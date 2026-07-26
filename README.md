@@ -107,6 +107,14 @@ uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
 ```
 
+## Synthetic recovery benchmark
+
+The first matched recovery grid makes all four reference families compete under the same
+prospective folds. A nested 150-trial design recovers two of four generating families,
+while its 300-trial counterpart recovers all four for the exact fixed parameter regimes.
+Fit-audit warnings remain visible and unresolved outcomes remain part of every confusion
+matrix. See the [four-family recovery benchmark](benchmarks/recovery_grid/README.md).
+
 ## Published-data benchmarks
 
 The first external benchmark reproduces the central longitudinal-behaviour result from
@@ -139,6 +147,7 @@ uv run python examples/temporal_transforms.py
 uv run python examples/within_session_validation.py
 uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
+uv run python -m benchmarks.recovery_grid.benchmark
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv

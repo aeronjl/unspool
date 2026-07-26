@@ -9,6 +9,7 @@ from types import MappingProxyType
 import numpy as np
 from numpy.typing import NDArray
 
+from unspool.diagnostics import FitAuditStatus
 from unspool.evaluation import FoldEvaluation, evaluate_splits
 from unspool.models.base import BehaviourModel, _protected_array
 from unspool.study import Study
@@ -85,6 +86,8 @@ class ModelRecoveryReport:
     mean_log_probabilities: NDArray[np.float64]
     converged: NDArray[np.bool_]
     failure_messages: tuple[tuple[str, ...], ...]
+    audit_statuses: tuple[tuple[FitAuditStatus, ...], ...]
+    audit_issue_codes: tuple[tuple[tuple[str, ...], ...], ...]
     seeds: NDArray[np.uint64]
     n_folds: NDArray[np.int64]
     n_trials: int
@@ -108,6 +111,12 @@ class ModelRecoveryReport:
         truth_labels = tuple(self.truth_labels)
         selected_labels = tuple(self.selected_labels)
         failure_messages = tuple(tuple(row) for row in self.failure_messages)
+        audit_statuses = tuple(
+            tuple(FitAuditStatus(status) for status in row) for row in self.audit_statuses
+        )
+        audit_issue_codes = tuple(
+            tuple(tuple(codes) for codes in row) for row in self.audit_issue_codes
+        )
         scores = _protected_array(self.mean_log_probabilities, dtype=np.float64)
         converged = _protected_array(self.converged, dtype=np.bool_)
         seeds = _protected_array(self.seeds, dtype=np.uint64)
@@ -125,6 +134,8 @@ class ModelRecoveryReport:
             == len(truth_labels)
             == len(selected_labels)
             == len(failure_messages)
+            == len(audit_statuses)
+            == len(audit_issue_codes)
             == n_runs
         ):
             raise ValueError("run metadata must have one value per recovery run")
@@ -141,6 +152,12 @@ class ModelRecoveryReport:
             raise ValueError("candidate scores must be finite")
         if any(len(row) != len(candidates) for row in failure_messages):
             raise ValueError("failure messages must have one column per candidate")
+        if any(len(row) != len(candidates) for row in audit_statuses):
+            raise ValueError("audit statuses must have one column per candidate")
+        if any(len(row) != len(candidates) for row in audit_issue_codes):
+            raise ValueError("audit issue codes must have one column per candidate")
+        if any(len(set(codes)) != len(codes) for row in audit_issue_codes for codes in row):
+            raise ValueError("audit issue codes must be unique within each candidate run")
         if any(label not in candidates for label in truth_labels):
             raise ValueError("every truth label must name a candidate")
         if any(label is not None and label not in candidates for label in selected_labels):
@@ -160,6 +177,8 @@ class ModelRecoveryReport:
         object.__setattr__(self, "mean_log_probabilities", scores)
         object.__setattr__(self, "converged", converged)
         object.__setattr__(self, "failure_messages", failure_messages)
+        object.__setattr__(self, "audit_statuses", audit_statuses)
+        object.__setattr__(self, "audit_issue_codes", audit_issue_codes)
         object.__setattr__(self, "seeds", seeds)
         object.__setattr__(self, "n_folds", n_folds)
 
@@ -188,6 +207,20 @@ class ModelRecoveryReport:
         ]
         return float(np.mean(resolved)) if resolved else float("nan")
 
+    @property
+    def audit_warning_rate(self) -> float:
+        """Fraction of candidate-run cells with at least one non-failing warning."""
+
+        statuses = [status for row in self.audit_statuses for status in row]
+        return float(np.mean([status is FitAuditStatus.WARNING for status in statuses]))
+
+    @property
+    def audit_failure_rate(self) -> float:
+        """Fraction of candidate-run cells with a failing numerical audit."""
+
+        statuses = [status for row in self.audit_statuses for status in row]
+        return float(np.mean([status is FitAuditStatus.FAIL for status in statuses]))
+
     def confusion_matrix(self) -> ModelRecoveryMatrix:
         """Return candidate selections plus an explicit unresolved column."""
 
@@ -206,6 +239,88 @@ class ModelRecoveryReport:
             selected_labels=selected_columns,
             counts=counts,
             rates=rates,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ModelRecoveryGridSummary:
+    """Comparable recovery and audit rates for one named design cell."""
+
+    design_name: str
+    n_trials: int
+    n_subjects: int
+    n_runs: int
+    resolution_rate: float
+    overall_accuracy: float
+    resolved_accuracy: float
+    audit_warning_rate: float
+    audit_failure_rate: float
+
+
+@dataclass(frozen=True, slots=True)
+class ModelRecoveryGridReport:
+    """Recovery reports across named designs with fixed scenarios and candidates."""
+
+    design_names: tuple[str, ...]
+    reports: tuple[ModelRecoveryReport, ...]
+    seeds: NDArray[np.uint64]
+    root_seed: int
+
+    def __post_init__(self) -> None:
+        names = tuple(self.design_names)
+        reports = tuple(self.reports)
+        seeds = _protected_array(self.seeds, dtype=np.uint64)
+        if not names or len(set(names)) != len(names):
+            raise ValueError("design names must be non-empty and unique")
+        if len(reports) != len(names) or seeds.shape != (len(names),):
+            raise ValueError("grid reports and seeds must align with design names")
+        if (
+            isinstance(self.root_seed, bool)
+            or not isinstance(self.root_seed, int)
+            or self.root_seed < 0
+        ):
+            raise ValueError("root_seed must be a non-negative integer")
+        reference = reports[0]
+        for report in reports[1:]:
+            if (
+                report.candidate_labels != reference.candidate_labels
+                or report.candidate_signatures != reference.candidate_signatures
+                or report.scenario_names != reference.scenario_names
+                or report.truth_labels != reference.truth_labels
+                or report.repeats != reference.repeats
+            ):
+                raise ValueError(
+                    "every design cell must use the same candidate and scenario contract"
+                )
+        object.__setattr__(self, "design_names", names)
+        object.__setattr__(self, "reports", reports)
+        object.__setattr__(self, "seeds", seeds)
+
+    def report_for(self, design_name: str) -> ModelRecoveryReport:
+        """Return one named design cell without relying on tuple position."""
+
+        try:
+            index = self.design_names.index(design_name)
+        except ValueError:
+            raise KeyError(f"unknown recovery-grid design: {design_name!r}") from None
+        return self.reports[index]
+
+    def summary(self) -> tuple[ModelRecoveryGridSummary, ...]:
+        """Return one compact recovery and audit summary per design cell."""
+
+        return tuple(
+            ModelRecoveryGridSummary(
+                design_name=name,
+                n_trials=report.n_trials,
+                n_subjects=report.n_subjects,
+                n_runs=report.n_runs,
+                resolution_rate=report.resolution_rate,
+                overall_accuracy=report.overall_accuracy,
+                resolved_accuracy=report.resolved_accuracy,
+                audit_warning_rate=report.audit_warning_rate,
+                audit_failure_rate=report.audit_failure_rate,
+            )
+            for name, report in zip(self.design_names, self.reports, strict=True)
         )
 
 
@@ -254,6 +369,8 @@ def run_model_recovery(
     truth_labels: list[str] = []
     selected_labels: list[str | None] = []
     failure_messages: list[tuple[str, ...]] = []
+    audit_statuses: list[tuple[FitAuditStatus, ...]] = []
+    audit_issue_codes: list[tuple[tuple[str, ...], ...]] = []
 
     run = 0
     for scenario in scenarios:
@@ -272,6 +389,8 @@ def run_model_recovery(
                 )
             n_folds[run] = len(splits)
             run_failures: list[str] = []
+            run_audit_statuses: list[FitAuditStatus] = []
+            run_issue_codes: list[tuple[str, ...]] = []
             for column, model in enumerate(candidate_models.values()):
                 evaluations = evaluate_splits(model, simulated, splits)
                 pointwise = np.concatenate(
@@ -283,9 +402,16 @@ def run_model_recovery(
                 )
                 converged[run, column] = candidate_converged
                 run_failures.append(_failure_message(evaluations))
+                audit_status, issue_codes = _aggregate_audits(evaluations)
+                run_audit_statuses.append(audit_status)
+                run_issue_codes.append(issue_codes)
 
+            numerically_usable = np.asarray(
+                [status is not FitAuditStatus.FAIL for status in run_audit_statuses],
+                dtype=np.bool_,
+            )
             selected_labels.append(
-                _select_candidate(scores[run], converged[run], candidate_labels, tie_tolerance)
+                _select_candidate(scores[run], numerically_usable, candidate_labels, tie_tolerance)
             )
             seeds[run] = child_seed
             scenario_names.append(scenario.name)
@@ -293,6 +419,8 @@ def run_model_recovery(
             generator_parameters.append(scenario.parameters)
             truth_labels.append(scenario.truth_label)
             failure_messages.append(tuple(run_failures))
+            audit_statuses.append(tuple(run_audit_statuses))
+            audit_issue_codes.append(tuple(run_issue_codes))
             run += 1
 
     return ModelRecoveryReport(
@@ -306,6 +434,8 @@ def run_model_recovery(
         mean_log_probabilities=scores,
         converged=converged,
         failure_messages=tuple(failure_messages),
+        audit_statuses=tuple(audit_statuses),
+        audit_issue_codes=tuple(audit_issue_codes),
         seeds=seeds,
         n_folds=n_folds,
         n_trials=len(design),
@@ -316,6 +446,59 @@ def run_model_recovery(
         horizon=horizon,
         step=step,
         tie_tolerance=tie_tolerance,
+    )
+
+
+def run_model_recovery_grid(
+    designs: Mapping[str, Study],
+    scenarios: Sequence[ModelRecoveryScenario],
+    candidates: Mapping[str, BehaviourModel],
+    *,
+    repeats: int = 1,
+    seed: int,
+    min_train_sessions: int = 1,
+    horizon: int = 1,
+    step: int = 1,
+    tie_tolerance: float = 1e-8,
+) -> ModelRecoveryGridReport:
+    """Run one fixed recovery contract across named study-design cells."""
+
+    if not isinstance(designs, Mapping) or not designs:
+        raise ValueError("designs must be a non-empty mapping")
+    validated_designs: dict[str, Study] = {}
+    for name, design in designs.items():
+        if not isinstance(name, str) or not name:
+            raise ValueError("design names must be non-empty strings")
+        if not isinstance(design, Study):
+            raise TypeError(f"design {name!r} must be a Study")
+        validated_designs[name] = design
+    if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
+        raise ValueError("seed must be a non-negative integer")
+
+    child_sequences = np.random.SeedSequence(seed).spawn(len(validated_designs))
+    seeds = np.asarray(
+        [sequence.generate_state(1, dtype=np.uint64)[0] for sequence in child_sequences],
+        dtype=np.uint64,
+    )
+    reports = tuple(
+        run_model_recovery(
+            design,
+            scenarios,
+            candidates,
+            repeats=repeats,
+            seed=int(child_seed),
+            min_train_sessions=min_train_sessions,
+            horizon=horizon,
+            step=step,
+            tie_tolerance=tie_tolerance,
+        )
+        for design, child_seed in zip(validated_designs.values(), seeds, strict=True)
+    )
+    return ModelRecoveryGridReport(
+        design_names=tuple(validated_designs),
+        reports=reports,
+        seeds=seeds,
+        root_seed=seed,
     )
 
 
@@ -358,6 +541,20 @@ def _failure_message(evaluations: tuple[FoldEvaluation, ...]) -> str:
         if not diagnostics.converged:
             failures.append(f"fold {fold}: {diagnostics.message}")
     return "; ".join(failures)
+
+
+def _aggregate_audits(
+    evaluations: tuple[FoldEvaluation, ...],
+) -> tuple[FitAuditStatus, tuple[str, ...]]:
+    audits = tuple(evaluation.fit.audit() for evaluation in evaluations)
+    if any(audit.status is FitAuditStatus.FAIL for audit in audits):
+        status = FitAuditStatus.FAIL
+    elif any(audit.status is FitAuditStatus.WARNING for audit in audits):
+        status = FitAuditStatus.WARNING
+    else:
+        status = FitAuditStatus.PASS
+    codes = tuple(dict.fromkeys(code for audit in audits for code in audit.issue_codes))
+    return status, codes
 
 
 def _require_positive_integer(value: int, name: str) -> None:

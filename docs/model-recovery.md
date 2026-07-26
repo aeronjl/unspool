@@ -24,11 +24,15 @@ repeat, `run_model_recovery` then:
 3. constructs expanding forward-session folds;
 4. refits every candidate independently at every forecasting origin;
 5. pools pointwise test log probabilities across folds;
-6. selects the converged candidate with the highest prospective mean log probability.
+6. aggregates every fold's `FitAudit` without discarding warnings;
+7. selects the numerically usable candidate with the highest prospective mean log
+   probability.
 
-An unresolved result is retained when no candidate converges or when the best two scores
-fall within `tie_tolerance`. Nonconverged candidates are excluded from selection, while
-their fold-level optimizer messages remain in `failure_messages`.
+An unresolved result is retained when every candidate has a failing audit or when the best
+two usable scores fall within `tie_tolerance`. Warnings remain eligible because they can
+limit uncertainty or interpretation without invalidating filtered prediction. Failing
+candidates are excluded from selection, while their fold-level optimizer messages, audit
+statuses, and stable issue codes remain in the report.
 
 ## Static versus smooth example
 
@@ -69,8 +73,38 @@ provides overall accuracy, resolution rate, and accuracy conditional on resoluti
 
 Raw run-level state is retained: scenario and truth labels, generator parameters, generator
 and candidate signatures, child seeds, mean log probabilities, convergence flags, failure
-messages, fold counts, and all splitter settings. This makes alternative tie rules or
-summaries possible without rerunning the simulations.
+messages, audit statuses and issue codes, fold counts, and all splitter settings. This
+makes alternative tie rules or summaries possible without rerunning the simulations.
+
+## Named design grids
+
+`run_model_recovery_grid` applies the same scenarios, candidates, split settings, and tie
+rule to a mapping of named `Study` designs. Each design receives an independent recorded
+child seed. `ModelRecoveryGridReport` retains the complete per-design reports and provides
+one summary row per cell with trial/subject counts, resolution and accuracy, plus audit
+warning and failure rates.
+
+```python
+from unspool import run_model_recovery_grid
+
+grid = run_model_recovery_grid(
+    {"sparse": sparse_design, "dense": dense_design},
+    scenarios,
+    candidates,
+    repeats=20,
+    seed=123,
+    min_train_sessions=3,
+)
+
+for row in grid.summary():
+    print(row.design_name, row.overall_accuracy, row.audit_warning_rate)
+```
+
+The first bounded [four-family recovery benchmark](../benchmarks/recovery_grid/README.md)
+uses static, smooth, GLM-HMM, and Q-learning candidates on nested 150- and 300-trial
+designs. The smaller cell recovers two of four generating families; the larger recovers
+all four for the exact single-run parameter regimes. The contrast is evidence that the
+answer changes with the design—not an estimate of a general sample-size threshold.
 
 ## What the matrix does—and does not—show
 
@@ -113,4 +147,5 @@ Run the complete example with:
 
 ```bash
 uv run python examples/model_recovery.py
+uv run python -m benchmarks.recovery_grid.benchmark
 ```
