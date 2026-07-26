@@ -87,10 +87,16 @@ action-contingent reward environment for simulation, session-reset action values
 updates, and recoverable learning-rate, temperature, bias, and perseveration parameters.
 See the [session-reset Q-learning guide](q-learning.md).
 
-Fitting uses SciPy's deterministic L-BFGS-B optimizer. An optional L2 penalty applies to
-non-intercept coefficients. Standard errors and 95% coverage summaries use a local Hessian
-approximation; when penalization is nonzero they are approximate rather than exact
-frequentist intervals.
+`WienerDriftDiffusion` supplies the first joint choice/response-time family. Covariates
+control drift while boundary separation, relative starting bias, and non-decision time are
+shared across trials. It declares both observed columns, converts explicit physical time
+units to seconds, retains deterministic restart evidence, and supports generative recovery.
+See the [joint choice and response-time guide](drift-diffusion.md).
+
+The GLM implementations use SciPy's deterministic L-BFGS-B optimizer. An optional L2
+penalty applies to non-intercept coefficients. Standard errors and 95% coverage summaries
+use a local Hessian approximation; when penalization is nonzero they are approximate rather
+than exact frequentist intervals.
 
 ## Prospective evaluation
 

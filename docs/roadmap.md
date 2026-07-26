@@ -86,11 +86,23 @@ The roadmap is organized by scientific contracts rather than by model count.
   and make complete fit audits, audit eligibility, finite-uncertainty denominators, and
   standards-compliant JSON serialization first-class in parameter recovery.
 
+## 0.6 — Joint choice and response time
+
+- **Implemented:** add an explicit positive response-time schema with seconds and
+  milliseconds as typed physical units and canonical internal conversion.
+- **Implemented:** add a fixed-parameter Wiener drift-diffusion family with covariate-
+  dependent drift, joint choice/response-time scoring, analytic choice probabilities,
+  paired first-passage expansions, and discretized generative simulation.
+- **Implemented:** retain deterministic restart evidence, local-Hessian uncertainty,
+  boundary warnings, minimum observed response time, and likelihood-floor counts.
+- **Implemented:** validate density normalization and natural-scale parameter recovery,
+  including a repeated 400-versus-1,200-trial benchmark in which every parameter's RMSE
+  decreases with sample size.
+
 ## Later
 
 - Session-varying GLM-HMM parameters
-- Joint reaction-time and drift-diffusion families, now gated by the scored-observation
-  contract and a dedicated recovery benchmark
+- Non-stationary, hierarchical, and contaminant-aware response-time families
 - Richer mixtures and model plugins
 - NWB/DANDI streaming workflows
 - Cross-lab trajectory-shape comparisons

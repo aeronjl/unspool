@@ -57,6 +57,20 @@ def test_parameter_recovery_is_reproducible_and_design_specific() -> None:
     json.dumps(payload, allow_nan=False)
 
 
+def test_parameter_recovery_does_not_report_correlation_for_constant_truth() -> None:
+    model = BernoulliHistoryGLM(choice_lags=0)
+    report = run_parameter_recovery(
+        model,
+        recovery_design(),
+        [{"intercept": 0.2}],
+        repeats=3,
+        seed=14,
+    )
+
+    assert np.isnan(report.summary()[0].correlation)
+    assert report.to_dict()["summary"][0]["correlation"] is None
+
+
 def test_parameter_recovery_keeps_failed_audits_out_of_summaries() -> None:
     model = BernoulliHistoryGLM(
         covariates=("stimulus",),

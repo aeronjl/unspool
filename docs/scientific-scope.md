@@ -33,24 +33,24 @@ complete-lab holdout;
 common model outputs; static and smoothly
 time-varying Bernoulli history GLMs; fixed- or estimated-scale static partial pooling;
 fixed-knot partially pooled subject trajectories; a fixed-transition Bernoulli GLM-HMM;
-a session-reset
-binary Q-learning agent; design-specific parameter and model recovery; and a first named
-four-family recovery grid plus repeated boundary-near regimes with retained fit audits and
-truth-aware permutation-invariant latent-state recovery.
+a session-reset binary Q-learning agent; an explicit response-time schema and fixed-
+parameter Wiener drift-diffusion model; design-specific parameter and model recovery; and
+a first named four-family recovery grid plus repeated boundary-near regimes with retained
+fit audits and truth-aware permutation-invariant latent-state recovery.
 See the
 [clock and transform guide](clocks-and-transforms.md), [modelling guide](modelling.md),
 [fit-audit guide](diagnostics.md), [smooth-drift guide](smooth-drift.md),
 [partial-pooling guide](hierarchical-glm.md),
 [partially pooled trajectory guide](hierarchical-smooth-glm.md),
 [GLM-HMM guide](glm-hmm.md),
-[Q-learning guide](q-learning.md), and [model-recovery guide](model-recovery.md) for their
-assumptions and current boundaries.
+[Q-learning guide](q-learning.md), [drift-diffusion guide](drift-diffusion.md), and
+[model-recovery guide](model-recovery.md) for their assumptions and current boundaries.
 
 ## Non-goals for v0.1
 
 - A catalogue of every cognitive model
 - Full hierarchical Bayesian inference
-- Drift-diffusion and arbitrary mixture families
+- Arbitrary mixture families and non-stationary or hierarchical response-time models
 - A universal learning landmark
 - Automatic cognitive interpretation of latent states
 - A graphical interface or hosted analysis service

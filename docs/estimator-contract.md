@@ -8,7 +8,7 @@ Unspool separates three questions that are often collapsed into one model API:
 
 That separation lets a third-party estimator enter comparison before it has a simulator,
 without letting it enter simulation-based recovery prematurely. It also establishes the
-comparison boundary needed for future response-time models.
+comparison boundary used by joint response-time models.
 
 ## The two structural protocols
 
@@ -42,13 +42,13 @@ recovery require a `GenerativeBehaviourModel` for every scenario generator.
 ## Why scored columns are part of the contract
 
 Pointwise log probabilities are comparable only when they are densities or probabilities
-for the same observed event. All current models declare:
+for the same observed event. Choice-only models declare:
 
 ```python
 scored_columns = ("choice",)
 ```
 
-A future joint drift-diffusion model should instead declare, for example:
+`WienerDriftDiffusion` instead declares, by default:
 
 ```python
 scored_columns = ("choice", "response_time")
@@ -90,16 +90,14 @@ estimate may lack finite local uncertainty. `ParameterRecoveryReport.to_dict()` 
 truth, estimates, standard errors, seeds, optimizer messages, audits, and both denominators
 without emitting non-standard JSON `NaN` values.
 
-## Reaction-time extension boundary
+## Reaction-time implementation boundary
 
-This contract makes reaction-time models safe to add; it does not yet provide them. The
-first such family should add:
+The first response-time family now supplies an explicit positive column and unit metadata,
+a joint Wiener choice/response-time likelihood with finite tail handling, generative
+simulation, deterministic restart diagnostics, and a dedicated parameter-recovery
+benchmark. See the [drift-diffusion guide](drift-diffusion.md).
 
-- an explicit positive response-time column and unit metadata in the study adapter;
-- a joint choice/response-time likelihood with numerically stable tail handling;
-- simulation and parameter recovery over identifiable and boundary-near regimes;
-- prospective comparisons only against candidates scoring the same joint observation;
-- diagnostics for contaminant responses, non-decision-time boundaries, and optimizer
-  failures.
-
-That benchmark should precede interpretive claims about latent decision parameters.
+It intentionally stops short of a contaminant process, across-trial parameter variation,
+hierarchical pooling, or longitudinal parameter drift. Until matched joint-observation
+competitors exist, it can be evaluated prospectively and recovered but not meaningfully
+ranked by joint log score against Unspool's choice-only families.
