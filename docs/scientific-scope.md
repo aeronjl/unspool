@@ -26,6 +26,11 @@ The first useful release should contain:
    remain lightweight and format-independent.
 8. Reproducible benchmarks against the Cell 2025 study and public IBL learning data.
 
+The current executable slice covers the canonical study contract, complete-session
+validation, common model outputs, a static Bernoulli history GLM, and design-specific
+parameter recovery. See the [modelling guide](modelling.md) for its assumptions and current
+boundaries.
+
 ## Non-goals for v0.1
 
 - A catalogue of every cognitive model

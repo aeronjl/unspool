@@ -18,8 +18,9 @@ and sits within several non-equivalent clocks—trials, sessions, calendar time,
 stages, and inferred learning landmarks.
 
 > [!IMPORTANT]
-> Unspool is pre-alpha. Its longitudinal data and validation contracts are now executable,
-> but the API is not yet stable and the modelling interface is still roadmap work.
+> Unspool is pre-alpha. Its longitudinal data, validation, first modelling, and parameter-
+> recovery contracts are executable, but the API is not yet stable and only one static
+> reference model is implemented.
 
 ## Why “Unspool”?
 
@@ -77,6 +78,16 @@ out splitter is intentionally marked non-prospective because it can train on the
 session's future. See the [data contract](docs/data-contract.md) and
 [validation guide](docs/validation.md).
 
+The first reference model is also executable: a static Bernoulli GLM with recursively
+generated, session-bounded choice history. It exposes simulation, fitting, filtered
+prediction, pointwise scoring, numerical diagnostics, prospective fold evaluation, and
+design-specific parameter recovery through one common contract. See the
+[modelling guide](docs/modelling.md) or run:
+
+```bash
+uv run python examples/static_glm.py
+```
+
 ## Development
 
 Unspool requires Python 3.11 or newer. The development interpreter is pinned to Python
@@ -85,6 +96,7 @@ Unspool requires Python 3.11 or newer. The development interpreter is pinned to 
 ```bash
 uv sync --locked --all-groups
 uv run pytest
+uv run python examples/static_glm.py
 uv run ruff check .
 uv run ruff format --check .
 uv build
