@@ -37,6 +37,11 @@ from unspool.models.hierarchical_glm import (
     HierarchicalGLMFitResult,
     HierarchicalGLMSimulation,
 )
+from unspool.models.hierarchical_smooth_ddm import (
+    HierarchicalSmoothDriftDiffusionFitResult,
+    HierarchicalSmoothDriftDiffusionSimulation,
+    HierarchicalSmoothWienerDriftDiffusion,
+)
 from unspool.models.hierarchical_smooth_glm import (
     HierarchicalSmoothBernoulliHistoryGLM,
     HierarchicalSmoothGLMFitResult,
@@ -76,8 +81,11 @@ __all__ = [
     "HierarchicalGLMFitResult",
     "HierarchicalGLMSimulation",
     "HierarchicalSmoothBernoulliHistoryGLM",
+    "HierarchicalSmoothDriftDiffusionFitResult",
+    "HierarchicalSmoothDriftDiffusionSimulation",
     "HierarchicalSmoothGLMFitResult",
     "HierarchicalSmoothGLMSimulation",
+    "HierarchicalSmoothWienerDriftDiffusion",
     "ModelCapabilities",
     "ModelDataError",
     "Prediction",

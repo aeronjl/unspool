@@ -126,10 +126,24 @@ The roadmap is organized by scientific contracts rather than by model count.
   changing matched designs; the scientifically matched family wins training-path recovery
   and held-out final-session joint log loss in both regimes.
 
+## 0.9 — Partially pooled decision-process trajectories
+
+- **Implemented:** jointly estimate smooth population Wiener paths and additive,
+  Gaussian-shrunken subject-deviation paths for explicitly selected varying parameters.
+- **Implemented:** expose immutable population and subject trajectories, retain random-
+  effect truth outside observed studies, enforce effective natural-scale bounds, and use a
+  declared population-trajectory plug-in for unseen animals.
+- **Implemented:** derive local population and subject uncertainty from the numerical
+  arrowhead Hessian and Schur complement while retaining restart and fit-audit evidence.
+- **Implemented:** compare complete pooling, shared smooth, independent smooth, and
+  hierarchical smooth fits across 20 stationary-identical, shared-change, and individual-
+  change panels; the matched structure wins subject-path RMSE and future-session joint log
+  loss in every regime, with all 480 fits converged.
+
 ## Later
 
 - Session-varying GLM-HMM parameters
-- Hierarchical response-time trajectories and variance-component estimation
+- Parameter-specific variance components and their estimation
 - Richer mixtures and model plugins
 - NWB/DANDI streaming workflows
 - Cross-lab trajectory-shape comparisons

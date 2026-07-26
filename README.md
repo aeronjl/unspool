@@ -23,8 +23,9 @@ stages, and inferred learning landmarks.
 > is not yet stable. The model catalogue currently contains static and smoothly time-
 > varying Bernoulli GLMs, static and smooth hierarchical Bernoulli GLMs, a fixed-transition
 > GLM-HMM, a compact binary Q-learning agent, and a joint choice/response-time Wiener
-> drift-diffusion family with stationary or smooth session-varying parameters and an
-> optional explicit contaminant mixture for the stationary model.
+> drift-diffusion family with stationary, smooth session-varying, or partially pooled
+> animal-specific trajectories and an optional explicit contaminant mixture for the
+> stationary model.
 
 ## Why “Unspool”?
 
@@ -94,13 +95,14 @@ Leave-subject-out and leave-lab-out folds train on complete disjoint population 
 Lab holdout rejects any subject assigned to more than one lab rather than permitting
 cross-fold leakage.
 
-Eight reference models are executable: a static Bernoulli GLM, a smoothly time-varying
+Nine reference models are executable: a static Bernoulli GLM, a smoothly time-varying
 competitor with fixed temporal knots, a static partial-pooling Bernoulli GLM, a partially
 pooled smooth trajectory model, a fixed-transition Bernoulli GLM-HMM, and a compact
 session-reset binary Q-learning agent, plus a fixed-parameter Wiener drift-diffusion model
 that jointly scores choice and response time and can include a fixed-support contaminant
 component, and a smooth longitudinal Wiener model for drift, boundary, and starting-bias
-paths. They expose recursive simulation, fitting,
+paths, plus a hierarchical Wiener model with shrunken animal-specific trajectories. They
+expose recursive simulation, fitting,
 filtered prediction, pointwise scoring, numerical diagnostics, prospective fold evaluation,
 and design-specific recovery through one common contract. Every fit also produces a
 normalized audit without discarding its model-specific evidence. See the
@@ -113,6 +115,7 @@ normalized audit without discarding its model-specific evidence. See the
 [GLM-HMM guide](docs/glm-hmm.md), [Q-learning guide](docs/q-learning.md),
 [drift-diffusion guide](docs/drift-diffusion.md),
 [session-varying drift-diffusion guide](docs/smooth-ddm.md),
+[hierarchical drift-diffusion guide](docs/hierarchical-smooth-ddm.md),
 and the [model-recovery guide](docs/model-recovery.md),
 or run:
 
@@ -126,6 +129,7 @@ uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
 uv run python examples/drift_diffusion.py
 uv run python examples/smooth_drift_diffusion.py
+uv run python examples/hierarchical_smooth_drift_diffusion.py
 uv run python examples/contaminant_ddm.py
 uv run python examples/population_validation.py
 uv run python examples/hierarchical_glm.py
@@ -207,6 +211,13 @@ wins both metrics under the specified changing drift and boundary paths, includi
 future-session comparisons. See the
 [session-varying DDM benchmark](benchmarks/smooth_ddm/README.md).
 
+The hierarchical Wiener benchmark then makes complete pooling, shared smooth, independent
+smooth, and partially pooled smooth trajectories compete under stationary identical
+animals, shared change, and individual change. Across 20 repetitions per regime, the
+scientifically matched structure wins both subject-path RMSE and held-out fifth-session
+joint log loss; all 480 fits converge. See the
+[hierarchical DDM benchmark](benchmarks/hierarchical_smooth_ddm/README.md).
+
 ## Published-data benchmarks
 
 The first external benchmark reproduces the central longitudinal-behaviour result from
@@ -252,6 +263,7 @@ uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
 uv run python examples/drift_diffusion.py
 uv run python examples/smooth_drift_diffusion.py
+uv run python examples/hierarchical_smooth_drift_diffusion.py
 uv run python examples/contaminant_ddm.py
 uv run python examples/population_validation.py
 uv run python examples/hierarchical_glm.py
@@ -268,6 +280,7 @@ uv run python -m benchmarks.nested_selection.benchmark
 uv run python -m benchmarks.ddm_recovery.benchmark
 uv run python -m benchmarks.ddm_contaminants.benchmark
 uv run python -m benchmarks.smooth_ddm.benchmark
+uv run python -m benchmarks.hierarchical_smooth_ddm.benchmark
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv

@@ -159,6 +159,21 @@ def test_hierarchical_smooth_example_exposes_individual_trajectories(
     assert "new-mouse fitted: False" in output
 
 
+def test_hierarchical_smooth_ddm_example_exposes_population_policy(
+    capsys: CaptureFixture[str],
+) -> None:
+    example = Path(__file__).parents[1] / "examples" / "hierarchical_smooth_drift_diffusion.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Partially pooled drift-diffusion trajectories" in output
+    assert "unseen-subject policy: population-trajectory-plugin" in output
+    assert "population stimulus:" in output
+    assert "mouse-0 stimulus:" in output
+    assert "new-mouse stimulus:" in output
+
+
 def test_prospective_comparison_example_exposes_nested_selection(
     capsys: CaptureFixture[str],
 ) -> None:
