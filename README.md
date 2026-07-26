@@ -21,7 +21,8 @@ stages, and inferred learning landmarks.
 > Unspool is pre-alpha. Its longitudinal data, clock, fold-fitted transform, validation,
 > first modelling, and parameter- and model-recovery contracts are executable, but the API
 > is not yet stable and the model catalogue currently contains static and smoothly time-
-> varying Bernoulli GLMs, a fixed-transition GLM-HMM, and a compact binary Q-learning agent.
+> varying Bernoulli GLMs, a fixed-scale hierarchical Bernoulli GLM, a fixed-transition
+> GLM-HMM, and a compact binary Q-learning agent.
 
 ## Why “Unspool”?
 
@@ -90,14 +91,16 @@ Leave-subject-out and leave-lab-out folds train on complete disjoint population 
 Lab holdout rejects any subject assigned to more than one lab rather than permitting
 cross-fold leakage.
 
-Four reference models are executable: a static Bernoulli GLM, a smoothly time-varying
-competitor with fixed temporal knots, a fixed-transition Bernoulli GLM-HMM, and a compact
-session-reset binary Q-learning agent. They expose recursive simulation, fitting, filtered
+Five reference models are executable: a static Bernoulli GLM, a smoothly time-varying
+competitor with fixed temporal knots, a fixed-scale partial-pooling Bernoulli GLM, a fixed-
+transition Bernoulli GLM-HMM, and a compact session-reset binary Q-learning agent. They
+expose recursive simulation, fitting, filtered
 prediction, pointwise scoring, numerical diagnostics, prospective fold evaluation, and
 design-specific recovery through one common contract. Every fit also produces a normalized
 audit without discarding its model-specific evidence. See the
 [modelling guide](docs/modelling.md), [fit-audit guide](docs/diagnostics.md),
 [smooth-drift guide](docs/smooth-drift.md),
+[partial-pooling guide](docs/hierarchical-glm.md),
 [GLM-HMM guide](docs/glm-hmm.md), [Q-learning guide](docs/q-learning.md), and
 the [model-recovery guide](docs/model-recovery.md),
 or run:
@@ -111,6 +114,7 @@ uv run python examples/within_session_validation.py
 uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
 uv run python examples/population_validation.py
+uv run python examples/hierarchical_glm.py
 ```
 
 ## Synthetic recovery benchmark
@@ -126,6 +130,13 @@ limiting case in which competitors can imitate it. Recovery falls from 70.0% acr
 stronger-reference runs to 32.5% across 40 boundary-near runs, with scenario-level
 confusion and Wilson intervals retained. See the
 [weak-signal recovery benchmark](benchmarks/weak_signal_recovery/README.md).
+
+The first population benchmark compares complete pooling, independent subject fits, and
+fixed-scale partial pooling over low, moderate, and high subject heterogeneity. Across 20
+matched repetitions per regime, partial pooling has the lowest individual-coefficient RMSE
+and future-session log loss in all three. The scale is supplied from the generator, so this
+validates shrinkage mechanics rather than variance-component estimation. See the
+[hierarchical GLM benchmark](benchmarks/hierarchical_glm/README.md).
 
 ## Published-data benchmarks
 
@@ -162,8 +173,10 @@ uv run python examples/within_session_validation.py
 uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
 uv run python examples/population_validation.py
+uv run python examples/hierarchical_glm.py
 uv run python -m benchmarks.recovery_grid.benchmark
 uv run python -m benchmarks.weak_signal_recovery.benchmark
+uv run python -m benchmarks.hierarchical_glm.benchmark
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv

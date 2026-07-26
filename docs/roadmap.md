@@ -41,7 +41,10 @@ The roadmap is organized by scientific contracts rather than by model count.
 
 - **Implemented:** add complete-subject and complete-lab holdout folds with explicit group
   provenance, cross-lab subject-leakage rejection, and a pinned IBL coverage contract.
-- Introduce constrained partial pooling across subjects.
+- **Implemented:** introduce a first constrained partial-pooling Bernoulli GLM with a
+  fixed Gaussian subject scale, explicit seen/unseen-subject prediction, retained subject
+  effects, and a matched recovery benchmark. Estimating variance components and
+  propagating their uncertainty remain later work.
 - Test latent-state alignment rather than assuming it.
 - Quantify alignment and landmark uncertainty.
 

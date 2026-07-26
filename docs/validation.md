@@ -119,7 +119,8 @@ must define how new-subject values are obtained using training-fold information 
 
 ## Current boundary
 
-Population splitters currently fit one shared parameter vector to the training animals.
-They do not yet estimate population and individual effects through partial pooling, and
-they do not align subject-specific latent states. Those require model-aware hierarchical
-contracts rather than hidden assumptions in a generic splitter.
+The fixed-scale hierarchical Bernoulli GLM can now estimate population and individual
+effects through bounded partial pooling, using a population-mean plug-in for held-out
+subjects. Other model families do not yet have hierarchical extensions, and the library
+does not align subject-specific latent states. Those remain model-aware contracts rather
+than hidden assumptions in a generic splitter.
