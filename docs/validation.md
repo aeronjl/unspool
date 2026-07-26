@@ -41,6 +41,9 @@ pipeline prospective by itself. Any learned scaling, feature selection, state al
 or behavioural landmark must also be fitted on `train_indices` only. Unspool's first
 training-only landmark helper is described in the
 [clock and transform guide](clocks-and-transforms.md).
+Its uncertainty wrapper uses the same fold helper, so both point landmarks and bootstrap
+draws are learned only from training rows. Frozen clock samples can then be applied to the
+test side without reading held-out outcomes.
 
 ## Within-session rolling origins
 

@@ -47,6 +47,8 @@ def test_temporal_transforms_example_runs_end_to_end(capsys: CaptureFixture[str]
     output = capsys.readouterr().out
     assert "Explicit design clocks" in output
     assert "Training-fold landmark" in output
+    assert "resolution rate:" in output
+    assert "landmark interval:" in output
     assert "learned values: {'mouse-1': 4.0}" in output
     assert "fit trials:     8" in output
     assert "test-relative:  [4.0, 5.0, 6.0, 7.0]" in output

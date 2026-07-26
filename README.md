@@ -44,6 +44,7 @@ Unspool is being designed so that:
 - sequential data are not shuffled into invalid trial-wise folds by default;
 - subject- and lab-held-out folds exclude complete population units;
 - data-derived landmarks are learned inside training folds;
+- unresolved landmark-uncertainty draws remain visible in relative-clock distributions;
 - every fitted model can be paired with a generative simulation;
 - convergence failures, boundary estimates, and label ambiguity remain visible;
 - recovery is reported for a particular design and sample size, not awarded as a
@@ -160,6 +161,12 @@ to complete label reversal. Clear states reach 91.85% decoded accuracy with no a
 assignments; overlapping states fall to 56.53%, with 35% explicitly ambiguous. See the
 [state-alignment benchmark](benchmarks/state_alignment/README.md).
 
+The first landmark-uncertainty benchmark compares decisive and marginal learning under one
+fixed threshold definition. Decisive transitions resolve in every point estimate and
+bootstrap draw, whereas marginal learning resolves in 83.33% of datasets and 82.05% of
+draws; its conditional intervals are more than three times wider. See the
+[landmark-uncertainty benchmark](benchmarks/landmark_uncertainty/README.md).
+
 ## Published-data benchmarks
 
 The first external benchmark reproduces the central longitudinal-behaviour result from
@@ -203,6 +210,7 @@ uv run python -m benchmarks.hierarchical_glm.benchmark
 uv run python -m benchmarks.subject_scale_recovery.benchmark
 uv run python -m benchmarks.trajectory_recovery.benchmark
 uv run python -m benchmarks.state_alignment.benchmark
+uv run python -m benchmarks.landmark_uncertainty.benchmark
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv

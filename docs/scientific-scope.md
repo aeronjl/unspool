@@ -27,8 +27,9 @@ The first useful release should contain:
 8. Reproducible benchmarks against the Cell 2025 study and public IBL learning data.
 
 The current executable slice covers the canonical study contract; typed design and
-landmark-relative clocks; fold-fitted threshold landmarks; complete-session and
-within-session rolling-origin validation; complete-subject and complete-lab holdout;
+landmark-relative clocks; fold-fitted threshold landmarks and uncertainty samples;
+complete-session and within-session rolling-origin validation; complete-subject and
+complete-lab holdout;
 common model outputs; static and smoothly
 time-varying Bernoulli history GLMs; fixed- or estimated-scale static partial pooling;
 fixed-knot partially pooled subject trajectories; a fixed-transition Bernoulli GLM-HMM;
