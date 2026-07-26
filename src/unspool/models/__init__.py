@@ -48,6 +48,11 @@ from unspool.models.q_learning import (
     QLearningParameters,
     ValueTrajectory,
 )
+from unspool.models.smooth_ddm import (
+    DriftDiffusionTrajectory,
+    SmoothDriftDiffusionFitResult,
+    SmoothWienerDriftDiffusion,
+)
 
 __all__ = [
     "BehaviourEstimator",
@@ -59,6 +64,7 @@ __all__ = [
     "DriftDiffusionFitResult",
     "DriftDiffusionParameters",
     "DriftDiffusionSimulation",
+    "DriftDiffusionTrajectory",
     "FilteredStateProbabilities",
     "FitDiagnostics",
     "FitResult",
@@ -79,6 +85,8 @@ __all__ = [
     "QLearningFitResult",
     "QLearningParameters",
     "SmoothBernoulliHistoryGLM",
+    "SmoothDriftDiffusionFitResult",
+    "SmoothWienerDriftDiffusion",
     "UniformResponseTimeContaminant",
     "UnsupportedPredictionMode",
     "ValueTrajectory",

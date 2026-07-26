@@ -35,6 +35,7 @@ time-varying Bernoulli history GLMs; fixed- or estimated-scale static partial po
 fixed-knot partially pooled subject trajectories; a fixed-transition Bernoulli GLM-HMM;
 a session-reset binary Q-learning agent; an explicit response-time schema and fixed-
 parameter Wiener drift-diffusion model with an optional explicit contaminant mixture;
+smooth session-varying Wiener drift, boundary, and starting-bias paths;
 design-specific parameter and model recovery; and a first named four-family recovery grid
 plus repeated boundary-near regimes with retained fit audits and truth-aware permutation-
 invariant latent-state recovery.
@@ -44,14 +45,15 @@ See the
 [partial-pooling guide](hierarchical-glm.md),
 [partially pooled trajectory guide](hierarchical-smooth-glm.md),
 [GLM-HMM guide](glm-hmm.md),
-[Q-learning guide](q-learning.md), [drift-diffusion guide](drift-diffusion.md), and
+[Q-learning guide](q-learning.md), [drift-diffusion guide](drift-diffusion.md),
+[session-varying drift-diffusion guide](smooth-ddm.md), and
 [model-recovery guide](model-recovery.md) for their assumptions and current boundaries.
 
 ## Non-goals for v0.1
 
 - A catalogue of every cognitive model
 - Full hierarchical Bayesian inference
-- Arbitrary mixture families and non-stationary or hierarchical response-time models
+- Arbitrary mixture families and hierarchical response-time trajectories
 - A universal learning landmark
 - Automatic cognitive interpretation of latent states
 - A graphical interface or hosted analysis service

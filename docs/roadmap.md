@@ -111,10 +111,25 @@ The roadmap is organized by scientific contracts rather than by model count.
   the robust model lowers every shared parameter RMSE and future-session joint log loss in
   all 20 repetitions.
 
+## 0.8 — Longitudinal decision-process trajectories
+
+- **Implemented:** represent Wiener drift coefficients, boundary separation, and starting
+  bias as natural-scale fixed-knot paths over an explicit external study clock, while
+  distinguishing across-trial change from within-decision dynamics.
+- **Implemented:** retain non-decision time as stationary, require explicit shared-path
+  opt-in for multi-animal data, and carry unsupported future knots forward through a
+  time-scaled first-difference penalty.
+- **Implemented:** expose read-only named parameter trajectories and support simulation,
+  prospective scoring, generic parameter recovery, deterministic restarts, local-Hessian
+  uncertainty, and complete fit audits.
+- **Implemented:** compare static and smooth Wiener accounts under 20 stationary and 20
+  changing matched designs; the scientifically matched family wins training-path recovery
+  and held-out final-session joint log loss in both regimes.
+
 ## Later
 
 - Session-varying GLM-HMM parameters
-- Non-stationary and hierarchical response-time families
+- Hierarchical response-time trajectories and variance-component estimation
 - Richer mixtures and model plugins
 - NWB/DANDI streaming workflows
 - Cross-lab trajectory-shape comparisons
