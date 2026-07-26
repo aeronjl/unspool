@@ -110,7 +110,9 @@ Population folds can be passed directly to `evaluate_splits`. That does not make
 model population-aware: the fitted model must define parameters that can be shared across
 training subjects and applied to an unseen subject. For example, the static GLM supports
 shared coefficients, while the smooth GLM requires an explicit `shared_trajectory=True`
-choice before fitting multiple subjects.
+choice before fitting multiple subjects. The hierarchical smooth GLM instead learns a
+population trajectory and subject-deviation trajectories, then applies only the population
+trajectory to a held-out subject.
 
 Fold-fitted, subject-specific landmarks present a stricter boundary. A landmark learned
 only for training subjects cannot be applied to a new test subject, and Unspool raises
@@ -119,8 +121,8 @@ must define how new-subject values are obtained using training-fold information 
 
 ## Current boundary
 
-The hierarchical Bernoulli GLM can estimate population and individual
-effects through bounded partial pooling, using a population-mean plug-in for held-out
-subjects. Other model families do not yet have hierarchical extensions, and the library
-does not align subject-specific latent states. Those remain model-aware contracts rather
-than hidden assumptions in a generic splitter.
+The hierarchical Bernoulli GLMs can estimate static or smooth population and individual
+effects through bounded partial pooling, using population plug-ins for held-out subjects.
+Other model families do not yet have hierarchical extensions, and the library does not
+align subject-specific latent states. Those remain model-aware contracts rather than
+hidden assumptions in a generic splitter.

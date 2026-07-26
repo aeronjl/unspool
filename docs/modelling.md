@@ -59,6 +59,11 @@ a subject scale fixed before fitting. Seen subjects use their fitted deviations;
 subjects use an explicitly recorded population-mean plug-in. See the
 [partial-pooling guide](hierarchical-glm.md).
 
+`HierarchicalSmoothBernoulliHistoryGLM` combines those two axes: a fixed-knot population
+trajectory plus shrunken, smooth subject-deviation trajectories. Its shared-clock
+assumption, penalty structure, unseen-subject policy, and factorial recovery evidence are
+detailed in [Partially pooled trajectories](hierarchical-smooth-glm.md).
+
 `BernoulliGLMHMM` supplies the first discrete switching competitor: state-specific
 Bernoulli GLM emissions, a stationary learned transition matrix, session-reset initial
 states, deterministic multi-restart fitting, filtered state probabilities, and explicit

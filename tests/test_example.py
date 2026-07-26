@@ -124,3 +124,19 @@ def test_hierarchical_glm_example_exposes_population_policy(
     assert "unseen-subject policy: population-mean-plugin" in output
     assert "mouse-a fitted: True" in output
     assert "new-mouse fitted: False" in output
+
+
+def test_hierarchical_smooth_example_exposes_individual_trajectories(
+    capsys: CaptureFixture[str],
+) -> None:
+    example = Path(__file__).parents[1] / "examples" / "hierarchical_smooth_glm.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Partially pooled coefficient trajectories" in output
+    assert "converged: True" in output
+    assert "unseen-subject policy: population-trajectory-plugin" in output
+    assert "population stimulus:" in output
+    assert "mouse-0 stimulus:" in output
+    assert "new-mouse fitted: False" in output

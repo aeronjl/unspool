@@ -1,0 +1,148 @@
+{
+  "benchmark": "factorial population and individual trajectory recovery",
+  "seed": 5419,
+  "repetitions": 20,
+  "design": {
+    "subjects": 12,
+    "training_sessions": 4,
+    "test_sessions": 1,
+    "trials_per_session": 50,
+    "knots": [0.0, 2.0, 4.0]
+  },
+  "scope": {
+    "hyperparameters": "fixed equally across matched repetitions",
+    "prediction": "final session for subjects represented in training",
+    "trajectory_metric": "RMSE over realized subject coefficient values at knots"
+  },
+  "regimes": {
+    "stationary_identical": {
+      "expected_winner": "complete_pooling",
+      "trajectory_rmse_winner": "complete_pooling",
+      "prospective_log_loss_winner": "complete_pooling",
+      "methods": {
+        "complete_pooling": {
+          "mean_subject_trajectory_rmse": 0.05815067150956434,
+          "mean_prospective_log_loss": 0.5976380375175339,
+          "all_fits_converged": true
+        },
+        "static_partial_pooling": {
+          "mean_subject_trajectory_rmse": 0.1427817553576025,
+          "mean_prospective_log_loss": 0.6006171299035563,
+          "all_fits_converged": true
+        },
+        "shared_smooth": {
+          "mean_subject_trajectory_rmse": 0.1299107918032058,
+          "mean_prospective_log_loss": 0.6037529077816364,
+          "all_fits_converged": true
+        },
+        "independent_smooth": {
+          "mean_subject_trajectory_rmse": 0.30021771729046504,
+          "mean_prospective_log_loss": 0.624977207886254,
+          "all_fits_converged": true
+        },
+        "hierarchical_smooth": {
+          "mean_subject_trajectory_rmse": 0.2001046397684446,
+          "mean_prospective_log_loss": 0.6076991776817634,
+          "all_fits_converged": true
+        }
+      }
+    },
+    "stable_individual": {
+      "expected_winner": "static_partial_pooling",
+      "trajectory_rmse_winner": "static_partial_pooling",
+      "prospective_log_loss_winner": "static_partial_pooling",
+      "methods": {
+        "complete_pooling": {
+          "mean_subject_trajectory_rmse": 0.39186747872161465,
+          "mean_prospective_log_loss": 0.6148080291477553,
+          "all_fits_converged": true
+        },
+        "static_partial_pooling": {
+          "mean_subject_trajectory_rmse": 0.16397603815700987,
+          "mean_prospective_log_loss": 0.5900002509319571,
+          "all_fits_converged": true
+        },
+        "shared_smooth": {
+          "mean_subject_trajectory_rmse": 0.4147032941129726,
+          "mean_prospective_log_loss": 0.6212840929250446,
+          "all_fits_converged": true
+        },
+        "independent_smooth": {
+          "mean_subject_trajectory_rmse": 0.3113804365923374,
+          "mean_prospective_log_loss": 0.614389975680866,
+          "all_fits_converged": true
+        },
+        "hierarchical_smooth": {
+          "mean_subject_trajectory_rmse": 0.27174679127565826,
+          "mean_prospective_log_loss": 0.6077564820211058,
+          "all_fits_converged": true
+        }
+      }
+    },
+    "shared_drift": {
+      "expected_winner": "shared_smooth",
+      "trajectory_rmse_winner": "shared_smooth",
+      "prospective_log_loss_winner": "shared_smooth",
+      "methods": {
+        "complete_pooling": {
+          "mean_subject_trajectory_rmse": 0.41946960134571254,
+          "mean_prospective_log_loss": 0.5598712155199717,
+          "all_fits_converged": true
+        },
+        "static_partial_pooling": {
+          "mean_subject_trajectory_rmse": 0.43939549820035084,
+          "mean_prospective_log_loss": 0.5613091543472823,
+          "all_fits_converged": true
+        },
+        "shared_smooth": {
+          "mean_subject_trajectory_rmse": 0.14495035373851642,
+          "mean_prospective_log_loss": 0.5125853316071831,
+          "all_fits_converged": true
+        },
+        "independent_smooth": {
+          "mean_subject_trajectory_rmse": 0.32422812042791627,
+          "mean_prospective_log_loss": 0.5318141574390863,
+          "all_fits_converged": true
+        },
+        "hierarchical_smooth": {
+          "mean_subject_trajectory_rmse": 0.2136907863308332,
+          "mean_prospective_log_loss": 0.5141202300558328,
+          "all_fits_converged": true
+        }
+      }
+    },
+    "individual_drift": {
+      "expected_winner": "hierarchical_smooth",
+      "trajectory_rmse_winner": "hierarchical_smooth",
+      "prospective_log_loss_winner": "hierarchical_smooth",
+      "methods": {
+        "complete_pooling": {
+          "mean_subject_trajectory_rmse": 0.3673422458173129,
+          "mean_prospective_log_loss": 0.585336612949457,
+          "all_fits_converged": true
+        },
+        "static_partial_pooling": {
+          "mean_subject_trajectory_rmse": 0.34377421608471065,
+          "mean_prospective_log_loss": 0.5886465938322873,
+          "all_fits_converged": true
+        },
+        "shared_smooth": {
+          "mean_subject_trajectory_rmse": 0.3533806474258463,
+          "mean_prospective_log_loss": 0.5860767670086772,
+          "all_fits_converged": true
+        },
+        "independent_smooth": {
+          "mean_subject_trajectory_rmse": 0.322221515585707,
+          "mean_prospective_log_loss": 0.5870856620452386,
+          "all_fits_converged": true
+        },
+        "hierarchical_smooth": {
+          "mean_subject_trajectory_rmse": 0.2783307659729698,
+          "mean_prospective_log_loss": 0.5796624451705603,
+          "all_fits_converged": true
+        }
+      }
+    }
+  },
+  "all_expected_winners_recovered": true
+}
