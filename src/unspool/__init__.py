@@ -27,6 +27,7 @@ from unspool.model_recovery import (
     ModelRecoveryMatrix,
     ModelRecoveryReport,
     ModelRecoveryScenario,
+    ModelRecoveryScenarioMatrix,
     run_model_recovery,
     run_model_recovery_grid,
 )
@@ -112,6 +113,7 @@ __all__ = [
     "ModelRecoveryMatrix",
     "ModelRecoveryReport",
     "ModelRecoveryScenario",
+    "ModelRecoveryScenarioMatrix",
     "ParameterRecoveryReport",
     "ParameterRecoverySummary",
     "Prediction",

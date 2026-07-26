@@ -1,0 +1,683 @@
+{
+  "audit_failure_rate": 0.0,
+  "audit_issue_codes": [
+    "boundary_estimate",
+    "ill_conditioned_hessian",
+    "restart_objective_disagreement"
+  ],
+  "audit_warning_rate": 0.34375,
+  "benchmark": "repeated recovery near model-family limiting cases",
+  "candidate_labels": [
+    "static",
+    "smooth",
+    "hmm",
+    "q-learning"
+  ],
+  "candidate_signatures": [
+    "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.01]",
+    "smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,1,2,3,4;smoothness=5.0;l2=0.01;shared_trajectory=False]",
+    "bernoulli-glm-hmm[states=2;outcome=choice;covariates=stimulus;choice_lags=1;label_by=intercept;l2=0.01]",
+    "binary-q-learning[outcome=choice;reward=reward;environment=reward_probability_0,reward_probability_1;initial_value=0.5;session_reset=True]"
+  ],
+  "contract_passed": true,
+  "family_confusion": {
+    "counts": [
+      [
+        7,
+        2,
+        4,
+        2,
+        5
+      ],
+      [
+        6,
+        12,
+        0,
+        0,
+        2
+      ],
+      [
+        6,
+        6,
+        5,
+        0,
+        3
+      ],
+      [
+        0,
+        0,
+        0,
+        17,
+        3
+      ]
+    ],
+    "rates": [
+      [
+        0.35,
+        0.1,
+        0.2,
+        0.1,
+        0.25
+      ],
+      [
+        0.3,
+        0.6,
+        0.0,
+        0.0,
+        0.1
+      ],
+      [
+        0.3,
+        0.3,
+        0.25,
+        0.0,
+        0.15
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.85,
+        0.15
+      ]
+    ],
+    "selected_labels": [
+      "static",
+      "smooth",
+      "hmm",
+      "q-learning",
+      "unresolved"
+    ],
+    "truth_labels": [
+      "static",
+      "smooth",
+      "hmm",
+      "q-learning"
+    ]
+  },
+  "n_folds_per_run": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  "n_subjects": 1,
+  "n_trials": 300,
+  "repeats": 10,
+  "root_seed": 7701,
+  "run_seeds": [
+    4787212542880088584,
+    3043688829389668750,
+    14562229678428460206,
+    3782971939185182355,
+    8977742250030267956,
+    5096747370555696783,
+    5582956979728014404,
+    75440860490966268,
+    15340711981062966424,
+    16763363228617578906,
+    9365356779213801578,
+    5982737151951080368,
+    17857078087523838195,
+    3306552240892568596,
+    3174271287477518861,
+    493468675224115445,
+    13900287544883275402,
+    17598947265888122313,
+    7534847617715015854,
+    5578655642878920438,
+    2151256976374799886,
+    3173122318770405119,
+    4100977361468838928,
+    11119047055754548866,
+    1489754646054825517,
+    9320331663602623141,
+    5940590449727435014,
+    11490292490718022547,
+    9535275931921458385,
+    10630096543032471667,
+    4049265394807944424,
+    4229778730928446318,
+    17018272661824655542,
+    9560531488636881976,
+    16036708948347222946,
+    1126694593933094775,
+    362096677713784243,
+    10876705996134509821,
+    1905898665228178022,
+    7302695013819865737,
+    14090187218452663878,
+    12942191939494249949,
+    4768290341246747210,
+    6116027757665512333,
+    10044098320517776598,
+    6413209588040284717,
+    10614996497766518227,
+    6020310771256295593,
+    14363429263910382026,
+    13098190966599834911,
+    11530253090192046964,
+    15522780324517955383,
+    16565337085669250207,
+    9830248631930840684,
+    5237945150074146336,
+    16899157898680489092,
+    15787604355084786193,
+    18003226758322515367,
+    15798339864816400500,
+    3911756218293521149,
+    2354766763285918440,
+    11738443167704073000,
+    15882655664276383750,
+    10178944285465770266,
+    3266334603168541880,
+    11358026460952490064,
+    17198599868411008675,
+    11124023506208888412,
+    9899920939163842446,
+    10591142065050008030,
+    4676331372414707534,
+    16891491167087648892,
+    855858774428552635,
+    10258871676602933124,
+    8691164056485312141,
+    14221030186046359139,
+    3334478044593222500,
+    1062483753459580689,
+    7262667924635909863,
+    12184110351572398405
+  ],
+  "scenario_matrix": {
+    "counts": [
+      [
+        4,
+        2,
+        1,
+        0,
+        3
+      ],
+      [
+        0,
+        10,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        3,
+        4,
+        0,
+        3
+      ],
+      [
+        0,
+        0,
+        0,
+        10,
+        0
+      ],
+      [
+        3,
+        0,
+        3,
+        2,
+        2
+      ],
+      [
+        6,
+        2,
+        0,
+        0,
+        2
+      ],
+      [
+        6,
+        3,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        7,
+        3
+      ]
+    ],
+    "rates": [
+      [
+        0.4,
+        0.2,
+        0.1,
+        0.0,
+        0.3
+      ],
+      [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.3,
+        0.4,
+        0.0,
+        0.3
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        0.3,
+        0.0,
+        0.3,
+        0.2,
+        0.2
+      ],
+      [
+        0.6,
+        0.2,
+        0.0,
+        0.0,
+        0.2
+      ],
+      [
+        0.6,
+        0.3,
+        0.1,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.7,
+        0.3
+      ]
+    ],
+    "scenario_names": [
+      "strong-stationary",
+      "strong-drifting",
+      "strong-switching",
+      "strong-reward-learning",
+      "weak-low-signal-stationary",
+      "weak-subtle-drift",
+      "weak-overlapping-states",
+      "weak-slow-learning"
+    ],
+    "selected_labels": [
+      "static",
+      "smooth",
+      "hmm",
+      "q-learning",
+      "unresolved"
+    ],
+    "truth_labels": [
+      "static",
+      "smooth",
+      "hmm",
+      "q-learning",
+      "static",
+      "smooth",
+      "hmm",
+      "q-learning"
+    ]
+  },
+  "scenario_scores": [
+    {
+      "mean_log_probability": {
+        "hmm": -0.5814519168658796,
+        "q-learning": -0.6970769338351648,
+        "smooth": -0.583951028178767,
+        "static": -0.5705589336142136
+      },
+      "scenario": "strong-stationary",
+      "standard_deviation": {
+        "hmm": 0.04872067393778135,
+        "q-learning": 0.013599534749569453,
+        "smooth": 0.03768172450976206,
+        "static": 0.0390876031535168
+      },
+      "truth_label": "static"
+    },
+    {
+      "mean_log_probability": {
+        "hmm": -0.5610107910320543,
+        "q-learning": -0.7300250260975891,
+        "smooth": -0.5123577017900381,
+        "static": -0.5751095714917935
+      },
+      "scenario": "strong-drifting",
+      "standard_deviation": {
+        "hmm": 0.05891621512821334,
+        "q-learning": 0.020478888575282097,
+        "smooth": 0.03678718230855517,
+        "static": 0.03266846484201588
+      },
+      "truth_label": "smooth"
+    },
+    {
+      "mean_log_probability": {
+        "hmm": -0.5871194140061088,
+        "q-learning": -0.6440547247305731,
+        "smooth": -0.6094301181073641,
+        "static": -0.5900486810091692
+      },
+      "scenario": "strong-switching",
+      "standard_deviation": {
+        "hmm": 0.04666018040765916,
+        "q-learning": 0.03891907526945076,
+        "smooth": 0.033832706390086405,
+        "static": 0.035669127337695124
+      },
+      "truth_label": "hmm"
+    },
+    {
+      "mean_log_probability": {
+        "hmm": -0.569727903730169,
+        "q-learning": -0.4432665894233983,
+        "smooth": -0.6128608748984886,
+        "static": -0.5896659042609722
+      },
+      "scenario": "strong-reward-learning",
+      "standard_deviation": {
+        "hmm": 0.043722241111504606,
+        "q-learning": 0.06335126700720764,
+        "smooth": 0.037319158479150065,
+        "static": 0.044354745479137286
+      },
+      "truth_label": "q-learning"
+    },
+    {
+      "mean_log_probability": {
+        "hmm": -0.7018042846187814,
+        "q-learning": -0.7099952715828725,
+        "smooth": -0.6932219768195527,
+        "static": -0.6856319588009289
+      },
+      "scenario": "weak-low-signal-stationary",
+      "standard_deviation": {
+        "hmm": 0.02941225193239278,
+        "q-learning": 0.030452163557177336,
+        "smooth": 0.020660723442810756,
+        "static": 0.02130201673148454
+      },
+      "truth_label": "static"
+    },
+    {
+      "mean_log_probability": {
+        "hmm": -0.5960440037407146,
+        "q-learning": -0.7022700277369675,
+        "smooth": -0.5922745937318505,
+        "static": -0.5865093131115388
+      },
+      "scenario": "weak-subtle-drift",
+      "standard_deviation": {
+        "hmm": 0.03272722009442686,
+        "q-learning": 0.016696159207499967,
+        "smooth": 0.02569350779955674,
+        "static": 0.034869936731242286
+      },
+      "truth_label": "smooth"
+    },
+    {
+      "mean_log_probability": {
+        "hmm": -0.6353678058960105,
+        "q-learning": -0.7041197579771957,
+        "smooth": -0.6299521283529783,
+        "static": -0.623521271287571
+      },
+      "scenario": "weak-overlapping-states",
+      "standard_deviation": {
+        "hmm": 0.04570462405661014,
+        "q-learning": 0.024239114867587237,
+        "smooth": 0.04046703483660797,
+        "static": 0.04184028435849717
+      },
+      "truth_label": "hmm"
+    },
+    {
+      "mean_log_probability": {
+        "hmm": -0.719162234282394,
+        "q-learning": -0.6776764057511294,
+        "smooth": -0.7022949484616349,
+        "static": -0.6923469420131811
+      },
+      "scenario": "weak-slow-learning",
+      "standard_deviation": {
+        "hmm": 0.020440152118651526,
+        "q-learning": 0.021807186855957113,
+        "smooth": 0.02676013790720339,
+        "static": 0.018237537976412855
+      },
+      "truth_label": "q-learning"
+    }
+  ],
+  "scenarios": [
+    {
+      "generator_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.01]",
+      "name": "strong-stationary",
+      "parameters": {
+        "choice_lag_1": 0.3,
+        "intercept": -0.1,
+        "stimulus": 1.2
+      }
+    },
+    {
+      "generator_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,1,2,3,4;smoothness=5.0;l2=0.01;shared_trajectory=False]",
+      "name": "strong-drifting",
+      "parameters": {
+        "choice_lag_1[session_order=0]": 0.7,
+        "choice_lag_1[session_order=1]": 0.5499999999999999,
+        "choice_lag_1[session_order=2]": 0.39999999999999997,
+        "choice_lag_1[session_order=3]": 0.25,
+        "choice_lag_1[session_order=4]": 0.1,
+        "intercept[session_order=0]": -0.6,
+        "intercept[session_order=1]": -0.3,
+        "intercept[session_order=2]": 0.0,
+        "intercept[session_order=3]": 0.29999999999999993,
+        "intercept[session_order=4]": 0.6,
+        "stimulus[session_order=0]": 0.4,
+        "stimulus[session_order=1]": 0.8,
+        "stimulus[session_order=2]": 1.2000000000000002,
+        "stimulus[session_order=3]": 1.6,
+        "stimulus[session_order=4]": 2.0
+      }
+    },
+    {
+      "generator_signature": "bernoulli-glm-hmm[states=2;outcome=choice;covariates=stimulus;choice_lags=1;label_by=intercept;l2=0.01]",
+      "name": "strong-switching",
+      "parameters": {
+        "initial_logit[state=0|reference=1]": 0.0,
+        "state[0].choice_lag_1": 0.6,
+        "state[0].intercept": -1.5,
+        "state[0].stimulus": 0.5,
+        "state[1].choice_lag_1": 0.1,
+        "state[1].intercept": 1.5,
+        "state[1].stimulus": 1.5,
+        "transition_logit[from=0,to=0|reference=1]": 2.5866893440979424,
+        "transition_logit[from=1,to=0|reference=1]": -2.5866893440979424
+      }
+    },
+    {
+      "generator_signature": "binary-q-learning[outcome=choice;reward=reward;environment=reward_probability_0,reward_probability_1;initial_value=0.5;session_reset=True]",
+      "name": "strong-reward-learning",
+      "parameters": {
+        "choice_bias": 0.0,
+        "inverse_temperature_log": 1.6094379124341003,
+        "learning_rate_logit": -0.8472978603872038,
+        "perseveration": 0.2
+      }
+    },
+    {
+      "generator_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.01]",
+      "name": "weak-low-signal-stationary",
+      "parameters": {
+        "choice_lag_1": 0.1,
+        "intercept": -0.05,
+        "stimulus": 0.35
+      }
+    },
+    {
+      "generator_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,1,2,3,4;smoothness=5.0;l2=0.01;shared_trajectory=False]",
+      "name": "weak-subtle-drift",
+      "parameters": {
+        "choice_lag_1[session_order=0]": 0.3,
+        "choice_lag_1[session_order=1]": 0.25,
+        "choice_lag_1[session_order=2]": 0.2,
+        "choice_lag_1[session_order=3]": 0.15,
+        "choice_lag_1[session_order=4]": 0.1,
+        "intercept[session_order=0]": -0.2,
+        "intercept[session_order=1]": -0.1,
+        "intercept[session_order=2]": 0.0,
+        "intercept[session_order=3]": 0.10000000000000003,
+        "intercept[session_order=4]": 0.2,
+        "stimulus[session_order=0]": 0.75,
+        "stimulus[session_order=1]": 0.825,
+        "stimulus[session_order=2]": 0.9,
+        "stimulus[session_order=3]": 0.9750000000000001,
+        "stimulus[session_order=4]": 1.05
+      }
+    },
+    {
+      "generator_signature": "bernoulli-glm-hmm[states=2;outcome=choice;covariates=stimulus;choice_lags=1;label_by=intercept;l2=0.01]",
+      "name": "weak-overlapping-states",
+      "parameters": {
+        "initial_logit[state=0|reference=1]": 0.0,
+        "state[0].choice_lag_1": 0.3,
+        "state[0].intercept": -0.35,
+        "state[0].stimulus": 0.85,
+        "state[1].choice_lag_1": 0.1,
+        "state[1].intercept": 0.35,
+        "state[1].stimulus": 1.15,
+        "transition_logit[from=0,to=0|reference=1]": 3.1780538303479453,
+        "transition_logit[from=1,to=0|reference=1]": -3.1780538303479453
+      }
+    },
+    {
+      "generator_signature": "binary-q-learning[outcome=choice;reward=reward;environment=reward_probability_0,reward_probability_1;initial_value=0.5;session_reset=True]",
+      "name": "weak-slow-learning",
+      "parameters": {
+        "choice_bias": 0.0,
+        "inverse_temperature_log": 0.6931471805599453,
+        "learning_rate_logit": -2.4423470353692047,
+        "perseveration": 0.1
+      }
+    }
+  ],
+  "signal_levels": {
+    "strong": {
+      "accuracy": 0.7,
+      "accuracy_wilson_95": [
+        0.5456998118185507,
+        0.8192515477025347
+      ],
+      "audit_status_counts": {
+        "pass": 109,
+        "warning": 51
+      },
+      "correct": 28,
+      "n_runs": 40,
+      "resolution_rate": 0.85
+    },
+    "weak": {
+      "accuracy": 0.325,
+      "accuracy_wilson_95": [
+        0.200845022317827,
+        0.47982253810122333
+      ],
+      "audit_status_counts": {
+        "pass": 101,
+        "warning": 59
+      },
+      "correct": 13,
+      "n_runs": 40,
+      "resolution_rate": 0.825
+    }
+  }
+}

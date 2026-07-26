@@ -50,5 +50,6 @@ from selection. Unresolved ties remain an explicit fifth confusion-matrix column
 The improvement from 150 to 300 trials demonstrates design dependence for these exact
 parameters, seeds, candidate settings, and folds. It does not establish a general sample-
 size threshold, and perfect recovery in one dense run is not evidence of universal
-identifiability. The next expansion should add repeats and scientifically plausible weak-
-signal parameter regimes near the boundaries where these families imitate one another.
+identifiability. The follow-up
+[repeated weak-signal benchmark](../weak_signal_recovery/README.md) tests scientifically
+plausible regimes near the boundaries where these families imitate one another.

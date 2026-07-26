@@ -76,6 +76,12 @@ and candidate signatures, child seeds, mean log probabilities, convergence flags
 messages, audit statuses and issue codes, fold counts, and all splitter settings. This
 makes alternative tie rules or summaries possible without rerunning the simulations.
 
+When multiple parameter regimes share a generating family,
+`report.scenario_confusion_matrix()` retains one row per named scenario rather than
+collapsing them into the family-level confusion matrix. This is essential for testing
+limiting cases: aggregate family accuracy can otherwise hide which parameter regimes are
+actually distinguishable.
+
 ## Named design grids
 
 `run_model_recovery_grid` applies the same scenarios, candidates, split settings, and tie
@@ -105,6 +111,13 @@ uses static, smooth, GLM-HMM, and Q-learning candidates on nested 150- and 300-t
 designs. The smaller cell recovers two of four generating families; the larger recovers
 all four for the exact single-run parameter regimes. The contrast is evidence that the
 answer changes with the design—not an estimate of a general sample-size threshold.
+
+The follow-up [weak-signal benchmark](../benchmarks/weak_signal_recovery/README.md) fixes
+the 300-trial design and repeats each stronger and boundary-near regime ten times. Recovery
+falls from 70.0% to 32.5%; the scenario matrix shows subtle drift collapsing toward static
+fits and overlapping HMM emissions collapsing toward static or smooth fits. Wilson
+intervals quantify finite-simulation uncertainty without treating the chosen parameter
+regimes as a population sample.
 
 ## What the matrix does—and does not—show
 
@@ -148,4 +161,5 @@ Run the complete example with:
 ```bash
 uv run python examples/model_recovery.py
 uv run python -m benchmarks.recovery_grid.benchmark
+uv run python -m benchmarks.weak_signal_recovery.benchmark
 ```

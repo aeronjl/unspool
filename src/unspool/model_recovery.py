@@ -73,6 +73,38 @@ class ModelRecoveryMatrix:
 
 
 @dataclass(frozen=True, slots=True)
+class ModelRecoveryScenarioMatrix:
+    """Counts and rates by named parameter regime rather than model family."""
+
+    scenario_names: tuple[str, ...]
+    truth_labels: tuple[str, ...]
+    selected_labels: tuple[str, ...]
+    counts: NDArray[np.int64]
+    rates: NDArray[np.float64]
+
+    def __post_init__(self) -> None:
+        scenario_names = tuple(self.scenario_names)
+        truth_labels = tuple(self.truth_labels)
+        selected_labels = tuple(self.selected_labels)
+        counts = _protected_array(self.counts, dtype=np.int64)
+        rates = _protected_array(self.rates, dtype=np.float64)
+        expected_shape = (len(scenario_names), len(selected_labels))
+        if not scenario_names or len(set(scenario_names)) != len(scenario_names):
+            raise ValueError("scenario names must be non-empty and unique")
+        if len(truth_labels) != len(scenario_names):
+            raise ValueError("every scenario row must retain its truth label")
+        if counts.shape != expected_shape or rates.shape != expected_shape:
+            raise ValueError("scenario matrix dimensions must match its labels")
+        if np.any(counts < 0):
+            raise ValueError("scenario recovery counts must be non-negative")
+        object.__setattr__(self, "scenario_names", scenario_names)
+        object.__setattr__(self, "truth_labels", truth_labels)
+        object.__setattr__(self, "selected_labels", selected_labels)
+        object.__setattr__(self, "counts", counts)
+        object.__setattr__(self, "rates", rates)
+
+
+@dataclass(frozen=True, slots=True)
 class ModelRecoveryReport:
     """Raw prospective scores and selections for a model-recovery experiment."""
 
@@ -236,6 +268,37 @@ class ModelRecoveryReport:
         np.divide(counts, row_totals, out=rates, where=row_totals > 0)
         return ModelRecoveryMatrix(
             truth_labels=self.candidate_labels,
+            selected_labels=selected_columns,
+            counts=counts,
+            rates=rates,
+        )
+
+    def scenario_confusion_matrix(self) -> ModelRecoveryScenarioMatrix:
+        """Return selections separately for every named parameter regime."""
+
+        scenario_names = tuple(dict.fromkeys(self.scenario_names))
+        selected_columns = (*self.candidate_labels, UNRESOLVED_LABEL)
+        scenario_index = {name: index for index, name in enumerate(scenario_names)}
+        selected_index = {label: index for index, label in enumerate(selected_columns)}
+        truth_by_scenario: dict[str, str] = {}
+        counts = np.zeros((len(scenario_names), len(selected_columns)), dtype=np.int64)
+        for scenario, truth, selected in zip(
+            self.scenario_names,
+            self.truth_labels,
+            self.selected_labels,
+            strict=True,
+        ):
+            previous_truth = truth_by_scenario.setdefault(scenario, truth)
+            if previous_truth != truth:
+                raise ValueError("a named scenario cannot map to multiple truth labels")
+            selected_key = UNRESOLVED_LABEL if selected is None else selected
+            counts[scenario_index[scenario], selected_index[selected_key]] += 1
+        row_totals = counts.sum(axis=1, keepdims=True)
+        rates = np.full(counts.shape, np.nan, dtype=np.float64)
+        np.divide(counts, row_totals, out=rates, where=row_totals > 0)
+        return ModelRecoveryScenarioMatrix(
+            scenario_names=scenario_names,
+            truth_labels=tuple(truth_by_scenario[name] for name in scenario_names),
             selected_labels=selected_columns,
             counts=counts,
             rates=rates,
