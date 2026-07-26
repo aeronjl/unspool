@@ -39,9 +39,10 @@ The roadmap is organized by scientific contracts rather than by model count.
 
 ## 0.3 — Population structure
 
+- **Implemented:** add complete-subject and complete-lab holdout folds with explicit group
+  provenance, cross-lab subject-leakage rejection, and a pinned IBL coverage contract.
 - Introduce constrained partial pooling across subjects.
 - Test latent-state alignment rather than assuming it.
-- Add leave-subject-out and leave-lab-out evaluation.
 - Quantify alignment and landmark uncertainty.
 
 ## Later

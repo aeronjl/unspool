@@ -41,6 +41,7 @@ software commitments.
 Unspool is being designed so that:
 
 - sequential data are not shuffled into invalid trial-wise folds by default;
+- subject- and lab-held-out folds exclude complete population units;
 - data-derived landmarks are learned inside training folds;
 - every fitted model can be paired with a generative simulation;
 - convergence failures, boundary estimates, and label ambiguity remain visible;
@@ -85,6 +86,10 @@ independently inside each training fold with immutable provenance. See the
 [clock and transform guide](docs/clocks-and-transforms.md), and
 [validation guide](docs/validation.md).
 
+Leave-subject-out and leave-lab-out folds train on complete disjoint population units.
+Lab holdout rejects any subject assigned to more than one lab rather than permitting
+cross-fold leakage.
+
 Four reference models are executable: a static Bernoulli GLM, a smoothly time-varying
 competitor with fixed temporal knots, a fixed-transition Bernoulli GLM-HMM, and a compact
 session-reset binary Q-learning agent. They expose recursive simulation, fitting, filtered
@@ -105,6 +110,7 @@ uv run python examples/temporal_transforms.py
 uv run python examples/within_session_validation.py
 uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
+uv run python examples/population_validation.py
 ```
 
 ## Synthetic recovery benchmark
@@ -136,7 +142,9 @@ and the benchmark compares three disjoint early sessions with the final three tr
 sessions before the first biased-task transition. All nine selected animals improve on
 easy trials (`+0.42943` mean accuracy), providing a checksum-pinned positive control for
 public-data retrieval, session chronology, and landmark-relative phase construction. See
-the [IBL 2021 benchmark](benchmarks/ibl2021/README.md).
+the [IBL 2021 benchmark](benchmarks/ibl2021/README.md). Its population-validation contract
+also confirms complete trial coverage for nine subject and nine lab holdouts while making
+their one-subject-per-lab equivalence explicit.
 
 ## Development
 
@@ -153,6 +161,7 @@ uv run python examples/temporal_transforms.py
 uv run python examples/within_session_validation.py
 uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
+uv run python examples/population_validation.py
 uv run python -m benchmarks.recovery_grid.benchmark
 uv run python -m benchmarks.weak_signal_recovery.benchmark
 uv run python -m benchmarks.cell2025.fetch_data

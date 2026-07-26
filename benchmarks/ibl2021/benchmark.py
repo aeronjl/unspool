@@ -19,7 +19,7 @@ from benchmarks.ibl2021.fetch_data import (
     load_manifest,
     verify_file,
 )
-from unspool import Study
+from unspool import Study, leave_one_lab_out_splits, leave_one_subject_out_splits
 
 EXPECTED: dict[str, int | float] = {
     "n_trials": 28_400,
@@ -32,6 +32,10 @@ EXPECTED: dict[str, int | float] = {
     "late_training_easy_accuracy": 0.853_331_571_282_641,
     "accuracy_change": 0.429_431_301_040_646_7,
     "n_improved_subjects": 9,
+    "n_leave_subject_out_folds": 9,
+    "n_leave_lab_out_folds": 9,
+    "n_matching_subject_lab_partitions": 9,
+    "n_lab_holdouts_with_multiple_subjects": 0,
 }
 
 
@@ -168,6 +172,33 @@ def calculate_session_metrics(study: Study) -> list[SessionMetrics]:
     return rows
 
 
+def population_validation_summary(study: Study) -> dict[str, int]:
+    """Summarize subject- and lab-held-out coverage without fitting a model."""
+
+    subject_splits = leave_one_subject_out_splits(study)
+    lab_splits = leave_one_lab_out_splits(study)
+    expected_positions = set(range(len(study)))
+    subject_test_positions = [int(row) for split in subject_splits for row in split.test_indices]
+    lab_test_positions = [int(row) for split in lab_splits for row in split.test_indices]
+    if set(subject_test_positions) != expected_positions or len(subject_test_positions) != len(
+        study
+    ):
+        raise ValueError("leave-subject-out folds must test every trial exactly once")
+    if set(lab_test_positions) != expected_positions or len(lab_test_positions) != len(study):
+        raise ValueError("leave-lab-out folds must test every trial exactly once")
+
+    subject_partitions = {frozenset(split.test_subjects) for split in subject_splits}
+    lab_partitions = {frozenset(split.test_subjects) for split in lab_splits}
+    return {
+        "n_leave_subject_out_folds": len(subject_splits),
+        "n_leave_lab_out_folds": len(lab_splits),
+        "n_matching_subject_lab_partitions": len(subject_partitions & lab_partitions),
+        "n_lab_holdouts_with_multiple_subjects": sum(
+            len(split.test_subjects) > 1 for split in lab_splits
+        ),
+    }
+
+
 def run(data_directory: Path, *, check: bool = True) -> dict[str, Any]:
     """Run the benchmark and optionally enforce its numerical regression contract."""
 
@@ -203,6 +234,7 @@ def run(data_directory: Path, *, check: bool = True) -> dict[str, Any]:
         "late_training_easy_accuracy": float(np.mean(late_accuracy)),
         "accuracy_change": float(np.mean(late_accuracy) - np.mean(early_accuracy)),
         "n_improved_subjects": sum(change > 0 for change in subject_changes.values()),
+        **population_validation_summary(study),
     }
     passed = contract_matches(values)
     if check and not passed:

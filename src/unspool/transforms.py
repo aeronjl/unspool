@@ -19,7 +19,7 @@ from unspool.clocks import (
     _with_column,
 )
 from unspool.study import Study
-from unspool.validation import ValidationSplit
+from unspool.validation import ValidationFold
 
 
 class LandmarkNotFoundError(ValueError):
@@ -217,7 +217,7 @@ class FittedThresholdLandmarkClock:
 class FoldTransformResult:
     """Training and test studies transformed by training-only fitted state."""
 
-    split: ValidationSplit
+    split: ValidationFold
     fitted_transform: FittedStudyTransform
     training: ClockedStudy
     testing: ClockedStudy
@@ -226,7 +226,7 @@ class FoldTransformResult:
 def fit_transform_split(
     transform: StudyTransform,
     study: Study,
-    split: ValidationSplit,
+    split: ValidationFold,
     *,
     require_prospective: bool = True,
 ) -> FoldTransformResult:
@@ -251,7 +251,7 @@ def fit_transform_split(
 def fit_transform_splits(
     transform: StudyTransform,
     study: Study,
-    splits: Iterable[ValidationSplit],
+    splits: Iterable[ValidationFold],
     *,
     require_prospective: bool = True,
 ) -> tuple[FoldTransformResult, ...]:
