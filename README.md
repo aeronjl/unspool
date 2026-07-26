@@ -1,5 +1,7 @@
 # Unspool
 
+[![CI](https://github.com/aeronjl/unspool/actions/workflows/ci.yml/badge.svg)](https://github.com/aeronjl/unspool/actions/workflows/ci.yml)
+
 > “No two moments are identical in a conscious being.”
 > — Henri Bergson, *The Creative Mind*
 
@@ -16,9 +18,8 @@ and sits within several non-equivalent clocks—trials, sessions, calendar time,
 stages, and inferred learning landmarks.
 
 > [!IMPORTANT]
-> Unspool is pre-alpha. The repository currently establishes its scientific scope,
-> intellectual commitments, provenance, and reproducible development workflow. Its
-> modelling API is not yet stable or published.
+> Unspool is pre-alpha. Its longitudinal data and validation contracts are now executable,
+> but the API is not yet stable and the modelling interface is still roadmap work.
 
 ## Why “Unspool”?
 
@@ -49,6 +50,32 @@ Unspool is being designed so that:
 
 See the [scientific scope](docs/scientific-scope.md) and [roadmap](docs/roadmap.md) for
 the proposed first release.
+
+## First executable contract
+
+```python
+from unspool import Study, forward_session_splits
+
+study = Study(
+    {
+        "subject": ["mouse-1", "mouse-1", "mouse-1"],
+        "session": ["day-1", "day-1", "day-2"],
+        "trial": [0, 1, 0],
+        "session_order": [0, 0, 1],
+        "choice": [1, 0, 1],
+    }
+)
+
+split = forward_session_splits(study)[0]
+train = study.take(split.train_indices)
+test = study.take(split.test_indices)
+```
+
+The required schema makes chronology explicit while preserving arbitrary source fields.
+Forward-session folds train only on earlier complete sessions. A separate leave-one-session-
+out splitter is intentionally marked non-prospective because it can train on the held-out
+session's future. See the [data contract](docs/data-contract.md) and
+[validation guide](docs/validation.md).
 
 ## Development
 

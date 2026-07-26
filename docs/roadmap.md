@@ -4,11 +4,12 @@ The roadmap is organized by scientific contracts rather than by model count.
 
 ## 0.1 — The longitudinal contract
 
-- Define and validate the canonical study schema.
+- **Implemented:** define and validate the canonical study schema.
 - Represent multiple learning clocks without silently aligning them.
 - Establish the model and fit-result protocols.
 - Add static GLM and smooth-drift baselines.
-- Add session and rolling-origin validation.
+- **In progress:** add session and rolling-origin validation. Expanding forward-session and
+  leave-one-session-out folds are implemented; within-session origins remain.
 - Produce the first end-to-end synthetic recovery report.
 
 ## 0.2 — Competing explanations

@@ -11,8 +11,9 @@ explicit comparisons among alternative accounts of nonstationarity.
 
 The first useful release should contain:
 
-1. A canonical study schema with subject, session, trial, outcome, timing, and task
-   covariates, while retaining source-specific columns.
+1. A canonical study schema with subject, session, trial, explicit session chronology, and
+   source-specific columns. Outcomes, timing, and task covariates remain unopinionated
+   source fields until model protocols define their roles.
 2. Explicit clocks for session order, cumulative trials, elapsed time, task phase, and
    data-derived landmarks.
 3. A small model protocol covering simulation, fitting, pointwise log probability,
