@@ -53,6 +53,11 @@ states, deterministic multi-restart fitting, filtered state probabilities, and e
 label/occupancy diagnostics. Its assumptions and non-interpretive label convention are
 detailed in the [fixed-transition GLM-HMM guide](glm-hmm.md).
 
+`BinaryQLearning` supplies the first reward-learning competitor. It uses an explicit
+action-contingent reward environment for simulation, session-reset action values, filtered
+updates, and recoverable learning-rate, temperature, bias, and perseveration parameters.
+See the [session-reset Q-learning guide](q-learning.md).
+
 Fitting uses SciPy's deterministic L-BFGS-B optimizer. An optional L2 penalty applies to
 non-intercept coefficients. Standard errors and 95% coverage summaries use a local Hessian
 approximation; when penalization is nonzero they are approximate rather than exact

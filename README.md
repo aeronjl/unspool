@@ -20,8 +20,8 @@ stages, and inferred learning landmarks.
 > [!IMPORTANT]
 > Unspool is pre-alpha. Its longitudinal data, clock, fold-fitted transform, validation,
 > first modelling, and parameter- and model-recovery contracts are executable, but the API
-> is not yet stable and the model catalogue currently contains static, smoothly time-
-> varying, and fixed-transition latent-state Bernoulli GLMs.
+> is not yet stable and the model catalogue currently contains static and smoothly time-
+> varying Bernoulli GLMs, a fixed-transition GLM-HMM, and a compact binary Q-learning agent.
 
 ## Why “Unspool”?
 
@@ -85,14 +85,15 @@ independently inside each training fold with immutable provenance. See the
 [clock and transform guide](docs/clocks-and-transforms.md), and
 [validation guide](docs/validation.md).
 
-Three reference models are executable: a static Bernoulli GLM, a smoothly time-varying
-competitor with fixed temporal knots, and a fixed-transition Bernoulli GLM-HMM. They use
-recursively generated, session-bounded choice history and expose simulation, fitting,
-filtered prediction, pointwise scoring, numerical diagnostics, prospective fold evaluation,
-and design-specific recovery through one common contract. See the
+Four reference models are executable: a static Bernoulli GLM, a smoothly time-varying
+competitor with fixed temporal knots, a fixed-transition Bernoulli GLM-HMM, and a compact
+session-reset binary Q-learning agent. They expose recursive simulation, fitting, filtered
+prediction, pointwise scoring, numerical diagnostics, prospective fold evaluation, and
+design-specific recovery through one common contract. See the
 [modelling guide](docs/modelling.md), [smooth-drift guide](docs/smooth-drift.md),
-[GLM-HMM guide](docs/glm-hmm.md), and the
-[model-recovery guide](docs/model-recovery.md), or run:
+[GLM-HMM guide](docs/glm-hmm.md), [Q-learning guide](docs/q-learning.md), and
+the [model-recovery guide](docs/model-recovery.md),
+or run:
 
 ```bash
 uv run python examples/static_glm.py
@@ -101,6 +102,7 @@ uv run python examples/model_recovery.py
 uv run python examples/temporal_transforms.py
 uv run python examples/within_session_validation.py
 uv run python examples/glm_hmm.py
+uv run python examples/q_learning.py
 ```
 
 ## Development
@@ -117,6 +119,7 @@ uv run python examples/model_recovery.py
 uv run python examples/temporal_transforms.py
 uv run python examples/within_session_validation.py
 uv run python examples/glm_hmm.py
+uv run python examples/q_learning.py
 uv run ruff check .
 uv run ruff format --check .
 uv build

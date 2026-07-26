@@ -97,6 +97,12 @@ parameters are canonically label-ordered, but recovery conclusions must still in
 restart convergence, state occupancy, emission separation, and label-order ambiguity. See
 the [GLM-HMM guide](glm-hmm.md).
 
+`BinaryQLearning` likewise satisfies both recovery interfaces. Generative designs must
+include explicit action-contingent reward probabilities, while fitting conditions only on
+the resulting observed choices and rewards. Recovery should vary reward volatility because
+learning rate and inverse temperature are often weakly distinguished by stationary tasks.
+See the [Q-learning guide](q-learning.md).
+
 Smoothness, knots, preprocessing, and landmarks must be chosen a priori or inside a nested
 training procedure. Choosing them on the same test folds used in the recovery matrix makes
 the matrix optimistic. With `horizon > 1` and `step < horizon`, test sessions may also occur
