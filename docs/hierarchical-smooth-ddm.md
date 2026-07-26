@@ -14,15 +14,15 @@ The population path \(\mu_p\) has the same time-scaled first-difference penalty 
 `SmoothWienerDriftDiffusion`. Subject deviations use
 
 \[
-\frac{1}{2\sigma^2}\sum_k\delta_{spk}^2
+\frac{1}{2\sigma_p^2}\sum_k\delta_{spk}^2
 +\frac{\lambda_s}{2}\sum_{k=2}^{K}
 \frac{(\delta_{spk}-\delta_{sp,k-1})^2}{u_k-u_{k-1}}.
 \]
 
-`subject_scale` is the fixed natural-scale deviation size \(\sigma\), and
-`subject_smoothness` is \(\lambda_s\). This first implementation performs a joint
-penalized maximum-a-posteriori fit. It is hierarchical partial pooling, but it is not a
-full Bayesian posterior sampler.
+Each selected parameter may have its own natural-scale deviation size \(\sigma_p\), while
+`subject_smoothness` is the shared \(\lambda_s\). The model performs a joint penalized
+maximum-a-posteriori fit. It is hierarchical partial pooling, but it is not a full Bayesian
+posterior sampler.
 
 ## Declaring the hierarchy
 
@@ -39,10 +39,55 @@ model = HierarchicalSmoothWienerDriftDiffusion(
     varying_parameters=("drift.stimulus", "boundary"),
     subject_parameters=("drift.stimulus", "boundary"),
     smoothness=8.0,
-    subject_scale=0.2,
+    subject_parameter_scales={"drift.stimulus": 0.2, "boundary": 0.08},
     subject_smoothness=8.0,
 )
 ```
+
+`subject_scale` remains a backward-compatible common fallback when
+`subject_parameter_scales` is omitted. A mapping must name every selected subject
+parameter exactly; its values are ordered internally by `subject_parameters`, never by
+mapping insertion order.
+
+## Estimating heterogeneity from training data
+
+Fixed scales remain the default. To estimate separate components, declare bounds and a
+neutral starting value for every parameter:
+
+```python
+model = HierarchicalSmoothWienerDriftDiffusion(
+    covariates=("stimulus",),
+    time="session_order",
+    knots=(0.0, 2.0, 4.0),
+    varying_parameters=("drift.stimulus", "boundary"),
+    subject_parameters=("drift.stimulus", "boundary"),
+    subject_parameter_scales={"drift.stimulus": 0.15, "boundary": 0.15},
+    estimate_subject_scales=True,
+    subject_scale_bounds=(0.03, 0.5),
+)
+
+fit = model.fit(training_study)
+print(fit.subject_scale_map)
+print(fit.subject_scale_standard_error_map)
+print(fit.subject_scale_at_boundary_map)
+```
+
+The estimator alternates a joint path-MAP step with bounded variance-component updates.
+Each update minimizes the expected normalized Gaussian-prior loss under a local
+conditional Laplace approximation. This avoids treating scales as raw joint-MAP
+coordinates, which would reward collapsing scales and deviations together. It is an
+approximate Laplace-EM procedure, not exact marginal likelihood.
+
+Only rows passed to `fit()` participate. Consequently, prospective split evaluation
+estimates scales from each training study before scoring its held-out sessions or animals.
+`scale_estimation_iterations`, `scale_estimation_converged`, and named bound flags remain
+on the fit result. A bound hit means the design did not resolve heterogeneity beyond the
+declared range; it is not evidence that the true variance equals the bound.
+
+Scale standard errors use final expected-prior curvature in log-scale coordinates, and
+`subject_scale_confidence_intervals_95` applies a delta-method transformation. The pinned
+recovery benchmark shows that these local intervals are too narrow in its finite design,
+so they are optimization diagnostics rather than calibrated posterior intervals.
 
 Population simulation parameters retain the smooth Wiener's stable natural-scale
 coordinates. `simulate_with_effects()` either draws deviation paths from the configured
@@ -76,7 +121,7 @@ but one animal's deviation block does not couple directly to another's. Unspool 
 the population, subject, and population–subject curvature blocks numerically and inverts
 them with the Schur complement. This retains population–subject uncertainty coupling while
 avoiding evaluations of known zero cross-animal blocks. It remains a local Gaussian
-approximation conditional on the fixed penalties.
+approximation conditional on the fitted penalties.
 
 ## Seen and unseen animals
 
@@ -99,8 +144,8 @@ see [Wiecki, Sofer, and Frank (2013)](https://pmc.ncbi.nlm.nih.gov/articles/PMC3
 
 Current limitations are explicit:
 
-- one fixed shared `subject_scale` is used for all selected parameters;
-- variance components are not estimated;
+- scale estimation is empirical-Bayes Laplace-EM rather than full posterior inference;
+- all parameter-specific components share one path-smoothness value;
 - subject deviations for stationary non-decision time are not supported;
 - contaminant mixtures and within-decision time-varying dynamics are not supported;
 - unseen-animal predictions are plug-ins rather than posterior predictive distributions;
@@ -115,9 +160,18 @@ wins both subject-path RMSE and fifth-session joint log loss: complete pooling f
 stationary identical animals, shared smooth for shared change, and hierarchical smooth for
 individual change. All 480 fits converge.
 
+The [parameter-specific scale benchmark](../benchmarks/ddm_subject_scale_recovery/README.md)
+starts drift and boundary components at the same value, estimates them from three training
+sessions, and scores a held-out fourth session against an oracle given the true scales.
+Doubling the cohort from 6 to 12 animals reduces joint scale RMSE from `0.09178` to
+`0.05138`; all 16 variance procedures and final fits converge. Mean excess future-session
+log loss is `0.00232` and `0.00080`, respectively. Local interval coverage is only
+50–62.5%, preserving the approximation's calibration limit rather than hiding it.
+
 Run the example and benchmark with:
 
 ```bash
 uv run python examples/hierarchical_smooth_drift_diffusion.py
 uv run python -m benchmarks.hierarchical_smooth_ddm.benchmark
+uv run python -m benchmarks.ddm_subject_scale_recovery.benchmark
 ```

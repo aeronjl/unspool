@@ -172,6 +172,14 @@ RMSE and held-out final-session log loss; the hierarchical smooth model wins onl
 animals genuinely change differently. See the
 [trajectory-recovery benchmark](benchmarks/trajectory_recovery/README.md).
 
+The longitudinal Wiener hierarchy now supports named drift and boundary heterogeneity and
+can estimate each scale inside the training fold with bounded Laplace-EM updates. In a
+prospective 6-versus-12-animal benchmark, joint scale RMSE falls from `0.09178` to
+`0.05138`; all 16 fits converge and mean future-session log loss stays within `0.00233` of
+an oracle. Local interval coverage is only 50–62.5%, so Unspool reports those intervals as
+diagnostics rather than calibrated uncertainty. See the
+[parameter-specific DDM scale benchmark](benchmarks/ddm_subject_scale_recovery/README.md).
+
 A latent-state recovery benchmark separates arbitrary HMM label names from recovered state
 identity. Across 20 clear-state and 20 overlapping-state fits, aligned metrics are invariant
 to complete label reversal. Clear states reach 91.85% decoded accuracy with no ambiguous
