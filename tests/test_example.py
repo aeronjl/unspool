@@ -172,3 +172,18 @@ def test_drift_diffusion_example_exposes_joint_likelihood_and_audit(
     assert "scored columns: ('choice', 'response_time')" in output
     assert "fit audit: pass []" in output
     assert "nondecision_time" in output
+
+
+def test_contaminant_ddm_example_exposes_mixture_truth_and_responsibility(
+    capsys: CaptureFixture[str],
+) -> None:
+    example = Path(__file__).parents[1] / "examples" / "contaminant_ddm.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Contaminant-aware joint choice/response-time model" in output
+    assert "fit audit: pass []" in output
+    assert "generated contaminants:" in output
+    assert "posterior expected count:" in output
+    assert "contaminant_probability" in output

@@ -16,6 +16,8 @@ from unspool.models.base import (
 from unspool.models.ddm import (
     DriftDiffusionFitResult,
     DriftDiffusionParameters,
+    DriftDiffusionSimulation,
+    UniformResponseTimeContaminant,
     WienerDriftDiffusion,
 )
 from unspool.models.glm import (
@@ -56,6 +58,7 @@ __all__ = [
     "CoefficientTrajectory",
     "DriftDiffusionFitResult",
     "DriftDiffusionParameters",
+    "DriftDiffusionSimulation",
     "FilteredStateProbabilities",
     "FitDiagnostics",
     "FitResult",
@@ -76,6 +79,7 @@ __all__ = [
     "QLearningFitResult",
     "QLearningParameters",
     "SmoothBernoulliHistoryGLM",
+    "UniformResponseTimeContaminant",
     "UnsupportedPredictionMode",
     "ValueTrajectory",
     "WienerDriftDiffusion",
