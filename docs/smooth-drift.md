@@ -53,7 +53,8 @@ leak, so nested validation or pre-registration is required for comparative claim
 Coefficient paths are subject-specific by default. Passing a multi-subject `Study` raises
 an error rather than assuming that equal clock values align individual learning histories.
 `shared_trajectory=True` is an explicit opt-in for a scientifically justified common path;
-it is not a substitute for the future hierarchical model.
+it is not a substitute for the population-plus-subject paths in the
+[hierarchical smooth model](hierarchical-smooth-glm.md).
 
 ## Simulation and inspection
 

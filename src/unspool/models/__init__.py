@@ -26,6 +26,11 @@ from unspool.models.hierarchical_glm import (
     HierarchicalGLMFitResult,
     HierarchicalGLMSimulation,
 )
+from unspool.models.hierarchical_smooth_glm import (
+    HierarchicalSmoothBernoulliHistoryGLM,
+    HierarchicalSmoothGLMFitResult,
+    HierarchicalSmoothGLMSimulation,
+)
 from unspool.models.q_learning import (
     BinaryQLearning,
     QLearningFitResult,
@@ -48,6 +53,9 @@ __all__ = [
     "HierarchicalBernoulliHistoryGLM",
     "HierarchicalGLMFitResult",
     "HierarchicalGLMSimulation",
+    "HierarchicalSmoothBernoulliHistoryGLM",
+    "HierarchicalSmoothGLMFitResult",
+    "HierarchicalSmoothGLMSimulation",
     "ModelDataError",
     "Prediction",
     "PredictionMode",

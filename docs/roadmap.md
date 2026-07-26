@@ -48,6 +48,9 @@ The roadmap is organized by scientific contracts rather than by model count.
   likelihood approximation, local-Hessian uncertainty, boundary diagnostics, and a
   sample-size recovery benchmark. Multiple variance components and posterior predictive
   uncertainty remain later work.
+- **Implemented:** add fixed-knot population trajectories with shrunken smooth subject-
+  deviation paths, explicit unseen-subject prediction, and a factorial benchmark that
+  distinguishes stationarity, stable heterogeneity, shared drift, and individual drift.
 - Test latent-state alignment rather than assuming it.
 - Quantify alignment and landmark uncertainty.
 
