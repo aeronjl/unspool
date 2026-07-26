@@ -15,6 +15,9 @@ build/
 dist/
 *.egg-info/
 
+# Public benchmark inputs are fetched and checksum-verified on demand.
+benchmarks/*/data/
+
 .env
 .env.*
 !.env.example

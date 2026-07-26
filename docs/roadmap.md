@@ -26,8 +26,9 @@ The roadmap is organized by scientific contracts rather than by model count.
   explanation diagnostics.
 - **In progress:** add parameter- and model-recovery grids. The design-specific engines and
   static-versus-smooth example are implemented; broad benchmark grids remain.
+- **Implemented:** reproduce the Cell 2025 Figure 1 early-strategy/late-strategy result
+  from a checksum-pinned public input while preserving a source session-identity collision.
 - Make label ambiguity and optimization diagnostics first-class outputs.
-- Reproduce a bounded Cell 2025 behavioural result.
 - Add an IBL public-learning benchmark.
 
 ## 0.3 — Population structure
