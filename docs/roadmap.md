@@ -13,8 +13,9 @@ The roadmap is organized by scientific contracts rather than by model count.
   fit-result protocols.
 - **Implemented:** add static and smoothly time-varying Bernoulli history GLM baselines,
   with an explicit clock, fixed knots, and inspectable coefficient trajectories.
-- **In progress:** add session and rolling-origin validation. Expanding forward-session and
-  leave-one-session-out folds are implemented; within-session origins remain.
+- **Implemented:** add expanding forward-session, within-session rolling-origin, and
+  deliberately non-prospective leave-one-session-out validation. Within-session evaluation
+  preserves observed pre-origin history while scoring only future trials.
 - **Implemented:** produce an end-to-end synthetic parameter-recovery report for the
   static GLM. Cross-model recovery remains part of 0.2.
 

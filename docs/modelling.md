@@ -69,10 +69,16 @@ for evaluation in evaluations:
 folds raises an error unless `require_prospective=False` explicitly acknowledges the
 interpolation analysis. Each fold refits the model from scratch and retains its full fit.
 
+For within-session rolling origins, evaluation replays the observed current-session prefix
+to construct filtered history, then returns predictions and scores only for future target
+trials. A multi-trial horizon is evaluated sequentially as outcomes become observed; it is
+not an open-loop simulation from the origin. See the [validation guide](validation.md).
+
 This guarantee covers model fitting and scoring. Covariates supplied to the model must
 also be causally available at prediction time. Learned normalization, feature selection,
-and learning landmarks still require a fold-fitted transformation contract, which remains
-roadmap work.
+and learning landmarks still require training-only estimation. The first fold-fitted
+landmark contract is described in the
+[clock and transform guide](clocks-and-transforms.md).
 
 ## Design-specific parameter recovery
 

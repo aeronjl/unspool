@@ -1,7 +1,12 @@
 import numpy as np
 import pytest
 
-from unspool import Study, forward_session_splits, leave_one_session_out_splits
+from unspool import (
+    Study,
+    forward_session_splits,
+    leave_one_session_out_splits,
+    within_session_rolling_splits,
+)
 from unspool.validation import ValidationSplit
 
 
@@ -24,6 +29,29 @@ def one_session_study() -> Study:
             "session": ["only", "only"],
             "trial": [0, 2],
             "session_order": [4, 4],
+        }
+    )
+
+
+def shuffled_within_session_study() -> Study:
+    return Study(
+        {
+            "subject": ["a", "b", "a", "a", "b", "a", "a", "a", "b", "b", "b"],
+            "session": [
+                "a-2",
+                "b-1",
+                "a-1",
+                "a-2",
+                "b-1",
+                "a-1",
+                "a-2",
+                "a-2",
+                "b-2",
+                "b-2",
+                "b-2",
+            ],
+            "trial": [2, 1, 0, 0, 0, 1, 3, 1, 0, 2, 1],
+            "session_order": [1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1],
         }
     )
 
@@ -89,6 +117,87 @@ def test_leave_one_session_out_is_whole_session_but_not_prospective() -> None:
     assert middle.scheme == "leave-one-session-out"
 
 
+def test_within_session_origins_expand_history_without_sorting_source_rows() -> None:
+    study = shuffled_within_session_study()
+
+    splits = within_session_rolling_splits(
+        study,
+        min_train_sessions=1,
+        min_train_trials=2,
+    )
+
+    assert len(splits) == 3
+    first, second, subject_b = splits
+    assert first.subject == "a"
+    assert first.scheme == "within-session-rolling-origin"
+    assert first.prospective is True
+    assert first.train_sessions == ("a-1", "a-2")
+    assert first.test_sessions == ("a-2",)
+    assert first.train_indices.tolist() == [2, 3, 5, 7]
+    assert first.prediction_context_indices.tolist() == [3, 7]
+    assert first.test_indices.tolist() == [0]
+    assert first.origin_session == "a-2"
+    assert first.origin_session_order == 1
+    assert first.origin_trial == 1
+    assert first.test_trials == (2,)
+
+    assert second.train_indices.tolist() == [0, 2, 3, 5, 7]
+    assert second.prediction_context_indices.tolist() == [0, 3, 7]
+    assert second.test_indices.tolist() == [6]
+    assert second.origin_trial == 2
+    assert second.test_trials == (3,)
+
+    assert subject_b.subject == "b"
+    assert subject_b.train_indices.tolist() == [1, 4, 8, 10]
+    assert subject_b.prediction_context_indices.tolist() == [8, 10]
+    assert subject_b.test_indices.tolist() == [9]
+
+
+def test_within_session_horizon_and_step_count_observed_trials() -> None:
+    splits = within_session_rolling_splits(
+        shuffled_within_session_study(),
+        min_train_sessions=1,
+        min_train_trials=1,
+        horizon=2,
+        step=2,
+    )
+
+    assert len(splits) == 2
+    assert splits[0].subject == "a"
+    assert splits[0].origin_trial == 0
+    assert splits[0].test_trials == (1, 2)
+    assert splits[1].subject == "b"
+    assert splits[1].test_trials == (1, 2)
+
+
+def test_within_session_can_begin_without_a_prior_complete_session() -> None:
+    splits = within_session_rolling_splits(
+        one_session_study(),
+        min_train_sessions=0,
+        min_train_trials=1,
+    )
+
+    assert len(splits) == 1
+    assert splits[0].train_sessions == ("only",)
+    assert splits[0].origin_trial == 0
+    assert splits[0].test_trials == (2,)
+
+
+@pytest.mark.parametrize(
+    ("argument", "value"),
+    [
+        ("min_train_sessions", -1),
+        ("min_train_sessions", True),
+        ("min_train_trials", 0),
+        ("horizon", -1),
+        ("step", True),
+    ],
+)
+def test_within_session_arguments_validate_counts(argument: str, value: object) -> None:
+    with pytest.raises(ValueError, match=argument):
+        within_session_rolling_splits(shuffled_within_session_study(), **{argument: value})
+
+
 def test_subjects_without_enough_sessions_produce_no_folds() -> None:
     study = one_session_study()
 
@@ -104,6 +213,14 @@ def test_validation_indices_are_read_only_and_disjoint() -> None:
         split.train_indices[0] = 99
     with pytest.raises(ValueError, match="cannot set WRITEABLE flag"):
         split.train_indices.setflags(write=True)
+
+    within = within_session_rolling_splits(
+        shuffled_within_session_study(),
+        min_train_sessions=1,
+        min_train_trials=2,
+    )[0]
+    with pytest.raises(ValueError, match="read-only"):
+        within.prediction_context_indices[0] = 99
 
 
 def test_validation_split_rejects_overlap() -> None:
@@ -145,4 +262,53 @@ def test_validation_split_rejects_unknown_scheme() -> None:
             train_session_orders=(0,),
             test_session_orders=(1,),
             scheme="random",  # type: ignore[arg-type]
+        )
+
+
+def test_only_within_session_splits_may_carry_prediction_context() -> None:
+    with pytest.raises(ValueError, match="only valid for within-session"):
+        ValidationSplit(
+            train_indices=np.array([0]),
+            test_indices=np.array([1]),
+            subject="a",
+            train_sessions=("s1",),
+            test_sessions=("s2",),
+            train_session_orders=(0,),
+            test_session_orders=(1,),
+            scheme="forward-session",
+            prediction_context_indices=np.array([0]),
+        )
+
+
+def test_within_session_split_requires_complete_origin_metadata() -> None:
+    with pytest.raises(ValueError, match="origin_session"):
+        ValidationSplit(
+            train_indices=np.array([0]),
+            test_indices=np.array([1]),
+            subject="a",
+            train_sessions=("s1",),
+            test_sessions=("s1",),
+            train_session_orders=(0,),
+            test_session_orders=(0,),
+            scheme="within-session-rolling-origin",
+            prediction_context_indices=np.array([0]),
+        )
+
+
+def test_within_session_split_rejects_complete_sessions_after_the_origin() -> None:
+    with pytest.raises(ValueError, match="must precede"):
+        ValidationSplit(
+            train_indices=np.array([0, 1]),
+            test_indices=np.array([2]),
+            subject="a",
+            train_sessions=("s1", "s3", "s2"),
+            test_sessions=("s2",),
+            train_session_orders=(0, 2, 1),
+            test_session_orders=(1,),
+            scheme="within-session-rolling-origin",
+            prediction_context_indices=np.array([1]),
+            origin_session="s2",
+            origin_session_order=1,
+            origin_trial=4,
+            test_trials=(5,),
         )

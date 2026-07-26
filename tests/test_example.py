@@ -50,3 +50,17 @@ def test_temporal_transforms_example_runs_end_to_end(capsys: CaptureFixture[str]
     assert "learned values: {'mouse-1': 4.0}" in output
     assert "fit trials:     8" in output
     assert "test-relative:  [4.0, 5.0, 6.0, 7.0]" in output
+
+
+def test_within_session_validation_example_runs_end_to_end(
+    capsys: CaptureFixture[str],
+) -> None:
+    example = Path(__file__).parents[1] / "examples" / "within_session_validation.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Prospective within-session rolling origins" in output
+    assert "origin=session-2:19, fit=100, context=20" in output
+    assert "origin=session-2:29, fit=110, context=30" in output
+    assert "test=(20, 21, 22, 23, 24)" in output

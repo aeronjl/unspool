@@ -27,9 +27,9 @@ The first useful release should contain:
 8. Reproducible benchmarks against the Cell 2025 study and public IBL learning data.
 
 The current executable slice covers the canonical study contract; typed design and
-landmark-relative clocks; fold-fitted threshold landmarks; complete-session validation;
-common model outputs; static and smoothly time-varying Bernoulli history GLMs; and
-design-specific parameter and model recovery. See the
+landmark-relative clocks; fold-fitted threshold landmarks; complete-session and
+within-session rolling-origin validation; common model outputs; static and smoothly
+time-varying Bernoulli history GLMs; and design-specific parameter and model recovery. See the
 [clock and transform guide](clocks-and-transforms.md), [modelling guide](modelling.md),
 [smooth-drift guide](smooth-drift.md), and [model-recovery guide](model-recovery.md) for
 their assumptions and current boundaries.
