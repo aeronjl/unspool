@@ -21,7 +21,7 @@ stages, and inferred learning landmarks.
 > Unspool is pre-alpha. Its longitudinal data, clock, fold-fitted transform, validation,
 > first modelling, and parameter- and model-recovery contracts are executable, but the API
 > is not yet stable and the model catalogue currently contains static and smoothly time-
-> varying Bernoulli GLMs, a fixed-scale hierarchical Bernoulli GLM, a fixed-transition
+> varying Bernoulli GLMs, a hierarchical Bernoulli GLM, a fixed-transition
 > GLM-HMM, and a compact binary Q-learning agent.
 
 ## Why “Unspool”?
@@ -92,7 +92,7 @@ Lab holdout rejects any subject assigned to more than one lab rather than permit
 cross-fold leakage.
 
 Five reference models are executable: a static Bernoulli GLM, a smoothly time-varying
-competitor with fixed temporal knots, a fixed-scale partial-pooling Bernoulli GLM, a fixed-
+competitor with fixed temporal knots, a partial-pooling Bernoulli GLM, a fixed-
 transition Bernoulli GLM-HMM, and a compact session-reset binary Q-learning agent. They
 expose recursive simulation, fitting, filtered
 prediction, pointwise scoring, numerical diagnostics, prospective fold evaluation, and
@@ -138,6 +138,13 @@ and future-session log loss in all three. The scale is supplied from the generat
 validates shrinkage mechanics rather than variance-component estimation. See the
 [hierarchical GLM benchmark](benchmarks/hierarchical_glm/README.md).
 
+A follow-up estimates the shared subject scale from a neutral starting value using bounded
+Laplace marginal likelihood. Across 120 fits, all optimizations converge; moving from 8 to
+24 subjects reduces scale RMSE at every tested heterogeneity level, while approximate 95%
+interval coverage ranges from 95% to 100%. Weak heterogeneity still reaches the lower bound
+in 40% of 8-subject runs, preserving an important resolution limit. See the
+[subject-scale recovery benchmark](benchmarks/subject_scale_recovery/README.md).
+
 ## Published-data benchmarks
 
 The first external benchmark reproduces the central longitudinal-behaviour result from
@@ -177,6 +184,7 @@ uv run python examples/hierarchical_glm.py
 uv run python -m benchmarks.recovery_grid.benchmark
 uv run python -m benchmarks.weak_signal_recovery.benchmark
 uv run python -m benchmarks.hierarchical_glm.benchmark
+uv run python -m benchmarks.subject_scale_recovery.benchmark
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv

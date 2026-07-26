@@ -43,8 +43,11 @@ The roadmap is organized by scientific contracts rather than by model count.
   provenance, cross-lab subject-leakage rejection, and a pinned IBL coverage contract.
 - **Implemented:** introduce a first constrained partial-pooling Bernoulli GLM with a
   fixed Gaussian subject scale, explicit seen/unseen-subject prediction, retained subject
-  effects, and a matched recovery benchmark. Estimating variance components and
-  propagating their uncertainty remain later work.
+  effects, and a matched recovery benchmark.
+- **Implemented:** estimate one bounded shared subject scale with a Laplace marginal-
+  likelihood approximation, local-Hessian uncertainty, boundary diagnostics, and a
+  sample-size recovery benchmark. Multiple variance components and posterior predictive
+  uncertainty remain later work.
 - Test latent-state alignment rather than assuming it.
 - Quantify alignment and landmark uncertainty.
 

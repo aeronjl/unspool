@@ -119,7 +119,7 @@ must define how new-subject values are obtained using training-fold information 
 
 ## Current boundary
 
-The fixed-scale hierarchical Bernoulli GLM can now estimate population and individual
+The hierarchical Bernoulli GLM can estimate population and individual
 effects through bounded partial pooling, using a population-mean plug-in for held-out
 subjects. Other model families do not yet have hierarchical extensions, and the library
 does not align subject-specific latent states. Those remain model-aware contracts rather

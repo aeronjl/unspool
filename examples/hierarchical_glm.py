@@ -39,19 +39,29 @@ def build_design() -> Study:
 
 
 def main() -> None:
-    model = HierarchicalBernoulliHistoryGLM(
+    generator = HierarchicalBernoulliHistoryGLM(
         covariates=("stimulus",),
         choice_lags=1,
         l2=0.05,
         subject_scale=0.45,
     )
     truth = {"intercept": -0.2, "stimulus": 1.0, "choice_lag_1": 0.35}
-    simulation = model.simulate_with_effects(build_design(), truth, seed=71)
+    simulation = generator.simulate_with_effects(build_design(), truth, seed=71)
+    model = HierarchicalBernoulliHistoryGLM(
+        covariates=("stimulus",),
+        choice_lags=1,
+        l2=0.05,
+        subject_scale=0.25,
+        estimate_subject_scale=True,
+        subject_scale_bounds=(0.05, 1.5),
+    )
     fit = model.fit(simulation.study)
 
-    print("Fixed-scale hierarchical Bernoulli GLM")
+    print("Hierarchical Bernoulli GLM with estimated scale")
     print(f"converged: {fit.diagnostics.converged}")
-    print(f"subject scale (fixed): {fit.subject_scale}")
+    print(f"subject scale (estimated): {fit.subject_scale:.3f}")
+    print(f"scale interval: {fit.subject_scale_confidence_interval_95}")
+    print(f"scale at boundary: {fit.subject_scale_at_boundary}")
     print(f"unseen-subject policy: {fit.unseen_subject_policy}")
     print("\nsubject       true stimulus  fitted stimulus")
     stimulus_index = fit.parameter_names.index("stimulus")

@@ -87,6 +87,27 @@ def test_hierarchical_model_has_a_bounded_public_contract() -> None:
         HierarchicalBernoulliHistoryGLM(subject_scale=0.0)
 
 
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        {"estimate_subject_scale": 1},
+        {"subject_scale_bounds": (0.0, 1.0)},
+        {"subject_scale_bounds": (1.0, 1.0)},
+        {"subject_scale_bounds": (1.0, 0.5)},
+        {
+            "subject_scale": 2.0,
+            "estimate_subject_scale": True,
+            "subject_scale_bounds": (0.1, 1.0),
+        },
+    ],
+)
+def test_subject_scale_estimation_configuration_is_validated(
+    arguments: dict[str, object],
+) -> None:
+    with pytest.raises(ValueError):
+        HierarchicalBernoulliHistoryGLM(**arguments)
+
+
 def test_simulation_retains_random_effect_truth_outside_observed_study() -> None:
     model = HierarchicalBernoulliHistoryGLM(
         covariates=("stimulus",), choice_lags=1, subject_scale=0.35
@@ -126,6 +147,94 @@ def test_joint_fit_exposes_population_and_shrunken_subject_estimates() -> None:
     assert isinstance(fit.coefficients_for("mouse-0"), MappingProxyType)
     assert fit.subject_was_fitted("mouse-0")
     assert not fit.subject_was_fitted("new-mouse")
+    assert not fit.subject_scale_estimated
+    assert fit.subject_scale_standard_error is None
+    assert fit.subject_scale_confidence_interval_95 is None
+
+
+def test_laplace_fit_estimates_subject_scale_and_uncertainty() -> None:
+    truth_scale = 0.5
+    generator = HierarchicalBernoulliHistoryGLM(
+        covariates=("stimulus",), choice_lags=1, l2=0.05, subject_scale=truth_scale
+    )
+    study = generator.simulate(
+        make_population_design(n_subjects=12, n_sessions=4, n_trials=35),
+        {"intercept": -0.2, "stimulus": 1.0, "choice_lag_1": 0.35},
+        seed=11,
+    )
+    model = HierarchicalBernoulliHistoryGLM(
+        covariates=("stimulus",),
+        choice_lags=1,
+        l2=0.05,
+        subject_scale=0.25,
+        estimate_subject_scale=True,
+        subject_scale_bounds=(0.05, 1.5),
+    )
+
+    fit = model.fit(study)
+
+    assert fit.diagnostics.converged
+    assert fit.diagnostics.optimizer == "L-BFGS-B with Laplace marginal likelihood"
+    assert fit.subject_scale_estimated
+    assert not fit.subject_scale_at_boundary
+    assert fit.subject_scale == pytest.approx(truth_scale, abs=0.15)
+    assert fit.subject_scale_standard_error is not None
+    assert fit.subject_scale_standard_error > 0
+    assert fit.subject_scale_confidence_interval_95 is not None
+    lower, upper = fit.subject_scale_confidence_interval_95
+    assert lower < truth_scale < upper
+
+
+def test_estimated_scale_is_stable_to_distinct_initial_values() -> None:
+    generator = HierarchicalBernoulliHistoryGLM(
+        covariates=("stimulus",), choice_lags=0, subject_scale=0.6
+    )
+    study = generator.simulate(
+        make_population_design(n_subjects=10, n_sessions=3, n_trials=35),
+        {"intercept": -0.2, "stimulus": 1.0},
+        seed=82,
+    )
+
+    estimates = [
+        HierarchicalBernoulliHistoryGLM(
+            covariates=("stimulus",),
+            choice_lags=0,
+            subject_scale=initial,
+            estimate_subject_scale=True,
+            subject_scale_bounds=(0.05, 1.5),
+        )
+        .fit(study)
+        .subject_scale
+        for initial in (0.15, 1.2)
+    ]
+
+    assert estimates[0] == pytest.approx(estimates[1], abs=1e-3)
+
+
+def test_small_heterogeneity_is_visible_as_a_scale_boundary() -> None:
+    generator = HierarchicalBernoulliHistoryGLM(
+        covariates=("stimulus",), choice_lags=1, l2=0.05, subject_scale=0.1
+    )
+    study = generator.simulate(
+        make_population_design(n_subjects=12, n_sessions=4, n_trials=35),
+        {"intercept": -0.2, "stimulus": 1.0, "choice_lag_1": 0.35},
+        seed=11,
+    )
+    model = HierarchicalBernoulliHistoryGLM(
+        covariates=("stimulus",),
+        choice_lags=1,
+        l2=0.05,
+        subject_scale=0.4,
+        estimate_subject_scale=True,
+        subject_scale_bounds=(0.05, 1.5),
+    )
+
+    fit = model.fit(study)
+
+    assert fit.diagnostics.converged
+    assert fit.subject_scale_at_boundary
+    assert fit.diagnostics.boundary_estimate
+    assert fit.subject_scale == pytest.approx(0.05)
 
 
 def test_prediction_declares_seen_and_unseen_subject_behavior() -> None:

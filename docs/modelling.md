@@ -57,7 +57,7 @@ subject-alignment safeguards, and prospective use are detailed in
 jointly estimates population coefficients and Gaussian-penalized subject deviations with
 a subject scale fixed before fitting. Seen subjects use their fitted deviations; unseen
 subjects use an explicitly recorded population-mean plug-in. See the
-[fixed-scale partial-pooling guide](hierarchical-glm.md).
+[partial-pooling guide](hierarchical-glm.md).
 
 `BernoulliGLMHMM` supplies the first discrete switching competitor: state-specific
 Bernoulli GLM emissions, a stationary learned transition matrix, session-reset initial
