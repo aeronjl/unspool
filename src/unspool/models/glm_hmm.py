@@ -21,6 +21,7 @@ from unspool.models.base import (
     _protected_array,
 )
 from unspool.models.glm import BernoulliHistoryGLM, _ordered_session_indices
+from unspool.state_alignment import LatentStateAlignment, align_latent_states
 from unspool.study import Study
 
 
@@ -511,6 +512,26 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
             outcomes,
             _ordered_session_indices(study),
             self.parameter_components(fit),
+        )
+
+    def state_recovery(
+        self,
+        simulation: GLMHMMSimulation,
+        fit: FitResult,
+        *,
+        ambiguity_tolerance: float = 0.05,
+    ) -> LatentStateAlignment:
+        """Align outcome-filtered state probabilities to separately retained truth."""
+
+        if not isinstance(simulation, GLMHMMSimulation):
+            raise TypeError("simulation must be a GLMHMMSimulation")
+        if simulation.n_states != self.n_states:
+            raise ValueError("simulation and model must contain the same number of states")
+        filtered = self.state_probabilities(simulation.study, fit).filtered
+        return align_latent_states(
+            simulation.states,
+            filtered,
+            ambiguity_tolerance=ambiguity_tolerance,
         )
 
     def _initial_points(

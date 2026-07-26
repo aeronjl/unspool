@@ -98,6 +98,36 @@ This convention does not make “state 0” a disengaged, exploratory, or biased
 across restarts should block such interpretations. Any cognitive claim still has to survive
 observable-strategy, history, reinforcement-learning, static, and smooth-drift competitors.
 
+Canonical ordering is not evidence that fitted labels match simulated labels. For
+truth-aware recovery, `state_recovery()` ignores their names and finds the permutation that
+maximizes posterior mass on the known simulated states, balanced equally across states:
+
+```python
+simulation = model.simulate_with_states(design, parameters, seed=11)
+fit = model.fit(simulation.study)
+recovery = model.state_recovery(simulation, fit)
+
+recovery.reference_to_inferred
+recovery.decoded_accuracy
+recovery.posterior_accuracy
+recovery.score_gap
+recovery.ambiguous
+```
+
+The result retains the row-normalized soft confusion matrix, winning and runner-up
+assignment scores, aligned probabilities and labels, reference-state counts, and both hard
+and posterior accuracy. A missing reference state or a winning margin no larger than
+`ambiguity_tolerance` is explicitly ambiguous. The default tolerance is `0.05` balanced
+posterior-accuracy units; it is a declared recovery criterion, not a universal constant.
+
+Alignment consumes latent simulation truth and therefore cannot be run as an ordinary fit
+diagnostic on empirical data. It never changes model parameters or predictions. The
+fit-internal `label_ambiguous` flag asks whether the chosen ordering coordinate is stable;
+the recovery-level `ambiguous` flag asks whether fitted states can be uniquely matched to
+known generative states. Either can fail without the other. Filtering excludes later
+outcomes from each state update, but whether fitted parameters are prospective depends on
+how the supplied `fit` was trained.
+
 ## Filtered prediction and state probabilities
 
 `predict()` and `pointwise_log_prob()` are strictly one-step-ahead and filtered. Before
@@ -127,7 +157,9 @@ Recovery remains design-specific. Transition probabilities near zero or one, rar
 occupied states, weakly separated emissions, short sessions, or insufficient state changes
 can all make a nominally fitted model unrecoverable. The included tests use a deliberately
 clear switching regime and also require it to outperform static and smooth session-time
-GLMs on a future session.
+GLMs on a future session. The repeated
+[state-alignment benchmark](../benchmarks/state_alignment/README.md) additionally contrasts
+clear and overlapping emissions and verifies exact invariance to inferred-label reversal.
 
 ## Current boundary
 

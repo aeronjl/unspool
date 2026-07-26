@@ -54,7 +54,8 @@ particular claim; Unspool keeps the decision visible.
 failed messages, and the absolute and relative range among finite converged objectives.
 It does not pretend that objective agreement proves parameter agreement. `LatentStateAudit`
 reports state count, minimum occupancy, emission separation, label-order gap, and the
-model's ambiguity flags.
+model's ambiguity flags. Truth-aware permutation alignment is deliberately absent from a
+fit audit: it is available only in simulation recovery, where reference states exist.
 
 ## Explicit policy
 

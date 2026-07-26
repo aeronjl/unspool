@@ -154,6 +154,12 @@ RMSE and held-out final-session log loss; the hierarchical smooth model wins onl
 animals genuinely change differently. See the
 [trajectory-recovery benchmark](benchmarks/trajectory_recovery/README.md).
 
+A latent-state recovery benchmark separates arbitrary HMM label names from recovered state
+identity. Across 20 clear-state and 20 overlapping-state fits, aligned metrics are invariant
+to complete label reversal. Clear states reach 91.85% decoded accuracy with no ambiguous
+assignments; overlapping states fall to 56.53%, with 35% explicitly ambiguous. See the
+[state-alignment benchmark](benchmarks/state_alignment/README.md).
+
 ## Published-data benchmarks
 
 The first external benchmark reproduces the central longitudinal-behaviour result from
@@ -196,6 +202,7 @@ uv run python -m benchmarks.weak_signal_recovery.benchmark
 uv run python -m benchmarks.hierarchical_glm.benchmark
 uv run python -m benchmarks.subject_scale_recovery.benchmark
 uv run python -m benchmarks.trajectory_recovery.benchmark
+uv run python -m benchmarks.state_alignment.benchmark
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv

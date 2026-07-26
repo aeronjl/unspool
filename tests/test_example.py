@@ -75,6 +75,7 @@ def test_glm_hmm_example_runs_end_to_end(capsys: CaptureFixture[str]) -> None:
     assert "Fixed-transition Bernoulli GLM-HMM" in output
     assert "restart objectives" in output
     assert "label ambiguous:    False" in output
+    assert "alignment ambiguous: False" in output
     assert "fit audit:          pass []" in output
     assert "Prospective competing explanations" in output
     assert " GLM-HMM: log-loss=" in output

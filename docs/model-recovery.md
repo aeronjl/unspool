@@ -142,7 +142,10 @@ models under the same prospective interface.
 `BernoulliGLMHMM` can be used as either a scenario generator or candidate. Its packed
 parameters are canonically label-ordered, but recovery conclusions must still inspect
 restart convergence, state occupancy, emission separation, and label-order ambiguity. See
-the [GLM-HMM guide](glm-hmm.md).
+the [GLM-HMM guide](glm-hmm.md). When latent simulation truth is available,
+`state_recovery()` performs a separate permutation-invariant assignment and reports its
+best-versus-runner-up gap. Canonical parameter order and recovered state identity are not
+treated as the same claim.
 
 `BinaryQLearning` likewise satisfies both recovery interfaces. Generative designs must
 include explicit action-contingent reward probabilities, while fitting conditions only on
@@ -162,4 +165,5 @@ Run the complete example with:
 uv run python examples/model_recovery.py
 uv run python -m benchmarks.recovery_grid.benchmark
 uv run python -m benchmarks.weak_signal_recovery.benchmark
+uv run python -m benchmarks.state_alignment.benchmark
 ```

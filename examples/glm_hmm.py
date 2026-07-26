@@ -47,8 +47,7 @@ def main() -> None:
     simulation = model.simulate_with_states(build_design(), truth, seed=2026)
     fit = model.fit(simulation.study)
     fitted = model.parameter_components(fit)
-    state_probability = model.state_probabilities(simulation.study, fit)
-    decoded = np.argmax(state_probability.filtered, axis=1)
+    recovery = model.state_recovery(simulation, fit)
     audit = fit.audit()
 
     print("Fixed-transition Bernoulli GLM-HMM")
@@ -58,9 +57,9 @@ def main() -> None:
     print(f"state occupancy:    {np.round(fit.state_occupancy, 3).tolist()}")
     print(f"label ambiguous:    {fit.label_ambiguous}")
     print(f"fit audit:          {audit.status.value} {list(audit.issue_codes)}")
-    print(
-        f"filtered state accuracy on synthetic truth: {np.mean(decoded == simulation.states):.1%}"
-    )
+    print(f"aligned filtered state accuracy: {recovery.decoded_accuracy:.1%}")
+    print(f"alignment gap:      {recovery.score_gap:.3f}")
+    print(f"alignment ambiguous: {recovery.ambiguous}")
 
     splits = forward_session_splits(simulation.study, min_train_sessions=5)
     static = BernoulliHistoryGLM(choice_lags=0, l2=0.01)

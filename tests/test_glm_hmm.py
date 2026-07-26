@@ -221,8 +221,7 @@ def test_fit_recovers_clear_states_and_retains_restart_diagnostics() -> None:
 
     fit = model.fit(simulation.study)
     components = model.parameter_components(fit)
-    filtered = model.state_probabilities(simulation.study, fit)
-    state_accuracy = float(np.mean(np.argmax(filtered.filtered, axis=1) == simulation.states))
+    recovery = model.state_recovery(simulation, fit)
 
     assert fit.diagnostics.converged
     assert fit.restart_objectives.shape == (model.n_restarts,)
@@ -233,7 +232,24 @@ def test_fit_recovers_clear_states_and_retains_restart_diagnostics() -> None:
     assert fit.low_occupancy is False
     assert components.emission_coefficients[0, 0] < 0 < components.emission_coefficients[1, 0]
     assert np.all(np.diag(components.transition_matrix) > 0.85)
-    assert state_accuracy > 0.85
+    assert recovery.decoded_accuracy > 0.85
+    assert recovery.posterior_accuracy > 0.8
+    assert recovery.ambiguous is False
+
+
+def test_state_recovery_rejects_a_simulation_with_the_wrong_state_count() -> None:
+    model = clear_model(n_restarts=1)
+    parameters = clear_parameters(model)
+    simulation = model.simulate_with_states(
+        design(n_sessions=1, trials_per_session=10),
+        parameters,
+        seed=3,
+    )
+    fit = fixed_fit(model, parameters, len(simulation.study))
+    three_state_model = BernoulliGLMHMM(choice_lags=0, n_states=3, n_restarts=1)
+
+    with pytest.raises(ValueError, match="same number of states"):
+        three_state_model.state_recovery(simulation, fit)
 
 
 def test_generic_parameter_recovery_handles_canonical_hmm_labels() -> None:

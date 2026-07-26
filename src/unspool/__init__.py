@@ -63,6 +63,7 @@ from unspool.recovery import (
     ParameterRecoverySummary,
     run_parameter_recovery,
 )
+from unspool.state_alignment import LatentStateAlignment, align_latent_states
 from unspool.study import REQUIRED_COLUMNS, Study, StudyValidationError
 from unspool.transforms import (
     FittedStudyTransform,
@@ -122,6 +123,7 @@ __all__ = [
     "HierarchicalSmoothGLMFitResult",
     "HierarchicalSmoothGLMSimulation",
     "LandmarkNotFoundError",
+    "LatentStateAlignment",
     "LatentStateAudit",
     "ModelDataError",
     "ModelRecoveryGridReport",
@@ -149,6 +151,7 @@ __all__ = [
     "ValidationSplit",
     "ValueTrajectory",
     "__version__",
+    "align_latent_states",
     "audit_fit",
     "evaluate_splits",
     "fit_transform_split",
