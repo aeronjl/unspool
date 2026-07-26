@@ -21,7 +21,9 @@ The roadmap is organized by scientific contracts rather than by model count.
 
 ## 0.2 — Competing explanations
 
-- Add fixed GLM-HMM and compact reinforcement-learning reference models.
+- **In progress:** add discrete-state and learning-agent competitors. A fixed-transition
+  Bernoulli GLM-HMM with label, occupancy, restart, recovery, and prospective-comparison
+  diagnostics is implemented; the compact reinforcement-learning model remains.
 - **In progress:** add parameter- and model-recovery grids. The design-specific engines and
   static-versus-smooth example are implemented; broad benchmark grids remain.
 - Make label ambiguity and optimization diagnostics first-class outputs.
