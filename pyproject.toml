@@ -23,7 +23,14 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
 ]
-dependencies = []
+dependencies = [
+    "numpy>=2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/aeronjl/unspool"
+Issues = "https://github.com/aeronjl/unspool/issues"
+Repository = "https://github.com/aeronjl/unspool"
 
 [dependency-groups]
 dev = [
