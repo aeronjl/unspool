@@ -140,10 +140,23 @@ The roadmap is organized by scientific contracts rather than by model count.
   change panels; the matched structure wins subject-path RMSE and future-session joint log
   loss in every regime, with all 480 fits converged.
 
+## 0.10 — Parameter-specific decision-process heterogeneity
+
+- **Implemented:** replace the single longitudinal Wiener subject scale with named,
+  natural-scale components for each selected drift, boundary, or bias trajectory while
+  retaining the common scalar as a backward-compatible fixed fallback.
+- **Implemented:** estimate those components strictly inside each training fit with bounded
+  Laplace-EM updates, retained iteration convergence, local-curvature uncertainty, and
+  parameter-specific bound diagnostics.
+- **Implemented:** pin a prospective recovery benchmark with unequal drift and boundary
+  heterogeneity. Doubling animals from 6 to 12 lowers joint scale RMSE, all 16 fits
+  converge, oracle predictive loss remains close, and poor local-interval coverage stays
+  visible as a calibration limit.
+
 ## Later
 
 - Session-varying GLM-HMM parameters
-- Parameter-specific variance components and their estimation
+- Calibrated variance-component uncertainty and posterior predictive random effects
 - Richer mixtures and model plugins
 - NWB/DANDI streaming workflows
 - Cross-lab trajectory-shape comparisons

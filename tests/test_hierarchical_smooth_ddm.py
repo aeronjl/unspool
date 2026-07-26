@@ -14,7 +14,7 @@ from unspool import (
     leave_one_subject_out_splits,
     run_parameter_recovery,
 )
-from unspool.models.hierarchical_smooth_ddm import _arrowhead_covariance
+from unspool.models.hierarchical_smooth_ddm import _arrowhead_covariance, _scales_at_bounds
 
 
 def make_design(
@@ -110,6 +110,9 @@ def test_hierarchical_smooth_ddm_has_a_stable_public_contract() -> None:
         "nondecision_time",
     )
     assert "subject_scale=0.18" in model.signature
+    assert model.subject_parameter_scales is None
+    assert "subject_parameter_scales=drift.stimulus:0.18,boundary:0.18" in model.signature
+    assert "estimate_subject_scales=False" in model.signature
     assert "subject_smoothness=8.0" in model.signature
 
 
@@ -117,6 +120,18 @@ def test_hierarchical_smooth_ddm_has_a_stable_public_contract() -> None:
     "arguments",
     [
         {"subject_scale": 0.0},
+        {"subject_parameter_scales": {"boundary": 0.2}},
+        {
+            "subject_parameter_scales": {
+                "drift.stimulus": 0.2,
+                "boundary": 0.0,
+            }
+        },
+        {"estimate_subject_scales": 1},
+        {"subject_scale_bounds": (0.2, 0.1)},
+        {"estimate_subject_scales": True, "subject_scale": 0.01},
+        {"scale_max_iterations": 0},
+        {"scale_tolerance": 0.0},
         {"subject_smoothness": 0.0},
         {"subject_parameters": ()},
         {"subject_parameters": ("nondecision_time",)},
@@ -149,6 +164,68 @@ def test_simulation_retains_reproducible_subject_paths_outside_observed_data() -
     assert "subject_deviation" not in first.study.columns
     with pytest.raises(ValueError, match="cannot set WRITEABLE flag"):
         first.subject_knot_values.setflags(write=True)
+
+
+def test_parameter_specific_scales_control_named_simulation_components() -> None:
+    model = hierarchical_model(
+        subject_parameter_scales={"drift.stimulus": 0.3, "boundary": 0.05},
+        subject_smoothness=0.1,
+    )
+    design = make_design(n_subjects=40, n_sessions=1, trials_per_session=2)
+
+    simulation = model.simulate_with_effects(design, population_truth(model), seed=81)
+    empirical = np.std(simulation.subject_deviation_knot_values, axis=(0, 2))
+
+    assert empirical[0] > 3.0 * empirical[1]
+
+
+def test_subject_scales_are_estimated_by_parameter_with_retained_diagnostics() -> None:
+    model = hierarchical_model(
+        subject_parameter_scales={"drift.stimulus": 0.22, "boundary": 0.08},
+        estimate_subject_scales=True,
+        subject_scale_bounds=(0.04, 0.5),
+        scale_max_iterations=5,
+        scale_tolerance=0.02,
+        n_restarts=1,
+    )
+    design = make_design(n_subjects=8, trials_per_session=70)
+    study = model.simulate(design, population_truth(model), seed=91)
+
+    fit = model.fit(study)
+
+    assert fit.subject_scales_estimated
+    assert fit.scale_estimation_policy == "laplace-em"
+    assert 1 <= fit.scale_estimation_iterations <= 5
+    assert set(fit.subject_scale_map) == {"drift.stimulus", "boundary"}
+    assert set(fit.subject_scale_standard_error_map or ()) == {
+        "drift.stimulus",
+        "boundary",
+    }
+    assert set(fit.subject_scale_at_boundary_map or ()) == {
+        "drift.stimulus",
+        "boundary",
+    }
+    assert set(fit.subject_scale_confidence_intervals_95 or ()) == {
+        "drift.stimulus",
+        "boundary",
+    }
+    assert fit.subject_scale_map["drift.stimulus"] > fit.subject_scale_map["boundary"]
+    assert np.all(np.isfinite(fit.subject_parameter_scales))
+    assert np.all(fit.subject_scale_standard_errors > 0)
+    with pytest.raises(ValueError, match="cannot set WRITEABLE flag"):
+        fit.subject_parameter_scales.setflags(write=True)
+
+
+def test_subject_scale_boundary_diagnostics_use_declared_log_scale_tolerance() -> None:
+    indicators = _scales_at_bounds(
+        np.asarray([0.0505, 0.2, 0.99]),
+        (0.05, 1.0),
+        tolerance=0.02,
+    )
+
+    assert indicators.tolist() == [True, False, True]
+    with pytest.raises(ValueError, match="cannot set WRITEABLE flag"):
+        indicators.setflags(write=True)
 
 
 def test_joint_fit_recovers_population_and_subject_trajectory_outputs() -> None:
