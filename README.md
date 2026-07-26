@@ -89,8 +89,10 @@ Four reference models are executable: a static Bernoulli GLM, a smoothly time-va
 competitor with fixed temporal knots, a fixed-transition Bernoulli GLM-HMM, and a compact
 session-reset binary Q-learning agent. They expose recursive simulation, fitting, filtered
 prediction, pointwise scoring, numerical diagnostics, prospective fold evaluation, and
-design-specific recovery through one common contract. See the
-[modelling guide](docs/modelling.md), [smooth-drift guide](docs/smooth-drift.md),
+design-specific recovery through one common contract. Every fit also produces a normalized
+audit without discarding its model-specific evidence. See the
+[modelling guide](docs/modelling.md), [fit-audit guide](docs/diagnostics.md),
+[smooth-drift guide](docs/smooth-drift.md),
 [GLM-HMM guide](docs/glm-hmm.md), [Q-learning guide](docs/q-learning.md), and
 the [model-recovery guide](docs/model-recovery.md),
 or run:

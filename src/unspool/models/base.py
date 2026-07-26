@@ -6,12 +6,15 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 import numpy as np
 from numpy.typing import NDArray
 
 from unspool.study import Study
+
+if TYPE_CHECKING:
+    from unspool.diagnostics import FitAudit, FitAuditPolicy
 
 
 class PredictionMode(StrEnum):
@@ -92,6 +95,13 @@ class FitResult:
         return MappingProxyType(
             dict(zip(self.parameter_names, self.standard_errors.tolist(), strict=True))
         )
+
+    def audit(self, *, policy: FitAuditPolicy | None = None) -> FitAudit:
+        """Normalize all available diagnostics without removing their raw evidence."""
+
+        from unspool.diagnostics import audit_fit
+
+        return audit_fit(self, policy=policy)
 
 
 @dataclass(frozen=True, slots=True)

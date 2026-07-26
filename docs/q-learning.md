@@ -90,6 +90,10 @@ numerical-Hessian covariance, gradient and condition diagnostics, and a boundary
 flag covers learning rates near zero or one, inverse temperatures near zero or above the
 configured warning scale, and extreme bias or perseveration estimates.
 
+`fit.audit()` normalizes those numerical flags and the retained restart outcomes into the
+same status, issue-code, and `RestartAudit` contract used by the other reference models.
+Raw objectives, convergence flags, and optimizer messages remain on `QLearningFitResult`.
+
 ## Recovery and competing explanations
 
 The model satisfies Unspool's generic parameter- and model-recovery contracts. Its tests

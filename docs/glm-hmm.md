@@ -77,6 +77,11 @@ than being silently discarded.
 - explicit low-occupancy and label-ambiguity flags; and
 - the common numerical, boundary, gradient, and Hessian diagnostics.
 
+`fit.audit()` exposes these through the shared `FitAudit`: restart disagreement,
+nonconvergence, low occupancy, and label ambiguity receive the same stable issue codes used
+in reports for other model families. The raw arrays and model-specific scalar diagnostics
+remain on `GLMHMMFitResult`.
+
 Standard errors use a local numerical Hessian of the penalized marginal likelihood. They
 are local approximations around one mode, not a resolution of multimodality or label
 uncertainty. With nonzero `l2`, they are also penalized-likelihood approximations.

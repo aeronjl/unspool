@@ -31,7 +31,9 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** validate the canonical longitudinal schema on a checksum-pinned IBL
   public-learning panel spanning nine labs, with trial-outcome-blind cohort selection and
   disjoint transition-anchored early/late-training windows.
-- Make label ambiguity and optimization diagnostics first-class outputs.
+- **Implemented:** make optimization, boundary, restart, occupancy, and label-ambiguity
+  evidence first-class through a common fit-audit status and stable issue codes, without
+  discarding model-specific diagnostics.
 
 ## 0.3 — Population structure
 

@@ -49,6 +49,7 @@ def main() -> None:
     fitted = model.parameter_components(fit)
     state_probability = model.state_probabilities(simulation.study, fit)
     decoded = np.argmax(state_probability.filtered, axis=1)
+    audit = fit.audit()
 
     print("Fixed-transition Bernoulli GLM-HMM")
     print("fitted transition matrix:")
@@ -56,6 +57,7 @@ def main() -> None:
     print(f"restart objectives: {np.round(fit.restart_objectives, 3).tolist()}")
     print(f"state occupancy:    {np.round(fit.state_occupancy, 3).tolist()}")
     print(f"label ambiguous:    {fit.label_ambiguous}")
+    print(f"fit audit:          {audit.status.value} {list(audit.issue_codes)}")
     print(
         f"filtered state accuracy on synthetic truth: {np.mean(decoded == simulation.states):.1%}"
     )
