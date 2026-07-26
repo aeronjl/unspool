@@ -18,9 +18,10 @@ and sits within several non-equivalent clocks—trials, sessions, calendar time,
 stages, and inferred learning landmarks.
 
 > [!IMPORTANT]
-> Unspool is pre-alpha. Its longitudinal data, validation, first modelling, and parameter-
-> and model-recovery contracts are executable, but the API is not yet stable and the model
-> catalogue currently contains only static and smoothly time-varying Bernoulli GLMs.
+> Unspool is pre-alpha. Its longitudinal data, clock, fold-fitted transform, validation,
+> first modelling, and parameter- and model-recovery contracts are executable, but the API
+> is not yet stable and the model catalogue currently contains only static and smoothly
+> time-varying Bernoulli GLMs.
 
 ## Why “Unspool”?
 
@@ -75,7 +76,11 @@ test = study.take(split.test_indices)
 The required schema makes chronology explicit while preserving arbitrary source fields.
 Forward-session folds train only on earlier complete sessions. A separate leave-one-session-
 out splitter is intentionally marked non-prospective because it can train on the held-out
-session's future. See the [data contract](docs/data-contract.md) and
+session's future. Typed session, cumulative-trial, elapsed-time, task-phase, and
+landmark-relative clocks prevent unlike temporal coordinates from becoming anonymous
+columns. Behavioural landmarks are fitted independently inside each training fold with
+immutable provenance. See the [data contract](docs/data-contract.md),
+[clock and transform guide](docs/clocks-and-transforms.md), and
 [validation guide](docs/validation.md).
 
 Two reference models are executable: a static Bernoulli GLM and a smoothly time-varying
@@ -90,6 +95,7 @@ recovery through one common contract. See the [modelling guide](docs/modelling.m
 uv run python examples/static_glm.py
 uv run python examples/smooth_glm.py
 uv run python examples/model_recovery.py
+uv run python examples/temporal_transforms.py
 ```
 
 ## Development
@@ -103,6 +109,7 @@ uv run pytest
 uv run python examples/static_glm.py
 uv run python examples/smooth_glm.py
 uv run python examples/model_recovery.py
+uv run python examples/temporal_transforms.py
 uv run ruff check .
 uv run ruff format --check .
 uv build

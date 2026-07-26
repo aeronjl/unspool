@@ -5,7 +5,10 @@ The roadmap is organized by scientific contracts rather than by model count.
 ## 0.1 — The longitudinal contract
 
 - **Implemented:** define and validate the canonical study schema.
-- Represent multiple learning clocks without silently aligning them.
+- **Implemented:** represent session-order, cumulative-trial, elapsed-time, task-phase,
+  and landmark-relative clocks without silently aligning them. Threshold landmarks use a
+  fold-fitted transform contract with immutable training provenance; richer landmark
+  definitions and uncertainty remain later work.
 - **Implemented:** establish the generative model, prediction, scoring, diagnostics, and
   fit-result protocols.
 - **Implemented:** add static and smoothly time-varying Bernoulli history GLM baselines,

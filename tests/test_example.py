@@ -37,3 +37,16 @@ def test_model_recovery_example_runs_end_to_end(capsys: CaptureFixture[str]) -> 
     assert "unresolved" in output
     assert "resolution rate: 83.3%" in output
     assert "accuracy among resolved runs: 100.0%" in output
+
+
+def test_temporal_transforms_example_runs_end_to_end(capsys: CaptureFixture[str]) -> None:
+    example = Path(__file__).parents[1] / "examples" / "temporal_transforms.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Explicit design clocks" in output
+    assert "Training-fold landmark" in output
+    assert "learned values: {'mouse-1': 4.0}" in output
+    assert "fit trials:     8" in output
+    assert "test-relative:  [4.0, 5.0, 6.0, 7.0]" in output
