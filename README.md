@@ -74,12 +74,14 @@ test = study.take(split.test_indices)
 ```
 
 The required schema makes chronology explicit while preserving arbitrary source fields.
-Forward-session folds train only on earlier complete sessions. A separate leave-one-session-
-out splitter is intentionally marked non-prospective because it can train on the held-out
-session's future. Typed session, cumulative-trial, elapsed-time, task-phase, and
-landmark-relative clocks prevent unlike temporal coordinates from becoming anonymous
-columns. Behavioural landmarks are fitted independently inside each training fold with
-immutable provenance. See the [data contract](docs/data-contract.md),
+Forward-session folds train only on earlier complete sessions. Within-session rolling
+origins carry the observed pre-origin prefix into filtered prediction while scoring only
+future trials. A separate leave-one-session-out splitter is intentionally marked non-
+prospective because it can train on the held-out session's future. Typed session,
+cumulative-trial, elapsed-time, task-phase, and landmark-relative clocks prevent unlike
+temporal coordinates from becoming anonymous columns. Behavioural landmarks are fitted
+independently inside each training fold with immutable provenance. See the
+[data contract](docs/data-contract.md),
 [clock and transform guide](docs/clocks-and-transforms.md), and
 [validation guide](docs/validation.md).
 
@@ -96,6 +98,7 @@ uv run python examples/static_glm.py
 uv run python examples/smooth_glm.py
 uv run python examples/model_recovery.py
 uv run python examples/temporal_transforms.py
+uv run python examples/within_session_validation.py
 ```
 
 ## Development
@@ -110,6 +113,7 @@ uv run python examples/static_glm.py
 uv run python examples/smooth_glm.py
 uv run python examples/model_recovery.py
 uv run python examples/temporal_transforms.py
+uv run python examples/within_session_validation.py
 uv run ruff check .
 uv run ruff format --check .
 uv build

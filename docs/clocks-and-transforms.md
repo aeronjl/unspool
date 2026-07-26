@@ -129,4 +129,5 @@ This API makes clock construction and one operational landmark criterion explici
 not claim that the threshold is a universal definition of learning, quantify landmark
 uncertainty, choose a criterion on held-out data, or align latent states. Alternative
 landmark definitions should implement the same training-only transform contract and be
-compared as modelling choices. Within-session rolling origins remain future work.
+compared as modelling choices. Within-session rolling origins are available, but automatic
+composition of arbitrary fitted transforms with model evaluation remains future work.

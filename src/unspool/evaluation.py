@@ -60,7 +60,8 @@ def evaluate_splits(
     """Fit and score a model independently within each supplied fold.
 
     Prospective folds are required by default. Passing a non-prospective splitter therefore
-    needs an explicit ``require_prospective=False`` acknowledgement.
+    needs an explicit ``require_prospective=False`` acknowledgement. Prediction-context
+    rows initialize filtered history but are removed from returned predictions and scores.
     """
 
     evaluations: list[FoldEvaluation] = []
@@ -72,11 +73,28 @@ def evaluate_splits(
             )
         _validate_positions(split.train_indices, len(study), "train_indices")
         _validate_positions(split.test_indices, len(study), "test_indices")
+        _validate_positions(
+            split.prediction_context_indices,
+            len(study),
+            "prediction_context_indices",
+        )
         training = study.take(split.train_indices)
-        testing = study.take(split.test_indices)
         fit = model.fit(training)
-        prediction = model.predict(testing, fit, mode=mode)
-        scores = model.pointwise_log_prob(testing, fit, mode=mode)
+        prediction_rows = np.concatenate((split.prediction_context_indices, split.test_indices))
+        prediction_study = study.take(prediction_rows)
+        full_prediction = model.predict(prediction_study, fit, mode=mode)
+        full_scores = model.pointwise_log_prob(prediction_study, fit, mode=mode)
+        target = np.arange(
+            len(split.prediction_context_indices),
+            len(prediction_rows),
+            dtype=np.intp,
+        )
+        prediction = Prediction(
+            probability=full_prediction.probability[target],
+            linear_predictor=full_prediction.linear_predictor[target],
+            mode=full_prediction.mode,
+        )
+        scores = full_scores[target]
         evaluations.append(
             FoldEvaluation(
                 split=split,

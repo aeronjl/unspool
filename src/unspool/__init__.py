@@ -50,6 +50,7 @@ from unspool.validation import (
     ValidationSplit,
     forward_session_splits,
     leave_one_session_out_splits,
+    within_session_rolling_splits,
 )
 
 __version__ = "0.1.0"
@@ -98,4 +99,5 @@ __all__ = [
     "session_order_clock",
     "with_cumulative_trial_clock",
     "with_elapsed_time_clock",
+    "within_session_rolling_splits",
 ]
