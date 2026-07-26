@@ -51,7 +51,9 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** add fixed-knot population trajectories with shrunken smooth subject-
   deviation paths, explicit unseen-subject prediction, and a factorial benchmark that
   distinguishes stationarity, stable heterogeneity, shared drift, and individual drift.
-- Test latent-state alignment rather than assuming it.
+- **Implemented:** test latent-state recovery with a balanced permutation-invariant
+  assignment, retained winning and runner-up scores, explicit missing-state and near-tie
+  ambiguity, and a repeated clear-versus-overlapping emission benchmark.
 - Quantify alignment and landmark uncertainty.
 
 ## Later

@@ -1,0 +1,71 @@
+{
+  "benchmark": "permutation-invariant latent-state recovery",
+  "contract": {
+    "all_aligned_metrics_permutation_invariant": true,
+    "all_fits_converged": true,
+    "clear_states_have_higher_decoded_accuracy": true,
+    "clear_states_have_higher_posterior_accuracy": true,
+    "clear_states_have_larger_assignment_gap": true,
+    "overlap_does_not_reduce_alignment_ambiguity": true
+  },
+  "contract_passed": true,
+  "design": {
+    "ambiguity_tolerance": 0.05,
+    "n_sessions": 4,
+    "n_subjects": 1,
+    "transition_matrix": [
+      [
+        0.95,
+        0.05
+      ],
+      [
+        0.05,
+        0.95
+      ]
+    ],
+    "trials_per_session": 75
+  },
+  "regimes": {
+    "clear": {
+      "alignment_ambiguity_rate": 0.0,
+      "convergence_rate": 1.0,
+      "emission_intercepts": [
+        -2.0,
+        2.0
+      ],
+      "fit_label_ambiguity_rate": 0.0,
+      "mean_best_score": 0.876162056724254,
+      "mean_decoded_accuracy": 0.9185000000000001,
+      "mean_posterior_accuracy": 0.8806437740251372,
+      "mean_raw_decoded_accuracy": 0.9185000000000001,
+      "mean_reversed_raw_decoded_accuracy": 0.08149999999999999,
+      "mean_runner_up_score": 0.12383794327574622,
+      "mean_score_gap": 0.7523241134485075,
+      "permutation_invariance_rate": 1.0
+    },
+    "overlapping": {
+      "alignment_ambiguity_rate": 0.35,
+      "convergence_rate": 1.0,
+      "emission_intercepts": [
+        -0.25,
+        0.25
+      ],
+      "fit_label_ambiguity_rate": 0.0,
+      "mean_best_score": 0.546107321062741,
+      "mean_decoded_accuracy": 0.5653333333333334,
+      "mean_posterior_accuracy": 0.5592334399172014,
+      "mean_raw_decoded_accuracy": 0.5463333333333333,
+      "mean_reversed_raw_decoded_accuracy": 0.4536666666666666,
+      "mean_runner_up_score": 0.45389267893725915,
+      "mean_score_gap": 0.09221464212548183,
+      "permutation_invariance_rate": 1.0
+    }
+  },
+  "repetitions": 20,
+  "scope": {
+    "assignment": "balanced posterior mass over reference states",
+    "posterior": "outcome-filtered recursion conditional on full-study fitted parameters; each state update excludes future outcomes",
+    "truth_use": "alignment and recovery diagnostics only; never fitting"
+  },
+  "seed": 9107
+}
