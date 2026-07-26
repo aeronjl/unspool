@@ -20,9 +20,10 @@ stages, and inferred learning landmarks.
 > [!IMPORTANT]
 > Unspool is pre-alpha. Its longitudinal data, clock, fold-fitted transform, validation,
 > first modelling, and parameter- and model-recovery contracts are executable, but the API
-> is not yet stable and the model catalogue currently contains static and smoothly time-
+> is not yet stable. The model catalogue currently contains static and smoothly time-
 > varying Bernoulli GLMs, static and smooth hierarchical Bernoulli GLMs, a fixed-transition
-> GLM-HMM, and a compact binary Q-learning agent.
+> GLM-HMM, a compact binary Q-learning agent, and a joint choice/response-time Wiener
+> drift-diffusion model.
 
 ## Why “Unspool”?
 
@@ -92,21 +93,23 @@ Leave-subject-out and leave-lab-out folds train on complete disjoint population 
 Lab holdout rejects any subject assigned to more than one lab rather than permitting
 cross-fold leakage.
 
-Six reference models are executable: a static Bernoulli GLM, a smoothly time-varying
+Seven reference models are executable: a static Bernoulli GLM, a smoothly time-varying
 competitor with fixed temporal knots, a static partial-pooling Bernoulli GLM, a partially
 pooled smooth trajectory model, a fixed-transition Bernoulli GLM-HMM, and a compact
-session-reset binary Q-learning agent. They expose recursive simulation, fitting, filtered
-prediction, pointwise scoring, numerical diagnostics, prospective fold evaluation, and
-design-specific recovery through one common contract. Every fit also produces a normalized
-audit without discarding its model-specific evidence. See the
+session-reset binary Q-learning agent, plus a fixed-parameter Wiener drift-diffusion model
+that jointly scores choice and response time. They expose recursive simulation, fitting,
+filtered prediction, pointwise scoring, numerical diagnostics, prospective fold evaluation,
+and design-specific recovery through one common contract. Every fit also produces a
+normalized audit without discarding its model-specific evidence. See the
 [modelling guide](docs/modelling.md), [fit-audit guide](docs/diagnostics.md),
 [estimator and plugin contract](docs/estimator-contract.md),
 [prospective comparison guide](docs/comparison.md),
 [smooth-drift guide](docs/smooth-drift.md),
 [partial-pooling guide](docs/hierarchical-glm.md),
 [partially pooled trajectory guide](docs/hierarchical-smooth-glm.md),
-[GLM-HMM guide](docs/glm-hmm.md), [Q-learning guide](docs/q-learning.md), and
-the [model-recovery guide](docs/model-recovery.md),
+[GLM-HMM guide](docs/glm-hmm.md), [Q-learning guide](docs/q-learning.md),
+[drift-diffusion guide](docs/drift-diffusion.md),
+and the [model-recovery guide](docs/model-recovery.md),
 or run:
 
 ```bash
@@ -117,6 +120,7 @@ uv run python examples/temporal_transforms.py
 uv run python examples/within_session_validation.py
 uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
+uv run python examples/drift_diffusion.py
 uv run python examples/population_validation.py
 uv run python examples/hierarchical_glm.py
 uv run python examples/hierarchical_smooth_glm.py
@@ -177,6 +181,12 @@ in 37/40 outer folds; across 20 strong shared-drift datasets it chooses the smoo
 as a design-specific resolution limit. See the
 [nested selection benchmark](benchmarks/nested_selection/README.md).
 
+The first joint choice/response-time benchmark fits a fixed-parameter Wiener
+drift-diffusion model across 20 repetitions at both 400 and 1,200 trials. All 40 fits pass
+audit, and increasing the design size reduces RMSE for drift intercept, stimulus drift,
+boundary, starting bias, and non-decision time. See the
+[drift-diffusion recovery benchmark](benchmarks/ddm_recovery/README.md).
+
 ## Published-data benchmarks
 
 The first external benchmark reproduces the central longitudinal-behaviour result from
@@ -220,6 +230,7 @@ uv run python examples/temporal_transforms.py
 uv run python examples/within_session_validation.py
 uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
+uv run python examples/drift_diffusion.py
 uv run python examples/population_validation.py
 uv run python examples/hierarchical_glm.py
 uv run python examples/hierarchical_smooth_glm.py
@@ -232,6 +243,7 @@ uv run python -m benchmarks.trajectory_recovery.benchmark
 uv run python -m benchmarks.state_alignment.benchmark
 uv run python -m benchmarks.landmark_uncertainty.benchmark
 uv run python -m benchmarks.nested_selection.benchmark
+uv run python -m benchmarks.ddm_recovery.benchmark
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv

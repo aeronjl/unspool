@@ -13,6 +13,11 @@ from unspool.models.base import (
     UnsupportedPredictionMode,
     model_capabilities,
 )
+from unspool.models.ddm import (
+    DriftDiffusionFitResult,
+    DriftDiffusionParameters,
+    WienerDriftDiffusion,
+)
 from unspool.models.glm import (
     BernoulliHistoryGLM,
     CoefficientTrajectory,
@@ -49,6 +54,8 @@ __all__ = [
     "BernoulliHistoryGLM",
     "BinaryQLearning",
     "CoefficientTrajectory",
+    "DriftDiffusionFitResult",
+    "DriftDiffusionParameters",
     "FilteredStateProbabilities",
     "FitDiagnostics",
     "FitResult",
@@ -71,5 +78,6 @@ __all__ = [
     "SmoothBernoulliHistoryGLM",
     "UnsupportedPredictionMode",
     "ValueTrajectory",
+    "WienerDriftDiffusion",
     "model_capabilities",
 ]

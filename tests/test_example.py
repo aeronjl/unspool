@@ -158,3 +158,17 @@ def test_prospective_comparison_example_exposes_nested_selection(
     assert "shared_smooth: loss=" in output
     assert "Training-only nested selection" in output
     assert "selected:" in output
+
+
+def test_drift_diffusion_example_exposes_joint_likelihood_and_audit(
+    capsys: CaptureFixture[str],
+) -> None:
+    example = Path(__file__).parents[1] / "examples" / "drift_diffusion.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Joint choice/response-time drift-diffusion model" in output
+    assert "scored columns: ('choice', 'response_time')" in output
+    assert "fit audit: pass []" in output
+    assert "nondecision_time" in output

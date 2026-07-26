@@ -146,7 +146,11 @@ class ParameterRecoveryReport:
                 coverage = float(np.mean(covered))
             else:
                 coverage = float("nan")
-            if n_successful >= 2 and np.std(truth) > 0 and np.std(estimate) > 0:
+            truth_scale = max(1.0, float(np.max(np.abs(truth), initial=0.0)))
+            estimate_scale = max(1.0, float(np.max(np.abs(estimate), initial=0.0)))
+            truth_varies = n_successful >= 2 and np.ptp(truth) > 1e-12 * truth_scale
+            estimate_varies = n_successful >= 2 and np.ptp(estimate) > 1e-12 * estimate_scale
+            if n_successful >= 2 and truth_varies and estimate_varies:
                 correlation = float(np.corrcoef(truth, estimate)[0, 1])
             else:
                 correlation = float("nan")

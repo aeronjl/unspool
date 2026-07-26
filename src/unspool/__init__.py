@@ -48,6 +48,8 @@ from unspool.models import (
     BernoulliHistoryGLM,
     BinaryQLearning,
     CoefficientTrajectory,
+    DriftDiffusionFitResult,
+    DriftDiffusionParameters,
     FilteredStateProbabilities,
     FitDiagnostics,
     FitResult,
@@ -70,6 +72,7 @@ from unspool.models import (
     SmoothBernoulliHistoryGLM,
     UnsupportedPredictionMode,
     ValueTrajectory,
+    WienerDriftDiffusion,
     model_capabilities,
 )
 from unspool.recovery import (
@@ -77,6 +80,7 @@ from unspool.recovery import (
     ParameterRecoverySummary,
     run_parameter_recovery,
 )
+from unspool.response_times import ResponseTimes, ResponseTimeSpec, ResponseTimeUnit
 from unspool.state_alignment import LatentStateAlignment, align_latent_states
 from unspool.study import REQUIRED_COLUMNS, Study, StudyValidationError
 from unspool.transforms import (
@@ -126,6 +130,8 @@ __all__ = [
     "ClockedStudy",
     "CoefficientTrajectory",
     "CohortValidationSplit",
+    "DriftDiffusionFitResult",
+    "DriftDiffusionParameters",
     "FilteredStateProbabilities",
     "FitAudit",
     "FitAuditPolicy",
@@ -172,6 +178,9 @@ __all__ = [
     "ProspectiveModelResult",
     "QLearningFitResult",
     "QLearningParameters",
+    "ResponseTimeSpec",
+    "ResponseTimeUnit",
+    "ResponseTimes",
     "RestartAudit",
     "SmoothBernoulliHistoryGLM",
     "Study",
@@ -184,6 +193,7 @@ __all__ = [
     "ValidationFold",
     "ValidationSplit",
     "ValueTrajectory",
+    "WienerDriftDiffusion",
     "__version__",
     "align_latent_states",
     "audit_fit",
