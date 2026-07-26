@@ -30,6 +30,12 @@ subject/session-aware comparisons. Unspool will extract only concepts that belon
 general library. Research-specific evidence machinery and broad thesis dependencies will
 remain outside the package.
 
+The public [IBL 2021 benchmark](../benchmarks/ibl2021/README.md) independently implements
+a smaller, trial-outcome-blind extraction contract rather than copying that programme's
+policy or modelling machinery. It pins 54 public `trials.table` datasets from the fixed
+behaviour release, validates each source hash, and keeps all IBL-specific selection and
+adaptation code outside `src/unspool`. The data remain CC BY 4.0 and are fetched on demand.
+
 ## Earlier public explorations
 
 - [InfiniteIOHMM.jl](https://github.com/aeronjl/InfiniteIOHMM.jl)

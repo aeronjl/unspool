@@ -105,7 +105,7 @@ uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
 ```
 
-## Published-data benchmark
+## Published-data benchmarks
 
 The first external benchmark reproduces the central longitudinal-behaviour result from
 Liebana, Laffere et al. (2025): bias during days 4–8 predicts the final-five-session
@@ -113,6 +113,14 @@ right-minus-left psychometric-slope asymmetry across 30 mice (`r = 0.69479`,
 `p = 2.04e-05`). The workflow fetches only the required member of the versioned public
 Figshare archive, verifies its checksum, maps trials to `Study`, and enforces a numerical
 regression contract. See the [Cell 2025 benchmark](benchmarks/cell2025/README.md).
+
+The second benchmark maps 28,400 public IBL trials into the same `Study` contract. A
+trial-outcome-blind rule selects one transition-anchored trajectory from each of nine labs,
+and the benchmark compares three disjoint early sessions with the final three training
+sessions before the first biased-task transition. All nine selected animals improve on
+easy trials (`+0.42943` mean accuracy), providing a checksum-pinned positive control for
+public-data retrieval, session chronology, and landmark-relative phase construction. See
+the [IBL 2021 benchmark](benchmarks/ibl2021/README.md).
 
 ## Development
 
@@ -132,6 +140,8 @@ uv run python examples/q_learning.py
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv
+uv run python -m benchmarks.ibl2021.fetch_data
+uv run --with pyarrow python -m benchmarks.ibl2021.benchmark
 uv run ruff check .
 uv run ruff format --check .
 uv build
