@@ -10,6 +10,16 @@ from unspool.clocks import (
     with_cumulative_trial_clock,
     with_elapsed_time_clock,
 )
+from unspool.diagnostics import (
+    AuditSeverity,
+    FitAudit,
+    FitAuditPolicy,
+    FitAuditStatus,
+    FitIssue,
+    LatentStateAudit,
+    RestartAudit,
+    audit_fit,
+)
 from unspool.evaluation import FoldEvaluation, evaluate_splits
 from unspool.model_recovery import (
     ModelRecoveryMatrix,
@@ -66,6 +76,7 @@ __version__ = "0.1.0"
 
 __all__ = [
     "REQUIRED_COLUMNS",
+    "AuditSeverity",
     "BehaviourModel",
     "BernoulliGLMHMM",
     "BernoulliHistoryGLM",
@@ -77,7 +88,11 @@ __all__ = [
     "ClockedStudy",
     "CoefficientTrajectory",
     "FilteredStateProbabilities",
+    "FitAudit",
+    "FitAuditPolicy",
+    "FitAuditStatus",
     "FitDiagnostics",
+    "FitIssue",
     "FitResult",
     "FittedStudyTransform",
     "FittedThresholdLandmarkClock",
@@ -87,6 +102,7 @@ __all__ = [
     "GLMHMMParameters",
     "GLMHMMSimulation",
     "LandmarkNotFoundError",
+    "LatentStateAudit",
     "ModelDataError",
     "ModelRecoveryMatrix",
     "ModelRecoveryReport",
@@ -97,6 +113,7 @@ __all__ = [
     "PredictionMode",
     "QLearningFitResult",
     "QLearningParameters",
+    "RestartAudit",
     "SmoothBernoulliHistoryGLM",
     "Study",
     "StudyTransform",
@@ -107,6 +124,7 @@ __all__ = [
     "ValidationSplit",
     "ValueTrajectory",
     "__version__",
+    "audit_fit",
     "evaluate_splits",
     "fit_transform_split",
     "fit_transform_splits",

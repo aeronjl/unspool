@@ -52,6 +52,7 @@ def main() -> None:
     fit = model.fit(study)
     recovered = model.parameter_components(fit)
     values = model.value_trajectory(study, fit)
+    audit = fit.audit()
 
     print("Session-reset binary Q-learning")
     print(f"learning rate:       {recovered.learning_rate:.3f}")
@@ -59,6 +60,7 @@ def main() -> None:
     print(f"choice bias:         {recovered.choice_bias:.3f}")
     print(f"perseveration:       {recovered.perseveration:.3f}")
     print(f"restart objectives:  {fit.restart_objectives.round(3).tolist()}")
+    print(f"fit audit:           {audit.status.value} {list(audit.issue_codes)}")
     print(f"first prediction error: {values.prediction_error[0]:.3f}")
 
     splits = forward_session_splits(study, min_train_sessions=7)

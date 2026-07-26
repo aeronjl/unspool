@@ -22,6 +22,12 @@ size, optimizer status and message, iteration count, objective, gradient norm, H
 condition number, and a large-coefficient boundary warning. Arrays are copied and exposed
 read-only. An optimizer's failure remains part of the result rather than being discarded.
 
+Calling `fit.audit()` derives one common `FitAudit` from those fields and any retained
+restart, occupancy, or label evidence. Its `pass`, `warning`, or `fail` status never removes
+the underlying diagnostics, and its stable issue codes make heterogeneous fits comparable
+in reports. See the [fit-audit guide](diagnostics.md) for the complete rules and
+interpretation boundary.
+
 ## Static Bernoulli history GLM
 
 `BernoulliHistoryGLM` models a binary choice using an intercept, named numeric covariates,
@@ -73,7 +79,7 @@ evaluations = evaluate_splits(model, study, splits)
 
 for evaluation in evaluations:
     print(evaluation.split.test_sessions, evaluation.mean_log_loss)
-    print(evaluation.fit.diagnostics.converged)
+    print(evaluation.fit.audit().status, evaluation.fit.audit().issue_codes)
 ```
 
 `evaluate_splits` requires prospective folds by default. Passing leave-one-session-out

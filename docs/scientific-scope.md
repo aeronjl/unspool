@@ -32,7 +32,8 @@ within-session rolling-origin validation; common model outputs; static and smoot
 time-varying Bernoulli history GLMs; a fixed-transition Bernoulli GLM-HMM; a session-reset
 binary Q-learning agent; and design-specific parameter and model recovery. See the
 [clock and transform guide](clocks-and-transforms.md), [modelling guide](modelling.md),
-[smooth-drift guide](smooth-drift.md), [GLM-HMM guide](glm-hmm.md),
+[fit-audit guide](diagnostics.md), [smooth-drift guide](smooth-drift.md),
+[GLM-HMM guide](glm-hmm.md),
 [Q-learning guide](q-learning.md), and [model-recovery guide](model-recovery.md) for their
 assumptions and current boundaries.
 
