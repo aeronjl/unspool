@@ -6,11 +6,14 @@ The roadmap is organized by scientific contracts rather than by model count.
 
 - **Implemented:** define and validate the canonical study schema.
 - Represent multiple learning clocks without silently aligning them.
-- Establish the model and fit-result protocols.
-- Add static GLM and smooth-drift baselines.
+- **Implemented:** establish the generative model, prediction, scoring, diagnostics, and
+  fit-result protocols.
+- **In progress:** add static GLM and smooth-drift baselines. The static Bernoulli history
+  GLM is implemented; smooth drift remains its first nonstationary competitor.
 - **In progress:** add session and rolling-origin validation. Expanding forward-session and
   leave-one-session-out folds are implemented; within-session origins remain.
-- Produce the first end-to-end synthetic recovery report.
+- **Implemented:** produce an end-to-end synthetic parameter-recovery report for the
+  static GLM. Cross-model recovery remains part of 0.2.
 
 ## 0.2 — Competing explanations
 
