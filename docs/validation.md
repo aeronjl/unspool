@@ -31,7 +31,9 @@ enough sessions simply produce no eligible fold.
 
 The split guarantees temporal ordering at session resolution. It does not make a fitted
 pipeline prospective by itself. Any learned scaling, feature selection, state alignment,
-or behavioural landmark must also be fitted on `train_indices` only.
+or behavioural landmark must also be fitted on `train_indices` only. Unspool's first
+training-only landmark helper is described in the
+[clock and transform guide](clocks-and-transforms.md).
 
 ## Whole-session holdout
 
@@ -51,5 +53,5 @@ perturbations, or the influence of individual sessions.
 
 Both splitters produce separate folds for each subject. They do not pool other animals into
 the training indices, because the library does not yet have a model-aware contract for
-hierarchical fitting. Leave-subject-out, leave-lab-out, within-session rolling-origin, and
-training-fold landmark transforms remain roadmap work rather than hidden assumptions.
+hierarchical fitting. Leave-subject-out, leave-lab-out, and within-session rolling-origin
+remain roadmap work rather than hidden assumptions.
