@@ -1,0 +1,418 @@
+{
+  "benchmark": "matched four-family prospective model-recovery grid",
+  "candidate_labels": [
+    "static",
+    "smooth",
+    "hmm",
+    "q-learning"
+  ],
+  "contract_passed": true,
+  "designs": [
+    {
+      "audit_failure_rate": 0.0,
+      "audit_issue_codes": [
+        [
+          [],
+          [],
+          [],
+          [
+            "ill_conditioned_hessian",
+            "boundary_estimate"
+          ]
+        ],
+        [
+          [],
+          [],
+          [
+            "boundary_estimate"
+          ],
+          [
+            "ill_conditioned_hessian",
+            "boundary_estimate"
+          ]
+        ],
+        [
+          [],
+          [],
+          [
+            "boundary_estimate",
+            "ill_conditioned_hessian"
+          ],
+          []
+        ],
+        [
+          [],
+          [],
+          [
+            "boundary_estimate"
+          ],
+          []
+        ]
+      ],
+      "audit_statuses": [
+        [
+          "pass",
+          "pass",
+          "pass",
+          "warning"
+        ],
+        [
+          "pass",
+          "pass",
+          "warning",
+          "warning"
+        ],
+        [
+          "pass",
+          "pass",
+          "warning",
+          "pass"
+        ],
+        [
+          "pass",
+          "pass",
+          "warning",
+          "pass"
+        ]
+      ],
+      "audit_warning_rate": 0.3125,
+      "confusion": {
+        "counts": [
+          [
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0
+          ]
+        ],
+        "rates": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ]
+        ],
+        "selected_labels": [
+          "static",
+          "smooth",
+          "hmm",
+          "q-learning",
+          "unresolved"
+        ],
+        "truth_labels": [
+          "static",
+          "smooth",
+          "hmm",
+          "q-learning"
+        ]
+      },
+      "design": "sparse",
+      "design_seed": 16973924958244824058,
+      "mean_log_probabilities": [
+        [
+          -0.5908363383855384,
+          -0.6412058268668256,
+          -0.6381369147816863,
+          -0.7352844580284266
+        ],
+        [
+          -0.5309032232859812,
+          -0.5383856444484452,
+          -0.5694938918717278,
+          -0.6611977721450741
+        ],
+        [
+          -0.5739955537156461,
+          -0.5563610804974072,
+          -0.7139081929001236,
+          -0.6120884767470564
+        ],
+        [
+          -0.5365538723031045,
+          -0.5452207849027473,
+          -0.7144016162145665,
+          -0.39884963336930196
+        ]
+      ],
+      "n_folds": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "n_runs": 4,
+      "n_subjects": 1,
+      "n_trials": 150,
+      "overall_accuracy": 0.5,
+      "resolution_rate": 1.0,
+      "resolved_accuracy": 0.5,
+      "run_seeds": [
+        3011942455743600193,
+        896723044679403985,
+        13494917154076053370,
+        16546652808334453667
+      ],
+      "selected_labels": [
+        "static",
+        "static",
+        "smooth",
+        "q-learning"
+      ],
+      "truth_labels": [
+        "static",
+        "smooth",
+        "hmm",
+        "q-learning"
+      ]
+    },
+    {
+      "audit_failure_rate": 0.0,
+      "audit_issue_codes": [
+        [
+          [],
+          [],
+          [
+            "boundary_estimate"
+          ],
+          [
+            "boundary_estimate"
+          ]
+        ],
+        [
+          [],
+          [],
+          [
+            "ill_conditioned_hessian",
+            "boundary_estimate"
+          ],
+          [
+            "boundary_estimate"
+          ]
+        ],
+        [
+          [],
+          [],
+          [],
+          [
+            "boundary_estimate",
+            "restart_objective_disagreement"
+          ]
+        ],
+        [
+          [],
+          [],
+          [
+            "boundary_estimate"
+          ],
+          []
+        ]
+      ],
+      "audit_statuses": [
+        [
+          "pass",
+          "pass",
+          "warning",
+          "warning"
+        ],
+        [
+          "pass",
+          "pass",
+          "warning",
+          "warning"
+        ],
+        [
+          "pass",
+          "pass",
+          "pass",
+          "warning"
+        ],
+        [
+          "pass",
+          "pass",
+          "warning",
+          "pass"
+        ]
+      ],
+      "audit_warning_rate": 0.375,
+      "confusion": {
+        "counts": [
+          [
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            1,
+            0
+          ]
+        ],
+        "rates": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ]
+        ],
+        "selected_labels": [
+          "static",
+          "smooth",
+          "hmm",
+          "q-learning",
+          "unresolved"
+        ],
+        "truth_labels": [
+          "static",
+          "smooth",
+          "hmm",
+          "q-learning"
+        ]
+      },
+      "design": "dense",
+      "design_seed": 7840408485345725287,
+      "mean_log_probabilities": [
+        [
+          -0.5285546448591459,
+          -0.5465666258596769,
+          -0.6040380996947831,
+          -0.6791874358355812
+        ],
+        [
+          -0.5328383481482148,
+          -0.47481830510073986,
+          -0.5219620866026324,
+          -0.6990005943945846
+        ],
+        [
+          -0.5392229974914236,
+          -0.5313753582732746,
+          -0.5217935037777817,
+          -0.6199684091156309
+        ],
+        [
+          -0.5876369744931834,
+          -0.5915437393166976,
+          -0.5625134288189281,
+          -0.42578518908137686
+        ]
+      ],
+      "n_folds": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "n_runs": 4,
+      "n_subjects": 1,
+      "n_trials": 300,
+      "overall_accuracy": 1.0,
+      "resolution_rate": 1.0,
+      "resolved_accuracy": 1.0,
+      "run_seeds": [
+        7381549723114671078,
+        7410305707988276010,
+        13363871378603352064,
+        2564904038162814473
+      ],
+      "selected_labels": [
+        "static",
+        "smooth",
+        "hmm",
+        "q-learning"
+      ],
+      "truth_labels": [
+        "static",
+        "smooth",
+        "hmm",
+        "q-learning"
+      ]
+    }
+  ],
+  "root_seed": 77
+}

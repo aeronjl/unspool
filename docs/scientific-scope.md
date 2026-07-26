@@ -30,7 +30,8 @@ The current executable slice covers the canonical study contract; typed design a
 landmark-relative clocks; fold-fitted threshold landmarks; complete-session and
 within-session rolling-origin validation; common model outputs; static and smoothly
 time-varying Bernoulli history GLMs; a fixed-transition Bernoulli GLM-HMM; a session-reset
-binary Q-learning agent; and design-specific parameter and model recovery. See the
+binary Q-learning agent; design-specific parameter and model recovery; and a first named
+four-family recovery grid with retained fit audits. See the
 [clock and transform guide](clocks-and-transforms.md), [modelling guide](modelling.md),
 [fit-audit guide](diagnostics.md), [smooth-drift guide](smooth-drift.md),
 [GLM-HMM guide](glm-hmm.md),

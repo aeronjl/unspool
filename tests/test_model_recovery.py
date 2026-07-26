@@ -3,10 +3,12 @@ import pytest
 
 from unspool import (
     BernoulliHistoryGLM,
+    FitAuditStatus,
     ModelRecoveryScenario,
     SmoothBernoulliHistoryGLM,
     Study,
     run_model_recovery,
+    run_model_recovery_grid,
 )
 
 
@@ -90,6 +92,10 @@ def test_model_recovery_builds_an_explicit_prospective_confusion_matrix() -> Non
     assert report.overall_accuracy == pytest.approx(5 / 6)
     assert report.resolved_accuracy == 1.0
     assert np.all(report.converged)
+    assert all(status is FitAuditStatus.PASS for row in report.audit_statuses for status in row)
+    assert all(not codes for row in report.audit_issue_codes for codes in row)
+    assert report.audit_warning_rate == 0.0
+    assert report.audit_failure_rate == 0.0
 
     matrix = report.confusion_matrix()
     assert matrix.truth_labels == ("static", "smooth")
@@ -150,9 +156,72 @@ def test_nonconvergence_is_retained_and_excluded_from_selection() -> None:
     )
 
     assert report.converged.tolist() == [[True, False]]
+    assert report.audit_statuses == ((FitAuditStatus.PASS, FitAuditStatus.FAIL),)
+    assert report.audit_issue_codes[0][0] == ()
+    assert "optimizer_nonconvergence" in report.audit_issue_codes[0][1]
+    assert report.audit_failure_rate == 0.5
     assert report.selected_labels == ("good",)
     assert report.failure_messages[0][0] == ""
     assert "ITERATIONS REACHED LIMIT" in report.failure_messages[0][1]
+
+
+def test_audit_warnings_are_retained_without_disqualifying_a_candidate() -> None:
+    warning_model = BernoulliHistoryGLM(
+        covariates=("stimulus",),
+        choice_lags=1,
+        l2=0.01,
+        coefficient_warning_threshold=0.01,
+    )
+    scenario = ModelRecoveryScenario(
+        name="boundary-warning",
+        truth_label="warning",
+        generator=warning_model,
+        parameters={"intercept": -0.2, "stimulus": 1.2, "choice_lag_1": 0.4},
+    )
+
+    report = run_model_recovery(
+        recovery_design(n_sessions=4, n_trials=80),
+        [scenario],
+        {"warning": warning_model},
+        seed=5,
+        min_train_sessions=2,
+    )
+
+    assert report.selected_labels == ("warning",)
+    assert report.audit_statuses == ((FitAuditStatus.WARNING,),)
+    assert report.audit_issue_codes == ((("boundary_estimate",),),)
+    assert report.audit_warning_rate == 1.0
+    assert report.audit_failure_rate == 0.0
+
+
+def test_recovery_grid_compares_named_designs_with_independent_seeds() -> None:
+    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01)
+    scenario = ModelRecoveryScenario(
+        name="stationary",
+        truth_label="static",
+        generator=model,
+        parameters={"intercept": -0.2, "stimulus": 1.2, "choice_lag_1": 0.4},
+    )
+
+    grid = run_model_recovery_grid(
+        {
+            "short": recovery_design(n_sessions=4, n_trials=40),
+            "long": recovery_design(n_sessions=4, n_trials=80),
+        },
+        [scenario],
+        {"static": model},
+        seed=91,
+        min_train_sessions=2,
+    )
+
+    assert grid.design_names == ("short", "long")
+    assert len(set(grid.seeds.tolist())) == 2
+    assert grid.report_for("short").n_trials == 160
+    assert grid.report_for("long").n_trials == 320
+    assert [row.design_name for row in grid.summary()] == ["short", "long"]
+    assert [row.overall_accuracy for row in grid.summary()] == [1.0, 1.0]
+    with pytest.raises(KeyError, match="unknown recovery-grid design"):
+        grid.report_for("missing")
 
 
 def test_scenarios_require_exact_generator_parameters() -> None:

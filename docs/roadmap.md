@@ -24,8 +24,9 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** add a fixed-transition Bernoulli GLM-HMM and a compact session-reset
   binary Q-learning agent, both with restart, recovery, and prospective competing-
   explanation diagnostics.
-- **In progress:** add parameter- and model-recovery grids. The design-specific engines and
-  static-versus-smooth example are implemented; broad benchmark grids remain.
+- **In progress:** expand parameter- and model-recovery grids. The design-specific engines,
+  static-versus-smooth example, named-design grid contract, audit propagation, and first
+  matched four-family benchmark are implemented; repeated weak-signal grids remain.
 - **Implemented:** reproduce the Cell 2025 Figure 1 early-strategy/late-strategy result
   from a checksum-pinned public input while preserving a source session-identity collision.
 - **Implemented:** validate the canonical longitudinal schema on a checksum-pinned IBL

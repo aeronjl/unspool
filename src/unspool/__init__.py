@@ -22,10 +22,13 @@ from unspool.diagnostics import (
 )
 from unspool.evaluation import FoldEvaluation, evaluate_splits
 from unspool.model_recovery import (
+    ModelRecoveryGridReport,
+    ModelRecoveryGridSummary,
     ModelRecoveryMatrix,
     ModelRecoveryReport,
     ModelRecoveryScenario,
     run_model_recovery,
+    run_model_recovery_grid,
 )
 from unspool.models import (
     BehaviourModel,
@@ -104,6 +107,8 @@ __all__ = [
     "LandmarkNotFoundError",
     "LatentStateAudit",
     "ModelDataError",
+    "ModelRecoveryGridReport",
+    "ModelRecoveryGridSummary",
     "ModelRecoveryMatrix",
     "ModelRecoveryReport",
     "ModelRecoveryScenario",
@@ -131,6 +136,7 @@ __all__ = [
     "forward_session_splits",
     "leave_one_session_out_splits",
     "run_model_recovery",
+    "run_model_recovery_grid",
     "run_parameter_recovery",
     "session_order_clock",
     "with_cumulative_trial_clock",
