@@ -117,8 +117,10 @@ def test_hierarchical_glm_example_exposes_population_policy(
     runpy.run_path(str(example), run_name="__main__")
 
     output = capsys.readouterr().out
-    assert "Fixed-scale hierarchical Bernoulli GLM" in output
+    assert "Hierarchical Bernoulli GLM with estimated scale" in output
     assert "converged: True" in output
+    assert "subject scale (estimated):" in output
+    assert "scale at boundary: False" in output
     assert "unseen-subject policy: population-mean-plugin" in output
     assert "mouse-a fitted: True" in output
     assert "new-mouse fitted: False" in output
