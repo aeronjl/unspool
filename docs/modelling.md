@@ -96,6 +96,12 @@ choice/RT responses and retains posterior trial responsibilities without silentl
 them.
 See the [joint choice and response-time guide](drift-diffusion.md).
 
+`SmoothWienerDriftDiffusion` places selected drift coefficients, boundary separation, and
+starting bias on fixed-knot paths over an explicit study clock while retaining stationary
+non-decision time. Its future-knot persistence forecast, single-subject default, and strict
+distinction between across-trial trajectories and within-decision dynamics are detailed in
+the [session-varying drift-diffusion guide](smooth-ddm.md).
+
 The GLM implementations use SciPy's deterministic L-BFGS-B optimizer. An optional L2
 penalty applies to non-intercept coefficients. Standard errors and 95% coverage summaries
 use a local Hessian approximation; when penalization is nonzero they are approximate rather

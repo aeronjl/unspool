@@ -27,6 +27,20 @@ def test_smooth_glm_example_runs_end_to_end(capsys: CaptureFixture[str]) -> None
     assert "convergence=100%" in output
 
 
+def test_smooth_ddm_example_exposes_trajectories_and_forecast(
+    capsys: CaptureFixture[str],
+) -> None:
+    example = Path(__file__).parents[1] / "examples" / "smooth_drift_diffusion.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Session-varying drift-diffusion trajectories" in output
+    assert "stimulus drift:" in output
+    assert "boundary:" in output
+    assert "Prospective final-session joint log loss:" in output
+
+
 def test_model_recovery_example_runs_end_to_end(capsys: CaptureFixture[str]) -> None:
     example = Path(__file__).parents[1] / "examples" / "model_recovery.py"
 

@@ -28,10 +28,12 @@ All public parameters use their natural scale:
 - `starting_bias` strictly between zero and one;
 - non-negative `nondecision_time`, expressed in seconds.
 
-This is deliberately a first, stationary family. The base configuration does not model
+This is deliberately the stationary member of the family. The base configuration does not model
 across-trial Wiener-parameter variability, collapsing bounds, history-dependent starting
-points, or parameters that drift across learning. An optional contaminant mixture provides
-a narrow robustness account for responses outside the decision process.
+points, or parameters that drift across learning. `SmoothWienerDriftDiffusion` adds
+fixed-knot longitudinal paths for selected drift coefficients, boundary, and starting bias;
+see the [session-varying guide](smooth-ddm.md). An optional contaminant mixture provides a
+narrow robustness account for responses outside the stationary decision process.
 
 ## Response-time schema
 
@@ -179,7 +181,9 @@ Run the small executable example and full benchmark with:
 
 ```bash
 uv run python examples/drift_diffusion.py
+uv run python examples/smooth_drift_diffusion.py
 uv run python examples/contaminant_ddm.py
 uv run python -m benchmarks.ddm_recovery.benchmark
 uv run python -m benchmarks.ddm_contaminants.benchmark
+uv run python -m benchmarks.smooth_ddm.benchmark
 ```

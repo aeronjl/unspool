@@ -904,39 +904,48 @@ def _wiener_log_density(
     choice: NDArray[np.float64],
     drift: NDArray[np.float64],
     *,
-    boundary: float,
-    starting_bias: float,
+    boundary: float | NDArray[np.float64],
+    starting_bias: float | NDArray[np.float64],
     terms: int,
 ) -> NDArray[np.float64]:
     """Joint two-boundary Wiener log density using paired convergent series."""
 
-    times, choices, drifts = np.broadcast_arrays(
+    times, choices, drifts, boundaries, biases = np.broadcast_arrays(
         np.asarray(decision_time, dtype=np.float64),
         np.asarray(choice, dtype=np.float64),
         np.asarray(drift, dtype=np.float64),
+        np.asarray(boundary, dtype=np.float64),
+        np.asarray(starting_bias, dtype=np.float64),
     )
     result = np.full(times.shape, _LOG_DENSITY_FLOOR, dtype=np.float64)
     valid = (
-        np.isfinite(times) & (times > 0) & np.isfinite(drifts) & ((choices == 0) | (choices == 1))
+        np.isfinite(times)
+        & (times > 0)
+        & np.isfinite(drifts)
+        & np.isfinite(boundaries)
+        & (boundaries > 0)
+        & np.isfinite(biases)
+        & (biases > 0)
+        & (biases < 1)
+        & ((choices == 0) | (choices == 1))
     )
     if not np.any(valid):
         return result
     selected_times = times[valid]
     selected_choices = choices[valid]
     selected_drifts = drifts[valid]
+    selected_boundaries = boundaries[valid]
+    selected_biases = biases[valid]
     effective_drift = np.where(selected_choices == 1, -selected_drifts, selected_drifts)
-    effective_bias = np.where(selected_choices == 1, 1.0 - starting_bias, starting_bias)
-    scaled_time = selected_times / boundary**2
-    standard = np.empty_like(scaled_time)
-    for bias in np.unique(effective_bias):
-        positions = effective_bias == bias
-        standard[positions] = _standard_wiener_log_density(
-            scaled_time[positions],
-            float(bias),
-            terms=terms,
-        )
-    log_density = -2.0 * np.log(boundary)
-    log_density += -effective_drift * boundary * effective_bias
+    effective_bias = np.where(selected_choices == 1, 1.0 - selected_biases, selected_biases)
+    scaled_time = selected_times / selected_boundaries**2
+    standard = _standard_wiener_log_density(
+        scaled_time,
+        effective_bias,
+        terms=terms,
+    )
+    log_density = -2.0 * np.log(selected_boundaries)
+    log_density += -effective_drift * selected_boundaries * effective_bias
     log_density += -0.5 * effective_drift**2 * selected_times
     log_density += standard
     result[valid] = np.maximum(log_density, _LOG_DENSITY_FLOOR)
@@ -945,33 +954,37 @@ def _wiener_log_density(
 
 def _standard_wiener_log_density(
     scaled_time: NDArray[np.float64],
-    starting_bias: float,
+    starting_bias: float | NDArray[np.float64],
     *,
     terms: int,
 ) -> NDArray[np.float64]:
-    result = np.empty_like(scaled_time)
-    small = scaled_time < 0.15
+    times, biases = np.broadcast_arrays(
+        np.asarray(scaled_time, dtype=np.float64),
+        np.asarray(starting_bias, dtype=np.float64),
+    )
+    result = np.empty_like(times)
+    small = times < 0.15
     if np.any(small):
         lower = -int(np.ceil((terms - 1) / 2))
         upper = int(np.floor((terms - 1) / 2))
         k = np.arange(lower, upper + 1, dtype=np.float64)
-        coefficients = starting_bias + 2.0 * k
-        exponent = -(coefficients[None, :] ** 2) / (2.0 * scaled_time[small, None])
+        coefficients = biases[small, None] + 2.0 * k[None, :]
+        exponent = -(coefficients**2) / (2.0 * times[small, None])
         log_sum, sign = logsumexp(
             exponent,
-            b=np.broadcast_to(coefficients, exponent.shape),
+            b=coefficients,
             axis=1,
             return_sign=True,
         )
-        values = log_sum - 0.5 * np.log(2.0 * np.pi) - 1.5 * np.log(scaled_time[small])
+        values = log_sum - 0.5 * np.log(2.0 * np.pi) - 1.5 * np.log(times[small])
         result[small] = np.where(sign > 0, values, _LOG_DENSITY_FLOOR)
     if np.any(~small):
         k = np.arange(1, terms + 1, dtype=np.float64)
-        coefficients = k * np.sin(k * np.pi * starting_bias)
-        exponent = -0.5 * (k[None, :] * np.pi) ** 2 * scaled_time[~small, None]
+        coefficients = k[None, :] * np.sin(k[None, :] * np.pi * biases[~small, None])
+        exponent = -0.5 * (k[None, :] * np.pi) ** 2 * times[~small, None]
         log_sum, sign = logsumexp(
             exponent,
-            b=np.broadcast_to(coefficients, exponent.shape),
+            b=coefficients,
             axis=1,
             return_sign=True,
         )
@@ -983,21 +996,26 @@ def _standard_wiener_log_density(
 def _upper_boundary_probability(
     drift: NDArray[np.float64],
     *,
-    boundary: float,
-    starting_bias: float,
+    boundary: float | NDArray[np.float64],
+    starting_bias: float | NDArray[np.float64],
 ) -> NDArray[np.float64]:
-    scaled = 2.0 * np.asarray(drift, dtype=np.float64) * boundary
+    drifts, boundaries, biases = np.broadcast_arrays(
+        np.asarray(drift, dtype=np.float64),
+        np.asarray(boundary, dtype=np.float64),
+        np.asarray(starting_bias, dtype=np.float64),
+    )
+    scaled = 2.0 * drifts * boundaries
     probability = np.empty_like(scaled)
     near_zero = np.abs(scaled) < 1e-8
-    probability[near_zero] = starting_bias
+    probability[near_zero] = biases[near_zero]
     positive = (scaled > 0) & ~near_zero
-    probability[positive] = np.expm1(-scaled[positive] * starting_bias) / np.expm1(
+    probability[positive] = np.expm1(-scaled[positive] * biases[positive]) / np.expm1(
         -scaled[positive]
     )
     negative = (scaled < 0) & ~near_zero
     negative_scaled = scaled[negative]
     probability[negative] = (
-        np.exp(negative_scaled * (1.0 - starting_bias)) - np.exp(negative_scaled)
+        np.exp(negative_scaled * (1.0 - biases[negative])) - np.exp(negative_scaled)
     ) / (1.0 - np.exp(negative_scaled))
     return probability
 
