@@ -1,14 +1,19 @@
 # Longitudinal validation
 
-Unspool's first splitters operate within subjects at complete-session and within-session
-resolutions. They answer different questions and expose that difference through
-`split.prospective`.
+Unspool's splitters operate both within subjects over time and across complete population
+units. They answer different questions and retain the held-out unit in every split.
 
 | Splitter | Training data | Test data | Prospective? | Primary use |
 | --- | --- | --- | --- | --- |
 | `forward_session_splits` | Expanding prefix of sessions | Next `horizon` sessions | Yes | Forecasting behaviour from the past available at that point |
 | `within_session_rolling_splits` | Earlier sessions plus current-session prefix | Next `horizon` observed trials | Yes | Online, filtered prediction inside a session |
 | `leave_one_session_out_splits` | Every other session for that subject | One complete session | No | Interpolation and sensitivity to a particular session |
+| `leave_one_subject_out_splits` | Every other subject | All trials from one subject | Yes¹ | Generalization to an unseen animal |
+| `leave_one_lab_out_splits` | Every other lab | All subjects and trials from one lab | Yes¹ | Generalization across acquisition sites |
+
+¹ Population folds exclude every observation from the held-out unit. Their `prospective`
+flag therefore means leakage-safe generalization to an unseen subject or lab, not a
+within-subject forecast through calendar time.
 
 ## Forward-session prediction
 
@@ -83,9 +88,38 @@ collected after the held-out session. It must not be described as prospective pr
 The method is still useful when the estimand is interpolation, robustness to session-level
 perturbations, or the influence of individual sessions.
 
+## Population holdout
+
+```python
+from unspool import leave_one_lab_out_splits, leave_one_subject_out_splits
+
+for split in leave_one_subject_out_splits(study):
+    assert set(split.train_subjects).isdisjoint(split.test_subjects)
+
+for split in leave_one_lab_out_splits(study, lab_column="lab"):
+    assert set(split.train_subjects).isdisjoint(split.test_subjects)
+    assert set(split.train_groups).isdisjoint(split.test_groups)
+```
+
+Both splitters preserve source row positions and hold out complete subjects. Lab holdout
+also requires every subject to map to exactly one non-missing lab; a subject appearing in
+more than one lab is rejected instead of leaking across the fold. Studies with fewer than
+two eligible subjects or labs produce no folds.
+
+Population folds can be passed directly to `evaluate_splits`. That does not make every
+model population-aware: the fitted model must define parameters that can be shared across
+training subjects and applied to an unseen subject. For example, the static GLM supports
+shared coefficients, while the smooth GLM requires an explicit `shared_trajectory=True`
+choice before fitting multiple subjects.
+
+Fold-fitted, subject-specific landmarks present a stricter boundary. A landmark learned
+only for training subjects cannot be applied to a new test subject, and Unspool raises
+rather than silently estimating it from held-out data. Population-transferable transforms
+must define how new-subject values are obtained using training-fold information alone.
+
 ## Current boundary
 
-All splitters produce separate folds for each subject. They do not pool other animals into
-the training indices, because the library does not yet have a model-aware contract for
-hierarchical fitting. Leave-subject-out and leave-lab-out remain roadmap work rather than
-hidden assumptions.
+Population splitters currently fit one shared parameter vector to the training animals.
+They do not yet estimate population and individual effects through partial pooling, and
+they do not align subject-specific latent states. Those require model-aware hierarchical
+contracts rather than hidden assumptions in a generic splitter.

@@ -68,6 +68,18 @@ The verified result is:
 
 The machine-readable result is committed in [`result.json`](result.json).
 
+## Population-validation contract
+
+The same 28,400 rows now exercise complete-subject and complete-lab holdout. Both schemes
+produce nine folds, cover every trial exactly once on the test side, and keep training and
+test subjects disjoint. All nine lab partitions exactly match a subject partition because
+the selection contract intentionally retained one animal per lab.
+
+That equivalence is a useful leakage and coverage regression, but it is also a scientific
+limit: this panel cannot distinguish generalization to a new animal from generalization to
+a new lab. A cross-lab model benchmark requires multiple held-out animals per lab rather
+than reinterpreting these nine paired partitions.
+
 ## Interpretation boundary
 
 The transition is itself performance-gated in the training pipeline, and both transition

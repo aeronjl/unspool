@@ -92,3 +92,18 @@ def test_q_learning_example_runs_end_to_end(capsys: CaptureFixture[str]) -> None
     assert "fit audit:           pass []" in output
     assert "Prospective competing explanations" in output
     assert "Q-learning: log-loss=" in output
+
+
+def test_population_validation_example_exposes_held_out_units(
+    capsys: CaptureFixture[str],
+) -> None:
+    example = Path(__file__).parents[1] / "examples" / "population_validation.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Leave-subject-out folds" in output
+    assert "held out=mouse-a" in output
+    assert "Leave-lab-out folds" in output
+    assert "held out=lab-1" in output
+    assert "test=('mouse-a', 'mouse-b')" in output

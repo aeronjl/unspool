@@ -6,7 +6,9 @@ from unspool import (
     Study,
     evaluate_splits,
     forward_session_splits,
+    leave_one_lab_out_splits,
     leave_one_session_out_splits,
+    leave_one_subject_out_splits,
     within_session_rolling_splits,
 )
 
@@ -90,3 +92,57 @@ def test_within_session_evaluation_preserves_filtered_pre_origin_history() -> No
         evaluation.prediction.probability[0],
         reset_prediction.probability[0],
     )
+
+
+def test_population_holdouts_fit_only_on_unseen_subjects_and_labs() -> None:
+    generator = np.random.default_rng(31)
+    subjects = ("a", "b", "c")
+    labs = {"a": "north", "b": "north", "c": "south"}
+    n_sessions = 2
+    n_trials = 20
+    design = Study(
+        {
+            "subject": [
+                subject
+                for subject in subjects
+                for _session in range(n_sessions)
+                for _trial in range(n_trials)
+            ],
+            "session": [
+                f"{subject}-{session}"
+                for subject in subjects
+                for session in range(n_sessions)
+                for _trial in range(n_trials)
+            ],
+            "trial": list(range(n_trials)) * n_sessions * len(subjects),
+            "session_order": [
+                session
+                for _subject in subjects
+                for session in range(n_sessions)
+                for _trial in range(n_trials)
+            ],
+            "lab": [
+                labs[subject]
+                for subject in subjects
+                for _session in range(n_sessions)
+                for _trial in range(n_trials)
+            ],
+            "stimulus": generator.normal(size=len(subjects) * n_sessions * n_trials),
+        }
+    )
+    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.1)
+    study = model.simulate(
+        design,
+        {"intercept": -0.1, "stimulus": 1.0, "choice_lag_1": 0.4},
+        seed=32,
+    )
+
+    subject_evaluation = evaluate_splits(model, study, leave_one_subject_out_splits(study))[0]
+    assert subject_evaluation.fit.n_observations == 80
+    assert subject_evaluation.prediction.probability.shape == (40,)
+    assert subject_evaluation.split.test_subjects == ("a",)
+
+    lab_evaluation = evaluate_splits(model, study, leave_one_lab_out_splits(study))[0]
+    assert lab_evaluation.fit.n_observations == 40
+    assert lab_evaluation.prediction.probability.shape == (80,)
+    assert lab_evaluation.split.test_groups == ("north",)

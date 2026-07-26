@@ -16,14 +16,14 @@ from unspool.models.base import (
     _protected_array,
 )
 from unspool.study import Study
-from unspool.validation import ValidationSplit
+from unspool.validation import ValidationFold
 
 
 @dataclass(frozen=True, slots=True)
 class FoldEvaluation:
     """Fit, prediction, and pointwise score for one validation fold."""
 
-    split: ValidationSplit
+    split: ValidationFold
     fit: FitResult
     prediction: Prediction
     pointwise_log_probability: NDArray[np.float64]
@@ -52,7 +52,7 @@ class FoldEvaluation:
 def evaluate_splits(
     model: BehaviourModel,
     study: Study,
-    splits: Iterable[ValidationSplit],
+    splits: Iterable[ValidationFold],
     *,
     mode: PredictionMode = PredictionMode.FILTERED,
     require_prospective: bool = True,

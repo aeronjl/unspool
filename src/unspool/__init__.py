@@ -70,9 +70,13 @@ from unspool.transforms import (
     fit_transform_splits,
 )
 from unspool.validation import (
+    PopulationValidationSplit,
+    ValidationFold,
     ValidationSplit,
     forward_session_splits,
+    leave_one_lab_out_splits,
     leave_one_session_out_splits,
+    leave_one_subject_out_splits,
     within_session_rolling_splits,
 )
 
@@ -116,6 +120,7 @@ __all__ = [
     "ModelRecoveryScenarioMatrix",
     "ParameterRecoveryReport",
     "ParameterRecoverySummary",
+    "PopulationValidationSplit",
     "Prediction",
     "PredictionMode",
     "QLearningFitResult",
@@ -128,6 +133,7 @@ __all__ = [
     "ThresholdLandmarkClock",
     "TransformProvenance",
     "UnsupportedPredictionMode",
+    "ValidationFold",
     "ValidationSplit",
     "ValueTrajectory",
     "__version__",
@@ -136,7 +142,9 @@ __all__ = [
     "fit_transform_split",
     "fit_transform_splits",
     "forward_session_splits",
+    "leave_one_lab_out_splits",
     "leave_one_session_out_splits",
+    "leave_one_subject_out_splits",
     "run_model_recovery",
     "run_model_recovery_grid",
     "run_parameter_recovery",

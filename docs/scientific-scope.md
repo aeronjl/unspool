@@ -28,7 +28,8 @@ The first useful release should contain:
 
 The current executable slice covers the canonical study contract; typed design and
 landmark-relative clocks; fold-fitted threshold landmarks; complete-session and
-within-session rolling-origin validation; common model outputs; static and smoothly
+within-session rolling-origin validation; complete-subject and complete-lab holdout;
+common model outputs; static and smoothly
 time-varying Bernoulli history GLMs; a fixed-transition Bernoulli GLM-HMM; a session-reset
 binary Q-learning agent; design-specific parameter and model recovery; and a first named
 four-family recovery grid plus repeated boundary-near regimes with retained fit audits.

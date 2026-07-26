@@ -4,7 +4,9 @@ import pytest
 from unspool import (
     Study,
     forward_session_splits,
+    leave_one_lab_out_splits,
     leave_one_session_out_splits,
+    leave_one_subject_out_splits,
     within_session_rolling_splits,
 )
 from unspool.validation import ValidationSplit
@@ -52,6 +54,18 @@ def shuffled_within_session_study() -> Study:
             ],
             "trial": [2, 1, 0, 0, 0, 1, 3, 1, 0, 2, 1],
             "session_order": [1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1],
+        }
+    )
+
+
+def population_study() -> Study:
+    return Study(
+        {
+            "subject": ["a", "c", "b", "a", "d", "c", "b", "d"],
+            "session": ["a-1", "c-1", "b-1", "a-1", "d-1", "c-1", "b-1", "d-1"],
+            "trial": [0, 0, 0, 1, 0, 1, 1, 1],
+            "session_order": [0] * 8,
+            "lab": ["north", "south", "north", "north", "east", "south", "north", "east"],
         }
     )
 
@@ -115,6 +129,69 @@ def test_leave_one_session_out_is_whole_session_but_not_prospective() -> None:
     assert middle.test_indices.tolist() == [0, 6]
     assert middle.prospective is False
     assert middle.scheme == "leave-one-session-out"
+
+
+def test_leave_one_subject_out_holds_out_complete_subjects() -> None:
+    splits = leave_one_subject_out_splits(population_study())
+
+    assert len(splits) == 4
+    first = splits[0]
+    assert first.scheme == "leave-one-subject-out"
+    assert first.group_column == "subject"
+    assert first.held_out_group == "a"
+    assert first.train_subjects == ("c", "b", "d")
+    assert first.test_subjects == ("a",)
+    assert first.train_groups == first.train_subjects
+    assert first.test_groups == first.test_subjects
+    assert first.train_indices.tolist() == [1, 2, 4, 5, 6, 7]
+    assert first.test_indices.tolist() == [0, 3]
+    assert first.prospective
+
+
+def test_leave_one_lab_out_holds_out_subjects_and_labs_together() -> None:
+    splits = leave_one_lab_out_splits(population_study())
+
+    assert len(splits) == 3
+    north = splits[0]
+    assert north.scheme == "leave-one-lab-out"
+    assert north.group_column == "lab"
+    assert north.held_out_group == "north"
+    assert north.train_groups == ("south", "east")
+    assert north.test_groups == ("north",)
+    assert north.train_subjects == ("c", "d")
+    assert north.test_subjects == ("a", "b")
+    assert north.train_indices.tolist() == [1, 4, 5, 7]
+    assert north.test_indices.tolist() == [0, 2, 3, 6]
+    assert not np.intersect1d(north.train_subjects, north.test_subjects).size
+
+
+def test_leave_one_lab_out_rejects_cross_lab_subject_leakage() -> None:
+    study = population_study()
+    columns = {name: study[name] for name in study.columns}
+    columns["lab"] = ["north", "south", "north", "west", "east", "south", "north", "east"]
+
+    with pytest.raises(ValueError, match="subject 'a' maps to 'north' and 'west'"):
+        leave_one_lab_out_splits(Study(columns))
+
+
+def test_population_splitters_require_multiple_valid_groups() -> None:
+    assert leave_one_subject_out_splits(one_session_study()) == ()
+    with pytest.raises(ValueError, match="does not contain lab column"):
+        leave_one_lab_out_splits(population_study(), lab_column="institution")
+    with pytest.raises(ValueError, match="lab_column must differ"):
+        leave_one_lab_out_splits(population_study(), lab_column="subject")
+
+
+def test_leave_one_lab_out_accepts_an_explicit_source_column() -> None:
+    study = population_study()
+    columns = {name: study[name] for name in study.columns if name != "lab"}
+    columns["institution"] = study["lab"]
+
+    splits = leave_one_lab_out_splits(Study(columns), lab_column="institution")
+
+    assert len(splits) == 3
+    assert splits[0].group_column == "institution"
+    assert splits[0].held_out_group == "north"
 
 
 def test_within_session_origins_expand_history_without_sorting_source_rows() -> None:

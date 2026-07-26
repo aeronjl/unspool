@@ -15,6 +15,7 @@ SplitScheme = Literal[
     "leave-one-session-out",
     "within-session-rolling-origin",
 ]
+PopulationSplitScheme = Literal["leave-one-subject-out", "leave-one-lab-out"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -136,6 +137,84 @@ class ValidationSplit:
         return self.scheme in ("forward-session", "within-session-rolling-origin")
 
 
+@dataclass(frozen=True, slots=True)
+class PopulationValidationSplit:
+    """Whole-population fold with explicit held-out subject and group metadata.
+
+    Population folds contain complete subjects on both sides. ``group_column`` names the
+    unit being held out: ``subject`` for subject generalization or a source column such as
+    ``lab`` for group generalization.
+    """
+
+    train_indices: NDArray[np.intp]
+    test_indices: NDArray[np.intp]
+    train_subjects: tuple[Any, ...]
+    test_subjects: tuple[Any, ...]
+    train_groups: tuple[Any, ...]
+    test_groups: tuple[Any, ...]
+    held_out_group: Any
+    group_column: str
+    scheme: PopulationSplitScheme
+    prediction_context_indices: NDArray[np.intp] = field(
+        default_factory=lambda: np.empty(0, dtype=np.intp)
+    )
+
+    def __post_init__(self) -> None:
+        if self.scheme not in ("leave-one-subject-out", "leave-one-lab-out"):
+            raise ValueError(f"unknown population validation scheme: {self.scheme!r}")
+        if not isinstance(self.group_column, str) or not self.group_column:
+            raise ValueError("group_column must be a non-empty string")
+
+        train = _validated_indices(self.train_indices, "train_indices")
+        test = _validated_indices(self.test_indices, "test_indices")
+        context = _validated_indices(
+            self.prediction_context_indices,
+            "prediction_context_indices",
+            allow_empty=True,
+        )
+        train_subjects = _validated_identifiers(self.train_subjects, "train_subjects")
+        test_subjects = _validated_identifiers(self.test_subjects, "test_subjects")
+        train_groups = _validated_identifiers(self.train_groups, "train_groups")
+        test_groups = _validated_identifiers(self.test_groups, "test_groups")
+        held_out_group = _validated_identifier(self.held_out_group, "held_out_group")
+
+        if np.intersect1d(train, test).size:
+            raise ValueError("training and test indices must not overlap")
+        if context.size:
+            raise ValueError("population splits do not use prediction context")
+        if _identifier_keys(train_subjects) & _identifier_keys(test_subjects):
+            raise ValueError("population training and test subjects must be disjoint")
+        if _identifier_keys(train_groups) & _identifier_keys(test_groups):
+            raise ValueError("population training and test groups must be disjoint")
+        if len(test_groups) != 1 or not _equal(test_groups[0], held_out_group):
+            raise ValueError("test_groups must contain exactly the held-out group")
+        if self.scheme == "leave-one-subject-out":
+            if self.group_column != "subject":
+                raise ValueError("leave-one-subject-out folds must group by 'subject'")
+            if train_groups != train_subjects or test_groups != test_subjects:
+                raise ValueError("subject-holdout group metadata must match subject metadata")
+        elif self.group_column == "subject":
+            raise ValueError("leave-one-lab-out folds require a non-subject group column")
+
+        object.__setattr__(self, "train_indices", train)
+        object.__setattr__(self, "test_indices", test)
+        object.__setattr__(self, "prediction_context_indices", context)
+        object.__setattr__(self, "train_subjects", train_subjects)
+        object.__setattr__(self, "test_subjects", test_subjects)
+        object.__setattr__(self, "train_groups", train_groups)
+        object.__setattr__(self, "test_groups", test_groups)
+        object.__setattr__(self, "held_out_group", held_out_group)
+
+    @property
+    def prospective(self) -> bool:
+        """Whether all observations from the held-out population unit are excluded."""
+
+        return True
+
+
+ValidationFold = ValidationSplit | PopulationValidationSplit
+
+
 def forward_session_splits(
     study: Study,
     *,
@@ -200,6 +279,43 @@ def leave_one_session_out_splits(study: Study) -> tuple[ValidationSplit, ...]:
                 )
             )
     return tuple(splits)
+
+
+def leave_one_subject_out_splits(study: Study) -> tuple[PopulationValidationSplit, ...]:
+    """Hold out every complete subject while training on all other subjects."""
+
+    return _leave_one_population_group_out(
+        study,
+        groups=study.subjects,
+        group_column="subject",
+        scheme="leave-one-subject-out",
+    )
+
+
+def leave_one_lab_out_splits(
+    study: Study,
+    *,
+    lab_column: str = "lab",
+) -> tuple[PopulationValidationSplit, ...]:
+    """Hold out every complete lab while preventing subjects from crossing folds.
+
+    The lab column is optional in the core ``Study`` schema, so its name is explicit and
+    validated here. Every subject must map to exactly one non-missing lab.
+    """
+
+    if not isinstance(lab_column, str) or not lab_column:
+        raise ValueError("lab_column must be a non-empty string")
+    if lab_column == "subject":
+        raise ValueError("lab_column must differ from the subject column")
+    if lab_column not in study.columns:
+        raise ValueError(f"study does not contain lab column {lab_column!r}")
+    groups = _groups_with_constant_subject_assignment(study, lab_column)
+    return _leave_one_population_group_out(
+        study,
+        groups=groups,
+        group_column=lab_column,
+        scheme="leave-one-lab-out",
+    )
 
 
 def within_session_rolling_splits(
@@ -270,6 +386,79 @@ def within_session_rolling_splits(
                 )
                 train_count += step
     return tuple(splits)
+
+
+def _leave_one_population_group_out(
+    study: Study,
+    *,
+    groups: tuple[Any, ...],
+    group_column: str,
+    scheme: PopulationSplitScheme,
+) -> tuple[PopulationValidationSplit, ...]:
+    if len(groups) < 2:
+        return ()
+
+    group_values = study[group_column]
+    splits: list[PopulationValidationSplit] = []
+    for held_out_group in groups:
+        test_mask = np.fromiter(
+            (_equal(value, held_out_group) for value in group_values),
+            dtype=np.bool_,
+            count=len(study),
+        )
+        train_indices = np.flatnonzero(~test_mask)
+        test_indices = np.flatnonzero(test_mask)
+        train_subjects = _unique_identifiers(study["subject"][train_indices])
+        test_subjects = _unique_identifiers(study["subject"][test_indices])
+        train_groups = _unique_identifiers(group_values[train_indices])
+        test_groups = _unique_identifiers(group_values[test_indices])
+        splits.append(
+            PopulationValidationSplit(
+                train_indices=train_indices,
+                test_indices=test_indices,
+                train_subjects=train_subjects,
+                test_subjects=test_subjects,
+                train_groups=train_groups,
+                test_groups=test_groups,
+                held_out_group=_scalar(held_out_group),
+                group_column=group_column,
+                scheme=scheme,
+            )
+        )
+    return tuple(splits)
+
+
+def _groups_with_constant_subject_assignment(study: Study, group_column: str) -> tuple[Any, ...]:
+    subject_groups: dict[Any, Any] = {}
+    groups: list[Any] = []
+    seen_groups: set[Any] = set()
+    for row in range(len(study)):
+        subject = _validated_identifier(study["subject"][row], f"subject at row {row}")
+        group = _validated_identifier(study[group_column][row], f"{group_column} at row {row}")
+        subject_key = _identifier_key(subject)
+        known_group = subject_groups.setdefault(subject_key, group)
+        if not _equal(known_group, group):
+            raise ValueError(
+                f"every subject must map to exactly one {group_column}; "
+                f"subject {subject!r} maps to {known_group!r} and {group!r}"
+            )
+        group_key = _identifier_key(group)
+        if group_key not in seen_groups:
+            seen_groups.add(group_key)
+            groups.append(group)
+    return tuple(groups)
+
+
+def _unique_identifiers(values: NDArray[Any]) -> tuple[Any, ...]:
+    identifiers: list[Any] = []
+    seen: set[Any] = set()
+    for position, value in enumerate(values):
+        identifier = _validated_identifier(value, f"identifier at position {position}")
+        key = _identifier_key(identifier)
+        if key not in seen:
+            seen.add(key)
+            identifiers.append(identifier)
+    return tuple(identifiers)
 
 
 def _sessions_for_subject(study: Study, subject: Any) -> tuple[tuple[int, Any], ...]:
@@ -363,6 +552,42 @@ def _validated_session_orders(values: tuple[int, ...], name: str) -> tuple[int, 
     if len(set(orders)) != len(orders):
         raise ValueError(f"{name} must not contain duplicates")
     return orders
+
+
+def _validated_identifiers(values: tuple[Any, ...], name: str) -> tuple[Any, ...]:
+    identifiers = tuple(
+        _validated_identifier(value, f"{name}[{position}]") for position, value in enumerate(values)
+    )
+    if not identifiers:
+        raise ValueError(f"{name} must not be empty")
+    if len(_identifier_keys(identifiers)) != len(identifiers):
+        raise ValueError(f"{name} must not contain duplicates")
+    return identifiers
+
+
+def _validated_identifier(value: Any, name: str) -> Any:
+    identifier = _scalar(value)
+    if identifier is None:
+        raise ValueError(f"{name} must not be missing")
+    if isinstance(identifier, (float, complex, np.floating, np.complexfloating)) and np.isnan(
+        identifier
+    ):
+        raise ValueError(f"{name} must not be missing")
+    if isinstance(identifier, (np.datetime64, np.timedelta64)) and np.isnat(identifier):
+        raise ValueError(f"{name} must not be missing")
+    try:
+        hash(identifier)
+    except TypeError:
+        raise TypeError(f"{name} must be hashable") from None
+    return identifier
+
+
+def _identifier_key(value: Any) -> Any:
+    return _scalar(value)
+
+
+def _identifier_keys(values: tuple[Any, ...]) -> set[Any]:
+    return {_identifier_key(value) for value in values}
 
 
 def _require_positive_integer(value: int, name: str) -> None:

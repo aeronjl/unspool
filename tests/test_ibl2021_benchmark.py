@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 
-from benchmarks.ibl2021.benchmark import build_study, calculate_session_metrics
+from benchmarks.ibl2021.benchmark import (
+    build_study,
+    calculate_session_metrics,
+    population_validation_summary,
+)
 from benchmarks.ibl2021.fetch_data import EXPECTED_MANIFEST_SHA256, load_manifest
 from benchmarks.ibl2021.selection import manifest_digest, select_learning_panel
+
+RESULT_PATH = Path("benchmarks/ibl2021/result.json")
 
 
 def _subject_sessions(lab: str, subject: str, n_training: int, n_biased: int = 2) -> list[dict]:
@@ -85,6 +93,16 @@ def test_committed_manifest_covers_nine_labs_with_disjoint_phases() -> None:
         assert len({row["session"] for row in subject_rows}) == 6
 
 
+def test_committed_result_retains_population_holdout_coverage() -> None:
+    result = json.loads(RESULT_PATH.read_text(encoding="utf-8"))
+
+    assert result["contract_passed"]
+    assert result["n_leave_subject_out_folds"] == 9
+    assert result["n_leave_lab_out_folds"] == 9
+    assert result["n_matching_subject_lab_partitions"] == 9
+    assert result["n_lab_holdouts_with_multiple_subjects"] == 0
+
+
 def _trials(rewards: list[int]) -> dict[str, Any]:
     n_trials = len(rewards)
     return {
@@ -133,3 +151,29 @@ def test_ibl_adapter_preserves_session_order_and_easy_accuracy() -> None:
         ("early", 0.25),
         ("late", 0.75),
     ]
+
+
+def test_population_validation_summary_distinguishes_subject_and_lab_partitions() -> None:
+    session_trials = [
+        (
+            {
+                "subject": subject,
+                "session": f"{subject}-session",
+                "session_order": 0,
+                "lab": lab,
+                "phase": "early",
+                "task_protocol": "trainingChoiceWorld",
+            },
+            _trials([1, 0]),
+        )
+        for subject, lab in (("a", "north"), ("b", "north"), ("c", "south"))
+    ]
+
+    summary = population_validation_summary(build_study(session_trials))
+
+    assert summary == {
+        "n_leave_subject_out_folds": 3,
+        "n_leave_lab_out_folds": 2,
+        "n_matching_subject_lab_partitions": 1,
+        "n_lab_holdouts_with_multiple_subjects": 1,
+    }
