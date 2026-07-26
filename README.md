@@ -23,7 +23,7 @@ stages, and inferred learning landmarks.
 > is not yet stable. The model catalogue currently contains static and smoothly time-
 > varying Bernoulli GLMs, static and smooth hierarchical Bernoulli GLMs, a fixed-transition
 > GLM-HMM, a compact binary Q-learning agent, and a joint choice/response-time Wiener
-> drift-diffusion model.
+> drift-diffusion model with an optional explicit contaminant mixture.
 
 ## Why “Unspool”?
 
@@ -97,7 +97,8 @@ Seven reference models are executable: a static Bernoulli GLM, a smoothly time-v
 competitor with fixed temporal knots, a static partial-pooling Bernoulli GLM, a partially
 pooled smooth trajectory model, a fixed-transition Bernoulli GLM-HMM, and a compact
 session-reset binary Q-learning agent, plus a fixed-parameter Wiener drift-diffusion model
-that jointly scores choice and response time. They expose recursive simulation, fitting,
+that jointly scores choice and response time and can include a fixed-support contaminant
+component. They expose recursive simulation, fitting,
 filtered prediction, pointwise scoring, numerical diagnostics, prospective fold evaluation,
 and design-specific recovery through one common contract. Every fit also produces a
 normalized audit without discarding its model-specific evidence. See the
@@ -121,6 +122,7 @@ uv run python examples/within_session_validation.py
 uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
 uv run python examples/drift_diffusion.py
+uv run python examples/contaminant_ddm.py
 uv run python examples/population_validation.py
 uv run python examples/hierarchical_glm.py
 uv run python examples/hierarchical_smooth_glm.py
@@ -187,6 +189,13 @@ audit, and increasing the design size reduces RMSE for drift intercept, stimulus
 boundary, starting bias, and non-decision time. See the
 [drift-diffusion recovery benchmark](benchmarks/ddm_recovery/README.md).
 
+A paired contaminant benchmark then injects five-percent independent uniform response-time
+contamination into 20 five-session designs. The explicit-mixture Wiener fit lowers RMSE for
+every shared parameter and beats the naive fit on held-out fifth-session joint log loss in
+all 20 repetitions. Posterior trial responsibilities remain soft and the support is fixed
+before fitting. See the
+[contaminant-aware DDM benchmark](benchmarks/ddm_contaminants/README.md).
+
 ## Published-data benchmarks
 
 The first external benchmark reproduces the central longitudinal-behaviour result from
@@ -231,6 +240,7 @@ uv run python examples/within_session_validation.py
 uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
 uv run python examples/drift_diffusion.py
+uv run python examples/contaminant_ddm.py
 uv run python examples/population_validation.py
 uv run python examples/hierarchical_glm.py
 uv run python examples/hierarchical_smooth_glm.py
@@ -244,6 +254,7 @@ uv run python -m benchmarks.state_alignment.benchmark
 uv run python -m benchmarks.landmark_uncertainty.benchmark
 uv run python -m benchmarks.nested_selection.benchmark
 uv run python -m benchmarks.ddm_recovery.benchmark
+uv run python -m benchmarks.ddm_contaminants.benchmark
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv

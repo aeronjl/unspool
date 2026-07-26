@@ -1,0 +1,2524 @@
+{
+  "benchmark": "uniform-contaminant Wiener recovery and future-session forecast",
+  "design": {
+    "n_sessions": 5,
+    "n_test_trials": 200,
+    "n_train_trials": 800,
+    "trials_per_session": 200
+  },
+  "generator_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+  "naive_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+  "repeats": 20,
+  "runs": [
+    {
+      "design_seed": 128760963975366989,
+      "future_mean_log_loss": {
+        "naive": 0.44680779346803645,
+        "robust": 0.40432950131923046
+      },
+      "n_test_contaminants": 5,
+      "n_train_contaminants": 48,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.008143136704204733,
+            "hessian_condition": 676.0759981220496,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 21,
+            "objective": 454.63367747314794,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 2.3192569642560557e-08,
+            "relative_objective_range": 5.1013751932027475e-11,
+            "selected_converged": true,
+            "selected_objective": 454.63367747314794,
+            "selected_restart": 2
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.36002413596931,
+          "drift.intercept": 0.19220431358332493,
+          "drift.stimulus": 0.8069678256741124,
+          "nondecision_time": 0.22993495702562636,
+          "starting_bias": 0.43408061084980476
+        },
+        "objective": 454.63367747314794,
+        "restart_objectives": [
+          454.6336774963405,
+          454.63367747377674,
+          454.63367747314794
+        ],
+        "selected_restart": 2,
+        "standard_errors": {
+          "boundary": 0.021871882187176034,
+          "drift.intercept": 0.06707490496626829,
+          "drift.stimulus": 0.06105668518855117,
+          "nondecision_time": 0.0030461027742243285,
+          "starting_bias": 0.011841654424121672
+        }
+      },
+      "responsibility": {
+        "expected_count": 46.29925533999635,
+        "ordinary_trials": 0.02890210271176559,
+        "true_contaminants": 0.5117682104322631
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.008101278120433033,
+            "hessian_condition": 767.428300119823,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 27,
+            "objective": 419.0008977087063,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 3.1516726153313357e-06,
+            "relative_objective_range": 7.521875567728284e-09,
+            "selected_converged": true,
+            "selected_objective": 419.0008977087063,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.2256795365707667,
+          "contaminant_probability": 0.05787440805648056,
+          "drift.intercept": 0.17468561055341172,
+          "drift.stimulus": 0.9807762008619475,
+          "nondecision_time": 0.25154854757249634,
+          "starting_bias": 0.4358928755618736
+        },
+        "objective": 419.0008977087063,
+        "restart_objectives": [
+          419.0009008603789,
+          419.0008977087063,
+          419.0008980793163
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.026081788352684817,
+          "contaminant_probability": 0.012717997486640391,
+          "drift.intercept": 0.08106606900656643,
+          "drift.stimulus": 0.07694401213750857,
+          "nondecision_time": 0.0038987325937193903,
+          "starting_bias": 0.012590388979747026
+        }
+      },
+      "simulation_seed": 18040046618882922809
+    },
+    {
+      "design_seed": 9481426141345355009,
+      "future_mean_log_loss": {
+        "naive": 0.5512170813487312,
+        "robust": 0.33516419920749485
+      },
+      "n_test_contaminants": 6,
+      "n_train_contaminants": 47,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.06794736176564939,
+            "hessian_condition": 892.2988161422911,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 24,
+            "objective": 531.5211444008133,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 1.341664869869419e-06,
+            "relative_objective_range": 2.5241984895669297e-09,
+            "selected_converged": true,
+            "selected_objective": 531.5211444008133,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.6475087532576094,
+          "drift.intercept": 0.22249175405627222,
+          "drift.stimulus": 0.9137675705101117,
+          "nondecision_time": 0.10689602696960404,
+          "starting_bias": 0.45583844568085363
+        },
+        "objective": 531.5211444008133,
+        "restart_objectives": [
+          531.5211457424782,
+          531.5211444008133,
+          531.5211447868949
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.027885029250046846,
+          "drift.intercept": 0.06478963988036597,
+          "drift.stimulus": 0.05353602668353599,
+          "nondecision_time": 0.0023424683235163434,
+          "starting_bias": 0.013359725332618016
+        }
+      },
+      "responsibility": {
+        "expected_count": 41.03942910682375,
+        "ordinary_trials": 0.024514337694582687,
+        "true_contaminants": 0.4804283579319783
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.0011226395342946063,
+            "hessian_condition": 654.9898964082346,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 21,
+            "objective": 365.5319717446244,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 2.2735827087672078e-07,
+            "relative_objective_range": 6.219928445426453e-10,
+            "selected_converged": true,
+            "selected_objective": 365.5319717446244,
+            "selected_restart": 2
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.2574906999837423,
+          "contaminant_probability": 0.05129922435285325,
+          "drift.intercept": 0.221681932319635,
+          "drift.stimulus": 1.196296380951781,
+          "nondecision_time": 0.2462800643473337,
+          "starting_bias": 0.46866421649227274
+        },
+        "objective": 365.5319717446244,
+        "restart_objectives": [
+          365.53197178749167,
+          365.53197197198267,
+          365.5319717446244
+        ],
+        "selected_restart": 2,
+        "standard_errors": {
+          "boundary": 0.027583843969121367,
+          "contaminant_probability": 0.012250214940581556,
+          "drift.intercept": 0.0821412029770162,
+          "drift.stimulus": 0.074673464440984,
+          "nondecision_time": 0.004615140261849186,
+          "starting_bias": 0.013016879073900383
+        }
+      },
+      "simulation_seed": 8284123132759123660
+    },
+    {
+      "design_seed": 6872946642124573500,
+      "future_mean_log_loss": {
+        "naive": 0.7512735596693328,
+        "robust": 0.5084651713345347
+      },
+      "n_test_contaminants": 10,
+      "n_train_contaminants": 38,
+      "naive": {
+        "audit": {
+          "issues": [
+            {
+              "code": "restart_objective_disagreement",
+              "message": "converged restarts reached materially different objective values (relative range 1.39)",
+              "severity": "warning"
+            }
+          ],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.001119916338439872,
+            "hessian_condition": 980.8203716881168,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 21,
+            "objective": 479.97181014657593,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 665.2818525778696,
+            "relative_objective_range": 1.3860852627463742,
+            "selected_converged": true,
+            "selected_objective": 479.97181014657593,
+            "selected_restart": 0
+          },
+          "status": "warning"
+        },
+        "estimates": {
+          "boundary": 1.6350481045968308,
+          "drift.intercept": 0.12427576716772284,
+          "drift.stimulus": 1.0427983627679185,
+          "nondecision_time": 0.10333054759424702,
+          "starting_bias": 0.48027061753192346
+        },
+        "objective": 479.97181014657593,
+        "restart_objectives": [
+          479.97181014657593,
+          1145.2536627244456,
+          479.9718102088357
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.02846027420540924,
+          "drift.intercept": 0.06673224613063161,
+          "drift.stimulus": 0.05813615016110492,
+          "nondecision_time": 0.0022939088182632045,
+          "starting_bias": 0.013593947121184079
+        }
+      },
+      "responsibility": {
+        "expected_count": 32.15593868037398,
+        "ordinary_trials": 0.017399712698290663,
+        "true_contaminants": 0.4972988843230656
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.009343697394999838,
+            "hessian_condition": 1212.2462218484718,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 21,
+            "objective": 270.3432425109639,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 2.6961060939356685e-07,
+            "relative_objective_range": 9.972899891612148e-10,
+            "selected_converged": true,
+            "selected_objective": 270.3432425109639,
+            "selected_restart": 0
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.1942393596957948,
+          "contaminant_probability": 0.04019455442693576,
+          "drift.intercept": 0.3228989158829808,
+          "drift.stimulus": 1.2810923988465026,
+          "nondecision_time": 0.2538516401167799,
+          "starting_bias": 0.425397422525969
+        },
+        "objective": 270.3432425109639,
+        "restart_objectives": [
+          270.3432425109639,
+          270.34324268920045,
+          270.3432427805745
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.025114207305450983,
+          "contaminant_probability": 0.010152021437022334,
+          "drift.intercept": 0.08317033089734154,
+          "drift.stimulus": 0.07673769571490345,
+          "nondecision_time": 0.003310955018094338,
+          "starting_bias": 0.012209517667107506
+        }
+      },
+      "simulation_seed": 4482814635017711793
+    },
+    {
+      "design_seed": 16145638377871379016,
+      "future_mean_log_loss": {
+        "naive": 0.46109045178121816,
+        "robust": 0.3999546022623708
+      },
+      "n_test_contaminants": 6,
+      "n_train_contaminants": 46,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.00012270807676635092,
+            "hessian_condition": 856.0582061451428,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 22,
+            "objective": 449.48391822355705,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 5.455527229969448e-07,
+            "relative_objective_range": 1.2137313502851655e-09,
+            "selected_converged": true,
+            "selected_objective": 449.48391822355705,
+            "selected_restart": 0
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.4458231449099137,
+          "drift.intercept": -0.005743047664996681,
+          "drift.stimulus": 0.905102036549631,
+          "nondecision_time": 0.19227903403018706,
+          "starting_bias": 0.4929908483081529
+        },
+        "objective": 449.48391822355705,
+        "restart_objectives": [
+          449.48391822355705,
+          449.4839185024297,
+          449.4839187691098
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.023254223793200048,
+          "drift.intercept": 0.06671306580558713,
+          "drift.stimulus": 0.0580289193039924,
+          "nondecision_time": 0.0025045997009361222,
+          "starting_bias": 0.012465597999034999
+        }
+      },
+      "responsibility": {
+        "expected_count": 40.333064272855495,
+        "ordinary_trials": 0.026607815859504575,
+        "true_contaminants": 0.4406689372780225
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.048897565344456266,
+            "hessian_condition": 760.3743649317271,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 20,
+            "objective": 381.5567959313916,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 3.1529680200037546e-06,
+            "relative_objective_range": 8.263430382119824e-09,
+            "selected_converged": true,
+            "selected_objective": 381.5567959313916,
+            "selected_restart": 2
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.249548637960119,
+          "contaminant_probability": 0.050418032437604836,
+          "drift.intercept": -0.016962276795638952,
+          "drift.stimulus": 1.1282771163929592,
+          "nondecision_time": 0.24212223119300336,
+          "starting_bias": 0.4769322529743325
+        },
+        "objective": 381.5567959313916,
+        "restart_objectives": [
+          381.5567990843596,
+          381.55679608860675,
+          381.5567959313916
+        ],
+        "selected_restart": 2,
+        "standard_errors": {
+          "boundary": 0.026555523079965886,
+          "contaminant_probability": 0.01198622099624822,
+          "drift.intercept": 0.08076988522871503,
+          "drift.stimulus": 0.07396977257866692,
+          "nondecision_time": 0.0038985581789051965,
+          "starting_bias": 0.012766866910123227
+        }
+      },
+      "simulation_seed": 14392970268947175366
+    },
+    {
+      "design_seed": 16068294189314254790,
+      "future_mean_log_loss": {
+        "naive": 0.8905622231020976,
+        "robust": 0.5055561378800678
+      },
+      "n_test_contaminants": 11,
+      "n_train_contaminants": 34,
+      "naive": {
+        "audit": {
+          "issues": [
+            {
+              "code": "restart_objective_disagreement",
+              "message": "converged restarts reached materially different objective values (relative range 1.18)",
+              "severity": "warning"
+            }
+          ],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.025632071026437074,
+            "hessian_condition": 867.516858054724,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 12,
+            "objective": 569.1919194326591,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 669.8609526358365,
+            "relative_objective_range": 1.1768630751180007,
+            "selected_converged": true,
+            "selected_objective": 569.1919194326591,
+            "selected_restart": 2
+          },
+          "status": "warning"
+        },
+        "estimates": {
+          "boundary": 1.6667251348659313,
+          "drift.intercept": 0.002421208019906325,
+          "drift.stimulus": 0.809575142484854,
+          "nondecision_time": 0.06495952594066745,
+          "starting_bias": 0.5058815940177439
+        },
+        "objective": 569.1919194326591,
+        "restart_objectives": [
+          569.1919197706272,
+          1239.0528720684956,
+          569.1919194326591
+        ],
+        "selected_restart": 2,
+        "standard_errors": {
+          "boundary": 0.028808432282711006,
+          "drift.intercept": 0.06509408439650027,
+          "drift.stimulus": 0.05192181040181028,
+          "nondecision_time": 0.0023699274166421305,
+          "starting_bias": 0.014010771932864955
+        }
+      },
+      "responsibility": {
+        "expected_count": 42.54459335401286,
+        "ordinary_trials": 0.026105572929029264,
+        "true_contaminants": 0.6631683673640135
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.011614085653954342,
+            "hessian_condition": 1295.7322304824143,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 21,
+            "objective": 320.2686183217818,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 8.638060592147667e-06,
+            "relative_objective_range": 2.697129877229743e-08,
+            "selected_converged": true,
+            "selected_objective": 320.2686183217818,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.17684284431937,
+          "contaminant_probability": 0.053180653780724424,
+          "drift.intercept": 0.20337575460100266,
+          "drift.stimulus": 1.1838167815643101,
+          "nondecision_time": 0.2581778304108104,
+          "starting_bias": 0.4480713674074423
+        },
+        "objective": 320.2686183217818,
+        "restart_objectives": [
+          320.2686269598424,
+          320.2686183217818,
+          320.26861846394587
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.0234181781818396,
+          "contaminant_probability": 0.011098311931537987,
+          "drift.intercept": 0.08551677845474892,
+          "drift.stimulus": 0.08224420832326304,
+          "nondecision_time": 0.0032067684874094613,
+          "starting_bias": 0.012669457955947629
+        }
+      },
+      "simulation_seed": 6962554599663866719
+    },
+    {
+      "design_seed": 17425462970062510803,
+      "future_mean_log_loss": {
+        "naive": 0.851197172017081,
+        "robust": 0.5241340173217439
+      },
+      "n_test_contaminants": 12,
+      "n_train_contaminants": 31,
+      "naive": {
+        "audit": {
+          "issues": [
+            {
+              "code": "restart_objective_disagreement",
+              "message": "converged restarts reached materially different objective values (relative range 1.23)",
+              "severity": "warning"
+            }
+          ],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.00969822693110015,
+            "hessian_condition": 718.4719127685152,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 14,
+            "objective": 546.5811257439317,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 672.5510790771333,
+            "relative_objective_range": 1.2304689046145685,
+            "selected_converged": true,
+            "selected_objective": 546.5811257439317,
+            "selected_restart": 2
+          },
+          "status": "warning"
+        },
+        "estimates": {
+          "boundary": 1.6975157972492965,
+          "drift.intercept": -0.0037297039077585285,
+          "drift.stimulus": 0.8791162222646918,
+          "nondecision_time": 0.06281869563104374,
+          "starting_bias": 0.49656371806601063
+        },
+        "objective": 546.5811257439317,
+        "restart_objectives": [
+          546.5811258457163,
+          1219.132204821065,
+          546.5811257439317
+        ],
+        "selected_restart": 2,
+        "standard_errors": {
+          "boundary": 0.030056459698706184,
+          "drift.intercept": 0.06492542402540741,
+          "drift.stimulus": 0.05014595142580554,
+          "nondecision_time": 0.0026231422369219393,
+          "starting_bias": 0.013920323308981472
+        }
+      },
+      "responsibility": {
+        "expected_count": 36.25209913230038,
+        "ordinary_trials": 0.022618727492037236,
+        "true_contaminants": 0.6083321835781855
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.029082995229976344,
+            "hessian_condition": 1205.9573924601132,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 20,
+            "objective": 291.4834619431226,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 1.0984990694851149e-07,
+            "relative_objective_range": 3.768649727714109e-10,
+            "selected_converged": true,
+            "selected_objective": 291.4834619431226,
+            "selected_restart": 0
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.2161472243738232,
+          "contaminant_probability": 0.04531493823563008,
+          "drift.intercept": 0.26858228440768034,
+          "drift.stimulus": 1.24076086016336,
+          "nondecision_time": 0.2506058154726114,
+          "starting_bias": 0.42839659877029773
+        },
+        "objective": 291.4834619431226,
+        "restart_objectives": [
+          291.4834619431226,
+          291.4834620132183,
+          291.4834620529725
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.024958982884275446,
+          "contaminant_probability": 0.01062868227962256,
+          "drift.intercept": 0.08354330979827235,
+          "drift.stimulus": 0.07708685149156957,
+          "nondecision_time": 0.0032430709468412506,
+          "starting_bias": 0.012380180059300363
+        }
+      },
+      "simulation_seed": 7373521858777928936
+    },
+    {
+      "design_seed": 142451928774831699,
+      "future_mean_log_loss": {
+        "naive": 11.079374654860972,
+        "robust": 0.45170099364378385
+      },
+      "n_test_contaminants": 10,
+      "n_train_contaminants": 32,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.02498916479166423,
+            "hessian_condition": 555.0888925774583,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 17,
+            "objective": 323.01077536679014,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 2.936189957836177e-09,
+            "relative_objective_range": 9.090068139374081e-12,
+            "selected_converged": true,
+            "selected_objective": 323.01077536679014,
+            "selected_restart": 2
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.3017001588307426,
+          "drift.intercept": 0.056669238018362156,
+          "drift.stimulus": 1.046119212540343,
+          "nondecision_time": 0.23842898719927563,
+          "starting_bias": 0.4706096020257481
+        },
+        "objective": 323.01077536679014,
+        "restart_objectives": [
+          323.01077536972633,
+          323.0107753679981,
+          323.01077536679014
+        ],
+        "selected_restart": 2,
+        "standard_errors": {
+          "boundary": 0.023812894096305774,
+          "drift.intercept": 0.07045804712542571,
+          "drift.stimulus": 0.06167864403334653,
+          "nondecision_time": 0.003956777108039901,
+          "starting_bias": 0.011763957514931067
+        }
+      },
+      "responsibility": {
+        "expected_count": 30.04774715995146,
+        "ordinary_trials": 0.018264533856331578,
+        "true_contaminants": 0.5006432861965251
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.03923587949555593,
+            "hessian_condition": 946.9929360134671,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 27,
+            "objective": 296.80791472394264,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 3.750483870135213e-07,
+            "relative_objective_range": 1.263606421554995e-09,
+            "selected_converged": true,
+            "selected_objective": 296.80791472394264,
+            "selected_restart": 0
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.2402304658168852,
+          "contaminant_probability": 0.03755924150279765,
+          "drift.intercept": 0.07101649917688012,
+          "drift.stimulus": 1.256108112733639,
+          "nondecision_time": 0.2455267053527833,
+          "starting_bias": 0.4682216507604596
+        },
+        "objective": 296.80791472394264,
+        "restart_objectives": [
+          296.80791472394264,
+          296.80791509899103,
+          296.8079150447486
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.025664870302124936,
+          "contaminant_probability": 0.01014904791943917,
+          "drift.intercept": 0.08098228026957734,
+          "drift.stimulus": 0.07701423043825122,
+          "nondecision_time": 0.003560538026624024,
+          "starting_bias": 0.012320589131445155
+        }
+      },
+      "simulation_seed": 12096943901184909917
+    },
+    {
+      "design_seed": 10063264052522161572,
+      "future_mean_log_loss": {
+        "naive": 0.6621439826675959,
+        "robust": 0.4147961147371187
+      },
+      "n_test_contaminants": 7,
+      "n_train_contaminants": 42,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.0014777977078668642,
+            "hessian_condition": 546.5944113749857,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 16,
+            "objective": 579.7260090318621,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 6.78548985888483e-08,
+            "relative_objective_range": 1.1704649702048982e-10,
+            "selected_converged": true,
+            "selected_objective": 579.7260090318621,
+            "selected_restart": 2
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.6178294167562346,
+          "drift.intercept": 0.09991131357137219,
+          "drift.stimulus": 0.8135388476884147,
+          "nondecision_time": 0.09267439322432647,
+          "starting_bias": 0.4801645076369649
+        },
+        "objective": 579.7260090318621,
+        "restart_objectives": [
+          579.726009099717,
+          579.7260090372823,
+          579.7260090318621
+        ],
+        "selected_restart": 2,
+        "standard_errors": {
+          "boundary": 0.02733194945905408,
+          "drift.intercept": 0.06323574263664337,
+          "drift.stimulus": 0.05429314969465795,
+          "nondecision_time": 0.002918906259201571,
+          "starting_bias": 0.013195161844820558
+        }
+      },
+      "responsibility": {
+        "expected_count": 41.15894432834841,
+        "ordinary_trials": 0.027912141147730166,
+        "true_contaminants": 0.4762271747230703
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.022691254890621758,
+            "hessian_condition": 880.2920411184396,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 21,
+            "objective": 387.94424442668486,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 4.1517085946907173e-07,
+            "relative_objective_range": 1.0701817733695808e-09,
+            "selected_converged": true,
+            "selected_objective": 387.94424442668486,
+            "selected_restart": 2
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.2123494018709848,
+          "contaminant_probability": 0.05144859797243724,
+          "drift.intercept": 0.2030224175649634,
+          "drift.stimulus": 1.103727567250385,
+          "nondecision_time": 0.24452880080306694,
+          "starting_bias": 0.465635918993058
+        },
+        "objective": 387.94424442668486,
+        "restart_objectives": [
+          387.9442448418557,
+          387.9442444342685,
+          387.94424442668486
+        ],
+        "selected_restart": 2,
+        "standard_errors": {
+          "boundary": 0.025148844312277957,
+          "contaminant_probability": 0.011774966436702,
+          "drift.intercept": 0.08022029049375998,
+          "drift.stimulus": 0.07730809607903562,
+          "nondecision_time": 0.003701708811940767,
+          "starting_bias": 0.01226434159337058
+        }
+      },
+      "simulation_seed": 8981831225927350385
+    },
+    {
+      "design_seed": 4479046374728555307,
+      "future_mean_log_loss": {
+        "naive": 0.33182006535822983,
+        "robust": 0.30163375817761445
+      },
+      "n_test_contaminants": 4,
+      "n_train_contaminants": 42,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.02183479215296336,
+            "hessian_condition": 543.9210057526877,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 23,
+            "objective": 405.6992445015514,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 7.111488173450198e-06,
+            "relative_objective_range": 1.75289657790403e-08,
+            "selected_converged": true,
+            "selected_objective": 405.6992445015514,
+            "selected_restart": 0
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.347042382979767,
+          "drift.intercept": 0.06805231016383652,
+          "drift.stimulus": 0.9841026584239596,
+          "nondecision_time": 0.23115650367120844,
+          "starting_bias": 0.4805805168175262
+        },
+        "objective": 405.6992445015514,
+        "restart_objectives": [
+          405.6992445015514,
+          405.6992452987646,
+          405.69925161303956
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.022834652270310955,
+          "drift.intercept": 0.06762608353634647,
+          "drift.stimulus": 0.0630989130807726,
+          "nondecision_time": 0.00352163080467106,
+          "starting_bias": 0.011780529163734125
+        }
+      },
+      "responsibility": {
+        "expected_count": 48.64048437107519,
+        "ordinary_trials": 0.02884045783252648,
+        "true_contaminants": 0.6376051746195266
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.09686343932553074,
+            "hessian_condition": 1063.7579902572293,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 27,
+            "objective": 356.8122332877208,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 3.650971052593377e-06,
+            "relative_objective_range": 1.0232191365617677e-08,
+            "selected_converged": true,
+            "selected_objective": 356.8122332877208,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.2124873981372895,
+          "contaminant_probability": 0.06079908624667211,
+          "drift.intercept": 0.2245286364063912,
+          "drift.stimulus": 1.2538412869142233,
+          "nondecision_time": 0.2530126520541908,
+          "starting_bias": 0.45724825767359406
+        },
+        "objective": 356.8122332877208,
+        "restart_objectives": [
+          356.81223693869185,
+          356.8122332877208,
+          356.8122332924471
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.02540023423206279,
+          "contaminant_probability": 0.012088311112080067,
+          "drift.intercept": 0.08408130608315158,
+          "drift.stimulus": 0.08265632441804335,
+          "nondecision_time": 0.00346854811528246,
+          "starting_bias": 0.012518141733016595
+        }
+      },
+      "simulation_seed": 15273566970561670140
+    },
+    {
+      "design_seed": 11458455292191366000,
+      "future_mean_log_loss": {
+        "naive": 0.8110283542640842,
+        "robust": 0.6232677671993943
+      },
+      "n_test_contaminants": 10,
+      "n_train_contaminants": 36,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.014413944345218617,
+            "hessian_condition": 649.9498038310135,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 28,
+            "objective": 564.4029245326915,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 2.3733014131721575e-06,
+            "relative_objective_range": 4.204977171472276e-09,
+            "selected_converged": true,
+            "selected_objective": 564.4029245326915,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.6663270994533532,
+          "drift.intercept": 0.2525601527029562,
+          "drift.stimulus": 0.8657833162525975,
+          "nondecision_time": 0.08394443189537103,
+          "starting_bias": 0.44911293827549
+        },
+        "objective": 564.4029245326915,
+        "restart_objectives": [
+          564.4029269059929,
+          564.4029245326915,
+          564.4029245364065
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.028743922600257422,
+          "drift.intercept": 0.06400325415625219,
+          "drift.stimulus": 0.053420177884133176,
+          "nondecision_time": 0.002701636683462056,
+          "starting_bias": 0.013380530281245407
+        }
+      },
+      "responsibility": {
+        "expected_count": 30.435051221911852,
+        "ordinary_trials": 0.017713735237910578,
+        "true_contaminants": 0.4694932638930048
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.009563191908746422,
+            "hessian_condition": 868.2801714723145,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 21,
+            "objective": 353.7780319518447,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 1.030141731916956e-06,
+            "relative_objective_range": 2.9118306929164443e-09,
+            "selected_converged": true,
+            "selected_objective": 353.7780319518447,
+            "selected_restart": 2
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.2579512407350846,
+          "contaminant_probability": 0.038043388542118105,
+          "drift.intercept": 0.3456472797271543,
+          "drift.stimulus": 1.1647496653621887,
+          "nondecision_time": 0.24596408819250618,
+          "starting_bias": 0.4336961699373939
+        },
+        "objective": 353.7780319518447,
+        "restart_objectives": [
+          353.7780329819864,
+          353.7780319658414,
+          353.7780319518447
+        ],
+        "selected_restart": 2,
+        "standard_errors": {
+          "boundary": 0.024834170394279396,
+          "contaminant_probability": 0.010053797126450291,
+          "drift.intercept": 0.07895989332455394,
+          "drift.stimulus": 0.07407141364395249,
+          "nondecision_time": 0.0035085834025133985,
+          "starting_bias": 0.012209014541375738
+        }
+      },
+      "simulation_seed": 6616847821578068138
+    },
+    {
+      "design_seed": 2886358482002408006,
+      "future_mean_log_loss": {
+        "naive": 0.7923414043287864,
+        "robust": 0.49730232962790555
+      },
+      "n_test_contaminants": 9,
+      "n_train_contaminants": 46,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.001472014079500652,
+            "hessian_condition": 548.2479989872356,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 26,
+            "objective": 625.3289015099464,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 1.694502316240687e-09,
+            "relative_objective_range": 2.7097777060184935e-12,
+            "selected_converged": true,
+            "selected_objective": 625.3289015099464,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.7082076826086503,
+          "drift.intercept": -0.06319837106877024,
+          "drift.stimulus": 0.8079556243849338,
+          "nondecision_time": 0.047401268794570094,
+          "starting_bias": 0.5153089562817416
+        },
+        "objective": 625.3289015099464,
+        "restart_objectives": [
+          625.3289015103302,
+          625.3289015099464,
+          625.3289015116409
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.02954474379318953,
+          "drift.intercept": 0.06264670152055227,
+          "drift.stimulus": 0.05182707373588292,
+          "nondecision_time": 0.0029201765929722946,
+          "starting_bias": 0.013905071368236327
+        }
+      },
+      "responsibility": {
+        "expected_count": 50.04196360661918,
+        "ordinary_trials": 0.03020534999200264,
+        "true_contaminants": 0.5927636894054172
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.031782016128555766,
+            "hessian_condition": 616.5611615286767,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 22,
+            "objective": 347.9078424538437,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 2.9885654839745257e-07,
+            "relative_objective_range": 8.590106687149523e-10,
+            "selected_converged": true,
+            "selected_objective": 347.9078424538437,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.1832105981270171,
+          "contaminant_probability": 0.06255054734276058,
+          "drift.intercept": 0.15761608228723525,
+          "drift.stimulus": 1.205663153354077,
+          "nondecision_time": 0.2541236504985802,
+          "starting_bias": 0.450779658153137
+        },
+        "objective": 347.9078424538437,
+        "restart_objectives": [
+          347.90784259994876,
+          347.9078424538437,
+          347.9078427527003
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.02910153953556994,
+          "contaminant_probability": 0.012389875493207591,
+          "drift.intercept": 0.08547983204410668,
+          "drift.stimulus": 0.08333241137991475,
+          "nondecision_time": 0.005511733814728863,
+          "starting_bias": 0.012741523557924229
+        }
+      },
+      "simulation_seed": 15713938265775271776
+    },
+    {
+      "design_seed": 1591142979961782073,
+      "future_mean_log_loss": {
+        "naive": 0.4852520754409719,
+        "robust": 0.32337107213801125
+      },
+      "n_test_contaminants": 3,
+      "n_train_contaminants": 32,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.0024200480605172663,
+            "hessian_condition": 897.6958011845023,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 24,
+            "objective": 454.4704152471554,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 3.084340960413101e-08,
+            "relative_objective_range": 6.786670500291507e-11,
+            "selected_converged": true,
+            "selected_objective": 454.4704152471554,
+            "selected_restart": 0
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.5401095746125295,
+          "drift.intercept": 0.2532508371233636,
+          "drift.stimulus": 0.9380586129548147,
+          "nondecision_time": 0.13571744627168777,
+          "starting_bias": 0.45983525083207466
+        },
+        "objective": 454.4704152471554,
+        "restart_objectives": [
+          454.4704152471554,
+          454.4704152779988,
+          454.4704152548321
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.025926627396999108,
+          "drift.intercept": 0.0672043151056821,
+          "drift.stimulus": 0.056551476058808954,
+          "nondecision_time": 0.00243212920002803,
+          "starting_bias": 0.013008166975204403
+        }
+      },
+      "responsibility": {
+        "expected_count": 29.709869752642852,
+        "ordinary_trials": 0.016310591775171076,
+        "true_contaminants": 0.5369792271659833
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.0015377799594618038,
+            "hessian_condition": 1022.2523661598301,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 25,
+            "objective": 302.3893982559159,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 2.248274086014135e-06,
+            "relative_objective_range": 7.435029465257219e-09,
+            "selected_converged": true,
+            "selected_objective": 302.3893982559159,
+            "selected_restart": 0
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.1986927211066007,
+          "contaminant_probability": 0.03713737689269358,
+          "drift.intercept": 0.3576496177950251,
+          "drift.stimulus": 1.1584445690216894,
+          "nondecision_time": 0.2508582828835197,
+          "starting_bias": 0.42913878493124574
+        },
+        "objective": 302.3893982559159,
+        "restart_objectives": [
+          302.3893982559159,
+          302.38939825600085,
+          302.38940050419
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.024001791400557297,
+          "contaminant_probability": 0.009690120936554747,
+          "drift.intercept": 0.08056400861014337,
+          "drift.stimulus": 0.07420772836301102,
+          "nondecision_time": 0.0034413959851084847,
+          "starting_bias": 0.011925368588254744
+        }
+      },
+      "simulation_seed": 2372675779858296866
+    },
+    {
+      "design_seed": 7110188308025574591,
+      "future_mean_log_loss": {
+        "naive": 7.524710934232599,
+        "robust": 0.3628669368881756
+      },
+      "n_test_contaminants": 10,
+      "n_train_contaminants": 44,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.01743467907427034,
+            "hessian_condition": 943.3023373101373,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 21,
+            "objective": 444.6101128169726,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 2.0423410433068057e-05,
+            "relative_objective_range": 4.59355508215251e-08,
+            "selected_converged": true,
+            "selected_objective": 444.6101128169726,
+            "selected_restart": 0
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.4824906588322937,
+          "drift.intercept": 0.2111512095115324,
+          "drift.stimulus": 0.9783344830332774,
+          "nondecision_time": 0.18685877849902824,
+          "starting_bias": 0.45719673417997175
+        },
+        "objective": 444.6101128169726,
+        "restart_objectives": [
+          444.6101128169726,
+          444.61013324038305,
+          444.61011294629714
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.02372197660000149,
+          "drift.intercept": 0.06624753883087647,
+          "drift.stimulus": 0.058161222599656184,
+          "nondecision_time": 0.002356954611742473,
+          "starting_bias": 0.012412210819173115
+        }
+      },
+      "responsibility": {
+        "expected_count": 50.21093204274237,
+        "ordinary_trials": 0.031492557653801365,
+        "true_contaminants": 0.6000581467379215
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.012332352327317152,
+            "hessian_condition": 1087.2159023335578,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 18,
+            "objective": 355.8292424172947,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 1.073078124136373e-06,
+            "relative_objective_range": 3.015710897863568e-09,
+            "selected_converged": true,
+            "selected_objective": 355.8292424172947,
+            "selected_restart": 0
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.213823212330443,
+          "contaminant_probability": 0.06276411114259449,
+          "drift.intercept": 0.2581878672774291,
+          "drift.stimulus": 1.2488742911488362,
+          "nondecision_time": 0.2531310329276765,
+          "starting_bias": 0.4522485492434776
+        },
+        "objective": 355.8292424172947,
+        "restart_objectives": [
+          355.8292424172947,
+          355.8292424481594,
+          355.82924349037285
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.02563498255179508,
+          "contaminant_probability": 0.012596227566493298,
+          "drift.intercept": 0.08456241737399763,
+          "drift.stimulus": 0.07855647054973962,
+          "nondecision_time": 0.0035499744398539384,
+          "starting_bias": 0.012496667273166192
+        }
+      },
+      "simulation_seed": 4555526007956963109
+    },
+    {
+      "design_seed": 12013717727042744471,
+      "future_mean_log_loss": {
+        "naive": 0.8167140505839267,
+        "robust": 0.5243027077382767
+      },
+      "n_test_contaminants": 7,
+      "n_train_contaminants": 44,
+      "naive": {
+        "audit": {
+          "issues": [
+            {
+              "code": "restart_objective_disagreement",
+              "message": "converged restarts reached materially different objective values (relative range 1.05)",
+              "severity": "warning"
+            }
+          ],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.05532027806563167,
+            "hessian_condition": 593.8989548789386,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 20,
+            "objective": 632.52204175523,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 665.3825030709345,
+            "relative_objective_range": 1.0519514880849332,
+            "selected_converged": true,
+            "selected_objective": 632.52204175523,
+            "selected_restart": 2
+          },
+          "status": "warning"
+        },
+        "estimates": {
+          "boundary": 1.7931358993326532,
+          "drift.intercept": 0.10998349738121832,
+          "drift.stimulus": 0.8276144859836735,
+          "nondecision_time": 0.03303383103879931,
+          "starting_bias": 0.47611688170725974
+        },
+        "objective": 632.52204175523,
+        "restart_objectives": [
+          632.5220441880637,
+          1297.9045448261645,
+          632.52204175523
+        ],
+        "selected_restart": 2,
+        "standard_errors": {
+          "boundary": 0.031478340161547366,
+          "drift.intercept": 0.061664648228905244,
+          "drift.stimulus": 0.04829897921036079,
+          "nondecision_time": 0.0027207398208940075,
+          "starting_bias": 0.013904794383677161
+        }
+      },
+      "responsibility": {
+        "expected_count": 56.12182165477247,
+        "ordinary_trials": 0.03393798901736126,
+        "true_contaminants": 0.6923795899465308
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.005543667360732643,
+            "hessian_condition": 1247.3979551344185,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 21,
+            "objective": 320.2032400910137,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 2.9611402396767517e-07,
+            "relative_objective_range": 9.247689807370735e-10,
+            "selected_converged": true,
+            "selected_objective": 320.2032400910137,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.1919669799938613,
+          "contaminant_probability": 0.07015205236843117,
+          "drift.intercept": 0.23266900217024145,
+          "drift.stimulus": 1.313241234051839,
+          "nondecision_time": 0.2568021573269195,
+          "starting_bias": 0.4350357214313241
+        },
+        "objective": 320.2032400910137,
+        "restart_objectives": [
+          320.2032403871277,
+          320.2032400910137,
+          320.20324010851107
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.025879091676314706,
+          "contaminant_probability": 0.01262863813201034,
+          "drift.intercept": 0.08724840320918094,
+          "drift.stimulus": 0.08246626420965215,
+          "nondecision_time": 0.0033952504608315724,
+          "starting_bias": 0.012481495085110596
+        }
+      },
+      "simulation_seed": 6983993397191461026
+    },
+    {
+      "design_seed": 17491627006994735895,
+      "future_mean_log_loss": {
+        "naive": 0.607049766545539,
+        "robust": 0.4348472803189734
+      },
+      "n_test_contaminants": 7,
+      "n_train_contaminants": 38,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.007840360245326278,
+            "hessian_condition": 740.6306367111245,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 17,
+            "objective": 501.3751429386989,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 2.068694016088557e-07,
+            "relative_objective_range": 4.1260402419700485e-10,
+            "selected_converged": true,
+            "selected_objective": 501.3751429386989,
+            "selected_restart": 2
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.5937587013293226,
+          "drift.intercept": 0.1053509256109559,
+          "drift.stimulus": 0.9215677504074318,
+          "nondecision_time": 0.11249614769799901,
+          "starting_bias": 0.4681146865894746
+        },
+        "objective": 501.3751429386989,
+        "restart_objectives": [
+          501.3751429813721,
+          501.3751431455683,
+          501.3751429386989
+        ],
+        "selected_restart": 2,
+        "standard_errors": {
+          "boundary": 0.02734657216721236,
+          "drift.intercept": 0.0659816914183672,
+          "drift.stimulus": 0.05519809914365415,
+          "nondecision_time": 0.0026330719008663133,
+          "starting_bias": 0.013316950138133764
+        }
+      },
+      "responsibility": {
+        "expected_count": 36.0644501341372,
+        "ordinary_trials": 0.022806855384874047,
+        "true_contaminants": 0.4917270087069257
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.0026222504375307634,
+            "hessian_condition": 977.3561328789627,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 22,
+            "objective": 327.1233993062441,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 1.1180887895534397e-06,
+            "relative_objective_range": 3.417941950727637e-09,
+            "selected_converged": true,
+            "selected_objective": 327.1233993062441,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.2189866690073432,
+          "contaminant_probability": 0.04508052124669173,
+          "drift.intercept": 0.15872619034065694,
+          "drift.stimulus": 1.1953310629931617,
+          "nondecision_time": 0.2454517460335899,
+          "starting_bias": 0.46030767030745123
+        },
+        "objective": 327.1233993062441,
+        "restart_objectives": [
+          327.1234004243329,
+          327.1233993062441,
+          327.12340039981393
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.02504550849087498,
+          "contaminant_probability": 0.010548498484283398,
+          "drift.intercept": 0.08210618859619903,
+          "drift.stimulus": 0.07623041333309523,
+          "nondecision_time": 0.003525198390114083,
+          "starting_bias": 0.012488379197244142
+        }
+      },
+      "simulation_seed": 10601751395106887863
+    },
+    {
+      "design_seed": 14532867363447711765,
+      "future_mean_log_loss": {
+        "naive": 4.376216398814024,
+        "robust": 0.6284812454555135
+      },
+      "n_test_contaminants": 14,
+      "n_train_contaminants": 32,
+      "naive": {
+        "audit": {
+          "issues": [
+            {
+              "code": "restart_objective_disagreement",
+              "message": "converged restarts reached materially different objective values (relative range 1.43)",
+              "severity": "warning"
+            }
+          ],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.007568258825079178,
+            "hessian_condition": 1067.0672419335522,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 24,
+            "objective": 468.1714516453886,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 669.4488806830964,
+            "relative_objective_range": 1.4299224746197536,
+            "selected_converged": true,
+            "selected_objective": 468.1714516453886,
+            "selected_restart": 0
+          },
+          "status": "warning"
+        },
+        "estimates": {
+          "boundary": 1.5614884206269004,
+          "drift.intercept": 0.0994369789494026,
+          "drift.stimulus": 0.9446808957904267,
+          "nondecision_time": 0.12984228228599168,
+          "starting_bias": 0.4882370290291921
+        },
+        "objective": 468.1714516453886,
+        "restart_objectives": [
+          468.1714516453886,
+          1137.620332328485,
+          468.1714516485223
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.026237647262236773,
+          "drift.intercept": 0.06721947329991664,
+          "drift.stimulus": 0.05705870863088215,
+          "nondecision_time": 0.0022072816730614292,
+          "starting_bias": 0.013385664936219423
+        }
+      },
+      "responsibility": {
+        "expected_count": 34.77551241331631,
+        "ordinary_trials": 0.021209336057581546,
+        "true_contaminants": 0.5777106975341775
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.06698649576799398,
+            "hessian_condition": 1191.948242329738,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 18,
+            "objective": 293.97504967501425,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 4.6044192458793987e-08,
+            "relative_objective_range": 1.5662619160944192e-10,
+            "selected_converged": true,
+            "selected_objective": 293.97504967501425,
+            "selected_restart": 0
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.194202551278834,
+          "contaminant_probability": 0.04346991337300067,
+          "drift.intercept": 0.31096722806469723,
+          "drift.stimulus": 1.2366394763406918,
+          "nondecision_time": 0.25205893417753383,
+          "starting_bias": 0.44509495760166967
+        },
+        "objective": 293.97504967501425,
+        "restart_objectives": [
+          293.97504967501425,
+          293.97504972105844,
+          293.97504968627345
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.024049171470872686,
+          "contaminant_probability": 0.01066960899375796,
+          "drift.intercept": 0.08451374543335222,
+          "drift.stimulus": 0.08021749675120145,
+          "nondecision_time": 0.0033189304541652006,
+          "starting_bias": 0.01243750861319841
+        }
+      },
+      "simulation_seed": 3779374628245122602
+    },
+    {
+      "design_seed": 1833955989810714314,
+      "future_mean_log_loss": {
+        "naive": 0.7221034083229477,
+        "robust": 0.39458924185541133
+      },
+      "n_test_contaminants": 8,
+      "n_train_contaminants": 43,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.0007124274375951544,
+            "hessian_condition": 578.9346270709812,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 22,
+            "objective": 625.7904392291676,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 4.988106638847967e-07,
+            "relative_objective_range": 7.970889815753955e-10,
+            "selected_converged": true,
+            "selected_objective": 625.7904392291676,
+            "selected_restart": 0
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.7058821886183593,
+          "drift.intercept": 0.040416727679580655,
+          "drift.stimulus": 0.7533896905189761,
+          "nondecision_time": 0.048470934811399816,
+          "starting_bias": 0.4913499067649856
+        },
+        "objective": 625.7904392291676,
+        "restart_objectives": [
+          625.7904392291676,
+          625.7904392792241,
+          625.7904397279783
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.029394098161073252,
+          "drift.intercept": 0.06251576445173594,
+          "drift.stimulus": 0.04894853264651033,
+          "nondecision_time": 0.002820301681660861,
+          "starting_bias": 0.013825375979838373
+        }
+      },
+      "responsibility": {
+        "expected_count": 49.32697394182773,
+        "ordinary_trials": 0.031222675372480847,
+        "true_contaminants": 0.5974746205781333
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.10564170673961516,
+            "hessian_condition": 1203.4859453836527,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 32,
+            "objective": 348.8409643832265,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 1.2591090126079507e-07,
+            "relative_objective_range": 3.609406982445818e-10,
+            "selected_converged": true,
+            "selected_objective": 348.8409643832265,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.1907194583732243,
+          "contaminant_probability": 0.06165904109492371,
+          "drift.intercept": 0.23774027804198833,
+          "drift.stimulus": 1.136174276612079,
+          "nondecision_time": 0.2507618887449706,
+          "starting_bias": 0.4248366442738054
+        },
+        "objective": 348.8409643832265,
+        "restart_objectives": [
+          348.8409645091374,
+          348.8409643832265,
+          348.84096445968146
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.024583638989543338,
+          "contaminant_probability": 0.012052577083512046,
+          "drift.intercept": 0.08564171776183968,
+          "drift.stimulus": 0.07655998793767295,
+          "nondecision_time": 0.0034196930218411583,
+          "starting_bias": 0.012739593194308119
+        }
+      },
+      "simulation_seed": 3804689071943683187
+    },
+    {
+      "design_seed": 3489070530367279845,
+      "future_mean_log_loss": {
+        "naive": 7.692777427882072,
+        "robust": 0.46067142690307483
+      },
+      "n_test_contaminants": 10,
+      "n_train_contaminants": 34,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.008443339361092896,
+            "hessian_condition": 999.4081859312033,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 25,
+            "objective": 485.4094058127861,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 3.527392777868954e-06,
+            "relative_objective_range": 7.266840600178662e-09,
+            "selected_converged": true,
+            "selected_objective": 485.4094058127861,
+            "selected_restart": 0
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.5892390123701627,
+          "drift.intercept": 0.1209909489419834,
+          "drift.stimulus": 0.923553961615144,
+          "nondecision_time": 0.12396332738903097,
+          "starting_bias": 0.4932040900630391
+        },
+        "objective": 485.4094058127861,
+        "restart_objectives": [
+          485.4094058127861,
+          485.40940934017885,
+          485.4094058365281
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.02687795577957903,
+          "drift.intercept": 0.06663206465757862,
+          "drift.stimulus": 0.055066650331696464,
+          "nondecision_time": 0.002266669788468403,
+          "starting_bias": 0.013469665927610905
+        }
+      },
+      "responsibility": {
+        "expected_count": 29.49989483521299,
+        "ordinary_trials": 0.01679339884285474,
+        "true_contaminants": 0.48929856828194895
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.017482542567405265,
+            "hessian_condition": 932.3176795223957,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 22,
+            "objective": 312.93550477656197,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 2.18315392430668e-07,
+            "relative_objective_range": 6.976370181662405e-10,
+            "selected_converged": true,
+            "selected_objective": 312.93550477656197,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.2122641707773154,
+          "contaminant_probability": 0.03687500582285998,
+          "drift.intercept": 0.19334863398959878,
+          "drift.stimulus": 1.166816543051295,
+          "nondecision_time": 0.2508275689891578,
+          "starting_bias": 0.4763230006417509
+        },
+        "objective": 312.93550477656197,
+        "restart_objectives": [
+          312.9355048559488,
+          312.93550477656197,
+          312.93550499487736
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.02543836980751786,
+          "contaminant_probability": 0.010312560281731909,
+          "drift.intercept": 0.0805345226020868,
+          "drift.stimulus": 0.07484621198159092,
+          "nondecision_time": 0.0035790527923849013,
+          "starting_bias": 0.01220776240420171
+        }
+      },
+      "simulation_seed": 13899807755296116302
+    },
+    {
+      "design_seed": 12738356500159110061,
+      "future_mean_log_loss": {
+        "naive": 0.6083973414618656,
+        "robust": 0.39705894491372523
+      },
+      "n_test_contaminants": 12,
+      "n_train_contaminants": 43,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.0007790452254795762,
+            "hessian_condition": 998.9435682831815,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 21,
+            "objective": 462.0650565786515,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 7.923520684016694e-07,
+            "relative_objective_range": 1.7148062964739628e-09,
+            "selected_converged": true,
+            "selected_objective": 462.0650565786515,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.5581359190090511,
+          "drift.intercept": 7.836540947719984e-05,
+          "drift.stimulus": 0.969252511129472,
+          "nondecision_time": 0.14471534345371098,
+          "starting_bias": 0.4880587670314824
+        },
+        "objective": 462.0650565786515,
+        "restart_objectives": [
+          462.0650565792636,
+          462.0650565786515,
+          462.06505737100355
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.02617450847822787,
+          "drift.intercept": 0.06677447189763412,
+          "drift.stimulus": 0.056578428252349156,
+          "nondecision_time": 0.0022692747927488925,
+          "starting_bias": 0.01317631612659698
+        }
+      },
+      "responsibility": {
+        "expected_count": 28.111457645443284,
+        "ordinary_trials": 0.0161473684201995,
+        "true_contaminants": 0.3694860407291224
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.00019797510935112302,
+            "hessian_condition": 900.7229336130158,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 24,
+            "objective": 327.43999486182355,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 2.8209070705997874e-06,
+            "relative_objective_range": 8.615035166336912e-09,
+            "selected_converged": true,
+            "selected_objective": 327.43999486182355,
+            "selected_restart": 2
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.2423789552304276,
+          "contaminant_probability": 0.0351393191479983,
+          "drift.intercept": 0.16722741446889616,
+          "drift.stimulus": 1.2031805368969397,
+          "nondecision_time": 0.24841269952416029,
+          "starting_bias": 0.44563248339288997
+        },
+        "objective": 327.43999486182355,
+        "restart_objectives": [
+          327.4399976827306,
+          327.43999490747444,
+          327.43999486182355
+        ],
+        "selected_restart": 2,
+        "standard_errors": {
+          "boundary": 0.025293681771850072,
+          "contaminant_probability": 0.009816395516423534,
+          "drift.intercept": 0.07892489155515854,
+          "drift.stimulus": 0.07411865308017718,
+          "nondecision_time": 0.0035457942056999914,
+          "starting_bias": 0.0121966647360375
+        }
+      },
+      "simulation_seed": 9233296902958379113
+    },
+    {
+      "design_seed": 3204596500634884489,
+      "future_mean_log_loss": {
+        "naive": 0.7875910489069236,
+        "robust": 0.5062227343648309
+      },
+      "n_test_contaminants": 9,
+      "n_train_contaminants": 39,
+      "naive": {
+        "audit": {
+          "issues": [
+            {
+              "code": "restart_objective_disagreement",
+              "message": "converged restarts reached materially different objective values (relative range 1.14)",
+              "severity": "warning"
+            }
+          ],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.12835376501842066,
+            "hessian_condition": 746.7864645914156,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 15,
+            "objective": 584.9179784069737,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 667.1760750799575,
+            "relative_objective_range": 1.1406318487542715,
+            "selected_converged": true,
+            "selected_objective": 584.9179784069737,
+            "selected_restart": 2
+          },
+          "status": "warning"
+        },
+        "estimates": {
+          "boundary": 1.7156561804443393,
+          "drift.intercept": 0.03577274773914005,
+          "drift.stimulus": 0.859386792555454,
+          "nondecision_time": 0.051117197610958114,
+          "starting_bias": 0.48914203203193163
+        },
+        "objective": 584.9179784069737,
+        "restart_objectives": [
+          584.917988445138,
+          1252.0940534869312,
+          584.9179784069737
+        ],
+        "selected_restart": 2,
+        "standard_errors": {
+          "boundary": 0.030065362965181485,
+          "drift.intercept": 0.06397903355254256,
+          "drift.stimulus": 0.052047938525779644,
+          "nondecision_time": 0.002506367238977747,
+          "starting_bias": 0.013998298714607033
+        }
+      },
+      "responsibility": {
+        "expected_count": 32.167039766115586,
+        "ordinary_trials": 0.01777316660689774,
+        "true_contaminants": 0.47799128149401027
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.058626547974899614,
+            "hessian_condition": 1088.639026598337,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 20,
+            "objective": 297.5166014246382,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 3.492821747386188e-07,
+            "relative_objective_range": 1.1739922177992911e-09,
+            "selected_converged": true,
+            "selected_objective": 297.5166014246382,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.2046175680503917,
+          "contaminant_probability": 0.04020874954526004,
+          "drift.intercept": 0.22137115794492476,
+          "drift.stimulus": 1.247687235333281,
+          "nondecision_time": 0.253619856516705,
+          "starting_bias": 0.44040556549187143
+        },
+        "objective": 297.5166014246382,
+        "restart_objectives": [
+          297.5166017739204,
+          297.5166014246382,
+          297.5166014939865
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.024715224363261564,
+          "contaminant_probability": 0.010224943663293622,
+          "drift.intercept": 0.08219490961756584,
+          "drift.stimulus": 0.07784681711410181,
+          "nondecision_time": 0.003403729402507561,
+          "starting_bias": 0.01226565477129826
+        }
+      },
+      "simulation_seed": 4562600715984923356
+    }
+  ],
+  "scored_columns": [
+    "choice",
+    "response_time"
+  ],
+  "seed": 73901,
+  "summary": {
+    "contaminant_probability_rmse": 0.010469659465097775,
+    "future_mean_log_loss": {
+      "naive": 2.062483459752852,
+      "naive_minus_robust": 1.6125476505884895,
+      "robust": 0.4499358091643626,
+      "robust_better_runs": 20
+    },
+    "mean_responsibility": {
+      "ordinary_trials": 0.023838921329146678,
+      "true_contaminants": 0.5355751355459912
+    },
+    "n_paired_eligible": 20,
+    "parameter_rmse": {
+      "boundary": {
+        "naive": 0.4035960686439502,
+        "robust": 0.027858824142948598,
+        "robust_better": true
+      },
+      "drift.intercept": {
+        "naive": 0.13747083751025138,
+        "robust": 0.08791551819032702,
+        "robust_better": true
+      },
+      "drift.stimulus": {
+        "naive": 0.3108696155495533,
+        "robust": 0.07213485913228856,
+        "robust_better": true
+      },
+      "nondecision_time": {
+        "naive": 0.1437824875780292,
+        "robust": 0.004191128523539833,
+        "robust_better": true
+      },
+      "starting_bias": {
+        "naive": 0.03468187098895014,
+        "robust": 0.016546299725752684,
+        "robust_better": true
+      }
+    }
+  },
+  "truth": {
+    "boundary": 1.2,
+    "contaminant_probability": 0.05,
+    "drift.intercept": 0.2,
+    "drift.stimulus": 1.2,
+    "nondecision_time": 0.25,
+    "starting_bias": 0.45
+  }
+}

@@ -99,10 +99,22 @@ The roadmap is organized by scientific contracts rather than by model count.
   including a repeated 400-versus-1,200-trial benchmark in which every parameter's RMSE
   decreases with sample size.
 
+## 0.7 — Explicit response contaminants
+
+- **Implemented:** add a fixed-support uniform joint choice/response-time contaminant
+  component with a fitted mixture probability and explicit physical-time units.
+- **Implemented:** require contaminant support and non-decision-time search bounds to be
+  fixed in model configuration, so held-out response times cannot define their own density.
+- **Implemented:** retain simulated contaminant truth separately from observed studies and
+  expose posterior trial responsibilities without converting them into hard exclusions.
+- **Implemented:** compare contaminant-aware and naive Wiener fits on 20 paired designs;
+  the robust model lowers every shared parameter RMSE and future-session joint log loss in
+  all 20 repetitions.
+
 ## Later
 
 - Session-varying GLM-HMM parameters
-- Non-stationary, hierarchical, and contaminant-aware response-time families
+- Non-stationary and hierarchical response-time families
 - Richer mixtures and model plugins
 - NWB/DANDI streaming workflows
 - Cross-lab trajectory-shape comparisons

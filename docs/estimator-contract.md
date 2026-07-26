@@ -94,10 +94,11 @@ without emitting non-standard JSON `NaN` values.
 
 The first response-time family now supplies an explicit positive column and unit metadata,
 a joint Wiener choice/response-time likelihood with finite tail handling, generative
-simulation, deterministic restart diagnostics, and a dedicated parameter-recovery
-benchmark. See the [drift-diffusion guide](drift-diffusion.md).
+simulation, deterministic restart diagnostics, and dedicated parameter-recovery
+benchmarks. Its optional contaminant component has the same scored observation, so it can
+be compared directly with the naive Wiener model. See the
+[drift-diffusion guide](drift-diffusion.md).
 
-It intentionally stops short of a contaminant process, across-trial parameter variation,
-hierarchical pooling, or longitudinal parameter drift. Until matched joint-observation
-competitors exist, it can be evaluated prospectively and recovered but not meaningfully
+It intentionally stops short of across-trial Wiener-parameter variation, hierarchical
+pooling, or longitudinal parameter drift. Neither Wiener configuration can be meaningfully
 ranked by joint log score against Unspool's choice-only families.

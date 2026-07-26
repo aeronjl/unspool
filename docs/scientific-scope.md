@@ -34,9 +34,10 @@ common model outputs; static and smoothly
 time-varying Bernoulli history GLMs; fixed- or estimated-scale static partial pooling;
 fixed-knot partially pooled subject trajectories; a fixed-transition Bernoulli GLM-HMM;
 a session-reset binary Q-learning agent; an explicit response-time schema and fixed-
-parameter Wiener drift-diffusion model; design-specific parameter and model recovery; and
-a first named four-family recovery grid plus repeated boundary-near regimes with retained
-fit audits and truth-aware permutation-invariant latent-state recovery.
+parameter Wiener drift-diffusion model with an optional explicit contaminant mixture;
+design-specific parameter and model recovery; and a first named four-family recovery grid
+plus repeated boundary-near regimes with retained fit audits and truth-aware permutation-
+invariant latent-state recovery.
 See the
 [clock and transform guide](clocks-and-transforms.md), [modelling guide](modelling.md),
 [fit-audit guide](diagnostics.md), [smooth-drift guide](smooth-drift.md),

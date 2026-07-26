@@ -28,9 +28,10 @@ All public parameters use their natural scale:
 - `starting_bias` strictly between zero and one;
 - non-negative `nondecision_time`, expressed in seconds.
 
-This is deliberately a first, stationary family. It does not yet model across-trial
-variability, lapse/contaminant responses, collapsing bounds, history-dependent starting
-points, or parameters that drift across learning.
+This is deliberately a first, stationary family. The base configuration does not model
+across-trial Wiener-parameter variability, collapsing bounds, history-dependent starting
+points, or parameters that drift across learning. An optional contaminant mixture provides
+a narrow robustness account for responses outside the decision process.
 
 ## Response-time schema
 
@@ -69,7 +70,8 @@ Fitting evaluates paired small- and large-time expansions of the Wiener first-pa
 density, uses deterministic bounded L-BFGS-B restarts, and estimates local uncertainty
 from a numerical Hessian. `DriftDiffusionFitResult` retains every restart objective,
 convergence flag, and optimizer message, plus the selected restart, minimum observed
-response time, and number of observations assigned the finite log-density floor.
+response time, number of observations assigned the finite log-density floor, and fitted
+posterior contaminant responsibilities when that component is configured.
 
 Simulation uses vectorized Euler-Maruyama paths and linearly interpolates each boundary
 crossing within its final time step. `simulation_time_step` controls the accuracy/cost
@@ -93,9 +95,48 @@ choice_probability = model.predict(simulated, fit).probability
 ```
 
 Prediction returns the analytic marginal probability of an upper-boundary choice. Pointwise
-scoring returns the joint density. Response times at or below fitted non-decision time, and
-extreme numerical underflow, receive a finite floor score and trigger retained diagnostics
-when encountered during fitting.
+scoring returns the joint density. In the base configuration, response times at or below
+fitted non-decision time and extreme numerical underflow receive a finite floor score and
+trigger retained diagnostics when encountered during fitting.
+
+## Explicit response contaminants
+
+`UniformResponseTimeContaminant` adds one normalized joint mixture component:
+
+\[
+p(y,t) = (1-\pi)f_{\mathrm{Wiener}}(y,t)
+       + \pi\,\operatorname{Bernoulli}(y;q)\,
+         \frac{\mathbb{1}[L \le t \le U]}{U-L}.
+\]
+
+The fitted `contaminant_probability` is \(\pi\). The response-time support \([L,U]\),
+its unit in canonical seconds, the fixed contaminant choice probability \(q\), and the
+mixture-probability bounds are model configuration. They are not estimated from the scored
+session.
+
+```python
+from unspool import UniformResponseTimeContaminant, WienerDriftDiffusion
+
+model = WienerDriftDiffusion(
+    covariates=("stimulus",),
+    contaminant=UniformResponseTimeContaminant(
+        time_bounds=(0.05, 3.0),
+        probability_bounds=(0.0, 0.2),
+    ),
+    nondecision_time_bounds=(0.1, 0.6),
+)
+```
+
+A fixed non-decision-time search interval is required in this configuration. Otherwise the
+fastest observed contaminant would constrain non-decision time before the mixture could
+explain it. Both intervals should come from task timing, equipment limits, prior studies,
+or a rule fitted only to training data.
+
+`simulate_with_contaminants()` returns a `DriftDiffusionSimulation` whose latent Boolean
+indicators are separate from its observed `Study`. `fit.posterior_contaminant_probability`
+and `model.contaminant_responsibility(study, fit)` expose soft trial assignments. The
+prediction API also marginalizes the contaminant choice process rather than returning the
+Wiener choice probability alone.
 
 ## Interpretation boundary
 
@@ -107,15 +148,19 @@ and unmodelled across-trial variation.
 
 Use the model prospectively only when response times are recorded on a common, documented
 event definition. Inspect the minimum response time, likelihood-floor count, bound warnings,
-restart agreement, and audit before interpretation. Add an explicit contaminant model or
-pre-registered exclusion rule when the task contains anticipatory or timeout responses;
-the likelihood floor is a numerical safeguard, not a contaminant account.
+restart agreement, and audit before interpretation. When using the mixture, inspect its
+support, fitted weight, and responsibilities as model-dependent uncertainty. A high
+responsibility is not an observed fact about a trial, and the uniform component is not a
+mechanistic theory of distraction, guessing, anticipation, or timeout responses.
 
 The mathematical parameterization and paired first-passage expansions follow
 [Navarro and Fuss (2009)](https://doi.org/10.1016/j.jmp.2009.02.003). The relation between
 accuracy and response-time distributions, and the standard cognitive interpretation of
 drift, boundaries, starting point, and non-decision time, are reviewed by
 [Ratcliff and McKoon (2008)](https://doi.org/10.1162/neco.2008.12-06-420).
+The decision to represent contaminants explicitly rather than rely on unreported trimming
+follows [Ratcliff and Tuerlinckx (2002)](https://doi.org/10.3758/BF03196302); Unspool's
+fixed-support independent mixture is a deliberately simpler first contract.
 
 ## Recovery evidence
 
@@ -124,9 +169,17 @@ repetitions at both 400 and 1,200 trials. All 40 fits pass audit, and RMSE decre
 the larger design for every fitted parameter. This validates the implementation in one
 specified regime; it does not establish universal identifiability or interval calibration.
 
+The [contaminant benchmark](../benchmarks/ddm_contaminants/README.md) compares robust and
+naive Wiener fits on 20 matched designs with five-percent contamination. The robust model
+has lower RMSE for every shared parameter and lower future-session joint log loss in all 20
+repetitions. This supports the specified uniform mixture under matched simulation; it does
+not show that real contaminants are uniform or independently chosen.
+
 Run the small executable example and full benchmark with:
 
 ```bash
 uv run python examples/drift_diffusion.py
+uv run python examples/contaminant_ddm.py
 uv run python -m benchmarks.ddm_recovery.benchmark
+uv run python -m benchmarks.ddm_contaminants.benchmark
 ```

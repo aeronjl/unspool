@@ -91,6 +91,9 @@ See the [session-reset Q-learning guide](q-learning.md).
 control drift while boundary separation, relative starting bias, and non-decision time are
 shared across trials. It declares both observed columns, converts explicit physical time
 units to seconds, retains deterministic restart evidence, and supports generative recovery.
+An optional fixed-support contaminant component estimates the probability of independent
+choice/RT responses and retains posterior trial responsibilities without silently removing
+them.
 See the [joint choice and response-time guide](drift-diffusion.md).
 
 The GLM implementations use SciPy's deterministic L-BFGS-B optimizer. An optional L2
