@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from unspool import (
+    BootstrapThresholdLandmarkClock,
     ClockKind,
     ClockSpec,
     Study,
@@ -48,7 +49,14 @@ def main() -> None:
         consecutive=2,
     )
     splits = forward_session_splits(study, min_train_sessions=2)
-    results = fit_transform_splits(landmark, study, splits)
+    uncertain_landmark = BootstrapThresholdLandmarkClock(
+        landmark,
+        n_resamples=100,
+        seed=19,
+        smoothing_window=2,
+        interval_level=0.8,
+    )
+    results = fit_transform_splits(uncertain_landmark, study, splits)
 
     print("Explicit design clocks")
     print(f"cumulative trials: {study['cumulative_trial'][[0, -1]].tolist()}")
@@ -59,6 +67,12 @@ def main() -> None:
         print(f"learned values: {dict(provenance.learned_values)}")
         print(f"fit trials:     {provenance.n_fit_trials}")
         print(f"test-relative:  {result.testing.study['trials_since_learning'].tolist()}")
+        uncertainty = result.fitted_transform.uncertainty
+        if uncertainty is None:
+            raise AssertionError("uncertainty-aware fit did not retain samples")
+        estimate = uncertainty.estimates["mouse-1"]
+        print(f"resolution rate: {estimate.resolution_rate:.1%}")
+        print(f"landmark interval: {estimate.interval}")
 
 
 if __name__ == "__main__":

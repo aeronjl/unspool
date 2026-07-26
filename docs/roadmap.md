@@ -8,7 +8,7 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** represent session-order, cumulative-trial, elapsed-time, task-phase,
   and landmark-relative clocks without silently aligning them. Threshold landmarks use a
   fold-fitted transform contract with immutable training provenance; richer landmark
-  definitions and uncertainty remain later work.
+  definitions remain later work.
 - **Implemented:** establish the generative model, prediction, scoring, diagnostics, and
   fit-result protocols.
 - **Implemented:** add static and smoothly time-varying Bernoulli history GLM baselines,
@@ -54,7 +54,9 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** test latent-state recovery with a balanced permutation-invariant
   assignment, retained winning and runner-up scores, explicit missing-state and near-tie
   ambiguity, and a repeated clear-versus-overlapping emission benchmark.
-- Quantify alignment and landmark uncertainty.
+- **Implemented:** quantify threshold-landmark and relative-clock uncertainty with a
+  fold-safe plug-in Bernoulli bootstrap, explicit unresolved draws, frozen clock samples,
+  and a repeated decisive-versus-marginal learning benchmark.
 
 ## Later
 

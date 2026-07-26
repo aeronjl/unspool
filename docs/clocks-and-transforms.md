@@ -123,11 +123,50 @@ The retained state makes it possible to audit which observations could have infl
 coordinate. A subject absent from the fitting data cannot be transformed using a borrowed
 landmark.
 
+## Landmark uncertainty remains inside the fold
+
+For a binary metric, `BootstrapThresholdLandmarkClock` makes uncertainty estimation part
+of the same generic fold-transform path:
+
+```python
+from unspool import BootstrapThresholdLandmarkClock
+
+uncertain_landmark = BootstrapThresholdLandmarkClock(
+    landmark,
+    n_resamples=500,
+    seed=19,
+    smoothing_window=10,
+    interval_level=0.9,
+)
+results = fit_transform_splits(uncertain_landmark, study, splits)
+
+fitted = results[0].fitted_transform
+estimate = fitted.uncertainty.estimates["mouse-1"]
+estimate.point
+estimate.resolution_rate
+estimate.median
+estimate.interval
+clock_draws = fitted.transform_samples(test_study)
+```
+
+The ordinary transformed studies still use the observed-data point landmark. Uncertainty
+draws are separate and immutable: `transform_samples()` returns a draw-by-trial matrix of
+alternative landmark-relative coordinates. It only reads subject identity and the source
+clock, so changing held-out metric values cannot alter the distribution.
+
+The current procedure causally smooths each subject's binary training metric using a
+declared window and Jeffreys regularization, samples plug-in Bernoulli trajectories at the
+original chronological positions, and reapplies the unchanged threshold rule. Failed
+detections remain `NaN`; intervals condition on resolved draws and must be accompanied by
+`resolution_rate`. This is a design-specific parametric bootstrap—not a posterior credible
+interval—and it assumes conditional independence around the smoothed trajectory.
+
 ## Current boundary
 
 This API makes clock construction and one operational landmark criterion explicit. It does
-not claim that the threshold is a universal definition of learning, quantify landmark
-uncertainty, choose a criterion on held-out data, or align latent states. Alternative
-landmark definitions should implement the same training-only transform contract and be
-compared as modelling choices. Within-session rolling origins are available, but automatic
-composition of arbitrary fitted transforms with model evaluation remains future work.
+not claim that the threshold is a universal definition of learning, choose a criterion on
+held-out data, model residual serial dependence in its first bootstrap, or automatically
+propagate clock draws through every downstream model. Alternative landmark definitions
+should implement the same training-only transform contract and be compared as modelling
+choices. Within-session rolling origins are available, but automatic composition of
+arbitrary fitted transforms with model evaluation remains future work.

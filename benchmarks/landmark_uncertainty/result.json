@@ -1,0 +1,62 @@
+{
+  "benchmark": "threshold-landmark uncertainty and resolution",
+  "contract": {
+    "clock_samples_retain_unresolved_draws": true,
+    "decisive_learning_has_higher_bootstrap_resolution": true,
+    "decisive_learning_is_usually_bootstrap_resolved": true,
+    "decisive_learning_resolves_more_point_landmarks": true,
+    "marginal_learning_remains_incompletely_resolved": true,
+    "point_estimates_are_preserved": true
+  },
+  "contract_passed": true,
+  "design": {
+    "bootstrap_smoothing_window": 7,
+    "consecutive_windows": 3,
+    "detection_window": 15,
+    "interval_level": 0.9,
+    "n_sessions": 4,
+    "n_subjects": 1,
+    "probability_transition_trial": 50,
+    "threshold": 0.8,
+    "trials_per_session": 30
+  },
+  "n_resamples_per_fit": 200,
+  "regimes": {
+    "decisive": {
+      "clock_sample_resolution_matches_landmark_rate": 1.0,
+      "interval_available_rate": 1.0,
+      "mean_bootstrap_resolution_rate": 1.0,
+      "mean_interval_width_when_resolved": 11.934999999999992,
+      "mean_point_landmark_when_resolved": 62.63333333333333,
+      "minimum_bootstrap_resolution_rate": 1.0,
+      "point_resolution_rate": 1.0,
+      "point_transform_agreement_rate": 1.0,
+      "probability_before_after": [
+        0.15,
+        0.95
+      ]
+    },
+    "marginal": {
+      "clock_sample_resolution_matches_landmark_rate": 1.0,
+      "interval_available_rate": 1.0,
+      "mean_bootstrap_resolution_rate": 0.8205000000000001,
+      "mean_interval_width_when_resolved": 38.44333333333332,
+      "mean_point_landmark_when_resolved": 79.68,
+      "minimum_bootstrap_resolution_rate": 0.535,
+      "point_resolution_rate": 0.8333333333333334,
+      "point_transform_agreement_rate": 1.0,
+      "probability_before_after": [
+        0.15,
+        0.72
+      ]
+    }
+  },
+  "repetitions": 30,
+  "scope": {
+    "claim": "design-specific landmark resolution, not a posterior credible interval",
+    "dependence": "conditional independence given the smoothed training trajectory",
+    "estimator": "causally smoothed plug-in Bernoulli bootstrap",
+    "interval": "equal-tailed among resolved draws; resolution reported separately"
+  },
+  "seed": 12401
+}
