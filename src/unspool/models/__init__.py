@@ -9,15 +9,21 @@ from unspool.models.base import (
     PredictionMode,
     UnsupportedPredictionMode,
 )
-from unspool.models.glm import BernoulliHistoryGLM
+from unspool.models.glm import (
+    BernoulliHistoryGLM,
+    CoefficientTrajectory,
+    SmoothBernoulliHistoryGLM,
+)
 
 __all__ = [
     "BehaviourModel",
     "BernoulliHistoryGLM",
+    "CoefficientTrajectory",
     "FitDiagnostics",
     "FitResult",
     "ModelDataError",
     "Prediction",
     "PredictionMode",
+    "SmoothBernoulliHistoryGLM",
     "UnsupportedPredictionMode",
 ]

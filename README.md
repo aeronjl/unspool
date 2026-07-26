@@ -19,8 +19,8 @@ stages, and inferred learning landmarks.
 
 > [!IMPORTANT]
 > Unspool is pre-alpha. Its longitudinal data, validation, first modelling, and parameter-
-> recovery contracts are executable, but the API is not yet stable and only one static
-> reference model is implemented.
+> recovery contracts are executable, but the API is not yet stable and the model catalogue
+> currently contains only static and smoothly time-varying Bernoulli GLMs.
 
 ## Why “Unspool”?
 
@@ -78,14 +78,16 @@ out splitter is intentionally marked non-prospective because it can train on the
 session's future. See the [data contract](docs/data-contract.md) and
 [validation guide](docs/validation.md).
 
-The first reference model is also executable: a static Bernoulli GLM with recursively
-generated, session-bounded choice history. It exposes simulation, fitting, filtered
-prediction, pointwise scoring, numerical diagnostics, prospective fold evaluation, and
-design-specific parameter recovery through one common contract. See the
-[modelling guide](docs/modelling.md) or run:
+Two reference models are executable: a static Bernoulli GLM and a smoothly time-varying
+competitor with fixed temporal knots. Both use recursively generated, session-bounded
+choice history and expose simulation, fitting, filtered prediction, pointwise scoring,
+numerical diagnostics, prospective fold evaluation, and design-specific parameter
+recovery through one common contract. See the [modelling guide](docs/modelling.md), the
+[smooth-drift guide](docs/smooth-drift.md), or run:
 
 ```bash
 uv run python examples/static_glm.py
+uv run python examples/smooth_glm.py
 ```
 
 ## Development
@@ -97,6 +99,7 @@ Unspool requires Python 3.11 or newer. The development interpreter is pinned to 
 uv sync --locked --all-groups
 uv run pytest
 uv run python examples/static_glm.py
+uv run python examples/smooth_glm.py
 uv run ruff check .
 uv run ruff format --check .
 uv build
