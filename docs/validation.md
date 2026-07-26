@@ -6,6 +6,7 @@ units. They answer different questions and retain the held-out unit in every spl
 | Splitter | Training data | Test data | Prospective? | Primary use |
 | --- | --- | --- | --- | --- |
 | `forward_session_splits` | Expanding prefix of sessions | Next `horizon` sessions | Yes | Forecasting behaviour from the past available at that point |
+| `cohort_forward_session_splits` | Same expanding session prefix across a cohort | Same future session rank for every eligible subject | Yes | Jointly fitting population or hierarchical models for within-subject forecasts |
 | `within_session_rolling_splits` | Earlier sessions plus current-session prefix | Next `horizon` observed trials | Yes | Online, filtered prediction inside a session |
 | `leave_one_session_out_splits` | Every other session for that subject | One complete session | No | Interpolation and sensitivity to a particular session |
 | `leave_one_subject_out_splits` | Every other subject | All trials from one subject | Yes¹ | Generalization to an unseen animal |
@@ -36,8 +37,29 @@ at earlier forecasting origins. `step` controls the distance between origins and
 controls the number of consecutive future sessions tested at each origin. Subjects without
 enough sessions simply produce no eligible fold.
 
-The split guarantees temporal ordering at session resolution. It does not make a fitted
-pipeline prospective by itself. Any learned scaling, feature selection, state alignment,
+## Cohort forward-session prediction
+
+```python
+from unspool import cohort_forward_session_splits, evaluate_splits
+
+splits = cohort_forward_session_splits(
+    study,
+    min_train_sessions=5,
+    horizon=1,
+)
+results = evaluate_splits(hierarchical_model, study, splits)
+```
+
+Each cohort fold contains all training and test rows for a shared session-rank origin, so
+population and hierarchical models are fitted jointly rather than once per animal. Source
+session identifiers and orders remain available in mappings keyed by subject. By default,
+fold generation stops as soon as any subject lacks the requested future horizon; this
+keeps the estimand's cohort fixed across origins. Set `require_all_subjects=False` only
+when a transparently shrinking, follow-up-dependent cohort is intended.
+
+Both forward-session splitters guarantee temporal ordering at session resolution. That
+does not make a fitted pipeline prospective by itself. Any learned scaling, feature
+selection, state alignment,
 or behavioural landmark must also be fitted on `train_indices` only. Unspool's first
 training-only landmark helper is described in the
 [clock and transform guide](clocks-and-transforms.md).

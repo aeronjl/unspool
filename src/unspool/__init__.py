@@ -81,9 +81,11 @@ from unspool.transforms import (
     fit_transform_splits,
 )
 from unspool.validation import (
+    CohortValidationSplit,
     PopulationValidationSplit,
     ValidationFold,
     ValidationSplit,
+    cohort_forward_session_splits,
     forward_session_splits,
     leave_one_lab_out_splits,
     leave_one_session_out_splits,
@@ -107,6 +109,7 @@ __all__ = [
     "ClockValidationError",
     "ClockedStudy",
     "CoefficientTrajectory",
+    "CohortValidationSplit",
     "FilteredStateProbabilities",
     "FitAudit",
     "FitAuditPolicy",
@@ -161,6 +164,7 @@ __all__ = [
     "__version__",
     "align_latent_states",
     "audit_fit",
+    "cohort_forward_session_splits",
     "evaluate_splits",
     "fit_transform_split",
     "fit_transform_splits",

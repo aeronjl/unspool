@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any, Literal
 
 import numpy as np
@@ -16,6 +18,7 @@ SplitScheme = Literal[
     "within-session-rolling-origin",
 ]
 PopulationSplitScheme = Literal["leave-one-subject-out", "leave-one-lab-out"]
+CohortSplitScheme = Literal["cohort-forward-session"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -212,7 +215,87 @@ class PopulationValidationSplit:
         return True
 
 
-ValidationFold = ValidationSplit | PopulationValidationSplit
+@dataclass(frozen=True, slots=True)
+class CohortValidationSplit:
+    """A prospective session-origin fold fitted jointly across a subject cohort.
+
+    Session metadata is keyed by subject because source session identifiers and source
+    chronology need not be shared across animals. All subjects nevertheless contribute
+    the same number of training sessions and the same forecast horizon.
+    """
+
+    train_indices: NDArray[np.intp]
+    test_indices: NDArray[np.intp]
+    subjects: tuple[Any, ...]
+    train_sessions: Mapping[Any, tuple[Any, ...]]
+    test_sessions: Mapping[Any, tuple[Any, ...]]
+    train_session_orders: Mapping[Any, tuple[int, ...]]
+    test_session_orders: Mapping[Any, tuple[int, ...]]
+    train_session_count: int
+    scheme: CohortSplitScheme = "cohort-forward-session"
+    prediction_context_indices: NDArray[np.intp] = field(
+        default_factory=lambda: np.empty(0, dtype=np.intp)
+    )
+
+    def __post_init__(self) -> None:
+        if self.scheme != "cohort-forward-session":
+            raise ValueError(f"unknown cohort validation scheme: {self.scheme!r}")
+        _require_positive_integer(self.train_session_count, "train_session_count")
+
+        train = _validated_indices(self.train_indices, "train_indices")
+        test = _validated_indices(self.test_indices, "test_indices")
+        context = _validated_indices(
+            self.prediction_context_indices,
+            "prediction_context_indices",
+            allow_empty=True,
+        )
+        subjects = _validated_identifiers(self.subjects, "subjects")
+        if np.intersect1d(train, test).size:
+            raise ValueError("training and test indices must not overlap")
+        if context.size:
+            raise ValueError("cohort splits do not use prediction context")
+
+        train_sessions = _validated_subject_mapping(self.train_sessions, subjects, "train_sessions")
+        test_sessions = _validated_subject_mapping(self.test_sessions, subjects, "test_sessions")
+        train_orders = _validated_subject_order_mapping(
+            self.train_session_orders, subjects, "train_session_orders"
+        )
+        test_orders = _validated_subject_order_mapping(
+            self.test_session_orders, subjects, "test_session_orders"
+        )
+        for subject in subjects:
+            if len(train_sessions[subject]) != self.train_session_count:
+                raise ValueError(
+                    "every subject must contribute train_session_count training sessions"
+                )
+            if len(train_sessions[subject]) != len(train_orders[subject]):
+                raise ValueError("every training session must have a session order")
+            if len(test_sessions[subject]) != len(test_orders[subject]):
+                raise ValueError("every test session must have a session order")
+            if not test_sessions[subject]:
+                raise ValueError("test sessions must not be empty")
+            if set(train_orders[subject]) & set(test_orders[subject]):
+                raise ValueError("training and test session orders must not overlap")
+            if max(train_orders[subject]) >= min(test_orders[subject]):
+                raise ValueError("cohort training must occur strictly before testing")
+
+        object.__setattr__(self, "train_indices", train)
+        object.__setattr__(self, "test_indices", test)
+        object.__setattr__(self, "prediction_context_indices", context)
+        object.__setattr__(self, "subjects", subjects)
+        object.__setattr__(self, "train_sessions", MappingProxyType(train_sessions))
+        object.__setattr__(self, "test_sessions", MappingProxyType(test_sessions))
+        object.__setattr__(self, "train_session_orders", MappingProxyType(train_orders))
+        object.__setattr__(self, "test_session_orders", MappingProxyType(test_orders))
+
+    @property
+    def prospective(self) -> bool:
+        """Whether every subject is trained strictly before its test sessions."""
+
+        return True
+
+
+ValidationFold = ValidationSplit | PopulationValidationSplit | CohortValidationSplit
 
 
 def forward_session_splits(
@@ -250,6 +333,98 @@ def forward_session_splits(
                 )
             )
             train_count += step
+    return tuple(splits)
+
+
+def cohort_forward_session_splits(
+    study: Study,
+    *,
+    min_train_sessions: int = 1,
+    horizon: int = 1,
+    step: int = 1,
+    require_all_subjects: bool = True,
+) -> tuple[CohortValidationSplit, ...]:
+    """Create expanding-history prospective folds fitted across a subject cohort.
+
+    Unlike :func:`forward_session_splits`, each returned fold joins every eligible
+    subject into one training and test set. By default, fold generation stops before the
+    first origin unavailable for any subject, keeping the cohort fixed. Setting
+    ``require_all_subjects=False`` permits later folds to contain only subjects with
+    sufficient follow-up; membership remains explicit in each fold.
+    """
+
+    _require_positive_integer(min_train_sessions, "min_train_sessions")
+    _require_positive_integer(horizon, "horizon")
+    _require_positive_integer(step, "step")
+    if not isinstance(require_all_subjects, bool):
+        raise TypeError("require_all_subjects must be a boolean")
+
+    sessions_by_subject = {
+        _identifier_key(subject): _sessions_for_subject(study, subject)
+        for subject in study.subjects
+    }
+    splits: list[CohortValidationSplit] = []
+    train_count = min_train_sessions
+    while True:
+        eligible_subjects = tuple(
+            subject
+            for subject in study.subjects
+            if train_count + horizon <= len(sessions_by_subject[_identifier_key(subject)])
+        )
+        if require_all_subjects and len(eligible_subjects) != len(study.subjects):
+            break
+        if not eligible_subjects:
+            break
+
+        train_sessions: dict[Any, tuple[Any, ...]] = {}
+        test_sessions: dict[Any, tuple[Any, ...]] = {}
+        train_orders: dict[Any, tuple[int, ...]] = {}
+        test_orders: dict[Any, tuple[int, ...]] = {}
+        train_order_sets: dict[Any, set[int]] = {}
+        test_order_sets: dict[Any, set[int]] = {}
+        for subject in eligible_subjects:
+            key = _identifier_key(subject)
+            ordered_sessions = sessions_by_subject[key]
+            training = ordered_sessions[:train_count]
+            testing = ordered_sessions[train_count : train_count + horizon]
+            train_sessions[key] = tuple(session for _, session in training)
+            test_sessions[key] = tuple(session for _, session in testing)
+            train_orders[key] = tuple(order for order, _ in training)
+            test_orders[key] = tuple(order for order, _ in testing)
+            train_order_sets[key] = set(train_orders[key])
+            test_order_sets[key] = set(test_orders[key])
+
+        train_mask = np.fromiter(
+            (
+                _identifier_key(subject) in train_order_sets
+                and int(order) in train_order_sets[_identifier_key(subject)]
+                for subject, order in zip(study["subject"], study["session_order"], strict=True)
+            ),
+            dtype=np.bool_,
+            count=len(study),
+        )
+        test_mask = np.fromiter(
+            (
+                _identifier_key(subject) in test_order_sets
+                and int(order) in test_order_sets[_identifier_key(subject)]
+                for subject, order in zip(study["subject"], study["session_order"], strict=True)
+            ),
+            dtype=np.bool_,
+            count=len(study),
+        )
+        splits.append(
+            CohortValidationSplit(
+                train_indices=np.flatnonzero(train_mask),
+                test_indices=np.flatnonzero(test_mask),
+                subjects=eligible_subjects,
+                train_sessions=train_sessions,
+                test_sessions=test_sessions,
+                train_session_orders=train_orders,
+                test_session_orders=test_orders,
+                train_session_count=train_count,
+            )
+        )
+        train_count += step
     return tuple(splits)
 
 
@@ -563,6 +738,46 @@ def _validated_identifiers(values: tuple[Any, ...], name: str) -> tuple[Any, ...
     if len(_identifier_keys(identifiers)) != len(identifiers):
         raise ValueError(f"{name} must not contain duplicates")
     return identifiers
+
+
+def _validated_subject_mapping(
+    values: Mapping[Any, tuple[Any, ...]],
+    subjects: tuple[Any, ...],
+    name: str,
+) -> dict[Any, tuple[Any, ...]]:
+    if not isinstance(values, Mapping):
+        raise TypeError(f"{name} must be a mapping keyed by subject")
+    expected = _identifier_keys(subjects)
+    observed = {_identifier_key(key) for key in values}
+    if observed != expected:
+        raise ValueError(f"{name} keys must exactly match subjects")
+    result: dict[Any, tuple[Any, ...]] = {}
+    for subject in subjects:
+        key = _identifier_key(subject)
+        entries = tuple(
+            _validated_identifier(value, f"{name}[{subject!r}]") for value in values[key]
+        )
+        if not entries:
+            raise ValueError(f"{name}[{subject!r}] must not be empty")
+        result[key] = entries
+    return result
+
+
+def _validated_subject_order_mapping(
+    values: Mapping[Any, tuple[int, ...]],
+    subjects: tuple[Any, ...],
+    name: str,
+) -> dict[Any, tuple[int, ...]]:
+    if not isinstance(values, Mapping):
+        raise TypeError(f"{name} must be a mapping keyed by subject")
+    expected = _identifier_keys(subjects)
+    observed = {_identifier_key(key) for key in values}
+    if observed != expected:
+        raise ValueError(f"{name} keys must exactly match subjects")
+    return {
+        _identifier_key(subject): _validated_session_orders(values[_identifier_key(subject)], name)
+        for subject in subjects
+    }
 
 
 def _validated_identifier(value: Any, name: str) -> Any:

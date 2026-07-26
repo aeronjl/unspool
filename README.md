@@ -186,6 +186,15 @@ the [IBL 2021 benchmark](benchmarks/ibl2021/README.md). Its population-validatio
 also confirms complete trial coverage for nine subject and nine lab holdouts while making
 their one-subject-per-lab equivalence explicit.
 
+The first end-to-end [prospective longitudinal study](benchmarks/flagship_longitudinal/README.md)
+then aligns six sessions per animal in both public sources and forecasts the sixth from the
+first five. Complete pooling, static partial pooling, shared smooth drift, and hierarchical
+smooth trajectories compete under one cohort-level fold, with subject-balanced scoring,
+paired subject-bootstrap intervals, fit audits, and individual paths retained. Static
+partial pooling has the lowest point estimate in the 30-mouse Cell panel; shared drift has
+the lowest in the nine-mouse IBL panel, where uncertainty leaves the structural ranking
+unresolved.
+
 ## Development
 
 Unspool requires Python 3.11 or newer. The development interpreter is pinned to Python
@@ -216,6 +225,7 @@ uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv
 uv run python -m benchmarks.ibl2021.fetch_data
 uv run --with pyarrow python -m benchmarks.ibl2021.benchmark
+uv run --with pyarrow python -m benchmarks.flagship_longitudinal.benchmark
 uv run ruff check .
 uv run ruff format --check .
 uv build
