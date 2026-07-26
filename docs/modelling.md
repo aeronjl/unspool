@@ -102,6 +102,12 @@ non-decision time. Its future-knot persistence forecast, single-subject default,
 distinction between across-trial trajectories and within-decision dynamics are detailed in
 the [session-varying drift-diffusion guide](smooth-ddm.md).
 
+`HierarchicalSmoothWienerDriftDiffusion` adds smooth Gaussian-shrunken animal deviations
+around those population paths. Represented animals use their fitted paths; unseen animals
+use an explicitly recorded population-trajectory plug-in. The fixed-scale MAP contract,
+natural-bound safeguards, arrowhead local uncertainty, and structural recovery benchmark
+are detailed in the [hierarchical drift-diffusion guide](hierarchical-smooth-ddm.md).
+
 The GLM implementations use SciPy's deterministic L-BFGS-B optimizer. An optional L2
 penalty applies to non-intercept coefficients. Standard errors and 95% coverage summaries
 use a local Hessian approximation; when penalization is nonzero they are approximate rather

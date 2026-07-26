@@ -93,7 +93,7 @@ This first family intentionally excludes:
 - session-varying non-decision time, whose admissible range is entangled with local minimum
   response times;
 - contaminant mixtures, which need a trajectory-aware robustness contract;
-- hierarchical pooling of animal-specific Wiener paths;
+- parameter-specific or estimated variance components for hierarchical Wiener paths;
 - within-decision time-varying drift or collapsing boundaries;
 - learned knots, automatic change points, or automatic trajectory interpretation.
 
@@ -113,9 +113,15 @@ the static model wins both training-path RMSE and final-session joint log loss u
 stationarity; the smooth model wins both under the specified change trajectory. This is a
 design-specific implementation check, not a universal change detector.
 
+For multi-animal partial pooling, see
+[Partially pooled Wiener trajectories](hierarchical-smooth-ddm.md). That model estimates a
+population path and shrunken animal deviations instead of silently sharing one trajectory.
+
 Run the executable example and benchmark with:
 
 ```bash
 uv run python examples/smooth_drift_diffusion.py
+uv run python examples/hierarchical_smooth_drift_diffusion.py
 uv run python -m benchmarks.smooth_ddm.benchmark
+uv run python -m benchmarks.hierarchical_smooth_ddm.benchmark
 ```

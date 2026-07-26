@@ -34,6 +34,8 @@ points, or parameters that drift across learning. `SmoothWienerDriftDiffusion` a
 fixed-knot longitudinal paths for selected drift coefficients, boundary, and starting bias;
 see the [session-varying guide](smooth-ddm.md). An optional contaminant mixture provides a
 narrow robustness account for responses outside the stationary decision process.
+The [hierarchical trajectory guide](hierarchical-smooth-ddm.md) extends the longitudinal
+family to partially pooled animal-specific paths.
 
 ## Response-time schema
 
@@ -182,8 +184,10 @@ Run the small executable example and full benchmark with:
 ```bash
 uv run python examples/drift_diffusion.py
 uv run python examples/smooth_drift_diffusion.py
+uv run python examples/hierarchical_smooth_drift_diffusion.py
 uv run python examples/contaminant_ddm.py
 uv run python -m benchmarks.ddm_recovery.benchmark
 uv run python -m benchmarks.ddm_contaminants.benchmark
 uv run python -m benchmarks.smooth_ddm.benchmark
+uv run python -m benchmarks.hierarchical_smooth_ddm.benchmark
 ```
