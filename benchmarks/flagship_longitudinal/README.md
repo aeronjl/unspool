@@ -12,6 +12,8 @@ five and compares four explanations of longitudinal behavioural structure:
 
 The exercise is a comparative forecast, not a retrospective description. One cohort fold
 jointly fits all animals, and no held-out sixth-session choice is available during fitting.
+Its scoring, paired uncertainty, audits, and fold provenance are produced by Unspool's
+public `ProspectiveComparisonReport` rather than benchmark-local comparison code.
 
 ## Fixed analysis contract
 

@@ -25,9 +25,8 @@ from unspool import (
     HierarchicalSmoothGLMFitResult,
     SmoothBernoulliHistoryGLM,
     Study,
-    audit_fit,
     cohort_forward_session_splits,
-    evaluate_splits,
+    compare_models,
 )
 
 KNOTS = (0.0, 2.0, 5.0)
@@ -105,59 +104,67 @@ def analyze_panel(
     if len(splits) != 1:
         raise ValueError("a balanced six-session panel must produce exactly one flagship fold")
     split = splits[0]
-    models = _models()
-    subject_losses: dict[str, np.ndarray[Any, np.dtype[np.float64]]] = {}
+    report = compare_models(
+        _models(),
+        panel,
+        (split,),
+        bootstrap_resamples=bootstrap_resamples,
+        bootstrap_seed=bootstrap_seed,
+    )
     method_payloads: dict[str, Any] = {}
-    for method, model in models.items():
-        evaluation = evaluate_splits(model, panel, (split,))[0]
-        test = panel.take(split.test_indices)
-        losses = -evaluation.pointwise_log_probability
-        squared_errors = (evaluation.prediction.probability - test["choice"]) ** 2
-        per_subject_loss = _subject_means(test, losses, split.subjects)
-        per_subject_brier = _subject_means(test, squared_errors, split.subjects)
-        subject_losses[method] = per_subject_loss
+    for method in METHODS:
+        result = report.result_for(method)
+        interval = result.unit_balanced_log_loss_interval
+        if method == "complete_pooling":
+            improvement = {
+                "estimate": 0.0,
+                "interval_95": [0.0, 0.0],
+                "bootstrap_probability_positive": 0.0,
+            }
+        else:
+            paired = report.comparison_for("complete_pooling", method)
+            improvement = {
+                "estimate": paired.left_minus_right.estimate,
+                "interval_95": [
+                    paired.left_minus_right.lower,
+                    paired.left_minus_right.upper,
+                ],
+                "bootstrap_probability_positive": paired.bootstrap_probability_positive,
+            }
         method_payloads[method] = {
-            "subject_balanced_log_loss": float(np.mean(per_subject_loss)),
-            "pooled_trial_log_loss": float(np.mean(losses)),
-            "subject_balanced_brier_score": float(np.mean(per_subject_brier)),
-            "pooled_trial_brier_score": float(np.mean(squared_errors)),
+            "subject_balanced_log_loss": result.unit_balanced_log_loss,
+            "pooled_trial_log_loss": result.pooled_log_loss,
+            "subject_balanced_brier_score": result.unit_balanced_brier_score,
+            "pooled_trial_brier_score": result.pooled_brier_score,
             "subject_log_loss": {
                 str(subject): float(value)
-                for subject, value in zip(split.subjects, per_subject_loss, strict=True)
+                for subject, value in zip(
+                    result.aggregation_units,
+                    result.unit_log_losses,
+                    strict=True,
+                )
             },
-            "fit_audit": audit_fit(evaluation.fit).to_dict(),
-            "stimulus_trajectory": _stimulus_trajectory(method, evaluation.fit, split.subjects),
+            "fit_audit": result.audits[0].to_dict(),
+            "stimulus_trajectory": _stimulus_trajectory(
+                method,
+                result.evaluations[0].fit,
+                split.subjects,
+            ),
+            "subject_bootstrap_log_loss_95_interval": [interval.lower, interval.upper],
+            "log_loss_improvement_over_complete_pooling": improvement,
         }
 
-    generator = np.random.default_rng(bootstrap_seed)
-    draws = generator.integers(
-        0, len(split.subjects), size=(bootstrap_resamples, len(split.subjects))
-    )
-    reference = subject_losses["complete_pooling"]
-    for method in METHODS:
-        values = subject_losses[method]
-        bootstrap_loss = np.mean(values[draws], axis=1)
-        improvement = reference - values
-        bootstrap_improvement = np.mean(improvement[draws], axis=1)
-        method_payloads[method]["subject_bootstrap_log_loss_95_interval"] = _interval(
-            bootstrap_loss
-        )
-        method_payloads[method]["log_loss_improvement_over_complete_pooling"] = {
-            "estimate": float(np.mean(improvement)),
-            "interval_95": _interval(bootstrap_improvement),
-            "bootstrap_probability_positive": float(np.mean(bootstrap_improvement > 0)),
+    pairwise = {
+        f"{comparison.left_model}_minus_{comparison.right_model}": {
+            "estimate": comparison.left_minus_right.estimate,
+            "interval_95": [
+                comparison.left_minus_right.lower,
+                comparison.left_minus_right.upper,
+            ],
+            "bootstrap_probability_positive": comparison.bootstrap_probability_positive,
         }
-
-    pairwise: dict[str, Any] = {}
-    for left_index, left in enumerate(METHODS):
-        for right in METHODS[left_index + 1 :]:
-            difference = subject_losses[left] - subject_losses[right]
-            bootstrap_difference = np.mean(difference[draws], axis=1)
-            pairwise[f"{left}_minus_{right}"] = {
-                "estimate": float(np.mean(difference)),
-                "interval_95": _interval(bootstrap_difference),
-                "bootstrap_probability_positive": float(np.mean(bootstrap_difference > 0)),
-            }
+        for comparison in report.pairwise_comparisons
+    }
 
     test_subjects = panel.take(split.test_indices)["subject"]
     return {
@@ -173,9 +180,7 @@ def analyze_panel(
             },
             "subjects": [str(subject) for subject in split.subjects],
         },
-        "winner_by_subject_balanced_log_loss": min(
-            METHODS, key=lambda method: method_payloads[method]["subject_balanced_log_loss"]
-        ),
+        "winner_by_subject_balanced_log_loss": report.winner,
         "pairwise_subject_log_loss_differences": pairwise,
         "methods": method_payloads,
     }
@@ -323,19 +328,6 @@ def _models() -> Mapping[str, Any]:
             subject_smoothness=3.0,
         ),
     }
-
-
-def _subject_means(study: Study, values: Any, subjects: tuple[Any, ...]) -> np.ndarray:
-    array = np.asarray(values, dtype=float)
-    return np.asarray(
-        [float(np.mean(array[study["subject"] == subject])) for subject in subjects],
-        dtype=float,
-    )
-
-
-def _interval(values: Any) -> list[float]:
-    lower, upper = np.quantile(np.asarray(values, dtype=float), (0.025, 0.975))
-    return [float(lower), float(upper)]
 
 
 def _stimulus_trajectory(method: str, fit: FitResult, subjects: tuple[Any, ...]) -> dict[str, Any]:

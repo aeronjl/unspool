@@ -62,6 +62,18 @@ The roadmap is organized by scientific contracts rather than by model count.
   subject-balanced scores, paired subject-bootstrap uncertainty, fit audits, and retained
   individual trajectories.
 
+## 0.4 — Training-only comparison procedures
+
+- **Implemented:** compare arbitrary behavioural-model candidates over common prospective
+  folds with declared aggregation units, equal-unit and pooled log-loss/Brier summaries,
+  paired unit-bootstrap intervals, complete fit audits, and JSON-safe fold provenance.
+- **Implemented:** select candidates independently inside every outer training study,
+  retain the complete inner comparison and selected outer fit, and aggregate the resulting
+  outer performance as a selection procedure rather than relabelling it as one model.
+- **Implemented:** migrate the flagship Cell/IBL study onto the reusable report and test
+  the nested selector under stationary and strong shared-drift generators, including a
+  direct regression that changes outer-test outcomes without changing inner selection.
+
 ## Later
 
 - Session-varying GLM-HMM parameters

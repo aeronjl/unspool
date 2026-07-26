@@ -1,0 +1,826 @@
+{
+  "all_regimes_majority_recovered": true,
+  "benchmark": "nested prospective stationary-versus-drift selection recovery",
+  "design": {
+    "inner_minimum_training_sessions": 3,
+    "knots": [
+      0.0,
+      3.0,
+      6.0
+    ],
+    "outer_training_origins": [
+      5,
+      6
+    ],
+    "sessions": 7,
+    "subjects": 10,
+    "trials_per_session": 40
+  },
+  "regimes": {
+    "shared_drift": {
+      "all_selected_fits_passed_audit": true,
+      "expected_model": "shared_smooth",
+      "expected_selection_rate": 1.0,
+      "majority_recovery_rate": 1.0,
+      "mean_fixed_candidate_outer_log_loss": {
+        "shared_smooth": 0.432842073461327,
+        "static": 0.5418240660085138
+      },
+      "mean_nested_outer_log_loss": 0.432842073461327,
+      "runs": [
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.44148204158667453,
+            "static": 0.5420820100591879
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.44148204158667453,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.4240188193187276,
+            "static": 0.5532224088619466
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.4240188193187276,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.44174721251646504,
+            "static": 0.5348762272326365
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.44174721251646504,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.43890995174026015,
+            "static": 0.5462270891603426
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.43890995174026015,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.45493898422178985,
+            "static": 0.5335722855277976
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.45493898422178985,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.4530529369890372,
+            "static": 0.5591731189449795
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.4530529369890372,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.3920811781110342,
+            "static": 0.5162497715648647
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.3920811781110342,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.4228477169730011,
+            "static": 0.5425875110574612
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.4228477169730011,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.44498058755900727,
+            "static": 0.5638161745403227
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.44498058755900727,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.481824305317388,
+            "static": 0.560732321629172
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.481824305317388,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.40562407574531595,
+            "static": 0.5458162327203648
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.40562407574531595,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.44829012982616023,
+            "static": 0.5539427811329518
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.44829012982616023,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.4213320595907429,
+            "static": 0.536441803388354
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.4213320595907429,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.39016644352359453,
+            "static": 0.5205609126648382
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.39016644352359453,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.4218489012140713,
+            "static": 0.5323956636553264
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.4218489012140713,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.4625761726057406,
+            "static": 0.5625561893643706
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.4625761726057406,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.40953657507234525,
+            "static": 0.5297203612350376
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.40953657507234525,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.41383610950361166,
+            "static": 0.5178074031013205
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.41383610950361166,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.4331143303865447,
+            "static": 0.5361132521693285
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.4331143303865447,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "shared_smooth",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.4546329374250286,
+            "static": 0.5485878021596712
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.4546329374250286,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "shared_smooth"
+          ]
+        }
+      ],
+      "selection_counts": {
+        "shared_smooth": 40,
+        "static": 0
+      }
+    },
+    "stationary": {
+      "all_selected_fits_passed_audit": true,
+      "expected_model": "static",
+      "expected_selection_rate": 0.925,
+      "majority_recovery_rate": 0.85,
+      "mean_fixed_candidate_outer_log_loss": {
+        "shared_smooth": 0.588378007820433,
+        "static": 0.579958839197306
+      },
+      "mean_nested_outer_log_loss": 0.5817573028460674,
+      "runs": [
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5797607968883361,
+            "static": 0.5641057084719837
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": false,
+          "n_expected_selections": 1,
+          "nested_outer_log_loss": 0.5798451750529543,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.592141718129852,
+            "static": 0.5807181909621049
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.5807181909621049,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5835030562392111,
+            "static": 0.5828795661096868
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.5828795661096868,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.6008869482582647,
+            "static": 0.5900760127079836
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.5900760127079836,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.6022877191942931,
+            "static": 0.583632451439444
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.583632451439444,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5909816271894343,
+            "static": 0.5800775979956713
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": false,
+          "n_expected_selections": 1,
+          "nested_outer_log_loss": 0.5871274701380627,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5865620514373703,
+            "static": 0.579274095816035
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.579274095816035,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5911354074982629,
+            "static": 0.5813312983975235
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.5813312983975235,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.573958753213587,
+            "static": 0.5699094012566512
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.5699094012566512,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5919392143230964,
+            "static": 0.5863481911203337
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.5863481911203337,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5792876463461527,
+            "static": 0.5758787438550288
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.5758787438550288,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5801455179011519,
+            "static": 0.5727381605736268
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.5727381605736268,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.6144562083920249,
+            "static": 0.6118934322243446
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.6118934322243446,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5674464325403001,
+            "static": 0.561015251083157
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.561015251083157,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.59757167328061,
+            "static": 0.588810464186926
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.588810464186926,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5732933435278175,
+            "static": 0.569291350134565
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.569291350134565,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5845255424552287,
+            "static": 0.5679687662984416
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": false,
+          "n_expected_selections": 1,
+          "nested_outer_log_loss": 0.5811487005503122,
+          "outer_fold_selections": [
+            "shared_smooth",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5954308658936599,
+            "static": 0.5886701475335825
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.5886701475335825,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5840936093763371,
+            "static": 0.5816100446672869
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.5816100446672869,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        },
+        {
+          "all_selected_fits_passed_audit": true,
+          "expected_model": "static",
+          "fixed_candidate_outer_log_loss": {
+            "shared_smooth": 0.5981520243236699,
+            "static": 0.5829479091117412
+          },
+          "inner_fold_counts": [
+            2,
+            3
+          ],
+          "majority_recovered": true,
+          "n_expected_selections": 2,
+          "nested_outer_log_loss": 0.5829479091117412,
+          "outer_fold_selections": [
+            "static",
+            "static"
+          ]
+        }
+      ],
+      "selection_counts": {
+        "shared_smooth": 3,
+        "static": 37
+      }
+    }
+  },
+  "repetitions": 20,
+  "seed": 84221,
+  "selection_contract": {
+    "candidate_order": [
+      "static",
+      "shared_smooth"
+    ],
+    "outer_test_outcomes_available_during_selection": false,
+    "primary_metric": "mean subject-level inner-fold log loss",
+    "tie_break": "declared candidate order"
+  }
+}

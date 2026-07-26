@@ -143,3 +143,18 @@ def test_hierarchical_smooth_example_exposes_individual_trajectories(
     assert "population stimulus:" in output
     assert "mouse-0 stimulus:" in output
     assert "new-mouse fitted: False" in output
+
+
+def test_prospective_comparison_example_exposes_nested_selection(
+    capsys: CaptureFixture[str],
+) -> None:
+    example = Path(__file__).parents[1] / "examples" / "prospective_comparison.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Subject-balanced prospective comparison" in output
+    assert "static: loss=" in output
+    assert "shared_smooth: loss=" in output
+    assert "Training-only nested selection" in output
+    assert "selected:" in output
