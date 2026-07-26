@@ -82,6 +82,7 @@ def test_model_recovery_builds_an_explicit_prospective_confusion_matrix() -> Non
     assert report.n_runs == 6
     assert report.n_trials == 1_200
     assert report.n_subjects == 1
+    assert report.scored_columns == ("choice",)
     assert report.n_folds.tolist() == [7] * 6
     assert report.generator_parameters[0]["stimulus"] == 1.2
     with pytest.raises(TypeError):
@@ -265,3 +266,17 @@ def test_model_recovery_requires_eligible_folds_and_known_truth() -> None:
 
     with pytest.raises(ValueError, match="no eligible prospective folds"):
         run_model_recovery(design, [scenario], {"static": model}, seed=1)
+
+    with pytest.raises(ValueError, match="identical observed columns"):
+        run_model_recovery(
+            design,
+            [scenario],
+            {
+                "static": model,
+                "different_likelihood": BernoulliHistoryGLM(
+                    choice_lags=0,
+                    outcome="response",
+                ),
+            },
+            seed=1,
+        )

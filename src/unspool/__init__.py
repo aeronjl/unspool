@@ -42,6 +42,7 @@ from unspool.model_recovery import (
     run_model_recovery_grid,
 )
 from unspool.models import (
+    BehaviourEstimator,
     BehaviourModel,
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
@@ -50,6 +51,7 @@ from unspool.models import (
     FilteredStateProbabilities,
     FitDiagnostics,
     FitResult,
+    GenerativeBehaviourModel,
     GLMHMMFitResult,
     GLMHMMParameters,
     GLMHMMSimulation,
@@ -59,6 +61,7 @@ from unspool.models import (
     HierarchicalSmoothBernoulliHistoryGLM,
     HierarchicalSmoothGLMFitResult,
     HierarchicalSmoothGLMSimulation,
+    ModelCapabilities,
     ModelDataError,
     Prediction,
     PredictionMode,
@@ -67,6 +70,7 @@ from unspool.models import (
     SmoothBernoulliHistoryGLM,
     UnsupportedPredictionMode,
     ValueTrajectory,
+    model_capabilities,
 )
 from unspool.recovery import (
     ParameterRecoveryReport,
@@ -108,6 +112,7 @@ __version__ = "0.1.0"
 __all__ = [
     "REQUIRED_COLUMNS",
     "AuditSeverity",
+    "BehaviourEstimator",
     "BehaviourModel",
     "BernoulliGLMHMM",
     "BernoulliHistoryGLM",
@@ -135,6 +140,7 @@ __all__ = [
     "GLMHMMFitResult",
     "GLMHMMParameters",
     "GLMHMMSimulation",
+    "GenerativeBehaviourModel",
     "HierarchicalBernoulliHistoryGLM",
     "HierarchicalGLMFitResult",
     "HierarchicalGLMSimulation",
@@ -146,6 +152,7 @@ __all__ = [
     "LandmarkUncertaintyEstimate",
     "LatentStateAlignment",
     "LatentStateAudit",
+    "ModelCapabilities",
     "ModelDataError",
     "ModelRecoveryGridReport",
     "ModelRecoveryGridSummary",
@@ -189,6 +196,7 @@ __all__ = [
     "leave_one_lab_out_splits",
     "leave_one_session_out_splits",
     "leave_one_subject_out_splits",
+    "model_capabilities",
     "nested_select_model",
     "run_model_recovery",
     "run_model_recovery_grid",

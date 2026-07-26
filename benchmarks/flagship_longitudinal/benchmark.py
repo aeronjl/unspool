@@ -202,6 +202,7 @@ def run(cell_path: Path, ibl_directory: Path) -> dict[str, Any]:
             "panel": "first three and final three eligible sessions per subject",
             "forecast": "session rank 5 from ranks 0 through 4",
             "outcome": "binary choice",
+            "scored_columns": ["choice"],
             "covariates": ["stimulus", "one-session-reset choice lag"],
             "knots": list(KNOTS),
             "hyperparameters": {

@@ -74,10 +74,23 @@ The roadmap is organized by scientific contracts rather than by model count.
   the nested selector under stationary and strong shared-drift generators, including a
   direct regression that changes outer-test outcomes without changing inner selection.
 
+## 0.5 — Extensible estimator and recovery contract
+
+- **Implemented:** separate the prospective `BehaviourEstimator` contract from the
+  simulation-capable `GenerativeBehaviourModel` contract while retaining `BehaviourModel`
+  as the compatible full-model name.
+- **Implemented:** declare and validate the complete observed columns scored by every
+  pointwise likelihood, rejecting rankings between choice-only and joint-observation
+  estimators.
+- **Implemented:** validate plugin fit identity and row alignment at evaluation boundaries,
+  and make complete fit audits, audit eligibility, finite-uncertainty denominators, and
+  standards-compliant JSON serialization first-class in parameter recovery.
+
 ## Later
 
 - Session-varying GLM-HMM parameters
-- Reaction-time and drift-diffusion families
+- Joint reaction-time and drift-diffusion families, now gated by the scored-observation
+  contract and a dedicated recovery benchmark
 - Richer mixtures and model plugins
 - NWB/DANDI streaming workflows
 - Cross-lab trajectory-shape comparisons

@@ -4,18 +4,26 @@ Unspool's first model is intentionally ordinary: a static Bernoulli GLM. Its pur
 to establish what every more elaborate model must expose before smooth drift, latent
 states, reinforcement learning, or population structure are added.
 
-## Common interface
+## Common interfaces
 
-Objects satisfying `BehaviourModel` provide:
+Objects satisfying `BehaviourEstimator` provide fitting, prediction, and pointwise scoring.
+`GenerativeBehaviourModel` adds named parameters and simulation; `BehaviourModel` remains
+the backwards-compatible name for this full generative contract.
+
+| Method or property | Contract |
+| --- | --- |
+| `fit(study)` | Return estimates and visible numerical diagnostics, including failed convergence and boundary warnings. |
+| `predict(study, fit, mode=...)` | State whether predictions are filtered or smoothed rather than conflating the two. |
+| `pointwise_log_prob(study, fit, mode=...)` | Return one score per observed trial for validation and comparison. |
+| `scored_columns` | Declare the complete observed event represented by each likelihood contribution. |
+| `signature` | Prevent a fit from being silently reused with a different model specification. |
+
+Generative models additionally provide:
 
 | Method or property | Contract |
 | --- | --- |
 | `simulate(design, parameters, seed=...)` | Generate outcomes from named parameters while retaining the supplied study design. |
-| `fit(study)` | Return estimates and visible numerical diagnostics, including failed convergence and boundary warnings. |
-| `predict(study, fit, mode=...)` | State whether predictions are filtered or smoothed rather than conflating the two. |
-| `pointwise_log_prob(study, fit, mode=...)` | Return one score per observed trial for validation and comparison. |
 | `parameter_names` | Give simulation truth and fitted estimates the same stable coordinate system. |
-| `signature` | Prevent a fit from being silently reused with a different model specification. |
 
 `FitResult` retains parameter estimates, approximate standard errors, covariance, sample
 size, optimizer status and message, iteration count, objective, gradient norm, Hessian
@@ -27,6 +35,10 @@ restart, occupancy, or label evidence. Its `pass`, `warning`, or `fail` status n
 the underlying diagnostics, and its stable issue codes make heterogeneous fits comparable
 in reports. See the [fit-audit guide](diagnostics.md) for the complete rules and
 interpretation boundary.
+
+The [estimator contract guide](estimator-contract.md) documents plugin compatibility,
+machine-readable capabilities, fit-result invariants, and why choice-only and joint
+choice/response-time likelihoods cannot be ranked as if they scored the same event.
 
 ## Static Bernoulli history GLM
 
@@ -135,8 +147,10 @@ for row in report.summary():
 ```
 
 The report stores every truth, estimate, standard error, convergence flag, optimizer
-message, and child random seed. It also records the model signature and the design's number
-of trials and subjects. Bias, RMSE, truth-estimate correlation, and approximate 95%
+message, complete fit audit, and child random seed. Warning fits remain eligible for
+summary; failed audits remain visible but are excluded. Coverage reports its own finite-
+uncertainty denominator. The report also records the model signature and the design's
+number of trials and subjects. Bias, RMSE, truth-estimate correlation, and approximate 95%
 coverage are summaries of those retained runs—not a universal identifiability certificate.
 
 To test whether the design can distinguish whole model families, use prospective

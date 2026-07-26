@@ -1,13 +1,17 @@
 """Reference behavioural models and shared modelling contracts."""
 
 from unspool.models.base import (
+    BehaviourEstimator,
     BehaviourModel,
     FitDiagnostics,
     FitResult,
+    GenerativeBehaviourModel,
+    ModelCapabilities,
     ModelDataError,
     Prediction,
     PredictionMode,
     UnsupportedPredictionMode,
+    model_capabilities,
 )
 from unspool.models.glm import (
     BernoulliHistoryGLM,
@@ -39,6 +43,7 @@ from unspool.models.q_learning import (
 )
 
 __all__ = [
+    "BehaviourEstimator",
     "BehaviourModel",
     "BernoulliGLMHMM",
     "BernoulliHistoryGLM",
@@ -50,12 +55,14 @@ __all__ = [
     "GLMHMMFitResult",
     "GLMHMMParameters",
     "GLMHMMSimulation",
+    "GenerativeBehaviourModel",
     "HierarchicalBernoulliHistoryGLM",
     "HierarchicalGLMFitResult",
     "HierarchicalGLMSimulation",
     "HierarchicalSmoothBernoulliHistoryGLM",
     "HierarchicalSmoothGLMFitResult",
     "HierarchicalSmoothGLMSimulation",
+    "ModelCapabilities",
     "ModelDataError",
     "Prediction",
     "PredictionMode",
@@ -64,4 +71,5 @@ __all__ = [
     "SmoothBernoulliHistoryGLM",
     "UnsupportedPredictionMode",
     "ValueTrajectory",
+    "model_capabilities",
 ]

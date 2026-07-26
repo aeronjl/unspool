@@ -100,6 +100,7 @@ prediction, pointwise scoring, numerical diagnostics, prospective fold evaluatio
 design-specific recovery through one common contract. Every fit also produces a normalized
 audit without discarding its model-specific evidence. See the
 [modelling guide](docs/modelling.md), [fit-audit guide](docs/diagnostics.md),
+[estimator and plugin contract](docs/estimator-contract.md),
 [prospective comparison guide](docs/comparison.md),
 [smooth-drift guide](docs/smooth-drift.md),
 [partial-pooling guide](docs/hierarchical-glm.md),

@@ -33,6 +33,42 @@ class UnsupportedPredictionMode(ValueError):
 
 
 @dataclass(frozen=True, slots=True)
+class ModelCapabilities:
+    """Validated description of what one behavioural estimator exposes.
+
+    ``scored_columns`` names the complete observation used by each pointwise likelihood.
+    It is deliberately distinct from the binary choice probability returned by
+    :class:`Prediction`: a future reaction-time model may predict choice while scoring the
+    joint choice and response-time observation.
+    """
+
+    scored_columns: tuple[str, ...]
+    prediction_modes: tuple[PredictionMode, ...]
+    can_simulate: bool
+    can_recover_parameters: bool
+
+    def __post_init__(self) -> None:
+        if isinstance(self.scored_columns, str):
+            raise ValueError("scored_columns must be a tuple of column names")
+        columns = tuple(self.scored_columns)
+        modes = tuple(PredictionMode(mode) for mode in self.prediction_modes)
+        if not columns or len(set(columns)) != len(columns):
+            raise ValueError("scored_columns must be non-empty and unique")
+        if any(not isinstance(column, str) or not column for column in columns):
+            raise ValueError("scored_columns must contain non-empty strings")
+        if not modes or len(set(modes)) != len(modes):
+            raise ValueError("prediction_modes must be non-empty and unique")
+        if not isinstance(self.can_simulate, bool) or not isinstance(
+            self.can_recover_parameters, bool
+        ):
+            raise ValueError("capability flags must be boolean")
+        if self.can_recover_parameters and not self.can_simulate:
+            raise ValueError("parameter recovery requires simulation")
+        object.__setattr__(self, "scored_columns", columns)
+        object.__setattr__(self, "prediction_modes", modes)
+
+
+@dataclass(frozen=True, slots=True)
 class FitDiagnostics:
     """Optimizer and numerical diagnostics that remain attached to a fit."""
 
@@ -128,8 +164,8 @@ class Prediction:
 
 
 @runtime_checkable
-class BehaviourModel(Protocol):
-    """Minimum generative, fitting, prediction, and scoring model contract."""
+class BehaviourEstimator(Protocol):
+    """Minimum fitting, prediction, and pointwise-scoring contract."""
 
     @property
     def model_name(self) -> str: ...
@@ -138,18 +174,10 @@ class BehaviourModel(Protocol):
     def signature(self) -> str: ...
 
     @property
-    def parameter_names(self) -> tuple[str, ...]: ...
+    def scored_columns(self) -> tuple[str, ...]: ...
 
     @property
     def supported_prediction_modes(self) -> tuple[PredictionMode, ...]: ...
-
-    def simulate(
-        self,
-        design: Study,
-        parameters: Mapping[str, float],
-        *,
-        seed: int | np.random.Generator,
-    ) -> Study: ...
 
     def fit(self, study: Study) -> FitResult: ...
 
@@ -168,6 +196,57 @@ class BehaviourModel(Protocol):
         *,
         mode: PredictionMode = PredictionMode.FILTERED,
     ) -> NDArray[np.float64]: ...
+
+
+@runtime_checkable
+class GenerativeBehaviourModel(BehaviourEstimator, Protocol):
+    """An estimator with named parameters and a matching simulator."""
+
+    @property
+    def parameter_names(self) -> tuple[str, ...]: ...
+
+    def simulate(
+        self,
+        design: Study,
+        parameters: Mapping[str, float],
+        *,
+        seed: int | np.random.Generator,
+    ) -> Study: ...
+
+
+@runtime_checkable
+class BehaviourModel(GenerativeBehaviourModel, Protocol):
+    """Backward-compatible name for Unspool's full generative model contract."""
+
+
+def model_capabilities(model: BehaviourEstimator) -> ModelCapabilities:
+    """Validate and return the capabilities advertised by an estimator.
+
+    Runtime-checkable protocols establish method presence. This function additionally
+    validates the semantic metadata on which evaluation and recovery rely.
+    """
+
+    if not isinstance(model, BehaviourEstimator):
+        raise TypeError("model must satisfy the BehaviourEstimator contract")
+    if not isinstance(model.model_name, str) or not model.model_name:
+        raise ValueError("model_name must be a non-empty string")
+    if not isinstance(model.signature, str) or not model.signature:
+        raise ValueError("signature must be a non-empty string")
+    generative = isinstance(model, GenerativeBehaviourModel)
+    if generative:
+        if isinstance(model.parameter_names, str):
+            raise ValueError("parameter_names must be a tuple of names")
+        names = tuple(model.parameter_names)
+        if not names or len(set(names)) != len(names):
+            raise ValueError("parameter_names must be non-empty and unique")
+        if any(not isinstance(name, str) or not name for name in names):
+            raise ValueError("parameter_names must contain non-empty strings")
+    return ModelCapabilities(
+        scored_columns=tuple(model.scored_columns),
+        prediction_modes=tuple(model.supported_prediction_modes),
+        can_simulate=generative,
+        can_recover_parameters=generative,
+    )
 
 
 def _protected_array(

@@ -9,11 +9,12 @@ import numpy as np
 from numpy.typing import NDArray
 
 from unspool.models.base import (
-    BehaviourModel,
+    BehaviourEstimator,
     FitResult,
     Prediction,
     PredictionMode,
     _protected_array,
+    model_capabilities,
 )
 from unspool.study import Study
 from unspool.validation import ValidationFold
@@ -50,7 +51,7 @@ class FoldEvaluation:
 
 
 def evaluate_splits(
-    model: BehaviourModel,
+    model: BehaviourEstimator,
     study: Study,
     splits: Iterable[ValidationFold],
     *,
@@ -63,6 +64,16 @@ def evaluate_splits(
     needs an explicit ``require_prospective=False`` acknowledgement. Prediction-context
     rows initialize filtered history but are removed from returned predictions and scores.
     """
+
+    capabilities = model_capabilities(model)
+    prediction_mode = PredictionMode(mode)
+    if prediction_mode not in capabilities.prediction_modes:
+        raise ValueError(
+            f"model {model.model_name!r} does not support {prediction_mode.value!r} predictions"
+        )
+    missing = set(capabilities.scored_columns) - set(study.columns)
+    if missing:
+        raise ValueError(f"study is missing scored model columns: {sorted(missing)}")
 
     evaluations: list[FoldEvaluation] = []
     for split in splits:
@@ -80,10 +91,23 @@ def evaluate_splits(
         )
         training = study.take(split.train_indices)
         fit = model.fit(training)
+        if not isinstance(fit, FitResult):
+            raise TypeError("model.fit must return a FitResult")
+        if fit.model_name != model.model_name or fit.model_signature != model.signature:
+            raise ValueError("fit result does not match the fitted estimator")
+        if fit.n_observations != len(training):
+            raise ValueError("fit result n_observations must equal the training-study length")
         prediction_rows = np.concatenate((split.prediction_context_indices, split.test_indices))
         prediction_study = study.take(prediction_rows)
-        full_prediction = model.predict(prediction_study, fit, mode=mode)
-        full_scores = model.pointwise_log_prob(prediction_study, fit, mode=mode)
+        full_prediction = model.predict(prediction_study, fit, mode=prediction_mode)
+        if not isinstance(full_prediction, Prediction):
+            raise TypeError("model.predict must return a Prediction")
+        full_scores = np.asarray(
+            model.pointwise_log_prob(prediction_study, fit, mode=prediction_mode),
+            dtype=np.float64,
+        )
+        if full_scores.shape != (len(prediction_study),):
+            raise ValueError("pointwise_log_prob must return one score per prediction row")
         target = np.arange(
             len(split.prediction_context_indices),
             len(prediction_rows),

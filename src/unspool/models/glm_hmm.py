@@ -245,6 +245,14 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         )
         return (*emissions, *initial, *transitions)
 
+    @property
+    def scored_columns(self) -> tuple[str, ...]:
+        return (self.outcome,)
+
+    @property
+    def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
+        return (PredictionMode.FILTERED,)
+
     def parameters_from_components(
         self,
         *,
