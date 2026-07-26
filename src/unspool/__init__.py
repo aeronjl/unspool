@@ -1,6 +1,12 @@
 """Validation-first tools for modelling behaviour across learning."""
 
 from unspool.evaluation import FoldEvaluation, evaluate_splits
+from unspool.model_recovery import (
+    ModelRecoveryMatrix,
+    ModelRecoveryReport,
+    ModelRecoveryScenario,
+    run_model_recovery,
+)
 from unspool.models import (
     BehaviourModel,
     BernoulliHistoryGLM,
@@ -36,6 +42,9 @@ __all__ = [
     "FitResult",
     "FoldEvaluation",
     "ModelDataError",
+    "ModelRecoveryMatrix",
+    "ModelRecoveryReport",
+    "ModelRecoveryScenario",
     "ParameterRecoveryReport",
     "ParameterRecoverySummary",
     "Prediction",
@@ -49,5 +58,6 @@ __all__ = [
     "evaluate_splits",
     "forward_session_splits",
     "leave_one_session_out_splits",
+    "run_model_recovery",
     "run_parameter_recovery",
 ]

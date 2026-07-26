@@ -19,8 +19,8 @@ stages, and inferred learning landmarks.
 
 > [!IMPORTANT]
 > Unspool is pre-alpha. Its longitudinal data, validation, first modelling, and parameter-
-> recovery contracts are executable, but the API is not yet stable and the model catalogue
-> currently contains only static and smoothly time-varying Bernoulli GLMs.
+> and model-recovery contracts are executable, but the API is not yet stable and the model
+> catalogue currently contains only static and smoothly time-varying Bernoulli GLMs.
 
 ## Why “Unspool”?
 
@@ -83,11 +83,13 @@ competitor with fixed temporal knots. Both use recursively generated, session-bo
 choice history and expose simulation, fitting, filtered prediction, pointwise scoring,
 numerical diagnostics, prospective fold evaluation, and design-specific parameter
 recovery through one common contract. See the [modelling guide](docs/modelling.md), the
-[smooth-drift guide](docs/smooth-drift.md), or run:
+[smooth-drift guide](docs/smooth-drift.md), and the
+[model-recovery guide](docs/model-recovery.md), or run:
 
 ```bash
 uv run python examples/static_glm.py
 uv run python examples/smooth_glm.py
+uv run python examples/model_recovery.py
 ```
 
 ## Development
@@ -100,6 +102,7 @@ uv sync --locked --all-groups
 uv run pytest
 uv run python examples/static_glm.py
 uv run python examples/smooth_glm.py
+uv run python examples/model_recovery.py
 uv run ruff check .
 uv run ruff format --check .
 uv build
