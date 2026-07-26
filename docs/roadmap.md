@@ -8,8 +8,8 @@ The roadmap is organized by scientific contracts rather than by model count.
 - Represent multiple learning clocks without silently aligning them.
 - **Implemented:** establish the generative model, prediction, scoring, diagnostics, and
   fit-result protocols.
-- **In progress:** add static GLM and smooth-drift baselines. The static Bernoulli history
-  GLM is implemented; smooth drift remains its first nonstationary competitor.
+- **Implemented:** add static and smoothly time-varying Bernoulli history GLM baselines,
+  with an explicit clock, fixed knots, and inspectable coefficient trajectories.
 - **In progress:** add session and rolling-origin validation. Expanding forward-session and
   leave-one-session-out folds are implemented; within-session origins remain.
 - **Implemented:** produce an end-to-end synthetic parameter-recovery report for the

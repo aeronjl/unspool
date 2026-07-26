@@ -42,6 +42,11 @@ The coefficients are static across subjects and sessions. That restriction is th
 scientific role, not a claim about learning. It provides a stationary account that smooth
 drift and discrete-state models must outperform under prospective evaluation.
 
+The first such competitor, `SmoothBernoulliHistoryGLM`, represents each coefficient on an
+explicit fixed-knot time basis with a random-walk roughness penalty. Its assumptions,
+subject-alignment safeguards, and prospective use are detailed in
+[Smooth change as a competing explanation](smooth-drift.md).
+
 Fitting uses SciPy's deterministic L-BFGS-B optimizer. An optional L2 penalty applies to
 non-intercept coefficients. Standard errors and 95% coverage summaries use a local Hessian
 approximation; when penalization is nonzero they are approximate rather than exact

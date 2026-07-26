@@ -4,11 +4,13 @@ from unspool.evaluation import FoldEvaluation, evaluate_splits
 from unspool.models import (
     BehaviourModel,
     BernoulliHistoryGLM,
+    CoefficientTrajectory,
     FitDiagnostics,
     FitResult,
     ModelDataError,
     Prediction,
     PredictionMode,
+    SmoothBernoulliHistoryGLM,
     UnsupportedPredictionMode,
 )
 from unspool.recovery import (
@@ -29,6 +31,7 @@ __all__ = [
     "REQUIRED_COLUMNS",
     "BehaviourModel",
     "BernoulliHistoryGLM",
+    "CoefficientTrajectory",
     "FitDiagnostics",
     "FitResult",
     "FoldEvaluation",
@@ -37,6 +40,7 @@ __all__ = [
     "ParameterRecoverySummary",
     "Prediction",
     "PredictionMode",
+    "SmoothBernoulliHistoryGLM",
     "Study",
     "StudyValidationError",
     "UnsupportedPredictionMode",
