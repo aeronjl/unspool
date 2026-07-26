@@ -28,8 +28,10 @@ The roadmap is organized by scientific contracts rather than by model count.
   static-versus-smooth example are implemented; broad benchmark grids remain.
 - **Implemented:** reproduce the Cell 2025 Figure 1 early-strategy/late-strategy result
   from a checksum-pinned public input while preserving a source session-identity collision.
+- **Implemented:** validate the canonical longitudinal schema on a checksum-pinned IBL
+  public-learning panel spanning nine labs, with trial-outcome-blind cohort selection and
+  disjoint transition-anchored early/late-training windows.
 - Make label ambiguity and optimization diagnostics first-class outputs.
-- Add an IBL public-learning benchmark.
 
 ## 0.3 — Population structure
 

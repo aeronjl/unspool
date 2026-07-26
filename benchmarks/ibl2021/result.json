@@ -1,0 +1,28 @@
+{
+  "accuracy_change": 0.4294313010406467,
+  "benchmark": "IBL 2021 public learning: early versus late training",
+  "contract_passed": true,
+  "early_easy_accuracy": 0.42390027024199434,
+  "late_training_easy_accuracy": 0.853331571282641,
+  "manifest_sha256": "63ac8b40b35ea21bc036cbdb4819f2dc04b448c803f804361dc9e40768aa32a0",
+  "n_choice_trials": 28097,
+  "n_easy_trials": 13964,
+  "n_improved_subjects": 9,
+  "n_labs": 9,
+  "n_sessions": 54,
+  "n_subjects": 9,
+  "n_trials": 28400,
+  "source_doi": "10.7554/eLife.63711",
+  "source_release": "2021_Q1_IBL_et_al_Behaviour",
+  "subject_accuracy_change": {
+    "CSHL046": 0.47636347230826104,
+    "CSH_ZAD_011": 0.4329884919336913,
+    "DY_008": 0.4181707312445062,
+    "KS018": 0.4444599987139988,
+    "NYU-11": 0.24877913962891257,
+    "SWC_015": 0.5554543886752985,
+    "SWC_029": 0.728433615351331,
+    "ZM_1898": 0.49336587391424447,
+    "ibl_witten_18": 0.0668659975955756
+  }
+}
