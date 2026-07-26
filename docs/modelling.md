@@ -47,6 +47,12 @@ explicit fixed-knot time basis with a random-walk roughness penalty. Its assumpt
 subject-alignment safeguards, and prospective use are detailed in
 [Smooth change as a competing explanation](smooth-drift.md).
 
+`BernoulliGLMHMM` supplies the first discrete switching competitor: state-specific
+Bernoulli GLM emissions, a stationary learned transition matrix, session-reset initial
+states, deterministic multi-restart fitting, filtered state probabilities, and explicit
+label/occupancy diagnostics. Its assumptions and non-interpretive label convention are
+detailed in the [fixed-transition GLM-HMM guide](glm-hmm.md).
+
 Fitting uses SciPy's deterministic L-BFGS-B optimizer. An optional L2 penalty applies to
 non-intercept coefficients. Standard errors and 95% coverage summaries use a local Hessian
 approximation; when penalization is nonzero they are approximate rather than exact

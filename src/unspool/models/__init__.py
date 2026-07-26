@@ -14,13 +14,25 @@ from unspool.models.glm import (
     CoefficientTrajectory,
     SmoothBernoulliHistoryGLM,
 )
+from unspool.models.glm_hmm import (
+    BernoulliGLMHMM,
+    FilteredStateProbabilities,
+    GLMHMMFitResult,
+    GLMHMMParameters,
+    GLMHMMSimulation,
+)
 
 __all__ = [
     "BehaviourModel",
+    "BernoulliGLMHMM",
     "BernoulliHistoryGLM",
     "CoefficientTrajectory",
+    "FilteredStateProbabilities",
     "FitDiagnostics",
     "FitResult",
+    "GLMHMMFitResult",
+    "GLMHMMParameters",
+    "GLMHMMSimulation",
     "ModelDataError",
     "Prediction",
     "PredictionMode",

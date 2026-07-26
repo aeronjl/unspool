@@ -64,3 +64,16 @@ def test_within_session_validation_example_runs_end_to_end(
     assert "origin=session-2:19, fit=100, context=20" in output
     assert "origin=session-2:29, fit=110, context=30" in output
     assert "test=(20, 21, 22, 23, 24)" in output
+
+
+def test_glm_hmm_example_runs_end_to_end(capsys: CaptureFixture[str]) -> None:
+    example = Path(__file__).parents[1] / "examples" / "glm_hmm.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Fixed-transition Bernoulli GLM-HMM" in output
+    assert "restart objectives" in output
+    assert "label ambiguous:    False" in output
+    assert "Prospective competing explanations" in output
+    assert " GLM-HMM: log-loss=" in output
