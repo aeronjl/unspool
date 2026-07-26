@@ -115,6 +115,12 @@ while its 300-trial counterpart recovers all four for the exact fixed parameter 
 Fit-audit warnings remain visible and unresolved outcomes remain part of every confusion
 matrix. See the [four-family recovery benchmark](benchmarks/recovery_grid/README.md).
 
+A repeated follow-up holds the 300-trial design fixed while moving each family toward a
+limiting case in which competitors can imitate it. Recovery falls from 70.0% across 40
+stronger-reference runs to 32.5% across 40 boundary-near runs, with scenario-level
+confusion and Wilson intervals retained. See the
+[weak-signal recovery benchmark](benchmarks/weak_signal_recovery/README.md).
+
 ## Published-data benchmarks
 
 The first external benchmark reproduces the central longitudinal-behaviour result from
@@ -148,6 +154,7 @@ uv run python examples/within_session_validation.py
 uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
 uv run python -m benchmarks.recovery_grid.benchmark
+uv run python -m benchmarks.weak_signal_recovery.benchmark
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv

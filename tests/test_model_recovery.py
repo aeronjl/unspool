@@ -105,6 +105,13 @@ def test_model_recovery_builds_an_explicit_prospective_confusion_matrix() -> Non
     with pytest.raises(ValueError, match="cannot set WRITEABLE flag"):
         matrix.counts.setflags(write=True)
 
+    scenario_matrix = report.scenario_confusion_matrix()
+    assert scenario_matrix.scenario_names == ("stationary", "drifting")
+    assert scenario_matrix.truth_labels == ("static", "smooth")
+    assert scenario_matrix.selected_labels == ("static", "smooth", "unresolved")
+    assert scenario_matrix.counts.tolist() == [[2, 0, 1], [0, 3, 0]]
+    assert np.allclose(scenario_matrix.rates, [[2 / 3, 0, 1 / 3], [0, 1, 0]])
+
 
 def test_exact_candidate_ties_are_unresolved_and_reproducible() -> None:
     model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01)
