@@ -108,6 +108,12 @@ and learning landmarks still require training-only estimation. The first fold-fi
 landmark contract is described in the
 [clock and transform guide](clocks-and-transforms.md).
 
+Several candidates can be evaluated as one matched scientific object with
+`compare_models`. It retains equal-unit and pooled scores, paired unit-bootstrap
+differences, fit audits, and fold provenance. Candidate or hyperparameter selection for a
+final forecast belongs inside `nested_select_model`, which supplies only the outer training
+study to its inner splitter. See the [prospective comparison guide](comparison.md).
+
 ## Design-specific parameter recovery
 
 ```python

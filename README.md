@@ -100,6 +100,7 @@ prediction, pointwise scoring, numerical diagnostics, prospective fold evaluatio
 design-specific recovery through one common contract. Every fit also produces a normalized
 audit without discarding its model-specific evidence. See the
 [modelling guide](docs/modelling.md), [fit-audit guide](docs/diagnostics.md),
+[prospective comparison guide](docs/comparison.md),
 [smooth-drift guide](docs/smooth-drift.md),
 [partial-pooling guide](docs/hierarchical-glm.md),
 [partially pooled trajectory guide](docs/hierarchical-smooth-glm.md),
@@ -118,6 +119,7 @@ uv run python examples/q_learning.py
 uv run python examples/population_validation.py
 uv run python examples/hierarchical_glm.py
 uv run python examples/hierarchical_smooth_glm.py
+uv run python examples/prospective_comparison.py
 ```
 
 ## Synthetic recovery benchmark
@@ -167,6 +169,13 @@ bootstrap draw, whereas marginal learning resolves in 83.33% of datasets and 82.
 draws; its conditional intervals are more than three times wider. See the
 [landmark-uncertainty benchmark](benchmarks/landmark_uncertainty/README.md).
 
+The nested prospective-selection benchmark validates the complete selection procedure,
+not only its component models. Across 20 stationary datasets it chooses the static model
+in 37/40 outer folds; across 20 strong shared-drift datasets it chooses the smooth model in
+40/40. All selected outer fits pass audit, and the remaining stationary errors stay visible
+as a design-specific resolution limit. See the
+[nested selection benchmark](benchmarks/nested_selection/README.md).
+
 ## Published-data benchmarks
 
 The first external benchmark reproduces the central longitudinal-behaviour result from
@@ -213,6 +222,7 @@ uv run python examples/q_learning.py
 uv run python examples/population_validation.py
 uv run python examples/hierarchical_glm.py
 uv run python examples/hierarchical_smooth_glm.py
+uv run python examples/prospective_comparison.py
 uv run python -m benchmarks.recovery_grid.benchmark
 uv run python -m benchmarks.weak_signal_recovery.benchmark
 uv run python -m benchmarks.hierarchical_glm.benchmark
@@ -220,6 +230,7 @@ uv run python -m benchmarks.subject_scale_recovery.benchmark
 uv run python -m benchmarks.trajectory_recovery.benchmark
 uv run python -m benchmarks.state_alignment.benchmark
 uv run python -m benchmarks.landmark_uncertainty.benchmark
+uv run python -m benchmarks.nested_selection.benchmark
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv
