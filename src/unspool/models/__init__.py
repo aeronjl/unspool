@@ -21,11 +21,18 @@ from unspool.models.glm_hmm import (
     GLMHMMParameters,
     GLMHMMSimulation,
 )
+from unspool.models.q_learning import (
+    BinaryQLearning,
+    QLearningFitResult,
+    QLearningParameters,
+    ValueTrajectory,
+)
 
 __all__ = [
     "BehaviourModel",
     "BernoulliGLMHMM",
     "BernoulliHistoryGLM",
+    "BinaryQLearning",
     "CoefficientTrajectory",
     "FilteredStateProbabilities",
     "FitDiagnostics",
@@ -36,6 +43,9 @@ __all__ = [
     "ModelDataError",
     "Prediction",
     "PredictionMode",
+    "QLearningFitResult",
+    "QLearningParameters",
     "SmoothBernoulliHistoryGLM",
     "UnsupportedPredictionMode",
+    "ValueTrajectory",
 ]

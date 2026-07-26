@@ -77,3 +77,16 @@ def test_glm_hmm_example_runs_end_to_end(capsys: CaptureFixture[str]) -> None:
     assert "label ambiguous:    False" in output
     assert "Prospective competing explanations" in output
     assert " GLM-HMM: log-loss=" in output
+
+
+def test_q_learning_example_runs_end_to_end(capsys: CaptureFixture[str]) -> None:
+    example = Path(__file__).parents[1] / "examples" / "q_learning.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Session-reset binary Q-learning" in output
+    assert "learning rate:" in output
+    assert "restart objectives:" in output
+    assert "Prospective competing explanations" in output
+    assert "Q-learning: log-loss=" in output
