@@ -94,10 +94,11 @@ of complete later sessions. Recovery should then establish which path shapes and
 magnitudes are estimable under the actual design. Static truth must also be included: a
 flexible model that always invents drift is not a useful competitor.
 
-The current `run_parameter_recovery` API accepts smooth path parameter sets directly and
-retains every knot truth, estimate, standard error, seed, convergence flag, and optimizer
-message. Cross-model recovery—simulating under static and smooth generators and tabulating
-which model wins—is the next evaluation layer.
+The `run_parameter_recovery` API accepts smooth path parameter sets directly and retains
+every knot truth, estimate, standard error, seed, convergence flag, and optimizer message.
+The complementary [model-recovery API](model-recovery.md) simulates under static and smooth
+generators and tabulates which family wins prospective comparison, including ties and
+optimization failures.
 
 Run the end-to-end comparison with:
 

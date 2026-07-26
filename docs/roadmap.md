@@ -18,7 +18,8 @@ The roadmap is organized by scientific contracts rather than by model count.
 ## 0.2 — Competing explanations
 
 - Add fixed GLM-HMM and compact reinforcement-learning reference models.
-- Add parameter- and model-recovery grids.
+- **In progress:** add parameter- and model-recovery grids. The design-specific engines and
+  static-versus-smooth example are implemented; broad benchmark grids remain.
 - Make label ambiguity and optimization diagnostics first-class outputs.
 - Reproduce a bounded Cell 2025 behavioural result.
 - Add an IBL public-learning benchmark.

@@ -99,6 +99,10 @@ message, and child random seed. It also records the model signature and the desi
 of trials and subjects. Bias, RMSE, truth-estimate correlation, and approximate 95%
 coverage are summaries of those retained runs—not a universal identifiability certificate.
 
+To test whether the design can distinguish whole model families, use prospective
+cross-model simulation rather than parameter recovery alone. The contract and its explicit
+unresolved outcomes are described in [Prospective model recovery](model-recovery.md).
+
 Run the complete synthetic example with:
 
 ```bash

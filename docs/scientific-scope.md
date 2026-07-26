@@ -28,8 +28,9 @@ The first useful release should contain:
 
 The current executable slice covers the canonical study contract, complete-session
 validation, common model outputs, static and smoothly time-varying Bernoulli history GLMs,
-and design-specific parameter recovery. See the [modelling guide](modelling.md) and
-[smooth-drift guide](smooth-drift.md) for their assumptions and current boundaries.
+and design-specific parameter and model recovery. See the [modelling guide](modelling.md),
+[smooth-drift guide](smooth-drift.md), and [model-recovery guide](model-recovery.md) for
+their assumptions and current boundaries.
 
 ## Non-goals for v0.1
 

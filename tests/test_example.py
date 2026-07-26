@@ -25,3 +25,15 @@ def test_smooth_glm_example_runs_end_to_end(capsys: CaptureFixture[str]) -> None
     assert "Fitted stimulus trajectory" in output
     assert "Smooth-path parameter recovery" in output
     assert "convergence=100%" in output
+
+
+def test_model_recovery_example_runs_end_to_end(capsys: CaptureFixture[str]) -> None:
+    example = Path(__file__).parents[1] / "examples" / "model_recovery.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Prospective static-versus-smooth model recovery" in output
+    assert "unresolved" in output
+    assert "resolution rate: 83.3%" in output
+    assert "accuracy among resolved runs: 100.0%" in output
