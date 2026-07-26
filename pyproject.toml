@@ -1,0 +1,50 @@
+[project]
+name = "unspool"
+version = "0.1.0"
+description = "A process-first framework for fitting and falsifying behavioural models across learning."
+readme = "README.md"
+authors = [
+    { name = "Aeron Laffere" },
+]
+requires-python = ">=3.11"
+license = "MIT"
+keywords = [
+    "behavioral-neuroscience",
+    "cognitive-modeling",
+    "longitudinal-data",
+    "model-recovery",
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.0",
+    "ruff>=0.12.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.10.12,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.uv]
+required-version = ">=0.10.12,<0.12.0"
+
+[tool.pytest.ini_options]
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]

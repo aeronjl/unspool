@@ -1,0 +1,47 @@
+# Scientific scope
+
+## Objective
+
+Unspool will provide a common, tested contract for fitting and comparing generative
+models of trial-level behaviour across subjects and sessions. Its differentiator is the
+evaluation layer around the models: temporal validation, recovery, diagnostics, and
+explicit comparisons among alternative accounts of nonstationarity.
+
+## Proposed v0.1
+
+The first useful release should contain:
+
+1. A canonical study schema with subject, session, trial, outcome, timing, and task
+   covariates, while retaining source-specific columns.
+2. Explicit clocks for session order, cumulative trials, elapsed time, task phase, and
+   data-derived landmarks.
+3. A small model protocol covering simulation, fitting, pointwise log probability,
+   prediction, and diagnostics.
+4. Four reference families: a static psychometric/history GLM, a smooth dynamic GLM,
+   a fixed-transition GLM-HMM, and a compact reinforcement-learning model.
+5. Whole-session, rolling-origin, leave-subject-out, and leave-lab-out splitters.
+6. Parameter-recovery and model-recovery reports tied to an experimental design.
+7. Optional adapters for tabular data, IBL ONE, and NWB; the core representation should
+   remain lightweight and format-independent.
+8. Reproducible benchmarks against the Cell 2025 study and public IBL learning data.
+
+## Non-goals for v0.1
+
+- A catalogue of every cognitive model
+- Full hierarchical Bayesian inference
+- Drift-diffusion and arbitrary mixture families
+- A universal learning landmark
+- Automatic cognitive interpretation of latent states
+- A graphical interface or hosted analysis service
+- GPU acceleration as a baseline requirement
+
+These may become later extensions after the shared data, model, and evaluation contracts
+have survived real benchmarks.
+
+## Claim discipline
+
+Recovery is conditional on the simulated design, parameter distribution, missingness,
+and sample size. Passing one recovery experiment does not establish global identifiability.
+Likewise, held-out predictive performance does not by itself identify a cognitive
+mechanism. Unspool should report those distinctions rather than collapse them into a
+single model ranking.
