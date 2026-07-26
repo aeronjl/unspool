@@ -3,6 +3,7 @@ import pytest
 
 from unspool import (
     Study,
+    cohort_forward_session_splits,
     forward_session_splits,
     leave_one_lab_out_splits,
     leave_one_session_out_splits,
@@ -104,6 +105,47 @@ def test_forward_split_horizon_and_step_are_explicit() -> None:
     assert len(splits) == 1
     assert splits[0].train_sessions == ("a-1",)
     assert splits[0].test_sessions == ("a-2", "a-3")
+
+
+def test_cohort_forward_splits_fit_all_subjects_at_a_shared_origin() -> None:
+    splits = cohort_forward_session_splits(longitudinal_study())
+
+    assert len(splits) == 1
+    split = splits[0]
+    assert split.subjects == ("a", "b")
+    assert split.train_sessions == {"a": ("a-1",), "b": ("b-1",)}
+    assert split.test_sessions == {"a": ("a-2",), "b": ("b-2",)}
+    assert split.train_session_orders == {"a": (0,), "b": (0,)}
+    assert split.test_session_orders == {"a": (1,), "b": (1,)}
+    assert split.train_indices.tolist() == [1, 2, 5, 7]
+    assert split.test_indices.tolist() == [0, 4, 6]
+    assert split.train_session_count == 1
+    assert split.scheme == "cohort-forward-session"
+    assert split.prospective
+
+
+def test_cohort_forward_splits_can_explicitly_shrink_the_cohort() -> None:
+    splits = cohort_forward_session_splits(longitudinal_study(), require_all_subjects=False)
+
+    assert len(splits) == 2
+    assert splits[0].subjects == ("a", "b")
+    assert splits[1].subjects == ("a",)
+    assert splits[1].train_sessions == {"a": ("a-1", "a-2")}
+    assert splits[1].test_sessions == {"a": ("a-3",)}
+
+
+def test_cohort_forward_split_horizon_step_and_arguments_are_explicit() -> None:
+    split = cohort_forward_session_splits(
+        longitudinal_study(), horizon=2, step=2, require_all_subjects=False
+    )[0]
+
+    assert split.subjects == ("a",)
+    assert split.test_session_orders == {"a": (1, 2)}
+    with pytest.raises(TypeError, match="require_all_subjects"):
+        cohort_forward_session_splits(
+            longitudinal_study(),
+            require_all_subjects=1,  # type: ignore[arg-type]
+        )
 
 
 @pytest.mark.parametrize(

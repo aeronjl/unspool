@@ -57,6 +57,10 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** quantify threshold-landmark and relative-clock uncertainty with a
   fold-safe plug-in Bernoulli bootstrap, explicit unresolved draws, frozen clock samples,
   and a repeated decisive-versus-marginal learning benchmark.
+- **Implemented:** add cohort-level prospective session folds and use them in a matched
+  six-session Cell/IBL study comparing four population/trajectory structures with
+  subject-balanced scores, paired subject-bootstrap uncertainty, fit audits, and retained
+  individual trajectories.
 
 ## Later
 

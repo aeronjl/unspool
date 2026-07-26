@@ -36,6 +36,11 @@ policy or modelling machinery. It pins 54 public `trials.table` datasets from th
 behaviour release, validates each source hash, and keeps all IBL-specific selection and
 adaptation code outside `src/unspool`. The data remain CC BY 4.0 and are fetched on demand.
 
+The [flagship prospective study](../benchmarks/flagship_longitudinal/README.md) composes
+those two independently implemented adapters without copying either paper's analysis. It
+records the source hashes again, aligns only the declared six-session analysis rank, and
+retains source chronology so that the alignment remains reversible and auditable.
+
 ## Earlier public explorations
 
 - [InfiniteIOHMM.jl](https://github.com/aeronjl/InfiniteIOHMM.jl)
