@@ -16,6 +16,12 @@ The published archive is a research-analysis reference, not the package skeleton
 code adapted from it must retain its license and attribution and be covered by focused
 tests in Unspool.
 
+The first [Cell 2025 benchmark](../benchmarks/cell2025/README.md) independently
+reimplements one bounded Figure 1 result rather than copying the released notebook. It
+pins the Figshare article version, archive file ID, inner member, byte size, and SHA-256;
+records a verified numerical result; and keeps all paper-specific code outside
+`src/unspool`. The data remain CC BY 4.0 and are fetched on demand rather than redistributed.
+
 ## Subsequent research programme
 
 The private `latent-state-belief-models` research programme developed IBL loaders,

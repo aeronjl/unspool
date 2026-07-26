@@ -105,6 +105,15 @@ uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
 ```
 
+## Published-data benchmark
+
+The first external benchmark reproduces the central longitudinal-behaviour result from
+Liebana, Laffere et al. (2025): bias during days 4–8 predicts the final-five-session
+right-minus-left psychometric-slope asymmetry across 30 mice (`r = 0.69479`,
+`p = 2.04e-05`). The workflow fetches only the required member of the versioned public
+Figshare archive, verifies its checksum, maps trials to `Study`, and enforces a numerical
+regression contract. See the [Cell 2025 benchmark](benchmarks/cell2025/README.md).
+
 ## Development
 
 Unspool requires Python 3.11 or newer. The development interpreter is pinned to Python
@@ -120,6 +129,9 @@ uv run python examples/temporal_transforms.py
 uv run python examples/within_session_validation.py
 uv run python examples/glm_hmm.py
 uv run python examples/q_learning.py
+uv run python -m benchmarks.cell2025.fetch_data
+uv run python -m benchmarks.cell2025.benchmark \
+  benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv
 uv run ruff check .
 uv run ruff format --check .
 uv build

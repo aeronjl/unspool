@@ -1,0 +1,19 @@
+{
+  "accuracy_change": 0.2406880831723982,
+  "benchmark": "Liebana, Laffere et al. (2025), Cell, Figure 1G/I",
+  "contract_passed": true,
+  "early_bias_late_slope_p": 2.0429013100548865e-05,
+  "early_bias_late_slope_r": 0.6947896564480975,
+  "early_late_bias_p": 0.0027312381517590164,
+  "early_late_bias_r": -0.5276390751832067,
+  "first_session_accuracy": 0.5173369813661777,
+  "last_session_accuracy": 0.7580250645385759,
+  "n_sessions": 949,
+  "n_source_sessions": 950,
+  "n_subjects": 30,
+  "n_trials": 192238,
+  "source_doi": "10.6084/m9.figshare.28877912.v1",
+  "source_file_id": 54186326,
+  "source_member": "data/long_term_learning_dataset_preprocessed_behaviour_all.csv",
+  "source_member_sha256": "94a6d541bfde731f769e02a68dbc652ab5b73dbc1ec13b8b7c8100d181b8048a"
+}
