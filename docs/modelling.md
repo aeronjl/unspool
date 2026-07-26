@@ -2,7 +2,7 @@
 
 Unspool's first model is intentionally ordinary: a static Bernoulli GLM. Its purpose is
 to establish what every more elaborate model must expose before smooth drift, latent
-states, reinforcement learning, or hierarchical pooling are added.
+states, reinforcement learning, or population structure are added.
 
 ## Common interface
 
@@ -52,6 +52,12 @@ The first such competitor, `SmoothBernoulliHistoryGLM`, represents each coeffici
 explicit fixed-knot time basis with a random-walk roughness penalty. Its assumptions,
 subject-alignment safeguards, and prospective use are detailed in
 [Smooth change as a competing explanation](smooth-drift.md).
+
+`HierarchicalBernoulliHistoryGLM` supplies the first constrained population model. It
+jointly estimates population coefficients and Gaussian-penalized subject deviations with
+a subject scale fixed before fitting. Seen subjects use their fitted deviations; unseen
+subjects use an explicitly recorded population-mean plug-in. See the
+[fixed-scale partial-pooling guide](hierarchical-glm.md).
 
 `BernoulliGLMHMM` supplies the first discrete switching competitor: state-specific
 Bernoulli GLM emissions, a stationary learned transition matrix, session-reset initial

@@ -107,3 +107,18 @@ def test_population_validation_example_exposes_held_out_units(
     assert "Leave-lab-out folds" in output
     assert "held out=lab-1" in output
     assert "test=('mouse-a', 'mouse-b')" in output
+
+
+def test_hierarchical_glm_example_exposes_population_policy(
+    capsys: CaptureFixture[str],
+) -> None:
+    example = Path(__file__).parents[1] / "examples" / "hierarchical_glm.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Fixed-scale hierarchical Bernoulli GLM" in output
+    assert "converged: True" in output
+    assert "unseen-subject policy: population-mean-plugin" in output
+    assert "mouse-a fitted: True" in output
+    assert "new-mouse fitted: False" in output

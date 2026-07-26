@@ -1,0 +1,82 @@
+{
+  "benchmark": "fixed-scale hierarchical Bernoulli GLM recovery",
+  "seed": 8617,
+  "repetitions": 20,
+  "design": {
+    "subjects": 12,
+    "training_sessions": 3,
+    "test_sessions": 1,
+    "trials_per_session": 35
+  },
+  "scope": {
+    "subject_scale": "fixed to the known generative value before fitting",
+    "prediction": "one future session for subjects represented in training",
+    "claim": "MAP shrinkage mechanics, not learned variance or posterior prediction"
+  },
+  "regimes": {
+    "0.1": {
+      "subject_scale": 0.1,
+      "methods": {
+        "complete_pooling": {
+          "mean_subject_coefficient_rmse": 0.11835622072722445,
+          "mean_prospective_log_loss": 0.5771521584504955,
+          "all_fits_converged": true
+        },
+        "independent": {
+          "mean_subject_coefficient_rmse": 0.25312251024242716,
+          "mean_prospective_log_loss": 0.5891622066014758,
+          "all_fits_converged": true
+        },
+        "partial_pooling": {
+          "mean_subject_coefficient_rmse": 0.11265318604424526,
+          "mean_prospective_log_loss": 0.5766757195575747,
+          "all_fits_converged": true
+        }
+      }
+    },
+    "0.5": {
+      "subject_scale": 0.5,
+      "methods": {
+        "complete_pooling": {
+          "mean_subject_coefficient_rmse": 0.48533596298880716,
+          "mean_prospective_log_loss": 0.5984998699283117,
+          "all_fits_converged": true
+        },
+        "independent": {
+          "mean_subject_coefficient_rmse": 0.27902884160729435,
+          "mean_prospective_log_loss": 0.5607884777426703,
+          "all_fits_converged": true
+        },
+        "partial_pooling": {
+          "mean_subject_coefficient_rmse": 0.2284897490580055,
+          "mean_prospective_log_loss": 0.5560362085698227,
+          "all_fits_converged": true
+        }
+      }
+    },
+    "1.0": {
+      "subject_scale": 1.0,
+      "methods": {
+        "complete_pooling": {
+          "mean_subject_coefficient_rmse": 0.9818738926188008,
+          "mean_prospective_log_loss": 0.614622926954974,
+          "all_fits_converged": true
+        },
+        "independent": {
+          "mean_subject_coefficient_rmse": 0.42417767246962645,
+          "mean_prospective_log_loss": 0.46328859001694955,
+          "all_fits_converged": true
+        },
+        "partial_pooling": {
+          "mean_subject_coefficient_rmse": 0.2890465831431317,
+          "mean_prospective_log_loss": 0.45886608939722917,
+          "all_fits_converged": true
+        }
+      }
+    }
+  },
+  "partial_pooling_wins": {
+    "mean_subject_coefficient_rmse": 3,
+    "mean_prospective_log_loss": 3
+  }
+}
