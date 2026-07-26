@@ -128,6 +128,10 @@ class BernoulliHistoryGLM:
         return self.coefficient_names
 
     @property
+    def scored_columns(self) -> tuple[str, ...]:
+        return (self.outcome,)
+
+    @property
     def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
         return (PredictionMode.FILTERED,)
 

@@ -821,6 +821,9 @@
     ],
     "outer_test_outcomes_available_during_selection": false,
     "primary_metric": "mean subject-level inner-fold log loss",
+    "scored_columns": [
+      "choice"
+    ],
     "tie_break": "declared candidate order"
   }
 }

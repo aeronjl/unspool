@@ -13,7 +13,7 @@ Each `ModelRecoveryScenario` has:
 
 - a unique condition name;
 - a `truth_label` identifying the candidate family expected to win;
-- a generative model satisfying the common `BehaviourModel` contract;
+- a generator satisfying `GenerativeBehaviourModel`;
 - one exact, named parameter set for that generator.
 
 Candidate labels and configurations are fixed before simulation. For every scenario and
@@ -72,8 +72,9 @@ ties and failures therefore cannot disappear through conditional reporting. The 
 provides overall accuracy, resolution rate, and accuracy conditional on resolution.
 
 Raw run-level state is retained: scenario and truth labels, generator parameters, generator
-and candidate signatures, child seeds, mean log probabilities, convergence flags, failure
-messages, audit statuses and issue codes, fold counts, and all splitter settings. This
+and candidate signatures, the common scored columns, child seeds, mean log probabilities,
+convergence flags, failure messages, audit statuses and issue codes, fold counts, and all
+splitter settings. This
 makes alternative tie rules or summaries possible without rerunning the simulations.
 
 When multiple parameter regimes share a generating family,

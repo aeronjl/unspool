@@ -11,7 +11,12 @@ from numpy.typing import NDArray
 
 from unspool.diagnostics import FitAuditStatus
 from unspool.evaluation import FoldEvaluation, evaluate_splits
-from unspool.models.base import BehaviourModel, _protected_array
+from unspool.models.base import (
+    BehaviourEstimator,
+    GenerativeBehaviourModel,
+    _protected_array,
+    model_capabilities,
+)
 from unspool.study import Study
 from unspool.validation import forward_session_splits
 
@@ -24,7 +29,7 @@ class ModelRecoveryScenario:
 
     name: str
     truth_label: str
-    generator: BehaviourModel
+    generator: GenerativeBehaviourModel
     parameters: Mapping[str, float]
 
     def __post_init__(self) -> None:
@@ -32,8 +37,9 @@ class ModelRecoveryScenario:
             raise ValueError("scenario name must be a non-empty string")
         if not isinstance(self.truth_label, str) or not self.truth_label:
             raise ValueError("truth_label must be a non-empty string")
-        if not isinstance(self.generator, BehaviourModel):
-            raise TypeError("generator must satisfy the BehaviourModel contract")
+        if not isinstance(self.generator, GenerativeBehaviourModel):
+            raise TypeError("generator must satisfy the GenerativeBehaviourModel contract")
+        model_capabilities(self.generator)
         expected = set(self.generator.parameter_names)
         observed = set(self.parameters)
         if observed != expected:
@@ -110,6 +116,7 @@ class ModelRecoveryReport:
 
     candidate_labels: tuple[str, ...]
     candidate_signatures: tuple[str, ...]
+    scored_columns: tuple[str, ...]
     scenario_names: tuple[str, ...]
     generator_signatures: tuple[str, ...]
     generator_parameters: tuple[Mapping[str, float], ...]
@@ -134,6 +141,7 @@ class ModelRecoveryReport:
     def __post_init__(self) -> None:
         candidates = tuple(self.candidate_labels)
         candidate_signatures = tuple(self.candidate_signatures)
+        scored_columns = tuple(self.scored_columns)
         scenario_names = tuple(self.scenario_names)
         generator_signatures = tuple(self.generator_signatures)
         generator_parameters = tuple(
@@ -160,6 +168,8 @@ class ModelRecoveryReport:
             raise ValueError("candidate labels must be non-empty and unique")
         if len(candidate_signatures) != len(candidates):
             raise ValueError("every candidate must retain its model signature")
+        if not scored_columns or len(set(scored_columns)) != len(scored_columns):
+            raise ValueError("scored_columns must be non-empty and unique")
         if not (
             len(generator_signatures)
             == len(generator_parameters)
@@ -201,6 +211,7 @@ class ModelRecoveryReport:
 
         object.__setattr__(self, "candidate_labels", candidates)
         object.__setattr__(self, "candidate_signatures", candidate_signatures)
+        object.__setattr__(self, "scored_columns", scored_columns)
         object.__setattr__(self, "scenario_names", scenario_names)
         object.__setattr__(self, "generator_signatures", generator_signatures)
         object.__setattr__(self, "generator_parameters", generator_parameters)
@@ -348,6 +359,7 @@ class ModelRecoveryGridReport:
             if (
                 report.candidate_labels != reference.candidate_labels
                 or report.candidate_signatures != reference.candidate_signatures
+                or report.scored_columns != reference.scored_columns
                 or report.scenario_names != reference.scenario_names
                 or report.truth_labels != reference.truth_labels
                 or report.repeats != reference.repeats
@@ -390,7 +402,7 @@ class ModelRecoveryGridReport:
 def run_model_recovery(
     design: Study,
     scenarios: Sequence[ModelRecoveryScenario],
-    candidates: Mapping[str, BehaviourModel],
+    candidates: Mapping[str, BehaviourEstimator],
     *,
     repeats: int = 1,
     seed: int,
@@ -408,6 +420,7 @@ def run_model_recovery(
         raise ValueError("scenario names must be unique")
     candidate_models = _validated_candidates(candidates)
     candidate_labels = tuple(candidate_models)
+    scored_columns = model_capabilities(next(iter(candidate_models.values()))).scored_columns
     if any(scenario.truth_label not in candidate_models for scenario in scenarios):
         raise ValueError("every scenario truth_label must name a candidate")
     if isinstance(repeats, bool) or not isinstance(repeats, int) or repeats < 1:
@@ -489,6 +502,7 @@ def run_model_recovery(
     return ModelRecoveryReport(
         candidate_labels=candidate_labels,
         candidate_signatures=tuple(model.signature for model in candidate_models.values()),
+        scored_columns=scored_columns,
         scenario_names=tuple(scenario_names),
         generator_signatures=tuple(generator_signatures),
         generator_parameters=tuple(generator_parameters),
@@ -515,7 +529,7 @@ def run_model_recovery(
 def run_model_recovery_grid(
     designs: Mapping[str, Study],
     scenarios: Sequence[ModelRecoveryScenario],
-    candidates: Mapping[str, BehaviourModel],
+    candidates: Mapping[str, BehaviourEstimator],
     *,
     repeats: int = 1,
     seed: int,
@@ -566,19 +580,23 @@ def run_model_recovery_grid(
 
 
 def _validated_candidates(
-    candidates: Mapping[str, BehaviourModel],
-) -> Mapping[str, BehaviourModel]:
+    candidates: Mapping[str, BehaviourEstimator],
+) -> Mapping[str, BehaviourEstimator]:
     if not isinstance(candidates, Mapping) or not candidates:
         raise ValueError("candidates must be a non-empty mapping")
-    validated: dict[str, BehaviourModel] = {}
+    validated: dict[str, BehaviourEstimator] = {}
     for label, model in candidates.items():
         if not isinstance(label, str) or not label or label == UNRESOLVED_LABEL:
             raise ValueError(
                 f"candidate labels must be non-empty and cannot be {UNRESOLVED_LABEL!r}"
             )
-        if not isinstance(model, BehaviourModel):
-            raise TypeError(f"candidate {label!r} does not satisfy the BehaviourModel contract")
+        if not isinstance(model, BehaviourEstimator):
+            raise TypeError(f"candidate {label!r} does not satisfy the BehaviourEstimator contract")
+        model_capabilities(model)
         validated[label] = model
+    scored_columns = {model_capabilities(model).scored_columns for model in validated.values()}
+    if len(scored_columns) != 1:
+        raise ValueError("all model-recovery candidates must score identical observed columns")
     return MappingProxyType(validated)
 
 

@@ -36,6 +36,13 @@ the report but is ineligible to win; warnings remain eligible. If every candidat
 the comparison winner is `None`. Exact score ties follow candidate insertion order so the
 rule is deterministic and visible.
 
+Every estimator declares `scored_columns`, the complete observed event represented by one
+pointwise log probability. All candidates in a comparison must declare the same tuple.
+This prevents, for example, ranking a choice-only Bernoulli likelihood directly against a
+joint choice/response-time density. The binary `outcome_column` used for probabilities and
+Brier scores must be one of those scored columns. Both declarations are retained in the
+serialized report; see the [estimator contract](estimator-contract.md).
+
 ## Aggregation and uncertainty
 
 For each candidate, the report retains:

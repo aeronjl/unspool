@@ -5,14 +5,22 @@ import pytest
 from scipy.special import expit
 
 from unspool import (
+    BehaviourEstimator,
     BehaviourModel,
     BernoulliHistoryGLM,
     FitDiagnostics,
     FitResult,
+    GenerativeBehaviourModel,
+    ModelCapabilities,
     ModelDataError,
+    Prediction,
     PredictionMode,
     Study,
     UnsupportedPredictionMode,
+    evaluate_splits,
+    forward_session_splits,
+    model_capabilities,
+    run_parameter_recovery,
 )
 
 
@@ -64,10 +72,57 @@ def known_fit(model: BernoulliHistoryGLM, estimates: list[float]) -> FitResult:
     )
 
 
+class FitOnlyEstimator:
+    """Minimal third-party-style estimator without a simulator."""
+
+    def __init__(self, delegate: BernoulliHistoryGLM) -> None:
+        self.delegate = delegate
+
+    @property
+    def model_name(self) -> str:
+        return self.delegate.model_name
+
+    @property
+    def signature(self) -> str:
+        return self.delegate.signature
+
+    @property
+    def scored_columns(self) -> tuple[str, ...]:
+        return self.delegate.scored_columns
+
+    @property
+    def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
+        return self.delegate.supported_prediction_modes
+
+    def fit(self, study: Study) -> FitResult:
+        return self.delegate.fit(study)
+
+    def predict(
+        self,
+        study: Study,
+        fit: FitResult,
+        *,
+        mode: PredictionMode = PredictionMode.FILTERED,
+    ) -> Prediction:
+        return self.delegate.predict(study, fit, mode=mode)
+
+    def pointwise_log_prob(
+        self,
+        study: Study,
+        fit: FitResult,
+        *,
+        mode: PredictionMode = PredictionMode.FILTERED,
+    ) -> np.ndarray:
+        return self.delegate.pointwise_log_prob(study, fit, mode=mode)
+
+
 def test_model_satisfies_public_contract() -> None:
     model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=2)
 
     assert isinstance(model, BehaviourModel)
+    assert isinstance(model, BehaviourEstimator)
+    assert isinstance(model, GenerativeBehaviourModel)
+    assert model.scored_columns == ("choice",)
     assert model.parameter_names == (
         "intercept",
         "stimulus",
@@ -76,6 +131,60 @@ def test_model_satisfies_public_contract() -> None:
     )
     assert model.supported_prediction_modes == (PredictionMode.FILTERED,)
     assert "choice_lags=2" in model.signature
+
+    capabilities = model_capabilities(model)
+    assert capabilities == ModelCapabilities(
+        scored_columns=("choice",),
+        prediction_modes=(PredictionMode.FILTERED,),
+        can_simulate=True,
+        can_recover_parameters=True,
+    )
+
+
+def test_fit_only_estimators_can_be_evaluated_but_not_sent_to_recovery() -> None:
+    generator = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0)
+    estimator = FitOnlyEstimator(generator)
+    simulated = generator.simulate(
+        make_design(n_sessions=3, n_trials=30),
+        {"intercept": -0.2, "stimulus": 1.0},
+        seed=15,
+    )
+
+    assert isinstance(estimator, BehaviourEstimator)
+    assert not isinstance(estimator, GenerativeBehaviourModel)
+    capabilities = model_capabilities(estimator)
+    assert not capabilities.can_simulate
+    assert not capabilities.can_recover_parameters
+    evaluations = evaluate_splits(
+        estimator,
+        simulated,
+        forward_session_splits(simulated, min_train_sessions=2),
+    )
+    assert len(evaluations) == 1
+    with pytest.raises(TypeError, match="GenerativeBehaviourModel"):
+        run_parameter_recovery(
+            estimator,  # type: ignore[arg-type]
+            make_design(n_sessions=1, n_trials=10),
+            [{"intercept": 0.0, "stimulus": 1.0}],
+            seed=0,
+        )
+
+
+def test_capability_metadata_rejects_ambiguous_scalar_columns_and_flags() -> None:
+    with pytest.raises(ValueError, match="tuple of column names"):
+        ModelCapabilities(
+            scored_columns="choice",  # type: ignore[arg-type]
+            prediction_modes=(PredictionMode.FILTERED,),
+            can_simulate=False,
+            can_recover_parameters=False,
+        )
+    with pytest.raises(ValueError, match="requires simulation"):
+        ModelCapabilities(
+            scored_columns=("choice",),
+            prediction_modes=(PredictionMode.FILTERED,),
+            can_simulate=False,
+            can_recover_parameters=True,
+        )
 
 
 @pytest.mark.parametrize(

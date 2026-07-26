@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pytest
 
@@ -40,11 +42,38 @@ def test_parameter_recovery_is_reproducible_and_design_specific() -> None:
     assert np.array_equal(first.seeds, second.seeds)
     assert np.array_equal(first.estimates, second.estimates)
     assert first.convergence_rate == 1.0
+    assert first.audit_pass_rate == 1.0
+    assert first.audit_warning_rate == 0.0
+    assert first.audit_failure_rate == 0.0
+    assert len(first.audits) == first.n_runs
     assert len(first.summary()) == 3
     assert all(summary.n_successful == 6 for summary in first.summary())
+    assert all(summary.n_with_uncertainty == 6 for summary in first.summary())
     assert all(np.isfinite(summary.rmse) for summary in first.summary())
     with pytest.raises(ValueError, match="cannot set WRITEABLE flag"):
         first.estimates.setflags(write=True)
+    payload = first.to_dict()
+    assert payload["runs"][0]["fit_audit"]["status"] == "pass"
+    json.dumps(payload, allow_nan=False)
+
+
+def test_parameter_recovery_keeps_failed_audits_out_of_summaries() -> None:
+    model = BernoulliHistoryGLM(
+        covariates=("stimulus",),
+        choice_lags=1,
+        max_iterations=1,
+    )
+    report = run_parameter_recovery(
+        model,
+        recovery_design(),
+        [{"intercept": -0.2, "stimulus": 1.0, "choice_lag_1": 0.4}],
+        seed=19,
+    )
+
+    assert report.audit_failure_rate == 1.0
+    assert report.audits[0].issue_codes[0] == "optimizer_nonconvergence"
+    assert all(summary.n_successful == 0 for summary in report.summary())
+    json.dumps(report.to_dict(), allow_nan=False)
 
 
 @pytest.mark.parametrize(
@@ -53,6 +82,8 @@ def test_parameter_recovery_is_reproducible_and_design_specific() -> None:
         ([], 1, 0, "must not be empty"),
         ([{"intercept": 0.0}], 0, 0, "repeats"),
         ([{"intercept": 0.0}], 1, -1, "seed"),
+        ([{"intercept": np.nan}], 1, 0, "finite numeric"),
+        ([{"intercept": 0.0, "extra": 1.0}], 1, 0, "match the model exactly"),
     ],
 )
 def test_parameter_recovery_arguments_are_validated(

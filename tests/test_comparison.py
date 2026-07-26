@@ -86,6 +86,7 @@ def test_comparison_retains_matched_scores_fits_audits_and_provenance() -> None:
     )
 
     assert report.model_order == ("static", "smooth")
+    assert report.scored_columns == ("choice",)
     assert report.winner in report.model_order
     assert len(report.splits) == 2
     assert len(report.pairwise_comparisons) == 1
@@ -110,6 +111,7 @@ def test_comparison_retains_matched_scores_fits_audits_and_provenance() -> None:
     payload = report.to_dict()
     assert payload["folds"][0]["scheme"] == "cohort-forward-session"
     assert payload["bootstrap"]["unit"] == "subject"
+    assert payload["scored_columns"] == ["choice"]
     assert len(payload["models"]["static"]["fit_audits"]) == 2
     json.dumps(payload, allow_nan=False)
 
@@ -217,9 +219,24 @@ def test_comparison_rejects_implicit_interpolation_and_invalid_contracts() -> No
             cohort_forward_session_splits(study, min_train_sessions=5),
             bootstrap_resamples=True,  # type: ignore[arg-type]
         )
-    with pytest.raises(ValueError, match="not declared outcome_column"):
+    with pytest.raises(ValueError, match="not among the scored columns"):
         compare_models(
             {"other_outcome": BernoulliHistoryGLM(covariates=("stimulus",), outcome="response")},
+            Study(
+                {
+                    **{name: study[name] for name in study.columns},
+                    "response": study["choice"],
+                }
+            ),
+            cohort_forward_session_splits(study, min_train_sessions=5),
+            bootstrap_resamples=10,
+        )
+    with pytest.raises(ValueError, match="same observed columns"):
+        compare_models(
+            {
+                "choice": candidates()["static"],
+                "response": BernoulliHistoryGLM(covariates=("stimulus",), outcome="response"),
+            },
             Study(
                 {
                     **{name: study[name] for name in study.columns},

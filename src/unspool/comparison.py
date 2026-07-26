@@ -12,7 +12,12 @@ from numpy.typing import NDArray
 
 from unspool.diagnostics import FitAudit, FitAuditStatus, audit_fit
 from unspool.evaluation import FoldEvaluation, evaluate_splits
-from unspool.models.base import BehaviourModel, PredictionMode, _protected_array
+from unspool.models.base import (
+    BehaviourEstimator,
+    PredictionMode,
+    _protected_array,
+    model_capabilities,
+)
 from unspool.study import Study
 from unspool.validation import (
     CohortValidationSplit,
@@ -200,6 +205,7 @@ class ProspectiveComparisonReport:
 
     aggregation_column: str
     outcome_column: str
+    scored_columns: tuple[str, ...]
     splits: tuple[ValidationFold, ...]
     model_results: tuple[ProspectiveModelResult, ...]
     pairwise_comparisons: tuple[PairedModelComparison, ...]
@@ -210,6 +216,11 @@ class ProspectiveComparisonReport:
     def __post_init__(self) -> None:
         if not self.aggregation_column or not self.outcome_column:
             raise ValueError("aggregation and outcome columns must be non-empty")
+        scored_columns = tuple(self.scored_columns)
+        if not scored_columns or len(set(scored_columns)) != len(scored_columns):
+            raise ValueError("scored_columns must be non-empty and unique")
+        if self.outcome_column not in scored_columns:
+            raise ValueError("outcome_column must be included in scored_columns")
         splits = tuple(self.splits)
         results = tuple(self.model_results)
         comparisons = tuple(self.pairwise_comparisons)
@@ -262,6 +273,7 @@ class ProspectiveComparisonReport:
             if comparison.left_minus_right.confidence_level != self.confidence_level:
                 raise ValueError("pairwise confidence levels must match the report")
         object.__setattr__(self, "splits", splits)
+        object.__setattr__(self, "scored_columns", scored_columns)
         object.__setattr__(self, "model_results", results)
         object.__setattr__(self, "pairwise_comparisons", comparisons)
 
@@ -319,6 +331,7 @@ class ProspectiveComparisonReport:
         return {
             "aggregation_column": self.aggregation_column,
             "outcome_column": self.outcome_column,
+            "scored_columns": list(self.scored_columns),
             "bootstrap": {
                 "unit": self.aggregation_column,
                 "resamples": self.bootstrap_resamples,
@@ -374,6 +387,7 @@ class NestedProspectiveSelectionReport:
 
     aggregation_column: str
     outcome_column: str
+    scored_columns: tuple[str, ...]
     candidate_names: tuple[str, ...]
     folds: tuple[NestedSelectionFold, ...]
     aggregation_units: tuple[Any, ...]
@@ -388,6 +402,11 @@ class NestedProspectiveSelectionReport:
 
     def __post_init__(self) -> None:
         candidates = tuple(self.candidate_names)
+        scored_columns = tuple(self.scored_columns)
+        if not scored_columns or len(set(scored_columns)) != len(scored_columns):
+            raise ValueError("scored_columns must be non-empty and unique")
+        if self.outcome_column not in scored_columns:
+            raise ValueError("outcome_column must be included in scored_columns")
         folds = tuple(self.folds)
         units = _validated_identifiers(self.aggregation_units, "aggregation_units")
         losses = _protected_array(self.unit_log_losses, dtype=np.float64)
@@ -427,9 +446,11 @@ class NestedProspectiveSelectionReport:
             if (
                 fold.inner_report.aggregation_column != self.aggregation_column
                 or fold.inner_report.outcome_column != self.outcome_column
+                or fold.inner_report.scored_columns != scored_columns
             ):
                 raise ValueError("inner report columns must match the nested report")
         object.__setattr__(self, "candidate_names", candidates)
+        object.__setattr__(self, "scored_columns", scored_columns)
         object.__setattr__(self, "folds", folds)
         object.__setattr__(self, "aggregation_units", units)
         object.__setattr__(self, "unit_log_losses", losses)
@@ -473,6 +494,7 @@ class NestedProspectiveSelectionReport:
         return {
             "aggregation_column": self.aggregation_column,
             "outcome_column": self.outcome_column,
+            "scored_columns": list(self.scored_columns),
             "candidate_names": list(self.candidate_names),
             "selection_counts": dict(self.selection_counts),
             "n_outer_folds": len(self.folds),
@@ -509,7 +531,7 @@ class NestedProspectiveSelectionReport:
 
 
 def compare_models(
-    models: Mapping[str, BehaviourModel],
+    models: Mapping[str, BehaviourEstimator],
     study: Study,
     splits: Iterable[ValidationFold],
     *,
@@ -527,23 +549,26 @@ def compare_models(
     """
 
     candidates = _validated_models(models)
+    capabilities = {name: model_capabilities(model) for name, model in candidates.items()}
+    scored_columns = next(iter(capabilities.values())).scored_columns
+    for name, candidate_capabilities in capabilities.items():
+        if candidate_capabilities.scored_columns != scored_columns:
+            raise ValueError(
+                "all candidates must score the same observed columns; "
+                f"candidate {name!r} scores {candidate_capabilities.scored_columns!r}, "
+                f"expected {scored_columns!r}"
+            )
     folds = tuple(splits)
     _validate_comparison_inputs(
         study,
         folds,
         aggregation_column=aggregation_column,
         outcome_column=outcome_column,
+        scored_columns=scored_columns,
         bootstrap_resamples=bootstrap_resamples,
         bootstrap_seed=bootstrap_seed,
         confidence_level=confidence_level,
     )
-    for name, model in candidates.items():
-        model_outcome = getattr(model, "outcome", outcome_column)
-        if model_outcome != outcome_column:
-            raise ValueError(
-                f"candidate {name!r} scores outcome {model_outcome!r}, "
-                f"not declared outcome_column {outcome_column!r}"
-            )
     evaluations = {
         name: evaluate_splits(model, study, folds, mode=mode) for name, model in candidates.items()
     }
@@ -610,6 +635,7 @@ def compare_models(
     return ProspectiveComparisonReport(
         aggregation_column=aggregation_column,
         outcome_column=outcome_column,
+        scored_columns=scored_columns,
         splits=folds,
         model_results=tuple(model_results),
         pairwise_comparisons=tuple(pairwise),
@@ -620,7 +646,7 @@ def compare_models(
 
 
 def nested_select_model(
-    candidates: Mapping[str, BehaviourModel],
+    candidates: Mapping[str, BehaviourEstimator],
     study: Study,
     outer_splits: Iterable[ValidationFold],
     inner_splitter: Callable[[Study], Iterable[ValidationFold]],
@@ -641,12 +667,22 @@ def nested_select_model(
     """
 
     models = _validated_models(candidates)
+    capabilities = {name: model_capabilities(model) for name, model in models.items()}
+    scored_columns = next(iter(capabilities.values())).scored_columns
+    for name, candidate_capabilities in capabilities.items():
+        if candidate_capabilities.scored_columns != scored_columns:
+            raise ValueError(
+                "all candidates must score the same observed columns; "
+                f"candidate {name!r} scores {candidate_capabilities.scored_columns!r}, "
+                f"expected {scored_columns!r}"
+            )
     folds = tuple(outer_splits)
     _validate_comparison_inputs(
         study,
         folds,
         aggregation_column=aggregation_column,
         outcome_column=outcome_column,
+        scored_columns=scored_columns,
         bootstrap_resamples=bootstrap_resamples,
         bootstrap_seed=bootstrap_seed,
         confidence_level=confidence_level,
@@ -708,6 +744,7 @@ def nested_select_model(
     return NestedProspectiveSelectionReport(
         aggregation_column=aggregation_column,
         outcome_column=outcome_column,
+        scored_columns=scored_columns,
         candidate_names=tuple(models),
         folds=tuple(selections),
         aggregation_units=aggregate.units,
@@ -786,16 +823,17 @@ def _aggregate_evaluations(
 
 
 def _validated_models(
-    models: Mapping[str, BehaviourModel],
-) -> Mapping[str, BehaviourModel]:
+    models: Mapping[str, BehaviourEstimator],
+) -> Mapping[str, BehaviourEstimator]:
     if not isinstance(models, Mapping) or not models:
         raise ValueError("models must be a non-empty mapping")
-    validated: dict[str, BehaviourModel] = {}
+    validated: dict[str, BehaviourEstimator] = {}
     for name, model in models.items():
         if not isinstance(name, str) or not name:
             raise ValueError("model names must be non-empty strings")
-        if not isinstance(model, BehaviourModel):
-            raise TypeError(f"candidate {name!r} does not satisfy BehaviourModel")
+        if not isinstance(model, BehaviourEstimator):
+            raise TypeError(f"candidate {name!r} does not satisfy BehaviourEstimator")
+        model_capabilities(model)
         validated[name] = model
     return MappingProxyType(validated)
 
@@ -806,6 +844,7 @@ def _validate_comparison_inputs(
     *,
     aggregation_column: str,
     outcome_column: str,
+    scored_columns: tuple[str, ...],
     bootstrap_resamples: int,
     bootstrap_seed: int,
     confidence_level: float,
@@ -820,6 +859,13 @@ def _validate_comparison_inputs(
         raise ValueError("outcome_column must be a non-empty string")
     if outcome_column not in study.columns:
         raise ValueError(f"study does not contain outcome column {outcome_column!r}")
+    if outcome_column not in scored_columns:
+        raise ValueError(
+            f"outcome_column {outcome_column!r} is not among the scored columns {scored_columns!r}"
+        )
+    missing_scored = set(scored_columns) - set(study.columns)
+    if missing_scored:
+        raise ValueError(f"study is missing scored model columns: {sorted(missing_scored)}")
     _require_positive_integer(bootstrap_resamples, "bootstrap_resamples")
     _require_nonnegative_integer(bootstrap_seed, "bootstrap_seed")
     if not np.isfinite(confidence_level) or not 0 < confidence_level < 1:

@@ -186,6 +186,7 @@ def run(*, repetitions: int = 20, seed: int = 84_221) -> dict[str, Any]:
         },
         "selection_contract": {
             "primary_metric": "mean subject-level inner-fold log loss",
+            "scored_columns": ["choice"],
             "tie_break": "declared candidate order",
             "outer_test_outcomes_available_during_selection": False,
             "candidate_order": list(CANDIDATES),

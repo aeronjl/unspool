@@ -27,6 +27,9 @@
     "outcome": "binary choice",
     "panel": "first three and final three eligible sessions per subject",
     "primary_metric": "mean subject-level prospective log loss",
+    "scored_columns": [
+      "choice"
+    ],
     "uncertainty": "paired nonparametric subject bootstrap"
   },
   "benchmark": "matched prospective longitudinal model comparison",
