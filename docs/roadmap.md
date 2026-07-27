@@ -202,12 +202,28 @@ The roadmap is organized by scientific contracts rather than by model count.
   the public IBL panel, preserving its one-animal-per-lab confounding as a failed readiness
   check rather than a lab-effect result.
 
+## 0.14 — Exact IBL ONE interoperability and replicated public cohort
+
+- **Implemented:** import exact IBL trial-table UUIDs through the optional ONE client,
+  verify declared relative path, byte size, and MD5, and retain release, session, dataset,
+  and Alyx identity as trial-addressable provenance.
+- **Implemented:** preserve IBL source choice coding without silently converting `-1`, `0`,
+  and `+1` into a binary modelling response.
+- **Implemented:** build an outcome-blind manifest that retains all 78 eligible animals in
+  nine labs, with at least four animals per lab and the first and final three pre-transition
+  training sessions per animal.
+- **Implemented:** pin 468 source datasets and a 260,833-trial public-data regression result,
+  with replicated-lab trajectory geometry and nine complete leave-one-lab-out folds.
+- **Bounded claim:** selection is conditioned on the training-policy transition, endpoint
+  windows are ordinal rather than uniform elapsed time, and fixed-lab bootstrap intervals
+  do not generalize to a population of laboratories.
+
 ## Later
 
 - Session-varying GLM-HMM parameters
 - Full propagation of population-parameter and scale uncertainty into predictions
 - Richer mixtures and model plugins
-- IBL ONE and NWB-Zarr adapters
+- NWB-Zarr adapter
 - Population-of-labs uncertainty and hierarchical lab effects
 
 Each expansion should be justified by a benchmark or user need and should add recovery

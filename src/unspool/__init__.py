@@ -1,16 +1,21 @@
 """Validation-first tools for modelling behaviour across learning."""
 
 from unspool.adapters import (
+    DEFAULT_IBL_ALYX_URL,
     DANDIAdapterError,
     DANDINWBSource,
+    IBLONEAdapterError,
+    IBLONETrialSource,
     NWBAdapterError,
     NWBSessionSource,
     ResolvedDANDIAsset,
     add_study_trials,
+    read_ibl_one_sessions,
     read_nwb,
     read_nwb_sessions,
     resolve_dandi_nwb_asset,
     study_from_dandi,
+    study_from_ibl_one,
     study_from_nwbfile,
     write_nwb,
 )
@@ -146,6 +151,7 @@ from unspool.validation import (
 __version__ = "0.1.0"
 
 __all__ = [
+    "DEFAULT_IBL_ALYX_URL",
     "REQUIRED_COLUMNS",
     "AuditSeverity",
     "BehaviourEstimator",
@@ -193,6 +199,8 @@ __all__ = [
     "HierarchicalSmoothGLMFitResult",
     "HierarchicalSmoothGLMSimulation",
     "HierarchicalSmoothWienerDriftDiffusion",
+    "IBLONEAdapterError",
+    "IBLONETrialSource",
     "LandmarkClockSamples",
     "LandmarkNotFoundError",
     "LandmarkUncertaintyEstimate",
@@ -262,6 +270,7 @@ __all__ = [
     "leave_one_subject_out_splits",
     "model_capabilities",
     "nested_select_model",
+    "read_ibl_one_sessions",
     "read_nwb",
     "read_nwb_sessions",
     "resolve_dandi_nwb_asset",
@@ -270,6 +279,7 @@ __all__ = [
     "run_parameter_recovery",
     "session_order_clock",
     "study_from_dandi",
+    "study_from_ibl_one",
     "study_from_nwbfile",
     "with_cumulative_trial_clock",
     "with_elapsed_time_clock",

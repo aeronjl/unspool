@@ -43,6 +43,9 @@ dandi = [
     "pynwb>=3.1",
     "remfile>=0.1",
 ]
+ibl = [
+    "one-api>=3.5,<4",
+]
 
 [dependency-groups]
 dev = [

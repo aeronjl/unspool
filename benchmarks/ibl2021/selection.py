@@ -31,6 +31,76 @@ def select_learning_panel(
     if sessions_per_phase <= 0:
         raise ValueError("sessions_per_phase must be positive")
 
+    candidates_by_lab = _learning_candidates(
+        session_records,
+        trial_table_sessions,
+        sessions_per_phase=sessions_per_phase,
+    )
+    panel: list[dict[str, Any]] = []
+    for lab in sorted(candidates_by_lab):
+        candidates = sorted(
+            candidates_by_lab[lab],
+            key=lambda candidate: (-candidate[0], -candidate[1], candidate[2]),
+        )
+        panel.extend(candidates[0][3])
+    return panel
+
+
+def select_replicated_learning_panel(
+    session_records: Iterable[Mapping[str, Any]],
+    trial_table_sessions: set[str],
+    *,
+    sessions_per_phase: int = SESSIONS_PER_PHASE,
+    minimum_subjects_per_lab: int = 2,
+) -> list[dict[str, Any]]:
+    """Retain every eligible subject while requiring replication in every observed lab.
+
+    Eligibility uses session metadata and trial-table availability only. The selected
+    windows are the first and final training sessions before the first biased-task
+    transition; ``window_position`` records their ordinal within those retained windows
+    and must not be interpreted as uniform elapsed training time.
+    """
+
+    if sessions_per_phase <= 0:
+        raise ValueError("sessions_per_phase must be positive")
+    if (
+        isinstance(minimum_subjects_per_lab, bool)
+        or not isinstance(minimum_subjects_per_lab, int)
+        or minimum_subjects_per_lab < 2
+    ):
+        raise ValueError("minimum_subjects_per_lab must be an integer of at least two")
+    candidates_by_lab = _learning_candidates(
+        session_records,
+        trial_table_sessions,
+        sessions_per_phase=sessions_per_phase,
+    )
+    under_replicated = {
+        lab: len(candidates)
+        for lab, candidates in candidates_by_lab.items()
+        if len(candidates) < minimum_subjects_per_lab
+    }
+    if under_replicated:
+        raise ValueError(
+            "eligible labs do not meet the subject-replication threshold: "
+            f"{dict(sorted(under_replicated.items()))}"
+        )
+
+    panel: list[dict[str, Any]] = []
+    for lab in sorted(candidates_by_lab):
+        candidates = sorted(candidates_by_lab[lab], key=lambda candidate: candidate[2])
+        for _training_count, _coverage, _subject, selected in candidates:
+            panel.extend(
+                {**row, "window_position": position} for position, row in enumerate(selected)
+            )
+    return panel
+
+
+def _learning_candidates(
+    session_records: Iterable[Mapping[str, Any]],
+    trial_table_sessions: set[str],
+    *,
+    sessions_per_phase: int,
+) -> dict[str, list[tuple[int, int, str, list[dict[str, Any]]]]]:
     grouped: dict[tuple[str, str], list[Mapping[str, Any]]] = defaultdict(list)
     for record in session_records:
         session = _identifier(record, "id")
@@ -95,15 +165,7 @@ def select_learning_panel(
                     }
                 )
         candidates_by_lab[lab].append((len(training), len(ordered), subject, selected))
-
-    panel: list[dict[str, Any]] = []
-    for lab in sorted(candidates_by_lab):
-        candidates = sorted(
-            candidates_by_lab[lab],
-            key=lambda candidate: (-candidate[0], -candidate[1], candidate[2]),
-        )
-        panel.extend(candidates[0][3])
-    return panel
+    return candidates_by_lab
 
 
 def manifest_digest(session_rows: Iterable[Mapping[str, Any]]) -> str:

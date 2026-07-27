@@ -50,7 +50,7 @@ jobs:
         run: uv build
 
   interoperability:
-    name: NWB interoperability
+    name: Data interoperability
     runs-on: ubuntu-latest
 
     steps:
@@ -65,8 +65,8 @@ jobs:
       - name: Install Python
         run: uv python install 3.12
 
-      - name: Sync NWB and DANDI extras
-        run: uv sync --locked --all-groups --extra nwb --extra dandi --python 3.12
+      - name: Sync interoperability extras
+        run: uv sync --locked --all-groups --extra nwb --extra dandi --extra ibl --python 3.12
 
       - name: Test optional adapters
-        run: uv run pytest tests/test_nwb_adapter.py tests/test_dandi_adapter.py
+        run: uv run pytest tests/test_nwb_adapter.py tests/test_dandi_adapter.py tests/test_ibl_one_adapter.py
