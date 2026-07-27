@@ -15,6 +15,7 @@ from unspool import (
     PyMCHierarchicalGLMBackend,
     TaskSpec,
     audit_posterior,
+    psis_loo,
 )
 
 task = TaskSpec(
@@ -38,6 +39,7 @@ backend = PyMCHierarchicalGLMBackend(
 
 posterior = backend.sample(model, study, task=task)
 audit = audit_posterior(posterior)
+loo = psis_loo(posterior)
 
 if audit.issues:
     for issue in audit.issues:
@@ -116,7 +118,8 @@ See the [PyMC posterior-predictive reference](https://www.pymc.io/projects/docs/
 Use `posterior.to_arviz()` for the installed ArviZ representation. The standard groups and
 labelled axes are described in [labelled posterior results](posterior-results.md); the
 backend-neutral convergence policy is described in
-[posterior convergence diagnostics](posterior-diagnostics.md).
+[posterior convergence diagnostics](posterior-diagnostics.md), and the pointwise
+predictive-fit calculation in [PSIS-LOO predictive evaluation](psis-loo.md).
 
 ## Interpretation boundary
 

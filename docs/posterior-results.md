@@ -129,6 +129,19 @@ The audit keeps rank-normalized $\widehat R$, bulk/tail ESS, HMC warning counts 
 available, explicit thresholds, and labelled failure targets. See
 [posterior convergence diagnostics](posterior-diagnostics.md).
 
+When the backend also retained a pointwise `log_likelihood`, estimate observation-level
+predictive fit and retain its influential-observation diagnostics:
+
+```python
+from unspool import psis_loo
+
+loo = psis_loo(result)
+print(loo.elpd_loo, loo.issue_codes)
+```
+
+See [PSIS-LOO predictive evaluation](psis-loo.md), including why this diagnostic does not
+replace future-session validation.
+
 ## What this does not claim
 
 The container does not fit a model or turn approximate samples into a calibrated posterior.

@@ -103,6 +103,7 @@ nav:
       - Deterministic inference backends: inference-backends.md
       - Labelled posterior results: posterior-results.md
       - Posterior convergence diagnostics: posterior-diagnostics.md
+      - PSIS-LOO predictive evaluation: psis-loo.md
       - PyMC hierarchical GLM backend: pymc-backend.md
       - Estimator contract: estimator-contract.md
       - Trajectory shapes: trajectory-shapes.md
