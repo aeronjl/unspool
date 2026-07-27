@@ -11,6 +11,11 @@ the model means. Unspool therefore separates `OptimizationProblem` from
 - `OptimizationRun` retains every attempted optimum before applying one deterministic
   selection rule.
 
+Probabilistic samplers produce a different kind of evidence from an optimum. Their common
+output contract is documented under [labelled posterior results](posterior-results.md):
+natural-scale draws, predictive groups, pointwise likelihood, diagnostics, observed data,
+and provenance with optional ArviZ/xarray interchange.
+
 ## Run multistart maximum likelihood
 
 ```python

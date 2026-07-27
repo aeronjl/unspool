@@ -94,6 +94,13 @@ The common [inference backend contract](../inference-backends.md) keeps paramete
 semantics fixed while changing search strategy. SciPy L-BFGS-B is available in core;
 install `unspool[optimization]` for the optional PyBADS multistart backend.
 
+## I have posterior draws from a probabilistic backend
+
+The [labelled posterior-result contract](../posterior-results.md) retains natural-scale
+draws, predictions, pointwise likelihood, sampler diagnostics, observed data, and scientific
+provenance without making ArviZ a core dependency. Install `unspool[probabilistic]` only for
+ArviZ/xarray export or import.
+
 ## I want a complete example
 
 The [worked studies](../tutorials/index.md) begin with published scientific questions and

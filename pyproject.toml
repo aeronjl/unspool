@@ -52,6 +52,10 @@ ibl = [
 optimization = [
     "pybads>=1.0.6,<2",
 ]
+probabilistic = [
+    "arviz>=0.22,<1.2 ; python_full_version < '3.12'",
+    "arviz>=1.2,<2 ; python_full_version >= '3.12'",
+]
 
 [dependency-groups]
 dev = [

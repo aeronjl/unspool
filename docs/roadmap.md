@@ -405,8 +405,11 @@ The roadmap is organized by scientific contracts rather than by model count.
   limit termination from convergence without changing model or task semantics.
 - **Planned:** integrate an established probabilistic-programming backend for full
   hierarchical posterior inference rather than implementing a new sampler.
-- **Planned:** export labelled posterior, predictive, observed-data, log-likelihood, and
-  diagnostics groups through the current ArviZ/xarray interchange conventions.
+- **Implemented:** retain immutable, fully labelled posterior, predictive, observed-data,
+  constant-data, pointwise log-likelihood, and per-draw diagnostic groups in a NumPy-native
+  result with explicit model, backend, and parameter-space provenance; export and import
+  the same contract through optional ArviZ `InferenceData` and current xarray `DataTree`
+  conventions, with both supported Python-version paths under dedicated CI.
 - **Planned:** add posterior predictive checks, simulation-based calibration, PSIS-LOO,
   sensitivity, and test-retest reliability alongside Unspool's prospective validation and
   exact-design recovery.
