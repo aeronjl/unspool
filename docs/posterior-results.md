@@ -144,11 +144,14 @@ replace future-session validation.
 
 For model criticism, compare observed behavioural summaries with the complete replicated
 reference distribution using [posterior-predictive checks](posterior-predictive-checks.md).
+To test the joint prior-simulation and inference implementation over repeated synthetic
+studies, use [simulation-based calibration](simulation-based-calibration.md). It consumes
+the same labelled posterior contract without making a sampler part of Unspool core.
 
 ## What this does not claim
 
 The container does not fit a model or turn approximate samples into a calibrated posterior.
 The common audit checks standard sampling diagnostics, but a pass is not evidence of model
-adequacy or inferential calibration. Posterior predictive checks, simulation-based
-calibration, PSIS-LOO, and sensitivity analyses remain separate diagnostic procedures built
+adequacy or inferential calibration. Posterior-predictive checks, simulation-based
+calibration, PSIS-LOO, and sensitivity analyses are separate diagnostic procedures built
 on top of these retained groups.

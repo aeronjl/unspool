@@ -24,6 +24,7 @@ EXPECTED_FIGURES = {
     "model-atlas.svg",
     "model-recovery-matrix.svg",
     "nested-selection.svg",
+    "sbc-workflow.svg",
     "trajectory-components.svg",
     "validation-geometry.svg",
     "validation-splits.svg",
