@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from types import MappingProxyType
 
 import numpy as np
 from numpy.typing import NDArray
@@ -21,7 +20,43 @@ from unspool.models.base import (
     _protected_array,
 )
 from unspool.models.glm import _ordered_session_indices
+from unspool.parameters import ParameterSpace, ParameterSpec, ParameterTransform
 from unspool.study import REQUIRED_COLUMNS, Study
+
+_Q_LEARNING_PARAMETER_SPACE = ParameterSpace(
+    (
+        ParameterSpec(
+            name="learning_rate",
+            optimizer_name="learning_rate_logit",
+            transform=ParameterTransform.BOUNDED_LOGIT,
+            bounds=(0.0, 1.0),
+            plausible_bounds=(0.05, 0.95),
+            optimizer_bounds=(-12.0, 12.0),
+            description="Fraction of the reward prediction error applied per update.",
+        ),
+        ParameterSpec(
+            name="inverse_temperature",
+            optimizer_name="inverse_temperature_log",
+            transform=ParameterTransform.LOG,
+            bounds=(0.0, None),
+            plausible_bounds=(0.1, 10.0),
+            optimizer_bounds=(-5.0, 5.0),
+            description="Choice sensitivity to the learned action-value difference.",
+        ),
+        ParameterSpec(
+            name="choice_bias",
+            plausible_bounds=(-5.0, 5.0),
+            optimizer_bounds=(-30.0, 30.0),
+            description="Value-independent log-odds bias towards action one.",
+        ),
+        ParameterSpec(
+            name="perseveration",
+            plausible_bounds=(-5.0, 5.0),
+            optimizer_bounds=(-30.0, 30.0),
+            description="Effect-coded influence of the preceding choice.",
+        ),
+    )
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -185,12 +220,15 @@ class BinaryQLearning:
 
     @property
     def parameter_names(self) -> tuple[str, ...]:
-        return (
-            "learning_rate_logit",
-            "inverse_temperature_log",
-            "choice_bias",
-            "perseveration",
-        )
+        """Legacy optimizer-coordinate names retained for fit compatibility."""
+
+        return self.parameter_space.optimizer_names
+
+    @property
+    def parameter_space(self) -> ParameterSpace:
+        """Stable natural and optimizer coordinates shared by inference backends."""
+
+        return _Q_LEARNING_PARAMETER_SPACE
 
     @property
     def scored_columns(self) -> tuple[str, ...]:
@@ -220,13 +258,14 @@ class BinaryQLearning:
             choice_bias=choice_bias,
             perseveration=perseveration,
         )
-        values = (
-            np.log(parameters.learning_rate) - np.log1p(-parameters.learning_rate),
-            np.log(parameters.inverse_temperature),
-            parameters.choice_bias,
-            parameters.perseveration,
+        return self.parameter_space.encode_mapping(
+            {
+                "learning_rate": parameters.learning_rate,
+                "inverse_temperature": parameters.inverse_temperature,
+                "choice_bias": parameters.choice_bias,
+                "perseveration": parameters.perseveration,
+            }
         )
-        return MappingProxyType(dict(zip(self.parameter_names, values, strict=True)))
 
     def parameter_components(
         self,
@@ -253,7 +292,8 @@ class BinaryQLearning:
                 raise ValueError("parameters must contain finite numeric values") from None
             if not np.all(np.isfinite(vector)):
                 raise ValueError("parameters must contain finite numeric values")
-        return _decode_parameters(vector)
+        decoded = self.parameter_space.decode(vector)
+        return QLearningParameters(**decoded)
 
     def simulate(
         self,
@@ -302,7 +342,7 @@ class BinaryQLearning:
             return self._objective_gradient(vector, choices, rewards, sessions)
 
         starts = self._initial_points()
-        bounds = [(-12.0, 12.0), (-5.0, 5.0), (-30.0, 30.0), (-30.0, 30.0)]
+        bounds = list(self.parameter_space.optimizer_bounds)
         results = [
             minimize(
                 objective,
@@ -567,15 +607,12 @@ class BinaryQLearning:
 
 
 def _decode_parameters(vector: Sequence[float]) -> QLearningParameters:
-    values = np.asarray(vector, dtype=np.float64)
-    if values.shape != (4,) or not np.all(np.isfinite(values)):
-        raise ValueError("parameter vector must contain four finite optimizer coordinates")
-    return QLearningParameters(
-        learning_rate=float(expit(values[0])),
-        inverse_temperature=float(np.exp(values[1])),
-        choice_bias=float(values[2]),
-        perseveration=float(values[3]),
-    )
+    try:
+        return QLearningParameters(**_Q_LEARNING_PARAMETER_SPACE.decode(vector))
+    except ValueError as error:
+        raise ValueError(
+            "parameter vector must contain four finite optimizer coordinates"
+        ) from error
 
 
 def _numerical_hessian(

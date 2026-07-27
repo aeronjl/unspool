@@ -171,11 +171,16 @@ configured warning scale, and extreme bias or perseveration estimates.
 same status, issue-code, and `RestartAudit` contract used by the other reference models.
 Raw objectives, convergence flags, and optimizer messages remain on `QLearningFitResult`.
 
+`BinaryQLearning.parameter_space` now makes its natural and optimizer coordinates, bounds,
+and transforms machine-readable through the shared
+[parameter-space contract](parameter-spaces.md). Existing encoded names remain valid.
+Portable fit artifacts record both coordinate identities and estimates, while covariance
+and standard errors remain explicitly on the optimizer scale.
+
 `BinaryRLAgent` uses the same deterministic multistart and fit-audit requirements, with a
 numerical gradient because the recursion varies by component assembly. `RLFitResult`
-retains every restart plus a labelled natural-parameter view. The common fit artifact
-continues to record the stable optimizer coordinate; the shared parameter-schema work in
-0.23 will make both coordinates first-class across model families.
+retains every restart plus a labelled natural-parameter view; migrating its composable
+component declarations to the shared parameter space is a following 0.23 step.
 
 ## Recovery and competing explanations
 

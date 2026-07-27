@@ -23,6 +23,11 @@ comparison boundary used by joint response-time models.
 `simulate`. `BehaviourModel` remains the backwards-compatible public name for the full
 generative contract.
 
+Models can additionally expose the structural `ParameterSpaceProvider` protocol. Its
+[`ParameterSpace`](parameter-spaces.md) makes natural and optimizer coordinates, bounds,
+fixed values, and priors available to fitting adapters without adding an inheritance
+requirement or making parameter metadata a condition for basic prospective scoring.
+
 The protocols are structural: a plugin does not need to inherit an Unspool base class.
 `model_capabilities()` performs semantic validation in addition to checking method
 presence:

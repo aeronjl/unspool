@@ -14,6 +14,7 @@ from typing import Any, Final
 
 import numpy as np
 
+from unspool.parameters import ParameterSpaceProvider
 from unspool.study import Study
 from unspool.task import FittedModel, TaskSpec
 
@@ -130,32 +131,62 @@ def export_fit(fitted: FittedModel, study: Study) -> FitArtifact:
     if len(study) != result.n_observations:
         raise FitArtifactError("study row count does not match the fitted result")
 
-    parameters = tuple(
-        {
+    parameter_space = None
+    natural_parameters: Mapping[str, float] | None = None
+    specs_by_optimizer: dict[str, Any] = {}
+    if isinstance(fitted.model, ParameterSpaceProvider):
+        parameter_space = fitted.model.parameter_space
+        if parameter_space.optimizer_names != result.parameter_names:
+            raise FitArtifactError(
+                "model parameter_space optimizer coordinates do not match the fit result"
+            )
+        natural_parameters = parameter_space.decode(result.estimates)
+        specs_by_optimizer = {
+            spec.resolved_optimizer_name: spec
+            for spec in parameter_space.parameters
+            if spec.resolved_optimizer_name is not None
+        }
+
+    parameter_records = []
+    for name, estimate, standard_error in zip(
+        result.parameter_names,
+        result.estimates,
+        result.standard_errors,
+        strict=True,
+    ):
+        record: dict[str, Any] = {
             "name": name,
             "estimate": _finite_or_none(estimate),
             "standard_error": _finite_or_none(standard_error),
         }
-        for name, estimate, standard_error in zip(
-            result.parameter_names,
-            result.estimates,
-            result.standard_errors,
-            strict=True,
-        )
-    )
-    diagnostics = _sanitize_json(
-        {
-            "converged": result.diagnostics.converged,
-            "optimizer": result.diagnostics.optimizer,
-            "status": result.diagnostics.status,
-            "message": result.diagnostics.message,
-            "n_iterations": result.diagnostics.n_iterations,
-            "objective": result.diagnostics.objective,
-            "gradient_norm": result.diagnostics.gradient_norm,
-            "hessian_condition": result.diagnostics.hessian_condition,
-            "boundary_estimate": result.diagnostics.boundary_estimate,
-        }
-    )
+        if natural_parameters is not None:
+            spec = specs_by_optimizer[name]
+            record.update(
+                {
+                    "coordinate": "optimizer",
+                    "natural_name": spec.name,
+                    "natural_estimate": _finite_or_none(natural_parameters[spec.name]),
+                    "transform": spec.transform.value,
+                }
+            )
+        parameter_records.append(record)
+    parameters = tuple(parameter_records)
+
+    diagnostic_record: dict[str, Any] = {
+        "converged": result.diagnostics.converged,
+        "optimizer": result.diagnostics.optimizer,
+        "status": result.diagnostics.status,
+        "message": result.diagnostics.message,
+        "n_iterations": result.diagnostics.n_iterations,
+        "objective": result.diagnostics.objective,
+        "gradient_norm": result.diagnostics.gradient_norm,
+        "hessian_condition": result.diagnostics.hessian_condition,
+        "boundary_estimate": result.diagnostics.boundary_estimate,
+    }
+    if parameter_space is not None:
+        diagnostic_record["parameter_space"] = parameter_space.to_dict()
+        diagnostic_record["parameter_space_fingerprint"] = parameter_space.fingerprint
+    diagnostics = _sanitize_json(diagnostic_record)
     return FitArtifact(
         schema_version=FIT_ARTIFACT_SCHEMA,
         unspool_version=_package_version(),

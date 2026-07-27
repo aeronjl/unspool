@@ -27,6 +27,12 @@ The `unspool.fit-artifact/1` schema contains:
 - raw common optimizer diagnostics and the normalized fit audit;
 - the Unspool package version that produced the record.
 
+Models implementing `ParameterSpaceProvider` additionally retain the complete
+content-addressed [parameter-space declaration](parameter-spaces.md). Their parameter
+records distinguish optimizer names and estimates from natural names and estimates rather
+than implying that transformed values are directly interpretable. Covariance and standard
+errors remain on the optimizer coordinate in this schema.
+
 The artifact is deliberately non-executable. Reading it validates data, but does not
 import a class, call a factory, or reconstruct a fitted Python object. Specialized live
 results can contain richer state trajectories, restart arrays, and model-specific
