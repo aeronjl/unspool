@@ -280,6 +280,14 @@ an unbiased learning estimate: selection is conditioned on the protocol transiti
 the six endpoint positions are not uniform elapsed time. See the
 [replicated IBL 2021 benchmark](benchmarks/ibl2021_replicated/README.md).
 
+Its prospective successor then compares static partial pooling with hierarchical smooth
+drift under two leakage-safe boundaries. When positions 0–4 predict position 5 for the same
+78 animals, drift lowers subject-balanced log loss from `0.6400` to `0.5549` (paired
+improvement `+0.0851`, 95% interval `+0.0162` to `+0.1460`). When both the future session
+and an entire lab are held out, drift retains the lower point estimate but the interval
+spans zero; the represented sites do not resolve a transport advantage. See the
+[replicated IBL prospective comparison](benchmarks/ibl2021_prospective/README.md).
+
 The first end-to-end [prospective longitudinal study](benchmarks/flagship_longitudinal/README.md)
 then aligns six sessions per animal in both public sources and forecasts the sixth from the
 first five. Complete pooling, static partial pooling, shared smooth drift, and hierarchical
@@ -332,6 +340,7 @@ uv run python -m benchmarks.cell2025.benchmark \
 uv run python -m benchmarks.ibl2021.fetch_data
 uv run --with pyarrow python -m benchmarks.ibl2021.benchmark
 uv run --extra ibl python -m benchmarks.ibl2021_replicated.benchmark
+uv run --extra ibl python -m benchmarks.ibl2021_prospective.benchmark
 uv run --with pyarrow python -m benchmarks.flagship_longitudinal.benchmark
 uv run ruff check .
 uv run ruff format --check .

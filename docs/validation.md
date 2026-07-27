@@ -11,10 +11,14 @@ units. They answer different questions and retain the held-out unit in every spl
 | `leave_one_session_out_splits` | Every other session for that subject | One complete session | No | Interpolation and sensitivity to a particular session |
 | `leave_one_subject_out_splits` | Every other subject | All trials from one subject | Yes¹ | Generalization to an unseen animal |
 | `leave_one_lab_out_splits` | Every other lab | All subjects and trials from one lab | Yes¹ | Generalization across acquisition sites |
+| `leave_one_lab_out_session_forecast_splits` | Common session prefix from every other lab | Later common session horizon from one unseen lab | Yes² | Future-session transport to unseen sites and animals |
 
 ¹ Population folds exclude every observation from the held-out unit. Their `prospective`
 flag therefore means leakage-safe generalization to an unseen subject or lab, not a
 within-subject forecast through calendar time.
+
+² The combined population-forecast fold protects both boundaries: the held-out lab is
+absent from fitting, and later sessions from the training labs are excluded too.
 
 ## Forward-session prediction
 
@@ -138,6 +142,35 @@ shared coefficients, while the smooth GLM requires an explicit `shared_trajector
 choice before fitting multiple subjects. The hierarchical smooth GLM instead learns a
 population trajectory and subject-deviation trajectories, then applies only the population
 trajectory to a held-out subject.
+
+## Held-out-lab future-session prediction
+
+```python
+from unspool import leave_one_lab_out_session_forecast_splits
+
+splits = leave_one_lab_out_session_forecast_splits(
+    aligned_study,
+    train_session_count=5,
+    horizon=1,
+    lab_column="lab",
+)
+for split in splits:
+    assert set(split.train_subjects).isdisjoint(split.test_subjects)
+    assert set(split.train_groups).isdisjoint(split.test_groups)
+    assert max(split.train_session_orders) < min(split.test_session_orders)
+```
+
+This is stricter than ordinary lab holdout. Training uses only the common aligned session
+prefix in the other labs, while testing uses only the later common horizon in the held-out
+lab. Every subject must share those explicit `session_order` coordinates; unequal raw
+calendars must first be aligned by a scientifically declared, leakage-safe transform.
+Subjects that do not reach the horizon cause an error rather than silently changing cohort
+membership. Sessions before the horizon from test animals are withheld rather than used as
+prediction context, so hierarchical models must apply their declared unseen-subject policy.
+
+The [replicated IBL prospective benchmark](../benchmarks/ibl2021_prospective/README.md)
+uses this splitter to distinguish future prediction for represented animals from future
+prediction in an entirely unseen lab.
 
 Fold-fitted, subject-specific landmarks present a stricter boundary. A landmark learned
 only for training subjects cannot be applied to a new test subject, and Unspool raises

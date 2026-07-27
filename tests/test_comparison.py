@@ -11,6 +11,7 @@ from unspool import (
     Study,
     cohort_forward_session_splits,
     compare_models,
+    leave_one_lab_out_session_forecast_splits,
     leave_one_session_out_splits,
     nested_select_model,
 )
@@ -124,6 +125,31 @@ def test_comparison_bootstrap_is_reproducible_and_paired() -> None:
     second = compare_models(candidates(), study, splits, bootstrap_resamples=100, bootstrap_seed=91)
 
     assert first.to_dict() == second.to_dict()
+
+
+def test_comparison_serializes_population_future_session_provenance() -> None:
+    study = comparison_study()
+    columns = {name: study[name] for name in study.columns}
+    columns["lab"] = np.asarray(
+        ["short-lab" if subject == "short" else "other-lab" for subject in study["subject"]]
+    )
+    panel = Study(columns)
+    splits = leave_one_lab_out_session_forecast_splits(panel, train_session_count=5)
+
+    report = compare_models(
+        candidates(),
+        panel,
+        splits,
+        bootstrap_resamples=20,
+        bootstrap_seed=18,
+    )
+
+    payload = report.to_dict()
+    assert len(payload["folds"]) == 2
+    assert payload["folds"][0]["scheme"] == "leave-one-lab-out-session-forecast"
+    assert payload["folds"][0]["train_session_orders"] == list(range(5))
+    assert payload["folds"][0]["test_session_orders"] == [5]
+    assert payload["folds"][0]["n_prediction_context_rows"] == 0
 
 
 def test_failed_audit_candidate_is_retained_but_ineligible_to_win() -> None:

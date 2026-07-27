@@ -21,6 +21,7 @@ from unspool.models.base import (
 from unspool.study import Study
 from unspool.validation import (
     CohortValidationSplit,
+    PopulationForecastSplit,
     PopulationValidationSplit,
     ValidationFold,
     ValidationSplit,
@@ -943,6 +944,33 @@ def _split_provenance(split: ValidationFold) -> dict[str, Any]:
                 "test_groups": [_json_value(value) for value in split.test_groups],
                 "held_out_group": _json_value(split.held_out_group),
                 "group_column": split.group_column,
+            }
+        )
+    elif isinstance(split, PopulationForecastSplit):
+        common.update(
+            {
+                "train_subjects": [_json_value(value) for value in split.train_subjects],
+                "test_subjects": [_json_value(value) for value in split.test_subjects],
+                "train_groups": [_json_value(value) for value in split.train_groups],
+                "test_groups": [_json_value(value) for value in split.test_groups],
+                "held_out_group": _json_value(split.held_out_group),
+                "group_column": split.group_column,
+                "train_session_orders": list(split.train_session_orders),
+                "test_session_orders": list(split.test_session_orders),
+                "train_sessions_by_subject": [
+                    {
+                        "subject": _json_value(subject),
+                        "sessions": [_json_value(value) for value in split.train_sessions[subject]],
+                    }
+                    for subject in split.train_subjects
+                ],
+                "test_sessions_by_subject": [
+                    {
+                        "subject": _json_value(subject),
+                        "sessions": [_json_value(value) for value in split.test_sessions[subject]],
+                    }
+                    for subject in split.test_subjects
+                ],
             }
         )
     return common
