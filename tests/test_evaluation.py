@@ -6,6 +6,7 @@ from unspool import (
     Study,
     evaluate_splits,
     forward_session_splits,
+    leave_one_lab_out_session_forecast_splits,
     leave_one_lab_out_splits,
     leave_one_session_out_splits,
     leave_one_subject_out_splits,
@@ -146,3 +147,82 @@ def test_population_holdouts_fit_only_on_unseen_subjects_and_labs() -> None:
     assert lab_evaluation.fit.n_observations == 40
     assert lab_evaluation.prediction.probability.shape == (80,)
     assert lab_evaluation.split.test_groups == ("north",)
+
+
+def test_lab_session_forecasts_protect_both_population_and_future_boundaries() -> None:
+    generator = np.random.default_rng(41)
+    subjects = ("a", "b", "c", "d")
+    labs = {"a": "north", "b": "north", "c": "south", "d": "south"}
+    n_sessions = 6
+    n_trials = 10
+    design = Study(
+        {
+            "subject": [
+                subject
+                for subject in subjects
+                for _session in range(n_sessions)
+                for _trial in range(n_trials)
+            ],
+            "session": [
+                f"{subject}-{session}"
+                for subject in subjects
+                for session in range(n_sessions)
+                for _trial in range(n_trials)
+            ],
+            "trial": list(range(n_trials)) * n_sessions * len(subjects),
+            "session_order": [
+                session
+                for _subject in subjects
+                for session in range(n_sessions)
+                for _trial in range(n_trials)
+            ],
+            "lab": [
+                labs[subject]
+                for subject in subjects
+                for _session in range(n_sessions)
+                for _trial in range(n_trials)
+            ],
+            "stimulus": generator.normal(size=len(subjects) * n_sessions * n_trials),
+        }
+    )
+    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.1)
+    study = model.simulate(
+        design,
+        {"intercept": -0.1, "stimulus": 1.0, "choice_lag_1": 0.4},
+        seed=42,
+    )
+
+    splits = leave_one_lab_out_session_forecast_splits(
+        study,
+        train_session_count=5,
+    )
+
+    assert len(splits) == 2
+    assert all(split.prospective for split in splits)
+    assert all(split.train_session_orders == tuple(range(5)) for split in splits)
+    assert all(split.test_session_orders == (5,) for split in splits)
+    assert all(set(split.train_subjects).isdisjoint(split.test_subjects) for split in splits)
+    assert all(set(split.train_groups).isdisjoint(split.test_groups) for split in splits)
+    assert sum(len(split.test_indices) for split in splits) == len(subjects) * n_trials
+    evaluation = evaluate_splits(model, study, (splits[0],))[0]
+    assert evaluation.fit.n_observations == 2 * 5 * n_trials
+    assert evaluation.prediction.probability.shape == (2 * n_trials,)
+
+
+def test_lab_session_forecast_rejects_unaligned_subject_clocks() -> None:
+    unaligned = Study(
+        {
+            "subject": ["a"] * 3 + ["b"] * 3,
+            "session": ["a-0", "a-1", "a-2", "b-0", "b-1", "b-2"],
+            "trial": [0] * 6,
+            "session_order": [0, 1, 2, 0, 1, 3],
+            "lab": ["north"] * 3 + ["south"] * 3,
+        }
+    )
+
+    with pytest.raises(ValueError, match="common aligned"):
+        leave_one_lab_out_session_forecast_splits(
+            unaligned,
+            train_session_count=2,
+            horizon=1,
+        )

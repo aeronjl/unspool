@@ -18,6 +18,7 @@ SplitScheme = Literal[
     "within-session-rolling-origin",
 ]
 PopulationSplitScheme = Literal["leave-one-subject-out", "leave-one-lab-out"]
+PopulationForecastSplitScheme = Literal["leave-one-lab-out-session-forecast"]
 CohortSplitScheme = Literal["cohort-forward-session"]
 
 
@@ -216,6 +217,98 @@ class PopulationValidationSplit:
 
 
 @dataclass(frozen=True, slots=True)
+class PopulationForecastSplit:
+    """A future-session forecast for subjects in one entirely held-out population group.
+
+    Training subjects and test subjects are disjoint, as are their groups. All subjects
+    must share the declared aligned session-order coordinates: training uses the common
+    prefix and testing uses the later common horizon.
+    """
+
+    train_indices: NDArray[np.intp]
+    test_indices: NDArray[np.intp]
+    train_subjects: tuple[Any, ...]
+    test_subjects: tuple[Any, ...]
+    train_groups: tuple[Any, ...]
+    test_groups: tuple[Any, ...]
+    held_out_group: Any
+    group_column: str
+    train_sessions: Mapping[Any, tuple[Any, ...]]
+    test_sessions: Mapping[Any, tuple[Any, ...]]
+    train_session_orders: tuple[int, ...]
+    test_session_orders: tuple[int, ...]
+    scheme: PopulationForecastSplitScheme = "leave-one-lab-out-session-forecast"
+    prediction_context_indices: NDArray[np.intp] = field(
+        default_factory=lambda: np.empty(0, dtype=np.intp)
+    )
+
+    def __post_init__(self) -> None:
+        if self.scheme != "leave-one-lab-out-session-forecast":
+            raise ValueError(f"unknown population forecast scheme: {self.scheme!r}")
+        if not isinstance(self.group_column, str) or not self.group_column:
+            raise ValueError("group_column must be a non-empty string")
+        if self.group_column == "subject":
+            raise ValueError("population forecast group column must differ from subject")
+
+        train = _validated_indices(self.train_indices, "train_indices")
+        test = _validated_indices(self.test_indices, "test_indices")
+        context = _validated_indices(
+            self.prediction_context_indices,
+            "prediction_context_indices",
+            allow_empty=True,
+        )
+        train_subjects = _validated_identifiers(self.train_subjects, "train_subjects")
+        test_subjects = _validated_identifiers(self.test_subjects, "test_subjects")
+        train_groups = _validated_identifiers(self.train_groups, "train_groups")
+        test_groups = _validated_identifiers(self.test_groups, "test_groups")
+        held_out_group = _validated_identifier(self.held_out_group, "held_out_group")
+        train_orders = _validated_session_orders(self.train_session_orders, "train_session_orders")
+        test_orders = _validated_session_orders(self.test_session_orders, "test_session_orders")
+        train_sessions = _validated_subject_mapping(
+            self.train_sessions, train_subjects, "train_sessions"
+        )
+        test_sessions = _validated_subject_mapping(
+            self.test_sessions, test_subjects, "test_sessions"
+        )
+
+        if np.intersect1d(train, test).size:
+            raise ValueError("training and test indices must not overlap")
+        if context.size:
+            raise ValueError("population forecast splits do not use prediction context")
+        if _identifier_keys(train_subjects) & _identifier_keys(test_subjects):
+            raise ValueError("population forecast subjects must be disjoint")
+        if _identifier_keys(train_groups) & _identifier_keys(test_groups):
+            raise ValueError("population forecast groups must be disjoint")
+        if len(test_groups) != 1 or not _equal(test_groups[0], held_out_group):
+            raise ValueError("test_groups must contain exactly the held-out group")
+        if not train_orders or not test_orders or max(train_orders) >= min(test_orders):
+            raise ValueError("population forecast training orders must precede test orders")
+        if any(len(sessions) != len(train_orders) for sessions in train_sessions.values()):
+            raise ValueError("every training subject must contribute the common session prefix")
+        if any(len(sessions) != len(test_orders) for sessions in test_sessions.values()):
+            raise ValueError("every test subject must contribute the common forecast horizon")
+
+        object.__setattr__(self, "train_indices", train)
+        object.__setattr__(self, "test_indices", test)
+        object.__setattr__(self, "prediction_context_indices", context)
+        object.__setattr__(self, "train_subjects", train_subjects)
+        object.__setattr__(self, "test_subjects", test_subjects)
+        object.__setattr__(self, "train_groups", train_groups)
+        object.__setattr__(self, "test_groups", test_groups)
+        object.__setattr__(self, "held_out_group", held_out_group)
+        object.__setattr__(self, "train_sessions", MappingProxyType(train_sessions))
+        object.__setattr__(self, "test_sessions", MappingProxyType(test_sessions))
+        object.__setattr__(self, "train_session_orders", train_orders)
+        object.__setattr__(self, "test_session_orders", test_orders)
+
+    @property
+    def prospective(self) -> bool:
+        """Whether both the held-out population and future-session boundary are protected."""
+
+        return True
+
+
+@dataclass(frozen=True, slots=True)
 class CohortValidationSplit:
     """A prospective session-origin fold fitted jointly across a subject cohort.
 
@@ -295,7 +388,9 @@ class CohortValidationSplit:
         return True
 
 
-ValidationFold = ValidationSplit | PopulationValidationSplit | CohortValidationSplit
+ValidationFold = (
+    ValidationSplit | PopulationValidationSplit | PopulationForecastSplit | CohortValidationSplit
+)
 
 
 def forward_session_splits(
@@ -491,6 +586,114 @@ def leave_one_lab_out_splits(
         group_column=lab_column,
         scheme="leave-one-lab-out",
     )
+
+
+def leave_one_lab_out_session_forecast_splits(
+    study: Study,
+    *,
+    train_session_count: int,
+    horizon: int = 1,
+    lab_column: str = "lab",
+) -> tuple[PopulationForecastSplit, ...]:
+    """Forecast later aligned sessions for each entirely held-out lab in turn.
+
+    Every subject must have the same session-order prefix and forecast coordinates. No
+    row from the held-out lab is available during fitting; rows after the training prefix
+    in the remaining labs are excluded as well.
+    """
+
+    _require_positive_integer(train_session_count, "train_session_count")
+    _require_positive_integer(horizon, "horizon")
+    if not isinstance(lab_column, str) or not lab_column:
+        raise ValueError("lab_column must be a non-empty string")
+    if lab_column == "subject":
+        raise ValueError("lab_column must differ from the subject column")
+    if lab_column not in study.columns:
+        raise ValueError(f"study does not contain lab column {lab_column!r}")
+    groups = _groups_with_constant_subject_assignment(study, lab_column)
+    if len(groups) < 2:
+        return ()
+
+    sessions_by_subject = {
+        _identifier_key(subject): _sessions_for_subject(study, subject)
+        for subject in study.subjects
+    }
+    required = train_session_count + horizon
+    short = {
+        _scalar(subject): len(sessions_by_subject[_identifier_key(subject)])
+        for subject in study.subjects
+        if len(sessions_by_subject[_identifier_key(subject)]) < required
+    }
+    if short:
+        raise ValueError(
+            "every subject must reach the common population forecast horizon: "
+            f"{dict(sorted(short.items(), key=lambda item: str(item[0])))}"
+        )
+    train_order_sets = {
+        tuple(order for order, _session in sessions[:train_session_count])
+        for sessions in sessions_by_subject.values()
+    }
+    test_order_sets = {
+        tuple(order for order, _session in sessions[train_session_count:required])
+        for sessions in sessions_by_subject.values()
+    }
+    if len(train_order_sets) != 1 or len(test_order_sets) != 1:
+        raise ValueError("population forecasts require common aligned session-order coordinates")
+    train_orders = train_order_sets.pop()
+    test_orders = test_order_sets.pop()
+    if max(train_orders) >= min(test_orders):
+        raise ValueError("population forecast training orders must precede test orders")
+
+    group_values = study[lab_column]
+    splits: list[PopulationForecastSplit] = []
+    for held_out_group in groups:
+        held_out = np.fromiter(
+            (_equal(value, held_out_group) for value in group_values),
+            dtype=np.bool_,
+            count=len(study),
+        )
+        row_orders = np.asarray(study["session_order"], dtype=np.int64)
+        train_indices = np.flatnonzero(~held_out & np.isin(row_orders, train_orders))
+        test_indices = np.flatnonzero(held_out & np.isin(row_orders, test_orders))
+        train_subjects = _unique_identifiers(study["subject"][train_indices])
+        test_subjects = _unique_identifiers(study["subject"][test_indices])
+        train_groups = _unique_identifiers(group_values[train_indices])
+        test_groups = _unique_identifiers(group_values[test_indices])
+        train_sessions = {
+            _identifier_key(subject): tuple(
+                session
+                for _order, session in sessions_by_subject[_identifier_key(subject)][
+                    :train_session_count
+                ]
+            )
+            for subject in train_subjects
+        }
+        test_sessions = {
+            _identifier_key(subject): tuple(
+                session
+                for _order, session in sessions_by_subject[_identifier_key(subject)][
+                    train_session_count:required
+                ]
+            )
+            for subject in test_subjects
+        }
+        splits.append(
+            PopulationForecastSplit(
+                train_indices=train_indices,
+                test_indices=test_indices,
+                train_subjects=train_subjects,
+                test_subjects=test_subjects,
+                train_groups=train_groups,
+                test_groups=test_groups,
+                held_out_group=_scalar(held_out_group),
+                group_column=lab_column,
+                train_sessions=train_sessions,
+                test_sessions=test_sessions,
+                train_session_orders=train_orders,
+                test_session_orders=test_orders,
+            )
+        )
+    return tuple(splits)
 
 
 def within_session_rolling_splits(

@@ -218,6 +218,22 @@ The roadmap is organized by scientific contracts rather than by model count.
   windows are ordinal rather than uniform elapsed time, and fixed-lab bootstrap intervals
   do not generalize to a population of laboratories.
 
+## 0.15 — Prospective modelling on the replicated IBL cohort
+
+- **Implemented:** add a combined held-out-lab/future-session splitter that requires common
+  aligned session coordinates, excludes every held-out animal from fitting, and excludes
+  later training-lab sessions beyond the declared origin.
+- **Implemented:** compare static partial pooling with hierarchical smooth drift on a
+  predeclared 46,152-trial panel, with a source-row cap applied before choice eligibility
+  and no outcome-fitted preprocessing or hyperparameters.
+- **Implemented:** separate same-animal future prediction from unseen-lab future transport,
+  retaining subject-balanced and lab-balanced paired uncertainty and all 20 fit audits.
+- **Evidence:** smooth drift improves same-animal final-session log loss by `0.0851` with a
+  paired interval above zero; its smaller held-out-lab advantage remains unresolved under
+  both subject- and lab-balanced estimands.
+- **Bounded claim:** endpoint windows are ordinal, cohort entry is transition-conditioned,
+  and nine empirical labs do not support population-of-laboratories inference.
+
 ## Later
 
 - Session-varying GLM-HMM parameters
