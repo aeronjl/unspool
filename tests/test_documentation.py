@@ -7,6 +7,10 @@ ROOT = Path(__file__).parents[1]
 ASSETS = ROOT / "docs" / "assets"
 EXPECTED_FIGURES = {
     "cell2025-strategy.svg",
+    "cell2025-forecast.svg",
+    "cell2025-qvalue-response-time.svg",
+    "cell2025-recovery.svg",
+    "cell2025-trajectories.svg",
     "choice-model-evidence-atlas.svg",
     "clock-boundary.svg",
     "ddm-recovery.svg",

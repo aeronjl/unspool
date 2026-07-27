@@ -25,7 +25,7 @@ analysis.
 | Choose the time coordinate for learning | [Clocks and transforms](clocks-and-transforms.md) |
 | Test a model on genuinely later behaviour | [Prospective validation](validation.md) |
 | Compare models without test-set selection | [Training-only comparison](comparison.md) |
-| Reproduce a published longitudinal result | [Cell 2025 worked study](tutorials/cell2025-learning-trajectories.md) |
+| Reproduce and prospectively test a published longitudinal result | [Cell 2025 flagship study](tutorials/cell2025-learning-trajectories.md) |
 | See whether drift predicts future IBL behaviour | [IBL prospective study](tutorials/ibl2021-prospective-selection.md) |
 | Determine whether my design can distinguish models | [Recovery design](tutorials/model-recovery-design.md) |
 | See what the library cannot yet do | [Capability matrix](methods/capability-matrix.md) |
@@ -46,8 +46,8 @@ distinguished them at all.
 
 The current evidence programme includes:
 
-- an exact reproduction of the central longitudinal-behaviour relationship in Liebana,
-  Laffere et al. (2025);
+- an exact reproduction of public behavioural results in Liebana, Laffere et al. (2025),
+  followed by a frozen historical-cohort forecast of final-session choices;
 - an outcome-blind 78-animal, nine-lab IBL cohort with 468 checksum-pinned sessions;
 - same-animal and held-out-lab future-session prediction;
 - training-only nested model and smoothness selection; and

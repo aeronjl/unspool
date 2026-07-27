@@ -1,0 +1,56 @@
+# Cell 2025 flagship behavioural study
+
+This benchmark is the full behavioural flagship for Unspool. Its
+[`DESIGN.md`](DESIGN.md) freezes the questions, exclusions, clocks, candidates, validation
+geometry, recovery requirements, and claim boundaries before fitting.
+
+There are two deliberately separate result layers:
+
+- an independent reproduction of behavioural results from Liebana, Laffere et al.
+  (*Cell*, 2025); and
+- a new historical-cohort-calibrated forecast of an animal's final five sessions from
+  its first eight days.
+
+The implementation retains the published trial and source-session identities, constructs
+the declared 13-coordinate panel, evaluates six models with animal-balanced prospective
+scores, and runs design-matched structural, path, and early-bias recovery. The existing
+bounded Figure 1 reproduction remains in
+[`benchmarks/cell2025`](../cell2025/README.md).
+
+## Run the study
+
+Fetch and verify the public behaviour table and the small released analysis artifacts:
+
+```bash
+uv run python -m benchmarks.cell2025.fetch_data
+uv run python -m benchmarks.cell2025_flagship.fetch_released_artifacts
+```
+
+Then execute the frozen study:
+
+```bash
+uv run python -m benchmarks.cell2025_flagship.benchmark
+```
+
+The command writes `result.json`. It is intentionally compute-heavy because every
+candidate is refitted in six animal-level folds and the same experimental design is used
+for repeated model and parameter recovery.
+
+## Released-analysis compatibility
+
+The published Gaussian-process/soft-DTW visualization is reproduced in a small isolated
+compatibility environment rather than adding old numerical packages to Unspool's runtime:
+
+```bash
+uv venv --python 3.12 .venv-cell2025-release
+uv pip install --python .venv-cell2025-release/bin/python \
+  numpy==1.26.4 pandas==2.2.2 scipy==1.13.1 \
+  scikit-learn==1.5.1 tslearn==0.6.3 jax==0.4.34 jaxlib==0.4.34
+.venv-cell2025-release/bin/python \
+  -m benchmarks.cell2025_flagship.released_trajectory_clustering
+```
+
+The resulting semantic memberships are checked animal by animal against the released
+CSV. The released Q-value pickle is decoded into safe, reviewable JSON and summarized as
+a retrospective result; Unspool does not claim to have independently reoptimized that
+115-minute fit.

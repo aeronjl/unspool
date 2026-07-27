@@ -260,7 +260,7 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** turn the Cell 2025 reproduction, replicated IBL trajectories,
   prospective nested selection, and four-family recovery grid into worked literature
   studies with explicit denominators, estimands, limitations, and reproduction commands.
-- **Implemented:** generate eighteen versioned figures: ten empirical or simulation-based
+- **Implemented:** generate twenty-two versioned figures: fourteen empirical or simulation-based
   evidence displays from checksum-pinned public inputs and committed benchmark results,
   plus eight clearly labelled conceptual maps of workflow, validation, model structure, and
   diagnostics. Every figure has descriptive alternative text, an interpretive caption,
@@ -286,6 +286,33 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Bounded claim:** both examples concern one outcome-blindly selected animal and one
   future session; they demonstrate complete software workflows, not population effects,
   mechanistic identification, or a reproduction of Ashwood et al.
+
+## 0.19 — Cell 2025 behavioural flagship
+
+- **Implemented:** refactor the public behavioural analysis from Liebana, Laffere et al.
+  into two explicit layers: independently reproduced retrospective results and a new
+  historical-cohort-calibrated prospective estimand.
+- **Implemented:** preserve 391 source sessions while deriving the paper's 390 modeling
+  days, align days 1–8 and each animal's final five sessions, and exclude intervening
+  forecast-animal outcomes from every fit and transform.
+- **Implemented:** add the reusable `historical_cohort_forecast_splits` contract and
+  compare six frozen candidates in six animal-level folds with subject-balanced scores,
+  paired animal-bootstrap intervals, and retained numerical audits.
+- **Evidence:** early bias has the lowest mean log loss (`0.58109`) and improves on pooled
+  psychometric prediction by `0.04219` (`95% CI 0.01818–0.06425`), while its incremental
+  value over a late-phase control and hierarchical smooth drift remains unresolved.
+- **Implemented:** reproduce the released Gaussian-process/soft-DTW membership exactly,
+  safely summarize the released Q-value artifact, and independently reproduce response-
+  time changes without presenting clusters as natural kinds or released fits as new
+  optimization.
+- **Implemented:** run structural, hierarchical-path, outcome-derived-feature, and reward-
+  history competing-explanation recovery on the exact 73,042-trial design, retaining the
+  complete-pooling ambiguity and null-world false selections.
+- **Implemented:** publish a paper-style worked chapter and four new evidence figures with
+  explicit denominators, provenance, deployment assumptions, and claim boundaries.
+- **Bounded claim:** the study establishes internally validated behavioural forecastability
+  in one cohort. It does not uniquely identify a latent mechanism, establish causality,
+  reproduce multimodal/neural analyses, or demonstrate transport to another laboratory.
 
 ## Later
 

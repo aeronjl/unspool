@@ -21,6 +21,7 @@ from unspool.models.base import (
 from unspool.study import Study
 from unspool.validation import (
     CohortValidationSplit,
+    HistoricalCohortForecastSplit,
     PopulationForecastSplit,
     PopulationValidationSplit,
     ValidationFold,
@@ -933,6 +934,18 @@ def _split_provenance(split: ValidationFold) -> dict[str, Any]:
                     }
                     for subject in split.subjects
                 ],
+            }
+        )
+    elif isinstance(split, HistoricalCohortForecastSplit):
+        common.update(
+            {
+                "fold_index": split.fold_index,
+                "n_folds": split.n_folds,
+                "reference_subjects": [_json_value(value) for value in split.reference_subjects],
+                "forecast_subjects": [_json_value(value) for value in split.forecast_subjects],
+                "reference_session_orders": list(split.reference_session_orders),
+                "context_session_orders": list(split.context_session_orders),
+                "test_session_orders": list(split.test_session_orders),
             }
         )
     elif isinstance(split, PopulationValidationSplit):

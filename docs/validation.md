@@ -7,6 +7,7 @@ units. They answer different questions and retain the held-out unit in every spl
 | --- | --- | --- | --- | --- |
 | `forward_session_splits` | Expanding prefix of sessions | Next `horizon` sessions | Yes | Forecasting behaviour from the past available at that point |
 | `cohort_forward_session_splits` | Same expanding session prefix across a cohort | Same future session rank for every eligible subject | Yes | Jointly fitting population or hierarchical models for within-subject forecasts |
+| `historical_cohort_forecast_splits` | Complete aligned trajectories from reference animals plus an early prefix from forecast animals | Final aligned sessions from forecast animals | Yes³ | Forecasting a new animal after observing early behaviour, using a completed reference cohort |
 | `within_session_rolling_splits` | Earlier sessions plus current-session prefix | Next `horizon` observed trials | Yes | Online, filtered prediction inside a session |
 | `leave_one_session_out_splits` | Every other session for that subject | One complete session | No | Interpolation and sensitivity to a particular session |
 | `leave_one_subject_out_splits` | Every other subject | All trials from one subject | Yes¹ | Generalization to an unseen animal |
@@ -19,6 +20,10 @@ within-subject forecast through calendar time.
 
 ² The combined population-forecast fold protects both boundaries: the held-out lab is
 absent from fitting, and later sessions from the training labs are excluded too.
+
+³ Historical-cohort prospectivity depends on deployment order: reference animals must
+have completed training before the forecast animals are observed. It is not an online
+same-cohort split.
 
 <figure class="doc-figure doc-figure--wide">
   <img src="../assets/validation-splits.svg" alt="A four-panel comparison of forward-session, whole-session, unseen-animal, and held-out-lab future-session validation geometries using blue training blocks, amber test blocks, and grey untargeted sessions.">
@@ -75,6 +80,39 @@ training-only landmark helper is described in the
 Its uncertainty wrapper uses the same fold helper, so both point landmarks and bootstrap
 draws are learned only from training rows. Frozen clock samples can then be applied to the
 test side without reading held-out outcomes.
+
+## Historical-cohort forecasting
+
+```python
+from unspool import historical_cohort_forecast_splits
+
+splits = historical_cohort_forecast_splits(
+    aligned_study,
+    context_session_count=8,
+    horizon=5,
+    n_folds=6,
+)
+for split in splits:
+    assert set(split.reference_subjects).isdisjoint(split.forecast_subjects)
+    assert set(split.prediction_context_indices).issubset(split.train_indices)
+    assert max(split.context_session_orders) < min(split.test_session_orders)
+```
+
+Each deterministic round-robin fold treats one group of animals as the forecast cohort.
+Their early aligned sessions are available both for fitting individual effects and as
+prediction context; their final sessions are scored; any intervening sessions are absent.
+All aligned sessions from the remaining reference animals are available because those
+trajectories are assumed to have completed previously. The splitter requires an identical
+aligned coordinate grid for every animal and records reference, context, and test session
+identities explicitly.
+
+This geometry answers a different question from `cohort_forward_session_splits`. It asks
+how well a completed historical cohort and a new animal's observed prefix forecast that
+animal's future. Its interpretation relies on exchangeability between historical and new
+animals, so cohort drift, protocol changes, or batch effects require a transport analysis
+rather than a stronger claim. The [Cell 2025 flagship study](tutorials/cell2025-learning-trajectories.md)
+uses this contract to forecast each animal's final five sessions from its first eight
+paper days.
 
 ## Within-session rolling origins
 

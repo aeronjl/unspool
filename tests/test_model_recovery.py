@@ -7,6 +7,7 @@ from unspool import (
     ModelRecoveryScenario,
     SmoothBernoulliHistoryGLM,
     Study,
+    historical_cohort_forecast_splits,
     run_model_recovery,
     run_model_recovery_grid,
 )
@@ -23,6 +24,38 @@ def recovery_design(*, n_sessions: int = 10, n_trials: int = 120) -> Study:
             ],
             "trial": list(range(n_trials)) * n_sessions,
             "session_order": [session for session in range(n_sessions) for _ in range(n_trials)],
+            "stimulus": generator.normal(size=n_rows),
+        }
+    )
+
+
+def historical_recovery_design() -> Study:
+    generator = np.random.default_rng(19)
+    subjects = ("a", "b", "c", "d")
+    n_sessions = 4
+    n_trials = 20
+    n_rows = len(subjects) * n_sessions * n_trials
+    return Study(
+        {
+            "subject": [
+                subject
+                for subject in subjects
+                for _session in range(n_sessions)
+                for _trial in range(n_trials)
+            ],
+            "session": [
+                f"{subject}-{session}"
+                for subject in subjects
+                for session in range(n_sessions)
+                for _trial in range(n_trials)
+            ],
+            "trial": list(range(n_trials)) * (len(subjects) * n_sessions),
+            "session_order": [
+                session
+                for _subject in subjects
+                for session in range(n_sessions)
+                for _trial in range(n_trials)
+            ],
             "stimulus": generator.normal(size=n_rows),
         }
     )
@@ -97,6 +130,7 @@ def test_model_recovery_builds_an_explicit_prospective_confusion_matrix() -> Non
     assert all(not codes for row in report.audit_issue_codes for codes in row)
     assert report.audit_warning_rate == 0.0
     assert report.audit_failure_rate == 0.0
+    assert report.validation_scheme == "forward-session"
 
     matrix = report.confusion_matrix()
     assert matrix.truth_labels == ("static", "smooth")
@@ -112,6 +146,45 @@ def test_model_recovery_builds_an_explicit_prospective_confusion_matrix() -> Non
     assert scenario_matrix.selected_labels == ("static", "smooth", "unresolved")
     assert scenario_matrix.counts.tolist() == [[2, 0, 1], [0, 3, 0]]
     assert np.allclose(scenario_matrix.rates, [[2 / 3, 0, 1 / 3], [0, 1, 0]])
+
+
+def test_model_recovery_accepts_an_exact_custom_validation_geometry() -> None:
+    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.01)
+    scenario = ModelRecoveryScenario(
+        name="stationary",
+        truth_label="static",
+        generator=model,
+        parameters={"intercept": -0.2, "stimulus": 1.1},
+    )
+
+    report = run_model_recovery(
+        historical_recovery_design(),
+        [scenario],
+        {"static": model},
+        seed=7,
+        splitter=lambda study: historical_cohort_forecast_splits(
+            study,
+            context_session_count=2,
+            horizon=1,
+            n_folds=2,
+        ),
+        splitter_name="historical-cohort-session-forecast",
+        aggregation_column="subject",
+    )
+
+    assert report.n_folds.tolist() == [2]
+    assert report.validation_scheme == "historical-cohort-session-forecast"
+    assert report.aggregation_column == "subject"
+    assert report.selected_labels == ("static",)
+
+    with pytest.raises(ValueError, match="splitter_name requires"):
+        run_model_recovery(
+            historical_recovery_design(),
+            [scenario],
+            {"static": model},
+            seed=7,
+            splitter_name="not-used",
+        )
 
 
 def test_exact_candidate_ties_are_unresolved_and_reproducible() -> None:
