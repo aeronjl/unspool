@@ -65,6 +65,16 @@ declared generative distribution; it is not an empirical model check.
 - [Talts et al. (2018)](https://arxiv.org/abs/1804.06788)
 - [Modrák et al. (2023)](https://arxiv.org/abs/2211.02383)
 
+Sensitivity to prior, likelihood, preprocessing, and model choices is a distinct workflow
+stage. Unspool's first contract uses explicit exact refits and common scalar summaries; it
+can represent a small targeted sensitivity analysis or a larger multiverse without
+pretending that every possible fork is equally defensible. Power-scaling methods are a
+complementary efficient diagnostic, not silently substituted for those refits.
+
+- [Analysis sensitivity guide](sensitivity-analysis.md)
+- [Schad, Betancourt, and Vasishth (2021)](https://doi.org/10.1037/met0000275)
+- [Kallioinen et al. (2024)](https://doi.org/10.1007/s11222-023-10366-5)
+
 ## Documentation commitments
 
 Future literature examples should prioritize:

@@ -55,6 +55,7 @@ def main() -> None:
     _plot_nested_selection(args.output_dir / "nested-selection.svg")
     _plot_diagnostic_layers(args.output_dir / "diagnostic-layers.svg")
     _plot_sbc_workflow(args.output_dir / "sbc-workflow.svg")
+    _plot_sensitivity_specification(args.output_dir / "sensitivity-specification.svg")
     _plot_interoperability(args.output_dir / "interoperability-pipeline.svg")
     _plot_hierarchical_pooling(args.output_dir / "hierarchical-pooling.svg")
     _plot_ddm_recovery(args.output_dir / "ddm-recovery.svg")
@@ -493,6 +494,63 @@ def _plot_sbc_workflow(path: Path) -> None:
         "A finite histogram is descriptive evidence—not an automatic pass certificate",
         ha="center",
         color=AMBER,
+    )
+    _save(figure, path)
+
+
+def _plot_sensitivity_specification(path: Path) -> None:
+    figure, axes = plt.subplots(
+        1,
+        2,
+        figsize=(11, 4.8),
+        gridspec_kw={"width_ratios": (1.25, 1)},
+    )
+    curve, workflow = axes
+    estimates = np.asarray([0.365, 0.382, 0.394, 0.401, 0.416, 0.429, 0.451])
+    half_width = np.asarray([0.026, 0.022, 0.024, 0.021, 0.025, 0.023, 0.028])
+    order = np.arange(len(estimates))
+    colors = [BLUE, TEAL, MUTED, INDIGO, MUTED, AMBER, BLUE]
+    curve.errorbar(
+        order,
+        estimates,
+        yerr=half_width,
+        fmt="none",
+        ecolor=MUTED,
+        elinewidth=1.8,
+        capsize=3,
+    )
+    curve.scatter(order, estimates, color=colors, s=36, zorder=3)
+    curve.axhline(estimates[3], color=INDIGO, linestyle="--", linewidth=1)
+    curve.text(3.1, estimates[3] + 0.004, "declared reference", color=INDIGO, fontsize=8)
+    curve.set(
+        title="Specification curve (conceptual)",
+        xlabel="Declared scenarios, sorted for display",
+        ylabel="Common scientific estimate",
+        xticks=order,
+        xticklabels=["S1", "S2", "S3", "ref", "S5", "S6", "S7"],
+        ylim=(0.32, 0.49),
+    )
+    curve.grid(axis="y", color=LIGHT, linewidth=0.8)
+
+    workflow.set(xlim=(0, 4.5), ylim=(0, 4.8))
+    workflow.axis("off")
+    stages = (
+        (3.65, "Declare scenarios", "prior · history · exclusions", BLUE),
+        (2.55, "Refit each one", "stable independent seed", TEAL),
+        (1.45, "Extract metrics", "same identity and unit", INDIGO),
+        (0.35, "Retain evidence", "differences · intervals · failures", AMBER),
+    )
+    for bottom, title, subtitle, color in stages:
+        _box(workflow, (0.55, bottom), (3.35, 0.68), title, subtitle, color=color, fill="white")
+        if bottom > 0.35:
+            _arrow(workflow, (2.23, bottom - 0.04), (2.23, bottom - 0.38))
+    workflow.text(
+        2.23,
+        4.58,
+        "Sensitivity is a comparison, not a verdict",
+        ha="center",
+        color=INDIGO,
+        weight="bold",
     )
     _save(figure, path)
 

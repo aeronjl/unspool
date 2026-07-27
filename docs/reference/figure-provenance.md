@@ -51,6 +51,7 @@ bounded claims.
 | `diagnostic-layers.svg` | Separate numerical, predictive, parameter-recovery, and model-recovery evidence |
 | `interoperability-pipeline.svg` | Show how supported sources converge on the same study contract |
 | `sbc-workflow.svg` | Separate prior simulation, posterior inference, rank evidence, and bounded SBC interpretation |
+| `sensitivity-specification.svg` | Show declared refits, common metrics, and a descriptive specification curve without a robustness threshold |
 
 Conceptual figures contain schematic or simulated values chosen for explanation. They are
 not estimates from a study and should not be cited as results.
