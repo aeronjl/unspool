@@ -381,9 +381,12 @@ The roadmap is organized by scientific contracts rather than by model count.
   state-specific task-input emissions and add an explicit sticky Dirichlet self-transition
   prior, retaining state-count, occupancy, alignment, and prospective-selection
   diagnostics. Covariate-dependent transitions remain a distinct later extension.
-- **Planned:** cover standard DDM regressions, collapsing bounds, and race/LBA models through
-  first-party reference components or adapters to mature packages rather than duplicating
-  validated solvers.
+- **Implemented:** retain stationary, contaminant-aware, smooth session-varying, and
+  partially pooled Wiener DDMs under the same joint choice/response-time scoring,
+  diagnostics, prospective validation, and recovery requirements.
+- **Deferred beyond this release boundary:** standard DDM regressions, collapsing bounds,
+  and race/LBA models should arrive through first-party reference components or adapters
+  to mature packages rather than duplicated solvers.
 - **Release boundary:** every catalogue model must simulate, fit, predict, score pointwise,
   diagnose, document its assumptions, and participate in design-specific recovery.
 
@@ -443,10 +446,10 @@ The roadmap is organized by scientific contracts rather than by model count.
 
 ## 0.24 — Literature recipes and ecosystem documentation
 
-- **In progress:** publish end-to-end public-data recipes for psychometric/history models,
-  bandit RL, GLM-HMMs, perceptual DDMs, and longitudinal learning comparisons. Public Cell
-  and IBL recipes currently cover longitudinal history, GLM-HMM, and DDM workflows; a
-  public bandit recipe remains outstanding.
+- **Implemented:** publish end-to-end public-data recipes for psychometric/history models,
+  bandit RL, GLM-HMMs, perceptual DDMs, and longitudinal learning comparisons. The public
+  Chen restless-bandit recipe compares canonical static, history, and Q-learning accounts
+  under an animal-balanced future-session split and exact-design recovery.
 - **Implemented:** define a literature-recipe standard requiring source and cohort
   provenance, expected runtime, observed event, estimand, prospective boundary,
   diagnostics, exact-design recovery, publication-quality figures, and explicit claim
@@ -466,3 +469,13 @@ Session-varying GLM-HMM research, population-of-laboratories inference, inverse 
 agent-discovery models, novel trajectory-shape claims, and further Cell-paper analyses are
 outside the 0.21–0.24 critical path. They may later demonstrate the package, but they will
 not determine its basic architecture.
+
+## 0.21–0.24 completion audit
+
+The critical path is complete when read as a package release boundary: 0.21 supplies the
+public golden path and extension contracts; 0.22 supplies documented, recoverable
+reference families for canonical choice, learning, latent-state, and response-time tasks;
+0.23 supplies deterministic and posterior interoperability without changing task or
+validation semantics; and 0.24 supplies decision-first documentation plus public,
+figure-backed literature recipes. The deferred methods above may expand the catalogue but
+are not prerequisites for using or extending these contracts.

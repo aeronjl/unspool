@@ -122,5 +122,5 @@ division is:
 
 This is the same information boundary enforced by Unspool's clocks, landmarks, comparison
 procedures, and protocol compiler. Existing first-party models retain their current
-model-specific design arguments until migrated onto these terms with numerical parity
-tests during the 0.22 catalogue work.
+model-specific design arguments unless a migration onto these terms has explicit numerical
+parity tests.

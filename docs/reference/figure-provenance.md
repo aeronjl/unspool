@@ -28,6 +28,7 @@ Without the downloaded Cell table, regenerate every other figure with `--skip-ce
 | `ibl-prospective-selection.svg` | Subject-level scores from the committed nested-selection benchmark | Training-only smoothness selection and untouched future-session performance |
 | `ibl-choice-response-time.svg` | 111 untouched trials from one outcome-blindly selected, checksum-pinned IBL subject | Joint response-time, conditional-accuracy, contaminant-responsibility, and prospective DDM evidence |
 | `ibl-glmhmm-states.svg` | 150 untouched choices plus training-only state-count selection from the same IBL subject | Fitted latent structure, near-tied inner selection, and outer GLM-HMM versus static-GLM evidence |
+| `chen2021-bandit.svg` | 32 mice, 25,279 checksum-pinned restless-bandit trials, one session-8 forecast fold, and fixed exact-design simulations | Observed task dynamics, animal-balanced held-out comparison, paired uncertainty, and conditional WSLS/Q-learning recovery |
 | `model-recovery-matrix.svg` | Committed sparse and dense four-family simulation benchmark | Whether this analysis design can distinguish the candidate generators |
 | `hierarchical-pooling.svg` | Committed hierarchical-GLM recovery benchmark | How partial pooling responds to increasing true between-animal variation |
 | `ddm-recovery.svg` | Committed drift-diffusion recovery benchmark | Parameter recovery error at the benchmark's two trial counts |

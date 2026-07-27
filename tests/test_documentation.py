@@ -11,6 +11,7 @@ EXPECTED_FIGURES = {
     "cell2025-qvalue-response-time.svg",
     "cell2025-recovery.svg",
     "cell2025-trajectories.svg",
+    "chen2021-bandit.svg",
     "choice-model-evidence-atlas.svg",
     "clock-boundary.svg",
     "ddm-recovery.svg",

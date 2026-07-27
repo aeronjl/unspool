@@ -127,8 +127,8 @@ ArviZ result adapter now retains labelled groups and the fingerprint when one ex
 first [PyMC backend](pymc-backend.md) preserves the older hierarchical GLM's explicit
 fixed-scale prior semantics, but that model does not yet expose `ParameterSpaceProvider`,
 so its posterior result correctly leaves the parameter-space fingerprint unset rather than
-manufacturing one. PyDDM and HSSM adapters remain later 0.23 work. Optional dependencies do
-not become part of Unspool core.
+manufacturing one. PyDDM and HSSM adapters remain deferred ecosystem work. Optional
+dependencies do not become part of Unspool core.
 
 - [PyBADS API](https://acerbilab.github.io/pybads/api/classes/bads.html)
 - [PyDDM documentation](https://pyddm.readthedocs.io/)

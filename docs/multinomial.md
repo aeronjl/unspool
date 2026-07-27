@@ -114,5 +114,5 @@ would substitute recorded outcomes for generated ones.
 
 The common protocol artifact currently marks scalar reliability calibration unavailable
 for categorical predictions. Log loss, multicategory Brier score, prospective comparison,
-and recovery are implemented; classwise and top-label calibration summaries are part of
-0.23's diagnostic-interoperability work.
+and recovery are implemented; classwise and top-label calibration summaries remain a
+separate future extension.

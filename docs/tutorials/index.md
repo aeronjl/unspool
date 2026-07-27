@@ -49,6 +49,15 @@ warnings constrain interpretation.
 
 [Open the GLM-HMM study](ashwood2022-glm-hmm.md)
 
+## Restless-bandit reinforcement learning
+
+Fit bias, choice-history, reward-history, and Q-learning accounts on seven sessions from
+32 mice, then compare animal-balanced forecasts in the untouched eighth session. A matched
+recovery experiment shows where the WSLS/Q-learning distinction is identifiable while the
+empirical paired interval remains unresolved.
+
+[Open the restless-bandit study](chen2021-bandit.md)
+
 ## Can the design distinguish the models?
 
 Compare static, smooth, GLM-HMM, and Q-learning generators under sparse and dense versions

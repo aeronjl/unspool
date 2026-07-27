@@ -69,6 +69,7 @@ def main() -> None:
     _plot_cell_flagship_trajectories(args.output_dir / "cell2025-trajectories.svg")
     _plot_cell_flagship_recovery(args.output_dir / "cell2025-recovery.svg")
     _plot_cell_flagship_qvalue_rt(args.output_dir / "cell2025-qvalue-response-time.svg")
+    _plot_chen_bandit(args.output_dir / "chen2021-bandit.svg")
     if not args.skip_cell:
         if not args.cell_data.exists():
             raise FileNotFoundError(
@@ -1827,6 +1828,154 @@ def _plot_fitted_structure(
     axis.plot(np.arange(len(value_difference)), value_difference, color=color, linewidth=1)
     axis.axhline(0, color=MUTED, linewidth=1)
     axis.set(xticks=(0, len(value_difference) - 1), xticklabels=("first", "last"))
+
+
+def _plot_chen_bandit(path: Path) -> None:
+    result = _load("chen2021_bandit")
+    figure, axes = plt.subplots(2, 2, figsize=(10.8, 7.6), constrained_layout=True)
+    example = result["example_heldout_session"]
+    trial = np.asarray(example["trial"])
+    choice = np.asarray(example["choice"])
+    reward = np.asarray(example["reward"], dtype=bool)
+
+    observed = axes[0, 0]
+    observed.plot(
+        trial,
+        example["reward_probability_0"],
+        color=BLUE,
+        linewidth=2,
+        label="left reward probability",
+    )
+    observed.plot(
+        trial,
+        example["reward_probability_1"],
+        color=AMBER,
+        linewidth=2,
+        label="right reward probability",
+    )
+    observed.scatter(
+        trial[~reward],
+        choice[~reward],
+        s=13,
+        facecolors="white",
+        edgecolors=MUTED,
+        linewidths=0.7,
+        label="unrewarded choice",
+        zorder=3,
+    )
+    observed.scatter(
+        trial[reward],
+        choice[reward],
+        s=15,
+        color=TEAL,
+        linewidths=0,
+        label="rewarded choice",
+        zorder=4,
+    )
+    observed.set(
+        title="A · Untouched session 8 · mouse 01",
+        xlabel="trial",
+        ylabel="probability / action",
+        ylim=(-0.08, 1.08),
+    )
+    observed.legend(frameon=False, fontsize=7, ncol=2, loc="upper center")
+
+    models = result["comparison"]["models"]
+    order = ("bias", "perseveration", "win-stay-lose-shift", "q-learning")
+    labels = ("Bias", "Perseveration", "WSLS", "Q-learning")
+    estimates = np.asarray([models[name]["unit_balanced_log_loss"] for name in order])
+    lower = np.asarray([models[name]["unit_balanced_log_loss_interval"]["lower"] for name in order])
+    upper = np.asarray([models[name]["unit_balanced_log_loss_interval"]["upper"] for name in order])
+    comparison = axes[0, 1]
+    positions = np.arange(len(order))
+    comparison.errorbar(
+        positions,
+        estimates,
+        yerr=np.vstack((estimates - lower, upper - estimates)),
+        fmt="o",
+        color=INDIGO,
+        ecolor=BLUE,
+        capsize=4,
+        markersize=6,
+    )
+    comparison.set(
+        title="B · Animal-balanced future-session score",
+        ylabel="held-out log loss · lower is better",
+        xticks=positions,
+        xticklabels=labels,
+    )
+    comparison.tick_params(axis="x", rotation=18)
+
+    wsls = {row["unit"]: row["log_loss"] for row in models["win-stay-lose-shift"]["unit_scores"]}
+    q_learning = {row["unit"]: row["log_loss"] for row in models["q-learning"]["unit_scores"]}
+    differences = np.asarray([wsls[unit] - q_learning[unit] for unit in sorted(wsls)])
+    paired = axes[1, 0]
+    paired.axvline(0, color=MUTED, linestyle="--", linewidth=1)
+    paired.hist(differences, bins=12, color=TEAL, alpha=0.85, edgecolor="white")
+    interval = result["comparison"]["pairwise_log_loss_differences"][
+        "win-stay-lose-shift_minus_q-learning"
+    ]["left_minus_right"]
+    paired.errorbar(
+        interval["estimate"],
+        8.2,
+        xerr=np.asarray(
+            [
+                [interval["estimate"] - interval["lower"]],
+                [interval["upper"] - interval["estimate"]],
+            ]
+        ),
+        fmt="o",
+        color=AMBER,
+        capsize=4,
+    )
+    paired.set(
+        title="C · Paired animal differences",
+        xlabel="WSLS log loss - Q-learning log loss",
+        ylabel="animals",
+    )
+    paired.text(
+        0.98,
+        0.95,
+        "95% bootstrap interval crosses zero",
+        transform=paired.transAxes,
+        ha="right",
+        va="top",
+        color=AMBER,
+        fontsize=8,
+        weight="bold",
+    )
+
+    recovery = axes[1, 1]
+    counts = np.asarray(result["recovery"]["confusion"]["counts"])[:, :2]
+    recovery.imshow(counts, cmap="Blues", vmin=0, vmax=5)
+    for row in range(2):
+        for column in range(2):
+            recovery.text(
+                column,
+                row,
+                str(counts[row, column]),
+                ha="center",
+                va="center",
+                color="white" if counts[row, column] > 2 else INK,
+                weight="bold",
+                fontsize=12,
+            )
+    recovery.set(
+        title="D · Exact-design model recovery",
+        xlabel="selected model",
+        ylabel="generating regime",
+        xticks=(0, 1),
+        xticklabels=("WSLS", "Q-learning"),
+        yticks=(0, 1),
+        yticklabels=("WSLS", "Q-learning"),
+    )
+    figure.suptitle(
+        "Restless bandit: reward history and incremental value learning",
+        color=INDIGO,
+        weight="bold",
+        fontsize=13,
+    )
+    _save(figure, path, tight=False)
 
 
 def _load(name: str) -> dict[str, Any]:

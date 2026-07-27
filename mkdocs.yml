@@ -80,6 +80,7 @@ nav:
       - IBL learning trajectories: tutorials/ibl2021-learning-trajectories.md
       - Prospective drift and nested selection: tutorials/ibl2021-prospective-selection.md
       - Choice and response time: tutorials/ibl2021-choice-response-time.md
+      - Restless-bandit RL: tutorials/chen2021-bandit.md
       - Literature-shaped GLM-HMM: tutorials/ashwood2022-glm-hmm.md
       - Model-recovery design: tutorials/model-recovery-design.md
       - Reading a model evidence panel: tutorials/model-evidence-panels.md

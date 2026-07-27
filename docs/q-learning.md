@@ -184,8 +184,9 @@ arrays remain as checked compatibility views for diagnostics and existing analys
 
 `BinaryRLAgent` uses the same deterministic multistart and fit-audit requirements, with a
 numerical gradient because the recursion varies by component assembly. `RLFitResult`
-retains every restart plus a labelled natural-parameter view; migrating its composable
-component declarations to the shared parameter space is a following 0.23 step.
+retains every restart plus a labelled natural-parameter view. A single parameter-space
+encoding for arbitrary component assemblies remains an explicit extension rather than a
+hidden requirement of the stable fitting contract.
 
 ## Recovery and competing explanations
 

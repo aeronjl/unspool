@@ -117,9 +117,13 @@ The resulting orientation layer is deliberately practical:
 
 Future literature examples should prioritize:
 
-1. a genuinely public bandit task with a canonical RL/history comparison;
-2. an independently held-out smoothness confirmation after exact-design recovery;
-3. a cohort-level confirmation of the public choice/response-time design; and
-4. targeted smooth and learning competitors for the public latent-state design.
+1. an independently held-out smoothness confirmation after exact-design recovery;
+2. a cohort-level confirmation of the public choice/response-time design; and
+3. targeted smooth and learning competitors for the public latent-state design.
+
+The first public bandit commitment is now implemented in the
+[Chen et al. restless-bandit recipe](tutorials/chen2021-bandit.md): common bias, history,
+and Q-learning accounts share one prospective animal-balanced comparison and exact-design
+recovery contract.
 
 These are roadmap commitments, not currently supported empirical claims.

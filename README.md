@@ -5,7 +5,7 @@
 
 **[Read the documentation](https://aeronjl.github.io/unspool/)** to choose a
 longitudinal workflow, browse supported and experimental methods, and run worked
-Cell and IBL studies.
+Cell, Chen restless-bandit, and IBL studies.
 
 New analyses should start with **[Choose a model by the claim](https://aeronjl.github.io/unspool/model-choice-guide/)**
 and the common-format **[model cards](https://aeronjl.github.io/unspool/model-cards/)**,
