@@ -417,9 +417,13 @@ The roadmap is organized by scientific contracts rather than by model count.
   split R-hat, bulk and tail effective sample size, divergences, and maximum-tree-depth
   saturation; retain immutable labelled diagnostic arrays and stable, parameter-specific
   warning codes across both supported ArviZ representations.
-- **Planned:** add posterior predictive checks, simulation-based calibration, PSIS-LOO,
-  sensitivity, and test-retest reliability alongside Unspool's prospective validation and
-  exact-design recovery.
+- **Implemented:** estimate pointwise PSIS-LOO through established ArViZ implementations,
+  retaining log-scale ELPD, uncertainty, effective parameter count, labelled Pareto-k
+  evidence, adaptive reliability thresholds, and influential-observation warnings while
+  explicitly separating observation-level LOO from prospective longitudinal validation.
+- **Planned:** add posterior predictive checks, simulation-based calibration, sensitivity,
+  and test-retest reliability alongside Unspool's prospective validation and exact-design
+  recovery.
 - **Release boundary:** changing an inference backend must not change task semantics,
   prediction information, split geometry, scored observations, or result interpretation.
 

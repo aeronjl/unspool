@@ -220,6 +220,7 @@ from unspool.posterior_diagnostics import (
     PosteriorDiagnostic,
     audit_posterior,
 )
+from unspool.posterior_loo import PSISLOOIssue, PSISLOOResult, psis_loo
 from unspool.protocol import (
     SCHEMA_VERSION,
     AggregationWeighting,
@@ -520,6 +521,8 @@ __all__ = [
     "OptimizationBackend",
     "OptimizationProblem",
     "OptimizationRun",
+    "PSISLOOIssue",
+    "PSISLOOResult",
     "PairedModelComparison",
     "PairwiseTrajectoryShapeComparison",
     "PanelSpec",
@@ -674,6 +677,7 @@ __all__ = [
     "posterior_result_from_arviz",
     "protocol_from_dict",
     "protocol_from_json",
+    "psis_loo",
     "read_evidence_bundle",
     "read_ibl_one_sessions",
     "read_nwb",
