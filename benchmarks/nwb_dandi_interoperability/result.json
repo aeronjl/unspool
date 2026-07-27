@@ -1,0 +1,68 @@
+{
+  "benchmark": "NWB/DANDI longitudinal interoperability",
+  "source": {
+    "dandiset_id": "000004",
+    "version": "0.220126.1852",
+    "asset_path": "sub-P11HMH/sub-P11HMH_ses-20061101_ecephys+image.nwb",
+    "asset_id": "0f57f0b0-f021-42bb-8eaa-56cd482e2a29",
+    "size": 72628704,
+    "sha256": "ed70cbaa4c9ac65a4365bb805e4fb2f8689de7e0f867f9a8247285980acf7781",
+    "content_url": "https://dandiarchive.s3.amazonaws.com/blobs/812/56f/81256f92-0a31-4b24-8c59-90a3a64e91b1",
+    "license": "CC-BY-4.0",
+    "dandiset_doi": "10.48324/dandi.000004/0.220126.1852"
+  },
+  "study": {
+    "n_trials": 200,
+    "n_subjects": 1,
+    "columns": [
+      "subject",
+      "session",
+      "trial",
+      "session_order",
+      "start_time",
+      "stop_time",
+      "stim_phase",
+      "stimulus_category",
+      "category_name",
+      "new_old_labels_recog",
+      "response_value",
+      "response_timestamp",
+      "source_dandiset_id",
+      "source_dandi_version",
+      "source_dandi_asset_path",
+      "source_dandi_asset_id",
+      "source_dandi_asset_size",
+      "source_dandi_sha256",
+      "source_nwb_identifier"
+    ],
+    "phase_counts": {
+      "learn": 100,
+      "recog": 100
+    },
+    "stimulus_category_counts": {
+      "1": 40,
+      "2": 40,
+      "3": 40,
+      "4": 40,
+      "5": 40
+    },
+    "response_value_minimum": 0.0,
+    "response_value_maximum": 36.0
+  },
+  "contract": {
+    "published_version_is_pinned": true,
+    "asset_identity_matches": true,
+    "asset_size_matches": true,
+    "asset_sha256_matches": true,
+    "one_explicit_subject": true,
+    "one_explicit_session": true,
+    "session_order_is_explicit": true,
+    "source_trial_ids_preserved": true,
+    "source_row_order_preserved": true,
+    "trial_intervals_are_valid": true,
+    "provenance_is_trial_addressable": true,
+    "trial_provenance_matches_asset": true,
+    "source_response_semantics_are_unmodified": true
+  },
+  "contract_passed": true
+}

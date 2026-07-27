@@ -80,6 +80,35 @@ def test_from_records_requires_consistent_fields() -> None:
         )
 
 
+def test_from_dataframe_uses_explicit_columns_and_ignores_index() -> None:
+    class Frame:
+        columns = tuple(valid_columns())
+        index = (100, 50, 20, 10)
+
+        def __getitem__(self, name: str) -> np.ndarray:
+            return np.asarray(valid_columns()[name])
+
+    study = Study.from_dataframe(Frame())
+
+    assert study.columns == Frame.columns
+    assert study["trial"].tolist() == [0, 1, 0, 0]
+    assert "index" not in study.columns
+
+
+def test_from_dataframe_rejects_non_tabular_and_duplicate_columns() -> None:
+    with pytest.raises(TypeError, match="dataframe-like"):
+        Study.from_dataframe(object())
+
+    class DuplicateFrame:
+        columns = ("subject", "subject")
+
+        def __getitem__(self, name: str) -> list[str]:
+            return [name]
+
+    with pytest.raises(StudyValidationError, match="unique"):
+        Study.from_dataframe(DuplicateFrame())
+
+
 @pytest.mark.parametrize("missing", REQUIRED_COLUMNS)
 def test_required_columns_are_enforced(missing: str) -> None:
     columns = valid_columns()

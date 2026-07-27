@@ -38,6 +38,8 @@ parameter Wiener drift-diffusion model with an optional explicit contaminant mix
 smooth session-varying Wiener drift, boundary, and starting-bias paths;
 partially pooled population and animal-specific Wiener trajectories with opt-in
 supplemented variance-component uncertainty and empirical-Bayes unseen-animal prediction;
+dataframe ingestion, lossless single-session NWB trial-table round trips, multi-session
+assembly with explicit chronology, and published-version DANDI streaming;
 design-specific parameter and model recovery; and a first named four-family recovery grid
 plus repeated boundary-near regimes with retained fit audits and truth-aware permutation-
 invariant latent-state recovery.

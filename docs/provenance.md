@@ -41,6 +41,14 @@ those two independently implemented adapters without copying either paper's anal
 records the source hashes again, aligns only the declared six-session analysis rank, and
 retains source chronology so that the alignment remains reversible and auditable.
 
+## NWB/DANDI interoperability anchor
+
+The [NWB/DANDI benchmark](../benchmarks/nwb_dandi_interoperability/README.md) uses published
+Dandiset `000004`, version `0.220126.1852`, under CC BY 4.0. It pins one NWB asset by exact
+path, asset ID, byte size, and SHA-256. No source file is redistributed: the benchmark
+streams only selected trial-table datasets from the content-addressed public blob. Source
+field names remain uninterpreted unless an explicit mapping declares otherwise.
+
 ## Earlier public explorations
 
 - [InfiniteIOHMM.jl](https://github.com/aeronjl/InfiniteIOHMM.jl)

@@ -46,8 +46,9 @@ The roadmap is organized by scientific contracts rather than by model count.
   effects, and a matched recovery benchmark.
 - **Implemented:** estimate one bounded shared subject scale with a Laplace marginal-
   likelihood approximation, local-Hessian uncertainty, boundary diagnostics, and a
-  sample-size recovery benchmark. Multiple variance components and posterior predictive
-  uncertainty remain later work.
+  sample-size recovery benchmark. Parameter-specific longitudinal Wiener components and
+  empirical-Bayes unseen-subject prediction are now implemented in 0.10–0.11; full
+  Bayesian propagation remains later work.
 - **Implemented:** add fixed-knot population trajectories with shrunken smooth subject-
   deviation paths, explicit unseen-subject prediction, and a factorial benchmark that
   distinguishes stationarity, stable heterogeneity, shared drift, and individual drift.
@@ -171,12 +172,27 @@ The roadmap is organized by scientific contracts rather than by model count.
   the mean joint score across 80 unseen animals. The two stability failures and all Monte
   Carlo precision diagnostics remain part of the result.
 
+## 0.12 — NWB and DANDI interoperability
+
+- **Implemented:** ingest dataframe-like trial tables without treating their index as
+  identity or chronology, preserving explicit source column and row order.
+- **Implemented:** read and write scalar NWB `trials` tables behind optional dependencies,
+  with lossless native canonical IDs, one-session export safeguards, explicit column
+  mapping, PyNWB schema validation, and multi-file assembly that never infers session
+  order from paths or timestamps.
+- **Implemented:** resolve exact published DANDI versions and blob-backed NWB asset paths,
+  stream only selected HDF5 datasets, and retain the asset path, ID, byte size, SHA-256,
+  version, and NWB identifier as trial-addressable provenance.
+- **Implemented:** pin a public 200-trial DANDI benchmark that preserves source IDs, row
+  order, balanced task phases and categories, valid time intervals, and uninterpreted
+  response semantics without redistributing the 72.6 MB source file.
+
 ## Later
 
 - Session-varying GLM-HMM parameters
 - Full propagation of population-parameter and scale uncertainty into predictions
 - Richer mixtures and model plugins
-- NWB/DANDI streaming workflows
+- IBL ONE and NWB-Zarr adapters
 - Cross-lab trajectory-shape comparisons
 
 Each expansion should be justified by a benchmark or user need and should add recovery

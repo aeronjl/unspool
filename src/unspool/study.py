@@ -70,6 +70,25 @@ class Study:
 
         return cls({name: [row[name] for row in rows] for name in names})
 
+    @classmethod
+    def from_dataframe(cls, frame: Any) -> Study:
+        """Construct a study from a pandas-like dataframe without retaining its index.
+
+        Column and row order are preserved. The dataframe index is deliberately ignored:
+        longitudinal identity and chronology must be carried by explicit columns.
+        """
+
+        if not hasattr(frame, "columns") or not hasattr(frame, "__getitem__"):
+            raise TypeError("frame must provide dataframe-like columns and column access")
+        names = tuple(frame.columns)
+        if not names:
+            raise StudyValidationError("a dataframe must contain columns")
+        if any(not isinstance(name, str) or not name for name in names):
+            raise StudyValidationError("dataframe column names must be non-empty strings")
+        if len(set(names)) != len(names):
+            raise StudyValidationError("dataframe column names must be unique")
+        return cls({name: np.asarray(frame[name]) for name in names})
+
     def __len__(self) -> int:
         return self._length
 
