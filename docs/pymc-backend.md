@@ -14,6 +14,7 @@ from unspool import (
     HierarchicalBernoulliHistoryGLM,
     PyMCHierarchicalGLMBackend,
     TaskSpec,
+    audit_posterior,
 )
 
 task = TaskSpec(
@@ -36,6 +37,11 @@ backend = PyMCHierarchicalGLMBackend(
 )
 
 posterior = backend.sample(model, study, task=task)
+audit = audit_posterior(posterior)
+
+if audit.issues:
+    for issue in audit.issues:
+        print(issue.code, issue.targets)
 ```
 
 Install the backend only when needed:
@@ -108,14 +114,17 @@ changed; Unspool will expose that through its prospective split contract in a la
 See the [PyMC posterior-predictive reference](https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.sample_posterior_predictive.html).
 
 Use `posterior.to_arviz()` for the installed ArviZ representation. The standard groups and
-labelled axes are described in [labelled posterior results](posterior-results.md).
+labelled axes are described in [labelled posterior results](posterior-results.md); the
+backend-neutral convergence policy is described in
+[posterior convergence diagnostics](posterior-diagnostics.md).
 
 ## Interpretation boundary
 
-The adapter produces samples, not a declaration that a fit is trustworthy. Users must
-inspect divergences, chain mixing, effective sample size, prior sensitivity, and posterior
-predictive mismatch. Thirty-draw CI smoke tests establish API interoperability only; they
-are not scientific sampling defaults or recovery evidence.
+The adapter produces samples, not a declaration that a fit is trustworthy. The common
+audit screens divergences, maximum-tree-depth saturation, chain mixing, and effective
+sample size; users must still inspect prior sensitivity and posterior-predictive mismatch.
+Thirty-draw CI smoke tests establish API interoperability only; they are not scientific
+sampling defaults or recovery evidence.
 
 The current adapter is limited to a fixed independent scale shared across coefficients,
 static subject effects, binary non-omitted choices, and in-sample posterior predictive

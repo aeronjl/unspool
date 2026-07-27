@@ -113,9 +113,26 @@ result = posterior_result_from_arviz(
 Model and backend identity are required at import. Unspool does not infer provenance from a
 Python object's class name or silently treat every posterior variable as a model parameter.
 
+## Diagnose a retained posterior
+
+When ArviZ is installed, the common result can be audited without knowing which backend
+created it:
+
+```python
+from unspool import audit_posterior
+
+audit = audit_posterior(result)
+print(audit.status, audit.issue_codes)
+```
+
+The audit keeps rank-normalized $\widehat R$, bulk/tail ESS, HMC warning counts when
+available, explicit thresholds, and labelled failure targets. See
+[posterior convergence diagnostics](posterior-diagnostics.md).
+
 ## What this does not claim
 
-The container does not fit a model, judge convergence, or turn approximate samples into a
-calibrated posterior. It establishes the lossless seam needed by probabilistic adapters.
-Posterior predictive checks, simulation-based calibration, PSIS-LOO, and sensitivity
-analyses remain separate diagnostic procedures built on top of these retained groups.
+The container does not fit a model or turn approximate samples into a calibrated posterior.
+The common audit checks standard sampling diagnostics, but a pass is not evidence of model
+adequacy or inferential calibration. Posterior predictive checks, simulation-based
+calibration, PSIS-LOO, and sensitivity analyses remain separate diagnostic procedures built
+on top of these retained groups.

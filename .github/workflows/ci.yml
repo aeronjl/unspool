@@ -116,8 +116,8 @@ jobs:
       - name: Sync probabilistic extra
         run: uv sync --locked --all-groups --extra probabilistic --python ${{ matrix.python-version }}
 
-      - name: Test labelled posterior interchange
-        run: uv run pytest tests/test_posterior.py
+      - name: Test labelled posterior interchange and diagnostics
+        run: uv run pytest tests/test_posterior.py tests/test_posterior_diagnostics.py
 
   bayesian-interoperability:
     name: Bayesian interoperability Python ${{ matrix.python-version }}

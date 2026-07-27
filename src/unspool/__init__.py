@@ -212,6 +212,14 @@ from unspool.posterior import (
     PosteriorVariable,
     posterior_result_from_arviz,
 )
+from unspool.posterior_diagnostics import (
+    PosteriorAudit,
+    PosteriorAuditIssue,
+    PosteriorAuditPolicy,
+    PosteriorAuditStatus,
+    PosteriorDiagnostic,
+    audit_posterior,
+)
 from unspool.protocol import (
     SCHEMA_VERSION,
     AggregationWeighting,
@@ -527,6 +535,11 @@ __all__ = [
     "PointwisePrediction",
     "PopulationForecastSplit",
     "PopulationValidationSplit",
+    "PosteriorAudit",
+    "PosteriorAuditIssue",
+    "PosteriorAuditPolicy",
+    "PosteriorAuditStatus",
+    "PosteriorDiagnostic",
     "PosteriorError",
     "PosteriorGroup",
     "PosteriorResult",
@@ -630,6 +643,7 @@ __all__ = [
     "add_study_trials",
     "align_latent_states",
     "audit_fit",
+    "audit_posterior",
     "audit_trajectory_replication",
     "build_evidence_bundle",
     "capture_environment",

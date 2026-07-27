@@ -413,6 +413,10 @@ The roadmap is organized by scientific contracts rather than by model count.
   result with explicit model, backend, and parameter-space provenance; export and import
   the same contract through optional ArviZ `InferenceData` and current xarray `DataTree`
   conventions, with both supported Python-version paths under dedicated CI.
+- **Implemented:** audit any common posterior with an explicit policy over rank-normalized
+  split R-hat, bulk and tail effective sample size, divergences, and maximum-tree-depth
+  saturation; retain immutable labelled diagnostic arrays and stable, parameter-specific
+  warning codes across both supported ArviZ representations.
 - **Planned:** add posterior predictive checks, simulation-based calibration, PSIS-LOO,
   sensitivity, and test-retest reliability alongside Unspool's prospective validation and
   exact-design recovery.
