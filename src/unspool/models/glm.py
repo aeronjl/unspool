@@ -132,6 +132,12 @@ class BernoulliHistoryGLM:
         return (self.outcome,)
 
     @property
+    def required_task_columns(self) -> tuple[str, ...]:
+        """Covariates that must be declared as task predictors."""
+
+        return self.covariates
+
+    @property
     def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
         return (PredictionMode.FILTERED,)
 

@@ -102,6 +102,7 @@ nav:
       - Parameter spaces and backends: parameter-spaces.md
       - Deterministic inference backends: inference-backends.md
       - Labelled posterior results: posterior-results.md
+      - PyMC hierarchical GLM backend: pymc-backend.md
       - Estimator contract: estimator-contract.md
       - Trajectory shapes: trajectory-shapes.md
   - Data and interoperability:

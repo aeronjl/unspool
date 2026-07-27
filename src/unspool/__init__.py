@@ -261,6 +261,11 @@ from unspool.protocol_recovery import (
     RecoveryReplicate,
     run_exact_recovery,
 )
+from unspool.pymc_backend import (
+    PyMCBackendError,
+    PyMCHierarchicalGLMBackend,
+    PyMCUnavailableError,
+)
 from unspool.recovery import (
     ParameterRecoveryReport,
     ParameterRecoverySummary,
@@ -549,6 +554,9 @@ __all__ = [
     "Psychometric",
     "PyBADSMultistart",
     "PyBADSUnavailableError",
+    "PyMCBackendError",
+    "PyMCHierarchicalGLMBackend",
+    "PyMCUnavailableError",
     "QLearningFitResult",
     "QLearningParameters",
     "RLFitResult",
