@@ -20,6 +20,10 @@ Without the downloaded Cell table, regenerate every other figure with `--skip-ce
 | Figure | Scientific unit and source | What the display supports |
 | --- | --- | --- |
 | `cell2025-strategy.svg` | 30 animals; checksum-pinned Cell 2025 behavioural table | Independent reproduction of the reported early-bias/late-strategy association |
+| `cell2025-trajectories.svg` | 30 released Gaussian-process trajectories; checksum-pinned clustering membership | Exact reproduction of the retrospective visualization while showing continuous overlap |
+| `cell2025-qvalue-response-time.svg` | Released first-five-day Q-value summary and independent paired response-time summaries for 30 animals | Bounded retrospective model evidence and descriptive response-time change |
+| `cell2025-forecast.svg` | 30 animals, 73,042 trials, six historical-cohort forecast folds | Animal-balanced final-five-session performance and predeclared paired comparisons |
+| `cell2025-recovery.svg` | Exact Cell trial/contrast/session geometry; structural and feature-recovery simulations | Which candidate explanations the flagship design can and cannot distinguish |
 | `ibl-learning-trajectories.svg` | 78 animals, nine laboratories, 468 checksum-pinned IBL sessions | Outcome-blind retrieval and the descriptive geometry of early-to-late accuracy |
 | `ibl-prospective-selection.svg` | Subject-level scores from the committed nested-selection benchmark | Training-only smoothness selection and untouched future-session performance |
 | `ibl-choice-response-time.svg` | 111 untouched trials from one outcome-blindly selected, checksum-pinned IBL subject | Joint response-time, conditional-accuracy, contaminant-responsibility, and prospective DDM evidence |

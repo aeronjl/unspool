@@ -1,6 +1,8 @@
 import csv
 from pathlib import Path
 
+import numpy as np
+
 from benchmarks.cell2025.benchmark import calculate_session_metrics, load_study
 
 
@@ -56,6 +58,11 @@ def test_cell2025_adapter_builds_a_session_aware_study(tmp_path: Path) -> None:
     assert study["session_order"].max() == 8
     assert study["paper_session_order"].min() == 1
     assert study["paper_session_order"].max() == 9
+    assert set(study["signed_contrast"]) == {-0.5, 0.0, 0.5}
+    assert np.all(study["left_contrast"] <= 0)
+    assert np.all(study["right_contrast"] >= 0)
+    assert np.all(study["response_time"] > 0)
+    assert np.array_equal(study["source_trial"], study["trial"])
     assert len(metrics) == 9
     assert all(metric.subject == "DAP001" for metric in metrics)
 

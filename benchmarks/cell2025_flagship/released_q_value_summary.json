@@ -1,0 +1,3675 @@
+{
+  "aggregate": {
+    "innate_and_reward": {
+      "best_bic_animal_count": 13,
+      "mean_bic": 1349.1368954429465,
+      "standard_error_bic": 78.58259953526648
+    },
+    "only_innate": {
+      "best_bic_animal_count": 1,
+      "mean_bic": 1384.8829714970593,
+      "standard_error_bic": 78.76065620197352
+    },
+    "only_reward": {
+      "best_bic_animal_count": 12,
+      "mean_bic": 1359.2788475941015,
+      "standard_error_bic": 77.80833723258148
+    },
+    "only_sess": {
+      "best_bic_animal_count": 2,
+      "mean_bic": 1402.1663205651737,
+      "standard_error_bic": 76.32951433394483
+    },
+    "sess_and_reward": {
+      "best_bic_animal_count": 2,
+      "mean_bic": 1378.5038259837736,
+      "standard_error_bic": 76.40886290973152
+    }
+  },
+  "analysis": "released first-five-day single-state Q-value nested comparison",
+  "analysis_doi": "10.6084/m9.figshare.28877942.v1",
+  "animals": {
+    "DAP007": {
+      "best_bic_method": "only_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 2591.9432379177033,
+          "final_negative_log_likelihood": 1277.08447265625,
+          "n_bic_datapoints": 1910,
+          "n_nonzero_parameters": 5,
+          "parameters": {
+            "alpha_minus": 0.00023049773881211877,
+            "alpha_plus": 0.0014964649453759193,
+            "beta": 8.023098945617676,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 7.347370410570875e-05,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0223553404211998
+          }
+        },
+        "only_innate": {
+          "bic": 2590.919946656872,
+          "final_negative_log_likelihood": 1284.127685546875,
+          "n_bic_datapoints": 1910,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.028867244720459,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.45930853486061096,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.540630578994751
+          }
+        },
+        "only_reward": {
+          "bic": 2579.815454469372,
+          "final_negative_log_likelihood": 1278.575439453125,
+          "n_bic_datapoints": 1910,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.00010379085870226845,
+            "alpha_plus": 0.0025235037319362164,
+            "beta": 7.926878452301025,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 2648.9286390439474,
+          "final_negative_log_likelihood": 1282.91259765625,
+          "n_bic_datapoints": 1910,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.018179893493652,
+            "q_left_day_1": 0.4639143645763397,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.48224690556526184,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.5360224843025208,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.5179081559181213,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 2636.0350843564474,
+          "final_negative_log_likelihood": 1276.4658203125,
+          "n_bic_datapoints": 1910,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0015027334447950125,
+            "beta": 8.724067687988281,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.3641588091850281,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.017202097922563553,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.34779199957847595,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP009": {
+      "best_bic_method": "only_innate",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1815.794994150375,
+          "final_negative_log_likelihood": 889.9702758789062,
+          "n_bic_datapoints": 1301,
+          "n_nonzero_parameters": 5,
+          "parameters": {
+            "alpha_minus": 0.0014934279024600983,
+            "alpha_plus": 0.000734069908503443,
+            "beta": 5.704103946685791,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5867409110069275,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.4916958212852478
+          }
+        },
+        "only_innate": {
+          "bic": 1806.3493353574124,
+          "final_negative_log_likelihood": 892.4183349609375,
+          "n_bic_datapoints": 1301,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.002169609069824,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5231673717498779,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.4768272042274475
+          }
+        },
+        "only_reward": {
+          "bic": 1814.0236517636624,
+          "final_negative_log_likelihood": 896.2554931640625,
+          "n_bic_datapoints": 1301,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0005087534082122147,
+            "alpha_plus": 0.001097130123525858,
+            "beta": 7.689881324768066,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1863.1069461152001,
+          "final_negative_log_likelihood": 892.1135864257812,
+          "n_bic_datapoints": 1301,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 4.998769760131836,
+            "q_left_day_1": 0.5217657685279846,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.5086817145347595,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.47822877764701843,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.49123185873031616,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1864.5631129140252,
+          "final_negative_log_likelihood": 889.2562255859375,
+          "n_bic_datapoints": 1301,
+          "n_nonzero_parameters": 12,
+          "parameters": {
+            "alpha_minus": 0.002095872303470969,
+            "alpha_plus": 0.00021544721676036716,
+            "beta": 4.311570167541504,
+            "q_left_day_1": 0.5985249876976013,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.03658866882324219,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.46353551745414734,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP011": {
+      "best_bic_method": "only_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1565.9122676311763,
+          "final_negative_log_likelihood": 768.8750610351562,
+          "n_bic_datapoints": 1142,
+          "n_nonzero_parameters": 4,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.06891989707946777,
+            "beta": 4.10202169418335,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.9904950857162476,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.5493255257606506
+          }
+        },
+        "only_innate": {
+          "bic": 1595.9343533112728,
+          "final_negative_log_likelihood": 787.4063720703125,
+          "n_bic_datapoints": 1142,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 4.9931559562683105,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.4840231239795685,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.5153302550315857
+          }
+        },
+        "only_reward": {
+          "bic": 1557.2860288351194,
+          "final_negative_log_likelihood": 771.6024780273438,
+          "n_bic_datapoints": 1142,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.1383049637079239,
+            "beta": 3.2073166370391846,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1652.0367206048754,
+          "final_negative_log_likelihood": 787.29541015625,
+          "n_bic_datapoints": 1142,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 4.992361545562744,
+            "q_left_day_1": 0.4826921820640564,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.502961277961731,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.5165725350379944,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.4969862401485443,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1623.2740343388414,
+          "final_negative_log_likelihood": 769.393798828125,
+          "n_bic_datapoints": 1142,
+          "n_nonzero_parameters": 12,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0700092762708664,
+            "beta": 3.8722941875457764,
+            "q_left_day_1": 0.9523279666900635,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.109542615711689,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.507626473903656,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.07609722763299942,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP013": {
+      "best_bic_method": "innate_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1040.7311365790843,
+          "final_negative_log_likelihood": 510.3556213378906,
+          "n_bic_datapoints": 791,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.037453968077898026,
+            "beta": 9.295390129089355,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.16491387784481049,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_innate": {
+          "bic": 1109.331661481428,
+          "final_negative_log_likelihood": 544.6558837890625,
+          "n_bic_datapoints": 791,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 4.994429111480713,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5175788998603821,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.4830249845981598
+          }
+        },
+        "only_reward": {
+          "bic": 1065.4789201542853,
+          "final_negative_log_likelihood": 526.066162109375,
+          "n_bic_datapoints": 791,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.03488387539982796,
+            "beta": 8.50024700164795,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1108.5746126063816,
+          "final_negative_log_likelihood": 517.5841674804688,
+          "n_bic_datapoints": 791,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.183938503265381,
+            "q_left_day_1": 0.542589545249939,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.3663129210472107,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.4590678811073303,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.6338025331497192,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1056.4999666102879,
+          "final_negative_log_likelihood": 491.5468444824219,
+          "n_bic_datapoints": 791,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.035825181752443314,
+            "beta": 9.05704116821289,
+            "q_left_day_1": 0.17048612236976624,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.7039689421653748,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.8853409290313721,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP014": {
+      "best_bic_method": "innate_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1199.1611025877608,
+          "final_negative_log_likelihood": 589.2801513671875,
+          "n_bic_datapoints": 960,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.017365993931889534,
+            "beta": 9.374579429626465,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.09437866508960724,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_innate": {
+          "bic": 1230.5299990721358,
+          "final_negative_log_likelihood": 604.964599609375,
+          "n_bic_datapoints": 960,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.08590841293335,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5717194080352783,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.428314745426178
+          }
+        },
+        "only_reward": {
+          "bic": 1213.6257122720488,
+          "final_negative_log_likelihood": 599.9459228515625,
+          "n_bic_datapoints": 960,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.016183264553546906,
+            "beta": 8.9818696975708,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1276.3319204259558,
+          "final_negative_log_likelihood": 600.3978271484375,
+          "n_bic_datapoints": 960,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.116722106933594,
+            "q_left_day_1": 0.5831577777862549,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.45127907395362854,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.4169304370880127,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.5484369993209839,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1247.4579070633688,
+          "final_negative_log_likelihood": 589.394287109375,
+          "n_bic_datapoints": 960,
+          "n_nonzero_parameters": 10,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.014700708910822868,
+            "beta": 8.446553230285645,
+            "q_left_day_1": 0.09357747435569763,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.05048765987157822,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP015": {
+      "best_bic_method": "only_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1304.4289840906772,
+          "final_negative_log_likelihood": 638.4598999023438,
+          "n_bic_datapoints": 970,
+          "n_nonzero_parameters": 4,
+          "parameters": {
+            "alpha_minus": 8.961557614384219e-05,
+            "alpha_plus": 0.006052291952073574,
+            "beta": 8.18668270111084,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.03171243518590927
+          }
+        },
+        "only_innate": {
+          "bic": 1315.847830597305,
+          "final_negative_log_likelihood": 647.6079711914062,
+          "n_bic_datapoints": 970,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.033897399902344,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5447552800178528,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.45511066913604736
+          }
+        },
+        "only_reward": {
+          "bic": 1298.934744659805,
+          "final_negative_log_likelihood": 639.1514282226562,
+          "n_bic_datapoints": 970,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 3.2628355256747454e-05,
+            "alpha_plus": 0.003641733666881919,
+            "beta": 7.542165756225586,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1357.4434696770968,
+          "final_negative_log_likelihood": 640.8966064453125,
+          "n_bic_datapoints": 970,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.038302898406982,
+            "q_left_day_1": 0.5305702686309814,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.5576277375221252,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.46927207708358765,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.44313451647758484,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1349.640101686094,
+          "final_negative_log_likelihood": 633.5562744140625,
+          "n_bic_datapoints": 970,
+          "n_nonzero_parameters": 12,
+          "parameters": {
+            "alpha_minus": 0.0006291919853538275,
+            "alpha_plus": 0.012183497659862041,
+            "beta": 8.673893928527832,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.2177358865737915,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.06822079420089722,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.08803873509168625,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP017": {
+      "best_bic_method": "only_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1124.3442564433333,
+          "final_negative_log_likelihood": 548.7462158203125,
+          "n_bic_datapoints": 823,
+          "n_nonzero_parameters": 4,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.015323071740567684,
+            "beta": 5.476393222808838,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.47802734375,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.4139108955860138
+          }
+        },
+        "only_innate": {
+          "bic": 1118.1342299301562,
+          "final_negative_log_likelihood": 548.9976806640625,
+          "n_bic_datapoints": 823,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.046004295349121,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5451351404190063,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.45488566160202026
+          }
+        },
+        "only_reward": {
+          "bic": 1113.6920256826043,
+          "final_negative_log_likelihood": 550.133056640625,
+          "n_bic_datapoints": 823,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.018123164772987366,
+            "beta": 3.9044408798217773,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1164.0726207465102,
+          "final_negative_log_likelihood": 545.1150512695312,
+          "n_bic_datapoints": 823,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.079531669616699,
+            "q_left_day_1": 0.5579127669334412,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.4586235582828522,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.4421961009502411,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.540783703327179,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1169.0949031190623,
+          "final_negative_log_likelihood": 544.2697143554688,
+          "n_bic_datapoints": 823,
+          "n_nonzero_parameters": 12,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0012888485798612237,
+            "beta": 7.719300270080566,
+            "q_left_day_1": 0.14991578459739685,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.1927030086517334,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.09588567167520523,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.27429813146591187,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP019": {
+      "best_bic_method": "only_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1131.820157708606,
+          "final_negative_log_likelihood": 555.8424682617188,
+          "n_bic_datapoints": 822,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.024547100067139,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.464318186044693,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.5363649129867554
+          }
+        },
+        "only_innate": {
+          "bic": 1131.820157708606,
+          "final_negative_log_likelihood": 555.8424682617188,
+          "n_bic_datapoints": 822,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.027762413024902,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.46396908164024353,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.5359697341918945
+          }
+        },
+        "only_reward": {
+          "bic": 1130.1650579385498,
+          "final_negative_log_likelihood": 558.3707885742188,
+          "n_bic_datapoints": 822,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0049577695317566395,
+            "beta": 5.17081880569458,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1182.618450986243,
+          "final_negative_log_likelihood": 554.3946533203125,
+          "n_bic_datapoints": 822,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.0453691482543945,
+            "q_left_day_1": 0.4577080309391022,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.5261960029602051,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.542255699634552,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.4735139012336731,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1179.309124814368,
+          "final_negative_log_likelihood": 552.739990234375,
+          "n_bic_datapoints": 822,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0015262541128322482,
+            "beta": 9.045649528503418,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.48472073674201965,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.03142363578081131,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.43465158343315125,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP021": {
+      "best_bic_method": "innate_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 2038.6140588581284,
+          "final_negative_log_likelihood": 1008.2630615234375,
+          "n_bic_datapoints": 1576,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.004031368065625429,
+            "beta": 9.64138412475586,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.025233661755919456
+          }
+        },
+        "only_innate": {
+          "bic": 2104.3447717487534,
+          "final_negative_log_likelihood": 1041.12841796875,
+          "n_bic_datapoints": 1576,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.0331292152404785,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.4487361013889313,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.5511038899421692
+          }
+        },
+        "only_reward": {
+          "bic": 2040.4208471814607,
+          "final_negative_log_likelihood": 1012.8477783203125,
+          "n_bic_datapoints": 1576,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.004310375079512596,
+            "beta": 9.363907814025879,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 2138.577232740221,
+          "final_negative_log_likelihood": 1028.7940673828125,
+          "n_bic_datapoints": 1576,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.037219047546387,
+            "q_left_day_1": 0.4614788889884949,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.43604254722595215,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.5383592844009399,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.5649932026863098,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 2079.189049146471,
+          "final_negative_log_likelihood": 999.0999755859375,
+          "n_bic_datapoints": 1576,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.004913355223834515,
+            "beta": 9.314308166503906,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 1.0102252960205078,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.023912955075502396,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 1.1373190879821777,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP022": {
+      "best_bic_method": "innate_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1578.9324602346887,
+          "final_negative_log_likelihood": 775.307861328125,
+          "n_bic_datapoints": 1187,
+          "n_nonzero_parameters": 4,
+          "parameters": {
+            "alpha_minus": 0.0008189728250727057,
+            "alpha_plus": 0.00703785615041852,
+            "beta": 9.06441593170166,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.05401483178138733,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_innate": {
+          "bic": 1634.162846152579,
+          "final_negative_log_likelihood": 806.462646484375,
+          "n_bic_datapoints": 1187,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.019789218902588,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5322941541671753,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.4672214984893799
+          }
+        },
+        "only_reward": {
+          "bic": 1585.840580527579,
+          "final_negative_log_likelihood": 782.301513671875,
+          "n_bic_datapoints": 1187,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0009630428394302726,
+            "alpha_plus": 0.0056146904826164246,
+            "beta": 8.654067039489746,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1689.3173174032063,
+          "final_negative_log_likelihood": 805.72314453125,
+          "n_bic_datapoints": 1187,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.01307487487793,
+            "q_left_day_1": 0.5289077758789062,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.5221706628799438,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.4705957770347595,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.47798943519592285,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1633.5623953525035,
+          "final_negative_log_likelihood": 774.3060913085938,
+          "n_bic_datapoints": 1187,
+          "n_nonzero_parameters": 12,
+          "parameters": {
+            "alpha_minus": 0.0007778697763569653,
+            "alpha_plus": 0.006773258093744516,
+            "beta": 9.101506233215332,
+            "q_left_day_1": 0.05252465233206749,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.9149119853973389,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.8651767373085022,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP023": {
+      "best_bic_method": "only_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1532.9873829702026,
+          "final_negative_log_likelihood": 752.4586791992188,
+          "n_bic_datapoints": 1116,
+          "n_nonzero_parameters": 4,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.06779461354017258,
+            "beta": 6.282339096069336,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.37623128294944763,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.1886669099330902
+          }
+        },
+        "only_innate": {
+          "bic": 1564.6169715538238,
+          "final_negative_log_likelihood": 771.7822265625,
+          "n_bic_datapoints": 1116,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 4.992165565490723,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5088912844657898,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.4912739098072052
+          }
+        },
+        "only_reward": {
+          "bic": 1526.4151392390074,
+          "final_negative_log_likelihood": 756.1900634765625,
+          "n_bic_datapoints": 1116,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0656285285949707,
+            "beta": 5.548153400421143,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1620.6581437442287,
+          "final_negative_log_likelihood": 771.7327880859375,
+          "n_bic_datapoints": 1116,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 4.991921424865723,
+            "q_left_day_1": 0.5088157653808594,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.5012985467910767,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.49134597182273865,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.49862825870513916,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1584.60680223092,
+          "final_negative_log_likelihood": 750.1983642578125,
+          "n_bic_datapoints": 1116,
+          "n_nonzero_parameters": 12,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0650358498096466,
+            "beta": 6.053527355194092,
+            "q_left_day_1": 0.4168132245540619,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.45242735743522644,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.20005622506141663,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.24820095300674438,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP024": {
+      "best_bic_method": "only_sess",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1388.3171073201115,
+          "final_negative_log_likelihood": 683.72802734375,
+          "n_bic_datapoints": 1047,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.020411491394043,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5569332838058472,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.442691832780838
+          }
+        },
+        "only_innate": {
+          "bic": 1388.3173514607365,
+          "final_negative_log_likelihood": 683.7281494140625,
+          "n_bic_datapoints": 1047,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.043195724487305,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5568580627441406,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.44313278794288635
+          }
+        },
+        "only_reward": {
+          "bic": 1461.6526076795535,
+          "final_negative_log_likelihood": 723.8726196289062,
+          "n_bic_datapoints": 1047,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0005809332942590117,
+            "beta": 6.210322856903076,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1374.1869374523885,
+          "final_negative_log_likelihood": 648.8482055664062,
+          "n_bic_datapoints": 1047,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.181692123413086,
+            "q_left_day_1": 0.5305197238922119,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.6455368995666504,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.4694707989692688,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.35583794116973877,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1374.1869374523885,
+          "final_negative_log_likelihood": 648.8482055664062,
+          "n_bic_datapoints": 1047,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.158970832824707,
+            "q_left_day_1": 0.5306099057197571,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.6483967304229736,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.4692918360233307,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.35742202401161194,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP027": {
+      "best_bic_method": "innate_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 986.0256872143542,
+          "final_negative_log_likelihood": 482.82769775390625,
+          "n_bic_datapoints": 889,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.003939089365303516,
+            "beta": 7.90656042098999,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.10655422508716583,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_innate": {
+          "bic": 1014.6589879956042,
+          "final_negative_log_likelihood": 497.14434814453125,
+          "n_bic_datapoints": 889,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.141359806060791,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.6081271171569824,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.39210274815559387
+          }
+        },
+        "only_reward": {
+          "bic": 1026.8165225960279,
+          "final_negative_log_likelihood": 506.6181640625,
+          "n_bic_datapoints": 889,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.008106679655611515,
+            "beta": 9.010915756225586,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1039.2771291609654,
+          "final_negative_log_likelihood": 482.29302978515625,
+          "n_bic_datapoints": 889,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.118599891662598,
+            "q_left_day_1": 0.5836204886436462,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.6019005179405212,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.41658446192741394,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.39942365884780884,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1050.4353265616808,
+          "final_negative_log_likelihood": 481.08203125,
+          "n_bic_datapoints": 889,
+          "n_nonzero_parameters": 13,
+          "parameters": {
+            "alpha_minus": 0.0003720075183082372,
+            "alpha_plus": 0.0025306949391961098,
+            "beta": 5.9366021156311035,
+            "q_left_day_1": 0.452821284532547,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.45343509316444397,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.28139087557792664,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.24908804893493652,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP028": {
+      "best_bic_method": "only_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 679.7044158652727,
+          "final_negative_log_likelihood": 323.2821044921875,
+          "n_bic_datapoints": 756,
+          "n_nonzero_parameters": 5,
+          "parameters": {
+            "alpha_minus": 0.0006573856808245182,
+            "alpha_plus": 0.005700090434402227,
+            "beta": 6.308347225189209,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.1718609482049942,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.032315827906131744
+          }
+        },
+        "only_innate": {
+          "bic": 674.4218438551011,
+          "final_negative_log_likelihood": 327.26885986328125,
+          "n_bic_datapoints": 756,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.252687454223633,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.6608895659446716,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.33989500999450684
+          }
+        },
+        "only_reward": {
+          "bic": 665.905496814859,
+          "final_negative_log_likelihood": 326.32470703125,
+          "n_bic_datapoints": 756,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.013429811224341393,
+            "beta": 5.499404430389404,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 719.4839556262561,
+          "final_negative_log_likelihood": 323.2877502441406,
+          "n_bic_datapoints": 756,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.232194900512695,
+            "q_left_day_1": 0.6534905433654785,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.5729202628135681,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.3473222553730011,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.4278716444969177,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 713.1350072563419,
+          "final_negative_log_likelihood": 316.79925537109375,
+          "n_bic_datapoints": 756,
+          "n_nonzero_parameters": 12,
+          "parameters": {
+            "alpha_minus": 0.0015568917151540518,
+            "alpha_plus": 0.009263450279831886,
+            "beta": 6.426004409790039,
+            "q_left_day_1": 0.09998194873332977,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.323282390832901,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.05740863457322121,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP031": {
+      "best_bic_method": "only_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1337.4765134333443,
+          "final_negative_log_likelihood": 658.4008178710938,
+          "n_bic_datapoints": 984,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0016251043416559696,
+            "beta": 8.807709693908691,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.020076747983694077,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_innate": {
+          "bic": 1342.8366208552193,
+          "final_negative_log_likelihood": 661.0808715820312,
+          "n_bic_datapoints": 984,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.033547401428223,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.540760338306427,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.45919671654701233
+          }
+        },
+        "only_reward": {
+          "bic": 1332.178637536292,
+          "final_negative_log_likelihood": 659.1976928710938,
+          "n_bic_datapoints": 984,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0027230072300881147,
+            "beta": 8.638124465942383,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1394.2956778363248,
+          "final_negative_log_likelihood": 659.243896484375,
+          "n_bic_datapoints": 984,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.026201248168945,
+            "q_left_day_1": 0.5359874963760376,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.5322203636169434,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.4639645516872406,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.4681873321533203,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1399.2520009990021,
+          "final_negative_log_likelihood": 658.2762451171875,
+          "n_bic_datapoints": 984,
+          "n_nonzero_parameters": 12,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0016577698988839984,
+            "beta": 8.335457801818848,
+            "q_left_day_1": 0.09030643850564957,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.5952636003494263,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.06518837809562683,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.5744653940200806,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP033": {
+      "best_bic_method": "innate_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 850.7969438718651,
+          "final_negative_log_likelihood": 415.07635498046875,
+          "n_bic_datapoints": 974,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.007820460014045238,
+            "beta": 9.489466667175293,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.07766266167163849,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_innate": {
+          "bic": 1009.2130815671776,
+          "final_negative_log_likelihood": 494.284423828125,
+          "n_bic_datapoints": 974,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.178720474243164,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.6305387020111084,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.3694782853126526
+          }
+        },
+        "only_reward": {
+          "bic": 878.3413138182226,
+          "final_negative_log_likelihood": 432.28924560546875,
+          "n_bic_datapoints": 974,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.00868318323045969,
+            "beta": 9.303446769714355,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1041.975309496318,
+          "final_negative_log_likelihood": 483.139892578125,
+          "n_bic_datapoints": 974,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.154476165771484,
+            "q_left_day_1": 0.6136749982833862,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.6056724786758423,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.3863397538661957,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.39522504806518555,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 906.8941937736616,
+          "final_negative_log_likelihood": 415.5993347167969,
+          "n_bic_datapoints": 974,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.007906084880232811,
+            "beta": 9.444497108459473,
+            "q_left_day_1": 0.07597658783197403,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.4014594852924347,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.3681367337703705,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP035": {
+      "best_bic_method": "only_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1333.7148748144523,
+          "final_negative_log_likelihood": 652.5733642578125,
+          "n_bic_datapoints": 1264,
+          "n_nonzero_parameters": 4,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.03233407810330391,
+            "beta": 5.866703510284424,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.4641084372997284,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.09482427686452866
+          }
+        },
+        "only_innate": {
+          "bic": 1645.3858265209954,
+          "final_negative_log_likelihood": 811.9798583984375,
+          "n_bic_datapoints": 1264,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.042636394500732,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5655063986778259,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.43646934628486633
+          }
+        },
+        "only_reward": {
+          "bic": 1333.0196688525386,
+          "final_negative_log_likelihood": 659.3677978515625,
+          "n_bic_datapoints": 1264,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.03952052444219589,
+            "beta": 7.402726650238037,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1474.7540527124,
+          "final_negative_log_likelihood": 698.0958251953125,
+          "n_bic_datapoints": 1264,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.245222568511963,
+            "q_left_day_1": 0.6136868596076965,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.2907264530658722,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.38903966546058655,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.7101511359214783,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1337.1048295214816,
+          "final_negative_log_likelihood": 625.7001953125,
+          "n_bic_datapoints": 1264,
+          "n_nonzero_parameters": 12,
+          "parameters": {
+            "alpha_minus": 0.0009187886025756598,
+            "alpha_plus": 0.019088294357061386,
+            "beta": 5.008223533630371,
+            "q_left_day_1": 0.8860616087913513,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.22352208197116852,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.46794864535331726,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP037": {
+      "best_bic_method": "innate_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1357.338215830233,
+          "final_negative_log_likelihood": 668.2660522460938,
+          "n_bic_datapoints": 1028,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.004965767730027437,
+            "beta": 9.841590881347656,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.024430934339761734,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_innate": {
+          "bic": 1415.2492265724204,
+          "final_negative_log_likelihood": 697.2215576171875,
+          "n_bic_datapoints": 1028,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.004319667816162,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5338271856307983,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.4658568799495697
+          }
+        },
+        "only_reward": {
+          "bic": 1357.7721080795302,
+          "final_negative_log_likelihood": 671.95068359375,
+          "n_bic_datapoints": 1028,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.005128298886120319,
+            "beta": 9.580429077148438,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1366.8855104530412,
+          "final_negative_log_likelihood": 645.2982177734375,
+          "n_bic_datapoints": 1028,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.243037223815918,
+            "q_left_day_1": 0.4978335499763489,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.6570821404457092,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.5018810033798218,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.3443801999092102,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1363.5569648834314,
+          "final_negative_log_likelihood": 640.166259765625,
+          "n_bic_datapoints": 1028,
+          "n_nonzero_parameters": 12,
+          "parameters": {
+            "alpha_minus": 0.0007290452485904098,
+            "alpha_plus": 0.006109193433076143,
+            "beta": 7.5231475830078125,
+            "q_left_day_1": 0.01731315813958645,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.24643440544605255,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.023432940244674683,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP039": {
+      "best_bic_method": "only_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1292.9789470984063,
+          "final_negative_log_likelihood": 629.3615112304688,
+          "n_bic_datapoints": 945,
+          "n_nonzero_parameters": 5,
+          "parameters": {
+            "alpha_minus": 0.0023758504539728165,
+            "alpha_plus": 0.005969208665192127,
+            "beta": 8.688021659851074,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.17437008023262024,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.155096635222435
+          }
+        },
+        "only_innate": {
+          "bic": 1306.5441553684186,
+          "final_negative_log_likelihood": 642.9953002929688,
+          "n_bic_datapoints": 945,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.018199920654297,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5311139225959778,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.4689750373363495
+          }
+        },
+        "only_reward": {
+          "bic": 1280.3398096652936,
+          "final_negative_log_likelihood": 629.8931274414062,
+          "n_bic_datapoints": 945,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0031219865195453167,
+            "alpha_plus": 0.006052031647413969,
+            "beta": 8.271466255187988,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1357.4787568586812,
+          "final_negative_log_likelihood": 641.057861328125,
+          "n_bic_datapoints": 945,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.033748626708984,
+            "q_left_day_1": 0.5381990075111389,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.46813490986824036,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.4619610607624054,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.5314323902130127,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1328.8471650618062,
+          "final_negative_log_likelihood": 626.7420654296875,
+          "n_bic_datapoints": 945,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0032062584068626165,
+            "alpha_plus": 0.005629269871860743,
+            "beta": 8.96890926361084,
+            "q_left_day_1": 0.007823672145605087,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.04906783625483513,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP046": {
+      "best_bic_method": "only_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 929.4351093468321,
+          "final_negative_log_likelihood": 454.859130859375,
+          "n_bic_datapoints": 715,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.03523252531886101,
+            "beta": 7.226072311401367,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.051126979291439056
+          }
+        },
+        "only_innate": {
+          "bic": 962.6227314171446,
+          "final_negative_log_likelihood": 471.45294189453125,
+          "n_bic_datapoints": 715,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.048931121826172,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.448581725358963,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.5518307685852051
+          }
+        },
+        "only_reward": {
+          "bic": 923.5821261205442,
+          "final_negative_log_likelihood": 455.2187805175781,
+          "n_bic_datapoints": 715,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.03761282563209534,
+            "beta": 8.108687400817871,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 991.6487456649465,
+          "final_negative_log_likelihood": 459.67681884765625,
+          "n_bic_datapoints": 715,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.093441963195801,
+            "q_left_day_1": 0.42845961451530457,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.5878840088844299,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.5720361471176147,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.4121311604976654,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 978.1626616805715,
+          "final_negative_log_likelihood": 452.93377685546875,
+          "n_bic_datapoints": 715,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.03266134485602379,
+            "beta": 7.108296871185303,
+            "q_left_day_1": 0.015749771147966385,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.08189205080270767,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0683491975069046,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP048": {
+      "best_bic_method": "innate_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 791.5042764228441,
+          "final_negative_log_likelihood": 378.46282958984375,
+          "n_bic_datapoints": 1008,
+          "n_nonzero_parameters": 5,
+          "parameters": {
+            "alpha_minus": 0.0008117925608530641,
+            "alpha_plus": 0.002047921996563673,
+            "beta": 5.460691928863525,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.750815749168396,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.22134967148303986
+          }
+        },
+        "only_innate": {
+          "bic": 795.4630516935501,
+          "final_negative_log_likelihood": 387.3579406738281,
+          "n_bic_datapoints": 1008,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.284163475036621,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.6812753677368164,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.3200123906135559
+          }
+        },
+        "only_reward": {
+          "bic": 847.9708511941376,
+          "final_negative_log_likelihood": 417.0697021484375,
+          "n_bic_datapoints": 1008,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.02608739770948887,
+            "beta": 8.006611824035645,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 847.3077601810382,
+          "final_negative_log_likelihood": 385.6174011230469,
+          "n_bic_datapoints": 1008,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.310495376586914,
+            "q_left_day_1": 0.6895977258682251,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.45291322469711304,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.3118343651294708,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.5467754602432251,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 847.5554058087696,
+          "final_negative_log_likelihood": 378.82550048828125,
+          "n_bic_datapoints": 1008,
+          "n_nonzero_parameters": 13,
+          "parameters": {
+            "alpha_minus": 0.0009275958873331547,
+            "alpha_plus": 0.0014793600421398878,
+            "beta": 5.439539432525635,
+            "q_left_day_1": 0.7685832381248474,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.4664442837238312,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.2226894348859787,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.404601126909256,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP050": {
+      "best_bic_method": "only_sess",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1643.7599349101852,
+          "final_negative_log_likelihood": 807.7098388671875,
+          "n_bic_datapoints": 1194,
+          "n_nonzero_parameters": 4,
+          "parameters": {
+            "alpha_minus": 0.0023395961616188288,
+            "alpha_plus": 0.004927988164126873,
+            "beta": 9.906213760375977,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.03887244686484337,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_innate": {
+          "bic": 1666.8789721787327,
+          "final_negative_log_likelihood": 822.8118896484375,
+          "n_bic_datapoints": 1194,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 4.993793964385986,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5166674256324768,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.48335593938827515
+          }
+        },
+        "only_reward": {
+          "bic": 1644.4082690537327,
+          "final_negative_log_likelihood": 811.5765380859375,
+          "n_bic_datapoints": 1194,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.001741359243169427,
+            "alpha_plus": 0.0060660638846457005,
+            "beta": 9.721698760986328,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1615.164711139728,
+          "final_negative_log_likelihood": 768.614501953125,
+          "n_bic_datapoints": 1194,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.34340763092041,
+            "q_left_day_1": 0.5354697704315186,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.29403582215309143,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.4647482931613922,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.7065325975418091,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1616.164936566493,
+          "final_negative_log_likelihood": 765.5720825195312,
+          "n_bic_datapoints": 1194,
+          "n_nonzero_parameters": 12,
+          "parameters": {
+            "alpha_minus": 0.0008196086273528636,
+            "alpha_plus": 0.0036869398318231106,
+            "beta": 7.4656453132629395,
+            "q_left_day_1": 0.04269709810614586,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.10043668746948242,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.4188551604747772,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP051": {
+      "best_bic_method": "innate_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1599.0429797810361,
+          "final_negative_log_likelihood": 781.5447998046875,
+          "n_bic_datapoints": 1327,
+          "n_nonzero_parameters": 5,
+          "parameters": {
+            "alpha_minus": 0.0009662053198553622,
+            "alpha_plus": 4.7037170588737354e-05,
+            "beta": 4.883114337921143,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.6116400361061096,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.2801108956336975
+          }
+        },
+        "only_innate": {
+          "bic": 1601.0593327904967,
+          "final_negative_log_likelihood": 789.74365234375,
+          "n_bic_datapoints": 1327,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.112608909606934,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5911288857460022,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.4091103971004486
+          }
+        },
+        "only_reward": {
+          "bic": 1634.3772016780395,
+          "final_negative_log_likelihood": 809.9979248046875,
+          "n_bic_datapoints": 1327,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.01952783577144146,
+            "beta": 7.606238842010498,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1655.6074461432793,
+          "final_negative_log_likelihood": 788.2550048828125,
+          "n_bic_datapoints": 1327,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.100587844848633,
+            "q_left_day_1": 0.5865617394447327,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.5338078737258911,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.41368743777275085,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.466753751039505,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1621.3834471198418,
+          "final_negative_log_likelihood": 771.1430053710938,
+          "n_bic_datapoints": 1327,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0014376459876075387,
+            "alpha_plus": 0.0,
+            "beta": 4.942531108856201,
+            "q_left_day_1": 0.7174345254898071,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.1887107938528061,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.3235055208206177,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP053": {
+      "best_bic_method": "sess_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1896.7545350875093,
+          "final_negative_log_likelihood": 933.907470703125,
+          "n_bic_datapoints": 1387,
+          "n_nonzero_parameters": 4,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.01889457181096077,
+            "beta": 3.8880555629730225,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.5781733989715576,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.8677049875259399
+          }
+        },
+        "only_innate": {
+          "bic": 1934.993879831257,
+          "final_negative_log_likelihood": 956.6445922851562,
+          "n_bic_datapoints": 1387,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 4.993791103363037,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.484807550907135,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.5154972672462463
+          }
+        },
+        "only_reward": {
+          "bic": 1902.7946259421922,
+          "final_negative_log_likelihood": 944.1624145507812,
+          "n_bic_datapoints": 1387,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.02154521644115448,
+            "beta": 4.27604341506958,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1870.277974420338,
+          "final_negative_log_likelihood": 895.3470458984375,
+          "n_bic_datapoints": 1387,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.2014031410217285,
+            "q_left_day_1": 0.4549172520637512,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.6445629000663757,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.546383261680603,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.35649093985557556,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1867.9655446984677,
+          "final_negative_log_likelihood": 886.9559326171875,
+          "n_bic_datapoints": 1387,
+          "n_nonzero_parameters": 13,
+          "parameters": {
+            "alpha_minus": 0.0018428455805405974,
+            "alpha_plus": 0.0008184481412172318,
+            "beta": 6.10745906829834,
+            "q_left_day_1": 0.3463151752948761,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.8282018899917603,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.514107346534729,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.47807618975639343,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP059": {
+      "best_bic_method": "innate_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1096.242607113376,
+          "final_negative_log_likelihood": 537.9127197265625,
+          "n_bic_datapoints": 903,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0030901881400495768,
+            "beta": 8.425777435302734,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.07805844396352768
+          }
+        },
+        "only_innate": {
+          "bic": 1112.760429379001,
+          "final_negative_log_likelihood": 546.171630859375,
+          "n_bic_datapoints": 903,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.1063666343688965,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.4141383171081543,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.5858927369117737
+          }
+        },
+        "only_reward": {
+          "bic": 1118.043085731834,
+          "final_negative_log_likelihood": 552.2158203125,
+          "n_bic_datapoints": 903,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0054139927960932255,
+            "beta": 9.37192440032959,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1150.2096277750868,
+          "final_negative_log_likelihood": 537.67333984375,
+          "n_bic_datapoints": 903,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.091889381408691,
+            "q_left_day_1": 0.42699742317199707,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.4223420023918152,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.5730291604995728,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.5784004330635071,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1150.2098719157118,
+          "final_negative_log_likelihood": 537.6734619140625,
+          "n_bic_datapoints": 903,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.072677135467529,
+            "q_left_day_1": 0.42779281735420227,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.42303240299224854,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.5743777751922607,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.579681932926178,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP060": {
+      "best_bic_method": "innate_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1032.6809309672067,
+          "final_negative_log_likelihood": 506.2190856933594,
+          "n_bic_datapoints": 852,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.076844692230225,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.4092627465724945,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.5933254361152649
+          }
+        },
+        "only_innate": {
+          "bic": 1032.680992002363,
+          "final_negative_log_likelihood": 506.2191162109375,
+          "n_bic_datapoints": 852,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.110218524932861,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.4085363447666168,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.5913971662521362
+          }
+        },
+        "only_reward": {
+          "bic": 1063.9838205145961,
+          "final_negative_log_likelihood": 525.2443237304688,
+          "n_bic_datapoints": 852,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.004876274149864912,
+            "beta": 9.441312789916992,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1058.3879415412162,
+          "final_negative_log_likelihood": 492.0822448730469,
+          "n_bic_datapoints": 852,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.11428689956665,
+            "q_left_day_1": 0.4254819452762604,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.3869817554950714,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.5744442939758301,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.6144727468490601,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1058.3879415412162,
+          "final_negative_log_likelihood": 492.0822448730469,
+          "n_bic_datapoints": 852,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.097525119781494,
+            "q_left_day_1": 0.42598646879196167,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.38838425278663635,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.5754384994506836,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.6166235208511353,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP069": {
+      "best_bic_method": "sess_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1878.6451672218957,
+          "final_negative_log_likelihood": 924.8818359375,
+          "n_bic_datapoints": 1367,
+          "n_nonzero_parameters": 4,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.004269726108759642,
+            "beta": 5.051156520843506,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 1.7983437776565552,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 1.880786657333374
+          }
+        },
+        "only_innate": {
+          "bic": 1913.0427133070468,
+          "final_negative_log_likelihood": 945.6907958984375,
+          "n_bic_datapoints": 1367,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 4.993837356567383,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.4918054938316345,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.5082322955131531
+          }
+        },
+        "only_reward": {
+          "bic": 1910.631421501573,
+          "final_negative_log_likelihood": 948.0953369140625,
+          "n_bic_datapoints": 1367,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.020144280046224594,
+            "beta": 0.5334132313728333,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1715.8098543914634,
+          "final_negative_log_likelihood": 818.19287109375,
+          "n_bic_datapoints": 1367,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.3432698249816895,
+            "q_left_day_1": 0.4488588869571686,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.7205624580383301,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.552119791507721,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.2805900275707245,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1715.809488180526,
+          "final_negative_log_likelihood": 818.1926879882812,
+          "n_bic_datapoints": 1367,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.334102153778076,
+            "q_left_day_1": 0.4469517469406128,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.7220345139503479,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.5503902435302734,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.28130602836608887,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP110": {
+      "best_bic_method": "innate_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 665.7027255667297,
+          "final_negative_log_likelihood": 319.3097839355469,
+          "n_bic_datapoints": 872,
+          "n_nonzero_parameters": 4,
+          "parameters": {
+            "alpha_minus": 0.00016243034042418003,
+            "alpha_plus": 0.006930578500032425,
+            "beta": 6.479761123657227,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.1542704552412033
+          }
+        },
+        "only_innate": {
+          "bic": 677.1325587014144,
+          "final_negative_log_likelihood": 328.41009521484375,
+          "n_bic_datapoints": 872,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.29449987411499,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.31674647331237793,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.6840333342552185
+          }
+        },
+        "only_reward": {
+          "bic": 669.1482447365706,
+          "final_negative_log_likelihood": 324.4179382324219,
+          "n_bic_datapoints": 872,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 5.595709080807865e-05,
+            "alpha_plus": 0.013001632876694202,
+            "beta": 7.371680736541748,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 730.6091768270612,
+          "final_negative_log_likelihood": 328.06524658203125,
+          "n_bic_datapoints": 872,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.276933670043945,
+            "q_left_day_1": 0.32213467359542847,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.46430373191833496,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.67870032787323,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.5363513827323914,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 712.0774385458112,
+          "final_negative_log_likelihood": 318.79937744140625,
+          "n_bic_datapoints": 872,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.005231322720646858,
+            "beta": 6.8571319580078125,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.5006012320518494,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.1495826244354248,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.45707443356513977,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP156": {
+      "best_bic_method": "innate_and_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1172.8981592746686,
+          "final_negative_log_likelihood": 576.1723022460938,
+          "n_bic_datapoints": 945,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.008748024702072144,
+            "beta": 9.431504249572754,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.06398546695709229
+          }
+        },
+        "only_innate": {
+          "bic": 1234.8175928684186,
+          "final_negative_log_likelihood": 607.1320190429688,
+          "n_bic_datapoints": 945,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.0651984214782715,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.435869961977005,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.5639943480491638
+          }
+        },
+        "only_reward": {
+          "bic": 1187.9203874331124,
+          "final_negative_log_likelihood": 587.1090087890625,
+          "n_bic_datapoints": 945,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.007633129134774208,
+            "beta": 9.149855613708496,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1288.9844941633687,
+          "final_negative_log_likelihood": 606.8107299804688,
+          "n_bic_datapoints": 945,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.055963039398193,
+            "q_left_day_1": 0.439360648393631,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.48072904348373413,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.5605027079582214,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.5195626616477966,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1219.7741670149312,
+          "final_negative_log_likelihood": 572.20556640625,
+          "n_bic_datapoints": 945,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.008289145305752754,
+            "beta": 9.618855476379395,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 1.3908367156982422,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.06200425699353218,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 1.4523929357528687,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    },
+    "DAP158": {
+      "best_bic_method": "only_reward",
+      "methods": {
+        "innate_and_reward": {
+          "bic": 1616.4176929763437,
+          "final_negative_log_likelihood": 797.623291015625,
+          "n_bic_datapoints": 1161,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 4.994645595550537,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.479236364364624,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.5215067863464355
+          }
+        },
+        "only_innate": {
+          "bic": 1616.4176929763437,
+          "final_negative_log_likelihood": 797.623291015625,
+          "n_bic_datapoints": 1161,
+          "n_nonzero_parameters": 3,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 4.996595859527588,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.47885841131210327,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.521112322807312
+          }
+        },
+        "only_reward": {
+          "bic": 1613.7810661508959,
+          "final_negative_log_likelihood": 799.83349609375,
+          "n_bic_datapoints": 1161,
+          "n_nonzero_parameters": 2,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0014501090627163649,
+            "beta": 8.984764099121094,
+            "q_left_day_1": 0.0,
+            "q_left_day_2": 0.0,
+            "q_left_day_3": 0.0,
+            "q_left_day_4": 0.0,
+            "q_left_day_5": 0.0,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.0,
+            "q_right_day_2": 0.0,
+            "q_right_day_3": 0.0,
+            "q_right_day_4": 0.0,
+            "q_right_day_5": 0.0,
+            "q_right_innate": 0.0
+          }
+        },
+        "only_sess": {
+          "bic": 1670.9784810174267,
+          "final_negative_log_likelihood": 796.675537109375,
+          "n_bic_datapoints": 1161,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 5.000658988952637,
+            "q_left_day_1": 0.47485411167144775,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.5190598964691162,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.5251104235649109,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.4809272289276123,
+            "q_right_innate": 0.0
+          }
+        },
+        "sess_and_reward": {
+          "bic": 1670.9789692986767,
+          "final_negative_log_likelihood": 796.67578125,
+          "n_bic_datapoints": 1161,
+          "n_nonzero_parameters": 11,
+          "parameters": {
+            "alpha_minus": 0.0,
+            "alpha_plus": 0.0,
+            "beta": 4.995560646057129,
+            "q_left_day_1": 0.47523778676986694,
+            "q_left_day_2": 0.5,
+            "q_left_day_3": 0.5,
+            "q_left_day_4": 0.5,
+            "q_left_day_5": 0.5186651945114136,
+            "q_left_innate": 0.0,
+            "q_right_day_1": 0.5255452990531921,
+            "q_right_day_2": 0.5,
+            "q_right_day_3": 0.5,
+            "q_right_day_4": 0.5,
+            "q_right_day_5": 0.48049330711364746,
+            "q_right_innate": 0.0
+          }
+        }
+      }
+    }
+  },
+  "contract": {
+    "bic": "2 * final negative log likelihood + nonzero parameter count * log(len(Q))",
+    "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "initial_parameters": [
+      5.0,
+      0.01,
+      0.001,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ],
+    "iterations": 5000,
+    "learning_rate": 0.001,
+    "methods": [
+      "only_innate",
+      "only_sess",
+      "only_reward",
+      "innate_and_reward",
+      "sess_and_reward"
+    ],
+    "note": "len(Q) is choice count plus one in the released calculation",
+    "optimizer": "optax Adam",
+    "projection": "non-negative parameters"
+  },
+  "interpretation": "retrospective released fit; summarized, not independently re-optimized",
+  "source_member": "data/first_5_session_action_value_model.pickle",
+  "source_sha256": "ba69393ca8ceb8932c77958ba66f27d1c14089684adbb0fd32a38f0e27daee5e"
+}

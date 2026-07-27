@@ -7,7 +7,7 @@ its inferential or design coverage remains deliberately narrow.
 | Scientific capability | Status | Evidence boundary |
 | --- | --- | --- |
 | Canonical trial/session/animal representation | **Supported** | Identity, chronology, and source order are validated. |
-| Forward-session and within-session prospective validation | **Supported** | Learned preprocessing must still be fitted within folds. |
+| Forward-session, within-session, and historical-cohort prospective validation | **Supported** | Learned preprocessing must still be fitted within folds; historical-cohort claims require the declared deployment order. |
 | Complete-subject and complete-lab holdout | **Supported** | Does not by itself create population-of-labs inference. |
 | Static Bernoulli history GLM | **Supported** | Choice-only likelihood with declared covariates and lags. |
 | Smooth longitudinal Bernoulli GLM | **Supported** | Fixed clock and knots; future knots are not learned from test data. |

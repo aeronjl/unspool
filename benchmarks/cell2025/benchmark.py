@@ -115,11 +115,16 @@ def load_study(path: Path) -> Study:
         "subject": [],
         "session": [],
         "trial": [],
+        "source_trial": [],
         "session_order": [],
         "paper_session_order": [],
         "choice": [],
         "reward": [],
         "stimulus_side": [],
+        "signed_contrast": [],
+        "left_contrast": [],
+        "right_contrast": [],
+        "response_time": [],
     }
     with path.open(newline="", encoding="utf-8") as handle:
         for row in csv.DictReader(handle):
@@ -145,12 +150,18 @@ def load_study(path: Path) -> Study:
             contrast = float(row["contrastRight"]) - float(row["contrastLeft"])
             columns["subject"].append(subject)
             columns["session"].append(row["expRef"])
-            columns["trial"].append(_integer(row["trialNumber"]))
+            source_trial = _integer(row["trialNumber"])
+            columns["trial"].append(source_trial)
+            columns["source_trial"].append(source_trial)
             columns["session_order"].append(chronological_order[(subject, row["expRef"])])
             columns["paper_session_order"].append(session_order)
             columns["choice"].append(int(row["choice"] == "Right"))
             columns["reward"].append(int(row["feedback"] == "Rewarded"))
             columns["stimulus_side"].append(int(np.sign(contrast)))
+            columns["signed_contrast"].append(contrast)
+            columns["left_contrast"].append(min(contrast, 0.0))
+            columns["right_contrast"].append(max(contrast, 0.0))
+            columns["response_time"].append(reaction_time)
     return Study.from_columns(columns)
 
 

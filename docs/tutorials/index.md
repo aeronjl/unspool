@@ -4,13 +4,14 @@ These tutorials are executable scientific narratives rather than isolated API sn
 Each identifies its source, experimental unit, cohort rule, estimand, validation boundary,
 result, and limitations.
 
-## Cell 2025 learning strategies
+## Cell 2025 flagship forecast
 
-Reproduce the relationship between early choice bias and later psychometric asymmetry in 30
-mice from Liebana, Laffere et al. The example foregrounds exact trial exclusions and a
-preserved source-session identity collision.
+Reproduce the public behavioural results from 30 mice in Liebana, Laffere et al., then
+forecast each animal's final five sessions from its first eight days using a completed
+historical cohort. The chapter combines source-level provenance, animal-balanced model
+comparison, exact-design recovery, and explicit unresolved claims.
 
-[Open the Cell study](cell2025-learning-trajectories.md)
+[Open the Cell flagship study](cell2025-learning-trajectories.md)
 
 ## Replicated IBL learning trajectories
 

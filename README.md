@@ -265,6 +265,16 @@ right-minus-left psychometric-slope asymmetry across 30 mice (`r = 0.69479`,
 Figshare archive, verifies its checksum, maps trials to `Study`, and enforces a numerical
 regression contract. See the [Cell 2025 benchmark](benchmarks/cell2025/README.md).
 
+The [Cell behavioural flagship](benchmarks/cell2025_flagship/README.md) retains that
+reproduction and freezes a separate historical-cohort forecast: 25 completed reference
+animals plus days 1–8 from five forecast animals predict those animals' final five
+sessions in each of six folds. Early bias has the lowest animal-balanced log loss and
+clearly improves on complete pooling (`+0.04219`, 95% interval `+0.01818` to `+0.06425`),
+while its advantage over a late-phase control and hierarchical smooth trajectories remains
+unresolved. Exact-design recovery, released trajectory/Q-value compatibility, response-
+time summaries, numerical audits, and the unresolved comparisons remain committed as one
+paper-style evidence artifact.
+
 The second benchmark maps 28,400 public IBL trials into the same `Study` contract. A
 trial-outcome-blind rule selects one transition-anchored trajectory from each of nine labs,
 and the benchmark compares three disjoint early sessions with the final three training
@@ -352,6 +362,8 @@ uv run --extra dandi python -m benchmarks.nwb_dandi_interoperability.benchmark
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv
+uv run python -m benchmarks.cell2025_flagship.fetch_released_artifacts
+uv run python -m benchmarks.cell2025_flagship.benchmark
 uv run python -m benchmarks.ibl2021.fetch_data
 uv run --with pyarrow python -m benchmarks.ibl2021.benchmark
 uv run --extra ibl python -m benchmarks.ibl2021_replicated.benchmark

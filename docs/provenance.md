@@ -22,6 +22,14 @@ pins the Figshare article version, archive file ID, inner member, byte size, and
 records a verified numerical result; and keeps all paper-specific code outside
 `src/unspool`. The data remain CC BY 4.0 and are fetched on demand rather than redistributed.
 
+The subsequent [Cell behavioural flagship](https://github.com/aeronjl/unspool/tree/main/benchmarks/cell2025_flagship)
+retains that independent reproduction and adds a separately named prospective estimand.
+It also verifies the released trajectory membership in a pinned compatibility environment
+and converts the released Q-value pickle into reviewable JSON without executing or
+redistributing the raw artifact. Paper-specific fitting and compatibility code remains in
+the benchmark; only the general historical-cohort splitter and comparison provenance enter
+the library.
+
 ## Subsequent research programme
 
 The private `latent-state-belief-models` research programme developed IBL loaders,

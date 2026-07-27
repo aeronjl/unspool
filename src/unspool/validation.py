@@ -20,6 +20,7 @@ SplitScheme = Literal[
 PopulationSplitScheme = Literal["leave-one-subject-out", "leave-one-lab-out"]
 PopulationForecastSplitScheme = Literal["leave-one-lab-out-session-forecast"]
 CohortSplitScheme = Literal["cohort-forward-session"]
+HistoricalCohortForecastSplitScheme = Literal["historical-cohort-session-forecast"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -388,8 +389,121 @@ class CohortValidationSplit:
         return True
 
 
+@dataclass(frozen=True, slots=True)
+class HistoricalCohortForecastSplit:
+    """Forecast new animals using completed historical animals and early context.
+
+    Reference subjects contribute every aligned session to fitting. Forecast subjects
+    contribute only the declared context sessions to fitting and prediction-state
+    initialization; their later test sessions are scored. The prospective interpretation
+    therefore depends on the declared deployment order: reference trajectories must have
+    completed before forecast-subject context is observed.
+    """
+
+    train_indices: NDArray[np.intp]
+    test_indices: NDArray[np.intp]
+    reference_subjects: tuple[Any, ...]
+    forecast_subjects: tuple[Any, ...]
+    reference_sessions: Mapping[Any, tuple[Any, ...]]
+    context_sessions: Mapping[Any, tuple[Any, ...]]
+    test_sessions: Mapping[Any, tuple[Any, ...]]
+    reference_session_orders: tuple[int, ...]
+    context_session_orders: tuple[int, ...]
+    test_session_orders: tuple[int, ...]
+    fold_index: int
+    n_folds: int
+    scheme: HistoricalCohortForecastSplitScheme = "historical-cohort-session-forecast"
+    prediction_context_indices: NDArray[np.intp] = field(
+        default_factory=lambda: np.empty(0, dtype=np.intp)
+    )
+
+    def __post_init__(self) -> None:
+        if self.scheme != "historical-cohort-session-forecast":
+            raise ValueError(f"unknown historical cohort forecast scheme: {self.scheme!r}")
+        _require_positive_integer(self.n_folds, "n_folds")
+        if (
+            isinstance(self.fold_index, bool)
+            or not isinstance(self.fold_index, int)
+            or not 0 <= self.fold_index < self.n_folds
+        ):
+            raise ValueError("fold_index must identify one of n_folds folds")
+
+        train = _validated_indices(self.train_indices, "train_indices")
+        test = _validated_indices(self.test_indices, "test_indices")
+        context = _validated_indices(
+            self.prediction_context_indices,
+            "prediction_context_indices",
+        )
+        reference_subjects = _validated_identifiers(self.reference_subjects, "reference_subjects")
+        forecast_subjects = _validated_identifiers(self.forecast_subjects, "forecast_subjects")
+        if _identifier_keys(reference_subjects) & _identifier_keys(forecast_subjects):
+            raise ValueError("reference and forecast subjects must be disjoint")
+        if np.intersect1d(train, test).size:
+            raise ValueError("training and test indices must not overlap")
+        if np.intersect1d(context, test).size:
+            raise ValueError("prediction context and test indices must not overlap")
+        if np.setdiff1d(context, train).size:
+            raise ValueError("prediction context must be drawn from training indices")
+
+        reference_orders = _validated_session_orders(
+            self.reference_session_orders, "reference_session_orders"
+        )
+        context_orders = _validated_session_orders(
+            self.context_session_orders, "context_session_orders"
+        )
+        test_orders = _validated_session_orders(self.test_session_orders, "test_session_orders")
+        if not reference_orders or not context_orders or not test_orders:
+            raise ValueError("reference, context, and test session orders must not be empty")
+        if set(context_orders) & set(test_orders):
+            raise ValueError("context and test session orders must not overlap")
+        if max(context_orders) >= min(test_orders):
+            raise ValueError("forecast context must occur strictly before testing")
+        if not set(context_orders).issubset(reference_orders) or not set(test_orders).issubset(
+            reference_orders
+        ):
+            raise ValueError("reference sessions must cover context and test session orders")
+
+        reference_sessions = _validated_subject_mapping(
+            self.reference_sessions, reference_subjects, "reference_sessions"
+        )
+        context_sessions = _validated_subject_mapping(
+            self.context_sessions, forecast_subjects, "context_sessions"
+        )
+        test_sessions = _validated_subject_mapping(
+            self.test_sessions, forecast_subjects, "test_sessions"
+        )
+        if any(len(values) != len(reference_orders) for values in reference_sessions.values()):
+            raise ValueError("every reference subject must contribute every aligned session")
+        if any(len(values) != len(context_orders) for values in context_sessions.values()):
+            raise ValueError("every forecast subject must contribute every context session")
+        if any(len(values) != len(test_orders) for values in test_sessions.values()):
+            raise ValueError("every forecast subject must contribute every test session")
+
+        object.__setattr__(self, "train_indices", train)
+        object.__setattr__(self, "test_indices", test)
+        object.__setattr__(self, "prediction_context_indices", context)
+        object.__setattr__(self, "reference_subjects", reference_subjects)
+        object.__setattr__(self, "forecast_subjects", forecast_subjects)
+        object.__setattr__(self, "reference_sessions", MappingProxyType(reference_sessions))
+        object.__setattr__(self, "context_sessions", MappingProxyType(context_sessions))
+        object.__setattr__(self, "test_sessions", MappingProxyType(test_sessions))
+        object.__setattr__(self, "reference_session_orders", reference_orders)
+        object.__setattr__(self, "context_session_orders", context_orders)
+        object.__setattr__(self, "test_session_orders", test_orders)
+
+    @property
+    def prospective(self) -> bool:
+        """Whether the historical-cohort deployment order protects the forecast horizon."""
+
+        return True
+
+
 ValidationFold = (
-    ValidationSplit | PopulationValidationSplit | PopulationForecastSplit | CohortValidationSplit
+    ValidationSplit
+    | PopulationValidationSplit
+    | PopulationForecastSplit
+    | CohortValidationSplit
+    | HistoricalCohortForecastSplit
 )
 
 
@@ -520,6 +634,114 @@ def cohort_forward_session_splits(
             )
         )
         train_count += step
+    return tuple(splits)
+
+
+def historical_cohort_forecast_splits(
+    study: Study,
+    *,
+    context_session_count: int,
+    horizon: int,
+    n_folds: int,
+) -> tuple[HistoricalCohortForecastSplit, ...]:
+    """Split animals into historical references and context-to-future forecasts.
+
+    Subjects must share aligned ``session_order`` coordinates. For each deterministic
+    round-robin fold, all sessions from reference subjects and the common prefix from
+    forecast subjects enter training. Only the common final ``horizon`` sessions of the
+    forecast subjects are scored; any intervening sessions are excluded.
+    """
+
+    _require_positive_integer(context_session_count, "context_session_count")
+    _require_positive_integer(horizon, "horizon")
+    _require_positive_integer(n_folds, "n_folds")
+    subjects = tuple(sorted(study.subjects, key=_stable_identifier_sort_key))
+    if len(subjects) < 2:
+        return ()
+    if n_folds < 2 or n_folds > len(subjects):
+        raise ValueError("n_folds must lie between 2 and the number of subjects")
+
+    sessions_by_subject = {
+        _identifier_key(subject): _sessions_for_subject(study, subject) for subject in subjects
+    }
+    common_order_sets = {
+        tuple(order for order, _session in sessions) for sessions in sessions_by_subject.values()
+    }
+    if len(common_order_sets) != 1:
+        raise ValueError("historical cohort forecasts require common aligned session orders")
+    reference_orders = common_order_sets.pop()
+    required = context_session_count + horizon
+    if len(reference_orders) < required:
+        raise ValueError("subjects do not reach the requested context and forecast horizon")
+    context_orders = reference_orders[:context_session_count]
+    test_orders = reference_orders[-horizon:]
+    if max(context_orders) >= min(test_orders):
+        raise ValueError("forecast context must occur strictly before testing")
+
+    subject_values = study["subject"]
+    row_orders = np.asarray(study["session_order"], dtype=np.int64)
+    splits: list[HistoricalCohortForecastSplit] = []
+    for fold_index in range(n_folds):
+        forecast_subjects = subjects[fold_index::n_folds]
+        forecast_keys = _identifier_keys(forecast_subjects)
+        reference_subjects = tuple(
+            subject for subject in subjects if _identifier_key(subject) not in forecast_keys
+        )
+        reference_keys = _identifier_keys(reference_subjects)
+        reference_mask = np.fromiter(
+            (_identifier_key(value) in reference_keys for value in subject_values),
+            dtype=np.bool_,
+            count=len(study),
+        )
+        forecast_mask = np.fromiter(
+            (_identifier_key(value) in forecast_keys for value in subject_values),
+            dtype=np.bool_,
+            count=len(study),
+        )
+        context_mask = forecast_mask & np.isin(row_orders, context_orders)
+        test_mask = forecast_mask & np.isin(row_orders, test_orders)
+        context_indices = np.flatnonzero(context_mask)
+        train_indices = np.flatnonzero(reference_mask | context_mask)
+        test_indices = np.flatnonzero(test_mask)
+        reference_sessions = {
+            _identifier_key(subject): tuple(
+                session for _order, session in sessions_by_subject[_identifier_key(subject)]
+            )
+            for subject in reference_subjects
+        }
+        context_sessions = {
+            _identifier_key(subject): tuple(
+                session
+                for _order, session in sessions_by_subject[_identifier_key(subject)][
+                    :context_session_count
+                ]
+            )
+            for subject in forecast_subjects
+        }
+        test_sessions = {
+            _identifier_key(subject): tuple(
+                session
+                for _order, session in sessions_by_subject[_identifier_key(subject)][-horizon:]
+            )
+            for subject in forecast_subjects
+        }
+        splits.append(
+            HistoricalCohortForecastSplit(
+                train_indices=train_indices,
+                test_indices=test_indices,
+                prediction_context_indices=context_indices,
+                reference_subjects=reference_subjects,
+                forecast_subjects=forecast_subjects,
+                reference_sessions=reference_sessions,
+                context_sessions=context_sessions,
+                test_sessions=test_sessions,
+                reference_session_orders=reference_orders,
+                context_session_orders=context_orders,
+                test_session_orders=test_orders,
+                fold_index=fold_index,
+                n_folds=n_folds,
+            )
+        )
     return tuple(splits)
 
 
@@ -1053,3 +1275,8 @@ def _equal(left: Any, right: Any) -> bool:
 
 def _scalar(value: Any) -> Any:
     return value.item() if isinstance(value, np.generic) else value
+
+
+def _stable_identifier_sort_key(value: Any) -> tuple[str, str]:
+    scalar = _scalar(value)
+    return (f"{type(scalar).__module__}.{type(scalar).__qualname__}", repr(scalar))

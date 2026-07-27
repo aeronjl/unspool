@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from types import MappingProxyType
 
@@ -18,7 +18,7 @@ from unspool.models.base import (
     model_capabilities,
 )
 from unspool.study import Study
-from unspool.validation import forward_session_splits
+from unspool.validation import ValidationFold, forward_session_splits
 
 UNRESOLVED_LABEL = "unresolved"
 
@@ -137,6 +137,8 @@ class ModelRecoveryReport:
     horizon: int
     step: int
     tie_tolerance: float
+    validation_scheme: str
+    aggregation_column: str | None
 
     def __post_init__(self) -> None:
         candidates = tuple(self.candidate_labels)
@@ -208,6 +210,12 @@ class ModelRecoveryReport:
             raise ValueError("every recovery run must contain at least one fold")
         if self.n_trials < 1 or self.n_subjects < 1 or self.repeats < 1:
             raise ValueError("design counts and repeats must be positive")
+        if not isinstance(self.validation_scheme, str) or not self.validation_scheme:
+            raise ValueError("validation_scheme must be a non-empty string")
+        if self.aggregation_column is not None and (
+            not isinstance(self.aggregation_column, str) or not self.aggregation_column
+        ):
+            raise ValueError("aggregation_column must be None or a non-empty string")
 
         object.__setattr__(self, "candidate_labels", candidates)
         object.__setattr__(self, "candidate_signatures", candidate_signatures)
@@ -363,6 +371,8 @@ class ModelRecoveryGridReport:
                 or report.scenario_names != reference.scenario_names
                 or report.truth_labels != reference.truth_labels
                 or report.repeats != reference.repeats
+                or report.validation_scheme != reference.validation_scheme
+                or report.aggregation_column != reference.aggregation_column
             ):
                 raise ValueError(
                     "every design cell must use the same candidate and scenario contract"
@@ -410,8 +420,16 @@ def run_model_recovery(
     horizon: int = 1,
     step: int = 1,
     tie_tolerance: float = 1e-8,
+    splitter: Callable[[Study], Iterable[ValidationFold]] | None = None,
+    splitter_name: str | None = None,
+    aggregation_column: str | None = None,
 ) -> ModelRecoveryReport:
-    """Simulate scenarios and select candidates by prospective mean log probability."""
+    """Simulate scenarios and select candidates by prospective mean log probability.
+
+    By default recovery uses expanding within-subject forward-session folds. ``splitter``
+    permits an exact experimental validation geometry to be reapplied after each
+    simulation; ``splitter_name`` then provides stable provenance in the report.
+    """
 
     scenarios = tuple(scenarios)
     if not scenarios:
@@ -432,6 +450,23 @@ def run_model_recovery(
     _require_positive_integer(step, "step")
     if not np.isfinite(tie_tolerance) or tie_tolerance < 0:
         raise ValueError("tie_tolerance must be finite and non-negative")
+    if splitter is None:
+        if splitter_name is not None:
+            raise ValueError("splitter_name requires a custom splitter")
+        validation_scheme = "forward-session"
+    else:
+        if not callable(splitter):
+            raise TypeError("splitter must be callable")
+        if splitter_name is None:
+            splitter_name = getattr(splitter, "__name__", type(splitter).__qualname__)
+        if not isinstance(splitter_name, str) or not splitter_name:
+            raise ValueError("splitter_name must be a non-empty string")
+        validation_scheme = splitter_name
+    if aggregation_column is not None:
+        if not isinstance(aggregation_column, str) or not aggregation_column:
+            raise ValueError("aggregation_column must be None or a non-empty string")
+        if aggregation_column not in design.columns:
+            raise ValueError(f"design is missing aggregation column {aggregation_column!r}")
 
     n_runs = len(scenarios) * repeats
     child_sequences = np.random.SeedSequence(seed).spawn(n_runs)
@@ -453,12 +488,15 @@ def run_model_recovery(
         for _ in range(repeats):
             child_seed = int(child_sequences[run].generate_state(1, dtype=np.uint64)[0])
             simulated = scenario.generator.simulate(design, scenario.parameters, seed=child_seed)
-            splits = forward_session_splits(
-                simulated,
-                min_train_sessions=min_train_sessions,
-                horizon=horizon,
-                step=step,
-            )
+            if splitter is None:
+                splits: tuple[ValidationFold, ...] = forward_session_splits(
+                    simulated,
+                    min_train_sessions=min_train_sessions,
+                    horizon=horizon,
+                    step=step,
+                )
+            else:
+                splits = tuple(splitter(simulated))
             if not splits:
                 raise ValueError(
                     f"scenario {scenario.name!r} produced no eligible prospective folds"
@@ -469,10 +507,11 @@ def run_model_recovery(
             run_issue_codes: list[tuple[str, ...]] = []
             for column, model in enumerate(candidate_models.values()):
                 evaluations = evaluate_splits(model, simulated, splits)
-                pointwise = np.concatenate(
-                    [evaluation.pointwise_log_probability for evaluation in evaluations]
+                scores[run, column] = _mean_log_probability(
+                    simulated,
+                    evaluations,
+                    aggregation_column=aggregation_column,
                 )
-                scores[run, column] = float(np.mean(pointwise))
                 candidate_converged = all(
                     evaluation.fit.diagnostics.converged for evaluation in evaluations
                 )
@@ -523,6 +562,8 @@ def run_model_recovery(
         horizon=horizon,
         step=step,
         tie_tolerance=tie_tolerance,
+        validation_scheme=validation_scheme,
+        aggregation_column=aggregation_column,
     )
 
 
@@ -537,6 +578,9 @@ def run_model_recovery_grid(
     horizon: int = 1,
     step: int = 1,
     tie_tolerance: float = 1e-8,
+    splitter: Callable[[Study], Iterable[ValidationFold]] | None = None,
+    splitter_name: str | None = None,
+    aggregation_column: str | None = None,
 ) -> ModelRecoveryGridReport:
     """Run one fixed recovery contract across named study-design cells."""
 
@@ -568,6 +612,9 @@ def run_model_recovery_grid(
             horizon=horizon,
             step=step,
             tie_tolerance=tie_tolerance,
+            splitter=splitter,
+            splitter_name=splitter_name,
+            aggregation_column=aggregation_column,
         )
         for design, child_seed in zip(validated_designs.values(), seeds, strict=True)
     )
@@ -622,6 +669,31 @@ def _failure_message(evaluations: tuple[FoldEvaluation, ...]) -> str:
         if not diagnostics.converged:
             failures.append(f"fold {fold}: {diagnostics.message}")
     return "; ".join(failures)
+
+
+def _mean_log_probability(
+    study: Study,
+    evaluations: tuple[FoldEvaluation, ...],
+    *,
+    aggregation_column: str | None,
+) -> float:
+    if aggregation_column is None:
+        pointwise = np.concatenate(
+            [evaluation.pointwise_log_probability for evaluation in evaluations]
+        )
+        return float(np.mean(pointwise))
+
+    totals: dict[object, float] = {}
+    counts: dict[object, int] = {}
+    for evaluation in evaluations:
+        units = study[aggregation_column][evaluation.split.test_indices]
+        for unit, score in zip(units, evaluation.pointwise_log_probability, strict=True):
+            key = unit.item() if isinstance(unit, np.generic) else unit
+            totals[key] = totals.get(key, 0.0) + float(score)
+            counts[key] = counts.get(key, 0) + 1
+    if not totals:
+        raise ValueError("model recovery produced no aggregation units")
+    return float(np.mean([totals[key] / counts[key] for key in totals]))
 
 
 def _aggregate_audits(

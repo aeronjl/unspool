@@ -61,6 +61,10 @@ def main() -> None:
     _plot_choice_model_evidence_atlas(args.output_dir / "choice-model-evidence-atlas.svg")
     _plot_ibl_choice_rt(args.output_dir / "ibl-choice-response-time.svg")
     _plot_ibl_glm_hmm(args.output_dir / "ibl-glmhmm-states.svg")
+    _plot_cell_flagship_forecast(args.output_dir / "cell2025-forecast.svg")
+    _plot_cell_flagship_trajectories(args.output_dir / "cell2025-trajectories.svg")
+    _plot_cell_flagship_recovery(args.output_dir / "cell2025-recovery.svg")
+    _plot_cell_flagship_qvalue_rt(args.output_dir / "cell2025-qvalue-response-time.svg")
     if not args.skip_cell:
         if not args.cell_data.exists():
             raise FileNotFoundError(
@@ -720,6 +724,312 @@ def _plot_cell_strategy(data_path: Path, path: Path) -> None:
         weight="bold",
     )
     axis.grid(color="#edf0f5", linewidth=0.8)
+    _save(figure, path)
+
+
+def _plot_cell_flagship_forecast(path: Path) -> None:
+    payload = _load("cell2025_flagship")["historical_cohort_forecast"]
+    labels = {
+        "pooled_psychometric": "Pooled psychometric",
+        "late_phase_psychometric": "Late-phase control",
+        "early_bias_forecast": "Early-bias forecast",
+        "static_partial_pooling": "Static partial pooling",
+        "shared_smooth_trajectory": "Shared smooth trajectory",
+        "hierarchical_smooth_trajectory": "Hierarchical smooth trajectory",
+    }
+    order = payload["model_order"]
+    models = payload["models"]
+    estimates = np.asarray([models[name]["unit_balanced_log_loss"] for name in order])
+    lower = np.asarray([models[name]["unit_balanced_log_loss_interval"]["lower"] for name in order])
+    upper = np.asarray([models[name]["unit_balanced_log_loss_interval"]["upper"] for name in order])
+    colors = [AMBER if name == "early_bias_forecast" else INDIGO for name in order]
+
+    figure, axes = plt.subplots(2, 1, figsize=(7.6, 8.0), gridspec_kw={"height_ratios": (1.25, 1)})
+    positions = np.arange(len(order))
+    for position, estimate, low, high, color in zip(
+        positions, estimates, lower, upper, colors, strict=True
+    ):
+        axes[0].errorbar(
+            estimate,
+            position,
+            xerr=np.asarray([[estimate - low], [high - estimate]]),
+            fmt="o",
+            markersize=6,
+            color=color,
+            ecolor=color,
+            capsize=3,
+            linewidth=1.5,
+        )
+    axes[0].set(
+        yticks=positions,
+        yticklabels=[labels[name] for name in order],
+        xlabel="Animal-balanced held-out log loss (95% bootstrap interval)",
+        title="Forecast performance",
+    )
+    axes[0].invert_yaxis()
+    axes[0].grid(axis="x", color="#edf0f5", linewidth=0.8)
+    axes[0].text(
+        0.02,
+        -0.2,
+        "lower is better · 30 animals · 6 folds",
+        transform=axes[0].transAxes,
+        color=MUTED,
+    )
+
+    pairs = payload["pairwise_log_loss_differences"]
+    contrasts = (
+        ("pooled_psychometric_minus_early_bias_forecast", 1.0, "Pooled - early bias"),
+        ("late_phase_psychometric_minus_early_bias_forecast", 1.0, "Late phase - early bias"),
+        (
+            "early_bias_forecast_minus_hierarchical_smooth_trajectory",
+            -1.0,
+            "Hierarchical smooth - early bias",
+        ),
+    )
+    for position, (key, sign, _label) in enumerate(contrasts):
+        interval = pairs[key]["left_minus_right"]
+        estimate = sign * interval["estimate"]
+        low = min(sign * interval["lower"], sign * interval["upper"])
+        high = max(sign * interval["lower"], sign * interval["upper"])
+        color = TEAL if low > 0 else AMBER
+        axes[1].errorbar(
+            estimate,
+            position,
+            xerr=np.asarray([[estimate - low], [high - estimate]]),
+            fmt="o",
+            markersize=6,
+            color=color,
+            ecolor=color,
+            capsize=3,
+            linewidth=1.5,
+        )
+        axes[1].text(high + 0.002, position, f"{estimate:+.3f}", va="center", color=color)
+    axes[1].axvline(0, color=MUTED, linewidth=1)
+    axes[1].set(
+        yticks=range(len(contrasts)),
+        yticklabels=[row[2] for row in contrasts],
+        xlabel="Log-loss improvement favoring early bias",
+        title="Predeclared pairwise contrasts",
+    )
+    axes[1].invert_yaxis()
+    axes[1].grid(axis="x", color="#edf0f5", linewidth=0.8)
+    figure.suptitle(
+        "Early behaviour forecasts late choices, but the best complex models remain unresolved",
+        weight="semibold",
+    )
+    _save(figure, path)
+
+
+def _plot_cell_flagship_trajectories(path: Path) -> None:
+    artifact_path = ROOT / "benchmarks" / "cell2025_flagship" / "trajectory_clusters.json"
+    payload = json.loads(artifact_path.read_text(encoding="utf-8"))
+    colors = {"left": BLUE, "balanced": MUTED, "right": AMBER}
+    labels = payload["semantic_label_by_subject"]
+    trajectories = payload["fitted_trajectories"]
+    progress = np.linspace(0, 1, 100)
+    figure, axis = plt.subplots(figsize=(8.7, 5.0))
+    first = {name: True for name in colors}
+    for subject in payload["subject_order"]:
+        group = labels[subject]
+        row = trajectories[subject]
+        asymmetry = np.asarray(row["right_slope"]) - np.asarray(row["left_slope"])
+        axis.plot(
+            progress,
+            asymmetry,
+            color=colors[group],
+            linewidth=1.05,
+            alpha=0.46,
+            label=f"{group} visualization label" if first[group] else None,
+        )
+        first[group] = False
+    axis.axhline(0, color=INK, linewidth=0.9, alpha=0.65)
+    axis.set(
+        xlabel="Within-animal training progress (normalized)",
+        ylabel="GP right-minus-left psychometric slope",
+        title="Released trajectory labels summarize overlapping continuous paths",
+        xlim=(0, 1),
+        xticks=(0, 0.5, 1),
+        xticklabels=("first", "middle", "last"),
+    )
+    axis.grid(axis="y", color="#edf0f5", linewidth=0.8)
+    axis.legend(frameon=False, ncol=3, loc="upper left")
+    axis.text(
+        0.99,
+        0.02,
+        "30 animals · exact released membership match\nlabels are not prospective classes",
+        transform=axis.transAxes,
+        ha="right",
+        va="bottom",
+        color=MUTED,
+    )
+    _save(figure, path)
+
+
+def _plot_cell_flagship_recovery(path: Path) -> None:
+    payload = _load("cell2025_flagship")
+    recovery = payload["exact_design_model_recovery"]
+    confusion = recovery["confusion_matrix"]
+    counts = np.asarray(confusion["counts"], dtype=int)
+    short = {
+        "pooled_psychometric": "Pooled",
+        "static_partial_pooling": "Static\npartial",
+        "shared_smooth_trajectory": "Shared\nsmooth",
+        "hierarchical_smooth_trajectory": "Hierarchical\nsmooth",
+        "unresolved": "Unresolved",
+    }
+    figure, axes = plt.subplots(2, 1, figsize=(7.8, 8.0), gridspec_kw={"height_ratios": (1.2, 1)})
+    image = axes[0].imshow(counts, cmap="Blues", vmin=0, vmax=max(3, int(counts.max())))
+    for row in range(counts.shape[0]):
+        for column in range(counts.shape[1]):
+            axes[0].text(
+                column,
+                row,
+                str(counts[row, column]),
+                ha="center",
+                va="center",
+                color="white" if counts[row, column] >= 2 else INK,
+                weight="bold",
+            )
+    axes[0].set(
+        xticks=range(counts.shape[1]),
+        xticklabels=[short[name] for name in confusion["selected_labels"]],
+        yticks=range(counts.shape[0]),
+        yticklabels=[short[name] for name in confusion["truth_labels"]],
+        xlabel="Selected model",
+        ylabel="Generating model",
+        title="Structural recovery on the exact 73,042-trial design",
+    )
+    axes[0].tick_params(axis="x", labelsize=8)
+    figure.colorbar(image, ax=axes[0], fraction=0.046, pad=0.04, label="runs")
+
+    bias = payload["early_bias_feature_recovery"]
+    worlds = (
+        "null_no_subject_signal",
+        "context_predicts_late_asymmetry",
+        "reward_history_without_stable_strategy",
+    )
+    world_labels = (
+        "No subject\nsignal",
+        "Early context\npredicts late",
+        "Reward history\nwithout trait",
+    )
+    phase = []
+    early = []
+    for world in worlds:
+        counts_by_model = bias["summary"][world]["selection_counts"]
+        total = sum(counts_by_model.values())
+        phase.append(counts_by_model["late_phase_psychometric"] / total)
+        early.append(counts_by_model["early_bias_forecast"] / total)
+    positions = np.arange(len(worlds))
+    repeats = int(bias["repeats_per_world"])
+    axes[1].bar(positions, phase, color=INDIGO, label="Late-phase control")
+    axes[1].bar(positions, early, bottom=phase, color=AMBER, label="Early-bias forecast")
+    for position, (phase_count, early_count) in enumerate(zip(phase, early, strict=True)):
+        axes[1].text(
+            position,
+            phase_count / 2,
+            f"{phase_count * repeats:.0f}/{repeats}",
+            ha="center",
+            va="center",
+            color="white",
+        )
+        axes[1].text(
+            position,
+            phase_count + early_count / 2,
+            f"{early_count * repeats:.0f}/{repeats}",
+            ha="center",
+            va="center",
+            color="white" if early_count > 0.25 else AMBER,
+        )
+    axes[1].set(
+        xticks=positions,
+        xticklabels=world_labels,
+        ylim=(0, 1.16),
+        ylabel="Selection proportion",
+        title="Outcome-derived feature recovery",
+    )
+    axes[1].tick_params(axis="x", rotation=12)
+    axes[1].text(
+        0.04,
+        0.96,
+        "■ Late-phase control",
+        transform=axes[1].transAxes,
+        color=INDIGO,
+        fontsize=7.5,
+        va="top",
+    )
+    axes[1].text(
+        0.55,
+        0.96,
+        "■ Early-bias forecast",
+        transform=axes[1].transAxes,
+        color=AMBER,
+        fontsize=7.5,
+        va="top",
+    )
+    figure.suptitle(
+        "Recovery supports the main distinctions while exposing a complete-pooling ambiguity",
+        weight="semibold",
+    )
+    _save(figure, path)
+
+
+def _plot_cell_flagship_qvalue_rt(path: Path) -> None:
+    payload = _load("cell2025_flagship")
+    q_value = payload["released_q_value_comparison"]["aggregate"]
+    order = ("only_innate", "only_sess", "only_reward", "innate_and_reward", "sess_and_reward")
+    labels = ("Innate", "Day-specific", "Reward", "Innate + reward", "Day + reward")
+    means = np.asarray([q_value[name]["mean_bic"] for name in order])
+    errors = np.asarray([q_value[name]["standard_error_bic"] for name in order])
+    colors = [AMBER if name == "innate_and_reward" else INDIGO for name in order]
+    figure, axes = plt.subplots(2, 1, figsize=(7.8, 7.8))
+    positions = np.arange(len(order))
+    axes[0].bar(positions, means, yerr=errors, color=colors, capsize=3)
+    axes[0].set(
+        xticks=positions,
+        xticklabels=labels,
+        ylabel="Released mean BIC ± SEM",
+        title="First-five-day Q-value comparison",
+        ylim=(1200, 1500),
+    )
+    axes[0].tick_params(axis="x", rotation=20)
+    axes[0].text(0.02, 0.96, "lower is better", transform=axes[0].transAxes, va="top", color=MUTED)
+    axes[0].grid(axis="y", color="#edf0f5", linewidth=0.8)
+
+    response = payload["response_time_summary"]
+    animals = response["animals"]
+    first = np.asarray([row["first_session_mean_response_time"] for row in animals.values()])
+    late = np.asarray([row["final_five_mean_response_time"] for row in animals.values()])
+    for start, finish in zip(first, late, strict=True):
+        axes[1].plot((0, 1), (start, finish), color=LIGHT, linewidth=0.8, zorder=1)
+    axes[1].scatter(np.zeros(len(first)), first, color=BLUE, s=24, alpha=0.8, zorder=2)
+    axes[1].scatter(np.ones(len(late)), late, color=AMBER, s=24, alpha=0.8, zorder=2)
+    axes[1].plot(
+        (0, 1),
+        (np.mean(first), np.mean(late)),
+        color=INK,
+        linewidth=2.4,
+        marker="o",
+        zorder=3,
+    )
+    axes[1].set(
+        xticks=(0, 1),
+        xticklabels=("First session", "Final five mean"),
+        xlim=(-0.35, 1.35),
+        ylabel="Mean response time (s)",
+        title="Choice responses become faster across learning",
+    )
+    axes[1].grid(axis="y", color="#edf0f5", linewidth=0.8)
+    axes[1].text(
+        0.04,
+        0.94,
+        "30 animals · paired p = 9.16 x 10^-11",
+        transform=axes[1].transAxes,
+        va="top",
+        color=TEAL,
+        weight="bold",
+    )
+    figure.suptitle("Released and independent descriptive behavioural layers", weight="semibold")
     _save(figure, path)
 
 

@@ -7,6 +7,7 @@ protocol code, source checksums, seeds, fold provenance, audits, and JSON result
 | Evidence family | Public or controlled input | Primary contract |
 | --- | --- | --- |
 | Cell 2025 reproduction | Public Figshare trial table | Published numerical reproduction |
+| Cell 2025 flagship forecast | 30 animals; first eight days and final five sessions | Historical-cohort forecasting, exact-design recovery, and competing explanations |
 | IBL 2021 cohort | Exact ONE trial-table UUIDs | Outcome-blind selection and chronology |
 | IBL prospective comparison | 78 animals, nine labs | Same-animal and held-out-lab forecasting |
 | IBL nested selection | Same public panel | Training-only model and hyperparameter selection |

@@ -5,6 +5,7 @@ from unspool import (
     Study,
     cohort_forward_session_splits,
     forward_session_splits,
+    historical_cohort_forecast_splits,
     leave_one_lab_out_splits,
     leave_one_session_out_splits,
     leave_one_subject_out_splits,
@@ -67,6 +68,26 @@ def population_study() -> Study:
             "trial": [0, 0, 0, 1, 0, 1, 1, 1],
             "session_order": [0] * 8,
             "lab": ["north", "south", "north", "north", "east", "south", "north", "east"],
+        }
+    )
+
+
+def aligned_forecast_study() -> Study:
+    subjects = ("d", "b", "a", "c")
+    return Study(
+        {
+            "subject": [subject for subject in subjects for _session in range(5) for _ in range(2)],
+            "session": [
+                f"{subject}-{session}"
+                for subject in subjects
+                for session in range(5)
+                for _ in range(2)
+            ],
+            "trial": [0, 1] * (len(subjects) * 5),
+            "session_order": [
+                session for _subject in subjects for session in range(5) for _ in range(2)
+            ],
+            "choice": [0, 1] * (len(subjects) * 5),
         }
     )
 
@@ -145,6 +166,61 @@ def test_cohort_forward_split_horizon_step_and_arguments_are_explicit() -> None:
         cohort_forward_session_splits(
             longitudinal_study(),
             require_all_subjects=1,  # type: ignore[arg-type]
+        )
+
+
+def test_historical_cohort_forecast_protects_new_animals_future() -> None:
+    study = aligned_forecast_study()
+
+    splits = historical_cohort_forecast_splits(
+        study,
+        context_session_count=2,
+        horizon=2,
+        n_folds=2,
+    )
+
+    assert len(splits) == 2
+    first = splits[0]
+    assert first.reference_subjects == ("b", "d")
+    assert first.forecast_subjects == ("a", "c")
+    assert first.reference_session_orders == (0, 1, 2, 3, 4)
+    assert first.context_session_orders == (0, 1)
+    assert first.test_session_orders == (3, 4)
+    assert first.context_sessions == {"a": ("a-0", "a-1"), "c": ("c-0", "c-1")}
+    assert first.test_sessions == {"a": ("a-3", "a-4"), "c": ("c-3", "c-4")}
+    assert len(first.train_indices) == 28
+    assert len(first.prediction_context_indices) == 8
+    assert len(first.test_indices) == 8
+    assert not np.intersect1d(first.train_indices, first.test_indices).size
+    assert np.setdiff1d(first.prediction_context_indices, first.train_indices).size == 0
+    training_subjects = study["subject"][first.train_indices]
+    training_orders = study["session_order"][first.train_indices]
+    assert not np.any(np.isin(training_subjects, first.forecast_subjects) & (training_orders == 2))
+    assert first.scheme == "historical-cohort-session-forecast"
+    assert first.prospective
+
+    second = splits[1]
+    assert second.reference_subjects == ("a", "c")
+    assert second.forecast_subjects == ("b", "d")
+
+
+def test_historical_cohort_forecast_requires_a_common_aligned_panel() -> None:
+    study = aligned_forecast_study()
+    keep = ~((study["subject"] == "d") & (study["session_order"] == 0))
+
+    with pytest.raises(ValueError, match="common aligned session orders"):
+        historical_cohort_forecast_splits(
+            study.take(np.flatnonzero(keep)),
+            context_session_count=2,
+            horizon=2,
+            n_folds=2,
+        )
+    with pytest.raises(ValueError, match="n_folds"):
+        historical_cohort_forecast_splits(
+            study,
+            context_session_count=2,
+            horizon=2,
+            n_folds=5,
         )
 
 
