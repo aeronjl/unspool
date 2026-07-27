@@ -172,6 +172,11 @@ The [replicated IBL prospective benchmark](../benchmarks/ibl2021_prospective/REA
 uses this splitter to distinguish future prediction for represented animals from future
 prediction in an entirely unseen lab.
 
+Its [nested-selection successor](../benchmarks/ibl2021_nested_selection/README.md) performs
+candidate and smoothness selection on earlier inner forecasts within each outer training
+study. The outer held-out lab and future session are absent during selection, so the final
+score evaluates the complete training-only procedure.
+
 Fold-fitted, subject-specific landmarks present a stricter boundary. A landmark learned
 only for training subjects cannot be applied to a new test subject, and Unspool raises
 rather than silently estimating it from held-out data. Population-transferable transforms

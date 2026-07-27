@@ -120,6 +120,11 @@ reported as the performance of one fixed model when different candidates were se
 across folds. Likewise, inspecting outer results and then changing the candidate grid
 invalidates the nesting and requires a new untouched evaluation layer or a new study.
 
+The [replicated IBL nested-selection benchmark](../benchmarks/ibl2021_nested_selection/README.md)
+applies this contract to 78 animals across nine labs. It nests both same-animal session
+forecasting and unseen-lab future-session forecasting, and retains the exact inner targets,
+selected candidate, outer fit audit, and subject-level scores for every outer fold.
+
 ## Recovery requirement
 
 Nesting prevents direct test leakage; it does not guarantee reliable selection. The

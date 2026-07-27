@@ -10,10 +10,11 @@ trajectory analysis.
 
 The cohort is the checksum-pinned 2021 IBL behavioural panel: 78 animals in nine labs and
 six outcome-blind endpoint windows per animal. To keep the public regression benchmark
-bounded and give each session a comparable maximum contribution, the analysis retains the
-first 100 source rows in every session. This cap is applied before reading choice direction
-or choice validity. Rows with source `choice = 0` are then excluded because the Bernoulli
-models require an observed left/right response. The resulting panel contains 46,152 trials.
+bounded and give each session a comparable maximum contribution, the analysis retains up
+to the first 100 source rows in every session. Nine short source sessions contribute all
+their available rows. The cap is applied before reading choice direction or choice
+validity. Rows with source `choice = 0` are then excluded because the Bernoulli models
+require an observed left/right response. The resulting panel contains 46,152 trials.
 
 All source mappings are fixed rather than learned:
 

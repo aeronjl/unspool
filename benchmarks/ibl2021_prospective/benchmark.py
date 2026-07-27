@@ -61,12 +61,6 @@ def build_panel(study: Study, *, trials_per_session: int = TRIALS_PER_SESSION) -
         if counts[key] < trials_per_session:
             capped.append(index)
         counts[key] += 1
-    short_sessions = {key: count for key, count in counts.items() if count < trials_per_session}
-    if short_sessions:
-        raise ValueError(
-            "every source session must reach the declared trial cap; "
-            f"short sessions: {dict(sorted(short_sessions.items(), key=lambda item: str(item[0])))}"
-        )
     capped_positions = np.asarray(capped, dtype=np.intp)
     source_choice = np.asarray(study["source_choice"][capped_positions], dtype=np.float64)
     valid_choice = np.isfinite(source_choice) & (source_choice != 0)
@@ -203,7 +197,7 @@ def run(
         },
         "analysis_contract": {
             "models": list(METHODS),
-            "panel": "first 100 source rows in each of six outcome-blind endpoint windows",
+            "panel": "up to the first 100 source rows in each outcome-blind endpoint window",
             "choice_eligibility": "drop no-go choice=0 only after the source-row cap",
             "outcome": "rightward binary choice; IBL source choice -1 maps to 1",
             "covariates": ["signed contrast", "one-session-reset choice lag"],

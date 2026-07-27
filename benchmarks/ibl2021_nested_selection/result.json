@@ -1,0 +1,1414 @@
+{
+  "benchmark": "nested replicated IBL hierarchical model and smoothness selection",
+  "contract": {
+    "all_outer_subjects_scored_once": true,
+    "all_selected_outer_fits_are_usable": true,
+    "inner_selection_uses_only_earlier_positions": true,
+    "lab_outer_groups_are_untouched": true,
+    "reference_result_is_pinned": true,
+    "within_outer_position_is_untouched": true
+  },
+  "contract_passed": true,
+  "held_out_lab_future_session": {
+    "candidate_order": [
+      "static",
+      "drift_smoothness_1",
+      "drift_smoothness_3",
+      "drift_smoothness_9"
+    ],
+    "comparison_with_fixed_candidates": {
+      "fixed_drift_smoothness_3": {
+        "bootstrap_probability_below_zero": 1.0,
+        "direction": "selected procedure minus fixed candidate; negative favors selection",
+        "estimate": -0.0077734688112012255,
+        "interval_95": [
+          -0.013746066056943342,
+          -0.0025693237326754052
+        ]
+      },
+      "fixed_static": {
+        "bootstrap_probability_below_zero": 0.7742,
+        "direction": "selected procedure minus fixed candidate; negative favors selection",
+        "estimate": -0.03132633269670854,
+        "interval_95": [
+          -0.10978336554387386,
+          0.05665478248424934
+        ]
+      }
+    },
+    "family_selection_counts": {
+      "drift": 9
+    },
+    "folds": [
+      {
+        "inner_candidates": {
+          "drift_smoothness_1": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5891903597780689
+          },
+          "drift_smoothness_3": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5821955107206221
+          },
+          "drift_smoothness_9": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5685167656887369
+          },
+          "static": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.647034192803682
+          }
+        },
+        "inner_fold_count": 8,
+        "inner_fold_targets": [
+          "churchlandlab",
+          "cortexlab",
+          "danlab",
+          "hoferlab",
+          "mainenlab",
+          "mrsicflogellab",
+          "wittenlab",
+          "zadorlab"
+        ],
+        "inner_winner": "drift_smoothness_9",
+        "outer_held_out_lab": "angelakilab",
+        "outer_mean_trial_log_loss": 0.7885052567189322,
+        "outer_test_subjects": 4,
+        "outer_test_trials": 400,
+        "selected_candidate": "drift_smoothness_9",
+        "selected_family": "drift",
+        "selected_outer_fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "hierarchical-smooth-bernoulli-history-glm",
+          "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,2,5;smoothness=9.0;l2=0.02;subject_scale=0.4;subject_smoothness=9.0]",
+          "n_observations": 36508,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.07197356851078082,
+            "hessian_condition": 504.39024613224296,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 79,
+            "objective": 20696.98727431163,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        }
+      },
+      {
+        "inner_candidates": {
+          "drift_smoothness_1": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5704532504338776
+          },
+          "drift_smoothness_3": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5636800473065346
+          },
+          "drift_smoothness_9": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.551260532778838
+          },
+          "static": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.638902839890561
+          }
+        },
+        "inner_fold_count": 8,
+        "inner_fold_targets": [
+          "angelakilab",
+          "cortexlab",
+          "danlab",
+          "hoferlab",
+          "mainenlab",
+          "mrsicflogellab",
+          "wittenlab",
+          "zadorlab"
+        ],
+        "inner_winner": "drift_smoothness_9",
+        "outer_held_out_lab": "churchlandlab",
+        "outer_mean_trial_log_loss": 0.6577655891737206,
+        "outer_test_subjects": 17,
+        "outer_test_trials": 1699,
+        "selected_candidate": "drift_smoothness_9",
+        "selected_family": "drift",
+        "selected_outer_fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "hierarchical-smooth-bernoulli-history-glm",
+          "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,2,5;smoothness=9.0;l2=0.02;subject_scale=0.4;subject_smoothness=9.0]",
+          "n_observations": 30008,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.49264690650724474,
+            "hessian_condition": 416.8851390446535,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 71,
+            "objective": 16876.157843390396,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        }
+      },
+      {
+        "inner_candidates": {
+          "drift_smoothness_1": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5982950296653075
+          },
+          "drift_smoothness_3": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5907784419078433
+          },
+          "drift_smoothness_9": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5760082408540003
+          },
+          "static": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.6471798687663913
+          }
+        },
+        "inner_fold_count": 8,
+        "inner_fold_targets": [
+          "angelakilab",
+          "churchlandlab",
+          "danlab",
+          "hoferlab",
+          "mainenlab",
+          "mrsicflogellab",
+          "wittenlab",
+          "zadorlab"
+        ],
+        "inner_winner": "drift_smoothness_9",
+        "outer_held_out_lab": "cortexlab",
+        "outer_mean_trial_log_loss": 0.5100405399558459,
+        "outer_test_subjects": 11,
+        "outer_test_trials": 1100,
+        "selected_candidate": "drift_smoothness_9",
+        "selected_family": "drift",
+        "selected_outer_fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "hierarchical-smooth-bernoulli-history-glm",
+          "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,2,5;smoothness=9.0;l2=0.02;subject_scale=0.4;subject_smoothness=9.0]",
+          "n_observations": 33036,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.2240858423644972,
+            "hessian_condition": 457.22691169561347,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 74,
+            "objective": 18649.9721236792,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        }
+      },
+      {
+        "inner_candidates": {
+          "drift_smoothness_1": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5936717349376316
+          },
+          "drift_smoothness_3": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5874513167744327
+          },
+          "drift_smoothness_9": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5747017324237308
+          },
+          "static": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.6565663031917628
+          }
+        },
+        "inner_fold_count": 8,
+        "inner_fold_targets": [
+          "angelakilab",
+          "churchlandlab",
+          "cortexlab",
+          "hoferlab",
+          "mainenlab",
+          "mrsicflogellab",
+          "wittenlab",
+          "zadorlab"
+        ],
+        "inner_winner": "drift_smoothness_9",
+        "outer_held_out_lab": "danlab",
+        "outer_mean_trial_log_loss": 0.42524634148709267,
+        "outer_test_subjects": 6,
+        "outer_test_trials": 600,
+        "selected_candidate": "drift_smoothness_9",
+        "selected_family": "drift",
+        "selected_outer_fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "hierarchical-smooth-bernoulli-history-glm",
+          "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,2,5;smoothness=9.0;l2=0.02;subject_scale=0.4;subject_smoothness=9.0]",
+          "n_observations": 35388,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.08945887907770242,
+            "hessian_condition": 489.10465631431975,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 73,
+            "objective": 20113.69195357678,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        }
+      },
+      {
+        "inner_candidates": {
+          "drift_smoothness_1": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5624631568078632
+          },
+          "drift_smoothness_3": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.556181513373711
+          },
+          "drift_smoothness_9": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5445997990244621
+          },
+          "static": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.6393611775522854
+          }
+        },
+        "inner_fold_count": 8,
+        "inner_fold_targets": [
+          "angelakilab",
+          "churchlandlab",
+          "cortexlab",
+          "danlab",
+          "mainenlab",
+          "mrsicflogellab",
+          "wittenlab",
+          "zadorlab"
+        ],
+        "inner_winner": "drift_smoothness_9",
+        "outer_held_out_lab": "hoferlab",
+        "outer_mean_trial_log_loss": 0.8740650778969798,
+        "outer_test_subjects": 6,
+        "outer_test_trials": 600,
+        "selected_candidate": "drift_smoothness_9",
+        "selected_family": "drift",
+        "selected_outer_fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "hierarchical-smooth-bernoulli-history-glm",
+          "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,2,5;smoothness=9.0;l2=0.02;subject_scale=0.4;subject_smoothness=9.0]",
+          "n_observations": 35417,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.365565744196619,
+            "hessian_condition": 490.540191624637,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 73,
+            "objective": 19978.4946109524,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        }
+      },
+      {
+        "inner_candidates": {
+          "drift_smoothness_1": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5876332348932608
+          },
+          "drift_smoothness_3": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.58172276271236
+          },
+          "drift_smoothness_9": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5697636848829698
+          },
+          "static": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.6493858439555268
+          }
+        },
+        "inner_fold_count": 8,
+        "inner_fold_targets": [
+          "angelakilab",
+          "churchlandlab",
+          "cortexlab",
+          "danlab",
+          "hoferlab",
+          "mrsicflogellab",
+          "wittenlab",
+          "zadorlab"
+        ],
+        "inner_winner": "drift_smoothness_9",
+        "outer_held_out_lab": "mainenlab",
+        "outer_mean_trial_log_loss": 0.44101217690156164,
+        "outer_test_subjects": 9,
+        "outer_test_trials": 900,
+        "selected_candidate": "drift_smoothness_9",
+        "selected_family": "drift",
+        "selected_outer_fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "hierarchical-smooth-bernoulli-history-glm",
+          "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,2,5;smoothness=9.0;l2=0.02;subject_scale=0.4;subject_smoothness=9.0]",
+          "n_observations": 33878,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.13095380236750875,
+            "hessian_condition": 467.53849155406755,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 73,
+            "objective": 19048.028114349272,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        }
+      },
+      {
+        "inner_candidates": {
+          "drift_smoothness_1": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5885823670465185
+          },
+          "drift_smoothness_3": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5815721281344064
+          },
+          "drift_smoothness_9": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5678587802069984
+          },
+          "static": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.6461383638219377
+          }
+        },
+        "inner_fold_count": 8,
+        "inner_fold_targets": [
+          "angelakilab",
+          "churchlandlab",
+          "cortexlab",
+          "danlab",
+          "hoferlab",
+          "mainenlab",
+          "wittenlab",
+          "zadorlab"
+        ],
+        "inner_winner": "drift_smoothness_9",
+        "outer_held_out_lab": "mrsicflogellab",
+        "outer_mean_trial_log_loss": 0.5850717892490219,
+        "outer_test_subjects": 7,
+        "outer_test_trials": 700,
+        "selected_candidate": "drift_smoothness_9",
+        "selected_family": "drift",
+        "selected_outer_fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "hierarchical-smooth-bernoulli-history-glm",
+          "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,2,5;smoothness=9.0;l2=0.02;subject_scale=0.4;subject_smoothness=9.0]",
+          "n_observations": 34872,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.1255968282389406,
+            "hessian_condition": 491.17620782388246,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 78,
+            "objective": 19843.200499478095,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        }
+      },
+      {
+        "inner_candidates": {
+          "drift_smoothness_1": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5956981236083709
+          },
+          "drift_smoothness_3": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5868392533960315
+          },
+          "drift_smoothness_9": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5706426180230576
+          },
+          "static": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.6444484751423614
+          }
+        },
+        "inner_fold_count": 8,
+        "inner_fold_targets": [
+          "angelakilab",
+          "churchlandlab",
+          "cortexlab",
+          "danlab",
+          "hoferlab",
+          "mainenlab",
+          "mrsicflogellab",
+          "zadorlab"
+        ],
+        "inner_winner": "drift_smoothness_9",
+        "outer_held_out_lab": "wittenlab",
+        "outer_mean_trial_log_loss": 0.7479999013179366,
+        "outer_test_subjects": 8,
+        "outer_test_trials": 800,
+        "selected_candidate": "drift_smoothness_9",
+        "selected_family": "drift",
+        "selected_outer_fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "hierarchical-smooth-bernoulli-history-glm",
+          "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,2,5;smoothness=9.0;l2=0.02;subject_scale=0.4;subject_smoothness=9.0]",
+          "n_observations": 34472,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.3119721666559441,
+            "hessian_condition": 475.0225202461847,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 71,
+            "objective": 19424.257236277244,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        }
+      },
+      {
+        "inner_candidates": {
+          "drift_smoothness_1": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5835555568030608
+          },
+          "drift_smoothness_3": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5772709178246341
+          },
+          "drift_smoothness_9": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.5647999154428506
+          },
+          "static": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.6471905560015083
+          }
+        },
+        "inner_fold_count": 8,
+        "inner_fold_targets": [
+          "angelakilab",
+          "churchlandlab",
+          "cortexlab",
+          "danlab",
+          "hoferlab",
+          "mainenlab",
+          "mrsicflogellab",
+          "wittenlab"
+        ],
+        "inner_winner": "drift_smoothness_9",
+        "outer_held_out_lab": "zadorlab",
+        "outer_mean_trial_log_loss": 0.47392399256171847,
+        "outer_test_subjects": 10,
+        "outer_test_trials": 981,
+        "selected_candidate": "drift_smoothness_9",
+        "selected_family": "drift",
+        "selected_outer_fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "hierarchical-smooth-bernoulli-history-glm",
+          "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,2,5;smoothness=9.0;l2=0.02;subject_scale=0.4;subject_smoothness=9.0]",
+          "n_observations": 33397,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.09869599066386901,
+            "hessian_condition": 460.65769299207636,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 76,
+            "objective": 18906.671583410644,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        }
+      }
+    ],
+    "lab_balanced_selected_procedure": {
+      "bootstrap": {
+        "population_of_labs_inference": false,
+        "resamples": 5000,
+        "seed": 20300731,
+        "unit": "empirical held-out lab after equal subject weighting"
+      },
+      "interval_95": [
+        0.5141053484957989,
+        0.7169188286760585
+      ],
+      "log_loss_by_lab": {
+        "angelakilab": 0.7885052567189322,
+        "churchlandlab": 0.6576728026670734,
+        "cortexlab": 0.5100405399558459,
+        "danlab": 0.4252463414870926,
+        "hoferlab": 0.8740650778969797,
+        "mainenlab": 0.44101217690156164,
+        "mrsicflogellab": 0.5850717892490218,
+        "wittenlab": 0.7479999013179367,
+        "zadorlab": 0.47870990544665937
+      },
+      "mean_log_loss": 0.6120359768490115
+    },
+    "outer_audit_status": "pass",
+    "outer_folds": 9,
+    "outer_scored_trials": 7780,
+    "pooled_trial_log_loss": 0.5968326290126882,
+    "selection_counts": {
+      "drift_smoothness_1": 0,
+      "drift_smoothness_3": 0,
+      "drift_smoothness_9": 9,
+      "static": 0
+    },
+    "subject_balanced_brier_score": 0.1686645214571588,
+    "subject_balanced_log_loss": 0.5971344039731026,
+    "subject_bootstrap_log_loss_95_interval": [
+      0.5173747376181662,
+      0.6915297381816814
+    ],
+    "subject_scores": {
+      "CSHL045": {
+        "brier_score": 0.14953397610916638,
+        "log_loss": 0.4423313916980714
+      },
+      "CSHL046": {
+        "brier_score": 0.11030459094893294,
+        "log_loss": 0.3496001353933235
+      },
+      "CSHL047": {
+        "brier_score": 0.1425392298788665,
+        "log_loss": 0.4639248694069132
+      },
+      "CSHL049": {
+        "brier_score": 0.12334219236519335,
+        "log_loss": 0.3773346445908781
+      },
+      "CSHL051": {
+        "brier_score": 0.1389717445258456,
+        "log_loss": 0.46115685659704864
+      },
+      "CSHL052": {
+        "brier_score": 0.13204169400642538,
+        "log_loss": 0.4060329512687049
+      },
+      "CSHL053": {
+        "brier_score": 0.1507246370232097,
+        "log_loss": 0.48604613415194253
+      },
+      "CSHL054": {
+        "brier_score": 0.1511043662213792,
+        "log_loss": 0.4949181744119906
+      },
+      "CSHL055": {
+        "brier_score": 0.17617215134092834,
+        "log_loss": 0.5000285278732104
+      },
+      "CSHL058": {
+        "brier_score": 0.1197956934650788,
+        "log_loss": 0.37682636358419713
+      },
+      "CSHL059": {
+        "brier_score": 0.15941400978908826,
+        "log_loss": 0.5059969374865567
+      },
+      "CSHL060": {
+        "brier_score": 0.16152610923782798,
+        "log_loss": 0.46915956224955724
+      },
+      "CSHL_011": {
+        "brier_score": 0.4433830686529304,
+        "log_loss": 2.0003887207246573
+      },
+      "CSHL_012": {
+        "brier_score": 0.16581661636772904,
+        "log_loss": 0.5582439179804038
+      },
+      "CSHL_013": {
+        "brier_score": 0.5065489855720439,
+        "log_loss": 2.190597199332239
+      },
+      "CSHL_014": {
+        "brier_score": 0.18686431023847955,
+        "log_loss": 0.6414489176156241
+      },
+      "CSHL_015": {
+        "brier_score": 0.12389681154641632,
+        "log_loss": 0.4564023409749295
+      },
+      "CSH_ZAD_001": {
+        "brier_score": 0.1158989112243551,
+        "log_loss": 0.36435850690142213
+      },
+      "CSH_ZAD_002": {
+        "brier_score": 0.19850713860063707,
+        "log_loss": 0.721455243568949
+      },
+      "CSH_ZAD_003": {
+        "brier_score": 0.11412417596199152,
+        "log_loss": 0.36682832289082407
+      },
+      "CSH_ZAD_004": {
+        "brier_score": 0.13822906845977342,
+        "log_loss": 0.45274541484210945
+      },
+      "CSH_ZAD_005": {
+        "brier_score": 0.18082050314128245,
+        "log_loss": 0.5914189414241541
+      },
+      "CSH_ZAD_006": {
+        "brier_score": 0.13637899569111858,
+        "log_loss": 0.40672889447716976
+      },
+      "CSH_ZAD_007": {
+        "brier_score": 0.13217840068570472,
+        "log_loss": 0.433528443454029
+      },
+      "CSH_ZAD_010": {
+        "brier_score": 0.1000679292925943,
+        "log_loss": 0.32926215958305605
+      },
+      "CSH_ZAD_011": {
+        "brier_score": 0.20316504558726275,
+        "log_loss": 0.7258141444007171
+      },
+      "CSH_ZAD_022": {
+        "brier_score": 0.12551728304678422,
+        "log_loss": 0.3949589829241635
+      },
+      "DY_008": {
+        "brier_score": 0.1322777610227146,
+        "log_loss": 0.4076894197376709
+      },
+      "DY_009": {
+        "brier_score": 0.12423251341032673,
+        "log_loss": 0.40171887518204363
+      },
+      "DY_010": {
+        "brier_score": 0.1354133251374489,
+        "log_loss": 0.4844039663106639
+      },
+      "DY_011": {
+        "brier_score": 0.12379586552396526,
+        "log_loss": 0.387037136736317
+      },
+      "DY_013": {
+        "brier_score": 0.11494524692514578,
+        "log_loss": 0.36084821821483565
+      },
+      "DY_014": {
+        "brier_score": 0.14778642014948917,
+        "log_loss": 0.5097804327410246
+      },
+      "IBL_001": {
+        "brier_score": 0.09842970065755578,
+        "log_loss": 0.32632880412528026
+      },
+      "KS014": {
+        "brier_score": 0.1496850776989,
+        "log_loss": 0.5151402577134258
+      },
+      "KS015": {
+        "brier_score": 0.16614730592139157,
+        "log_loss": 0.5599164039766218
+      },
+      "KS016": {
+        "brier_score": 0.14201570421730328,
+        "log_loss": 0.42103802438615257
+      },
+      "KS017": {
+        "brier_score": 0.2093892251340012,
+        "log_loss": 0.7181588096344893
+      },
+      "KS018": {
+        "brier_score": 0.16202008007783675,
+        "log_loss": 0.47068819675084583
+      },
+      "KS019": {
+        "brier_score": 0.17298871792763038,
+        "log_loss": 0.5081546292908078
+      },
+      "KS021": {
+        "brier_score": 0.15818487099346204,
+        "log_loss": 0.5410672485920613
+      },
+      "KS022": {
+        "brier_score": 0.13412293303807246,
+        "log_loss": 0.44489716620653424
+      },
+      "KS023": {
+        "brier_score": 0.14619257605215352,
+        "log_loss": 0.478264223283347
+      },
+      "KS024": {
+        "brier_score": 0.15996028141949975,
+        "log_loss": 0.535259199528683
+      },
+      "KS025": {
+        "brier_score": 0.13450473383336317,
+        "log_loss": 0.41786178015133535
+      },
+      "NYU-09": {
+        "brier_score": 0.18514571703798535,
+        "log_loss": 0.6952651084158784
+      },
+      "NYU-11": {
+        "brier_score": 0.252944404208213,
+        "log_loss": 1.0052158735430232
+      },
+      "NYU-14": {
+        "brier_score": 0.1997309034325954,
+        "log_loss": 0.6541710813531907
+      },
+      "NYU-20": {
+        "brier_score": 0.18981422925933228,
+        "log_loss": 0.7993689635636366
+      },
+      "SWC_001": {
+        "brier_score": 0.1717491155688236,
+        "log_loss": 0.4833828020448302
+      },
+      "SWC_002": {
+        "brier_score": 0.5024787356602411,
+        "log_loss": 2.6902664473315685
+      },
+      "SWC_013": {
+        "brier_score": 0.1258349781452493,
+        "log_loss": 0.41392602567337833
+      },
+      "SWC_014": {
+        "brier_score": 0.18805256029202688,
+        "log_loss": 0.7440319580924267
+      },
+      "SWC_015": {
+        "brier_score": 0.1357690346243126,
+        "log_loss": 0.46110020537458696
+      },
+      "SWC_017": {
+        "brier_score": 0.192533031748159,
+        "log_loss": 0.6988020108557845
+      },
+      "SWC_018": {
+        "brier_score": 0.2698580562086638,
+        "log_loss": 1.0302899655521343
+      },
+      "SWC_021": {
+        "brier_score": 0.1343367602582662,
+        "log_loss": 0.45168302886508793
+      },
+      "SWC_022": {
+        "brier_score": 0.16537022612387425,
+        "log_loss": 0.5544359072909089
+      },
+      "SWC_023": {
+        "brier_score": 0.1401739265648268,
+        "log_loss": 0.42716838042814564
+      },
+      "SWC_029": {
+        "brier_score": 0.13863277381281688,
+        "log_loss": 0.4475386512187874
+      },
+      "SWC_030": {
+        "brier_score": 0.19421349976354485,
+        "log_loss": 0.6109388052721119
+      },
+      "ZM_1745": {
+        "brier_score": 0.11287306951908169,
+        "log_loss": 0.35373360476140264
+      },
+      "ZM_1897": {
+        "brier_score": 0.18048205229357883,
+        "log_loss": 0.5502209798047982
+      },
+      "ZM_1898": {
+        "brier_score": 0.14520938098643407,
+        "log_loss": 0.4753893980123044
+      },
+      "ZM_2107": {
+        "brier_score": 0.15878931325164508,
+        "log_loss": 0.4698335708354072
+      },
+      "ZM_2240": {
+        "brier_score": 0.14227154418769797,
+        "log_loss": 0.4719988903796583
+      },
+      "ZM_2241": {
+        "brier_score": 0.1394488028040734,
+        "log_loss": 0.4596100083561204
+      },
+      "ZM_2245": {
+        "brier_score": 0.12365985748920907,
+        "log_loss": 0.38119790307467416
+      },
+      "ZM_3003": {
+        "brier_score": 0.13850500288881565,
+        "log_loss": 0.4241118140526924
+      },
+      "ZM_3004": {
+        "brier_score": 0.12478054516674363,
+        "log_loss": 0.383013422836997
+      },
+      "ibl_witten_12": {
+        "brier_score": 0.19588257650344784,
+        "log_loss": 0.7386007988356472
+      },
+      "ibl_witten_13": {
+        "brier_score": 0.13871467786025207,
+        "log_loss": 0.5020981381812962
+      },
+      "ibl_witten_14": {
+        "brier_score": 0.20043983137199248,
+        "log_loss": 0.7418754946733861
+      },
+      "ibl_witten_15": {
+        "brier_score": 0.19327022825398998,
+        "log_loss": 1.0090166923334545
+      },
+      "ibl_witten_16": {
+        "brier_score": 0.13737207352482997,
+        "log_loss": 0.4078484047387276
+      },
+      "ibl_witten_17": {
+        "brier_score": 0.14911865450454012,
+        "log_loss": 0.5288663041287582
+      },
+      "ibl_witten_18": {
+        "brier_score": 0.37307965657109804,
+        "log_loss": 1.6936260083287322
+      },
+      "ibl_witten_19": {
+        "brier_score": 0.11633747565071798,
+        "log_loss": 0.3620673693234916
+      }
+    }
+  },
+  "panel": {
+    "labs": 9,
+    "sessions": 468,
+    "source_choice_counts": {
+      "-1": 22691,
+      "1": 23461
+    },
+    "subjects": 78,
+    "subjects_per_lab": {
+      "angelakilab": 4,
+      "churchlandlab": 17,
+      "cortexlab": 11,
+      "danlab": 6,
+      "hoferlab": 6,
+      "mainenlab": 9,
+      "mrsicflogellab": 7,
+      "wittenlab": 8,
+      "zadorlab": 10
+    },
+    "trials": 46152,
+    "trials_by_position": {
+      "0": 7620,
+      "1": 7453,
+      "2": 7703,
+      "3": 7799,
+      "4": 7797,
+      "5": 7780
+    }
+  },
+  "selection_contract": {
+    "bootstrap_seed": 20260731,
+    "candidate_grid": {
+      "common": {
+        "covariates": [
+          "signed contrast",
+          "one-session-reset choice lag"
+        ],
+        "l2": 0.02
+      },
+      "drift": {
+        "knots": [
+          0.0,
+          2.0,
+          5.0
+        ],
+        "smoothness_and_subject_smoothness": [
+          1.0,
+          3.0,
+          9.0
+        ],
+        "subject_scale": 0.4
+      },
+      "static": {
+        "subject_scale": 0.4
+      }
+    },
+    "candidate_order": [
+      "static",
+      "drift_smoothness_1",
+      "drift_smoothness_3",
+      "drift_smoothness_9"
+    ],
+    "inner_bootstrap_resamples": 1000,
+    "lab_inner": "position 4 in each inner held-out lab from positions 0 through 3 in the remaining outer-training labs",
+    "lab_outer": "position 5 in the untouched outer lab from positions 0 through 4 in all other labs",
+    "outer_bootstrap_resamples": 5000,
+    "outer_test_outcomes_available_during_selection": false,
+    "prediction_mode": "filtered one-step-ahead within test sessions",
+    "tie_break": "declared candidate order",
+    "within_inner": "positions 3 and 4 forecast from earlier prefixes",
+    "within_outer": "position 5 for all represented animals"
+  },
+  "source": {
+    "doi": "10.7554/eLife.63711",
+    "fixed_comparison_sha256": "3d2fc25771369d60955752aef4fcd731b4936985c399f5d08a6cc2f9008daf7c",
+    "manifest_sha256": "c0a45addbc14b936f6b3aaac0c06b6a4d7108725d82dcc3df8f1501f4b1aec0b",
+    "release": "2021_Q1_IBL_et_al_Behaviour"
+  },
+  "within_subject_future_session": {
+    "candidate_order": [
+      "static",
+      "drift_smoothness_1",
+      "drift_smoothness_3",
+      "drift_smoothness_9"
+    ],
+    "comparison_with_fixed_candidates": {
+      "fixed_drift_smoothness_3": {
+        "bootstrap_probability_below_zero": 1.0,
+        "direction": "selected procedure minus fixed candidate; negative favors selection",
+        "estimate": -0.007679897821400701,
+        "interval_95": [
+          -0.012847144778087677,
+          -0.0033818970730673604
+        ]
+      },
+      "fixed_static": {
+        "bootstrap_probability_below_zero": 0.9946,
+        "direction": "selected procedure minus fixed candidate; negative favors selection",
+        "estimate": -0.09277666173400918,
+        "interval_95": [
+          -0.14802290535720858,
+          -0.026720192401646463
+        ]
+      }
+    },
+    "family_selection_counts": {
+      "drift": 1
+    },
+    "folds": [
+      {
+        "inner_candidates": {
+          "drift_smoothness_1": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.618197217763698
+          },
+          "drift_smoothness_3": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.6167770041524281
+          },
+          "drift_smoothness_9": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.6149022828888598
+          },
+          "static": {
+            "audit_status": "pass",
+            "subject_balanced_log_loss": 0.7052588334183824
+          }
+        },
+        "inner_fold_count": 2,
+        "inner_fold_targets": [
+          3,
+          4
+        ],
+        "inner_winner": "drift_smoothness_9",
+        "outer_mean_trial_log_loss": 0.5466899630042603,
+        "outer_test_position": 5,
+        "outer_test_subjects": 78,
+        "outer_test_trials": 7780,
+        "selected_candidate": "drift_smoothness_9",
+        "selected_family": "drift",
+        "selected_outer_fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "hierarchical-smooth-bernoulli-history-glm",
+          "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,2,5;smoothness=9.0;l2=0.02;subject_scale=0.4;subject_smoothness=9.0]",
+          "n_observations": 38372,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.12278476958455888,
+            "hessian_condition": 529.0984421845645,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 76,
+            "objective": 21689.87413089852,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        }
+      }
+    ],
+    "outer_audit_status": "pass",
+    "outer_folds": 1,
+    "outer_scored_trials": 7780,
+    "pooled_trial_log_loss": 0.5466899630042603,
+    "selection_counts": {
+      "drift_smoothness_1": 0,
+      "drift_smoothness_3": 0,
+      "drift_smoothness_9": 1,
+      "static": 0
+    },
+    "subject_balanced_brier_score": 0.16096225487752375,
+    "subject_balanced_log_loss": 0.5472312174454272,
+    "subject_bootstrap_log_loss_95_interval": [
+      0.49284258912803364,
+      0.6151744476996407
+    ],
+    "subject_scores": {
+      "CSHL045": {
+        "brier_score": 0.14745532877042858,
+        "log_loss": 0.43702368385470103
+      },
+      "CSHL046": {
+        "brier_score": 0.10790988374986953,
+        "log_loss": 0.3427990013633546
+      },
+      "CSHL047": {
+        "brier_score": 0.13580158694367367,
+        "log_loss": 0.44573697304480137
+      },
+      "CSHL049": {
+        "brier_score": 0.1433046958633152,
+        "log_loss": 0.4239991532409033
+      },
+      "CSHL051": {
+        "brier_score": 0.15048322417612067,
+        "log_loss": 0.4894187860981415
+      },
+      "CSHL052": {
+        "brier_score": 0.1288150068859902,
+        "log_loss": 0.39833175374548885
+      },
+      "CSHL053": {
+        "brier_score": 0.17273682163237836,
+        "log_loss": 0.5310451171977101
+      },
+      "CSHL054": {
+        "brier_score": 0.14959219572618246,
+        "log_loss": 0.48467632495629714
+      },
+      "CSHL055": {
+        "brier_score": 0.18509631894731787,
+        "log_loss": 0.5229665099476795
+      },
+      "CSHL058": {
+        "brier_score": 0.12936669153688962,
+        "log_loss": 0.39648693965710174
+      },
+      "CSHL059": {
+        "brier_score": 0.12070043506513269,
+        "log_loss": 0.4161467325014665
+      },
+      "CSHL060": {
+        "brier_score": 0.18324679972523003,
+        "log_loss": 0.5176669092363744
+      },
+      "CSHL_011": {
+        "brier_score": 0.44195500802763005,
+        "log_loss": 1.9892178557994098
+      },
+      "CSHL_012": {
+        "brier_score": 0.1651786987711918,
+        "log_loss": 0.5467467077782985
+      },
+      "CSHL_013": {
+        "brier_score": 0.344875371164681,
+        "log_loss": 1.1757786723858492
+      },
+      "CSHL_014": {
+        "brier_score": 0.18274846649219686,
+        "log_loss": 0.6259318678108092
+      },
+      "CSHL_015": {
+        "brier_score": 0.1080394929998492,
+        "log_loss": 0.3975906035426145
+      },
+      "CSH_ZAD_001": {
+        "brier_score": 0.11139513962411816,
+        "log_loss": 0.3519538570741685
+      },
+      "CSH_ZAD_002": {
+        "brier_score": 0.18357310829523799,
+        "log_loss": 0.7394682614092011
+      },
+      "CSH_ZAD_003": {
+        "brier_score": 0.10404672201869376,
+        "log_loss": 0.3432233902840391
+      },
+      "CSH_ZAD_004": {
+        "brier_score": 0.1561509750459827,
+        "log_loss": 0.49706635343588085
+      },
+      "CSH_ZAD_005": {
+        "brier_score": 0.17262063515282544,
+        "log_loss": 0.54890190458166
+      },
+      "CSH_ZAD_006": {
+        "brier_score": 0.11420231411555685,
+        "log_loss": 0.3569254615208217
+      },
+      "CSH_ZAD_007": {
+        "brier_score": 0.12949198873179105,
+        "log_loss": 0.4322222342028929
+      },
+      "CSH_ZAD_010": {
+        "brier_score": 0.14826327557494332,
+        "log_loss": 0.43041972409488594
+      },
+      "CSH_ZAD_011": {
+        "brier_score": 0.2093440429480567,
+        "log_loss": 0.7701377574336754
+      },
+      "CSH_ZAD_022": {
+        "brier_score": 0.12012330969941583,
+        "log_loss": 0.3826896097936401
+      },
+      "DY_008": {
+        "brier_score": 0.1163207795296099,
+        "log_loss": 0.37035648071370775
+      },
+      "DY_009": {
+        "brier_score": 0.11557144060871166,
+        "log_loss": 0.37955538730392296
+      },
+      "DY_010": {
+        "brier_score": 0.13287898419199878,
+        "log_loss": 0.48062565657928424
+      },
+      "DY_011": {
+        "brier_score": 0.1204121099003698,
+        "log_loss": 0.37757870091206286
+      },
+      "DY_013": {
+        "brier_score": 0.12356789230094163,
+        "log_loss": 0.3752695673548777
+      },
+      "DY_014": {
+        "brier_score": 0.14460866759549543,
+        "log_loss": 0.5014149634770245
+      },
+      "IBL_001": {
+        "brier_score": 0.10150646136567552,
+        "log_loss": 0.32523604658545785
+      },
+      "KS014": {
+        "brier_score": 0.12505210946335438,
+        "log_loss": 0.46895025105287813
+      },
+      "KS015": {
+        "brier_score": 0.15269019376729137,
+        "log_loss": 0.5296112072214574
+      },
+      "KS016": {
+        "brier_score": 0.13702297334370292,
+        "log_loss": 0.4096197153430684
+      },
+      "KS017": {
+        "brier_score": 0.19473888095586198,
+        "log_loss": 0.6870763591973001
+      },
+      "KS018": {
+        "brier_score": 0.14382134777806874,
+        "log_loss": 0.43974246159110036
+      },
+      "KS019": {
+        "brier_score": 0.13176630019555682,
+        "log_loss": 0.41530494458931977
+      },
+      "KS021": {
+        "brier_score": 0.16422813068423336,
+        "log_loss": 0.5930664335529582
+      },
+      "KS022": {
+        "brier_score": 0.1394685095357346,
+        "log_loss": 0.44814323501494363
+      },
+      "KS023": {
+        "brier_score": 0.14742138271766905,
+        "log_loss": 0.47851271106581983
+      },
+      "KS024": {
+        "brier_score": 0.17887708458562998,
+        "log_loss": 0.584620795770498
+      },
+      "KS025": {
+        "brier_score": 0.12982049798476938,
+        "log_loss": 0.39055755951175786
+      },
+      "NYU-09": {
+        "brier_score": 0.1777606425436389,
+        "log_loss": 0.6555158113120227
+      },
+      "NYU-11": {
+        "brier_score": 0.33786928998130344,
+        "log_loss": 1.3030444026672294
+      },
+      "NYU-14": {
+        "brier_score": 0.19486783419319323,
+        "log_loss": 0.6316676563892163
+      },
+      "NYU-20": {
+        "brier_score": 0.18480142199694696,
+        "log_loss": 0.7768632928591924
+      },
+      "SWC_001": {
+        "brier_score": 0.1277063804918645,
+        "log_loss": 0.38759385326284884
+      },
+      "SWC_002": {
+        "brier_score": 0.43736735711625485,
+        "log_loss": 1.423979392659813
+      },
+      "SWC_013": {
+        "brier_score": 0.1252345254801443,
+        "log_loss": 0.4148086240676871
+      },
+      "SWC_014": {
+        "brier_score": 0.18554018295197117,
+        "log_loss": 0.6895081274291731
+      },
+      "SWC_015": {
+        "brier_score": 0.13529582009363803,
+        "log_loss": 0.4565750421382435
+      },
+      "SWC_017": {
+        "brier_score": 0.18069966432337584,
+        "log_loss": 0.6443422920623634
+      },
+      "SWC_018": {
+        "brier_score": 0.24255061273305525,
+        "log_loss": 0.9368927654578342
+      },
+      "SWC_021": {
+        "brier_score": 0.14893460424426325,
+        "log_loss": 0.47808228762916954
+      },
+      "SWC_022": {
+        "brier_score": 0.15358962580969676,
+        "log_loss": 0.5297735558262634
+      },
+      "SWC_023": {
+        "brier_score": 0.14515772219072784,
+        "log_loss": 0.4295016702973325
+      },
+      "SWC_029": {
+        "brier_score": 0.10480359686365658,
+        "log_loss": 0.36014066037007675
+      },
+      "SWC_030": {
+        "brier_score": 0.17922234056351627,
+        "log_loss": 0.5870523292817587
+      },
+      "ZM_1745": {
+        "brier_score": 0.11332325279967549,
+        "log_loss": 0.35170433837583964
+      },
+      "ZM_1897": {
+        "brier_score": 0.1207575251314014,
+        "log_loss": 0.407120531428535
+      },
+      "ZM_1898": {
+        "brier_score": 0.12583926835272177,
+        "log_loss": 0.42059229179188945
+      },
+      "ZM_2107": {
+        "brier_score": 0.17087227877283923,
+        "log_loss": 0.4953947386632347
+      },
+      "ZM_2240": {
+        "brier_score": 0.12789163047496496,
+        "log_loss": 0.4343121245456911
+      },
+      "ZM_2241": {
+        "brier_score": 0.141546763233782,
+        "log_loss": 0.466357679833257
+      },
+      "ZM_2245": {
+        "brier_score": 0.12309945488977235,
+        "log_loss": 0.3746986820579928
+      },
+      "ZM_3003": {
+        "brier_score": 0.12400023274705108,
+        "log_loss": 0.38909184407863434
+      },
+      "ZM_3004": {
+        "brier_score": 0.17244273346370137,
+        "log_loss": 0.4887077705992592
+      },
+      "ibl_witten_12": {
+        "brier_score": 0.16846000644634973,
+        "log_loss": 0.6015140348359167
+      },
+      "ibl_witten_13": {
+        "brier_score": 0.11167066539816255,
+        "log_loss": 0.41027587568658225
+      },
+      "ibl_witten_14": {
+        "brier_score": 0.15620834872578532,
+        "log_loss": 0.5571569452030893
+      },
+      "ibl_witten_15": {
+        "brier_score": 0.1860683749234875,
+        "log_loss": 0.7696935276875345
+      },
+      "ibl_witten_16": {
+        "brier_score": 0.13137690780288797,
+        "log_loss": 0.3958683163095689
+      },
+      "ibl_witten_17": {
+        "brier_score": 0.1433645193944901,
+        "log_loss": 0.5112628003230689
+      },
+      "ibl_witten_18": {
+        "brier_score": 0.3240245224991069,
+        "log_loss": 1.3134709498211812
+      },
+      "ibl_witten_19": {
+        "brier_score": 0.10641648962405112,
+        "log_loss": 0.34165612296252085
+      }
+    }
+  }
+}
