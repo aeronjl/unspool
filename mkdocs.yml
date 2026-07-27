@@ -106,6 +106,7 @@ nav:
       - Posterior-predictive checks: posterior-predictive-checks.md
       - Simulation-based calibration: simulation-based-calibration.md
       - Analysis sensitivity: sensitivity-analysis.md
+      - Test-retest reliability: test-retest-reliability.md
       - PSIS-LOO predictive evaluation: psis-loo.md
       - PyMC hierarchical GLM backend: pymc-backend.md
       - Estimator contract: estimator-contract.md

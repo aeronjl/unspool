@@ -149,6 +149,8 @@ studies, use [simulation-based calibration](simulation-based-calibration.md). It
 the same labelled posterior contract without making a sampler part of Unspool core.
 To compare those same labelled parameters across defensible prior, preprocessing, or
 backend refits, use [analysis sensitivity](sensitivity-analysis.md).
+When two comparable occasions estimate the same individual-level target, extract labelled
+subject means for [test-retest reliability](test-retest-reliability.md).
 
 ## What this does not claim
 

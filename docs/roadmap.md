@@ -433,8 +433,11 @@ The roadmap is organized by scientific contracts rather than by model count.
   exact-refit sensitivity contract with scenario-stable seeds, immutable scalar metrics,
   labelled posterior summaries, diagnostic and artifact provenance, reference contrasts,
   descriptive specification spread, and retained analysis or evaluation failures.
-- **Planned:** add test-retest reliability alongside Unspool's prospective validation and
-  exact-design recovery.
+- **Implemented:** assess test-retest reliability over exactly paired, subject-labelled
+  estimates, separating Pearson and rank consistency, two-way single-measure ICC
+  consistency, ICC absolute agreement, and Bland-Altman/error-scale evidence; retain raw
+  pairs, paired-bootstrap distributions and invalid draws, explicit finite-sample policy,
+  posterior parameter provenance, and stable estimability warnings.
 - **Release boundary:** changing an inference backend must not change task semantics,
   prediction information, split geometry, scored observations, or result interpretation.
 
