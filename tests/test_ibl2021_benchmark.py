@@ -101,6 +101,9 @@ def test_committed_result_retains_population_holdout_coverage() -> None:
     assert result["n_leave_lab_out_folds"] == 9
     assert result["n_matching_subject_lab_partitions"] == 9
     assert result["n_lab_holdouts_with_multiple_subjects"] == 0
+    audit = result["trajectory_shape_replication_audit"]
+    assert not audit["inferentially_ready"]
+    assert len(audit["singleton_groups"]) == 9
 
 
 def _trials(rewards: list[int]) -> dict[str, Any]:

@@ -80,6 +80,11 @@ limit: this panel cannot distinguish generalization to a new animal from general
 a new lab. A cross-lab model benchmark requires multiple held-out animals per lab rather
 than reinterpreting these nine paired partitions.
 
+The committed result now makes that limit machine-readable through Unspool's trajectory
+replication audit. All nine labs are flagged as singletons and the panel is explicitly
+`inferentially_ready: false` for cross-lab trajectory-shape comparison. No pairwise lab
+distance or bootstrap interval is produced from this confounded design.
+
 ## Interpretation boundary
 
 The transition is itself performance-gated in the training pipeline, and both transition

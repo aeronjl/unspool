@@ -53,6 +53,8 @@ Unspool is being designed so that:
 - recovery is reported for a particular design and sample size, not awarded as a
   universal certificate;
 - individual trajectories remain inspectable when population information is pooled;
+- cross-lab trajectory comparisons require independent animals within every lab and keep
+  level, amplitude, and scale-free shape distinct;
 - external tables retain explicit identity, chronology, source semantics, and provenance;
 - discrete states must compete against smooth drift, learning, history, and observable
   behavioural alternatives.
@@ -111,6 +113,7 @@ normalized audit without discarding its model-specific evidence. See the
 [modelling guide](docs/modelling.md), [fit-audit guide](docs/diagnostics.md),
 [estimator and plugin contract](docs/estimator-contract.md),
 [prospective comparison guide](docs/comparison.md),
+[cross-lab trajectory-shape guide](docs/trajectory-shapes.md),
 [smooth-drift guide](docs/smooth-drift.md),
 [partial-pooling guide](docs/hierarchical-glm.md),
 [partially pooled trajectory guide](docs/hierarchical-smooth-glm.md),
@@ -173,6 +176,12 @@ scientifically matched account wins every regime under both realized subject-tra
 RMSE and held-out final-session log loss; the hierarchical smooth model wins only when
 animals genuinely change differently. See the
 [trajectory-recovery benchmark](benchmarks/trajectory_recovery/README.md).
+
+The cross-lab trajectory benchmark separates a constant level shift, doubled centered
+amplitude, and a genuinely different path across four replicated synthetic labs. All 20
+matched repetitions recover the generating component structure, while a nine-lab
+singleton design is rejected as inferentially unready. See the
+[trajectory-shape benchmark](benchmarks/trajectory_shapes/README.md).
 
 The longitudinal Wiener hierarchy now supports named drift and boundary heterogeneity and
 can estimate each scale inside the training fold with bounded Laplace-EM updates. In a
