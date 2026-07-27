@@ -47,6 +47,7 @@ bounded claims.
 | `clock-boundary.svg` | Contrast time coordinates and show training-only transform fitting |
 | `validation-splits.svg` | Compare four prospective train/test geometries |
 | `model-atlas.svg` | Contrast the trajectory assumptions of supported model families |
+| `model-choice-workflow.svg` | Route the observed event and scientific mechanism into matched validation, alternatives, and recovery |
 | `nested-selection.svg` | Show where candidate selection sits inside an outer evaluation |
 | `diagnostic-layers.svg` | Separate numerical, predictive, parameter-recovery, and model-recovery evidence |
 | `interoperability-pipeline.svg` | Show how supported sources converge on the same study contract |

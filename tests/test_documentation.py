@@ -22,6 +22,7 @@ EXPECTED_FIGURES = {
     "ibl-prospective-selection.svg",
     "interoperability-pipeline.svg",
     "model-atlas.svg",
+    "model-choice-workflow.svg",
     "model-recovery-matrix.svg",
     "nested-selection.svg",
     "reliability-agreement.svg",
@@ -31,6 +32,24 @@ EXPECTED_FIGURES = {
     "validation-geometry.svg",
     "validation-splits.svg",
     "workflow-map.svg",
+}
+MODEL_CARD_CLASSES = {
+    "BernoulliGLMHMM",
+    "BernoulliHistoryGLM",
+    "BiasOnly",
+    "BinaryQLearning",
+    "BinaryRLAgent",
+    "HierarchicalBernoulliHistoryGLM",
+    "HierarchicalSmoothBernoulliHistoryGLM",
+    "HierarchicalSmoothWienerDriftDiffusion",
+    "LapsePsychometric",
+    "MultinomialLogit",
+    "Perseveration",
+    "Psychometric",
+    "SmoothBernoulliHistoryGLM",
+    "SmoothWienerDriftDiffusion",
+    "WienerDriftDiffusion",
+    "WinStayLoseShift",
 }
 
 
@@ -49,3 +68,10 @@ def test_figure_provenance_register_covers_every_figure() -> None:
 
     for name in EXPECTED_FIGURES:
         assert f"`{name}`" in register
+
+
+def test_model_cards_cover_every_first_party_family() -> None:
+    cards = (ROOT / "docs" / "model-cards.md").read_text()
+
+    for name in MODEL_CARD_CLASSES:
+        assert f"`{name}`" in cards

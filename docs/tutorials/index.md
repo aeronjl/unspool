@@ -4,6 +4,9 @@ These tutorials are executable scientific narratives rather than isolated API sn
 Each identifies its source, experimental unit, cohort rule, estimand, validation boundary,
 result, and limitations.
 
+The [literature-recipe standard](recipe-contract.md) explains the common structure and the
+minimum evidence required before a new example joins this list.
+
 ## Cell 2025 flagship forecast
 
 Reproduce the public behavioural results from 30 mice in Liebana, Laffere et al., then

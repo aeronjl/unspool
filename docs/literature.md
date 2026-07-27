@@ -88,13 +88,38 @@ and keeps hierarchical joint reliability modelling as a distinct extension.
 - [Schaaf et al. (2024)](https://doi.org/10.3758/s13428-023-02203-4)
 - [Williams et al. (2025)](https://doi.org/10.3758/s13428-025-02599-1)
 
+## Coverage signals from the current field
+
+Conference programmes are useful coverage audits, not evidence that a method is valid.
+The [Cosyne 2025 workshops](https://www.cosyne.org/workshops-program-2025) foregrounded
+multi-timescale behavioural flexibility and re-examining reinforcement learning in the
+brain; the [Cosyne 2026 workshops](https://www.cosyne.org/workshops-program) included
+inferring neural latent states from behaviour and learning-to-execution sequences. Those
+themes reinforce a basic package need: observable history, smooth change, reward-driven
+updates, and latent regimes must be easy to compare under the same longitudinal contract.
+They do not justify adding a novel mechanism without a validated implementation.
+
+For evidence-accumulation models, the multi-author
+[expert task-design guide](https://doi.org/10.1177/25152459251336127) treats experimental
+design, model adequacy, and parameter recovery as part of the analysis rather than
+post-fit decoration. Unspool uses that as a documentation standard: response-time origin,
+units, eligibility, candidate confusion, and recovery belong in each DDM recipe.
+
+The resulting orientation layer is deliberately practical:
+
+- [choose a model by the claim](model-choice-guide.md);
+- inspect common-format [model cards](model-cards.md);
+- follow the [literature-recipe standard](tutorials/recipe-contract.md); and
+- preserve established implementations with the [migration](migration-guides.md) and
+  [extension](extensions.md) guides.
+
 ## Documentation commitments
 
 Future literature examples should prioritize:
 
-1. a full prospective refactor of the Cell behavioural analysis;
+1. a genuinely public bandit task with a canonical RL/history comparison;
 2. an independently held-out smoothness confirmation after exact-design recovery;
 3. a cohort-level confirmation of the public choice/response-time design; and
-4. targeted smooth, history, and learning competitors for the public latent-state design.
+4. targeted smooth and learning competitors for the public latent-state design.
 
 These are roadmap commitments, not currently supported empirical claims.

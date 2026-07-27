@@ -26,10 +26,11 @@ its inferential or design coverage remains deliberately narrow.
 | Cross-lab trajectory geometry | **Experimental** | Fixed empirical labs, no population-of-labs generalization. |
 | Multinomial and omission-aware choice models | **Experimental** | Treatment-coded softmax regression supports finite JSON-scalar labels, trial availability, retained omissions, prospective scoring, and recovery; categorical calibration remains planned. |
 | Context-bound common fit artifacts and estimator registry | **Experimental** | Deterministic JSON binds task, data identity, version, parameters, and audits; it is intentionally not a lossless posterior format. |
-| ArviZ/xarray posterior and predictive interchange | **Planned** | Requires backend-neutral labelled sample dimensions and model-specific groups in 0.23. |
+| ArviZ/xarray posterior and predictive interchange | **Supported** | Immutable labelled groups preserve model, backend, dimension, and parameter-space provenance across both representations. |
+| PyMC posterior inference for the hierarchical history GLM | **Experimental** | NUTS covers the fixed-scale hierarchical Bernoulli history model with labelled likelihood, predictive, and diagnostic groups. |
 | Session-varying GLM-HMM parameters | **Planned** | Requires targeted state and trajectory recovery first. |
 | Hierarchical lab effects | **Planned** | Requires more labs and a population-level sampling model. |
-| Full Bayesian uncertainty propagation | **Planned** | Current implementations use Laplace/local or Monte Carlo approximations. |
+| Full Bayesian uncertainty propagation across the catalogue | **Planned** | Other first-party models still use local, bootstrap, or Monte Carlo approximations. |
 | Neural-signal modelling | **Out of scope** | Neural observations should enter through explicit companion models or packages. |
 
 A planned capability should not be approximated by forcing data through a supported method

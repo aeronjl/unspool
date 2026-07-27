@@ -52,6 +52,7 @@ def main() -> None:
     _plot_clock_boundary(args.output_dir / "clock-boundary.svg")
     _plot_validation_splits(args.output_dir / "validation-splits.svg")
     _plot_model_atlas(args.output_dir / "model-atlas.svg")
+    _plot_model_choice(args.output_dir / "model-choice-workflow.svg")
     _plot_nested_selection(args.output_dir / "nested-selection.svg")
     _plot_diagnostic_layers(args.output_dir / "diagnostic-layers.svg")
     _plot_sbc_workflow(args.output_dir / "sbc-workflow.svg")
@@ -352,6 +353,101 @@ def _plot_model_atlas(path: Path) -> None:
     axes[0].set_ylabel("Illustrative latent decision tendency")
     figure.suptitle(
         "Different model families encode different explanations of change", weight="semibold"
+    )
+    _save(figure, path)
+
+
+def _plot_model_choice(path: Path) -> None:
+    figure, axis = plt.subplots(figsize=(11.8, 6.1))
+    axis.set(xlim=(0, 11.8), ylim=(0, 6.1))
+    axis.axis("off")
+    _box(
+        axis,
+        (4.65, 5.02),
+        (2.5, 0.72),
+        "Observed event",
+        "what is scored on each trial?",
+        color=INDIGO,
+    )
+    _arrow(axis, (5.9, 5.0), (2.8, 4.35), color=BLUE)
+    _arrow(axis, (5.9, 5.0), (8.95, 4.35), color=AMBER)
+    _box(axis, (1.25, 3.65), (3.05, 0.72), "Choice", "binary or categorical", color=BLUE)
+    _box(
+        axis,
+        (7.5, 3.65),
+        (3.05, 0.72),
+        "Choice + response time",
+        "joint event and physical units",
+        color=AMBER,
+        fill="#fff8ef",
+    )
+    choice_families = (
+        (0.2, "Observable structure", "baseline · history GLM", BLUE),
+        (2.45, "Smooth change", "smooth or hierarchical GLM", TEAL),
+        (4.7, "Discrete regimes", "GLM-HMM + competitors", INDIGO),
+        (6.95, "Reward updating", "RL + history competitors", AMBER),
+    )
+    for left, title, subtitle, color in choice_families:
+        _box(axis, (left, 2.05), (2.0, 0.82), title, subtitle, color=color, fill="white")
+        _arrow(axis, (2.78, 3.62), (left + 1.0, 2.9), color=color)
+    _box(
+        axis,
+        (9.15, 2.05),
+        (2.35, 0.82),
+        "Wiener DDM",
+        "static · smooth · pooled",
+        color=AMBER,
+        fill="white",
+    )
+    _arrow(axis, (9.02, 3.62), (10.3, 2.9), color=AMBER)
+    _box(
+        axis,
+        (0.85, 0.45),
+        (2.45, 0.8),
+        "Deployment boundary",
+        "future trial · session · subject · lab",
+        color=BLUE,
+    )
+    _box(
+        axis,
+        (4.68, 0.45),
+        (2.45, 0.8),
+        "Matched alternatives",
+        "same observed event and test rows",
+        color=TEAL,
+    )
+    _box(
+        axis,
+        (8.5, 0.45),
+        (2.45, 0.8),
+        "Recovery + diagnostics",
+        "design-specific claim limit",
+        color=AMBER,
+    )
+    family_centers = (1.2, 3.45, 5.7, 7.95, 10.325)
+    for center in family_centers:
+        axis.plot((center, center), (2.05, 1.72), color=MUTED, linewidth=1.0)
+    axis.plot((family_centers[0], family_centers[-1]), (1.72, 1.72), color=MUTED, linewidth=1.0)
+    axis.text(
+        5.76,
+        1.79,
+        "for every candidate",
+        ha="center",
+        va="bottom",
+        color=MUTED,
+        fontsize=7.5,
+        weight="bold",
+    )
+    for center in (2.08, 5.9, 9.72):
+        _arrow(axis, (center, 1.69), (center, 1.28))
+    axis.text(
+        5.9,
+        5.98,
+        "Choose the claim before the mechanism",
+        ha="center",
+        color=INDIGO,
+        weight="bold",
+        fontsize=11,
     )
     _save(figure, path)
 

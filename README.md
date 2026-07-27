@@ -7,6 +7,10 @@
 longitudinal workflow, browse supported and experimental methods, and run worked
 Cell and IBL studies.
 
+New analyses should start with **[Choose a model by the claim](https://aeronjl.github.io/unspool/model-choice-guide/)**
+and the common-format **[model cards](https://aeronjl.github.io/unspool/model-cards/)**,
+then follow the **[literature-recipe standard](https://aeronjl.github.io/unspool/tutorials/recipe-contract/)**.
+
 > “No two moments are identical in a conscious being.”
 > — Henri Bergson, *The Creative Mind*
 
