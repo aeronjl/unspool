@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib
+import importlib.metadata
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
@@ -20,6 +22,10 @@ ObjectiveFunction = Callable[[NDArray[np.float64]], ObjectiveOutput]
 
 class InferenceError(ValueError):
     """Raised when an inference problem or backend result violates its contract."""
+
+
+class PyBADSUnavailableError(ImportError):
+    """Raised when the optional PyBADS backend is requested but not installed."""
 
 
 class ObjectiveTarget(StrEnum):
@@ -371,11 +377,7 @@ class ScipyMultistart:
                     gradient_norm=gradient_norm,
                 )
             )
-        successful = [item for item in attempts if item.converged and item.finite]
-        eligible = successful or [item for item in attempts if item.finite]
-        selected_index = (
-            None if not eligible else min(eligible, key=lambda item: item.objective).index
-        )
+        selected_index = _selected_attempt_index(attempts)
         return OptimizationRun(
             backend=self.backend_name,
             backend_config={
@@ -388,6 +390,188 @@ class ScipyMultistart:
             attempts=tuple(attempts),
             selected_index=selected_index,
         )
+
+
+@dataclass(frozen=True, slots=True)
+class PyBADSMultistart:
+    """Optional deterministic-seed PyBADS backend using the common run contract."""
+
+    random_seed: int = 0
+    max_iterations: int | None = None
+    max_function_evaluations: int | None = None
+    function_tolerance: float | None = None
+
+    def __post_init__(self) -> None:
+        if (
+            isinstance(self.random_seed, bool)
+            or not isinstance(self.random_seed, int)
+            or not 0 <= self.random_seed <= np.iinfo(np.uint32).max
+        ):
+            raise InferenceError("random_seed must be an unsigned 32-bit integer")
+        for value, label in (
+            (self.max_iterations, "max_iterations"),
+            (self.max_function_evaluations, "max_function_evaluations"),
+        ):
+            if value is not None and (
+                isinstance(value, bool) or not isinstance(value, int) or value < 1
+            ):
+                raise InferenceError(f"{label} must be a positive integer or null")
+        if self.function_tolerance is not None and (
+            not np.isfinite(self.function_tolerance) or self.function_tolerance <= 0
+        ):
+            raise InferenceError("function_tolerance must be finite and positive or null")
+
+    @property
+    def backend_name(self) -> str:
+        """Stable backend and algorithm identifier."""
+
+        return "pybads/BADS"
+
+    def run(self, problem: OptimizationProblem) -> OptimizationRun:
+        """Run one independently seeded BADS search for every declared start."""
+
+        if not isinstance(problem, OptimizationProblem):
+            raise TypeError("problem must be an OptimizationProblem")
+        last_seed = self.random_seed + len(problem.starts) - 1
+        if last_seed > np.iinfo(np.uint32).max:
+            raise InferenceError("random_seed plus attempt count exceeds uint32 range")
+        bads_class, version = _load_pybads()
+        lower, upper, plausible_lower, plausible_upper = _pybads_bounds(problem)
+        attempts: list[OptimizationAttempt] = []
+        for index, start in enumerate(problem.starts):
+            seed = self.random_seed + index
+            options: dict[str, Any] = {
+                "display": "off",
+                "random_seed": seed,
+                "uncertainty_handling": False,
+            }
+            if self.max_iterations is not None:
+                options["max_iter"] = self.max_iterations
+            if self.max_function_evaluations is not None:
+                options["max_fun_evals"] = self.max_function_evaluations
+            if self.function_tolerance is not None:
+                options["tol_fun"] = self.function_tolerance
+
+            problem.evaluate(start)
+            bads = None
+            random_state = np.random.get_state()
+            try:
+                bads = bads_class(
+                    lambda vector: _value_only(problem.evaluate(vector)),
+                    x0=np.asarray(start),
+                    lower_bounds=lower,
+                    upper_bounds=upper,
+                    plausible_lower_bounds=plausible_lower,
+                    plausible_upper_bounds=plausible_upper,
+                    options=options,
+                )
+                result = bads.optimize()
+                estimate = np.asarray(result["x"], dtype=np.float64).reshape(-1)
+                objective = float(result["fval"])
+                message = str(result.get("message", ""))
+                limit_reached = "reached maximum number" in message.lower()
+                finite = np.isfinite(objective) and np.all(np.isfinite(estimate))
+                converged = bool(result.get("success", False) and finite and not limit_reached)
+                attempts.append(
+                    OptimizationAttempt(
+                        index=index,
+                        start=start,
+                        estimate=estimate,
+                        objective=objective if not np.isnan(objective) else np.inf,
+                        converged=converged,
+                        status=0 if converged else 1,
+                        message=message,
+                        n_iterations=max(0, int(result.get("iterations", 0))),
+                        n_evaluations=max(0, int(result.get("func_count", 0))),
+                        n_gradient_evaluations=0,
+                        gradient_norm=np.inf,
+                    )
+                )
+            except Exception as error:
+                function_logger = getattr(bads, "function_logger", None)
+                attempts.append(
+                    OptimizationAttempt(
+                        index=index,
+                        start=start,
+                        estimate=start,
+                        objective=np.inf,
+                        converged=False,
+                        status=-1,
+                        message=f"PyBADS failed: {type(error).__name__}: {error}",
+                        n_iterations=0,
+                        n_evaluations=max(0, int(getattr(function_logger, "func_count", 0))),
+                        n_gradient_evaluations=0,
+                        gradient_norm=np.inf,
+                    )
+                )
+            finally:
+                np.random.set_state(random_state)
+        return OptimizationRun(
+            backend=self.backend_name,
+            backend_config={
+                "version": version,
+                "random_seed": self.random_seed,
+                "max_iterations": self.max_iterations,
+                "max_function_evaluations": self.max_function_evaluations,
+                "function_tolerance": self.function_tolerance,
+                "uncertainty_handling": False,
+            },
+            problem=problem.to_dict(),
+            attempts=tuple(attempts),
+            selected_index=_selected_attempt_index(attempts),
+        )
+
+
+def _load_pybads() -> tuple[type[Any], str]:
+    try:
+        module = importlib.import_module("pybads")
+        bads_class = module.BADS
+        version = importlib.metadata.version("pybads")
+    except (ImportError, AttributeError, importlib.metadata.PackageNotFoundError) as error:
+        raise PyBADSUnavailableError(
+            "PyBADS optimization requires optional dependencies; install `unspool[optimization]`"
+        ) from error
+    return bads_class, version
+
+
+def _pybads_bounds(
+    problem: OptimizationProblem,
+) -> tuple[
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.float64],
+]:
+    optimizer_bounds = problem.parameter_space.optimizer_bounds
+    lower = np.asarray([-np.inf if bounds[0] is None else bounds[0] for bounds in optimizer_bounds])
+    upper = np.asarray([np.inf if bounds[1] is None else bounds[1] for bounds in optimizer_bounds])
+    plausible = problem.parameter_space.optimizer_plausible_bounds
+    missing = [
+        name
+        for name, bounds in zip(problem.parameter_space.optimizer_names, plausible, strict=True)
+        if bounds is None or bounds[0] is None or bounds[1] is None
+    ]
+    if missing:
+        raise InferenceError(
+            "PyBADS requires two finite plausible bounds for every free parameter; "
+            f"missing={missing}"
+        )
+    plausible_lower = np.asarray([bounds[0] for bounds in plausible], dtype=np.float64)
+    plausible_upper = np.asarray([bounds[1] for bounds in plausible], dtype=np.float64)
+    for index, start in enumerate(problem.starts):
+        if np.any(start < plausible_lower) or np.any(start > plausible_upper):
+            raise InferenceError(f"PyBADS start {index} must lie inside plausible bounds")
+    return lower, upper, plausible_lower, plausible_upper
+
+
+def _value_only(output: ObjectiveOutput) -> float:
+    return float(output[0] if isinstance(output, tuple) else output)
+
+
+def _selected_attempt_index(attempts: Sequence[OptimizationAttempt]) -> int | None:
+    successful = [item for item in attempts if item.converged and item.finite]
+    eligible = successful or [item for item in attempts if item.finite]
+    return None if not eligible else min(eligible, key=lambda item: item.objective).index
 
 
 def _objective_value(value: Any) -> float:

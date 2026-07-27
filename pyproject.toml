@@ -49,6 +49,9 @@ dandi = [
 ibl = [
     "one-api>=3.5,<4",
 ]
+optimization = [
+    "pybads>=1.0.6,<2",
+]
 
 [dependency-groups]
 dev = [

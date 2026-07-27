@@ -103,6 +103,8 @@ from unspool.inference import (
     OptimizationProblem,
     OptimizationRun,
     PriorMeasure,
+    PyBADSMultistart,
+    PyBADSUnavailableError,
     ScipyMultistart,
 )
 from unspool.interchange import (
@@ -528,6 +530,8 @@ __all__ = [
     "ProtocolState",
     "ProtocolValidationError",
     "Psychometric",
+    "PyBADSMultistart",
+    "PyBADSUnavailableError",
     "QLearningFitResult",
     "QLearningParameters",
     "RLFitResult",

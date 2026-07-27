@@ -121,12 +121,13 @@ conversion contract lands; they are not relabelled as natural-scale uncertainty.
 | HSSM / PyMC | natural names, bounds, priors, fixed/free roles | hierarchical graph, sampling, posterior draws |
 | ArviZ / xarray | coordinate labels and parameter-space fingerprint | labelled posterior, predictive, likelihood, and diagnostic groups |
 
-The shared [deterministic inference contract](inference-backends.md) and its SciPy
-multistart implementation now consume this parameter space directly. PyBADS, PyDDM, HSSM,
-and ArviZ adapters are subsequent 0.23 work. The contract remains usable without optional
-dependencies and does not make HSSM's current Python requirements part of Unspool core. It
-follows PyBADS' distinction between hard and plausible bounds and prepares for ArviZ's
-labelled inference-data groups rather than inventing a parallel posterior format.
+The shared [deterministic inference contract](inference-backends.md), SciPy multistart
+implementation, and optional PyBADS adapter now consume this parameter space directly.
+PyDDM, HSSM, and ArviZ adapters are subsequent 0.23 work. The contract remains usable
+without optional dependencies and does not make HSSM's current Python requirements part of
+Unspool core. It follows PyBADS' distinction between hard and plausible bounds and prepares
+for ArviZ's labelled inference-data groups rather than inventing a parallel posterior
+format.
 
 - [PyBADS API](https://acerbilab.github.io/pybads/api/classes/bads.html)
 - [PyDDM documentation](https://pyddm.readthedocs.io/)

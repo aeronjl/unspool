@@ -399,8 +399,10 @@ The roadmap is organized by scientific contracts rather than by model count.
   Jacobian gradients, immutable backend configuration, and every attempted optimum; route
   reference Q-learning through the first SciPy L-BFGS-B multistart backend without breaking
   its existing restart diagnostics.
-- **Planned:** add an optional PyBADS implementation of the same backend contract, mapping
-  hard and plausible bounds without changing model or task semantics.
+- **Implemented:** add an optional, independently seeded PyBADS multistart implementation
+  of the identical backend contract, requiring declared finite plausible bounds, restoring
+  upstream global RNG state, retaining backend failures, and conservatively distinguishing
+  limit termination from convergence without changing model or task semantics.
 - **Planned:** integrate an established probabilistic-programming backend for full
   hierarchical posterior inference rather than implementing a new sampler.
 - **Planned:** export labelled posterior, predictive, observed-data, log-likelihood, and
