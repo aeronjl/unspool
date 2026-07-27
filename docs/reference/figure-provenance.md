@@ -26,6 +26,7 @@ Without the downloaded Cell table, regenerate every other figure with `--skip-ce
 | `hierarchical-pooling.svg` | Committed hierarchical-GLM recovery benchmark | How partial pooling responds to increasing true between-animal variation |
 | `ddm-recovery.svg` | Committed drift-diffusion recovery benchmark | Parameter recovery error at the benchmark's two trial counts |
 | `trajectory-components.svg` | Committed trajectory-shape benchmark | Separation of level, amplitude, and residual shape contrasts |
+| `choice-model-evidence-atlas.svg` | Deterministic representative fits using the dense four-family recovery design | How observations, fitted structure, future prediction, calibration, and model recovery jointly constrain a model claim |
 
 These plots visualize archived benchmark outputs; they do not create new evidence beyond
 the source result. Their surrounding pages state denominators, validation boundaries, and

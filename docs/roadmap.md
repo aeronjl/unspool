@@ -272,6 +272,10 @@ The roadmap is organized by scientific contracts rather than by model count.
 
 ## Later
 
+- Extend the standardized model evidence panel to joint choice/response-time models with
+  response-time distributions, conditional accuracy, contaminant responsibilities, and
+  physical-unit diagnostics.
+
 - Session-varying GLM-HMM parameters
 - Full propagation of population-parameter and scale uncertainty into predictions
 - Richer mixtures and model plugins
