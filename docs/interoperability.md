@@ -1,4 +1,4 @@
-# Tabular, NWB, and DANDI interoperability
+# Tabular, IBL ONE, NWB, and DANDI interoperability
 
 Unspool keeps `Study` small and format-independent. Interoperability code converts source
 tables into that contract; it does not let file names, dataframe indices, or archive order
@@ -18,6 +18,46 @@ study = Study.from_dataframe(trials_dataframe)
 
 The method is dataframe-like rather than pandas-specific and does not add a core pandas
 dependency.
+
+## Reading exact IBL ONE trial tables
+
+The optional ONE adapter makes release identity and dataset identity explicit instead of
+searching for whichever table currently matches a filename:
+
+```bash
+uv sync --extra ibl
+```
+
+```python
+from unspool import IBLONETrialSource, study_from_ibl_one
+
+study = study_from_ibl_one(
+    IBLONETrialSource(
+        session_id="13572468-1234-4abc-8def-0123456789ab",
+        dataset_id="24681357-1234-4abc-8def-0123456789ab",
+        dataset_path="alf/_ibl_trials.table.pqt",
+        file_size=12_345,
+        md5="0123456789abcdef0123456789abcdef",
+        release_tag="2021_Q1_IBL_et_al_Behaviour",
+        subject="mouse-1",
+        session_order=4,
+        columns=("contrastLeft", "contrastRight", "feedbackType", "choice"),
+        column_map={"feedbackType": "source_feedback", "choice": "source_choice"},
+    )
+)
+```
+
+The adapter asks ONE to load the exact dataset UUID with hash checking, then verifies its
+relative path, byte size, and MD5 against the declaration. Session UUID, dataset UUID,
+release tag, path, size, checksum, and Alyx origin remain addressable on every trial. A
+multi-session reader preserves declared input order while `Study.chronological_indices()`
+uses the explicit `session_order`.
+
+IBL's source `choice` coding is not Unspool's binary Bernoulli coding. The adapter therefore
+does not silently reinterpret `-1`, `0`, and `+1`; callers must give the source field an
+honest name such as `source_choice` and perform any model-specific recoding explicitly.
+The [replicated IBL benchmark](../benchmarks/ibl2021_replicated/README.md) exercises this
+contract against 468 checksum-pinned public tables.
 
 ## Reading local NWB sessions
 
@@ -125,8 +165,8 @@ follows the official [DANDI REST API](https://docs.dandiarchive.org/api/rest-api
 - The adapter imports trial tables, not arbitrary neural time series or processing modules.
 - Ragged trial fields require source-specific preprocessing outside the generic adapter.
 - DANDI upload, authentication, and draft mutation are deliberately out of scope.
-- An IBL ONE library adapter remains future work; the existing pinned IBL benchmark is a
-  paper-specific extraction rather than the reusable public API.
+- The ONE adapter is a read-only exact-dataset importer; release discovery, remote mutation,
+  and implicit selection by dataset name remain outside its contract.
 
 The [public interoperability benchmark](../benchmarks/nwb_dandi_interoperability/README.md)
 pins a real DANDI asset and verifies the complete identity, chronology, source-semantics,

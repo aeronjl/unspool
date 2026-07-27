@@ -270,6 +270,16 @@ the [IBL 2021 benchmark](benchmarks/ibl2021/README.md). Its population-validatio
 also confirms complete trial coverage for nine subject and nine lab holdouts while making
 their one-subject-per-lab equivalence explicit.
 
+The replicated successor uses the general optional ONE adapter to address that confounding
+directly. Its outcome-blind manifest retains all 78 eligible animals across the same nine
+labs (at least four per lab), pins 468 trial-table UUIDs and checksums, and maps 260,833
+trials into trial-addressable source provenance. All 78 animals improve descriptively from
+their first-three to final-three pre-transition training windows (`+0.42281` subject-weighted
+mean easy-trial accuracy). This is a strong retrieval and chronology positive control, not
+an unbiased learning estimate: selection is conditioned on the protocol transition, and
+the six endpoint positions are not uniform elapsed time. See the
+[replicated IBL 2021 benchmark](benchmarks/ibl2021_replicated/README.md).
+
 The first end-to-end [prospective longitudinal study](benchmarks/flagship_longitudinal/README.md)
 then aligns six sessions per animal in both public sources and forecasts the sixth from the
 first five. Complete pooling, static partial pooling, shared smooth drift, and hierarchical
@@ -321,6 +331,7 @@ uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv
 uv run python -m benchmarks.ibl2021.fetch_data
 uv run --with pyarrow python -m benchmarks.ibl2021.benchmark
+uv run --extra ibl python -m benchmarks.ibl2021_replicated.benchmark
 uv run --with pyarrow python -m benchmarks.flagship_longitudinal.benchmark
 uv run ruff check .
 uv run ruff format --check .

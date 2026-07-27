@@ -7,6 +7,13 @@ from unspool.adapters.dandi import (
     resolve_dandi_nwb_asset,
     study_from_dandi,
 )
+from unspool.adapters.ibl_one import (
+    DEFAULT_IBL_ALYX_URL,
+    IBLONEAdapterError,
+    IBLONETrialSource,
+    read_ibl_one_sessions,
+    study_from_ibl_one,
+)
 from unspool.adapters.nwb import (
     NWBAdapterError,
     NWBSessionSource,
@@ -18,16 +25,21 @@ from unspool.adapters.nwb import (
 )
 
 __all__ = [
+    "DEFAULT_IBL_ALYX_URL",
     "DANDIAdapterError",
     "DANDINWBSource",
+    "IBLONEAdapterError",
+    "IBLONETrialSource",
     "NWBAdapterError",
     "NWBSessionSource",
     "ResolvedDANDIAsset",
     "add_study_trials",
+    "read_ibl_one_sessions",
     "read_nwb",
     "read_nwb_sessions",
     "resolve_dandi_nwb_asset",
     "study_from_dandi",
+    "study_from_ibl_one",
     "study_from_nwbfile",
     "write_nwb",
 ]

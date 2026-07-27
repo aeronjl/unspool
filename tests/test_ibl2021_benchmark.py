@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import pytest
 
 from benchmarks.ibl2021.benchmark import (
     build_study,
@@ -12,7 +13,11 @@ from benchmarks.ibl2021.benchmark import (
     population_validation_summary,
 )
 from benchmarks.ibl2021.fetch_data import EXPECTED_MANIFEST_SHA256, load_manifest
-from benchmarks.ibl2021.selection import manifest_digest, select_learning_panel
+from benchmarks.ibl2021.selection import (
+    manifest_digest,
+    select_learning_panel,
+    select_replicated_learning_panel,
+)
 
 RESULT_PATH = Path("benchmarks/ibl2021/result.json")
 
@@ -69,6 +74,38 @@ def test_selection_ignores_sessions_without_trial_tables() -> None:
 
     assert len(selected) == 6
     assert {row["n_training_sessions_before_transition"] for row in selected} == {6}
+
+
+def test_replicated_selection_retains_every_eligible_subject_without_outcomes() -> None:
+    sessions = [
+        *_subject_sessions("lab-a", "a-1", 6),
+        *_subject_sessions("lab-a", "a-2", 8),
+        *_subject_sessions("lab-b", "b-1", 7),
+        *_subject_sessions("lab-b", "b-2", 9),
+    ]
+
+    selected = select_replicated_learning_panel(
+        sessions,
+        {row["id"] for row in sessions},
+    )
+
+    assert len(selected) == 4 * 6
+    assert {row["subject"] for row in selected} == {"a-1", "a-2", "b-1", "b-2"}
+    for subject in {row["subject"] for row in selected}:
+        rows = [row for row in selected if row["subject"] == subject]
+        assert [row["window_position"] for row in rows] == list(range(6))
+        assert [row["phase"] for row in rows] == ["early"] * 3 + ["late_training"] * 3
+
+
+def test_replicated_selection_rejects_singleton_eligible_labs() -> None:
+    sessions = [
+        *_subject_sessions("lab-a", "a-1", 6),
+        *_subject_sessions("lab-a", "a-2", 8),
+        *_subject_sessions("lab-b", "singleton", 7),
+    ]
+
+    with pytest.raises(ValueError, match=r"lab-b.*1"):
+        select_replicated_learning_panel(sessions, {row["id"] for row in sessions})
 
 
 def test_manifest_digest_is_canonical_for_mapping_key_order() -> None:
