@@ -69,6 +69,7 @@ nav:
       - IBL learning trajectories: tutorials/ibl2021-learning-trajectories.md
       - Prospective drift and nested selection: tutorials/ibl2021-prospective-selection.md
       - Model-recovery design: tutorials/model-recovery-design.md
+      - Reading a model evidence panel: tutorials/model-evidence-panels.md
   - Methods:
       - Methods catalog: methods/index.md
       - Capability matrix: methods/capability-matrix.md

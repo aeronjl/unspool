@@ -6,6 +6,7 @@ import argparse
 import json
 import sys
 from collections import defaultdict
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
@@ -57,6 +58,7 @@ def main() -> None:
     _plot_hierarchical_pooling(args.output_dir / "hierarchical-pooling.svg")
     _plot_ddm_recovery(args.output_dir / "ddm-recovery.svg")
     _plot_trajectory_components(args.output_dir / "trajectory-components.svg")
+    _plot_choice_model_evidence_atlas(args.output_dir / "choice-model-evidence-atlas.svg")
     if not args.skip_cell:
         if not args.cell_data.exists():
             raise FileNotFoundError(
@@ -878,6 +880,129 @@ def _plot_recovery_matrix(path: Path) -> None:
             spine.set_visible(False)
     figure.suptitle("Model recovery is a property of the design", weight="semibold")
     _save(figure, path, tight=False)
+
+
+def _plot_choice_model_evidence_atlas(path: Path) -> None:
+    """Build one reproducible, end-to-end evidence panel for each choice-model family."""
+
+    from benchmarks.recovery_grid.benchmark import build_design, experiment
+
+    scenarios, candidates = experiment()
+    recovery = json.loads(
+        (ROOT / "benchmarks" / "recovery_grid" / "result.json").read_text(encoding="utf-8")
+    )
+    dense = next(cell for cell in recovery["designs"] if cell["design"] == "dense")
+    figure, axes = plt.subplots(4, 5, figsize=(13.2, 10.2), constrained_layout=True)
+    labels = ("Static GLM", "Smooth GLM", "GLM-HMM", "Q-learning")
+    colors = (INDIGO, BLUE, TEAL, AMBER)
+    design = build_design(trials_per_session=60)
+
+    for row, (scenario, (key, model), label, color) in enumerate(
+        zip(scenarios, candidates.items(), labels, colors, strict=True)
+    ):
+        seed = int(dense["run_seeds"][row])
+        study = scenario.generator.simulate(design, scenario.parameters, seed=seed)
+        train = study.take(np.flatnonzero(study["session_order"] < 4))
+        test = study.take(np.flatnonzero(study["session_order"] == 4))
+        fit = model.fit(train)
+        prediction = model.predict(test, fit).probability
+        outcomes = np.asarray(study["choice"], dtype=float)
+        test_outcomes = np.asarray(test["choice"], dtype=float)
+
+        observed = axes[row, 0]
+        session_means = [
+            outcomes[np.asarray(study["session_order"]) == session].mean() for session in range(5)
+        ]
+        observed.plot(range(5), session_means, "o-", color=color, linewidth=2)
+        observed.axvspan(3.5, 4.5, color=AMBER, alpha=0.12)
+        observed.set(ylim=(0, 1), xticks=range(5), ylabel=label)
+
+        structure = axes[row, 1]
+        _plot_fitted_structure(structure, key, model, study, fit, color)
+
+        forecast = axes[row, 2]
+        bin_edges = np.linspace(0, len(test_outcomes), 7, dtype=int)
+        centers = np.arange(6)
+        predicted_bins = [prediction[left:right].mean() for left, right in pairwise(bin_edges)]
+        observed_bins = [test_outcomes[left:right].mean() for left, right in pairwise(bin_edges)]
+        forecast.plot(centers, predicted_bins, "o-", color=color, label="predicted")
+        forecast.scatter(centers, observed_bins, color=INK, marker="x", label="observed")
+        forecast.set(ylim=(0, 1), xticks=(0, 5), xticklabels=("early", "late"))
+
+        residual = axes[row, 3]
+        quantiles = np.quantile(prediction, np.linspace(0, 1, 5))
+        groups = np.clip(np.digitize(prediction, quantiles[1:-1]), 0, 3)
+        mean_prediction = np.asarray([prediction[groups == group].mean() for group in range(4)])
+        mean_outcome = np.asarray([test_outcomes[groups == group].mean() for group in range(4)])
+        residual.axhline(0, color=MUTED, linewidth=1)
+        residual.scatter(mean_prediction, mean_outcome - mean_prediction, color=color, s=28)
+        residual.set(xlim=(0, 1), ylim=(-0.45, 0.45))
+
+        recovery_axis = axes[row, 4]
+        scores = np.asarray(dense["mean_log_probabilities"][row])
+        bars = recovery_axis.bar(
+            range(4), scores, color=[color if index == row else LIGHT for index in range(4)]
+        )
+        bars[row].set_edgecolor(INK)
+        recovery_axis.set_xticks(range(4), ("S", "D", "H", "Q"))
+        recovery_axis.set_ylim(min(scores) - 0.08, max(scores) + 0.04)
+        recovery_axis.text(
+            row, scores[row], "truth", ha="center", va="bottom", fontsize=7, color=color
+        )
+
+        for axis in axes[row]:
+            axis.grid(color="#edf0f5", linewidth=0.7)
+            axis.tick_params(labelsize=7)
+
+    titles = (
+        "Observed choice rate",
+        "Fitted model structure",
+        "Untouched session 5",
+        "Calibration residual",
+        "Dense-design recovery",
+    )
+    for axis, title in zip(axes[0], titles, strict=True):
+        axis.set_title(title)
+    axes[0, 2].legend(frameon=False, fontsize=6.5, loc="lower right")
+    axes[-1, 0].set_xlabel("Session")
+    axes[-1, 2].set_xlabel("Future-session trial bin")
+    axes[-1, 3].set_xlabel("Predicted choice probability")
+    axes[-1, 3].set_ylabel("Observed - predicted")
+    axes[-1, 4].set_xlabel("Candidate: static · drift · HMM · Q")
+    figure.suptitle("A model claim requires a complete chain of evidence", weight="semibold")
+    _save(figure, path, tight=False)
+
+
+def _plot_fitted_structure(
+    axis: plt.Axes,
+    key: str,
+    model: Any,
+    study: Any,
+    fit: Any,
+    color: str,
+) -> None:
+    if key == "static":
+        axis.bar(range(len(fit.estimates)), fit.estimates, color=color)
+        axis.axhline(0, color=MUTED, linewidth=1)
+        axis.set_xticks(range(3), ("bias", "stim.", "history"))
+        return
+    if key == "smooth":
+        paths = fit.estimates.reshape(3, 5)
+        axis.plot(range(5), paths[1], "o-", color=color, label="stimulus")
+        axis.plot(range(5), paths[0], "o--", color=MUTED, label="bias")
+        axis.axhline(0, color=LIGHT)
+        axis.set_xticks(range(5))
+        return
+    if key == "hmm":
+        probability = model.state_probabilities(study, fit).filtered[:, 1]
+        axis.plot(np.arange(len(probability)), probability, color=color, linewidth=1)
+        axis.set(ylim=(0, 1), xticks=(0, len(probability) - 1), xticklabels=("first", "last"))
+        return
+    trajectory = model.value_trajectory(study, fit)
+    value_difference = trajectory.pre_choice[:, 1] - trajectory.pre_choice[:, 0]
+    axis.plot(np.arange(len(value_difference)), value_difference, color=color, linewidth=1)
+    axis.axhline(0, color=MUTED, linewidth=1)
+    axis.set(xticks=(0, len(value_difference) - 1), xticklabels=("first", "last"))
 
 
 def _load(name: str) -> dict[str, Any]:
