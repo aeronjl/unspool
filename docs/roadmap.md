@@ -394,8 +394,13 @@ The roadmap is organized by scientific contracts rather than by model count.
   bounds, fixed/free roles, normalized priors, density Jacobians, strict round trips, and
   fit-artifact metadata; integrate it through the reference Q-learning optimizer as the
   first backwards-compatible consumer.
-- **Planned:** expose deterministic multistart MLE/MAP and PyBADS through one backend
-  contract while retaining every attempted optimum.
+- **Implemented:** expose backend-neutral deterministic MLE/MAP problems and complete run
+  records, including explicit natural-versus-optimizer MAP measure, analytic prior and
+  Jacobian gradients, immutable backend configuration, and every attempted optimum; route
+  reference Q-learning through the first SciPy L-BFGS-B multistart backend without breaking
+  its existing restart diagnostics.
+- **Planned:** add an optional PyBADS implementation of the same backend contract, mapping
+  hard and plausible bounds without changing model or task semantics.
 - **Planned:** integrate an established probabilistic-programming backend for full
   hierarchical posterior inference rather than implementing a new sampler.
 - **Planned:** export labelled posterior, predictive, observed-data, log-likelihood, and

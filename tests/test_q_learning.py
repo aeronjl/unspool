@@ -7,14 +7,19 @@ from unspool import (
     BehaviourModel,
     BernoulliHistoryGLM,
     BinaryQLearning,
+    ChoiceSpec,
     FitDiagnostics,
     FitResult,
+    FittedModel,
     ModelDataError,
     PredictionMode,
+    RewardSpec,
     SmoothBernoulliHistoryGLM,
     Study,
+    TaskSpec,
     UnsupportedPredictionMode,
     evaluate_splits,
+    export_fit,
     forward_session_splits,
     run_parameter_recovery,
     within_session_rolling_splits,
@@ -221,6 +226,19 @@ def test_fit_recovers_agent_and_retains_all_restart_outcomes() -> None:
     assert fit.diagnostics.converged
     assert fit.restart_objectives.shape == (model.n_restarts,)
     assert fit.restart_converged.shape == (model.n_restarts,)
+    assert len(fit.optimization_run.attempts) == model.n_restarts
+    assert fit.optimization_run.selected_index == fit.selected_restart
+    assert fit.optimization_run.problem["parameter_space_fingerprint"] == (
+        model.parameter_space.fingerprint
+    )
+    assert fit.diagnostics.optimizer.startswith("scipy.optimize.minimize/L-BFGS-B")
+    task = TaskSpec(
+        choice=ChoiceSpec(options=(0, 1)),
+        reward=RewardSpec(column="reward", minimum=0.0, maximum=1.0),
+    )
+    artifact = export_fit(FittedModel(model, task, fit, task.validate(study)), study)
+    assert len(artifact.diagnostics["optimization_run"]["attempts"]) == model.n_restarts
+    assert artifact.diagnostics["optimization_run"]["selected_index"] == fit.selected_restart
     assert fit.learning_rate == pytest.approx(recovered.learning_rate)
     assert fit.inverse_temperature == pytest.approx(recovered.inverse_temperature)
     assert recovered.learning_rate == pytest.approx(0.25, abs=0.08)

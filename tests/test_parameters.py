@@ -104,6 +104,32 @@ def test_bounds_priors_and_density_jacobians_retain_coordinate_meaning() -> None
     assert PriorSpec.beta(1.0, 1.0).log_prob(0.0) == -math.inf
 
 
+def test_prior_and_jacobian_gradients_match_optimizer_finite_differences() -> None:
+    space = example_space()
+    vector = space.encode(natural_values())
+    analytic_prior = space.grad_log_prior_optimizer(vector, require_all=True)
+    analytic_jacobian = space.grad_log_abs_det_inverse_jacobian(vector)
+    numeric_prior = np.empty_like(vector)
+    numeric_jacobian = np.empty_like(vector)
+    for index in range(len(vector)):
+        positive = vector.copy()
+        negative = vector.copy()
+        positive[index] += 1e-6
+        negative[index] -= 1e-6
+        numeric_prior[index] = (
+            space.log_prior(space.decode(positive), require_all=True)
+            - space.log_prior(space.decode(negative), require_all=True)
+        ) / 2e-6
+        numeric_jacobian[index] = (
+            space.log_abs_det_inverse_jacobian(positive)
+            - space.log_abs_det_inverse_jacobian(negative)
+        ) / 2e-6
+
+    np.testing.assert_allclose(analytic_prior, numeric_prior, atol=1e-6, rtol=1e-6)
+    np.testing.assert_allclose(analytic_jacobian, numeric_jacobian, atol=1e-6, rtol=1e-6)
+    assert not analytic_prior.flags.writeable
+
+
 def test_parameter_space_is_strictly_portable_and_content_addressed() -> None:
     space = example_space()
 

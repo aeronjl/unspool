@@ -147,6 +147,27 @@ class PriorSpec:
             return -math.inf
         return float(-math.log(arguments["upper"] - arguments["lower"]))
 
+    def grad_log_prob(self, value: float) -> float:
+        """Derivative of the scalar log density on its supported natural scale."""
+
+        value = _finite_float(value, "prior value")
+        arguments = self.arguments
+        if self.family == PriorFamily.NORMAL:
+            return float(-(value - arguments["location"]) / arguments["scale"] ** 2)
+        if self.family == PriorFamily.HALF_NORMAL:
+            if value < 0:
+                raise ParameterSpaceError("half-normal gradient is undefined outside support")
+            return float(-value / arguments["scale"] ** 2)
+        if self.family == PriorFamily.BETA:
+            if not 0 < value < 1:
+                raise ParameterSpaceError("beta gradient is undefined outside support")
+            return float(
+                (arguments["alpha"] - 1.0) / value - (arguments["beta"] - 1.0) / (1.0 - value)
+            )
+        if not arguments["lower"] <= value <= arguments["upper"]:
+            raise ParameterSpaceError("uniform gradient is undefined outside support")
+        return 0.0
+
     def to_dict(self) -> dict[str, Any]:
         """Return a portable prior record."""
 
@@ -281,6 +302,34 @@ class ParameterSpec:
             return value
         lower, upper = self.bounds
         return float(math.log(upper - lower) - np.logaddexp(0.0, -value) - np.logaddexp(0.0, value))
+
+    def inverse_derivative(self, optimizer_value: float) -> float:
+        """Derivative of the natural coordinate with respect to optimizer coordinate."""
+
+        value = _finite_float(optimizer_value, self.resolved_optimizer_name or self.name)
+        if self.transform == ParameterTransform.IDENTITY:
+            return 1.0
+        if self.transform == ParameterTransform.LOG:
+            try:
+                derivative = math.exp(value)
+            except OverflowError:
+                raise ParameterSpaceError(f"derivative for {self.name!r} is not finite") from None
+            if not np.isfinite(derivative):
+                raise ParameterSpaceError(f"derivative for {self.name!r} is not finite")
+            return float(derivative)
+        lower, upper = self.bounds
+        probability = float(expit(value))
+        return float((upper - lower) * probability * (1.0 - probability))
+
+    def grad_log_abs_det_inverse_jacobian(self, optimizer_value: float) -> float:
+        """Derivative of the log inverse-transform Jacobian."""
+
+        value = _finite_float(optimizer_value, self.resolved_optimizer_name or self.name)
+        if self.transform == ParameterTransform.IDENTITY:
+            return 0.0
+        if self.transform == ParameterTransform.LOG:
+            return 1.0
+        return float(1.0 - 2.0 * expit(value))
 
     def transformed_bounds(self) -> tuple[float | None, float | None]:
         """Return numerical optimizer bounds, falling back to transformed hard bounds."""
@@ -509,6 +558,50 @@ class ParameterSpace:
             )
         )
 
+    def grad_log_prior_optimizer(
+        self,
+        optimizer: Sequence[float] | NDArray[np.floating[Any]],
+        *,
+        require_all: bool = False,
+    ) -> NDArray[np.float64]:
+        """Gradient of natural-scale priors with respect to optimizer coordinates."""
+
+        vector = self._optimizer_vector(optimizer)
+        natural = self.decode(vector)
+        gradient: list[float] = []
+        free_index = 0
+        for item in self.parameters:
+            if item.role == ParameterRole.FIXED:
+                continue
+            if item.prior is None:
+                if require_all:
+                    raise ParameterSpaceError(f"free parameter {item.name!r} has no prior")
+                gradient.append(0.0)
+            else:
+                gradient.append(
+                    item.prior.grad_log_prob(natural[item.name])
+                    * item.inverse_derivative(float(vector[free_index]))
+                )
+            free_index += 1
+        return _protected_vector(gradient)
+
+    def grad_log_abs_det_inverse_jacobian(
+        self, optimizer: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> NDArray[np.float64]:
+        """Gradient of the summed inverse-transform log Jacobian."""
+
+        vector = self._optimizer_vector(optimizer)
+        return _protected_vector(
+            [
+                item.grad_log_abs_det_inverse_jacobian(float(value))
+                for item, value in zip(
+                    (item for item in self.parameters if item.role == ParameterRole.FREE),
+                    vector,
+                    strict=True,
+                )
+            ]
+        )
+
     @property
     def fingerprint(self) -> str:
         """SHA-256 content address of the complete parameter semantics."""
@@ -548,6 +641,19 @@ class ParameterSpace:
             return {name: _finite_float(natural[name], name) for name in self.natural_names}
         except (TypeError, ValueError):
             raise ParameterSpaceError("natural parameters must contain finite values") from None
+
+    def _optimizer_vector(
+        self, optimizer: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> NDArray[np.float64]:
+        try:
+            vector = np.asarray(optimizer, dtype=np.float64)
+        except (TypeError, ValueError):
+            raise ParameterSpaceError("optimizer values must be finite numeric values") from None
+        if vector.shape != (len(self.optimizer_names),) or not np.all(np.isfinite(vector)):
+            raise ParameterSpaceError(
+                f"optimizer vector must contain {len(self.optimizer_names)} finite values"
+            )
+        return vector
 
 
 @runtime_checkable
