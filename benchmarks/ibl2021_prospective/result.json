@@ -28,7 +28,7 @@
       "hierarchical_smooth_drift"
     ],
     "outcome": "rightward binary choice; IBL source choice -1 maps to 1",
-    "panel": "first 100 source rows in each of six outcome-blind endpoint windows",
+    "panel": "up to the first 100 source rows in each outcome-blind endpoint window",
     "population_forecast": "position 5 in an entirely held-out lab from positions 0 through 4 in all other labs",
     "prediction_mode": "filtered one-step-ahead scoring within the test session; not open-loop",
     "primary_metric": "mean subject-level prospective log loss"

@@ -288,6 +288,16 @@ and an entire lab are held out, drift retains the lower point estimate but the i
 spans zero; the represented sites do not resolve a transport advantage. See the
 [replicated IBL prospective comparison](benchmarks/ibl2021_prospective/README.md).
 
+The nested successor moves model structure and smoothness selection entirely inside those
+training boundaries. A four-candidate grid selects the smoothness-9 drifting model in the
+represented-animal fold and in all nine held-out-lab folds. On untouched position-5 data,
+the selected procedure lowers subject-balanced log loss by `0.00768` relative to the fixed
+smoothness-3 drift model for represented animals and by `0.00777` under lab transfer; both
+paired intervals exclude zero. Smoothness 9 is the declared grid boundary, so this is
+evidence for stronger regularization under this design, not an estimate of an optimal
+continuous smoothness. See the
+[replicated IBL nested-selection benchmark](benchmarks/ibl2021_nested_selection/README.md).
+
 The first end-to-end [prospective longitudinal study](benchmarks/flagship_longitudinal/README.md)
 then aligns six sessions per animal in both public sources and forecasts the sixth from the
 first five. Complete pooling, static partial pooling, shared smooth drift, and hierarchical
@@ -341,6 +351,7 @@ uv run python -m benchmarks.ibl2021.fetch_data
 uv run --with pyarrow python -m benchmarks.ibl2021.benchmark
 uv run --extra ibl python -m benchmarks.ibl2021_replicated.benchmark
 uv run --extra ibl python -m benchmarks.ibl2021_prospective.benchmark
+uv run --extra ibl python -m benchmarks.ibl2021_nested_selection.benchmark
 uv run --with pyarrow python -m benchmarks.flagship_longitudinal.benchmark
 uv run ruff check .
 uv run ruff format --check .

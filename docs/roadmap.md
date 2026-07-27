@@ -234,6 +234,23 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Bounded claim:** endpoint windows are ordinal, cohort entry is transition-conditioned,
   and nine empirical labs do not support population-of-laboratories inference.
 
+## 0.16 — Nested model and hyperparameter selection on replicated IBL
+
+- **Implemented:** compare static partial pooling with three declared smoothness levels
+  entirely inside the outer training data, with deterministic candidate ordering and
+  training-only tie breaking.
+- **Implemented:** match inner validation to each outer estimand: earlier cohort-session
+  forecasts for represented animals and inner held-out-lab position-4 forecasts for
+  unseen-lab transfer.
+- **Implemented:** pin all inner targets, candidate scores, selections, outer fit audits,
+  subject scores, and paired comparisons with the previously fixed candidates.
+- **Evidence:** smoothness 9 is selected in the one same-animal fold and all nine lab folds;
+  untouched outer log loss improves on fixed smoothness 3 by `0.00768` and `0.00777`, with
+  both paired subject-bootstrap intervals below zero.
+- **Bounded claim:** smoothness 9 is the upper grid boundary, one same-animal outer fold is
+  not a selection-stability sample, and the selected procedure's unseen-lab advantage over
+  static remains unresolved.
+
 ## Later
 
 - Session-varying GLM-HMM parameters

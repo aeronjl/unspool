@@ -61,6 +61,13 @@ def test_panel_caps_source_rows_before_choice_filter_and_maps_semantics() -> Non
     assert set(panel["stimulus"]) == {-1.0, -0.5, 0.5, 1.0}
 
 
+def test_panel_accepts_sessions_shorter_than_the_source_row_cap() -> None:
+    panel = build_panel(_source_study(), trials_per_session=20)
+
+    assert len(panel) == 4 * 6 * 13
+    assert set(panel["session_order"]) == set(range(6))
+
+
 def test_panel_membership_and_features_do_not_depend_on_choice_direction() -> None:
     source = _source_study()
     changed = {name: source[name] for name in source.columns}
