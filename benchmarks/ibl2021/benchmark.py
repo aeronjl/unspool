@@ -19,7 +19,13 @@ from benchmarks.ibl2021.fetch_data import (
     load_manifest,
     verify_file,
 )
-from unspool import Study, leave_one_lab_out_splits, leave_one_subject_out_splits
+from unspool import (
+    Study,
+    TrajectoryPanel,
+    audit_trajectory_replication,
+    leave_one_lab_out_splits,
+    leave_one_subject_out_splits,
+)
 
 EXPECTED: dict[str, int | float] = {
     "n_trials": 28_400,
@@ -236,6 +242,25 @@ def run(data_directory: Path, *, check: bool = True) -> dict[str, Any]:
         "n_improved_subjects": sum(change > 0 for change in subject_changes.values()),
         **population_validation_summary(study),
     }
+    subject_labs: list[str] = []
+    for subject in subjects:
+        labs = {
+            str(lab)
+            for row_subject, lab in zip(study["subject"], study["lab"], strict=True)
+            if str(row_subject) == subject
+        }
+        if len(labs) != 1:
+            raise ValueError(f"subject {subject} must belong to exactly one lab")
+        subject_labs.append(labs.pop())
+    trajectory_panel = TrajectoryPanel(
+        grid=np.asarray([0.0, 1.0]),
+        values=np.column_stack((early_accuracy, late_accuracy)),
+        subjects=tuple(subjects),
+        groups=tuple(subject_labs),
+        clock_name="transition_anchored_phase",
+        parameter_name="easy_trial_accuracy",
+    )
+    trajectory_audit = audit_trajectory_replication(trajectory_panel)
     passed = contract_matches(values)
     if check and not passed:
         differences = {
@@ -251,6 +276,7 @@ def run(data_directory: Path, *, check: bool = True) -> dict[str, Any]:
         "manifest_sha256": EXPECTED_MANIFEST_SHA256,
         **values,
         "subject_accuracy_change": subject_changes,
+        "trajectory_shape_replication_audit": trajectory_audit.to_dict(),
         "contract_passed": passed,
     }
 

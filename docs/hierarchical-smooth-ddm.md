@@ -197,7 +197,9 @@ Current limitations are explicit:
 - contaminant mixtures and within-decision time-varying dynamics are not supported;
 - unseen-animal random-effect prediction does not propagate population or scale
   uncertainty;
-- lab-level structure and aligned cross-lab trajectory comparisons remain future work.
+- lab-level random effects remain future work; aligned fitted trajectories can be passed
+  to the separate [cross-lab trajectory-shape contract](trajectory-shapes.md), which first
+  audits independent animals per lab.
 
 ## Recovery evidence
 

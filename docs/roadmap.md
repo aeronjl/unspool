@@ -187,13 +187,28 @@ The roadmap is organized by scientific contracts rather than by model count.
   order, balanced task phases and categories, valid time intervals, and uninterpreted
   response semantics without redistributing the 72.6 MB source file.
 
+## 0.13 — Cross-lab trajectory geometry
+
+- **Implemented:** represent one explicitly aligned trajectory per independent subject on
+  a fixed common clock, without implicit interpolation, landmark fitting, or time warping.
+- **Implemented:** audit group replication before comparison and reject inferential lab
+  summaries when any lab has fewer than the declared minimum number of animals.
+- **Implemented:** decompose group-mean trajectories into overall level, centered change,
+  amplitude, and scale-free shape, with trapezoid-weighted distances and explicit handling
+  of flat trajectories whose shape is undefined.
+- **Implemented:** quantify uncertainty by resampling subjects within fixed labs while
+  stating that these intervals do not generalize to a population of laboratories.
+- **Implemented:** pin a matched four-lab recovery benchmark and apply the design audit to
+  the public IBL panel, preserving its one-animal-per-lab confounding as a failed readiness
+  check rather than a lab-effect result.
+
 ## Later
 
 - Session-varying GLM-HMM parameters
 - Full propagation of population-parameter and scale uncertainty into predictions
 - Richer mixtures and model plugins
 - IBL ONE and NWB-Zarr adapters
-- Cross-lab trajectory-shape comparisons
+- Population-of-labs uncertainty and hierarchical lab effects
 
 Each expansion should be justified by a benchmark or user need and should add recovery
 tests before adding interpretive claims.

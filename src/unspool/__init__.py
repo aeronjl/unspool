@@ -106,6 +106,15 @@ from unspool.recovery import (
 from unspool.response_times import ResponseTimes, ResponseTimeSpec, ResponseTimeUnit
 from unspool.state_alignment import LatentStateAlignment, align_latent_states
 from unspool.study import REQUIRED_COLUMNS, Study, StudyValidationError
+from unspool.trajectory_shapes import (
+    GroupTrajectorySummary,
+    PairwiseTrajectoryShapeComparison,
+    TrajectoryPanel,
+    TrajectoryReplicationAudit,
+    TrajectoryShapeComparisonReport,
+    audit_trajectory_replication,
+    compare_trajectory_shapes,
+)
 from unspool.transforms import (
     BootstrapThresholdLandmarkClock,
     FittedStudyTransform,
@@ -174,6 +183,7 @@ __all__ = [
     "GLMHMMParameters",
     "GLMHMMSimulation",
     "GenerativeBehaviourModel",
+    "GroupTrajectorySummary",
     "HierarchicalBernoulliHistoryGLM",
     "HierarchicalGLMFitResult",
     "HierarchicalGLMSimulation",
@@ -201,6 +211,7 @@ __all__ = [
     "NestedProspectiveSelectionReport",
     "NestedSelectionFold",
     "PairedModelComparison",
+    "PairwiseTrajectoryShapeComparison",
     "ParameterRecoveryReport",
     "ParameterRecoverySummary",
     "PopulationValidationSplit",
@@ -223,6 +234,9 @@ __all__ = [
     "StudyValidationError",
     "ThresholdLandmarkClock",
     "ThresholdLandmarkUncertainty",
+    "TrajectoryPanel",
+    "TrajectoryReplicationAudit",
+    "TrajectoryShapeComparisonReport",
     "TransformProvenance",
     "UniformResponseTimeContaminant",
     "UnseenSubjectPosteriorPrediction",
@@ -235,8 +249,10 @@ __all__ = [
     "add_study_trials",
     "align_latent_states",
     "audit_fit",
+    "audit_trajectory_replication",
     "cohort_forward_session_splits",
     "compare_models",
+    "compare_trajectory_shapes",
     "evaluate_splits",
     "fit_transform_split",
     "fit_transform_splits",

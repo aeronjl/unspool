@@ -1,0 +1,155 @@
+{
+  "benchmark": "cross-lab trajectory component recovery",
+  "complete_lab_holdout": {
+    "all_rows_tested_once": true,
+    "complete_subject_trajectories": true,
+    "folds": 4,
+    "held_out_subjects_per_lab": [
+      10,
+      10,
+      10,
+      10
+    ]
+  },
+  "contract": {
+    "amplitude_interval_excludes_zero": true,
+    "amplitude_shift_is_largest_reference_amplitude_contrast": true,
+    "complete_lab_holdout": true,
+    "component_structure_recovered": true,
+    "level_interval_excludes_zero": true,
+    "level_shift_is_largest_reference_level_contrast": true,
+    "singleton_labs_rejected": true
+  },
+  "contract_passed": true,
+  "design": {
+    "bootstrap_resamples": 300,
+    "bootstrap_unit": "subject within fixed lab",
+    "common_grid_positions": 9,
+    "labs": 4,
+    "subjects_per_lab": 10
+  },
+  "generating_components": {
+    "amplitude_shift": "same centered rise at twice the amplitude",
+    "level_shift": "same rise plus a constant",
+    "reference": "linear rise",
+    "shape_change": "one complete sinusoidal cycle"
+  },
+  "mean_pairwise_metrics": {
+    "amplitude_shift__shape_change": {
+      "absolute_amplitude_difference": 0.45129683875601734,
+      "absolute_level_difference": 0.05326884434818173,
+      "centered_distance": 1.7580201342883002,
+      "raw_distance": 1.759259549466886,
+      "shape_distance": 1.859187058139788
+    },
+    "level_shift__amplitude_shift": {
+      "absolute_amplitude_difference": 0.5783797640641043,
+      "absolute_level_difference": 1.99095162527904,
+      "centered_distance": 0.578925756096662,
+      "raw_distance": 2.0736542261063335,
+      "shape_distance": 0.02930672542611616
+    },
+    "level_shift__shape_change": {
+      "absolute_amplitude_difference": 0.12708292530808696,
+      "absolute_level_difference": 2.0115812075841704,
+      "centered_distance": 1.2140621655736576,
+      "raw_distance": 2.349883137101742,
+      "shape_distance": 1.8602686385918787
+    },
+    "reference__amplitude_shift": {
+      "absolute_amplitude_difference": 0.5745526128706768,
+      "absolute_level_difference": 0.05455381675008497,
+      "centered_distance": 0.5751568893663799,
+      "raw_distance": 0.5793459065890434,
+      "shape_distance": 0.0306956746553937
+    },
+    "reference__level_shift": {
+      "absolute_amplitude_difference": 0.011471791057533676,
+      "absolute_level_difference": 2.008342405125341,
+      "centered_distance": 0.02822505373828709,
+      "raw_distance": 2.0085532683230647,
+      "shape_distance": 0.041693971585362546
+    },
+    "reference__shape_change": {
+      "absolute_amplitude_difference": 0.12325577411465952,
+      "absolute_level_difference": 0.05939002071453407,
+      "centered_distance": 1.2164477516364522,
+      "raw_distance": 1.2185648762947412,
+      "shape_distance": 1.8585302624050457
+    }
+  },
+  "recovery_rates": {
+    "amplitude_interval_excludes_zero": 1.0,
+    "amplitude_shift_is_largest_reference_amplitude_contrast": 1.0,
+    "component_structure_recovered": 1.0,
+    "level_interval_excludes_zero": 1.0,
+    "level_shift_is_largest_reference_level_contrast": 1.0
+  },
+  "repetitions": 20,
+  "seed": 8119,
+  "singleton_lab_audit": {
+    "group_name": "lab",
+    "group_sizes": [
+      {
+        "group": "lab-0",
+        "subjects": 1
+      },
+      {
+        "group": "lab-1",
+        "subjects": 1
+      },
+      {
+        "group": "lab-2",
+        "subjects": 1
+      },
+      {
+        "group": "lab-3",
+        "subjects": 1
+      },
+      {
+        "group": "lab-4",
+        "subjects": 1
+      },
+      {
+        "group": "lab-5",
+        "subjects": 1
+      },
+      {
+        "group": "lab-6",
+        "subjects": 1
+      },
+      {
+        "group": "lab-7",
+        "subjects": 1
+      },
+      {
+        "group": "lab-8",
+        "subjects": 1
+      }
+    ],
+    "inferentially_ready": false,
+    "minimum_subjects_per_group": 2,
+    "singleton_groups": [
+      "lab-0",
+      "lab-1",
+      "lab-2",
+      "lab-3",
+      "lab-4",
+      "lab-5",
+      "lab-6",
+      "lab-7",
+      "lab-8"
+    ],
+    "under_replicated_groups": [
+      "lab-0",
+      "lab-1",
+      "lab-2",
+      "lab-3",
+      "lab-4",
+      "lab-5",
+      "lab-6",
+      "lab-7",
+      "lab-8"
+    ]
+  }
+}

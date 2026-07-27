@@ -28,5 +28,70 @@
     "SWC_029": 0.728433615351331,
     "ZM_1898": 0.49336587391424447,
     "ibl_witten_18": 0.0668659975955756
+  },
+  "trajectory_shape_replication_audit": {
+    "group_name": "lab",
+    "group_sizes": [
+      {
+        "group": "churchlandlab",
+        "subjects": 1
+      },
+      {
+        "group": "zadorlab",
+        "subjects": 1
+      },
+      {
+        "group": "danlab",
+        "subjects": 1
+      },
+      {
+        "group": "cortexlab",
+        "subjects": 1
+      },
+      {
+        "group": "angelakilab",
+        "subjects": 1
+      },
+      {
+        "group": "hoferlab",
+        "subjects": 1
+      },
+      {
+        "group": "mrsicflogellab",
+        "subjects": 1
+      },
+      {
+        "group": "mainenlab",
+        "subjects": 1
+      },
+      {
+        "group": "wittenlab",
+        "subjects": 1
+      }
+    ],
+    "inferentially_ready": false,
+    "minimum_subjects_per_group": 2,
+    "singleton_groups": [
+      "churchlandlab",
+      "zadorlab",
+      "danlab",
+      "cortexlab",
+      "angelakilab",
+      "hoferlab",
+      "mrsicflogellab",
+      "mainenlab",
+      "wittenlab"
+    ],
+    "under_replicated_groups": [
+      "churchlandlab",
+      "zadorlab",
+      "danlab",
+      "cortexlab",
+      "angelakilab",
+      "hoferlab",
+      "mrsicflogellab",
+      "mainenlab",
+      "wittenlab"
+    ]
   }
 }
