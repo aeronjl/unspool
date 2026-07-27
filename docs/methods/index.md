@@ -15,6 +15,10 @@ The Bernoulli history GLM estimates stimulus and choice-history effects that rem
 through the study. Hierarchical variants share information across animals without treating
 trials as independent subjects.
 
+The multinomial logit extends the same stable conditional-choice role to more than two
+actions, trial-specific choice sets, and an explicit modeled omission category. See
+[multinomial and omission-aware choice](../multinomial.md).
+
 ## Smooth longitudinal change
 
 Fixed-knot GLMs and drift-diffusion models allow declared parameters to vary over an

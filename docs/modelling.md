@@ -87,6 +87,12 @@ action-contingent reward environment for simulation, session-reset action values
 updates, and recoverable learning-rate, temperature, bias, and perseveration parameters.
 See the [session-reset Q-learning guide](q-learning.md).
 
+`MultinomialLogit` supplies the categorical reference likelihood. It consumes the shared
+`ChoiceSpec` coordinate, respects trial-specific action availability, optionally retains
+omissions as an additional category, and passes full probability vectors through the same
+prospective comparison, protocol, and recovery machinery. See the
+[multinomial and omission-aware choice guide](multinomial.md).
+
 `WienerDriftDiffusion` supplies the first joint choice/response-time family. Covariates
 control drift while boundary separation, relative starting bias, and non-decision time are
 shared across trials. It declares both observed columns, converts explicit physical time

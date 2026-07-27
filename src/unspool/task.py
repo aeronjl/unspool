@@ -13,7 +13,7 @@ from numpy.typing import NDArray
 from unspool.models.base import (
     BehaviourEstimator,
     FitResult,
-    Prediction,
+    ModelPrediction,
     PredictionMode,
     _protected_array,
     model_capabilities,
@@ -101,6 +101,22 @@ class ChoiceSpec:
             codes=codes,
             omitted=omitted,
             available=available,
+        )
+
+    def availability(self, study: Study) -> NDArray[np.bool_]:
+        """Return the declared option-availability mask without requiring outcomes.
+
+        This is the generative counterpart of :meth:`read`: simulators can validate the
+        choice set on a design study before a choice column exists.
+        """
+
+        if not isinstance(study, Study):
+            raise TypeError("study must be a Study")
+        codes = np.full(len(study), -1, dtype=np.int64)
+        omitted = np.ones(len(study), dtype=np.bool_)
+        return _protected_array(
+            self._read_available_options(study, codes, omitted),
+            dtype=np.bool_,
         )
 
     def _read_available_options(
@@ -374,7 +390,7 @@ class FittedModel:
         study: Study,
         *,
         mode: PredictionMode = PredictionMode.FILTERED,
-    ) -> Prediction:
+    ) -> ModelPrediction:
         self.task.validate(study)
         return self.model.predict(study, self.result, mode=mode)
 

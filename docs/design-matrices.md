@@ -38,6 +38,11 @@ The output contains an immutable two-dimensional array, stable feature names, an
 complete design signature. The same specification can therefore be built on training and
 test studies without discovering a different coordinate in each.
 
+Every `DesignTerm` declares `feature_names` and `required_columns` before it sees a study.
+`DesignSpec` verifies that `build()` returns exactly those names. Third-party terms
+therefore compose with model parameter coordinates and task-role validation without
+learning labels from test rows or changing coefficient meaning between datasets.
+
 ## Fixed terms
 
 `NumericTerm` applies a declared centring and scaling. It never estimates either quantity.

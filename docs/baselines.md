@@ -86,7 +86,8 @@ possible without implying that win-stay/lose-shift is a value-learning mechanism
 
 ## Current boundary
 
-These first 0.22 models retain binary zero/one choices because their likelihoods state that
-assumption. Composable reinforcement-learning components, multinomial/omission-aware
-policies, and standard input-driven or sticky GLM-HMM variants are the next catalogue
-layers. Richer task declarations are not coerced through these binary baselines.
+These named baselines retain binary zero/one choices because their likelihoods state that
+assumption. The separate [multinomial reference likelihood](multinomial.md) supports richer
+action sets and retained omissions; it does not retroactively change the estimand of these
+binary baselines. Standard input-driven or sticky GLM-HMM variants remain the next
+catalogue layer.

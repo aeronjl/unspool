@@ -3,11 +3,14 @@
 from unspool.models.base import (
     BehaviourEstimator,
     BehaviourModel,
+    CategoricalBehaviourEstimator,
+    CategoricalPrediction,
     FitDiagnostics,
     FitResult,
     GenerativeBehaviourModel,
     ModelCapabilities,
     ModelDataError,
+    ModelPrediction,
     Prediction,
     PredictionMode,
     UnsupportedPredictionMode,
@@ -57,6 +60,7 @@ from unspool.models.hierarchical_smooth_glm import (
     HierarchicalSmoothGLMFitResult,
     HierarchicalSmoothGLMSimulation,
 )
+from unspool.models.multinomial import MultinomialLogit
 from unspool.models.q_learning import (
     BinaryQLearning,
     QLearningFitResult,
@@ -90,6 +94,8 @@ __all__ = [
     "BiasOnly",
     "BinaryQLearning",
     "BinaryRLAgent",
+    "CategoricalBehaviourEstimator",
+    "CategoricalPrediction",
     "ChoiceKernel",
     "CoefficientTrajectory",
     "DriftDiffusionFitResult",
@@ -118,6 +124,8 @@ __all__ = [
     "LearningRule",
     "ModelCapabilities",
     "ModelDataError",
+    "ModelPrediction",
+    "MultinomialLogit",
     "Perseveration",
     "Prediction",
     "PredictionMode",

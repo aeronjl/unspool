@@ -7,7 +7,7 @@ its inferential or design coverage remains deliberately narrow.
 | Scientific capability | Status | Evidence boundary |
 | --- | --- | --- |
 | Canonical trial/session/animal representation | **Supported** | Identity, chronology, and source order are validated. |
-| Task-level choice, omission, availability, reward, and response-time schema | **Experimental** | Validation is model-independent; first-party choice likelihoods remain binary and are not yet omission-aware. |
+| Task-level choice, omission, availability, reward, and response-time schema | **Experimental** | Validation is model-independent; categorical and explicit-omission likelihoods now consume the shared choice coordinate. |
 | Labelled design matrices and fold-safe standardization | **Experimental** | Numeric, fixed-level categorical, interaction, explicit-reset lag/kernel, and training-only standardization terms are available. |
 | Forward-session, within-session, and historical-cohort prospective validation | **Supported** | Learned preprocessing must still be fitted within folds; historical-cohort claims require the declared deployment order. |
 | Complete-subject and complete-lab holdout | **Supported** | Does not by itself create population-of-labs inference. |
@@ -24,7 +24,7 @@ its inferential or design coverage remains deliberately narrow.
 | Hierarchical smooth drift diffusion | **Experimental** | Plug-in population prediction and bounded variance-component estimation. |
 | Threshold learning landmarks | **Experimental** | Fold-fitted plug-in bootstrap; unresolved draws remain visible. |
 | Cross-lab trajectory geometry | **Experimental** | Fixed empirical labs, no population-of-labs generalization. |
-| Multinomial and omission-aware choice models | **Planned** | The task coordinate is implemented; likelihood, prediction, scoring, and recovery contracts remain. |
+| Multinomial and omission-aware choice models | **Experimental** | Treatment-coded softmax regression supports finite JSON-scalar labels, trial availability, retained omissions, prospective scoring, and recovery; categorical calibration remains planned. |
 | Context-bound common fit artifacts and estimator registry | **Experimental** | Deterministic JSON binds task, data identity, version, parameters, and audits; it is intentionally not a lossless posterior format. |
 | ArviZ/xarray posterior and predictive interchange | **Planned** | Requires backend-neutral labelled sample dimensions and model-specific groups in 0.23. |
 | Session-varying GLM-HMM parameters | **Planned** | Requires targeted state and trajectory recovery first. |

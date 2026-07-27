@@ -15,7 +15,14 @@ import numpy as np
 from unspool.comparison import BootstrapInterval
 from unspool.compiler import CompiledProtocol
 from unspool.diagnostics import FitAudit, FitAuditStatus, audit_fit
-from unspool.models import BehaviourEstimator, FitResult, Prediction, PredictionMode
+from unspool.models import (
+    BehaviourEstimator,
+    CategoricalBehaviourEstimator,
+    CategoricalPrediction,
+    FitResult,
+    Prediction,
+    PredictionMode,
+)
 from unspool.protocol import (
     ProtocolState,
     ProtocolValidationError,
@@ -63,19 +70,77 @@ class PointwisePrediction:
     """Portable scored-row prediction with no copied raw observation."""
 
     row: int
-    probability: float
-    linear_predictor: float
+    probability: float | None
+    linear_predictor: float | None
     log_probability: float
     aggregation_unit: str | int | float | bool | None
+    category_probabilities: tuple[float, ...] | None = None
+    categories: tuple[str | int | float | bool | None, ...] | None = None
+    observed_category_index: int | None = None
 
     def __post_init__(self) -> None:
         if self.row < 0:
             raise ValueError("pointwise prediction row must be non-negative")
-        values = (self.probability, self.linear_predictor, self.log_probability)
-        if not all(math.isfinite(value) for value in values):
-            raise ValueError("pointwise prediction values must be finite")
-        if not 0 <= self.probability <= 1:
-            raise ValueError("pointwise probability must lie between zero and one")
+        if not math.isfinite(self.log_probability):
+            raise ValueError("pointwise log probability must be finite")
+        categorical = self.category_probabilities is not None
+        if categorical:
+            if self.probability is not None or self.linear_predictor is not None:
+                raise ValueError("categorical rows must not contain binary prediction fields")
+            probabilities = tuple(self.category_probabilities or ())
+            categories = tuple(self.categories or ())
+            if len(probabilities) < 2 or len(categories) != len(probabilities):
+                raise ValueError("categorical rows require aligned categories and probabilities")
+            if not all(math.isfinite(value) and 0 <= value <= 1 for value in probabilities):
+                raise ValueError("category probabilities must be finite values in [0, 1]")
+            if not math.isclose(sum(probabilities), 1.0, rel_tol=1e-10, abs_tol=1e-12):
+                raise ValueError("category probabilities must sum to one")
+            if self.observed_category_index is None or not (
+                0 <= self.observed_category_index < len(categories)
+            ):
+                raise ValueError("categorical rows require a valid observed category index")
+            for category in categories:
+                _identifier(category)
+            object.__setattr__(self, "category_probabilities", probabilities)
+            object.__setattr__(self, "categories", categories)
+        else:
+            if self.categories is not None or self.observed_category_index is not None:
+                raise ValueError("binary rows must not contain categorical prediction fields")
+            if self.probability is None or self.linear_predictor is None:
+                raise ValueError("binary rows require probability and linear predictor")
+            if not all(math.isfinite(value) for value in (self.probability, self.linear_predictor)):
+                raise ValueError("binary prediction values must be finite")
+            if not 0 <= self.probability <= 1:
+                raise ValueError("pointwise probability must lie between zero and one")
+
+    @property
+    def is_categorical(self) -> bool:
+        return self.category_probabilities is not None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return the binary legacy shape or an explicit categorical row."""
+
+        common: dict[str, Any] = {
+            "row": self.row,
+            "log_probability": self.log_probability,
+            "aggregation_unit": self.aggregation_unit,
+        }
+        if self.is_categorical:
+            common.update(
+                {
+                    "category_probabilities": list(self.category_probabilities or ()),
+                    "categories": list(self.categories or ()),
+                    "observed_category_index": self.observed_category_index,
+                }
+            )
+        else:
+            common.update(
+                {
+                    "probability": self.probability,
+                    "linear_predictor": self.linear_predictor,
+                }
+            )
+        return common
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,7 +220,7 @@ class FoldRun:
             "n_predictions": len(self.predictions),
         }
         if retain_predictions:
-            result["predictions"] = [_json_safe(asdict(item)) for item in self.predictions]
+            result["predictions"] = [_json_safe(item.to_dict()) for item in self.predictions]
         return result
 
 
@@ -838,9 +903,9 @@ def _run_candidate_folds(
                 fit,
                 mode=PredictionMode.FILTERED,
             )
-            if not isinstance(prediction, Prediction):
-                raise TypeError("model.predict must return Prediction")
-            if len(prediction.probability) != len(prediction_study):
+            if not isinstance(prediction, (Prediction, CategoricalPrediction)):
+                raise TypeError("model.predict must return Prediction or CategoricalPrediction")
+            if prediction.n_observations != len(prediction_study):
                 raise ValueError("prediction length differs from compiled prediction rows")
         except Exception as error:
             failures.append(_failure(name, fold.identifier, RunStage.PREDICT, error))
@@ -858,22 +923,52 @@ def _run_candidate_folds(
                 raise ValueError("pointwise scores must be one finite value per prediction row")
             offset = len(fold.prediction_context_rows)
             target = slice(offset, None)
-            pointwise = tuple(
-                PointwisePrediction(
-                    row=row,
-                    probability=float(probability),
-                    linear_predictor=float(linear_predictor),
-                    log_probability=float(log_probability),
-                    aggregation_unit=_identifier(study[aggregation_column][row]),
+            if isinstance(prediction, CategoricalPrediction):
+                if not isinstance(model, CategoricalBehaviourEstimator):
+                    raise TypeError(
+                        "categorical predictions require categories and outcome_codes()"
+                    )
+                if tuple(model.categories) != prediction.categories:
+                    raise ValueError("model and prediction category coordinates differ")
+                codes = np.asarray(model.outcome_codes(prediction_study), dtype=np.int64)
+                if codes.shape != (len(prediction_study),):
+                    raise ValueError("outcome_codes must return one code per prediction row")
+                pointwise = tuple(
+                    PointwisePrediction(
+                        row=row,
+                        probability=None,
+                        linear_predictor=None,
+                        log_probability=float(log_probability),
+                        aggregation_unit=_identifier(study[aggregation_column][row]),
+                        category_probabilities=tuple(float(value) for value in probabilities),
+                        categories=tuple(_identifier(value) for value in prediction.categories),
+                        observed_category_index=int(code),
+                    )
+                    for row, probabilities, code, log_probability in zip(
+                        fold.scored_rows,
+                        prediction.probability[target],
+                        codes[target],
+                        scores[target],
+                        strict=True,
+                    )
                 )
-                for row, probability, linear_predictor, log_probability in zip(
-                    fold.scored_rows,
-                    prediction.probability[target],
-                    prediction.linear_predictor[target],
-                    scores[target],
-                    strict=True,
+            else:
+                pointwise = tuple(
+                    PointwisePrediction(
+                        row=row,
+                        probability=float(probability),
+                        linear_predictor=float(linear_predictor),
+                        log_probability=float(log_probability),
+                        aggregation_unit=_identifier(study[aggregation_column][row]),
+                    )
+                    for row, probability, linear_predictor, log_probability in zip(
+                        fold.scored_rows,
+                        prediction.probability[target],
+                        prediction.linear_predictor[target],
+                        scores[target],
+                        strict=True,
+                    )
                 )
-            )
         except Exception as error:
             failures.append(_failure(name, fold.identifier, RunStage.SCORE, error))
             continue
@@ -931,18 +1026,9 @@ def _unit_scores(
         unit_values[key] = point.aggregation_unit
     result: list[UnitScore] = []
     for key, points in by_unit.items():
-        outcomes = [_binary_outcome(study[outcome_column][point.row]) for point in points]
+        point_brier = [_point_brier(point, study, outcome_column) for point in points]
         brier = (
-            float(
-                np.mean(
-                    [
-                        (point.probability - outcome) ** 2
-                        for point, outcome in zip(points, outcomes, strict=True)
-                    ]
-                )
-            )
-            if all(outcome is not None for outcome in outcomes)
-            else None
+            float(np.mean(point_brier)) if all(value is not None for value in point_brier) else None
         )
         result.append(
             UnitScore(
@@ -969,17 +1055,12 @@ def _score_summary(
     metric = ScoreMetric(metric)
     values = [_unit_score_value(score, metric) for score in unit_scores]
     if metric == ScoreMetric.BRIER:
-        outcomes = [_binary_outcome(study[outcome_column][point.row]) for point in predictions]
-        if any(outcome is None for outcome in outcomes):
-            raise ProtocolRunError("Brier scoring requires a binary 0/1 outcome")
-        pooled = float(
-            np.mean(
-                [
-                    (point.probability - outcome) ** 2
-                    for point, outcome in zip(predictions, outcomes, strict=True)
-                ]
+        brier = [_point_brier(point, study, outcome_column) for point in predictions]
+        if any(value is None for value in brier):
+            raise ProtocolRunError(
+                "Brier scoring requires a binary outcome or explicit categorical codes"
             )
-        )
+        pooled = float(np.mean(brier))
     else:
         pooled = -float(np.mean([point.log_probability for point in predictions]))
     interval = _bootstrap_interval(
@@ -995,7 +1076,9 @@ def _unit_score_value(score: UnitScore, metric: ScoreMetric) -> float:
     if metric in (ScoreMetric.LOG_LOSS, ScoreMetric.JOINT_LOG_LOSS):
         return score.log_loss
     if score.brier_score is None:
-        raise ProtocolRunError("Brier scoring requires a binary 0/1 outcome")
+        raise ProtocolRunError(
+            "Brier scoring requires a binary outcome or explicit categorical codes"
+        )
     return score.brier_score
 
 
@@ -1004,6 +1087,16 @@ def _calibration(
 ) -> CalibrationSummary:
     if not predictions:
         return CalibrationSummary(False, 0, None, None, None, None, "no successful predictions")
+    if any(point.is_categorical for point in predictions):
+        return CalibrationSummary(
+            False,
+            len(predictions),
+            None,
+            None,
+            None,
+            None,
+            "binary reliability calibration is not defined for categorical predictions",
+        )
     outcomes = [_binary_outcome(study[outcome_column][point.row]) for point in predictions]
     if any(outcome is None for outcome in outcomes):
         return CalibrationSummary(
@@ -1033,6 +1126,18 @@ def _calibration(
         brier_score=float(np.mean((probabilities - observed) ** 2)),
         expected_calibration_error=calibration_error,
     )
+
+
+def _point_brier(point: PointwisePrediction, study: Any, outcome_column: str) -> float | None:
+    if point.is_categorical:
+        probabilities = np.asarray(point.category_probabilities, dtype=np.float64)
+        target = np.zeros_like(probabilities)
+        target[point.observed_category_index] = 1.0  # type: ignore[index]
+        return float(0.5 * np.sum((probabilities - target) ** 2))
+    outcome = _binary_outcome(study[outcome_column][point.row])
+    if outcome is None:
+        return None
+    return float((point.probability - outcome) ** 2)  # type: ignore[operator]
 
 
 def _paired_comparisons(

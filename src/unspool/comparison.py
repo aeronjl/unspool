@@ -14,6 +14,7 @@ from unspool.diagnostics import FitAudit, FitAuditStatus, audit_fit
 from unspool.evaluation import FoldEvaluation, evaluate_splits
 from unspool.models.base import (
     BehaviourEstimator,
+    CategoricalPrediction,
     PredictionMode,
     _protected_array,
     model_capabilities,
@@ -788,15 +789,29 @@ def _aggregate_evaluations(
     pooled_brier: list[NDArray[np.float64]] = []
     for evaluation in evaluations:
         test = study.take(evaluation.split.test_indices)
-        raw_outcomes = np.asarray(test[outcome_column])
-        try:
-            outcomes = np.asarray(raw_outcomes, dtype=np.float64)
-        except (TypeError, ValueError):
-            raise ValueError(f"outcome column {outcome_column!r} must be binary numeric") from None
-        if not np.all(np.isfinite(outcomes)) or not np.all((outcomes == 0) | (outcomes == 1)):
-            raise ValueError(f"outcome column {outcome_column!r} must contain only 0 and 1")
         losses = -evaluation.pointwise_log_probability
-        brier = (evaluation.prediction.probability - outcomes) ** 2
+        if isinstance(evaluation.prediction, CategoricalPrediction):
+            if evaluation.outcome_codes is None:
+                raise ValueError("categorical fold is missing observed outcome codes")
+            targets = np.zeros_like(evaluation.prediction.probability)
+            targets[np.arange(len(targets)), evaluation.outcome_codes] = 1.0
+            # Half the multicategory squared distance preserves the familiar [0, 1]
+            # range and exactly matches the existing binary Brier convention.
+            brier = 0.5 * np.sum(
+                (evaluation.prediction.probability - targets) ** 2,
+                axis=1,
+            )
+        else:
+            raw_outcomes = np.asarray(test[outcome_column])
+            try:
+                outcomes = np.asarray(raw_outcomes, dtype=np.float64)
+            except (TypeError, ValueError):
+                raise ValueError(
+                    f"outcome column {outcome_column!r} must be binary numeric"
+                ) from None
+            if not np.all(np.isfinite(outcomes)) or not np.all((outcomes == 0) | (outcomes == 1)):
+                raise ValueError(f"outcome column {outcome_column!r} must contain only 0 and 1")
+            brier = (evaluation.prediction.probability - outcomes) ** 2
         if len(test) != len(losses):
             raise ValueError("fold test rows and pointwise scores must align")
         pooled_losses.append(losses)

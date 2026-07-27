@@ -44,6 +44,12 @@ class DesignTerm(Protocol):
     @property
     def signature(self) -> str: ...
 
+    @property
+    def feature_names(self) -> tuple[str, ...]: ...
+
+    @property
+    def required_columns(self) -> tuple[str, ...]: ...
+
     def build(self, study: Study) -> FeatureBlock: ...
 
 
@@ -68,6 +74,14 @@ class NumericTerm:
     @property
     def feature_name(self) -> str:
         return self.column if self.name is None else self.name
+
+    @property
+    def feature_names(self) -> tuple[str, ...]:
+        return (self.feature_name,)
+
+    @property
+    def required_columns(self) -> tuple[str, ...]:
+        return (self.column,)
 
     @property
     def signature(self) -> str:
@@ -147,6 +161,14 @@ class CategoricalTerm:
         return tuple(level for level in self.levels if _label_key(level) != reference_key)
 
     @property
+    def feature_names(self) -> tuple[str, ...]:
+        return tuple(f"{self.prefix}[{level!r}]" for level in self.encoded_levels)
+
+    @property
+    def required_columns(self) -> tuple[str, ...]:
+        return (self.column,)
+
+    @property
     def signature(self) -> str:
         return (
             f"categorical(column={self.column!r},levels={self.levels!r},"
@@ -174,8 +196,7 @@ class CategoricalTerm:
                 for level in encoded
             ]
         )
-        names = tuple(f"{self.prefix}[{level!r}]" for level in encoded)
-        return FeatureBlock(names=names, values=values)
+        return FeatureBlock(names=self.feature_names, values=values)
 
 
 @dataclass(frozen=True, slots=True)
@@ -224,6 +245,14 @@ class HistoryTerm:
             f"fill_value={self.fill_value!r},name={self.prefix!r})"
         )
 
+    @property
+    def feature_names(self) -> tuple[str, ...]:
+        return tuple(f"{self.prefix}_lag_{lag}" for lag in self.lags)
+
+    @property
+    def required_columns(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys((self.column, *self.reset_by)))
+
     def build(self, study: Study) -> FeatureBlock:
         missing = [
             column for column in (self.column, *self.reset_by) if column not in study.columns
@@ -246,8 +275,7 @@ class HistoryTerm:
                 if len(previous) >= lag:
                     values[index, output] = previous[-lag]
             previous.append(float(source[index]))
-        names = tuple(f"{self.prefix}_lag_{lag}" for lag in self.lags)
-        return FeatureBlock(names=names, values=values)
+        return FeatureBlock(names=self.feature_names, values=values)
 
 
 @dataclass(frozen=True, slots=True)
@@ -286,6 +314,14 @@ class HistoryKernelTerm:
         return f"{self.column}_kernel" if self.name is None else self.name
 
     @property
+    def feature_names(self) -> tuple[str, ...]:
+        return (self.feature_name,)
+
+    @property
+    def required_columns(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys((self.column, *self.reset_by)))
+
+    @property
     def signature(self) -> str:
         return (
             f"history_kernel(column={self.column!r},lags={self.lags!r},"
@@ -318,14 +354,23 @@ class InteractionTerm:
     def signature(self) -> str:
         return f"interaction(left={self.left.signature},right={self.right.signature})"
 
+    @property
+    def feature_names(self) -> tuple[str, ...]:
+        return tuple(
+            f"{left_name}:{right_name}"
+            for left_name in self.left.feature_names
+            for right_name in self.right.feature_names
+        )
+
+    @property
+    def required_columns(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys((*self.left.required_columns, *self.right.required_columns)))
+
     def build(self, study: Study) -> FeatureBlock:
         left = self.left.build(study)
         right = self.right.build(study)
         values = np.einsum("ij,ik->ijk", left.values, right.values).reshape(len(study), -1)
-        names = tuple(
-            f"{left_name}:{right_name}" for left_name in left.names for right_name in right.names
-        )
-        return FeatureBlock(names=names, values=values)
+        return FeatureBlock(names=self.feature_names, values=values)
 
 
 @dataclass(frozen=True, slots=True)
@@ -357,9 +402,37 @@ class DesignSpec:
         if not terms and not self.intercept:
             raise DesignValidationError("a design must contain an intercept or at least one term")
         for term in terms:
-            if not hasattr(term, "build") or not hasattr(term, "signature"):
-                raise TypeError("every design term must provide build() and signature")
+            if (
+                not hasattr(term, "build")
+                or not hasattr(term, "signature")
+                or not hasattr(term, "feature_names")
+                or not hasattr(term, "required_columns")
+            ):
+                raise TypeError(
+                    "every design term must provide build(), signature, feature_names, "
+                    "and required_columns"
+                )
         object.__setattr__(self, "terms", terms)
+
+    @property
+    def feature_names(self) -> tuple[str, ...]:
+        """Stable output coordinate declared without inspecting study rows."""
+
+        names = ("intercept",) if self.intercept else ()
+        for term in self.terms:
+            names += tuple(term.feature_names)
+        if len(set(names)) != len(names):
+            duplicates = sorted({name for name in names if names.count(name) > 1})
+            raise DesignValidationError(f"design feature names collide: {duplicates}")
+        return names
+
+    @property
+    def required_columns(self) -> tuple[str, ...]:
+        """Source columns needed by every term, in first-declaration order."""
+
+        return tuple(
+            dict.fromkeys(column for term in self.terms for column in term.required_columns)
+        )
 
     @property
     def signature(self) -> str:
@@ -372,16 +445,16 @@ class DesignSpec:
         if not isinstance(study, Study):
             raise TypeError("study must be a Study")
         blocks = [term.build(study) for term in self.terms]
-        names = ("intercept",) if self.intercept else ()
+        names = self.feature_names
         matrices: list[NDArray[np.float64]] = []
         if self.intercept:
             matrices.append(np.ones((len(study), 1), dtype=np.float64))
-        for block in blocks:
-            names += block.names
+        for term, block in zip(self.terms, blocks, strict=True):
+            if block.names != tuple(term.feature_names):
+                raise DesignValidationError(
+                    "design term built names that differ from its declared feature_names"
+                )
             matrices.append(block.values)
-        if len(set(names)) != len(names):
-            duplicates = sorted({name for name in names if names.count(name) > 1})
-            raise DesignValidationError(f"design feature names collide: {duplicates}")
         values = np.column_stack(matrices)
         return DesignMatrix(names=names, values=values, specification=self.signature)
 
