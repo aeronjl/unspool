@@ -329,6 +329,19 @@ from unspool.runner import (
     run_nested_protocol,
     run_protocol,
 )
+from unspool.sbc import (
+    PosteriorParameterQuantity,
+    SBCError,
+    SBCFailure,
+    SBCInference,
+    SBCRank,
+    SBCReport,
+    SBCSimulation,
+    SBCSimulator,
+    SBCSummary,
+    SBCTestQuantity,
+    run_simulation_based_calibration,
+)
 from unspool.state_alignment import LatentStateAlignment, align_latent_states
 from unspool.study import REQUIRED_COLUMNS, Study, StudyValidationError
 from unspool.task import (
@@ -560,6 +573,7 @@ __all__ = [
     "PosteriorDiagnostic",
     "PosteriorError",
     "PosteriorGroup",
+    "PosteriorParameterQuantity",
     "PosteriorPredictiveAudit",
     "PosteriorPredictiveCheck",
     "PosteriorPredictiveIssue",
@@ -621,6 +635,15 @@ __all__ = [
     "RewardSpec",
     "RunFailure",
     "RunStage",
+    "SBCError",
+    "SBCFailure",
+    "SBCInference",
+    "SBCRank",
+    "SBCReport",
+    "SBCSimulation",
+    "SBCSimulator",
+    "SBCSummary",
+    "SBCTestQuantity",
     "ScipyMultistart",
     "ScoreMetric",
     "ScoreSummary",
@@ -714,6 +737,7 @@ __all__ = [
     "run_nested_protocol",
     "run_parameter_recovery",
     "run_protocol",
+    "run_simulation_based_calibration",
     "session_order_clock",
     "study_from_dandi",
     "study_from_ibl_one",

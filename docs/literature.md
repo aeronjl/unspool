@@ -52,6 +52,19 @@ negative result rather than treating robustification as automatically superior.
 - [Choice/response-time study](tutorials/ibl2021-choice-response-time.md)
 - [Drift-diffusion assumptions](drift-diffusion.md)
 
+## Calibrating an inference implementation
+
+Simulation-based calibration tests a complete prior-simulation and posterior-inference
+pipeline by asking whether simulated truths have uniform randomized ranks among posterior
+draws. Unspool follows Talts et al.'s rank formulation, preserves the failed repetitions,
+and makes the tested quantities explicit because Modrák et al. show that diagnostic
+sensitivity depends on that choice. This checks computational faithfulness under the
+declared generative distribution; it is not an empirical model check.
+
+- [Simulation-based calibration guide](simulation-based-calibration.md)
+- [Talts et al. (2018)](https://arxiv.org/abs/1804.06788)
+- [Modrák et al. (2023)](https://arxiv.org/abs/2211.02383)
+
 ## Documentation commitments
 
 Future literature examples should prioritize:

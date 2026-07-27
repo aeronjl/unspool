@@ -54,6 +54,7 @@ def main() -> None:
     _plot_model_atlas(args.output_dir / "model-atlas.svg")
     _plot_nested_selection(args.output_dir / "nested-selection.svg")
     _plot_diagnostic_layers(args.output_dir / "diagnostic-layers.svg")
+    _plot_sbc_workflow(args.output_dir / "sbc-workflow.svg")
     _plot_interoperability(args.output_dir / "interoperability-pipeline.svg")
     _plot_hierarchical_pooling(args.output_dir / "hierarchical-pooling.svg")
     _plot_ddm_recovery(args.output_dir / "ddm-recovery.svg")
@@ -439,6 +440,59 @@ def _plot_diagnostic_layers(path: Path) -> None:
         ha="center",
         color=AMBER,
         weight="bold",
+    )
+    _save(figure, path)
+
+
+def _plot_sbc_workflow(path: Path) -> None:
+    figure, axis = plt.subplots(figsize=(11, 4.8))
+    axis.set(xlim=(0, 11), ylim=(0, 4.8))
+    axis.axis("off")
+    stages = (
+        (0.25, "Prior draw", "latent truth", BLUE),
+        (2.45, "Simulate Study", "observed trials", TEAL),
+        (4.65, "Infer posterior", "labelled draws", INDIGO),
+        (6.85, "Randomized rank", "truth among draws", AMBER),
+        (9.05, "Retain evidence", "ranks + failures", MUTED),
+    )
+    for left, title, subtitle, color in stages:
+        _box(axis, (left, 2.1), (1.7, 0.95), title, subtitle, color=color, fill="white")
+    for left in (1.95, 4.15, 6.35, 8.55):
+        _arrow(axis, (left, 2.58), (left + 0.45, 2.58))
+    axis.text(
+        5.5,
+        4.12,
+        "Repeat under the declared generative distribution",
+        ha="center",
+        color=INDIGO,
+        weight="bold",
+        fontsize=11,
+    )
+    axis.add_patch(
+        FancyArrowPatch(
+            (9.9, 3.12),
+            (1.1, 3.12),
+            connectionstyle="arc3,rad=0.2",
+            arrowstyle="-|>",
+            mutation_scale=11,
+            linewidth=1.1,
+            color=MUTED,
+        )
+    )
+    axis.text(
+        5.5,
+        0.92,
+        "Uniform ranks are expected only when simulation and inference agree",
+        ha="center",
+        color=TEAL,
+        weight="bold",
+    )
+    axis.text(
+        5.5,
+        0.42,
+        "A finite histogram is descriptive evidence—not an automatic pass certificate",
+        ha="center",
+        color=AMBER,
     )
     _save(figure, path)
 

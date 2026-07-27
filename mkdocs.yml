@@ -104,6 +104,7 @@ nav:
       - Labelled posterior results: posterior-results.md
       - Posterior convergence diagnostics: posterior-diagnostics.md
       - Posterior-predictive checks: posterior-predictive-checks.md
+      - Simulation-based calibration: simulation-based-calibration.md
       - PSIS-LOO predictive evaluation: psis-loo.md
       - PyMC hierarchical GLM backend: pymc-backend.md
       - Estimator contract: estimator-contract.md

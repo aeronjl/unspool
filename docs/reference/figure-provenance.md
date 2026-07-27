@@ -50,6 +50,7 @@ bounded claims.
 | `nested-selection.svg` | Show where candidate selection sits inside an outer evaluation |
 | `diagnostic-layers.svg` | Separate numerical, predictive, parameter-recovery, and model-recovery evidence |
 | `interoperability-pipeline.svg` | Show how supported sources converge on the same study contract |
+| `sbc-workflow.svg` | Separate prior simulation, posterior inference, rank evidence, and bounded SBC interpretation |
 
 Conceptual figures contain schematic or simulated values chosen for explanation. They are
 not estimates from a study and should not be cited as results.
