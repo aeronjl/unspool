@@ -11,7 +11,12 @@ from typing import Any
 import numpy as np
 
 from unspool.models.hierarchical_glm import HierarchicalBernoulliHistoryGLM
-from unspool.posterior import PosteriorResult, posterior_result_from_arviz
+from unspool.posterior import (
+    PosteriorGroup,
+    PosteriorResult,
+    PosteriorVariable,
+    posterior_result_from_arviz,
+)
 from unspool.study import Study
 from unspool.task import TaskSpec
 
@@ -220,6 +225,7 @@ class PyMCHierarchicalGLMBackend:
             inference_library_version=inference_version,
             parameter_names=("population_coefficient", "subject_deviation"),
         )
+        result = _retain_trial_identity(result, study, model.outcome)
         attrs = {
             **dict(result.attrs),
             "backend": self.backend_name,
@@ -258,6 +264,52 @@ def _import_pymc() -> Any:
         raise PyMCUnavailableError(
             "PyMC inference requires `pip install 'unspool[bayesian]'`"
         ) from error
+
+
+def _retain_trial_identity(
+    result: PosteriorResult,
+    study: Study,
+    outcome: str,
+) -> PosteriorResult:
+    trial = result["observed_data"][outcome].coords["trial"]
+    metadata = (
+        PosteriorVariable("trial_subject", study["subject"], ("trial",), {"trial": trial}),
+        PosteriorVariable("trial_session", study["session"], ("trial",), {"trial": trial}),
+        PosteriorVariable("trial_in_session", study["trial"], ("trial",), {"trial": trial}),
+        PosteriorVariable(
+            "trial_session_order",
+            study["session_order"],
+            ("trial",),
+            {"trial": trial},
+        ),
+    )
+    groups = list(result.groups)
+    constant_index = next(
+        (index for index, group in enumerate(groups) if group.name == "constant_data"),
+        None,
+    )
+    if constant_index is None:
+        groups.append(PosteriorGroup("constant_data", metadata))
+    else:
+        constant = groups[constant_index]
+        collisions = set(constant.variable_names) & {variable.name for variable in metadata}
+        if collisions:
+            raise PyMCBackendError(f"PyMC constant data collides with trial identity: {collisions}")
+        groups[constant_index] = PosteriorGroup(
+            "constant_data",
+            (*constant.variables, *metadata),
+            attrs=constant.attrs,
+        )
+    return PosteriorResult(
+        model_name=result.model_name,
+        model_signature=result.model_signature,
+        inference_library=result.inference_library,
+        inference_library_version=result.inference_library_version,
+        parameter_names=result.parameter_names,
+        groups=tuple(groups),
+        parameter_space_fingerprint=result.parameter_space_fingerprint,
+        attrs=result.attrs,
+    )
 
 
 def _subject_indices(study: Study, subjects: tuple[Any, ...]) -> np.ndarray:

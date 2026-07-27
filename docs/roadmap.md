@@ -421,9 +421,12 @@ The roadmap is organized by scientific contracts rather than by model count.
   retaining log-scale ELPD, uncertainty, effective parameter count, labelled Pareto-k
   evidence, adaptive reliability thresholds, and influential-observation warnings while
   explicitly separating observation-level LOO from prospective longitudinal validation.
-- **Planned:** add posterior predictive checks, simulation-based calibration, sensitivity,
-  and test-retest reliability alongside Unspool's prospective validation and exact-design
-  recovery.
+- **Implemented:** compare observed and replicated behaviour through a composable,
+  provenance-bearing discrepancy contract with explicit reference tails, immutable
+  chain-by-draw evidence, grouped subject/session checks, canonical rate/mean/variance/
+  switching summaries, and a documented boundary from prospective validation.
+- **Planned:** add simulation-based calibration, sensitivity, and test-retest reliability
+  alongside Unspool's prospective validation and exact-design recovery.
 - **Release boundary:** changing an inference backend must not change task semantics,
   prediction information, split geometry, scored observations, or result interpretation.
 

@@ -94,7 +94,9 @@ The returned `PosteriorResult` contains:
 - PyMC's per-draw NUTS diagnostics in `sample_stats`;
 - pointwise Bernoulli values in `log_likelihood`;
 - replicated choices in `posterior_predictive`;
-- the observed choices and fixed design matrix; and
+- the observed choices and fixed design matrix;
+- trial-level subject, session, within-session position, and session-order identity for
+  grouped posterior-predictive checks; and
 - model signature, task denominators, backend version/configuration, scored columns, and
   prior descriptions.
 
@@ -120,6 +122,8 @@ labelled axes are described in [labelled posterior results](posterior-results.md
 backend-neutral convergence policy is described in
 [posterior convergence diagnostics](posterior-diagnostics.md), and the pointwise
 predictive-fit calculation in [PSIS-LOO predictive evaluation](psis-loo.md).
+Behavioural discrepancy checks are described in
+[posterior-predictive checks](posterior-predictive-checks.md).
 
 ## Interpretation boundary
 

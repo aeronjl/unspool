@@ -142,6 +142,9 @@ print(loo.elpd_loo, loo.issue_codes)
 See [PSIS-LOO predictive evaluation](psis-loo.md), including why this diagnostic does not
 replace future-session validation.
 
+For model criticism, compare observed behavioural summaries with the complete replicated
+reference distribution using [posterior-predictive checks](posterior-predictive-checks.md).
+
 ## What this does not claim
 
 The container does not fit a model or turn approximate samples into a calibrated posterior.

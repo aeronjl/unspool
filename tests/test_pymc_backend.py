@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from unspool import (
+    CategoryRateDiscrepancy,
     ChoiceSpec,
     HierarchicalBernoulliHistoryGLM,
     PyMCBackendError,
@@ -12,6 +13,7 @@ from unspool import (
     Study,
     TaskSpec,
     TaskValidationError,
+    posterior_predictive_check,
 )
 
 
@@ -161,6 +163,28 @@ def test_real_pymc_fit_preserves_model_task_likelihood_and_predictive_evidence()
     predictive = result["posterior_predictive"]["choice"].values
     assert predictive.shape == (2, 30, len(study))
     assert set(np.unique(predictive)) <= {0, 1}
+    np.testing.assert_array_equal(
+        result["constant_data"]["trial_subject"].values,
+        study["subject"],
+    )
+    np.testing.assert_array_equal(
+        result["constant_data"]["trial_session"].values,
+        study["session"],
+    )
+    np.testing.assert_array_equal(
+        result["constant_data"]["trial_in_session"].values,
+        study["trial"],
+    )
+    predictive_audit = posterior_predictive_check(
+        result,
+        (CategoryRateDiscrepancy(1),),
+        groupby=("trial_subject",),
+    )
+    assert len(predictive_audit.checks) == 2
+    assert {check.group for check in predictive_audit.checks} == {
+        (("trial_subject", "mouse-a"),),
+        (("trial_subject", "mouse-b"),),
+    }
 
 
 def test_pymc_remains_an_optional_dependency(monkeypatch) -> None:
