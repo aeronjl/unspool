@@ -260,9 +260,9 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** turn the Cell 2025 reproduction, replicated IBL trajectories,
   prospective nested selection, and four-family recovery grid into worked literature
   studies with explicit denominators, estimands, limitations, and reproduction commands.
-- **Implemented:** generate fifteen versioned figures: five empirical or simulation-based
+- **Implemented:** generate eighteen versioned figures: ten empirical or simulation-based
   evidence displays from checksum-pinned public inputs and committed benchmark results,
-  plus ten clearly labelled conceptual maps of workflow, validation, model structure, and
+  plus eight clearly labelled conceptual maps of workflow, validation, model structure, and
   diagnostics. Every figure has descriptive alternative text, an interpretive caption,
   and an auditable entry in the figure provenance register.
 - **Implemented:** build documentation on every pull request and deploy the exact successful
@@ -270,11 +270,30 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Bounded claim:** the site makes current evidence legible; it does not expand the
   scientific coverage declared by the capability matrix.
 
+## 0.18 — Public joint-outcome and latent-state studies
+
+- **Implemented:** extend the frozen IBL cohort into a one-animal joint
+  choice/movement-onset-response-time study with a fixed eligibility window, physical
+  units, an untouched future session, and naive-versus-contaminant Wiener evidence.
+- **Implemented:** retain the negative robust-versus-naive result, model-dependent trial
+  responsibilities, a posterior-predictive response-time draw, and the boundary warning
+  rather than presenting robustness as automatic improvement.
+- **Implemented:** translate the question in Ashwood et al. into a structural analogue
+  with training-only 2/3/4-state selection, a static history-GLM comparator, and
+  one-step-ahead scoring in an untouched session.
+- **Implemented:** expose the near-tied inner selection, improved outer score, fitted
+  state probabilities, and warning-level restart, boundary, and curvature diagnostics.
+- **Bounded claim:** both examples concern one outcome-blindly selected animal and one
+  future session; they demonstrate complete software workflows, not population effects,
+  mechanistic identification, or a reproduction of Ashwood et al.
+
 ## Later
 
-- Extend the standardized model evidence panel to joint choice/response-time models with
-  response-time distributions, conditional accuracy, contaminant responsibilities, and
-  physical-unit diagnostics.
+- Confirm the joint choice/response-time design across animals with subject-balanced
+  evidence and freeze a design-matched recovery analysis before mechanistic interpretation.
+
+- Compare the public latent-state procedure with targeted smooth-drift, history, and
+  learning-agent competitors, including state and model recovery under the exact design.
 
 - Session-varying GLM-HMM parameters
 - Full propagation of population-parameter and scale uncertainty into predictions

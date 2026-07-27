@@ -13,6 +13,8 @@ EXPECTED_FIGURES = {
     "diagnostic-layers.svg",
     "hierarchical-pooling.svg",
     "ibl-learning-trajectories.svg",
+    "ibl-choice-response-time.svg",
+    "ibl-glmhmm-states.svg",
     "ibl-prospective-selection.svg",
     "interoperability-pipeline.svg",
     "model-atlas.svg",

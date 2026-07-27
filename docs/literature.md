@@ -31,12 +31,26 @@ labs remain explicit limitations.
 
 GLM-HMMs and reinforcement-learning agents are common explanations of nonstationary choice.
 Unspool makes them compete with observable history and smooth-drift accounts, then tests
-whether the study design recovers the generating family. Current public-data tutorials do
-not claim that a latent state or learning rate is mechanistically identified.
+whether the study design recovers the generating family. A bounded public-data analogue
+of Ashwood et al. selects GLM-HMM state count in an earlier session and scores the selected
+procedure in an untouched session. It does not claim that a latent state or learning rate
+is mechanistically identified.
 
+- [Literature-shaped GLM-HMM study](tutorials/ashwood2022-glm-hmm.md)
 - [Recovery study](tutorials/model-recovery-design.md)
 - [GLM-HMM assumptions](glm-hmm.md)
 - [Q-learning assumptions](q-learning.md)
+- [Ashwood et al. source article](https://doi.org/10.1038/s41593-021-01007-z)
+
+## Choice and response time
+
+Diffusion models turn accuracy and latency into one joint predictive claim. Unspool's
+public IBL example declares movement-onset response-time units and eligibility before
+fitting, compares naive and contaminant-aware accounts prospectively, and retains the
+negative result rather than treating robustification as automatically superior.
+
+- [Choice/response-time study](tutorials/ibl2021-choice-response-time.md)
+- [Drift-diffusion assumptions](drift-diffusion.md)
 
 ## Documentation commitments
 
@@ -44,7 +58,7 @@ Future literature examples should prioritize:
 
 1. a full prospective refactor of the Cell behavioural analysis;
 2. an independently held-out smoothness confirmation after exact-design recovery;
-3. a public choice-and-response-time example for drift-diffusion modelling; and
-4. a public latent-state example with targeted smooth, history, and learning competitors.
+3. a cohort-level confirmation of the public choice/response-time design; and
+4. targeted smooth, history, and learning competitors for the public latent-state design.
 
 These are roadmap commitments, not currently supported empirical claims.

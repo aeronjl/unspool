@@ -59,6 +59,8 @@ def main() -> None:
     _plot_ddm_recovery(args.output_dir / "ddm-recovery.svg")
     _plot_trajectory_components(args.output_dir / "trajectory-components.svg")
     _plot_choice_model_evidence_atlas(args.output_dir / "choice-model-evidence-atlas.svg")
+    _plot_ibl_choice_rt(args.output_dir / "ibl-choice-response-time.svg")
+    _plot_ibl_glm_hmm(args.output_dir / "ibl-glmhmm-states.svg")
     if not args.skip_cell:
         if not args.cell_data.exists():
             raise FileNotFoundError(
@@ -970,6 +972,229 @@ def _plot_choice_model_evidence_atlas(path: Path) -> None:
     axes[-1, 3].set_ylabel("Observed - predicted")
     axes[-1, 4].set_xlabel("Candidate: static · drift · HMM · Q")
     figure.suptitle("A model claim requires a complete chain of evidence", weight="semibold")
+    _save(figure, path, tight=False)
+
+
+def _plot_ibl_choice_rt(path: Path) -> None:
+    result = _load("ibl2021_decision_models")
+    ddm = result["ddm"]
+    heldout = ddm["heldout"]
+    observed_rt = np.asarray(heldout["response_time_seconds"], dtype=float)
+    predictive_rt = np.asarray(heldout["predictive_response_time_seconds"], dtype=float)
+    responsibilities = np.asarray(heldout["contaminant_responsibility"], dtype=float)
+
+    figure, axes = plt.subplots(2, 2, figsize=(10.8, 7.0), constrained_layout=True)
+    response_axis, accuracy_axis, responsibility_axis, evidence_axis = axes.ravel()
+
+    for values, label, color in (
+        (observed_rt, "observed", INK),
+        (predictive_rt, "one predictive draw", AMBER),
+    ):
+        ordered = np.sort(values)
+        response_axis.step(
+            ordered,
+            np.arange(1, len(ordered) + 1) / len(ordered),
+            where="post",
+            label=label,
+            color=color,
+            linewidth=1.8,
+        )
+    response_axis.set(
+        xscale="log",
+        xlim=(0.045, 3.2),
+        xlabel="Movement-onset response time (s)",
+        ylabel="Cumulative fraction",
+        title="Untouched-session response times",
+    )
+    response_axis.legend(frameon=False, fontsize=8)
+
+    accuracy = heldout["conditional_accuracy"]
+    contrast = np.asarray([row["absolute_contrast"] for row in accuracy], dtype=float)
+    observed = np.asarray([row["observed_accuracy"] for row in accuracy], dtype=float)
+    predicted = np.asarray([row["predicted_accuracy"] for row in accuracy], dtype=float)
+    accuracy_axis.plot(contrast, predicted, "o-", color=BLUE, label="robust DDM")
+    accuracy_axis.scatter(contrast, observed, marker="x", s=45, color=INK, label="observed")
+    accuracy_axis.set(
+        xscale="log",
+        ylim=(0.45, 1.03),
+        xlabel="Absolute contrast",
+        ylabel="Conditional accuracy",
+        title="Choice implication of the joint fit",
+    )
+    accuracy_axis.legend(frameon=False, fontsize=8)
+
+    responsibility_axis.scatter(
+        observed_rt,
+        responsibilities,
+        c=np.abs(np.asarray(heldout["stimulus"], dtype=float)),
+        cmap="viridis",
+        s=24,
+        alpha=0.8,
+        edgecolor="none",
+    )
+    responsibility_axis.set(
+        xscale="log",
+        xlim=(0.045, 3.2),
+        ylim=(-0.04, 1.04),
+        xlabel="Observed response time (s)",
+        ylabel="Posterior responsibility",
+        title="Model-dependent contaminant probability",
+    )
+
+    scores = (
+        ddm["naive"]["mean_test_joint_log_density"],
+        ddm["robust"]["mean_test_joint_log_density"],
+    )
+    bars = evidence_axis.bar((0, 1), scores, color=(BLUE, AMBER), width=0.62)
+    evidence_axis.axhline(0, color=MUTED, linewidth=1)
+    evidence_axis.set(
+        xticks=(0, 1),
+        xticklabels=("Naive", "Contaminant-aware"),
+        ylabel="Mean joint log density / trial",
+        title="Prospective evidence · position 5",
+    )
+    for bar, score in zip(bars, scores, strict=True):
+        evidence_axis.text(
+            bar.get_x() + bar.get_width() / 2,
+            score - 0.012,
+            f"{score:.3f}",
+            ha="center",
+            va="top",
+            color="white",
+            weight="bold",
+        )
+    evidence_axis.text(
+        0.5,
+        min(scores) - 0.055,
+        f"robust - naive = {ddm['robust']['improvement_over_naive']:+.3f}",
+        ha="center",
+        color=INK,
+        fontsize=8,
+    )
+    figure.suptitle(
+        "Joint choice and response-time evidence for one outcome-blind IBL subject",
+        weight="semibold",
+    )
+    _save(figure, path, tight=False)
+
+
+def _plot_ibl_glm_hmm(path: Path) -> None:
+    result = _load("ibl2021_decision_models")["glm_hmm"]
+    selected = result["selected_glm_hmm"]
+    probability = np.asarray(result["heldout"]["filtered_state_probability"], dtype=float)
+    coefficients = np.asarray(selected["emission_coefficients"], dtype=float)
+    transition = np.asarray(selected["transition_matrix"], dtype=float)
+    n_states = probability.shape[1]
+
+    figure = plt.figure(figsize=(11.8, 6.8), constrained_layout=True)
+    grid = figure.add_gridspec(2, 3, width_ratios=(1.35, 1.0, 1.0))
+    state_axis = figure.add_subplot(grid[0, :2])
+    coefficient_axis = figure.add_subplot(grid[0, 2])
+    transition_axis = figure.add_subplot(grid[1, 0])
+    selection_axis = figure.add_subplot(grid[1, 1])
+    evidence_axis = figure.add_subplot(grid[1, 2])
+
+    state_colors = (BLUE, AMBER, TEAL, INDIGO)
+    for state in range(n_states):
+        state_axis.plot(
+            np.arange(len(probability)),
+            probability[:, state],
+            color=state_colors[state],
+            linewidth=1.5,
+            label=f"state {state + 1}",
+        )
+    state_axis.set(
+        xlim=(0, len(probability) - 1),
+        ylim=(-0.03, 1.03),
+        xlabel="Trial in untouched position 5",
+        ylabel="Filtered probability",
+        title="Model-dependent state path",
+    )
+    state_axis.legend(frameon=False, ncol=n_states, fontsize=7.5, loc="lower center")
+
+    coefficient_limit = float(np.max(np.abs(coefficients)))
+    coefficient_image = coefficient_axis.imshow(
+        coefficients,
+        cmap="coolwarm",
+        aspect="auto",
+        vmin=-coefficient_limit,
+        vmax=coefficient_limit,
+    )
+    coefficient_axis.set(
+        xticks=range(coefficients.shape[1]),
+        xticklabels=selected["coefficient_names"],
+        yticks=range(n_states),
+        yticklabels=[f"state {state + 1}" for state in range(n_states)],
+        title="Emission coefficients",
+    )
+    coefficient_axis.tick_params(axis="x", rotation=30, labelsize=7.5)
+    figure.colorbar(coefficient_image, ax=coefficient_axis, shrink=0.75, label="logit weight")
+
+    transition_image = transition_axis.imshow(
+        transition,
+        cmap="Blues",
+        vmin=0,
+        vmax=1,
+    )
+    transition_axis.set(
+        xticks=range(n_states),
+        xticklabels=range(1, n_states + 1),
+        yticks=range(n_states),
+        yticklabels=range(1, n_states + 1),
+        xlabel="To state",
+        ylabel="From state",
+        title="Refitted transition matrix",
+    )
+    figure.colorbar(transition_image, ax=transition_axis, shrink=0.75, label="probability")
+
+    candidates = result["selection"]["candidates"]
+    candidate_states = [row["n_states"] for row in candidates]
+    candidate_losses = [row["mean_selection_log_loss"] for row in candidates]
+    selection_axis.plot(candidate_states, candidate_losses, "o-", color=BLUE, linewidth=1.8)
+    selected_states = result["selection"]["selected_states"]
+    selected_index = candidate_states.index(selected_states)
+    selection_axis.scatter(
+        [selected_states],
+        [candidate_losses[selected_index]],
+        s=80,
+        facecolor=AMBER,
+        edgecolor=INK,
+        zorder=3,
+        label="selected",
+    )
+    selection_axis.set(
+        xticks=candidate_states,
+        xlabel="Candidate states",
+        ylabel="Mean log loss",
+        title="Inner position-4 selection",
+    )
+    selection_axis.legend(frameon=False, fontsize=8)
+
+    outer_losses = (
+        result["static_glm"]["mean_test_log_loss"],
+        selected["mean_test_log_loss"],
+    )
+    bars = evidence_axis.bar((0, 1), outer_losses, color=(MUTED, TEAL), width=0.62)
+    evidence_axis.set(
+        xticks=(0, 1),
+        xticklabels=("Static GLM", f"{selected_states}-state\nGLM-HMM"),
+        ylabel="Mean choice log loss",
+        title="Outer position-5 evidence",
+    )
+    for bar, loss in zip(bars, outer_losses, strict=True):
+        evidence_axis.text(
+            bar.get_x() + bar.get_width() / 2,
+            loss - 0.025,
+            f"{loss:.3f}",
+            ha="center",
+            va="top",
+            color="white",
+            weight="bold",
+        )
+    figure.suptitle(
+        "Nested prospective GLM-HMM evidence for one outcome-blind IBL subject",
+        weight="semibold",
+    )
     _save(figure, path, tight=False)
 
 
