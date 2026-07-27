@@ -122,6 +122,7 @@ jobs:
           tests/test_posterior.py
           tests/test_posterior_diagnostics.py
           tests/test_posterior_loo.py
+          tests/test_posterior_predictive.py
 
   bayesian-interoperability:
     name: Bayesian interoperability Python ${{ matrix.python-version }}
