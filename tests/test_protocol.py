@@ -1,0 +1,337 @@
+"""Tests for the immutable study-protocol declaration and lifecycle."""
+
+from dataclasses import FrozenInstanceError, replace
+
+import pytest
+
+from unspool.protocol import (
+    SCHEMA_VERSION,
+    AggregationWeighting,
+    CandidateSpec,
+    CohortPredicate,
+    CohortSpec,
+    ComparisonSpec,
+    EstimandSpec,
+    LifecycleEvent,
+    ObservationRole,
+    ObservationSpec,
+    PanelSpec,
+    PredicateOperator,
+    PredictionInformation,
+    ProtocolClockSpec,
+    ProtocolLifecycleError,
+    ProtocolState,
+    ProtocolValidationError,
+    RecoveryKind,
+    RecoverySpec,
+    ReportingSpec,
+    ScoreMetric,
+    Setting,
+    SourceSpec,
+    StudyProtocol,
+    TransformSpec,
+    TransformVisibility,
+    UnitRole,
+    UnitSpec,
+    ValidationGeometry,
+    ValidationSpec,
+    WinnerPolicy,
+    protocol_from_json,
+)
+
+
+def example_protocol(*, with_recovery: bool = True) -> StudyProtocol:
+    recovery = (
+        RecoverySpec(
+            name="candidate-recovery",
+            kind=RecoveryKind.MODEL,
+            required=True,
+            repetitions=20,
+            seed=919,
+            success_metric="selection-rate",
+            threshold=0.8,
+            constrains_claims=("mechanistic identification",),
+            scenarios=(Setting("signal", "matched-design"),),
+        ),
+    )
+    return StudyProtocol(
+        identifier="learning-forecast-v1",
+        title="Learning trajectory forecast",
+        question="Do learning-history models improve future-session prediction?",
+        source=SourceSpec(
+            adapter="nwb",
+            release="2026-01",
+            locator="dandi:000000/0.1.0",
+            checksum_algorithm="sha256",
+            checksum="a" * 64,
+            identity_columns=("source_asset", "source_row"),
+            metadata=(Setting("license", "CC-BY-4.0"),),
+        ),
+        cohort=CohortSpec(
+            predicates=(
+                CohortPredicate(
+                    column="species",
+                    operator=PredicateOperator.EQUAL,
+                    value="mouse",
+                    rationale="target population",
+                ),
+            ),
+            selection_columns=("species", "session_order"),
+            outcome_blind=True,
+            expected_subjects=12,
+            expected_sessions=72,
+        ),
+        units=(
+            UnitSpec("animal", "subject", UnitRole.EXPERIMENTAL),
+            UnitSpec("session", "session", UnitRole.REPEATED_MEASURES, "animal"),
+        ),
+        observations=(
+            ObservationSpec("choice", ObservationRole.OUTCOME, "binary", allowed_values=(0, 1)),
+            ObservationSpec("stimulus", ObservationRole.PREDICTOR, "continuous"),
+        ),
+        clocks=(
+            ProtocolClockSpec(
+                name="training-session",
+                column="session_order",
+                kind="ordinal-session",
+                scope="subject",
+                alignment="first-eligible-session",
+            ),
+        ),
+        panel=PanelSpec(
+            subject_unit="animal",
+            session_unit="session",
+            common_clock="training-session",
+            minimum_sessions=6,
+            balance_required=True,
+        ),
+        estimands=(
+            EstimandSpec(
+                name="animal-balanced-future-log-loss",
+                population="eligible animals under the declared release",
+                outcome_columns=("choice",),
+                contrast="candidate minus reference future-session score",
+                aggregation_unit="animal",
+                weighting=AggregationWeighting.EQUAL_UNIT,
+            ),
+        ),
+        transforms=(
+            TransformSpec(
+                name="stimulus-scale",
+                implementation="unspool.transforms.Standardize",
+                input_columns=("stimulus",),
+                output_columns=("stimulus_z",),
+                visibility=TransformVisibility.TRAINING_ONLY,
+            ),
+        ),
+        validation=ValidationSpec(
+            geometry=ValidationGeometry.FUTURE_SESSION,
+            splitter="unspool.validation.cohort_forward_session_splits",
+            prediction_information=PredictionInformation.FILTERED,
+            origin=4,
+            horizon=(5,),
+        ),
+        candidates=(
+            CandidateSpec(
+                name="static",
+                implementation="unspool.models.HierarchicalBernoulliHistoryGLM",
+                hyperparameters=(Setting("subject_scale", 0.5),),
+                scored_columns=("choice",),
+            ),
+            CandidateSpec(
+                name="smooth",
+                implementation="unspool.models.HierarchicalSmoothBernoulliHistoryGLM",
+                hyperparameters=(Setting("smoothness", 9.0),),
+                scored_columns=("choice",),
+            ),
+        ),
+        comparison=ComparisonSpec(
+            metric=ScoreMetric.LOG_LOSS,
+            aggregation_unit="animal",
+            weighting=AggregationWeighting.EQUAL_UNIT,
+            interval_method="paired-unit-bootstrap",
+            interval_level=0.95,
+            bootstrap_repetitions=2_000,
+            seed=2025,
+            paired=True,
+            winner_policy=WinnerPolicy.INTERVAL_EXCLUDES_ZERO,
+            reference_candidate="static",
+        ),
+        recovery=recovery if with_recovery else (),
+        reporting=ReportingSpec(
+            required_tables=("denominators", "fold-scores", "fit-audits"),
+            required_figures=("paired-score-contrast",),
+            required_diagnostics=("optimization", "calibration"),
+            limitations=("one empirical cohort",),
+            prohibited_claims=("mechanistic identification",),
+        ),
+    )
+
+
+def test_protocol_is_deeply_immutable_and_has_versioned_fingerprint() -> None:
+    protocol = example_protocol()
+
+    assert protocol.schema_version == SCHEMA_VERSION
+    assert len(protocol.fingerprint) == 64
+    assert protocol.state == ProtocolState.DRAFT
+    with pytest.raises(FrozenInstanceError):
+        protocol.title = "changed"  # type: ignore[misc]
+    with pytest.raises(FrozenInstanceError):
+        protocol.source.release = "changed"  # type: ignore[misc]
+
+
+def test_canonical_serialization_round_trips_without_changing_identity() -> None:
+    frozen = example_protocol().freeze()
+    restored = protocol_from_json(frozen.canonical_json())
+
+    assert restored == frozen
+    assert restored.canonical_json() == frozen.canonical_json()
+    assert restored.fingerprint == frozen.fingerprint
+    assert "NaN" not in frozen.canonical_json()
+
+
+def test_fingerprint_stays_fixed_as_lifecycle_evidence_accumulates() -> None:
+    frozen = example_protocol().freeze()
+    materialized = frozen.advance(ProtocolState.MATERIALIZED, artifact_fingerprint="b" * 64)
+    audited = materialized.advance(ProtocolState.AUDITED, artifact_fingerprint="c" * 64)
+
+    assert frozen.fingerprint == materialized.fingerprint == audited.fingerprint
+    assert frozen.canonical_json() != materialized.canonical_json()
+    assert [event.to_state for event in audited.lifecycle] == [
+        ProtocolState.FROZEN,
+        ProtocolState.MATERIALIZED,
+        ProtocolState.AUDITED,
+    ]
+
+
+def test_lifecycle_requires_ordered_evidence_and_recovery_before_reporting() -> None:
+    protocol = example_protocol().freeze()
+    with pytest.raises(ProtocolLifecycleError, match="cannot advance"):
+        protocol.advance(ProtocolState.AUDITED, artifact_fingerprint="b" * 64)
+
+    protocol = protocol.advance(ProtocolState.MATERIALIZED, artifact_fingerprint="b" * 64)
+    protocol = protocol.advance(ProtocolState.AUDITED, artifact_fingerprint="c" * 64)
+    protocol = protocol.advance(ProtocolState.EVALUATED, artifact_fingerprint="d" * 64)
+    with pytest.raises(ProtocolLifecycleError, match=r"allowed=.*recovered"):
+        protocol.advance(ProtocolState.REPORTED, artifact_fingerprint="e" * 64)
+    protocol = protocol.advance(ProtocolState.RECOVERED, artifact_fingerprint="e" * 64)
+    protocol = protocol.advance(ProtocolState.REPORTED, artifact_fingerprint="f" * 64)
+
+    assert protocol.state == ProtocolState.REPORTED
+
+
+def test_protocol_without_recovery_may_report_after_evaluation() -> None:
+    protocol = example_protocol(with_recovery=False).freeze()
+    for state, digest in (
+        (ProtocolState.MATERIALIZED, "b" * 64),
+        (ProtocolState.AUDITED, "c" * 64),
+        (ProtocolState.EVALUATED, "d" * 64),
+        (ProtocolState.REPORTED, "e" * 64),
+    ):
+        protocol = protocol.advance(state, artifact_fingerprint=digest)
+    assert protocol.state == ProtocolState.REPORTED
+
+
+def test_amendment_links_parent_and_must_be_refrozen_before_evidence() -> None:
+    original = example_protocol().freeze()
+    amended = original.amend(
+        identifier="amendment-01",
+        reason="Public release corrected the expected session denominator.",
+        cohort=replace(original.cohort, expected_sessions=71),
+    )
+
+    assert amended.state == ProtocolState.DRAFT
+    assert amended.lifecycle == ()
+    assert amended.amendments[-1].parent_fingerprint == original.fingerprint
+    assert amended.amendments[-1].changed_sections == ("cohort",)
+    assert amended.fingerprint != original.fingerprint
+    assert amended.freeze().lifecycle[0].artifact_fingerprint == amended.fingerprint
+
+    materialized = original.advance(ProtocolState.MATERIALIZED, artifact_fingerprint="b" * 64)
+    with pytest.raises(ProtocolLifecycleError, match="pre-evidence"):
+        materialized.amend(identifier="late", reason="too late", title="changed")
+
+
+def test_outcome_blind_cohort_cannot_select_on_declared_outcome() -> None:
+    protocol = example_protocol()
+    cohort = replace(protocol.cohort, selection_columns=("species", "choice"))
+    with pytest.raises(ProtocolValidationError, match="selects on outcome"):
+        replace(protocol, cohort=cohort)
+
+
+def test_outcome_derived_transform_must_be_training_only() -> None:
+    with pytest.raises(ProtocolValidationError, match="training-only"):
+        TransformSpec(
+            name="learning-landmark",
+            implementation="unspool.transforms.ThresholdLandmarkClock",
+            input_columns=("choice",),
+            output_columns=("relative_trial",),
+            visibility=TransformVisibility.FIXED_A_PRIORI,
+            uses_outcomes=True,
+        )
+
+
+def test_candidates_must_score_the_same_complete_observation() -> None:
+    protocol = example_protocol()
+    incompatible = replace(protocol.candidates[1], scored_columns=("choice", "response_time"))
+    with pytest.raises(ProtocolValidationError, match="same complete observation"):
+        replace(protocol, candidates=(protocol.candidates[0], incompatible))
+
+
+def test_brier_scoring_requires_one_binary_outcome_column() -> None:
+    protocol = example_protocol()
+    observations = (
+        *protocol.observations,
+        ObservationSpec("response_time", ObservationRole.OUTCOME, "continuous"),
+    )
+    candidates = tuple(
+        replace(candidate, scored_columns=("choice", "response_time"))
+        for candidate in protocol.candidates
+    )
+    with pytest.raises(ProtocolValidationError, match="Brier scoring requires exactly one"):
+        replace(
+            protocol,
+            observations=observations,
+            candidates=candidates,
+            comparison=replace(protocol.comparison, metric=ScoreMetric.BRIER),
+        )
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    (
+        ({"weighting": AggregationWeighting.POOLED_OBSERVATION}, "equal-unit"),
+        ({"interval_method": "percentile-bootstrap"}, "paired-unit-bootstrap"),
+        ({"paired": False}, "requires paired"),
+    ),
+)
+def test_comparison_rejects_declarations_the_runner_cannot_honor(change, message) -> None:
+    comparison = example_protocol().comparison
+    with pytest.raises(ProtocolValidationError, match=message):
+        replace(comparison, **change)
+
+
+def test_comparison_must_match_a_declared_estimand() -> None:
+    protocol = example_protocol()
+    with pytest.raises(ProtocolValidationError, match="must match a declared estimand"):
+        replace(
+            protocol,
+            estimands=(replace(protocol.estimands[0], aggregation_unit="session"),),
+        )
+
+
+def test_recovery_gates_only_reference_explicitly_prohibited_claims() -> None:
+    protocol = example_protocol()
+    recovery = replace(protocol.recovery[0], constrains_claims=("causal effect",))
+    with pytest.raises(ProtocolValidationError, match=r"unknown=.*causal effect"):
+        replace(protocol, recovery=(recovery,))
+
+
+def test_tampered_lifecycle_is_rejected_on_construction() -> None:
+    protocol = example_protocol()
+    with pytest.raises(ProtocolValidationError, match="freeze event"):
+        replace(
+            protocol,
+            state=ProtocolState.FROZEN,
+            lifecycle=(LifecycleEvent(ProtocolState.DRAFT, ProtocolState.FROZEN, "b" * 64),),
+        )

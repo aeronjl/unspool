@@ -21,6 +21,7 @@ analysis.
 
 | I want to… | Start with |
 | --- | --- |
+| Freeze a complete study before fitting | [Study protocols](protocols/index.md) |
 | Represent trials without losing session or animal identity | [Longitudinal study contract](data-contract.md) |
 | Choose the time coordinate for learning | [Clocks and transforms](clocks-and-transforms.md) |
 | Test a model on genuinely later behaviour | [Prospective validation](validation.md) |
@@ -54,4 +55,5 @@ The current evidence programme includes:
 - parameter- and model-recovery benchmarks that retain ambiguity and numerical warnings.
 
 [Browse the worked studies](tutorials/index.md){ .md-button .md-button--primary }
+[Author a study protocol](protocols/index.md){ .md-button }
 [Read the philosophy](philosophy.md){ .md-button }

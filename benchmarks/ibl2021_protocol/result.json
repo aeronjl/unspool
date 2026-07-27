@@ -1,0 +1,1411 @@
+{
+  "held-out-lab": {
+    "cohort": {
+      "fingerprint": "d38679a67a4600da19928bcca2e2923c27d753d712b4a93153ef420c7c850f69",
+      "selected_observations": 46152,
+      "selected_sessions": 468,
+      "selected_subjects": 78,
+      "source_observations": 46152
+    },
+    "evaluation": {
+      "calibration": {
+        "available": true,
+        "brier_score": 0.16857930068744723,
+        "expected_calibration_error": 0.09394530346709726,
+        "mean_probability": 0.4742767937000164,
+        "n_observations": 7780,
+        "observed_rate": 0.48251928020565554,
+        "reason": null
+      },
+      "eligible": true,
+      "fingerprint": "cb8c22757561a29ac83ff6f97d9dc30309e19f7fc91a1f53fcd2f5754b1f7dea",
+      "folds": [
+        {
+          "inner_candidates": {
+            "drift_smoothness_1": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5891903597780689
+            },
+            "drift_smoothness_3": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5821955107206221
+            },
+            "drift_smoothness_9": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5685167656887369
+            },
+            "static": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.647034192803682
+            }
+          },
+          "outer_fold": "fold-0000",
+          "outer_result": {
+            "audit_status": "pass",
+            "eligible": true,
+            "pooled_log_loss": 0.7885052567189322,
+            "scored_observations": 400,
+            "unit_balanced_log_loss": 0.7885052567189322
+          },
+          "selected_candidate": "drift_smoothness_9",
+          "selection_failure": null
+        },
+        {
+          "inner_candidates": {
+            "drift_smoothness_1": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5704532504338776
+            },
+            "drift_smoothness_3": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5636800473065346
+            },
+            "drift_smoothness_9": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.551260532778838
+            },
+            "static": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.638902839890561
+            }
+          },
+          "outer_fold": "fold-0001",
+          "outer_result": {
+            "audit_status": "pass",
+            "eligible": true,
+            "pooled_log_loss": 0.6577655891737206,
+            "scored_observations": 1699,
+            "unit_balanced_log_loss": 0.6576728026670734
+          },
+          "selected_candidate": "drift_smoothness_9",
+          "selection_failure": null
+        },
+        {
+          "inner_candidates": {
+            "drift_smoothness_1": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5982950296653075
+            },
+            "drift_smoothness_3": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5907784419078433
+            },
+            "drift_smoothness_9": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5760082408540003
+            },
+            "static": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.6471798687663913
+            }
+          },
+          "outer_fold": "fold-0002",
+          "outer_result": {
+            "audit_status": "pass",
+            "eligible": true,
+            "pooled_log_loss": 0.5100405399558459,
+            "scored_observations": 1100,
+            "unit_balanced_log_loss": 0.5100405399558459
+          },
+          "selected_candidate": "drift_smoothness_9",
+          "selection_failure": null
+        },
+        {
+          "inner_candidates": {
+            "drift_smoothness_1": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5936717349376316
+            },
+            "drift_smoothness_3": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5874513167744327
+            },
+            "drift_smoothness_9": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5747017324237308
+            },
+            "static": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.6565663031917628
+            }
+          },
+          "outer_fold": "fold-0003",
+          "outer_result": {
+            "audit_status": "pass",
+            "eligible": true,
+            "pooled_log_loss": 0.42524634148709267,
+            "scored_observations": 600,
+            "unit_balanced_log_loss": 0.4252463414870926
+          },
+          "selected_candidate": "drift_smoothness_9",
+          "selection_failure": null
+        },
+        {
+          "inner_candidates": {
+            "drift_smoothness_1": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5624631568078632
+            },
+            "drift_smoothness_3": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.556181513373711
+            },
+            "drift_smoothness_9": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5445997990244621
+            },
+            "static": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.6393611775522854
+            }
+          },
+          "outer_fold": "fold-0004",
+          "outer_result": {
+            "audit_status": "pass",
+            "eligible": true,
+            "pooled_log_loss": 0.8740650778969798,
+            "scored_observations": 600,
+            "unit_balanced_log_loss": 0.8740650778969797
+          },
+          "selected_candidate": "drift_smoothness_9",
+          "selection_failure": null
+        },
+        {
+          "inner_candidates": {
+            "drift_smoothness_1": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5876332348932608
+            },
+            "drift_smoothness_3": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.58172276271236
+            },
+            "drift_smoothness_9": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5697636848829698
+            },
+            "static": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.6493858439555268
+            }
+          },
+          "outer_fold": "fold-0005",
+          "outer_result": {
+            "audit_status": "pass",
+            "eligible": true,
+            "pooled_log_loss": 0.44101217690156164,
+            "scored_observations": 900,
+            "unit_balanced_log_loss": 0.44101217690156164
+          },
+          "selected_candidate": "drift_smoothness_9",
+          "selection_failure": null
+        },
+        {
+          "inner_candidates": {
+            "drift_smoothness_1": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5885823670465185
+            },
+            "drift_smoothness_3": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5815721281344064
+            },
+            "drift_smoothness_9": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5678587802069984
+            },
+            "static": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.6461383638219377
+            }
+          },
+          "outer_fold": "fold-0006",
+          "outer_result": {
+            "audit_status": "pass",
+            "eligible": true,
+            "pooled_log_loss": 0.5850717892490219,
+            "scored_observations": 700,
+            "unit_balanced_log_loss": 0.5850717892490218
+          },
+          "selected_candidate": "drift_smoothness_9",
+          "selection_failure": null
+        },
+        {
+          "inner_candidates": {
+            "drift_smoothness_1": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5956981236083709
+            },
+            "drift_smoothness_3": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5868392533960315
+            },
+            "drift_smoothness_9": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5706426180230576
+            },
+            "static": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.6444484751423614
+            }
+          },
+          "outer_fold": "fold-0007",
+          "outer_result": {
+            "audit_status": "pass",
+            "eligible": true,
+            "pooled_log_loss": 0.7479999013179366,
+            "scored_observations": 800,
+            "unit_balanced_log_loss": 0.7479999013179367
+          },
+          "selected_candidate": "drift_smoothness_9",
+          "selection_failure": null
+        },
+        {
+          "inner_candidates": {
+            "drift_smoothness_1": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5835555568030608
+            },
+            "drift_smoothness_3": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5772709178246341
+            },
+            "drift_smoothness_9": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.5647999154428506
+            },
+            "static": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.6471905560015083
+            }
+          },
+          "outer_fold": "fold-0008",
+          "outer_result": {
+            "audit_status": "pass",
+            "eligible": true,
+            "pooled_log_loss": 0.47392399256171847,
+            "scored_observations": 981,
+            "unit_balanced_log_loss": 0.47870990544665937
+          },
+          "selected_candidate": "drift_smoothness_9",
+          "selection_failure": null
+        }
+      ],
+      "pooled_log_loss": 0.5968326290126882,
+      "schema_version": "unspool.nested-evaluation-report/1",
+      "selected_candidates": [
+        "drift_smoothness_9",
+        "drift_smoothness_9",
+        "drift_smoothness_9",
+        "drift_smoothness_9",
+        "drift_smoothness_9",
+        "drift_smoothness_9",
+        "drift_smoothness_9",
+        "drift_smoothness_9",
+        "drift_smoothness_9"
+      ],
+      "selection_counts": {
+        "drift_smoothness_1": 0,
+        "drift_smoothness_3": 0,
+        "drift_smoothness_9": 9,
+        "static": 0
+      },
+      "unit_balanced_log_loss": 0.5971344039731026,
+      "unit_balanced_log_loss_interval": {
+        "confidence_level": 0.95,
+        "estimate": 0.5971344039731026,
+        "lower": 0.5173747376181662,
+        "upper": 0.6915297381816814
+      }
+    },
+    "parity": {
+      "audit_parity": true,
+      "candidate_parity": true,
+      "denominator_parity": true,
+      "interval_parity": true,
+      "nested_selection_parity": true,
+      "outer_geometry_parity": true,
+      "passed": true,
+      "protocol_fingerprint": "00286aa3fcfcc2488ab26987198172c6fae4e31fa6e6ec894c26ede483514ed9",
+      "score_parity": true,
+      "source_parity": true,
+      "target": "held-out-lab"
+    },
+    "plan": {
+      "audit_passed": true,
+      "fingerprint": "853a174579129bec848901d7b4f49321788e03f9a6c4232a850e5dec6be50f2e",
+      "folds": [
+        {
+          "excluded_rows": 9244,
+          "fit_rows": 36508,
+          "identifier": "fold-0000",
+          "inner_folds": 8,
+          "prediction_context_rows": 0,
+          "scored_rows": 400
+        },
+        {
+          "excluded_rows": 14445,
+          "fit_rows": 30008,
+          "identifier": "fold-0001",
+          "inner_folds": 8,
+          "prediction_context_rows": 0,
+          "scored_rows": 1699
+        },
+        {
+          "excluded_rows": 12016,
+          "fit_rows": 33036,
+          "identifier": "fold-0002",
+          "inner_folds": 8,
+          "prediction_context_rows": 0,
+          "scored_rows": 1100
+        },
+        {
+          "excluded_rows": 10164,
+          "fit_rows": 35388,
+          "identifier": "fold-0003",
+          "inner_folds": 8,
+          "prediction_context_rows": 0,
+          "scored_rows": 600
+        },
+        {
+          "excluded_rows": 10135,
+          "fit_rows": 35417,
+          "identifier": "fold-0004",
+          "inner_folds": 8,
+          "prediction_context_rows": 0,
+          "scored_rows": 600
+        },
+        {
+          "excluded_rows": 11374,
+          "fit_rows": 33878,
+          "identifier": "fold-0005",
+          "inner_folds": 8,
+          "prediction_context_rows": 0,
+          "scored_rows": 900
+        },
+        {
+          "excluded_rows": 10580,
+          "fit_rows": 34872,
+          "identifier": "fold-0006",
+          "inner_folds": 8,
+          "prediction_context_rows": 0,
+          "scored_rows": 700
+        },
+        {
+          "excluded_rows": 10880,
+          "fit_rows": 34472,
+          "identifier": "fold-0007",
+          "inner_folds": 8,
+          "prediction_context_rows": 0,
+          "scored_rows": 800
+        },
+        {
+          "excluded_rows": 11774,
+          "fit_rows": 33397,
+          "identifier": "fold-0008",
+          "inner_folds": 8,
+          "prediction_context_rows": 0,
+          "scored_rows": 981
+        }
+      ],
+      "issues": [
+        {
+          "candidate": null,
+          "code": "row-roles-compiled",
+          "fold": null,
+          "level": "info",
+          "message": "compiled 9 folds with explicit fit, context, score, and exclusion rows"
+        }
+      ]
+    },
+    "protocol": {
+      "amendments": [],
+      "candidates": [
+        {
+          "hyperparameters": [
+            {
+              "name": "covariates",
+              "value": [
+                "stimulus"
+              ]
+            },
+            {
+              "name": "choice_lags",
+              "value": 1
+            },
+            {
+              "name": "l2",
+              "value": 0.02
+            },
+            {
+              "name": "subject_scale",
+              "value": 0.4
+            }
+          ],
+          "implementation": "unspool.models.HierarchicalBernoulliHistoryGLM",
+          "name": "static",
+          "prediction_information": "filtered",
+          "scored_columns": [
+            "choice"
+          ],
+          "supports_unseen_groups": true,
+          "supports_unseen_subjects": true
+        },
+        {
+          "hyperparameters": [
+            {
+              "name": "covariates",
+              "value": [
+                "stimulus"
+              ]
+            },
+            {
+              "name": "choice_lags",
+              "value": 1
+            },
+            {
+              "name": "l2",
+              "value": 0.02
+            },
+            {
+              "name": "knots",
+              "value": [
+                0.0,
+                2.0,
+                5.0
+              ]
+            },
+            {
+              "name": "smoothness",
+              "value": 1.0
+            },
+            {
+              "name": "subject_scale",
+              "value": 0.4
+            },
+            {
+              "name": "subject_smoothness",
+              "value": 1.0
+            }
+          ],
+          "implementation": "unspool.models.HierarchicalSmoothBernoulliHistoryGLM",
+          "name": "drift_smoothness_1",
+          "prediction_information": "filtered",
+          "scored_columns": [
+            "choice"
+          ],
+          "supports_unseen_groups": true,
+          "supports_unseen_subjects": true
+        },
+        {
+          "hyperparameters": [
+            {
+              "name": "covariates",
+              "value": [
+                "stimulus"
+              ]
+            },
+            {
+              "name": "choice_lags",
+              "value": 1
+            },
+            {
+              "name": "l2",
+              "value": 0.02
+            },
+            {
+              "name": "knots",
+              "value": [
+                0.0,
+                2.0,
+                5.0
+              ]
+            },
+            {
+              "name": "smoothness",
+              "value": 3.0
+            },
+            {
+              "name": "subject_scale",
+              "value": 0.4
+            },
+            {
+              "name": "subject_smoothness",
+              "value": 3.0
+            }
+          ],
+          "implementation": "unspool.models.HierarchicalSmoothBernoulliHistoryGLM",
+          "name": "drift_smoothness_3",
+          "prediction_information": "filtered",
+          "scored_columns": [
+            "choice"
+          ],
+          "supports_unseen_groups": true,
+          "supports_unseen_subjects": true
+        },
+        {
+          "hyperparameters": [
+            {
+              "name": "covariates",
+              "value": [
+                "stimulus"
+              ]
+            },
+            {
+              "name": "choice_lags",
+              "value": 1
+            },
+            {
+              "name": "l2",
+              "value": 0.02
+            },
+            {
+              "name": "knots",
+              "value": [
+                0.0,
+                2.0,
+                5.0
+              ]
+            },
+            {
+              "name": "smoothness",
+              "value": 9.0
+            },
+            {
+              "name": "subject_scale",
+              "value": 0.4
+            },
+            {
+              "name": "subject_smoothness",
+              "value": 9.0
+            }
+          ],
+          "implementation": "unspool.models.HierarchicalSmoothBernoulliHistoryGLM",
+          "name": "drift_smoothness_9",
+          "prediction_information": "filtered",
+          "scored_columns": [
+            "choice"
+          ],
+          "supports_unseen_groups": true,
+          "supports_unseen_subjects": true
+        }
+      ],
+      "clocks": [
+        {
+          "alignment": "three-early-plus-three-final-pre-transition-sessions",
+          "column": "session_order",
+          "fold_fitted": false,
+          "kind": "ordinal-session",
+          "name": "endpoint-window-position",
+          "scope": "animal"
+        }
+      ],
+      "cohort": {
+        "expected_observations": 46152,
+        "expected_sessions": 468,
+        "expected_subjects": 78,
+        "outcome_blind": true,
+        "predicates": [
+          {
+            "column": "phase",
+            "operator": "in",
+            "rationale": "retain the three early and three final pre-transition sessions",
+            "value": [
+              "early",
+              "late_training"
+            ]
+          }
+        ],
+        "selection_columns": [
+          "phase",
+          "session_order",
+          "lab"
+        ]
+      },
+      "comparison": {
+        "aggregation_unit": "animal",
+        "bootstrap_repetitions": 5000,
+        "interval_level": 0.95,
+        "interval_method": "paired-unit-bootstrap",
+        "metric": "log-loss",
+        "paired": true,
+        "reference_candidate": null,
+        "seed": 20270731,
+        "weighting": "equal-unit",
+        "winner_policy": "no-automatic-winner"
+      },
+      "estimands": [
+        {
+          "aggregation_unit": "animal",
+          "contrast": "selected procedure's untouched final-session predictive log loss",
+          "name": "animal-balanced-unseen-lab-final-session-log-loss",
+          "outcome_columns": [
+            "choice"
+          ],
+          "population": "eligible animals in each entirely held-out empirical lab",
+          "weighting": "equal-unit"
+        }
+      ],
+      "identifier": "ibl2021-nested-held-out-lab-v1",
+      "lifecycle": [
+        {
+          "artifact_fingerprint": "00286aa3fcfcc2488ab26987198172c6fae4e31fa6e6ec894c26ede483514ed9",
+          "from_state": "draft",
+          "to_state": "frozen"
+        },
+        {
+          "artifact_fingerprint": "d38679a67a4600da19928bcca2e2923c27d753d712b4a93153ef420c7c850f69",
+          "from_state": "frozen",
+          "to_state": "materialized"
+        },
+        {
+          "artifact_fingerprint": "853a174579129bec848901d7b4f49321788e03f9a6c4232a850e5dec6be50f2e",
+          "from_state": "materialized",
+          "to_state": "audited"
+        },
+        {
+          "artifact_fingerprint": "cb8c22757561a29ac83ff6f97d9dc30309e19f7fc91a1f53fcd2f5754b1f7dea",
+          "from_state": "audited",
+          "to_state": "evaluated"
+        }
+      ],
+      "observations": [
+        {
+          "allowed_values": [
+            0,
+            1
+          ],
+          "column": "choice",
+          "data_type": "binary",
+          "role": "outcome",
+          "unit": null
+        },
+        {
+          "allowed_values": [],
+          "column": "stimulus",
+          "data_type": "continuous",
+          "role": "predictor",
+          "unit": null
+        }
+      ],
+      "panel": {
+        "balance_required": true,
+        "common_clock": "endpoint-window-position",
+        "minimum_sessions": 6,
+        "session_unit": "session",
+        "subject_unit": "animal"
+      },
+      "question": "Which fixed hierarchical trajectory candidate transfers to a final ordinal session in an unseen laboratory?",
+      "recovery": [],
+      "reporting": {
+        "limitations": [
+          "endpoint positions are ordinal and do not represent uniform elapsed time",
+          "cohort entry is conditioned on the training-policy transition",
+          "held-out-lab inference concerns nine empirical laboratories",
+          "the upper smoothness grid boundary was selected in the pinned analysis"
+        ],
+        "prohibited_claims": [
+          "causal effect of laboratory",
+          "generalization to a population of laboratories",
+          "unique cognitive mechanism",
+          "selection stability beyond the declared candidate grid"
+        ],
+        "required_diagnostics": [
+          "optimization",
+          "calibration",
+          "outer-boundary-audit"
+        ],
+        "required_figures": [
+          "ibl-nested-selection"
+        ],
+        "required_tables": [
+          "denominators",
+          "inner-selections",
+          "outer-scores",
+          "fit-audits"
+        ],
+        "retain_pointwise_predictions": true
+      },
+      "schema_version": "unspool.study-protocol/1",
+      "selection": {
+        "aggregation_unit": "animal",
+        "bootstrap_repetitions": 1000,
+        "candidate_names": [
+          "static",
+          "drift_smoothness_1",
+          "drift_smoothness_3",
+          "drift_smoothness_9"
+        ],
+        "inner_validation": {
+          "geometry": "held-out-group-future-session",
+          "group_unit": "lab",
+          "horizon": [
+            4
+          ],
+          "origin": 3,
+          "prediction_information": "filtered",
+          "settings": [
+            {
+              "name": "train_session_count",
+              "value": 4
+            },
+            {
+              "name": "horizon",
+              "value": 1
+            },
+            {
+              "name": "lab_column",
+              "value": "lab"
+            }
+          ],
+          "splitter": "unspool.validation.leave_one_lab_out_session_forecast_splits"
+        },
+        "metric": "log-loss",
+        "refit_selected_on_outer_training": true,
+        "seed": 20270731,
+        "tie_break": "declared-order"
+      },
+      "source": {
+        "adapter": "ibl-one-exact-dataset",
+        "checksum": "c0a45addbc14b936f6b3aaac0c06b6a4d7108725d82dcc3df8f1501f4b1aec0b",
+        "checksum_algorithm": "sha256-manifest",
+        "identity_columns": [
+          "source_ibl_dataset_id",
+          "trial"
+        ],
+        "locator": "doi:10.7554/eLife.63711",
+        "metadata": [
+          {
+            "name": "outcome-blind-manifest",
+            "value": true
+          },
+          {
+            "name": "source-sessions",
+            "value": 468
+          },
+          {
+            "name": "source-trials-before-panel",
+            "value": 260833
+          },
+          {
+            "name": "source-row-cap-before-choice-eligibility",
+            "value": 100
+          }
+        ],
+        "release": "2021_Q1_IBL_et_al_Behaviour"
+      },
+      "state": "evaluated",
+      "title": "IBL 2021 held-out-lab future-session selection",
+      "transforms": [],
+      "units": [
+        {
+          "column": "subject",
+          "name": "animal",
+          "nested_within": null,
+          "role": "experimental"
+        },
+        {
+          "column": "session",
+          "name": "session",
+          "nested_within": "animal",
+          "role": "repeated-measures"
+        },
+        {
+          "column": "lab",
+          "name": "lab",
+          "nested_within": null,
+          "role": "aggregation"
+        }
+      ],
+      "validation": {
+        "geometry": "held-out-group-future-session",
+        "group_unit": "lab",
+        "horizon": [
+          5
+        ],
+        "origin": 4,
+        "prediction_information": "filtered",
+        "settings": [
+          {
+            "name": "train_session_count",
+            "value": 5
+          },
+          {
+            "name": "horizon",
+            "value": 1
+          },
+          {
+            "name": "lab_column",
+            "value": "lab"
+          }
+        ],
+        "splitter": "unspool.validation.leave_one_lab_out_session_forecast_splits"
+      }
+    }
+  },
+  "same-animal": {
+    "cohort": {
+      "fingerprint": "ff27e394c2361585f6a243c57566aa846b60155b7d23d45d6b901b15e2ba5905",
+      "selected_observations": 46152,
+      "selected_sessions": 468,
+      "selected_subjects": 78,
+      "source_observations": 46152
+    },
+    "evaluation": {
+      "calibration": {
+        "available": true,
+        "brier_score": 0.16084099677502892,
+        "expected_calibration_error": 0.07503184245583953,
+        "mean_probability": 0.47129105724414316,
+        "n_observations": 7780,
+        "observed_rate": 0.48251928020565554,
+        "reason": null
+      },
+      "eligible": true,
+      "fingerprint": "27e0d9b88a9d594827c16fff7aab38a5e8353b90ebbf9e453048ed7f045ecf54",
+      "folds": [
+        {
+          "inner_candidates": {
+            "drift_smoothness_1": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.618197217763698
+            },
+            "drift_smoothness_3": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.6167770041524281
+            },
+            "drift_smoothness_9": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.6149022828888598
+            },
+            "static": {
+              "audit_status": "pass",
+              "eligible": true,
+              "unit_balanced_log_loss": 0.7052588334183824
+            }
+          },
+          "outer_fold": "fold-0000",
+          "outer_result": {
+            "audit_status": "pass",
+            "eligible": true,
+            "pooled_log_loss": 0.5466899630042603,
+            "scored_observations": 7780,
+            "unit_balanced_log_loss": 0.5472312174454272
+          },
+          "selected_candidate": "drift_smoothness_9",
+          "selection_failure": null
+        }
+      ],
+      "pooled_log_loss": 0.5466899630042603,
+      "schema_version": "unspool.nested-evaluation-report/1",
+      "selected_candidates": [
+        "drift_smoothness_9"
+      ],
+      "selection_counts": {
+        "drift_smoothness_1": 0,
+        "drift_smoothness_3": 0,
+        "drift_smoothness_9": 1,
+        "static": 0
+      },
+      "unit_balanced_log_loss": 0.5472312174454272,
+      "unit_balanced_log_loss_interval": {
+        "confidence_level": 0.95,
+        "estimate": 0.5472312174454272,
+        "lower": 0.49284258912803364,
+        "upper": 0.6151744476996407
+      }
+    },
+    "parity": {
+      "audit_parity": true,
+      "candidate_parity": true,
+      "denominator_parity": true,
+      "interval_parity": true,
+      "nested_selection_parity": true,
+      "outer_geometry_parity": true,
+      "passed": true,
+      "protocol_fingerprint": "56a4494dfeb06a85373edd85c6e44f84ce31425f48f99413ead0c3d9f0e14be2",
+      "score_parity": true,
+      "source_parity": true,
+      "target": "same-animal"
+    },
+    "plan": {
+      "audit_passed": true,
+      "fingerprint": "2a2617b4cf6a856aeba3af59ea5f6ad4401aad001cb60d08e095474ebbc25a15",
+      "folds": [
+        {
+          "excluded_rows": 0,
+          "fit_rows": 38372,
+          "identifier": "fold-0000",
+          "inner_folds": 2,
+          "prediction_context_rows": 0,
+          "scored_rows": 7780
+        }
+      ],
+      "issues": [
+        {
+          "candidate": null,
+          "code": "row-roles-compiled",
+          "fold": null,
+          "level": "info",
+          "message": "compiled 1 folds with explicit fit, context, score, and exclusion rows"
+        }
+      ]
+    },
+    "protocol": {
+      "amendments": [],
+      "candidates": [
+        {
+          "hyperparameters": [
+            {
+              "name": "covariates",
+              "value": [
+                "stimulus"
+              ]
+            },
+            {
+              "name": "choice_lags",
+              "value": 1
+            },
+            {
+              "name": "l2",
+              "value": 0.02
+            },
+            {
+              "name": "subject_scale",
+              "value": 0.4
+            }
+          ],
+          "implementation": "unspool.models.HierarchicalBernoulliHistoryGLM",
+          "name": "static",
+          "prediction_information": "filtered",
+          "scored_columns": [
+            "choice"
+          ],
+          "supports_unseen_groups": false,
+          "supports_unseen_subjects": false
+        },
+        {
+          "hyperparameters": [
+            {
+              "name": "covariates",
+              "value": [
+                "stimulus"
+              ]
+            },
+            {
+              "name": "choice_lags",
+              "value": 1
+            },
+            {
+              "name": "l2",
+              "value": 0.02
+            },
+            {
+              "name": "knots",
+              "value": [
+                0.0,
+                2.0,
+                5.0
+              ]
+            },
+            {
+              "name": "smoothness",
+              "value": 1.0
+            },
+            {
+              "name": "subject_scale",
+              "value": 0.4
+            },
+            {
+              "name": "subject_smoothness",
+              "value": 1.0
+            }
+          ],
+          "implementation": "unspool.models.HierarchicalSmoothBernoulliHistoryGLM",
+          "name": "drift_smoothness_1",
+          "prediction_information": "filtered",
+          "scored_columns": [
+            "choice"
+          ],
+          "supports_unseen_groups": false,
+          "supports_unseen_subjects": false
+        },
+        {
+          "hyperparameters": [
+            {
+              "name": "covariates",
+              "value": [
+                "stimulus"
+              ]
+            },
+            {
+              "name": "choice_lags",
+              "value": 1
+            },
+            {
+              "name": "l2",
+              "value": 0.02
+            },
+            {
+              "name": "knots",
+              "value": [
+                0.0,
+                2.0,
+                5.0
+              ]
+            },
+            {
+              "name": "smoothness",
+              "value": 3.0
+            },
+            {
+              "name": "subject_scale",
+              "value": 0.4
+            },
+            {
+              "name": "subject_smoothness",
+              "value": 3.0
+            }
+          ],
+          "implementation": "unspool.models.HierarchicalSmoothBernoulliHistoryGLM",
+          "name": "drift_smoothness_3",
+          "prediction_information": "filtered",
+          "scored_columns": [
+            "choice"
+          ],
+          "supports_unseen_groups": false,
+          "supports_unseen_subjects": false
+        },
+        {
+          "hyperparameters": [
+            {
+              "name": "covariates",
+              "value": [
+                "stimulus"
+              ]
+            },
+            {
+              "name": "choice_lags",
+              "value": 1
+            },
+            {
+              "name": "l2",
+              "value": 0.02
+            },
+            {
+              "name": "knots",
+              "value": [
+                0.0,
+                2.0,
+                5.0
+              ]
+            },
+            {
+              "name": "smoothness",
+              "value": 9.0
+            },
+            {
+              "name": "subject_scale",
+              "value": 0.4
+            },
+            {
+              "name": "subject_smoothness",
+              "value": 9.0
+            }
+          ],
+          "implementation": "unspool.models.HierarchicalSmoothBernoulliHistoryGLM",
+          "name": "drift_smoothness_9",
+          "prediction_information": "filtered",
+          "scored_columns": [
+            "choice"
+          ],
+          "supports_unseen_groups": false,
+          "supports_unseen_subjects": false
+        }
+      ],
+      "clocks": [
+        {
+          "alignment": "three-early-plus-three-final-pre-transition-sessions",
+          "column": "session_order",
+          "fold_fitted": false,
+          "kind": "ordinal-session",
+          "name": "endpoint-window-position",
+          "scope": "animal"
+        }
+      ],
+      "cohort": {
+        "expected_observations": 46152,
+        "expected_sessions": 468,
+        "expected_subjects": 78,
+        "outcome_blind": true,
+        "predicates": [
+          {
+            "column": "phase",
+            "operator": "in",
+            "rationale": "retain the three early and three final pre-transition sessions",
+            "value": [
+              "early",
+              "late_training"
+            ]
+          }
+        ],
+        "selection_columns": [
+          "phase",
+          "session_order",
+          "lab"
+        ]
+      },
+      "comparison": {
+        "aggregation_unit": "animal",
+        "bootstrap_repetitions": 5000,
+        "interval_level": 0.95,
+        "interval_method": "paired-unit-bootstrap",
+        "metric": "log-loss",
+        "paired": true,
+        "reference_candidate": null,
+        "seed": 20260731,
+        "weighting": "equal-unit",
+        "winner_policy": "no-automatic-winner"
+      },
+      "estimands": [
+        {
+          "aggregation_unit": "animal",
+          "contrast": "selected procedure's untouched final-session predictive log loss",
+          "name": "animal-balanced-represented-final-session-log-loss",
+          "outcome_columns": [
+            "choice"
+          ],
+          "population": "all eligible represented animals",
+          "weighting": "equal-unit"
+        }
+      ],
+      "identifier": "ibl2021-nested-same-animal-v1",
+      "lifecycle": [
+        {
+          "artifact_fingerprint": "56a4494dfeb06a85373edd85c6e44f84ce31425f48f99413ead0c3d9f0e14be2",
+          "from_state": "draft",
+          "to_state": "frozen"
+        },
+        {
+          "artifact_fingerprint": "ff27e394c2361585f6a243c57566aa846b60155b7d23d45d6b901b15e2ba5905",
+          "from_state": "frozen",
+          "to_state": "materialized"
+        },
+        {
+          "artifact_fingerprint": "2a2617b4cf6a856aeba3af59ea5f6ad4401aad001cb60d08e095474ebbc25a15",
+          "from_state": "materialized",
+          "to_state": "audited"
+        },
+        {
+          "artifact_fingerprint": "27e0d9b88a9d594827c16fff7aab38a5e8353b90ebbf9e453048ed7f045ecf54",
+          "from_state": "audited",
+          "to_state": "evaluated"
+        }
+      ],
+      "observations": [
+        {
+          "allowed_values": [
+            0,
+            1
+          ],
+          "column": "choice",
+          "data_type": "binary",
+          "role": "outcome",
+          "unit": null
+        },
+        {
+          "allowed_values": [],
+          "column": "stimulus",
+          "data_type": "continuous",
+          "role": "predictor",
+          "unit": null
+        }
+      ],
+      "panel": {
+        "balance_required": true,
+        "common_clock": "endpoint-window-position",
+        "minimum_sessions": 6,
+        "session_unit": "session",
+        "subject_unit": "animal"
+      },
+      "question": "Which fixed hierarchical trajectory candidate forecasts the final ordinal session of represented animals?",
+      "recovery": [],
+      "reporting": {
+        "limitations": [
+          "endpoint positions are ordinal and do not represent uniform elapsed time",
+          "cohort entry is conditioned on the training-policy transition",
+          "held-out-lab inference concerns nine empirical laboratories",
+          "the upper smoothness grid boundary was selected in the pinned analysis"
+        ],
+        "prohibited_claims": [
+          "causal effect of laboratory",
+          "generalization to a population of laboratories",
+          "unique cognitive mechanism",
+          "selection stability beyond the declared candidate grid"
+        ],
+        "required_diagnostics": [
+          "optimization",
+          "calibration",
+          "outer-boundary-audit"
+        ],
+        "required_figures": [
+          "ibl-nested-selection"
+        ],
+        "required_tables": [
+          "denominators",
+          "inner-selections",
+          "outer-scores",
+          "fit-audits"
+        ],
+        "retain_pointwise_predictions": true
+      },
+      "schema_version": "unspool.study-protocol/1",
+      "selection": {
+        "aggregation_unit": "animal",
+        "bootstrap_repetitions": 1000,
+        "candidate_names": [
+          "static",
+          "drift_smoothness_1",
+          "drift_smoothness_3",
+          "drift_smoothness_9"
+        ],
+        "inner_validation": {
+          "geometry": "future-session",
+          "group_unit": null,
+          "horizon": [
+            3,
+            4
+          ],
+          "origin": 2,
+          "prediction_information": "filtered",
+          "settings": [
+            {
+              "name": "min_train_sessions",
+              "value": 3
+            },
+            {
+              "name": "horizon",
+              "value": 1
+            }
+          ],
+          "splitter": "unspool.validation.cohort_forward_session_splits"
+        },
+        "metric": "log-loss",
+        "refit_selected_on_outer_training": true,
+        "seed": 20260731,
+        "tie_break": "declared-order"
+      },
+      "source": {
+        "adapter": "ibl-one-exact-dataset",
+        "checksum": "c0a45addbc14b936f6b3aaac0c06b6a4d7108725d82dcc3df8f1501f4b1aec0b",
+        "checksum_algorithm": "sha256-manifest",
+        "identity_columns": [
+          "source_ibl_dataset_id",
+          "trial"
+        ],
+        "locator": "doi:10.7554/eLife.63711",
+        "metadata": [
+          {
+            "name": "outcome-blind-manifest",
+            "value": true
+          },
+          {
+            "name": "source-sessions",
+            "value": 468
+          },
+          {
+            "name": "source-trials-before-panel",
+            "value": 260833
+          },
+          {
+            "name": "source-row-cap-before-choice-eligibility",
+            "value": 100
+          }
+        ],
+        "release": "2021_Q1_IBL_et_al_Behaviour"
+      },
+      "state": "evaluated",
+      "title": "IBL 2021 same-animal future-session selection",
+      "transforms": [],
+      "units": [
+        {
+          "column": "subject",
+          "name": "animal",
+          "nested_within": null,
+          "role": "experimental"
+        },
+        {
+          "column": "session",
+          "name": "session",
+          "nested_within": "animal",
+          "role": "repeated-measures"
+        },
+        {
+          "column": "lab",
+          "name": "lab",
+          "nested_within": null,
+          "role": "aggregation"
+        }
+      ],
+      "validation": {
+        "geometry": "future-session",
+        "group_unit": null,
+        "horizon": [
+          5
+        ],
+        "origin": 4,
+        "prediction_information": "filtered",
+        "settings": [
+          {
+            "name": "min_train_sessions",
+            "value": 5
+          },
+          {
+            "name": "horizon",
+            "value": 1
+          }
+        ],
+        "splitter": "unspool.validation.cohort_forward_session_splits"
+      }
+    }
+  }
+}

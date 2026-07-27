@@ -1,0 +1,4012 @@
+{
+  "cohort": {
+    "fingerprint": "ff199a8fceee075ec36dbfc62e4ca7aae006f665bb719ffff98a1169531b4df2",
+    "selected_observations": 73042,
+    "selected_sessions": 390,
+    "selected_subjects": 30,
+    "source_observations": 73042
+  },
+  "evaluation": {
+    "candidates": {
+      "early_bias_forecast": {
+        "audit_status": "pass",
+        "calibration": {
+          "available": true,
+          "brier_score": 0.19554102048621672,
+          "expected_calibration_error": 0.05828313290142376,
+          "mean_probability": 0.49928005770437245,
+          "n_observations": 35830,
+          "observed_rate": 0.49628802679319006,
+          "reason": null
+        },
+        "eligible": true,
+        "failures": [],
+        "folds": [
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast,early_bias,early_bias_forecast_phase,early_bias_forecast_left_contrast,early_bias_forecast_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 67364,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.08874702971375201,
+                "hessian_condition": 6255.910482066175,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 53,
+                "objective": 41311.45464232362,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast,early_bias,early_bias_forecast_phase,early_bias_forecast_left_contrast,early_bias_forecast_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 67364,
+              "parameters": {
+                "early_bias": 3.3584878950305406,
+                "early_bias_forecast_left_contrast": -8.064921692345283,
+                "early_bias_forecast_phase": -5.103958285012083,
+                "early_bias_forecast_right_contrast": 10.255165924200684,
+                "forecast_phase": 0.07774642986128064,
+                "forecast_phase_left_contrast": 2.3542619442851906,
+                "forecast_phase_right_contrast": 2.6405072030127044,
+                "intercept": -0.07831753694847053,
+                "left_contrast": 0.36571964631772985,
+                "right_contrast": 0.04907087907784779
+              },
+              "standard_errors": {
+                "early_bias": 0.0686500265505742,
+                "early_bias_forecast_left_contrast": 0.44180776653435194,
+                "early_bias_forecast_phase": 0.1677605858277745,
+                "early_bias_forecast_right_contrast": 0.4426428310776967,
+                "forecast_phase": 0.03891803758746937,
+                "forecast_phase_left_contrast": 0.10861444164916956,
+                "forecast_phase_right_contrast": 0.10986275512436079,
+                "intercept": 0.02660517250135986,
+                "left_contrast": 0.0697128709657722,
+                "right_contrast": 0.0693556806346121
+              }
+            },
+            "fold": "fold-0000",
+            "n_predictions": 5678
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast,early_bias,early_bias_forecast_phase,early_bias_forecast_left_contrast,early_bias_forecast_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 67914,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.16940009784294704,
+                "hessian_condition": 7834.017814774677,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 56,
+                "objective": 41999.19182105783,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast,early_bias,early_bias_forecast_phase,early_bias_forecast_left_contrast,early_bias_forecast_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 67914,
+              "parameters": {
+                "early_bias": 3.358653002478728,
+                "early_bias_forecast_left_contrast": -7.640527165697495,
+                "early_bias_forecast_phase": -5.52599304849885,
+                "early_bias_forecast_right_contrast": 10.87426244643753,
+                "forecast_phase": 0.10771949765128355,
+                "forecast_phase_left_contrast": 2.440949928537619,
+                "forecast_phase_right_contrast": 2.2401548328877245,
+                "intercept": -0.07830254774033765,
+                "left_contrast": 0.3658218434703065,
+                "right_contrast": 0.0491075856740695
+              },
+              "standard_errors": {
+                "early_bias": 0.06865073064093294,
+                "early_bias_forecast_left_contrast": 0.48526892097380925,
+                "early_bias_forecast_phase": 0.18363473886119738,
+                "early_bias_forecast_right_contrast": 0.4872032727333505,
+                "forecast_phase": 0.038738510385501745,
+                "forecast_phase_left_contrast": 0.10786813965030038,
+                "forecast_phase_right_contrast": 0.10748459908692551,
+                "intercept": 0.026605252757831446,
+                "left_contrast": 0.06971314936392865,
+                "right_contrast": 0.06935587471869605
+              }
+            },
+            "fold": "fold-0001",
+            "n_predictions": 5128
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast,early_bias,early_bias_forecast_phase,early_bias_forecast_left_contrast,early_bias_forecast_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66516,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.22761429237227152,
+                "hessian_condition": 7614.2489974325235,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 63,
+                "objective": 40526.30685101939,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast,early_bias,early_bias_forecast_phase,early_bias_forecast_left_contrast,early_bias_forecast_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66516,
+              "parameters": {
+                "early_bias": 3.3585378526968577,
+                "early_bias_forecast_left_contrast": -9.236317341210226,
+                "early_bias_forecast_phase": -5.034883921144716,
+                "early_bias_forecast_right_contrast": 11.452363145681284,
+                "forecast_phase": 0.10496743677392545,
+                "forecast_phase_left_contrast": 2.2944067917145823,
+                "forecast_phase_right_contrast": 2.8929218699320787,
+                "intercept": -0.07871394845299698,
+                "left_contrast": 0.3645430004398883,
+                "right_contrast": 0.050095428577438594
+              },
+              "standard_errors": {
+                "early_bias": 0.0686500788304463,
+                "early_bias_forecast_left_contrast": 0.4891847062782892,
+                "early_bias_forecast_phase": 0.18351352010096067,
+                "early_bias_forecast_right_contrast": 0.505563744177596,
+                "forecast_phase": 0.039363226918143444,
+                "forecast_phase_left_contrast": 0.10946937799721533,
+                "forecast_phase_right_contrast": 0.11181584848888128,
+                "intercept": 0.026605388752355144,
+                "left_contrast": 0.06971295864135385,
+                "right_contrast": 0.06935608482989208
+              }
+            },
+            "fold": "fold-0002",
+            "n_predictions": 6526
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast,early_bias,early_bias_forecast_phase,early_bias_forecast_left_contrast,early_bias_forecast_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66935,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.4271624343577225,
+                "hessian_condition": 7976.562360589772,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 57,
+                "objective": 41098.28509949662,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast,early_bias,early_bias_forecast_phase,early_bias_forecast_left_contrast,early_bias_forecast_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66935,
+              "parameters": {
+                "early_bias": 3.3592137533881368,
+                "early_bias_forecast_left_contrast": -9.667874568590628,
+                "early_bias_forecast_phase": -4.774310503875257,
+                "early_bias_forecast_right_contrast": 12.035261242426877,
+                "forecast_phase": 0.09734665621867052,
+                "forecast_phase_left_contrast": 1.932256060708417,
+                "forecast_phase_right_contrast": 2.890670253743007,
+                "intercept": -0.07833624750755042,
+                "left_contrast": 0.3653321012436945,
+                "right_contrast": 0.048925784339068516
+              },
+              "standard_errors": {
+                "early_bias": 0.06865280027521137,
+                "early_bias_forecast_left_contrast": 0.5088181494075439,
+                "early_bias_forecast_phase": 0.1852932762219561,
+                "early_bias_forecast_right_contrast": 0.49352748191375617,
+                "forecast_phase": 0.039794347346293106,
+                "forecast_phase_left_contrast": 0.10880866072981103,
+                "forecast_phase_right_contrast": 0.11383596320297878,
+                "intercept": 0.026605540755932296,
+                "left_contrast": 0.06971354586319672,
+                "right_contrast": 0.06935671066579766
+              }
+            },
+            "fold": "fold-0003",
+            "n_predictions": 6107
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast,early_bias,early_bias_forecast_phase,early_bias_forecast_left_contrast,early_bias_forecast_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66805,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.0874779880289768,
+                "hessian_condition": 7506.902119087524,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 56,
+                "objective": 41317.46760917496,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast,early_bias,early_bias_forecast_phase,early_bias_forecast_left_contrast,early_bias_forecast_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66805,
+              "parameters": {
+                "early_bias": 3.3583627033096604,
+                "early_bias_forecast_left_contrast": -8.506431374577591,
+                "early_bias_forecast_phase": -4.867048927941715,
+                "early_bias_forecast_right_contrast": 10.17853737673881,
+                "forecast_phase": 0.14026404879277432,
+                "forecast_phase_left_contrast": 2.2717313066678146,
+                "forecast_phase_right_contrast": 2.381617714677131,
+                "intercept": -0.07832825938573776,
+                "left_contrast": 0.3656038735785266,
+                "right_contrast": 0.049034178253359595
+              },
+              "standard_errors": {
+                "early_bias": 0.06864945789704459,
+                "early_bias_forecast_left_contrast": 0.47860163475419487,
+                "early_bias_forecast_phase": 0.18171599919993445,
+                "early_bias_forecast_right_contrast": 0.4847589336923706,
+                "forecast_phase": 0.040039517330255826,
+                "forecast_phase_left_contrast": 0.11028096782106718,
+                "forecast_phase_right_contrast": 0.11250314510061392,
+                "intercept": 0.026605108486563372,
+                "left_contrast": 0.06971261979809502,
+                "right_contrast": 0.0693555296814963
+              }
+            },
+            "fold": "fold-0004",
+            "n_predictions": 6237
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast,early_bias,early_bias_forecast_phase,early_bias_forecast_left_contrast,early_bias_forecast_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66888,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.45237241703726067,
+                "hessian_condition": 7523.699974396694,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 84,
+                "objective": 41218.221312591544,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast,early_bias,early_bias_forecast_phase,early_bias_forecast_left_contrast,early_bias_forecast_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66888,
+              "parameters": {
+                "early_bias": 3.3583588070525163,
+                "early_bias_forecast_left_contrast": -8.375179221610043,
+                "early_bias_forecast_phase": -4.979036441475577,
+                "early_bias_forecast_right_contrast": 10.405995196495168,
+                "forecast_phase": 0.11697079892324279,
+                "forecast_phase_left_contrast": 2.3283133598201475,
+                "forecast_phase_right_contrast": 2.389134528918262,
+                "intercept": -0.07818201012234392,
+                "left_contrast": 0.36608226557878853,
+                "right_contrast": 0.04875703593414391
+              },
+              "standard_errors": {
+                "early_bias": 0.06864948691807315,
+                "early_bias_forecast_left_contrast": 0.48429106774026587,
+                "early_bias_forecast_phase": 0.18228700812841855,
+                "early_bias_forecast_right_contrast": 0.4849389107482788,
+                "forecast_phase": 0.039233681661731086,
+                "forecast_phase_left_contrast": 0.10904367271465805,
+                "forecast_phase_right_contrast": 0.10875930556285578,
+                "intercept": 0.026605035821176945,
+                "left_contrast": 0.06971264487365633,
+                "right_contrast": 0.06935537040855817
+              }
+            },
+            "fold": "fold-0005",
+            "n_predictions": 6154
+          }
+        ],
+        "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast,early_bias,early_bias_forecast_phase,early_bias_forecast_left_contrast,early_bias_forecast_right_contrast;choice_lags=0;l2=0.02]",
+        "name": "early_bias_forecast",
+        "pooled_brier_score": null,
+        "pooled_log_loss": 0.5810994020735744,
+        "score": {
+          "metric": "log-loss",
+          "pooled_score": 0.5810994020735744,
+          "unit_balanced_interval": {
+            "confidence_level": 0.95,
+            "estimate": 0.5810880542289122,
+            "lower": 0.5526493676735904,
+            "upper": 0.6112840249650087
+          },
+          "unit_balanced_score": 0.5810880542289122
+        },
+        "unit_balanced_brier_interval": null,
+        "unit_balanced_brier_score": null,
+        "unit_balanced_log_loss": 0.5810880542289122,
+        "unit_balanced_log_loss_interval": {
+          "confidence_level": 0.95,
+          "estimate": 0.5810880542289122,
+          "lower": 0.5526493676735904,
+          "upper": 0.6112840249650087
+        },
+        "unit_scores": [
+          {
+            "brier_score": 0.13951262876368895,
+            "log_loss": 0.45411012472171003,
+            "n_observations": 1049,
+            "unit": "DAP039"
+          },
+          {
+            "brier_score": 0.2285891551556428,
+            "log_loss": 0.6543214136232848,
+            "n_observations": 1206,
+            "unit": "DAP007"
+          },
+          {
+            "brier_score": 0.23406518664078899,
+            "log_loss": 0.6648079517704795,
+            "n_observations": 1018,
+            "unit": "DAP059"
+          },
+          {
+            "brier_score": 0.22097871586270185,
+            "log_loss": 0.638270188660337,
+            "n_observations": 909,
+            "unit": "DAP017"
+          },
+          {
+            "brier_score": 0.19910549879932196,
+            "log_loss": 0.5746043616042674,
+            "n_observations": 1496,
+            "unit": "DAP027"
+          },
+          {
+            "brier_score": 0.13871813952274212,
+            "log_loss": 0.45440119720023586,
+            "n_observations": 902,
+            "unit": "DAP009"
+          },
+          {
+            "brier_score": 0.2546100244554387,
+            "log_loss": 0.7145605736140149,
+            "n_observations": 778,
+            "unit": "DAP046"
+          },
+          {
+            "brier_score": 0.15952857561628742,
+            "log_loss": 0.49542033020628673,
+            "n_observations": 1223,
+            "unit": "DAP060"
+          },
+          {
+            "brier_score": 0.20811522639150126,
+            "log_loss": 0.596716603629693,
+            "n_observations": 821,
+            "unit": "DAP019"
+          },
+          {
+            "brier_score": 0.16258277042734642,
+            "log_loss": 0.48943014493122033,
+            "n_observations": 1404,
+            "unit": "DAP028"
+          },
+          {
+            "brier_score": 0.24373164927851254,
+            "log_loss": 0.7019999323430857,
+            "n_observations": 1161,
+            "unit": "DAP031"
+          },
+          {
+            "brier_score": 0.2105522269979529,
+            "log_loss": 0.6163385565740547,
+            "n_observations": 1408,
+            "unit": "DAP048"
+          },
+          {
+            "brier_score": 0.17286643537849333,
+            "log_loss": 0.5118844934798721,
+            "n_observations": 982,
+            "unit": "DAP069"
+          },
+          {
+            "brier_score": 0.27925165393554297,
+            "log_loss": 0.7960300396148564,
+            "n_observations": 1384,
+            "unit": "DAP021"
+          },
+          {
+            "brier_score": 0.1894857711909847,
+            "log_loss": 0.5621442946828279,
+            "n_observations": 1591,
+            "unit": "DAP011"
+          },
+          {
+            "brier_score": 0.23780087718135226,
+            "log_loss": 0.7173790056645283,
+            "n_observations": 1188,
+            "unit": "DAP110"
+          },
+          {
+            "brier_score": 0.19086799267943536,
+            "log_loss": 0.5674687700220206,
+            "n_observations": 1223,
+            "unit": "DAP022"
+          },
+          {
+            "brier_score": 0.1750470846614136,
+            "log_loss": 0.534361471194468,
+            "n_observations": 1446,
+            "unit": "DAP013"
+          },
+          {
+            "brier_score": 0.1790668129989769,
+            "log_loss": 0.5517978271924434,
+            "n_observations": 968,
+            "unit": "DAP033"
+          },
+          {
+            "brier_score": 0.21669642086520693,
+            "log_loss": 0.6388989583752032,
+            "n_observations": 1282,
+            "unit": "DAP050"
+          },
+          {
+            "brier_score": 0.2004382671354539,
+            "log_loss": 0.5946463561338474,
+            "n_observations": 1505,
+            "unit": "DAP156"
+          },
+          {
+            "brier_score": 0.16439943587819056,
+            "log_loss": 0.5052195201952776,
+            "n_observations": 1472,
+            "unit": "DAP014"
+          },
+          {
+            "brier_score": 0.17102798289899582,
+            "log_loss": 0.5328401420642721,
+            "n_observations": 1372,
+            "unit": "DAP023"
+          },
+          {
+            "brier_score": 0.1756563768878889,
+            "log_loss": 0.538894911837907,
+            "n_observations": 930,
+            "unit": "DAP051"
+          },
+          {
+            "brier_score": 0.17667085649647649,
+            "log_loss": 0.5202334529842385,
+            "n_observations": 958,
+            "unit": "DAP035"
+          },
+          {
+            "brier_score": 0.1717735722148814,
+            "log_loss": 0.5185825178212325,
+            "n_observations": 884,
+            "unit": "DAP037"
+          },
+          {
+            "brier_score": 0.21688337339229677,
+            "log_loss": 0.6366633542296712,
+            "n_observations": 1091,
+            "unit": "DAP053"
+          },
+          {
+            "brier_score": 0.1650378092046004,
+            "log_loss": 0.511551562015236,
+            "n_observations": 1399,
+            "unit": "DAP158"
+          },
+          {
+            "brier_score": 0.19927667170330501,
+            "log_loss": 0.5924470103126307,
+            "n_observations": 1718,
+            "unit": "DAP015"
+          },
+          {
+            "brier_score": 0.18812205032432758,
+            "log_loss": 0.5466165601681622,
+            "n_observations": 1062,
+            "unit": "DAP024"
+          }
+        ]
+      },
+      "hierarchical_smooth_trajectory": {
+        "audit_status": "pass",
+        "calibration": {
+          "available": true,
+          "brier_score": 0.19719254808198264,
+          "expected_calibration_error": 0.034373733401722194,
+          "mean_probability": 0.5040004612226062,
+          "n_observations": 35830,
+          "observed_rate": 0.49628802679319006,
+          "reason": null
+        },
+        "eligible": true,
+        "failures": [],
+        "folds": [
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "hierarchical-smooth-bernoulli-history-glm",
+              "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;subject_scale=0.4;subject_smoothness=3.0]",
+              "n_observations": 67364,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.20126890251366092,
+                "hessian_condition": 574.8599702477858,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 77,
+                "objective": 38013.15122158112,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "hierarchical-smooth-bernoulli-history-glm",
+              "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;subject_scale=0.4;subject_smoothness=3.0]",
+              "n_observations": 67364,
+              "parameters": {
+                "intercept[session_order=0]": -0.1991740881552128,
+                "intercept[session_order=12]": 0.24922962451160752,
+                "intercept[session_order=3]": -0.1423019183945153,
+                "intercept[session_order=7]": -0.22517030333863705,
+                "intercept[session_order=9]": -0.12219271861532362,
+                "left_contrast[session_order=0]": 0.19383030354760758,
+                "left_contrast[session_order=12]": 3.441804872024774,
+                "left_contrast[session_order=3]": 0.13664157788675074,
+                "left_contrast[session_order=7]": 0.8682963441305398,
+                "left_contrast[session_order=9]": 3.1113537850650466,
+                "right_contrast[session_order=0]": 0.02644745579063709,
+                "right_contrast[session_order=12]": 3.105209896824347,
+                "right_contrast[session_order=3]": 0.20210285520475466,
+                "right_contrast[session_order=7]": 0.20962743474053513,
+                "right_contrast[session_order=9]": 3.0603729277697904
+              },
+              "standard_errors": {
+                "intercept[session_order=0]": 0.09546112011522052,
+                "intercept[session_order=12]": 0.091699947770567,
+                "intercept[session_order=3]": 0.08338783344976898,
+                "intercept[session_order=7]": 0.08216057917596359,
+                "intercept[session_order=9]": 0.08636726519301938,
+                "left_contrast[session_order=0]": 0.18651776287227947,
+                "left_contrast[session_order=12]": 0.1767190363534191,
+                "left_contrast[session_order=3]": 0.15039798810502084,
+                "left_contrast[session_order=7]": 0.1516486420000226,
+                "left_contrast[session_order=9]": 0.16419558725651734,
+                "right_contrast[session_order=0]": 0.18531959305459478,
+                "right_contrast[session_order=12]": 0.17833918754074032,
+                "right_contrast[session_order=3]": 0.1495279722498587,
+                "right_contrast[session_order=7]": 0.14911047773256747,
+                "right_contrast[session_order=9]": 0.1624742868233887
+              }
+            },
+            "fold": "fold-0000",
+            "n_predictions": 5678
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "hierarchical-smooth-bernoulli-history-glm",
+              "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;subject_scale=0.4;subject_smoothness=3.0]",
+              "n_observations": 67914,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.15867445294180463,
+                "hessian_condition": 579.3300685186233,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 83,
+                "objective": 38751.48723062271,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "hierarchical-smooth-bernoulli-history-glm",
+              "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;subject_scale=0.4;subject_smoothness=3.0]",
+              "n_observations": 67914,
+              "parameters": {
+                "intercept[session_order=0]": -0.19763668732014425,
+                "intercept[session_order=12]": 0.2405946809948608,
+                "intercept[session_order=3]": -0.14909833313621546,
+                "intercept[session_order=7]": -0.20105052484444305,
+                "intercept[session_order=9]": -0.060425499028256745,
+                "left_contrast[session_order=0]": 0.19657234687776032,
+                "left_contrast[session_order=12]": 3.5588116513622694,
+                "left_contrast[session_order=3]": 0.12250991477429969,
+                "left_contrast[session_order=7]": 0.9058100874879332,
+                "left_contrast[session_order=9]": 3.150398186042737,
+                "right_contrast[session_order=0]": 0.029207898223187083,
+                "right_contrast[session_order=12]": 2.6913013605551233,
+                "right_contrast[session_order=3]": 0.1952647267550513,
+                "right_contrast[session_order=7]": 0.22699603512755434,
+                "right_contrast[session_order=9]": 2.5822178372193485
+              },
+              "standard_errors": {
+                "intercept[session_order=0]": 0.09545840606989589,
+                "intercept[session_order=12]": 0.09128015784309525,
+                "intercept[session_order=3]": 0.08337953936282662,
+                "intercept[session_order=7]": 0.08202298133253855,
+                "intercept[session_order=9]": 0.08557093306445579,
+                "left_contrast[session_order=0]": 0.18650556931475037,
+                "left_contrast[session_order=12]": 0.17617925592037667,
+                "left_contrast[session_order=3]": 0.15034227995632402,
+                "left_contrast[session_order=7]": 0.15110701286098366,
+                "left_contrast[session_order=9]": 0.16121277320836808,
+                "right_contrast[session_order=0]": 0.18530610344312334,
+                "right_contrast[session_order=12]": 0.174862322644707,
+                "right_contrast[session_order=3]": 0.14945570942560263,
+                "right_contrast[session_order=7]": 0.14832414878819894,
+                "right_contrast[session_order=9]": 0.15746697737588589
+              }
+            },
+            "fold": "fold-0001",
+            "n_predictions": 5128
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "hierarchical-smooth-bernoulli-history-glm",
+              "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;subject_scale=0.4;subject_smoothness=3.0]",
+              "n_observations": 66516,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.16210975038479933,
+                "hessian_condition": 574.1184909937976,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 82,
+                "objective": 37176.039914916226,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "hierarchical-smooth-bernoulli-history-glm",
+              "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;subject_scale=0.4;subject_smoothness=3.0]",
+              "n_observations": 66516,
+              "parameters": {
+                "intercept[session_order=0]": -0.2014509705999895,
+                "intercept[session_order=12]": 0.19851541044140866,
+                "intercept[session_order=3]": -0.13555703194892965,
+                "intercept[session_order=7]": -0.25350380122150773,
+                "intercept[session_order=9]": -0.007734627719659642,
+                "left_contrast[session_order=0]": 0.19057457174186718,
+                "left_contrast[session_order=12]": 3.351323077907263,
+                "left_contrast[session_order=3]": 0.1444953509930503,
+                "left_contrast[session_order=7]": 0.8239010754698721,
+                "left_contrast[session_order=9]": 2.9450411083182533,
+                "right_contrast[session_order=0]": 0.032533157427921025,
+                "right_contrast[session_order=12]": 3.68021789640905,
+                "right_contrast[session_order=3]": 0.18451910604747113,
+                "right_contrast[session_order=7]": 0.2925757539962508,
+                "right_contrast[session_order=9]": 3.3910123337411395
+              },
+              "standard_errors": {
+                "intercept[session_order=0]": 0.09546248634521255,
+                "intercept[session_order=12]": 0.09315993273026034,
+                "intercept[session_order=3]": 0.08337347091762283,
+                "intercept[session_order=7]": 0.08219965037722696,
+                "intercept[session_order=9]": 0.08666531193438862,
+                "left_contrast[session_order=0]": 0.18651644064933334,
+                "left_contrast[session_order=12]": 0.18121668774896044,
+                "left_contrast[session_order=3]": 0.15032812184748753,
+                "left_contrast[session_order=7]": 0.15176900135437624,
+                "left_contrast[session_order=9]": 0.16328696308136145,
+                "right_contrast[session_order=0]": 0.1853204749075086,
+                "right_contrast[session_order=12]": 0.18877419366481457,
+                "right_contrast[session_order=3]": 0.14946746023027352,
+                "right_contrast[session_order=7]": 0.14934789045635347,
+                "right_contrast[session_order=9]": 0.16647568435592805
+              }
+            },
+            "fold": "fold-0002",
+            "n_predictions": 6526
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "hierarchical-smooth-bernoulli-history-glm",
+              "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;subject_scale=0.4;subject_smoothness=3.0]",
+              "n_observations": 66935,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.3947184017991954,
+                "hessian_condition": 575.5512082731948,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 79,
+                "objective": 37806.98018274137,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "hierarchical-smooth-bernoulli-history-glm",
+              "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;subject_scale=0.4;subject_smoothness=3.0]",
+              "n_observations": 66935,
+              "parameters": {
+                "intercept[session_order=0]": -0.1968742282189981,
+                "intercept[session_order=12]": 0.2738464795976368,
+                "intercept[session_order=3]": -0.1502006944070697,
+                "intercept[session_order=7]": -0.19886525767255456,
+                "intercept[session_order=9]": 0.05911974344206129,
+                "left_contrast[session_order=0]": 0.19258558471272672,
+                "left_contrast[session_order=12]": 3.0615528379943666,
+                "left_contrast[session_order=3]": 0.140651608227425,
+                "left_contrast[session_order=7]": 0.8432695729948232,
+                "left_contrast[session_order=9]": 3.0034850275104588,
+                "right_contrast[session_order=0]": 0.029152204449346422,
+                "right_contrast[session_order=12]": 3.0241648175248286,
+                "right_contrast[session_order=3]": 0.19274259997479884,
+                "right_contrast[session_order=7]": 0.24617461244609828,
+                "right_contrast[session_order=9]": 2.963860248659329
+              },
+              "standard_errors": {
+                "intercept[session_order=0]": 0.09546022995415195,
+                "intercept[session_order=12]": 0.0933784305034331,
+                "intercept[session_order=3]": 0.08337906877833891,
+                "intercept[session_order=7]": 0.08221138162054316,
+                "intercept[session_order=9]": 0.08640461304038455,
+                "left_contrast[session_order=0]": 0.18651214782377754,
+                "left_contrast[session_order=12]": 0.17799648778384708,
+                "left_contrast[session_order=3]": 0.1503466726058782,
+                "left_contrast[session_order=7]": 0.15168784685919526,
+                "left_contrast[session_order=9]": 0.16209137098007126,
+                "right_contrast[session_order=0]": 0.18531582709781982,
+                "right_contrast[session_order=12]": 0.18333164884461733,
+                "right_contrast[session_order=3]": 0.14946854386371886,
+                "right_contrast[session_order=7]": 0.1491544743394489,
+                "right_contrast[session_order=9]": 0.16344509053383174
+              }
+            },
+            "fold": "fold-0003",
+            "n_predictions": 6107
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "hierarchical-smooth-bernoulli-history-glm",
+              "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;subject_scale=0.4;subject_smoothness=3.0]",
+              "n_observations": 66805,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.11368157325501675,
+                "hessian_condition": 576.0410214371327,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 83,
+                "objective": 37875.97187974935,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "hierarchical-smooth-bernoulli-history-glm",
+              "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;subject_scale=0.4;subject_smoothness=3.0]",
+              "n_observations": 66805,
+              "parameters": {
+                "intercept[session_order=0]": -0.1960155837401682,
+                "intercept[session_order=12]": 0.43676225348825304,
+                "intercept[session_order=3]": -0.1515457735872069,
+                "intercept[session_order=7]": -0.19680642019291292,
+                "intercept[session_order=9]": 0.057965485517523625,
+                "left_contrast[session_order=0]": 0.19306821283291667,
+                "left_contrast[session_order=12]": 3.7092273625892926,
+                "left_contrast[session_order=3]": 0.1342359013996196,
+                "left_contrast[session_order=7]": 0.8715985269567149,
+                "left_contrast[session_order=9]": 3.379280320670503,
+                "right_contrast[session_order=0]": 0.02756717799512075,
+                "right_contrast[session_order=12]": 2.315187014204555,
+                "right_contrast[session_order=3]": 0.20236061771939354,
+                "right_contrast[session_order=7]": 0.21954803468434753,
+                "right_contrast[session_order=9]": 2.4643415193020513
+              },
+              "standard_errors": {
+                "intercept[session_order=0]": 0.09545959609404095,
+                "intercept[session_order=12]": 0.09265304429437023,
+                "intercept[session_order=3]": 0.08337977794399812,
+                "intercept[session_order=7]": 0.08207663339908239,
+                "intercept[session_order=9]": 0.08652112005011232,
+                "left_contrast[session_order=0]": 0.18650974150240301,
+                "left_contrast[session_order=12]": 0.17966950459821338,
+                "left_contrast[session_order=3]": 0.15037332935089237,
+                "left_contrast[session_order=7]": 0.15149570152281183,
+                "left_contrast[session_order=9]": 0.16520329458769267,
+                "right_contrast[session_order=0]": 0.1853116725445047,
+                "right_contrast[session_order=12]": 0.17717575580299313,
+                "right_contrast[session_order=3]": 0.14947103483957566,
+                "right_contrast[session_order=7]": 0.14869190201175855,
+                "right_contrast[session_order=9]": 0.16102333018883092
+              }
+            },
+            "fold": "fold-0004",
+            "n_predictions": 6237
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "hierarchical-smooth-bernoulli-history-glm",
+              "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;subject_scale=0.4;subject_smoothness=3.0]",
+              "n_observations": 66888,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 1.087484374060074,
+                "hessian_condition": 575.954576653332,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 72,
+                "objective": 37889.44006217281,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "hierarchical-smooth-bernoulli-history-glm",
+              "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;subject_scale=0.4;subject_smoothness=3.0]",
+              "n_observations": 66888,
+              "parameters": {
+                "intercept[session_order=0]": -0.19985568905129633,
+                "intercept[session_order=12]": 0.24277892250394298,
+                "intercept[session_order=3]": -0.1415259693437151,
+                "intercept[session_order=7]": -0.22983874157744957,
+                "intercept[session_order=9]": -0.018128382156805473,
+                "left_contrast[session_order=0]": 0.19117077007525232,
+                "left_contrast[session_order=12]": 3.3238346363340314,
+                "left_contrast[session_order=3]": 0.14107756162217158,
+                "left_contrast[session_order=7]": 0.8311575735143909,
+                "left_contrast[session_order=9]": 3.0005443760814297,
+                "right_contrast[session_order=0]": 0.030835230509262443,
+                "right_contrast[session_order=12]": 2.8942318530591753,
+                "right_contrast[session_order=3]": 0.18412753334586268,
+                "right_contrast[session_order=7]": 0.303960717905272,
+                "right_contrast[session_order=9]": 2.9678570782893448
+              },
+              "standard_errors": {
+                "intercept[session_order=0]": 0.09545944144961703,
+                "intercept[session_order=12]": 0.0925971906289545,
+                "intercept[session_order=3]": 0.08337563744252673,
+                "intercept[session_order=7]": 0.08204932628978125,
+                "intercept[session_order=9]": 0.08622968148039871,
+                "left_contrast[session_order=0]": 0.18650946296652798,
+                "left_contrast[session_order=12]": 0.17864581012973343,
+                "left_contrast[session_order=3]": 0.1503499496024244,
+                "left_contrast[session_order=7]": 0.15127127987914393,
+                "left_contrast[session_order=9]": 0.16203977496346575,
+                "right_contrast[session_order=0]": 0.1853114119070342,
+                "right_contrast[session_order=12]": 0.17943106656270932,
+                "right_contrast[session_order=3]": 0.14948765136122805,
+                "right_contrast[session_order=7]": 0.14881761372807062,
+                "right_contrast[session_order=9]": 0.16219157324849068
+              }
+            },
+            "fold": "fold-0005",
+            "n_predictions": 6154
+          }
+        ],
+        "model_signature": "hierarchical-smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;subject_scale=0.4;subject_smoothness=3.0]",
+        "name": "hierarchical_smooth_trajectory",
+        "pooled_brier_score": null,
+        "pooled_log_loss": 0.5837101223051825,
+        "score": {
+          "metric": "log-loss",
+          "pooled_score": 0.5837101223051825,
+          "unit_balanced_interval": {
+            "confidence_level": 0.95,
+            "estimate": 0.58402047042308,
+            "lower": 0.5544966805335118,
+            "upper": 0.6140577814396565
+          },
+          "unit_balanced_score": 0.58402047042308
+        },
+        "unit_balanced_brier_interval": null,
+        "unit_balanced_brier_score": null,
+        "unit_balanced_log_loss": 0.58402047042308,
+        "unit_balanced_log_loss_interval": {
+          "confidence_level": 0.95,
+          "estimate": 0.58402047042308,
+          "lower": 0.5544966805335118,
+          "upper": 0.6140577814396565
+        },
+        "unit_scores": [
+          {
+            "brier_score": 0.14775308012648247,
+            "log_loss": 0.4715570277312534,
+            "n_observations": 1049,
+            "unit": "DAP039"
+          },
+          {
+            "brier_score": 0.23800752963706925,
+            "log_loss": 0.6773079160581489,
+            "n_observations": 1206,
+            "unit": "DAP007"
+          },
+          {
+            "brier_score": 0.24770592826396926,
+            "log_loss": 0.7021431301613612,
+            "n_observations": 1018,
+            "unit": "DAP059"
+          },
+          {
+            "brier_score": 0.20574225310605368,
+            "log_loss": 0.6013532152121523,
+            "n_observations": 909,
+            "unit": "DAP017"
+          },
+          {
+            "brier_score": 0.23197171484632859,
+            "log_loss": 0.6643226374554227,
+            "n_observations": 1496,
+            "unit": "DAP027"
+          },
+          {
+            "brier_score": 0.1340208867480888,
+            "log_loss": 0.44121346888816704,
+            "n_observations": 902,
+            "unit": "DAP009"
+          },
+          {
+            "brier_score": 0.2504680964856373,
+            "log_loss": 0.7100871597881603,
+            "n_observations": 778,
+            "unit": "DAP046"
+          },
+          {
+            "brier_score": 0.15678084193315533,
+            "log_loss": 0.4856891956781342,
+            "n_observations": 1223,
+            "unit": "DAP060"
+          },
+          {
+            "brier_score": 0.20122086002988462,
+            "log_loss": 0.5919401668914698,
+            "n_observations": 821,
+            "unit": "DAP019"
+          },
+          {
+            "brier_score": 0.16209533816832694,
+            "log_loss": 0.49171915068232114,
+            "n_observations": 1404,
+            "unit": "DAP028"
+          },
+          {
+            "brier_score": 0.26298524760719777,
+            "log_loss": 0.7410407418499272,
+            "n_observations": 1161,
+            "unit": "DAP031"
+          },
+          {
+            "brier_score": 0.2301939672648742,
+            "log_loss": 0.6651792725476042,
+            "n_observations": 1408,
+            "unit": "DAP048"
+          },
+          {
+            "brier_score": 0.20055219408922656,
+            "log_loss": 0.5932000018381581,
+            "n_observations": 982,
+            "unit": "DAP069"
+          },
+          {
+            "brier_score": 0.24799300950891895,
+            "log_loss": 0.7096212516211673,
+            "n_observations": 1384,
+            "unit": "DAP021"
+          },
+          {
+            "brier_score": 0.1933374881004356,
+            "log_loss": 0.5714963219155393,
+            "n_observations": 1591,
+            "unit": "DAP011"
+          },
+          {
+            "brier_score": 0.22078914715243322,
+            "log_loss": 0.6345142051100023,
+            "n_observations": 1188,
+            "unit": "DAP110"
+          },
+          {
+            "brier_score": 0.20593500094735592,
+            "log_loss": 0.6062339265789555,
+            "n_observations": 1223,
+            "unit": "DAP022"
+          },
+          {
+            "brier_score": 0.16762425870496098,
+            "log_loss": 0.5159421974145377,
+            "n_observations": 1446,
+            "unit": "DAP013"
+          },
+          {
+            "brier_score": 0.1530250095917675,
+            "log_loss": 0.4842728947244643,
+            "n_observations": 968,
+            "unit": "DAP033"
+          },
+          {
+            "brier_score": 0.2194507121741871,
+            "log_loss": 0.6401197474726067,
+            "n_observations": 1282,
+            "unit": "DAP050"
+          },
+          {
+            "brier_score": 0.2053033423596109,
+            "log_loss": 0.6013513667480358,
+            "n_observations": 1505,
+            "unit": "DAP156"
+          },
+          {
+            "brier_score": 0.16603840489994615,
+            "log_loss": 0.5071932467339725,
+            "n_observations": 1472,
+            "unit": "DAP014"
+          },
+          {
+            "brier_score": 0.14389577561342856,
+            "log_loss": 0.4603929189055708,
+            "n_observations": 1372,
+            "unit": "DAP023"
+          },
+          {
+            "brier_score": 0.17118393595529047,
+            "log_loss": 0.5258251889569483,
+            "n_observations": 930,
+            "unit": "DAP051"
+          },
+          {
+            "brier_score": 0.1976749922681608,
+            "log_loss": 0.5801227471638024,
+            "n_observations": 958,
+            "unit": "DAP035"
+          },
+          {
+            "brier_score": 0.16329961370180032,
+            "log_loss": 0.5038491536532739,
+            "n_observations": 884,
+            "unit": "DAP037"
+          },
+          {
+            "brier_score": 0.21838715960077518,
+            "log_loss": 0.6327849475472227,
+            "n_observations": 1091,
+            "unit": "DAP053"
+          },
+          {
+            "brier_score": 0.16721009198706904,
+            "log_loss": 0.515350132960511,
+            "n_observations": 1399,
+            "unit": "DAP158"
+          },
+          {
+            "brier_score": 0.1897937707857902,
+            "log_loss": 0.5665443181168733,
+            "n_observations": 1718,
+            "unit": "DAP015"
+          },
+          {
+            "brier_score": 0.21815431923071266,
+            "log_loss": 0.6282464622866367,
+            "n_observations": 1062,
+            "unit": "DAP024"
+          }
+        ]
+      },
+      "late_phase_psychometric": {
+        "audit_status": "pass",
+        "calibration": {
+          "available": true,
+          "brier_score": 0.2012978842813636,
+          "expected_calibration_error": 0.054127799571008405,
+          "mean_probability": 0.49679998160399685,
+          "n_observations": 35830,
+          "observed_rate": 0.49628802679319006,
+          "reason": null
+        },
+        "eligible": true,
+        "failures": [],
+        "folds": [
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 67364,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.019161829262017614,
+                "hessian_condition": 461.17796033572273,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 22,
+                "objective": 43134.63262404624,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 67364,
+              "parameters": {
+                "forecast_phase": 0.19966932368555732,
+                "forecast_phase_left_contrast": 2.48742444971656,
+                "forecast_phase_right_contrast": 2.216874188073834,
+                "intercept": -0.15421046107321565,
+                "left_contrast": 0.3291182335777895,
+                "right_contrast": 0.07293509501838372
+              },
+              "standard_errors": {
+                "forecast_phase": 0.03783752841443911,
+                "forecast_phase_left_contrast": 0.10575186025800999,
+                "forecast_phase_right_contrast": 0.10433131744953086,
+                "intercept": 0.025637826898774987,
+                "left_contrast": 0.06727856172404502,
+                "right_contrast": 0.06691806370232806
+              }
+            },
+            "fold": "fold-0000",
+            "n_predictions": 5678
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 67914,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.018625260223018674,
+                "hessian_condition": 467.0925669702101,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 21,
+                "objective": 43687.618105196045,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 67914,
+              "parameters": {
+                "forecast_phase": 0.231696296740623,
+                "forecast_phase_left_contrast": 2.5938119602402576,
+                "forecast_phase_right_contrast": 1.88410821300009,
+                "intercept": -0.1541976193213858,
+                "left_contrast": 0.32912649367000013,
+                "right_contrast": 0.07288358198878181
+              },
+              "standard_errors": {
+                "forecast_phase": 0.03767572563545751,
+                "forecast_phase_left_contrast": 0.10543657052923142,
+                "forecast_phase_right_contrast": 0.10287732989447872,
+                "intercept": 0.025637816159972758,
+                "left_contrast": 0.06727852802808396,
+                "right_contrast": 0.0669180531201017
+              }
+            },
+            "fold": "fold-0001",
+            "n_predictions": 5128
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66516,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.007349740242452186,
+                "hessian_condition": 457.72210557176805,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 23,
+                "objective": 42412.30106922855,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66516,
+              "parameters": {
+                "forecast_phase": 0.19610495179103377,
+                "forecast_phase_left_contrast": 2.259893377926308,
+                "forecast_phase_right_contrast": 2.6206527921925136,
+                "intercept": -0.154230773155489,
+                "left_contrast": 0.32905827506430213,
+                "right_contrast": 0.07299275996636041
+              },
+              "standard_errors": {
+                "forecast_phase": 0.0384261145998234,
+                "forecast_phase_left_contrast": 0.10608032229425837,
+                "forecast_phase_right_contrast": 0.10705399643916319,
+                "intercept": 0.02563784082058244,
+                "left_contrast": 0.06727856635945093,
+                "right_contrast": 0.06691808225449296
+              }
+            },
+            "fold": "fold-0002",
+            "n_predictions": 6526
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66935,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.00330657966330651,
+                "hessian_condition": 467.1668398674939,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 21,
+                "objective": 43191.489843860676,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66935,
+              "parameters": {
+                "forecast_phase": 0.24323944846948356,
+                "forecast_phase_left_contrast": 2.24583043889749,
+                "forecast_phase_right_contrast": 2.1251955693575106,
+                "intercept": -0.1542135094955397,
+                "left_contrast": 0.32909387626592085,
+                "right_contrast": 0.0729389476408808
+              },
+              "standard_errors": {
+                "forecast_phase": 0.038341178276398456,
+                "forecast_phase_left_contrast": 0.10530110737329045,
+                "forecast_phase_right_contrast": 0.10503086260932971,
+                "intercept": 0.025637827849145308,
+                "left_contrast": 0.06727854622662267,
+                "right_contrast": 0.06691806588017053
+              }
+            },
+            "fold": "fold-0003",
+            "n_predictions": 6107
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66805,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.008120896830331204,
+                "hessian_condition": 465.42193905937694,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 21,
+                "objective": 43155.861598322335,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66805,
+              "parameters": {
+                "forecast_phase": 0.2968008392254795,
+                "forecast_phase_left_contrast": 2.643377197364329,
+                "forecast_phase_right_contrast": 1.6911184538919373,
+                "intercept": -0.15419051332680117,
+                "left_contrast": 0.3291588182466442,
+                "right_contrast": 0.07287983026850595
+              },
+              "standard_errors": {
+                "forecast_phase": 0.03816182113529111,
+                "forecast_phase_left_contrast": 0.10623595406042786,
+                "forecast_phase_right_contrast": 0.10382996238596542,
+                "intercept": 0.0256378115670092,
+                "left_contrast": 0.06727853732575632,
+                "right_contrast": 0.0669180419667565
+              }
+            },
+            "fold": "fold-0004",
+            "n_predictions": 6237
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66888,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.09944387751456188,
+                "hessian_condition": 464.9031598562818,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 19,
+                "objective": 43025.53689592719,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66888,
+              "parameters": {
+                "forecast_phase": 0.19059311825562467,
+                "forecast_phase_left_contrast": 2.248335307225884,
+                "forecast_phase_right_contrast": 2.258693960532937,
+                "intercept": -0.15421124695267463,
+                "left_contrast": 0.32917977345062205,
+                "right_contrast": 0.07294592328792199
+              },
+              "standard_errors": {
+                "forecast_phase": 0.03834373324621497,
+                "forecast_phase_left_contrast": 0.10575075153409712,
+                "forecast_phase_right_contrast": 0.10516372981602515,
+                "intercept": 0.025637832719190574,
+                "left_contrast": 0.06727863026286794,
+                "right_contrast": 0.06691807159128207
+              }
+            },
+            "fold": "fold-0005",
+            "n_predictions": 6154
+          }
+        ],
+        "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast,forecast_phase,forecast_phase_left_contrast,forecast_phase_right_contrast;choice_lags=0;l2=0.02]",
+        "name": "late_phase_psychometric",
+        "pooled_brier_score": null,
+        "pooled_log_loss": 0.5936374871252604,
+        "score": {
+          "metric": "log-loss",
+          "pooled_score": 0.5936374871252604,
+          "unit_balanced_interval": {
+            "confidence_level": 0.95,
+            "estimate": 0.5967217897200439,
+            "lower": 0.5704473899650963,
+            "upper": 0.6234274355701694
+          },
+          "unit_balanced_score": 0.5967217897200439
+        },
+        "unit_balanced_brier_interval": null,
+        "unit_balanced_brier_score": null,
+        "unit_balanced_log_loss": 0.5967217897200439,
+        "unit_balanced_log_loss_interval": {
+          "confidence_level": 0.95,
+          "estimate": 0.5967217897200439,
+          "lower": 0.5704473899650963,
+          "upper": 0.6234274355701694
+        },
+        "unit_scores": [
+          {
+            "brier_score": 0.14446361380480047,
+            "log_loss": 0.4676489355372091,
+            "n_observations": 1049,
+            "unit": "DAP039"
+          },
+          {
+            "brier_score": 0.22976027202581903,
+            "log_loss": 0.6577847478970635,
+            "n_observations": 1206,
+            "unit": "DAP007"
+          },
+          {
+            "brier_score": 0.23984632532648123,
+            "log_loss": 0.6809414318349871,
+            "n_observations": 1018,
+            "unit": "DAP059"
+          },
+          {
+            "brier_score": 0.2211688965452023,
+            "log_loss": 0.6385504248031539,
+            "n_observations": 909,
+            "unit": "DAP017"
+          },
+          {
+            "brier_score": 0.21893032664790837,
+            "log_loss": 0.6284557826376628,
+            "n_observations": 1496,
+            "unit": "DAP027"
+          },
+          {
+            "brier_score": 0.13973402721288056,
+            "log_loss": 0.45702281136513345,
+            "n_observations": 902,
+            "unit": "DAP009"
+          },
+          {
+            "brier_score": 0.2616510138620502,
+            "log_loss": 0.7352168226687338,
+            "n_observations": 778,
+            "unit": "DAP046"
+          },
+          {
+            "brier_score": 0.17952794406012842,
+            "log_loss": 0.54984711692252,
+            "n_observations": 1223,
+            "unit": "DAP060"
+          },
+          {
+            "brier_score": 0.23301005655203513,
+            "log_loss": 0.6692240206220583,
+            "n_observations": 821,
+            "unit": "DAP019"
+          },
+          {
+            "brier_score": 0.1786481547910264,
+            "log_loss": 0.5374909433698836,
+            "n_observations": 1404,
+            "unit": "DAP028"
+          },
+          {
+            "brier_score": 0.25592060046474413,
+            "log_loss": 0.7165136286481674,
+            "n_observations": 1161,
+            "unit": "DAP031"
+          },
+          {
+            "brier_score": 0.22071458253283271,
+            "log_loss": 0.6373624058937074,
+            "n_observations": 1408,
+            "unit": "DAP048"
+          },
+          {
+            "brier_score": 0.21720846845477015,
+            "log_loss": 0.6327110390793038,
+            "n_observations": 982,
+            "unit": "DAP069"
+          },
+          {
+            "brier_score": 0.25669717648530327,
+            "log_loss": 0.720122931877995,
+            "n_observations": 1384,
+            "unit": "DAP021"
+          },
+          {
+            "brier_score": 0.19478568965853113,
+            "log_loss": 0.5763385156354215,
+            "n_observations": 1591,
+            "unit": "DAP011"
+          },
+          {
+            "brier_score": 0.19717897808112758,
+            "log_loss": 0.5824068154385238,
+            "n_observations": 1188,
+            "unit": "DAP110"
+          },
+          {
+            "brier_score": 0.19667459620625624,
+            "log_loss": 0.5824370530476313,
+            "n_observations": 1223,
+            "unit": "DAP022"
+          },
+          {
+            "brier_score": 0.17758442313693568,
+            "log_loss": 0.5408768890679825,
+            "n_observations": 1446,
+            "unit": "DAP013"
+          },
+          {
+            "brier_score": 0.16794172231991075,
+            "log_loss": 0.5198560162197846,
+            "n_observations": 968,
+            "unit": "DAP033"
+          },
+          {
+            "brier_score": 0.200964177967745,
+            "log_loss": 0.5906403646888,
+            "n_observations": 1282,
+            "unit": "DAP050"
+          },
+          {
+            "brier_score": 0.20075425153388687,
+            "log_loss": 0.5904697926510192,
+            "n_observations": 1505,
+            "unit": "DAP156"
+          },
+          {
+            "brier_score": 0.18408740922549666,
+            "log_loss": 0.5571480633728875,
+            "n_observations": 1472,
+            "unit": "DAP014"
+          },
+          {
+            "brier_score": 0.1541346008402392,
+            "log_loss": 0.4870748493595716,
+            "n_observations": 1372,
+            "unit": "DAP023"
+          },
+          {
+            "brier_score": 0.1745230419078761,
+            "log_loss": 0.5354109777795545,
+            "n_observations": 930,
+            "unit": "DAP051"
+          },
+          {
+            "brier_score": 0.22396377722269734,
+            "log_loss": 0.6484077141274818,
+            "n_observations": 958,
+            "unit": "DAP035"
+          },
+          {
+            "brier_score": 0.19515067951048945,
+            "log_loss": 0.5789093018614829,
+            "n_observations": 884,
+            "unit": "DAP037"
+          },
+          {
+            "brier_score": 0.20515856296158638,
+            "log_loss": 0.6017831649039942,
+            "n_observations": 1091,
+            "unit": "DAP053"
+          },
+          {
+            "brier_score": 0.16621717643110762,
+            "log_loss": 0.5142021902341294,
+            "n_observations": 1399,
+            "unit": "DAP158"
+          },
+          {
+            "brier_score": 0.18921662130470523,
+            "log_loss": 0.5662865548021774,
+            "n_observations": 1718,
+            "unit": "DAP015"
+          },
+          {
+            "brier_score": 0.2507704502994476,
+            "log_loss": 0.7005123852532946,
+            "n_observations": 1062,
+            "unit": "DAP024"
+          }
+        ]
+      },
+      "pooled_psychometric": {
+        "audit_status": "pass",
+        "calibration": {
+          "available": true,
+          "brier_score": 0.2146202874445323,
+          "expected_calibration_error": 0.12428448206224409,
+          "mean_probability": 0.4711074663063631,
+          "n_observations": 35830,
+          "observed_rate": 0.49628802679319006,
+          "reason": null
+        },
+        "eligible": true,
+        "failures": [],
+        "folds": [
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 67364,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.010279003690102215,
+                "hessian_condition": 78.02630434308648,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 10,
+                "objective": 44827.83461943467,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 67364,
+              "parameters": {
+                "intercept": -0.05406740354109354,
+                "left_contrast": 1.3480833843269577,
+                "right_contrast": 0.9187728804232065
+              },
+              "standard_errors": {
+                "intercept": 0.018694495144140993,
+                "left_contrast": 0.050765394491299916,
+                "right_contrast": 0.04994324256597052
+              }
+            },
+            "fold": "fold-0000",
+            "n_predictions": 5678
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 67914,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.002102829201973734,
+                "hessian_condition": 78.23371899698165,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 10,
+                "objective": 45237.575203693574,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 67914,
+              "parameters": {
+                "intercept": -0.043818918582642065,
+                "left_contrast": 1.3910686357923099,
+                "right_contrast": 0.818419176485866
+              },
+              "standard_errors": {
+                "intercept": 0.018635878769145183,
+                "left_contrast": 0.050646338835928985,
+                "right_contrast": 0.049680878880459606
+              }
+            },
+            "fold": "fold-0001",
+            "n_predictions": 5128
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66516,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.024273633733439125,
+                "hessian_condition": 78.555401338616,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 8,
+                "objective": 44270.416570901776,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66516,
+              "parameters": {
+                "intercept": -0.050745425668523886,
+                "left_contrast": 1.2736424258015435,
+                "right_contrast": 1.025485712226126
+              },
+              "standard_errors": {
+                "intercept": 0.018920878094528353,
+                "left_contrast": 0.051061102319810626,
+                "right_contrast": 0.0504860636666745
+              }
+            },
+            "fold": "fold-0002",
+            "n_predictions": 6526
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66935,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.011693960489798361,
+                "hessian_condition": 79.15944907705577,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 9,
+                "objective": 44733.853648857796,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66935,
+              "parameters": {
+                "intercept": -0.034337038919708074,
+                "left_contrast": 1.2753602620807554,
+                "right_contrast": 0.8798953655321864
+              },
+              "standard_errors": {
+                "intercept": 0.01891273844020498,
+                "left_contrast": 0.05092728651374706,
+                "right_contrast": 0.05027252370985916
+              }
+            },
+            "fold": "fold-0003",
+            "n_predictions": 6107
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66805,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.009921684686354883,
+                "hessian_condition": 78.55317171092513,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 9,
+                "objective": 44610.04895239408,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66805,
+              "parameters": {
+                "intercept": -0.01624195009674814,
+                "left_contrast": 1.406311174291507,
+                "right_contrast": 0.7239558857437414
+              },
+              "standard_errors": {
+                "intercept": 0.01883701632092185,
+                "left_contrast": 0.05099515838631653,
+                "right_contrast": 0.05008660088889801
+              }
+            },
+            "fold": "fold-0004",
+            "n_predictions": 6237
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66888,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.0062352818716948375,
+                "hessian_condition": 79.0318762351242,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 10,
+                "objective": 44623.01391183703,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "bernoulli-history-glm",
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02]",
+              "n_observations": 66888,
+              "parameters": {
+                "intercept": -0.06043044829611802,
+                "left_contrast": 1.2602035593248782,
+                "right_contrast": 0.9384315868707587
+              },
+              "standard_errors": {
+                "intercept": 0.01891766289955454,
+                "left_contrast": 0.051017837386361654,
+                "right_contrast": 0.050288532054965876
+              }
+            },
+            "fold": "fold-0005",
+            "n_predictions": 6154
+          }
+        ],
+        "model_signature": "bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02]",
+        "name": "pooled_psychometric",
+        "pooled_brier_score": null,
+        "pooled_log_loss": 0.6210532835294809,
+        "score": {
+          "metric": "log-loss",
+          "pooled_score": 0.6210532835294809,
+          "unit_balanced_interval": {
+            "confidence_level": 0.95,
+            "estimate": 0.6232731947734432,
+            "lower": 0.6099483924952208,
+            "upper": 0.6372336732451566
+          },
+          "unit_balanced_score": 0.6232731947734432
+        },
+        "unit_balanced_brier_interval": null,
+        "unit_balanced_brier_score": null,
+        "unit_balanced_log_loss": 0.6232731947734432,
+        "unit_balanced_log_loss_interval": {
+          "confidence_level": 0.95,
+          "estimate": 0.6232731947734432,
+          "lower": 0.6099483924952208,
+          "upper": 0.6372336732451566
+        },
+        "unit_scores": [
+          {
+            "brier_score": 0.19232517646720593,
+            "log_loss": 0.5755950205690817,
+            "n_observations": 1049,
+            "unit": "DAP039"
+          },
+          {
+            "brier_score": 0.23398192241962332,
+            "log_loss": 0.6613752742573783,
+            "n_observations": 1206,
+            "unit": "DAP007"
+          },
+          {
+            "brier_score": 0.24083995745376457,
+            "log_loss": 0.6758308272172042,
+            "n_observations": 1018,
+            "unit": "DAP059"
+          },
+          {
+            "brier_score": 0.2315629006322381,
+            "log_loss": 0.6564304272363083,
+            "n_observations": 909,
+            "unit": "DAP017"
+          },
+          {
+            "brier_score": 0.20642327925997403,
+            "log_loss": 0.6025475992226424,
+            "n_observations": 1496,
+            "unit": "DAP027"
+          },
+          {
+            "brier_score": 0.1854956213328504,
+            "log_loss": 0.5611211601259474,
+            "n_observations": 902,
+            "unit": "DAP009"
+          },
+          {
+            "brier_score": 0.26378457763945523,
+            "log_loss": 0.7240938437586015,
+            "n_observations": 778,
+            "unit": "DAP046"
+          },
+          {
+            "brier_score": 0.2132198842321892,
+            "log_loss": 0.6193408913568573,
+            "n_observations": 1223,
+            "unit": "DAP060"
+          },
+          {
+            "brier_score": 0.24344964873603506,
+            "log_loss": 0.6816978856007858,
+            "n_observations": 821,
+            "unit": "DAP019"
+          },
+          {
+            "brier_score": 0.1924292703567726,
+            "log_loss": 0.574047924013934,
+            "n_observations": 1404,
+            "unit": "DAP028"
+          },
+          {
+            "brier_score": 0.236279157589259,
+            "log_loss": 0.6652066436610156,
+            "n_observations": 1161,
+            "unit": "DAP031"
+          },
+          {
+            "brier_score": 0.2203624775976632,
+            "log_loss": 0.6325287242375134,
+            "n_observations": 1408,
+            "unit": "DAP048"
+          },
+          {
+            "brier_score": 0.2060378982025892,
+            "log_loss": 0.6024166045540471,
+            "n_observations": 982,
+            "unit": "DAP069"
+          },
+          {
+            "brier_score": 0.22778990624359577,
+            "log_loss": 0.6472750118470058,
+            "n_observations": 1384,
+            "unit": "DAP021"
+          },
+          {
+            "brier_score": 0.21669635210586116,
+            "log_loss": 0.6256210531304377,
+            "n_observations": 1591,
+            "unit": "DAP011"
+          },
+          {
+            "brier_score": 0.21164707199598118,
+            "log_loss": 0.6150837176117827,
+            "n_observations": 1188,
+            "unit": "DAP110"
+          },
+          {
+            "brier_score": 0.21176895915257168,
+            "log_loss": 0.6150744196804695,
+            "n_observations": 1223,
+            "unit": "DAP022"
+          },
+          {
+            "brier_score": 0.2110775948012245,
+            "log_loss": 0.614180663616093,
+            "n_observations": 1446,
+            "unit": "DAP013"
+          },
+          {
+            "brier_score": 0.19204824235746892,
+            "log_loss": 0.574350225801425,
+            "n_observations": 968,
+            "unit": "DAP033"
+          },
+          {
+            "brier_score": 0.2042041248975821,
+            "log_loss": 0.5990788418288335,
+            "n_observations": 1282,
+            "unit": "DAP050"
+          },
+          {
+            "brier_score": 0.2133581085407848,
+            "log_loss": 0.6184238320568469,
+            "n_observations": 1505,
+            "unit": "DAP156"
+          },
+          {
+            "brier_score": 0.21462441586113348,
+            "log_loss": 0.6217126183915623,
+            "n_observations": 1472,
+            "unit": "DAP014"
+          },
+          {
+            "brier_score": 0.18900938006493342,
+            "log_loss": 0.5679900782835875,
+            "n_observations": 1372,
+            "unit": "DAP023"
+          },
+          {
+            "brier_score": 0.2061796125407276,
+            "log_loss": 0.6039772379635027,
+            "n_observations": 930,
+            "unit": "DAP051"
+          },
+          {
+            "brier_score": 0.2395721968669236,
+            "log_loss": 0.6736841031244586,
+            "n_observations": 958,
+            "unit": "DAP035"
+          },
+          {
+            "brier_score": 0.20438658622146974,
+            "log_loss": 0.5993355171594646,
+            "n_observations": 884,
+            "unit": "DAP037"
+          },
+          {
+            "brier_score": 0.22795390464980317,
+            "log_loss": 0.6491583567881155,
+            "n_observations": 1091,
+            "unit": "DAP053"
+          },
+          {
+            "brier_score": 0.19367453384373595,
+            "log_loss": 0.5779106890324619,
+            "n_observations": 1399,
+            "unit": "DAP158"
+          },
+          {
+            "brier_score": 0.21738483224720787,
+            "log_loss": 0.6269978560728598,
+            "n_observations": 1718,
+            "unit": "DAP015"
+          },
+          {
+            "brier_score": 0.22259735373725348,
+            "log_loss": 0.6361087950030756,
+            "n_observations": 1062,
+            "unit": "DAP024"
+          }
+        ]
+      },
+      "shared_smooth_trajectory": {
+        "audit_status": "pass",
+        "calibration": {
+          "available": true,
+          "brier_score": 0.20195728161979942,
+          "expected_calibration_error": 0.06228482092148854,
+          "mean_probability": 0.4926237558958975,
+          "n_observations": 35830,
+          "observed_rate": 0.49628802679319006,
+          "reason": null
+        },
+        "eligible": true,
+        "failures": [],
+        "folds": [
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "smooth-bernoulli-history-glm",
+              "model_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;shared_trajectory=True]",
+              "n_observations": 67364,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.1496759407417788,
+                "hessian_condition": 204.8503867502803,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 39,
+                "objective": 43074.65194650637,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "smooth-bernoulli-history-glm",
+              "model_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;shared_trajectory=True]",
+              "n_observations": 67364,
+              "parameters": {
+                "intercept[session_order=0]": -0.10139553014529998,
+                "intercept[session_order=12]": 0.19035780927464546,
+                "intercept[session_order=3]": -0.1462590302684542,
+                "intercept[session_order=7]": -0.1718539717445275,
+                "intercept[session_order=9]": -0.09294703519369003,
+                "left_contrast[session_order=0]": 0.2327507346002275,
+                "left_contrast[session_order=12]": 3.184875374811614,
+                "left_contrast[session_order=3]": 0.08058639270724015,
+                "left_contrast[session_order=7]": 0.7949252605327694,
+                "left_contrast[session_order=9]": 2.777610438017182,
+                "right_contrast[session_order=0]": -0.02133044102040058,
+                "right_contrast[session_order=12]": 2.6547490642100953,
+                "right_contrast[session_order=3]": 0.19152430811544371,
+                "right_contrast[session_order=7]": 0.10564760603042168,
+                "right_contrast[session_order=9]": 2.531027454256276
+              },
+              "standard_errors": {
+                "intercept[session_order=0]": 0.06312607571516131,
+                "intercept[session_order=12]": 0.047787949154291104,
+                "intercept[session_order=3]": 0.048524577032032244,
+                "intercept[session_order=7]": 0.04736289784573988,
+                "intercept[session_order=9]": 0.04867957298466536,
+                "left_contrast[session_order=0]": 0.16554254854401243,
+                "left_contrast[session_order=12]": 0.14620683678246552,
+                "left_contrast[session_order=3]": 0.12677497969852655,
+                "left_contrast[session_order=7]": 0.12537244346718363,
+                "left_contrast[session_order=9]": 0.138351887303204,
+                "right_contrast[session_order=0]": 0.16443708012665187,
+                "right_contrast[session_order=12]": 0.14766065405746565,
+                "right_contrast[session_order=3]": 0.12614253714933024,
+                "right_contrast[session_order=7]": 0.12316234077306204,
+                "right_contrast[session_order=9]": 0.13495940972629156
+              }
+            },
+            "fold": "fold-0000",
+            "n_predictions": 5678
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "smooth-bernoulli-history-glm",
+              "model_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;shared_trajectory=True]",
+              "n_observations": 67914,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.20823371851011466,
+                "hessian_condition": 205.4340479561289,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 40,
+                "objective": 43666.20813423599,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "smooth-bernoulli-history-glm",
+              "model_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;shared_trajectory=True]",
+              "n_observations": 67914,
+              "parameters": {
+                "intercept[session_order=0]": -0.10113839733163986,
+                "intercept[session_order=12]": 0.21281465739242553,
+                "intercept[session_order=3]": -0.14680447468289576,
+                "intercept[session_order=7]": -0.16980282393103893,
+                "intercept[session_order=9]": -0.0374236897650716,
+                "left_contrast[session_order=0]": 0.23433916809605349,
+                "left_contrast[session_order=12]": 3.3452426138071907,
+                "left_contrast[session_order=3]": 0.07466813021222173,
+                "left_contrast[session_order=7]": 0.8167394392093812,
+                "left_contrast[session_order=9]": 2.882754533380797,
+                "right_contrast[session_order=0]": -0.019350408259034068,
+                "right_contrast[session_order=12]": 2.1897806044247847,
+                "right_contrast[session_order=3]": 0.18177902751413288,
+                "right_contrast[session_order=7]": 0.1393682576056272,
+                "right_contrast[session_order=9]": 2.146810204508854
+              },
+              "standard_errors": {
+                "intercept[session_order=0]": 0.06312572231830349,
+                "intercept[session_order=12]": 0.04738100085642261,
+                "intercept[session_order=3]": 0.04852247701121761,
+                "intercept[session_order=7]": 0.047326995870994745,
+                "intercept[session_order=9]": 0.04811688321537552,
+                "left_contrast[session_order=0]": 0.165542281476845,
+                "left_contrast[session_order=12]": 0.14664831834132824,
+                "left_contrast[session_order=3]": 0.12676629361656314,
+                "left_contrast[session_order=7]": 0.1252648741788652,
+                "left_contrast[session_order=9]": 0.137417238196135,
+                "right_contrast[session_order=0]": 0.16443533460383036,
+                "right_contrast[session_order=12]": 0.1422207326617096,
+                "right_contrast[session_order=3]": 0.12613287005472482,
+                "right_contrast[session_order=7]": 0.12299437118617394,
+                "right_contrast[session_order=9]": 0.13193630477401525
+              }
+            },
+            "fold": "fold-0001",
+            "n_predictions": 5128
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "smooth-bernoulli-history-glm",
+              "model_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;shared_trajectory=True]",
+              "n_observations": 66516,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.24705509623985425,
+                "hessian_condition": 204.53442553726637,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 40,
+                "objective": 42419.28492020785,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "smooth-bernoulli-history-glm",
+              "model_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;shared_trajectory=True]",
+              "n_observations": 66516,
+              "parameters": {
+                "intercept[session_order=0]": -0.1015907437715907,
+                "intercept[session_order=12]": 0.09578713896099174,
+                "intercept[session_order=3]": -0.14375436516447726,
+                "intercept[session_order=7]": -0.18375437211911133,
+                "intercept[session_order=9]": 0.016234178616408117,
+                "left_contrast[session_order=0]": 0.2307986992377151,
+                "left_contrast[session_order=12]": 3.0156106873342035,
+                "left_contrast[session_order=3]": 0.09102123770768376,
+                "left_contrast[session_order=7]": 0.7508203016531024,
+                "left_contrast[session_order=9]": 2.573268475738353,
+                "right_contrast[session_order=0]": -0.016832748327145187,
+                "right_contrast[session_order=12]": 2.933720666844734,
+                "right_contrast[session_order=3]": 0.17043958389240993,
+                "right_contrast[session_order=7]": 0.1859718951331433,
+                "right_contrast[session_order=9]": 2.9358608436003597
+              },
+              "standard_errors": {
+                "intercept[session_order=0]": 0.06312596650157701,
+                "intercept[session_order=12]": 0.0491702164413133,
+                "intercept[session_order=3]": 0.04852970701628501,
+                "intercept[session_order=7]": 0.04744555722498983,
+                "intercept[session_order=9]": 0.0493975700124244,
+                "left_contrast[session_order=0]": 0.1655407376280441,
+                "left_contrast[session_order=12]": 0.14773117612412076,
+                "left_contrast[session_order=3]": 0.1267764796940822,
+                "left_contrast[session_order=7]": 0.12538644687920744,
+                "left_contrast[session_order=9]": 0.13755335168943897,
+                "right_contrast[session_order=0]": 0.16443600211459053,
+                "right_contrast[session_order=12]": 0.15163322700475015,
+                "right_contrast[session_order=3]": 0.126163529903967,
+                "right_contrast[session_order=7]": 0.12345487329089239,
+                "right_contrast[session_order=9]": 0.14032440513903083
+              }
+            },
+            "fold": "fold-0002",
+            "n_predictions": 6526
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "smooth-bernoulli-history-glm",
+              "model_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;shared_trajectory=True]",
+              "n_observations": 66935,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.11988455910885601,
+                "hessian_condition": 205.21999786599827,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 41,
+                "objective": 43187.17464894638,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "smooth-bernoulli-history-glm",
+              "model_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;shared_trajectory=True]",
+              "n_observations": 66935,
+              "parameters": {
+                "intercept[session_order=0]": -0.10004421908628582,
+                "intercept[session_order=12]": 0.16696363210061543,
+                "intercept[session_order=3]": -0.14922208673143558,
+                "intercept[session_order=7]": -0.1632950479942939,
+                "intercept[session_order=9]": 0.031860835536840555,
+                "left_contrast[session_order=0]": 0.23222137134475088,
+                "left_contrast[session_order=12]": 2.771582015113641,
+                "left_contrast[session_order=3]": 0.08438095635797772,
+                "left_contrast[session_order=7]": 0.7782060974538043,
+                "left_contrast[session_order=9]": 2.691533425627599,
+                "right_contrast[session_order=0]": -0.02122916622681172,
+                "right_contrast[session_order=12]": 2.4419664562021994,
+                "right_contrast[session_order=3]": 0.18638019388493451,
+                "right_contrast[session_order=7]": 0.12778532323235592,
+                "right_contrast[session_order=9]": 2.4016661967302135
+              },
+              "standard_errors": {
+                "intercept[session_order=0]": 0.06312494755071421,
+                "intercept[session_order=12]": 0.04989137189117138,
+                "intercept[session_order=3]": 0.04852781691462735,
+                "intercept[session_order=7]": 0.04737343039065752,
+                "intercept[session_order=9]": 0.04879456103134168,
+                "left_contrast[session_order=0]": 0.16553759791109157,
+                "left_contrast[session_order=12]": 0.14602171020813612,
+                "left_contrast[session_order=3]": 0.12677166413005095,
+                "left_contrast[session_order=7]": 0.1252110656607664,
+                "left_contrast[session_order=9]": 0.1363647253703839,
+                "right_contrast[session_order=0]": 0.1644341925139333,
+                "right_contrast[session_order=12]": 0.14833149357516756,
+                "right_contrast[session_order=3]": 0.12614916620527303,
+                "right_contrast[session_order=7]": 0.12317830037229352,
+                "right_contrast[session_order=9]": 0.1355024322869284
+              }
+            },
+            "fold": "fold-0003",
+            "n_predictions": 6107
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "smooth-bernoulli-history-glm",
+              "model_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;shared_trajectory=True]",
+              "n_observations": 66805,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.2354908529323335,
+                "hessian_condition": 204.6140090398956,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 37,
+                "objective": 43135.662605217854,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "smooth-bernoulli-history-glm",
+              "model_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;shared_trajectory=True]",
+              "n_observations": 66805,
+              "parameters": {
+                "intercept[session_order=0]": -0.10100763246589223,
+                "intercept[session_order=12]": 0.2962726751415844,
+                "intercept[session_order=3]": -0.1468718705088665,
+                "intercept[session_order=7]": -0.1701627562488808,
+                "intercept[session_order=9]": 0.023312960779049555,
+                "left_contrast[session_order=0]": 0.23290295389842297,
+                "left_contrast[session_order=12]": 3.244256804650342,
+                "left_contrast[session_order=3]": 0.07963167536805105,
+                "left_contrast[session_order=7]": 0.797596545590435,
+                "left_contrast[session_order=9]": 3.047763750976494,
+                "right_contrast[session_order=0]": -0.021029539742076258,
+                "right_contrast[session_order=12]": 1.884660319575691,
+                "right_contrast[session_order=3]": 0.1860197925769462,
+                "right_contrast[session_order=7]": 0.1263470979397326,
+                "right_contrast[session_order=9]": 1.9953563436947974
+              },
+              "standard_errors": {
+                "intercept[session_order=0]": 0.06312597192431157,
+                "intercept[session_order=12]": 0.04868075872559937,
+                "intercept[session_order=3]": 0.04852985803508549,
+                "intercept[session_order=7]": 0.04743277302194353,
+                "intercept[session_order=9]": 0.04902589440046081,
+                "left_contrast[session_order=0]": 0.1655418410029756,
+                "left_contrast[session_order=12]": 0.14638388108096909,
+                "left_contrast[session_order=3]": 0.12678795510558244,
+                "left_contrast[session_order=7]": 0.12555113330474835,
+                "left_contrast[session_order=9]": 0.13958382701731534,
+                "right_contrast[session_order=0]": 0.16443656637967624,
+                "right_contrast[session_order=12]": 0.14325629271797813,
+                "right_contrast[session_order=3]": 0.12615064264022058,
+                "right_contrast[session_order=7]": 0.12326533217955986,
+                "right_contrast[session_order=9]": 0.13410375832000443
+              }
+            },
+            "fold": "fold-0004",
+            "n_predictions": 6237
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "smooth-bernoulli-history-glm",
+              "model_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;shared_trajectory=True]",
+              "n_observations": 66888,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.12053077273518242,
+                "hessian_condition": 204.95672916705874,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 42,
+                "objective": 43057.4254423766,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "smooth-bernoulli-history-glm",
+              "model_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;shared_trajectory=True]",
+              "n_observations": 66888,
+              "parameters": {
+                "intercept[session_order=0]": -0.09965716178111435,
+                "intercept[session_order=12]": 0.10285126144285954,
+                "intercept[session_order=3]": -0.14984478302285836,
+                "intercept[session_order=7]": -0.1617906847007771,
+                "intercept[session_order=9]": -0.015821707586032206,
+                "left_contrast[session_order=0]": 0.23215451731444756,
+                "left_contrast[session_order=12]": 2.903347330283885,
+                "left_contrast[session_order=3]": 0.08607419143863018,
+                "left_contrast[session_order=7]": 0.770817715948742,
+                "left_contrast[session_order=9]": 2.6291459521580482,
+                "right_contrast[session_order=0]": -0.01754874605801451,
+                "right_contrast[session_order=12]": 2.4250919858418993,
+                "right_contrast[session_order=3]": 0.17220239191537448,
+                "right_contrast[session_order=7]": 0.17727087920078838,
+                "right_contrast[session_order=9]": 2.57603494252365
+              },
+              "standard_errors": {
+                "intercept[session_order=0]": 0.06312446710453884,
+                "intercept[session_order=12]": 0.04903773141703327,
+                "intercept[session_order=3]": 0.04852860498467527,
+                "intercept[session_order=7]": 0.04737080130034574,
+                "intercept[session_order=9]": 0.04897070534867839,
+                "left_contrast[session_order=0]": 0.16553627223622136,
+                "left_contrast[session_order=12]": 0.14667259207430974,
+                "left_contrast[session_order=3]": 0.12677436044057072,
+                "left_contrast[session_order=7]": 0.1252070549436471,
+                "left_contrast[session_order=9]": 0.1369046063049543,
+                "right_contrast[session_order=0]": 0.16443192830807957,
+                "right_contrast[session_order=12]": 0.1454449341069187,
+                "right_contrast[session_order=3]": 0.12615530673615735,
+                "right_contrast[session_order=7]": 0.12321050384864697,
+                "right_contrast[session_order=9]": 0.13626926090207658
+              }
+            },
+            "fold": "fold-0005",
+            "n_predictions": 6154
+          }
+        ],
+        "model_signature": "smooth-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;time=session_order;knots=0,3,7,9,12;smoothness=3.0;l2=0.02;shared_trajectory=True]",
+        "name": "shared_smooth_trajectory",
+        "pooled_brier_score": null,
+        "pooled_log_loss": 0.5951651975847151,
+        "score": {
+          "metric": "log-loss",
+          "pooled_score": 0.5951651975847151,
+          "unit_balanced_interval": {
+            "confidence_level": 0.95,
+            "estimate": 0.5979630089279888,
+            "lower": 0.5717516429943762,
+            "upper": 0.6243173344717327
+          },
+          "unit_balanced_score": 0.5979630089279888
+        },
+        "unit_balanced_brier_interval": null,
+        "unit_balanced_brier_score": null,
+        "unit_balanced_log_loss": 0.5979630089279888,
+        "unit_balanced_log_loss_interval": {
+          "confidence_level": 0.95,
+          "estimate": 0.5979630089279888,
+          "lower": 0.5717516429943762,
+          "upper": 0.6243173344717327
+        },
+        "unit_scores": [
+          {
+            "brier_score": 0.15064633556544008,
+            "log_loss": 0.48058783917094655,
+            "n_observations": 1049,
+            "unit": "DAP039"
+          },
+          {
+            "brier_score": 0.22991337284201174,
+            "log_loss": 0.6568671986076362,
+            "n_observations": 1206,
+            "unit": "DAP007"
+          },
+          {
+            "brier_score": 0.241338111466661,
+            "log_loss": 0.684288652038861,
+            "n_observations": 1018,
+            "unit": "DAP059"
+          },
+          {
+            "brier_score": 0.22204944250646808,
+            "log_loss": 0.6385439106527403,
+            "n_observations": 909,
+            "unit": "DAP017"
+          },
+          {
+            "brier_score": 0.22976069873544036,
+            "log_loss": 0.6584655963975974,
+            "n_observations": 1496,
+            "unit": "DAP027"
+          },
+          {
+            "brier_score": 0.14373630041713895,
+            "log_loss": 0.46511893103341323,
+            "n_observations": 902,
+            "unit": "DAP009"
+          },
+          {
+            "brier_score": 0.266985714129067,
+            "log_loss": 0.7479123913526232,
+            "n_observations": 778,
+            "unit": "DAP046"
+          },
+          {
+            "brier_score": 0.18297101872659707,
+            "log_loss": 0.5556186865303993,
+            "n_observations": 1223,
+            "unit": "DAP060"
+          },
+          {
+            "brier_score": 0.23292856245274568,
+            "log_loss": 0.6676634817256847,
+            "n_observations": 821,
+            "unit": "DAP019"
+          },
+          {
+            "brier_score": 0.17633744696217965,
+            "log_loss": 0.5327461439748721,
+            "n_observations": 1404,
+            "unit": "DAP028"
+          },
+          {
+            "brier_score": 0.25602141299180353,
+            "log_loss": 0.7187829415986101,
+            "n_observations": 1161,
+            "unit": "DAP031"
+          },
+          {
+            "brier_score": 0.22229101437740775,
+            "log_loss": 0.6423028157362043,
+            "n_observations": 1408,
+            "unit": "DAP048"
+          },
+          {
+            "brier_score": 0.2159635051726605,
+            "log_loss": 0.6316158347076285,
+            "n_observations": 982,
+            "unit": "DAP069"
+          },
+          {
+            "brier_score": 0.24889571086795487,
+            "log_loss": 0.7030378624679758,
+            "n_observations": 1384,
+            "unit": "DAP021"
+          },
+          {
+            "brier_score": 0.19738045140817986,
+            "log_loss": 0.5819477078628302,
+            "n_observations": 1591,
+            "unit": "DAP011"
+          },
+          {
+            "brier_score": 0.1976869649387079,
+            "log_loss": 0.5835578736089493,
+            "n_observations": 1188,
+            "unit": "DAP110"
+          },
+          {
+            "brier_score": 0.20146291108596648,
+            "log_loss": 0.5939102881778794,
+            "n_observations": 1223,
+            "unit": "DAP022"
+          },
+          {
+            "brier_score": 0.17725726688301868,
+            "log_loss": 0.5395093763906584,
+            "n_observations": 1446,
+            "unit": "DAP013"
+          },
+          {
+            "brier_score": 0.1625076436697742,
+            "log_loss": 0.5071977448259045,
+            "n_observations": 968,
+            "unit": "DAP033"
+          },
+          {
+            "brier_score": 0.2000741614264372,
+            "log_loss": 0.5892839480183657,
+            "n_observations": 1282,
+            "unit": "DAP050"
+          },
+          {
+            "brier_score": 0.20384184213143683,
+            "log_loss": 0.597148287730399,
+            "n_observations": 1505,
+            "unit": "DAP156"
+          },
+          {
+            "brier_score": 0.18708834720385503,
+            "log_loss": 0.5623017879317035,
+            "n_observations": 1472,
+            "unit": "DAP014"
+          },
+          {
+            "brier_score": 0.14974033473526155,
+            "log_loss": 0.47680829559031385,
+            "n_observations": 1372,
+            "unit": "DAP023"
+          },
+          {
+            "brier_score": 0.17840697242131368,
+            "log_loss": 0.5434414396759857,
+            "n_observations": 930,
+            "unit": "DAP051"
+          },
+          {
+            "brier_score": 0.22789771607314868,
+            "log_loss": 0.6566385207753754,
+            "n_observations": 958,
+            "unit": "DAP035"
+          },
+          {
+            "brier_score": 0.18531488885155892,
+            "log_loss": 0.5557228276183329,
+            "n_observations": 884,
+            "unit": "DAP037"
+          },
+          {
+            "brier_score": 0.20745903360535867,
+            "log_loss": 0.6070259050014049,
+            "n_observations": 1091,
+            "unit": "DAP053"
+          },
+          {
+            "brier_score": 0.16794708586825893,
+            "log_loss": 0.5180365725897288,
+            "n_observations": 1399,
+            "unit": "DAP158"
+          },
+          {
+            "brier_score": 0.18961275505962194,
+            "log_loss": 0.5669616275643936,
+            "n_observations": 1718,
+            "unit": "DAP015"
+          },
+          {
+            "brier_score": 0.2398591645725335,
+            "log_loss": 0.6758457784822482,
+            "n_observations": 1062,
+            "unit": "DAP024"
+          }
+        ]
+      },
+      "static_partial_pooling": {
+        "audit_status": "pass",
+        "calibration": {
+          "available": true,
+          "brier_score": 0.24057609637932995,
+          "expected_calibration_error": 0.07283909912770703,
+          "mean_probability": 0.4497823008056322,
+          "n_observations": 35830,
+          "observed_rate": 0.49628802679319006,
+          "reason": null
+        },
+        "eligible": true,
+        "failures": [],
+        "folds": [
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "hierarchical-bernoulli-history-glm",
+              "model_signature": "hierarchical-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02;subject_scale=0.4;estimate_subject_scale=False;subject_scale_bounds=0.05,2.0]",
+              "n_observations": 67364,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.1670037475362787,
+                "hessian_condition": 2689.9319798678994,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 61,
+                "objective": 41946.5109727178,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "hierarchical-bernoulli-history-glm",
+              "model_signature": "hierarchical-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02;subject_scale=0.4;estimate_subject_scale=False;subject_scale_bounds=0.05,2.0]",
+              "n_observations": 67364,
+              "parameters": {
+                "intercept": -0.07509325842820458,
+                "left_contrast": 1.394081726186977,
+                "right_contrast": 0.9863076282325924
+              },
+              "standard_errors": {
+                "intercept": 0.0757354154774956,
+                "left_contrast": 0.0913154385100666,
+                "right_contrast": 0.09063933240898782
+              }
+            },
+            "fold": "fold-0000",
+            "n_predictions": 5678
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "hierarchical-bernoulli-history-glm",
+              "model_signature": "hierarchical-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02;subject_scale=0.4;estimate_subject_scale=False;subject_scale_bounds=0.05,2.0]",
+              "n_observations": 67914,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.24646988975613857,
+                "hessian_condition": 2733.0526212044983,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 67,
+                "objective": 42565.724268490354,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "hierarchical-bernoulli-history-glm",
+              "model_signature": "hierarchical-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02;subject_scale=0.4;estimate_subject_scale=False;subject_scale_bounds=0.05,2.0]",
+              "n_observations": 67914,
+              "parameters": {
+                "intercept": -0.05694705513108273,
+                "left_contrast": 1.4357754008328882,
+                "right_contrast": 0.8717297191241908
+              },
+              "standard_errors": {
+                "intercept": 0.07576084220021609,
+                "left_contrast": 0.09144704023339409,
+                "right_contrast": 0.0906311142773896
+              }
+            },
+            "fold": "fold-0001",
+            "n_predictions": 5128
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "hierarchical-bernoulli-history-glm",
+              "model_signature": "hierarchical-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02;subject_scale=0.4;estimate_subject_scale=False;subject_scale_bounds=0.05,2.0]",
+              "n_observations": 66516,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.2306643088827481,
+                "hessian_condition": 2618.6705320219976,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 81,
+                "objective": 40926.51526765968,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "hierarchical-bernoulli-history-glm",
+              "model_signature": "hierarchical-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02;subject_scale=0.4;estimate_subject_scale=False;subject_scale_bounds=0.05,2.0]",
+              "n_observations": 66516,
+              "parameters": {
+                "intercept": -0.07538470257393123,
+                "left_contrast": 1.3973184722818714,
+                "right_contrast": 1.0657431278650586
+              },
+              "standard_errors": {
+                "intercept": 0.07577122945358937,
+                "left_contrast": 0.0917073959335459,
+                "right_contrast": 0.09098690862478222
+              }
+            },
+            "fold": "fold-0002",
+            "n_predictions": 6526
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "hierarchical-bernoulli-history-glm",
+              "model_signature": "hierarchical-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02;subject_scale=0.4;estimate_subject_scale=False;subject_scale_bounds=0.05,2.0]",
+              "n_observations": 66935,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.23280342414849622,
+                "hessian_condition": 2653.996374663751,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 71,
+                "objective": 41376.81594066525,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "hierarchical-bernoulli-history-glm",
+              "model_signature": "hierarchical-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02;subject_scale=0.4;estimate_subject_scale=False;subject_scale_bounds=0.05,2.0]",
+              "n_observations": 66935,
+              "parameters": {
+                "intercept": -0.01210000045107353,
+                "left_contrast": 1.3373770902152973,
+                "right_contrast": 0.9369506983923647
+              },
+              "standard_errors": {
+                "intercept": 0.07586346334288784,
+                "left_contrast": 0.09191881306007232,
+                "right_contrast": 0.09129727319133772
+              }
+            },
+            "fold": "fold-0003",
+            "n_predictions": 6107
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "hierarchical-bernoulli-history-glm",
+              "model_signature": "hierarchical-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02;subject_scale=0.4;estimate_subject_scale=False;subject_scale_bounds=0.05,2.0]",
+              "n_observations": 66805,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 1.3857639396260026,
+                "hessian_condition": 2653.9272324996605,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 61,
+                "objective": 41392.84408308519,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "hierarchical-bernoulli-history-glm",
+              "model_signature": "hierarchical-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02;subject_scale=0.4;estimate_subject_scale=False;subject_scale_bounds=0.05,2.0]",
+              "n_observations": 66805,
+              "parameters": {
+                "intercept": -0.0010562900863089475,
+                "left_contrast": 1.5057955868696933,
+                "right_contrast": 0.7735874912329885
+              },
+              "standard_errors": {
+                "intercept": 0.07573659439168515,
+                "left_contrast": 0.09146015963864743,
+                "right_contrast": 0.09064919945072017
+              }
+            },
+            "fold": "fold-0004",
+            "n_predictions": 6237
+          },
+          {
+            "audit": {
+              "issues": [],
+              "latent_states": null,
+              "model_name": "hierarchical-bernoulli-history-glm",
+              "model_signature": "hierarchical-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02;subject_scale=0.4;estimate_subject_scale=False;subject_scale_bounds=0.05,2.0]",
+              "n_observations": 66888,
+              "numerical": {
+                "boundary_estimate": false,
+                "converged": true,
+                "gradient_norm": 0.16816546940451949,
+                "hessian_condition": 2658.9250908138542,
+                "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                "n_iterations": 65,
+                "objective": 41470.08236312194,
+                "optimizer": "L-BFGS-B",
+                "status": 0
+              },
+              "restarts": null,
+              "status": "pass"
+            },
+            "fit": {
+              "model_name": "hierarchical-bernoulli-history-glm",
+              "model_signature": "hierarchical-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02;subject_scale=0.4;estimate_subject_scale=False;subject_scale_bounds=0.05,2.0]",
+              "n_observations": 66888,
+              "parameters": {
+                "intercept": -0.08819588556677467,
+                "left_contrast": 1.3404866656369911,
+                "right_contrast": 1.0072212753383276
+              },
+              "standard_errors": {
+                "intercept": 0.07573861277593073,
+                "left_contrast": 0.09137762452592674,
+                "right_contrast": 0.09072520065032945
+              }
+            },
+            "fold": "fold-0005",
+            "n_predictions": 6154
+          }
+        ],
+        "model_signature": "hierarchical-bernoulli-history-glm[outcome=choice;covariates=left_contrast,right_contrast;choice_lags=0;l2=0.02;subject_scale=0.4;estimate_subject_scale=False;subject_scale_bounds=0.05,2.0]",
+        "name": "static_partial_pooling",
+        "pooled_brier_score": null,
+        "pooled_log_loss": 0.6776523727073894,
+        "score": {
+          "metric": "log-loss",
+          "pooled_score": 0.6776523727073894,
+          "unit_balanced_interval": {
+            "confidence_level": 0.95,
+            "estimate": 0.6734269199465964,
+            "lower": 0.6348497263024944,
+            "upper": 0.7185453292296692
+          },
+          "unit_balanced_score": 0.6734269199465964
+        },
+        "unit_balanced_brier_interval": null,
+        "unit_balanced_brier_score": null,
+        "unit_balanced_log_loss": 0.6734269199465964,
+        "unit_balanced_log_loss_interval": {
+          "confidence_level": 0.95,
+          "estimate": 0.6734269199465964,
+          "lower": 0.6348497263024944,
+          "upper": 0.7185453292296692
+        },
+        "unit_scores": [
+          {
+            "brier_score": 0.22921899340077892,
+            "log_loss": 0.6496248087494235,
+            "n_observations": 1049,
+            "unit": "DAP039"
+          },
+          {
+            "brier_score": 0.24573517264692069,
+            "log_loss": 0.6846134831635762,
+            "n_observations": 1206,
+            "unit": "DAP007"
+          },
+          {
+            "brier_score": 0.23106723082505257,
+            "log_loss": 0.6549070979478079,
+            "n_observations": 1018,
+            "unit": "DAP059"
+          },
+          {
+            "brier_score": 0.23996412597187072,
+            "log_loss": 0.6730495063893484,
+            "n_observations": 909,
+            "unit": "DAP017"
+          },
+          {
+            "brier_score": 0.15254598376301368,
+            "log_loss": 0.4714730620672556,
+            "n_observations": 1496,
+            "unit": "DAP027"
+          },
+          {
+            "brier_score": 0.21085709526484356,
+            "log_loss": 0.6135443481531268,
+            "n_observations": 902,
+            "unit": "DAP009"
+          },
+          {
+            "brier_score": 0.19067819496758787,
+            "log_loss": 0.5730179904359831,
+            "n_observations": 778,
+            "unit": "DAP046"
+          },
+          {
+            "brier_score": 0.19734918781177038,
+            "log_loss": 0.5625176434736195,
+            "n_observations": 1223,
+            "unit": "DAP060"
+          },
+          {
+            "brier_score": 0.18202519638841116,
+            "log_loss": 0.5493446981703277,
+            "n_observations": 821,
+            "unit": "DAP019"
+          },
+          {
+            "brier_score": 0.2198073008549929,
+            "log_loss": 0.6352041875172914,
+            "n_observations": 1404,
+            "unit": "DAP028"
+          },
+          {
+            "brier_score": 0.25653362740042207,
+            "log_loss": 0.7069754963228772,
+            "n_observations": 1161,
+            "unit": "DAP031"
+          },
+          {
+            "brier_score": 0.3342000148172298,
+            "log_loss": 0.9227862223620917,
+            "n_observations": 1408,
+            "unit": "DAP048"
+          },
+          {
+            "brier_score": 0.20109520943368264,
+            "log_loss": 0.593204786303386,
+            "n_observations": 982,
+            "unit": "DAP069"
+          },
+          {
+            "brier_score": 0.26127015100041595,
+            "log_loss": 0.715739435188842,
+            "n_observations": 1384,
+            "unit": "DAP021"
+          },
+          {
+            "brier_score": 0.23689317814846744,
+            "log_loss": 0.6661521839473054,
+            "n_observations": 1591,
+            "unit": "DAP011"
+          },
+          {
+            "brier_score": 0.40536239340704344,
+            "log_loss": 1.1239209368978413,
+            "n_observations": 1188,
+            "unit": "DAP110"
+          },
+          {
+            "brier_score": 0.2251551528408592,
+            "log_loss": 0.6398039108324863,
+            "n_observations": 1223,
+            "unit": "DAP022"
+          },
+          {
+            "brier_score": 0.23995110865373712,
+            "log_loss": 0.6729884884486133,
+            "n_observations": 1446,
+            "unit": "DAP013"
+          },
+          {
+            "brier_score": 0.22594928433183922,
+            "log_loss": 0.6337590980851571,
+            "n_observations": 968,
+            "unit": "DAP033"
+          },
+          {
+            "brier_score": 0.23592089446222367,
+            "log_loss": 0.6649326631017326,
+            "n_observations": 1282,
+            "unit": "DAP050"
+          },
+          {
+            "brier_score": 0.2556672818032465,
+            "log_loss": 0.7043724165967673,
+            "n_observations": 1505,
+            "unit": "DAP156"
+          },
+          {
+            "brier_score": 0.23108059051449753,
+            "log_loss": 0.6551415277100638,
+            "n_observations": 1472,
+            "unit": "DAP014"
+          },
+          {
+            "brier_score": 0.2152098800983757,
+            "log_loss": 0.6229482046227688,
+            "n_observations": 1372,
+            "unit": "DAP023"
+          },
+          {
+            "brier_score": 0.28595818211443497,
+            "log_loss": 0.7673251530331388,
+            "n_observations": 930,
+            "unit": "DAP051"
+          },
+          {
+            "brier_score": 0.2537611293574138,
+            "log_loss": 0.700713085449751,
+            "n_observations": 958,
+            "unit": "DAP035"
+          },
+          {
+            "brier_score": 0.23399515131554793,
+            "log_loss": 0.6561432206048533,
+            "n_observations": 884,
+            "unit": "DAP037"
+          },
+          {
+            "brier_score": 0.26871441242362165,
+            "log_loss": 0.7306940992678529,
+            "n_observations": 1091,
+            "unit": "DAP053"
+          },
+          {
+            "brier_score": 0.23018055784548003,
+            "log_loss": 0.6534051691505877,
+            "n_observations": 1399,
+            "unit": "DAP158"
+          },
+          {
+            "brier_score": 0.29019278768002454,
+            "log_loss": 0.7755993224248643,
+            "n_observations": 1718,
+            "unit": "DAP015"
+          },
+          {
+            "brier_score": 0.1734952077502137,
+            "log_loss": 0.5289053519791487,
+            "n_observations": 1062,
+            "unit": "DAP024"
+          }
+        ]
+      }
+    },
+    "execution_plan_fingerprint": "0df0580314e5785d72de616be404d267e177158bb6fa035fd3c0a61e26dfeac8",
+    "paired_comparisons": [
+      {
+        "bootstrap_probability_positive": 0.9988,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": 0.026551405053399466,
+          "lower": 0.009636245923180076,
+          "upper": 0.04247069145411187
+        },
+        "left_model": "pooled_psychometric",
+        "metric": "log-loss",
+        "right_model": "late_phase_psychometric"
+      },
+      {
+        "bootstrap_probability_positive": 0.9992,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": 0.04218514054453115,
+          "lower": 0.018176466493401457,
+          "upper": 0.06425099196110287
+        },
+        "left_model": "pooled_psychometric",
+        "metric": "log-loss",
+        "right_model": "early_bias_forecast"
+      },
+      {
+        "bootstrap_probability_positive": 0.009,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": -0.050153725173152974,
+          "lower": -0.09806338430981529,
+          "upper": -0.008275068622129874
+        },
+        "left_model": "pooled_psychometric",
+        "metric": "log-loss",
+        "right_model": "static_partial_pooling"
+      },
+      {
+        "bootstrap_probability_positive": 0.9986,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": 0.02531018584545446,
+          "lower": 0.008627808981300833,
+          "upper": 0.04076254722944365
+        },
+        "left_model": "pooled_psychometric",
+        "metric": "log-loss",
+        "right_model": "shared_smooth_trajectory"
+      },
+      {
+        "bootstrap_probability_positive": 0.9996,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": 0.03925272435036329,
+          "lower": 0.017185327953340032,
+          "upper": 0.06115617812232959
+        },
+        "left_model": "pooled_psychometric",
+        "metric": "log-loss",
+        "right_model": "hierarchical_smooth_trajectory"
+      },
+      {
+        "bootstrap_probability_positive": 0.9322,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": 0.015633735491131694,
+          "lower": -0.005141285803199051,
+          "upper": 0.036359991771914645
+        },
+        "left_model": "late_phase_psychometric",
+        "metric": "log-loss",
+        "right_model": "early_bias_forecast"
+      },
+      {
+        "bootstrap_probability_positive": 0.0014,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": -0.07670513022655244,
+          "lower": -0.1295577569591868,
+          "upper": -0.026657150096916528
+        },
+        "left_model": "late_phase_psychometric",
+        "metric": "log-loss",
+        "right_model": "static_partial_pooling"
+      },
+      {
+        "bootstrap_probability_positive": 0.2528,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": -0.0012412192079450065,
+          "lower": -0.0050057749991953915,
+          "upper": 0.002689348598395315
+        },
+        "left_model": "late_phase_psychometric",
+        "metric": "log-loss",
+        "right_model": "shared_smooth_trajectory"
+      },
+      {
+        "bootstrap_probability_positive": 0.9712,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": 0.012701319296963824,
+          "lower": -0.0005179021714688542,
+          "upper": 0.026325240923038565
+        },
+        "left_model": "late_phase_psychometric",
+        "metric": "log-loss",
+        "right_model": "hierarchical_smooth_trajectory"
+      },
+      {
+        "bootstrap_probability_positive": 0.0,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": -0.09233886571768414,
+          "lower": -0.1355843145342339,
+          "upper": -0.05061428788630604
+        },
+        "left_model": "early_bias_forecast",
+        "metric": "log-loss",
+        "right_model": "static_partial_pooling"
+      },
+      {
+        "bootstrap_probability_positive": 0.056,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": -0.0168749546990767,
+          "lower": -0.037596848751269694,
+          "upper": 0.004385204157346249
+        },
+        "left_model": "early_bias_forecast",
+        "metric": "log-loss",
+        "right_model": "shared_smooth_trajectory"
+      },
+      {
+        "bootstrap_probability_positive": 0.3512,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": -0.0029324161941678695,
+          "lower": -0.018804680155377253,
+          "upper": 0.012833991957468701
+        },
+        "left_model": "early_bias_forecast",
+        "metric": "log-loss",
+        "right_model": "hierarchical_smooth_trajectory"
+      },
+      {
+        "bootstrap_probability_positive": 0.9984,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": 0.07546391101860746,
+          "lower": 0.025462905648804303,
+          "upper": 0.12829907163199103
+        },
+        "left_model": "static_partial_pooling",
+        "metric": "log-loss",
+        "right_model": "shared_smooth_trajectory"
+      },
+      {
+        "bootstrap_probability_positive": 0.9998,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": 0.08940644952351628,
+          "lower": 0.04255045288555759,
+          "upper": 0.13806708501428883
+        },
+        "left_model": "static_partial_pooling",
+        "metric": "log-loss",
+        "right_model": "hierarchical_smooth_trajectory"
+      },
+      {
+        "bootstrap_probability_positive": 0.9862,
+        "direction": "left log-loss minus right log-loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": 0.013942538504908831,
+          "lower": 0.0019381692842045004,
+          "upper": 0.026151585777880758
+        },
+        "left_model": "shared_smooth_trajectory",
+        "metric": "log-loss",
+        "right_model": "hierarchical_smooth_trajectory"
+      }
+    ],
+    "protocol_fingerprint": "9680dca13a26329bee8e7bc5f6bf5d053b80323cf55e6d925a58c481afa64eda",
+    "ranking": {
+      "eligible_candidates": [
+        "pooled_psychometric",
+        "late_phase_psychometric",
+        "early_bias_forecast",
+        "static_partial_pooling",
+        "shared_smooth_trajectory",
+        "hierarchical_smooth_trajectory"
+      ],
+      "reason": "at least one paired interval does not exclude equal predictive performance",
+      "status": "unresolved",
+      "winner": null
+    },
+    "schema_version": "unspool.evaluation-report/1"
+  },
+  "parity": {
+    "audit_parity": true,
+    "candidate_parity": true,
+    "denominator_parity": true,
+    "fold_parity": true,
+    "interval_parity": true,
+    "passed": true,
+    "protocol_fingerprint": "9680dca13a26329bee8e7bc5f6bf5d053b80323cf55e6d925a58c481afa64eda",
+    "score_parity": true
+  },
+  "plan": {
+    "audit": [
+      {
+        "candidate": null,
+        "code": "row-roles-compiled",
+        "fold": null,
+        "level": "info",
+        "message": "compiled 6 folds with explicit fit, context, score, and exclusion rows"
+      }
+    ],
+    "fingerprint": "0df0580314e5785d72de616be404d267e177158bb6fa035fd3c0a61e26dfeac8",
+    "folds": [
+      {
+        "excluded_rows": 0,
+        "fit_rows": 67364,
+        "identifier": "fold-0000",
+        "prediction_context_rows": 6077,
+        "scored_rows": 5678
+      },
+      {
+        "excluded_rows": 0,
+        "fit_rows": 67914,
+        "identifier": "fold-0001",
+        "prediction_context_rows": 5433,
+        "scored_rows": 5128
+      },
+      {
+        "excluded_rows": 0,
+        "fit_rows": 66516,
+        "identifier": "fold-0002",
+        "prediction_context_rows": 6874,
+        "scored_rows": 6526
+      },
+      {
+        "excluded_rows": 0,
+        "fit_rows": 66935,
+        "identifier": "fold-0003",
+        "prediction_context_rows": 5636,
+        "scored_rows": 6107
+      },
+      {
+        "excluded_rows": 0,
+        "fit_rows": 66805,
+        "identifier": "fold-0004",
+        "prediction_context_rows": 6442,
+        "scored_rows": 6237
+      },
+      {
+        "excluded_rows": 0,
+        "fit_rows": 66888,
+        "identifier": "fold-0005",
+        "prediction_context_rows": 6750,
+        "scored_rows": 6154
+      }
+    ]
+  },
+  "protocol": {
+    "amendments": [],
+    "candidates": [
+      {
+        "hyperparameters": [
+          {
+            "name": "covariates",
+            "value": [
+              "left_contrast",
+              "right_contrast"
+            ]
+          },
+          {
+            "name": "choice_lags",
+            "value": 0
+          },
+          {
+            "name": "l2",
+            "value": 0.02
+          }
+        ],
+        "implementation": "unspool.models.BernoulliHistoryGLM",
+        "name": "pooled_psychometric",
+        "prediction_information": "filtered",
+        "scored_columns": [
+          "choice"
+        ],
+        "supports_unseen_groups": false,
+        "supports_unseen_subjects": false
+      },
+      {
+        "hyperparameters": [
+          {
+            "name": "covariates",
+            "value": [
+              "left_contrast",
+              "right_contrast",
+              "forecast_phase",
+              "forecast_phase_left_contrast",
+              "forecast_phase_right_contrast"
+            ]
+          },
+          {
+            "name": "choice_lags",
+            "value": 0
+          },
+          {
+            "name": "l2",
+            "value": 0.02
+          }
+        ],
+        "implementation": "unspool.models.BernoulliHistoryGLM",
+        "name": "late_phase_psychometric",
+        "prediction_information": "filtered",
+        "scored_columns": [
+          "choice"
+        ],
+        "supports_unseen_groups": false,
+        "supports_unseen_subjects": false
+      },
+      {
+        "hyperparameters": [
+          {
+            "name": "covariates",
+            "value": [
+              "left_contrast",
+              "right_contrast",
+              "forecast_phase",
+              "forecast_phase_left_contrast",
+              "forecast_phase_right_contrast",
+              "early_bias",
+              "early_bias_forecast_phase",
+              "early_bias_forecast_left_contrast",
+              "early_bias_forecast_right_contrast"
+            ]
+          },
+          {
+            "name": "choice_lags",
+            "value": 0
+          },
+          {
+            "name": "l2",
+            "value": 0.02
+          }
+        ],
+        "implementation": "unspool.models.BernoulliHistoryGLM",
+        "name": "early_bias_forecast",
+        "prediction_information": "filtered",
+        "scored_columns": [
+          "choice"
+        ],
+        "supports_unseen_groups": false,
+        "supports_unseen_subjects": false
+      },
+      {
+        "hyperparameters": [
+          {
+            "name": "covariates",
+            "value": [
+              "left_contrast",
+              "right_contrast"
+            ]
+          },
+          {
+            "name": "subject_scale",
+            "value": 0.4
+          },
+          {
+            "name": "choice_lags",
+            "value": 0
+          },
+          {
+            "name": "l2",
+            "value": 0.02
+          }
+        ],
+        "implementation": "unspool.models.HierarchicalBernoulliHistoryGLM",
+        "name": "static_partial_pooling",
+        "prediction_information": "filtered",
+        "scored_columns": [
+          "choice"
+        ],
+        "supports_unseen_groups": false,
+        "supports_unseen_subjects": false
+      },
+      {
+        "hyperparameters": [
+          {
+            "name": "covariates",
+            "value": [
+              "left_contrast",
+              "right_contrast"
+            ]
+          },
+          {
+            "name": "knots",
+            "value": [
+              0.0,
+              3.0,
+              7.0,
+              9.0,
+              12.0
+            ]
+          },
+          {
+            "name": "smoothness",
+            "value": 3.0
+          },
+          {
+            "name": "shared_trajectory",
+            "value": true
+          },
+          {
+            "name": "choice_lags",
+            "value": 0
+          },
+          {
+            "name": "l2",
+            "value": 0.02
+          }
+        ],
+        "implementation": "unspool.models.SmoothBernoulliHistoryGLM",
+        "name": "shared_smooth_trajectory",
+        "prediction_information": "filtered",
+        "scored_columns": [
+          "choice"
+        ],
+        "supports_unseen_groups": false,
+        "supports_unseen_subjects": false
+      },
+      {
+        "hyperparameters": [
+          {
+            "name": "covariates",
+            "value": [
+              "left_contrast",
+              "right_contrast"
+            ]
+          },
+          {
+            "name": "knots",
+            "value": [
+              0.0,
+              3.0,
+              7.0,
+              9.0,
+              12.0
+            ]
+          },
+          {
+            "name": "smoothness",
+            "value": 3.0
+          },
+          {
+            "name": "subject_scale",
+            "value": 0.4
+          },
+          {
+            "name": "subject_smoothness",
+            "value": 3.0
+          },
+          {
+            "name": "choice_lags",
+            "value": 0
+          },
+          {
+            "name": "l2",
+            "value": 0.02
+          }
+        ],
+        "implementation": "unspool.models.HierarchicalSmoothBernoulliHistoryGLM",
+        "name": "hierarchical_smooth_trajectory",
+        "prediction_information": "filtered",
+        "scored_columns": [
+          "choice"
+        ],
+        "supports_unseen_groups": false,
+        "supports_unseen_subjects": false
+      }
+    ],
+    "clocks": [
+      {
+        "alignment": "first-eight-plus-final-five",
+        "column": "session_order",
+        "fold_fitted": false,
+        "kind": "ordinal-session",
+        "name": "aligned-paper-day",
+        "scope": "animal"
+      }
+    ],
+    "cohort": {
+      "expected_observations": 73042,
+      "expected_sessions": 390,
+      "expected_subjects": 30,
+      "outcome_blind": true,
+      "predicates": [
+        {
+          "column": "phase",
+          "operator": "in",
+          "rationale": "retain the frozen first-eight and final-five paper-day windows",
+          "value": [
+            "context",
+            "forecast"
+          ]
+        }
+      ],
+      "selection_columns": [
+        "phase",
+        "session_order",
+        "paper_session_order"
+      ]
+    },
+    "comparison": {
+      "aggregation_unit": "animal",
+      "bootstrap_repetitions": 5000,
+      "interval_level": 0.95,
+      "interval_method": "paired-unit-bootstrap",
+      "metric": "log-loss",
+      "paired": true,
+      "reference_candidate": "pooled_psychometric",
+      "seed": 20250525,
+      "weighting": "equal-unit",
+      "winner_policy": "interval-excludes-zero"
+    },
+    "estimands": [
+      {
+        "aggregation_unit": "animal",
+        "contrast": "candidate minus reference final-five-session log loss",
+        "name": "animal-balanced-final-five-log-loss",
+        "outcome_columns": [
+          "choice"
+        ],
+        "population": "the 30 outcome-blindly eligible animals in the released cohort",
+        "weighting": "equal-unit"
+      }
+    ],
+    "identifier": "cell2025-behavioural-forecast-v1",
+    "lifecycle": [
+      {
+        "artifact_fingerprint": "9680dca13a26329bee8e7bc5f6bf5d053b80323cf55e6d925a58c481afa64eda",
+        "from_state": "draft",
+        "to_state": "frozen"
+      },
+      {
+        "artifact_fingerprint": "ff199a8fceee075ec36dbfc62e4ca7aae006f665bb719ffff98a1169531b4df2",
+        "from_state": "frozen",
+        "to_state": "materialized"
+      },
+      {
+        "artifact_fingerprint": "0df0580314e5785d72de616be404d267e177158bb6fa035fd3c0a61e26dfeac8",
+        "from_state": "materialized",
+        "to_state": "audited"
+      },
+      {
+        "artifact_fingerprint": "702567251fa68a589b9836abb6c606bba125211d2a3f483e4867f7403c842bdd",
+        "from_state": "audited",
+        "to_state": "evaluated"
+      }
+    ],
+    "observations": [
+      {
+        "allowed_values": [
+          0,
+          1
+        ],
+        "column": "choice",
+        "data_type": "binary",
+        "role": "outcome",
+        "unit": null
+      },
+      {
+        "allowed_values": [],
+        "column": "left_contrast",
+        "data_type": "continuous",
+        "role": "predictor",
+        "unit": null
+      },
+      {
+        "allowed_values": [],
+        "column": "right_contrast",
+        "data_type": "continuous",
+        "role": "predictor",
+        "unit": null
+      },
+      {
+        "allowed_values": [],
+        "column": "forecast_phase",
+        "data_type": "binary",
+        "role": "predictor",
+        "unit": null
+      },
+      {
+        "allowed_values": [],
+        "column": "forecast_phase_left_contrast",
+        "data_type": "continuous",
+        "role": "predictor",
+        "unit": null
+      },
+      {
+        "allowed_values": [],
+        "column": "forecast_phase_right_contrast",
+        "data_type": "continuous",
+        "role": "predictor",
+        "unit": null
+      },
+      {
+        "allowed_values": [],
+        "column": "early_bias",
+        "data_type": "continuous",
+        "role": "predictor",
+        "unit": null
+      },
+      {
+        "allowed_values": [],
+        "column": "early_bias_forecast_phase",
+        "data_type": "continuous",
+        "role": "predictor",
+        "unit": null
+      },
+      {
+        "allowed_values": [],
+        "column": "early_bias_forecast_left_contrast",
+        "data_type": "continuous",
+        "role": "predictor",
+        "unit": null
+      },
+      {
+        "allowed_values": [],
+        "column": "early_bias_forecast_right_contrast",
+        "data_type": "continuous",
+        "role": "predictor",
+        "unit": null
+      }
+    ],
+    "panel": {
+      "balance_required": true,
+      "common_clock": "aligned-paper-day",
+      "minimum_sessions": 13,
+      "session_unit": "paper-day",
+      "subject_unit": "animal"
+    },
+    "question": "Do early behavioural measurements forecast an animal's final-session choice policy beyond pooled, phase-control, and longitudinal alternatives?",
+    "recovery": [
+      {
+        "candidate_names": [
+          "pooled_psychometric",
+          "static_partial_pooling",
+          "shared_smooth_trajectory",
+          "hierarchical_smooth_trajectory"
+        ],
+        "constrains_claims": [
+          "unique latent mechanism"
+        ],
+        "kind": "model",
+        "name": "structural-model-recovery",
+        "repetitions": 3,
+        "required": true,
+        "scenarios": [
+          {
+            "name": "worlds",
+            "value": [
+              "pooled_psychometric",
+              "static_partial_pooling",
+              "shared_smooth_trajectory",
+              "hierarchical_smooth_trajectory"
+            ]
+          }
+        ],
+        "seed": 20250526,
+        "success_metric": "selection-rate",
+        "threshold": 0.75
+      },
+      {
+        "candidate_names": [
+          "hierarchical_smooth_trajectory"
+        ],
+        "constrains_claims": [
+          "precise individual trajectory recovery"
+        ],
+        "kind": "parameter",
+        "name": "hierarchical-path-recovery",
+        "repetitions": 3,
+        "required": true,
+        "scenarios": [],
+        "seed": 20250527,
+        "success_metric": "parameter-rmse",
+        "threshold": 0.4
+      },
+      {
+        "candidate_names": [
+          "late_phase_psychometric",
+          "early_bias_forecast"
+        ],
+        "constrains_claims": [
+          "stable natural strategy types"
+        ],
+        "kind": "outcome-derived-feature",
+        "name": "early-bias-feature-recovery",
+        "repetitions": 12,
+        "required": true,
+        "scenarios": [
+          {
+            "name": "worlds",
+            "value": [
+              "null_no_subject_signal",
+              "context_predicts_late_asymmetry",
+              "reward_history_without_stable_strategy"
+            ]
+          }
+        ],
+        "seed": 20250528,
+        "success_metric": "selection-rate",
+        "threshold": 0.8
+      }
+    ],
+    "reporting": {
+      "limitations": [
+        "one internally validated cohort",
+        "historical-cohort deployment assumes completed reference trajectories",
+        "early bias is outcome-derived and must be recomputed inside training data",
+        "the behavioural workflow does not reproduce neural or multimodal analyses"
+      ],
+      "prohibited_claims": [
+        "unique latent mechanism",
+        "precise individual trajectory recovery",
+        "stable natural strategy types",
+        "causal effect of learning history",
+        "transport to another laboratory"
+      ],
+      "required_diagnostics": [
+        "optimization",
+        "calibration",
+        "boundary-estimates"
+      ],
+      "required_figures": [
+        "cell2025-forecast",
+        "cell2025-recovery"
+      ],
+      "required_tables": [
+        "denominators",
+        "fold-scores",
+        "fit-audits",
+        "recovery-gates"
+      ],
+      "retain_pointwise_predictions": true
+    },
+    "schema_version": "unspool.study-protocol/1",
+    "selection": null,
+    "source": {
+      "adapter": "cell2025-figshare-csv",
+      "checksum": "94a6d541bfde731f769e02a68dbc652ab5b73dbc1ec13b8b7c8100d181b8048a",
+      "checksum_algorithm": "sha256",
+      "identity_columns": [
+        "subject",
+        "source_session",
+        "source_trial"
+      ],
+      "locator": "doi:10.6084/m9.figshare.28877912.v1",
+      "metadata": [
+        {
+          "name": "derived-session-contract",
+          "value": "paper-day"
+        }
+      ],
+      "release": "Cell-2025-publication-release"
+    },
+    "state": "evaluated",
+    "title": "Cell 2025 behavioural learning trajectories",
+    "transforms": [
+      {
+        "implementation": "benchmarks.cell2025_flagship._recompute_early_bias_features",
+        "input_columns": [
+          "choice",
+          "left_contrast",
+          "right_contrast"
+        ],
+        "name": "early-bias-feature",
+        "output_columns": [
+          "early_bias",
+          "early_bias_forecast_phase",
+          "early_bias_forecast_left_contrast",
+          "early_bias_forecast_right_contrast"
+        ],
+        "parameters": [
+          {
+            "name": "paper-days",
+            "value": [
+              4,
+              5,
+              6,
+              7,
+              8
+            ]
+          }
+        ],
+        "uses_outcomes": true,
+        "visibility": "training-only"
+      }
+    ],
+    "units": [
+      {
+        "column": "subject",
+        "name": "animal",
+        "nested_within": null,
+        "role": "experimental"
+      },
+      {
+        "column": "session",
+        "name": "paper-day",
+        "nested_within": "animal",
+        "role": "repeated-measures"
+      }
+    ],
+    "validation": {
+      "geometry": "historical-cohort-future-session",
+      "group_unit": null,
+      "horizon": [],
+      "origin": null,
+      "prediction_information": "filtered",
+      "settings": [
+        {
+          "name": "context_session_count",
+          "value": 8
+        },
+        {
+          "name": "horizon",
+          "value": 5
+        },
+        {
+          "name": "n_folds",
+          "value": 6
+        }
+      ],
+      "splitter": "unspool.validation.historical_cohort_forecast_splits"
+    }
+  }
+}
