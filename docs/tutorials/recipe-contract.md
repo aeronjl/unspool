@@ -137,13 +137,13 @@ fit all candidates only on training data, and compare matched held-out observati
 | IBL trajectories | Literature-shaped descriptive analysis | Session accuracy | Outcome-blind endpoint windows | Not an unbiased population learning curve |
 | IBL prospective selection | Literature-shaped prospective analysis | Binary choice | Later session and held-out lab | Fixed empirical labs, plug-in population prediction |
 | IBL choice/RT | Literature-shaped prospective analysis | Choice + movement-onset RT | Untouched later session | One selected animal; negative robustification result retained |
+| Chen restless bandit | Literature-shaped prospective analysis | Binary choice | Session 8 after fitting sessions 1–7 in all 32 mice | Q-learning versus WSLS paired interval includes zero |
 | Ashwood GLM-HMM | Literature-shaped prospective analysis | Binary choice | Training-only state selection, untouched later session | Near-tied selection and warning-level fit constrain state claims |
 | Model recovery design | Synthetic benchmark | Binary choice | Future session under known generators | Evidence is conditional on tested regimes |
 
-The current suite covers psychometric/history, longitudinal comparison, GLM-HMM, and
-perceptual DDM workflows on public Cell or IBL data. A genuinely public bandit dataset and
-task adapter are still required for the canonical RL recipe; the synthetic RL example is
-an API and recovery demonstration, not a substitute empirical result.
+The current suite covers psychometric/history, longitudinal comparison, restless-bandit
+RL, GLM-HMM, and perceptual DDM workflows on public Cell, Chen, or IBL data. Synthetic
+recovery examples remain design checks rather than substitutes for empirical results.
 
 ## Contribution checklist
 

@@ -43,8 +43,8 @@ import a class, call a factory, or reconstruct a fitted Python object. Specializ
 results can contain richer state trajectories, restart arrays, and model-specific
 uncertainty; these remain on `fitted.result`. The common artifact identifies the concrete
 result type instead of pretending that the initial schema is a lossless posterior format.
-Labelled posterior and predictive groups belong to the ArviZ/xarray interchange work in
-0.23.
+Labelled posterior and predictive groups use the separate
+[posterior-result contract](posterior-results.md) and ArviZ/xarray interchange layer.
 
 ## External estimator packages
 
