@@ -153,10 +153,28 @@ The roadmap is organized by scientific contracts rather than by model count.
   converge, oracle predictive loss remains close, and poor local-interval coverage stays
   visible as a calibration limit.
 
+## 0.11 — Variance-component and unseen-animal uncertainty
+
+- **Implemented:** add an opt-in supplemented EM covariance for longitudinal Wiener
+  subject scales by differentiating the fitted update in log-scale coordinates and
+  accounting for missing information omitted by the local expected-prior curvature.
+- **Implemented:** reject non-converged or locally unstable supplemented covariances rather
+  than clipping an information matrix into apparent validity; retain the local standard
+  errors, selected covariance, EM rate matrix, spectral radius, and declared interval
+  bounds on immutable fit results.
+- **Implemented:** integrate one coherent fitted random-effect trajectory per unseen animal
+  and Monte Carlo draw, returning marginal choice probabilities, pointwise marginal joint
+  densities, subject-joint log probabilities, effective draws, and log-score Monte Carlo
+  standard errors.
+- **Implemented:** pin a 20-panel benchmark in which supplemented intervals are finite in
+  18 panels and improve coarse scale coverage, while random-effect integration improves
+  the mean joint score across 80 unseen animals. The two stability failures and all Monte
+  Carlo precision diagnostics remain part of the result.
+
 ## Later
 
 - Session-varying GLM-HMM parameters
-- Calibrated variance-component uncertainty and posterior predictive random effects
+- Full propagation of population-parameter and scale uncertainty into predictions
 - Richer mixtures and model plugins
 - NWB/DANDI streaming workflows
 - Cross-lab trajectory-shape comparisons

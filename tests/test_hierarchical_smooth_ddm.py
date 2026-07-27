@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from scipy.special import logsumexp
 
 from unspool import (
     BehaviourModel,
@@ -9,6 +10,7 @@ from unspool import (
     HierarchicalSmoothWienerDriftDiffusion,
     ModelDataError,
     Study,
+    UnseenSubjectPosteriorPrediction,
     cohort_forward_session_splits,
     evaluate_splits,
     leave_one_subject_out_splits,
@@ -132,6 +134,8 @@ def test_hierarchical_smooth_ddm_has_a_stable_public_contract() -> None:
         {"estimate_subject_scales": True, "subject_scale": 0.01},
         {"scale_max_iterations": 0},
         {"scale_tolerance": 0.0},
+        {"subject_scale_uncertainty": "posterior"},
+        {"subject_scale_uncertainty": "supplemented"},
         {"subject_smoothness": 0.0},
         {"subject_parameters": ()},
         {"subject_parameters": ("nondecision_time",)},
@@ -184,8 +188,9 @@ def test_subject_scales_are_estimated_by_parameter_with_retained_diagnostics() -
         subject_parameter_scales={"drift.stimulus": 0.22, "boundary": 0.08},
         estimate_subject_scales=True,
         subject_scale_bounds=(0.04, 0.5),
-        scale_max_iterations=5,
-        scale_tolerance=0.02,
+        scale_max_iterations=12,
+        scale_tolerance=0.03,
+        subject_scale_uncertainty="supplemented",
         n_restarts=1,
     )
     design = make_design(n_subjects=8, trials_per_session=70)
@@ -195,7 +200,8 @@ def test_subject_scales_are_estimated_by_parameter_with_retained_diagnostics() -
 
     assert fit.subject_scales_estimated
     assert fit.scale_estimation_policy == "laplace-em"
-    assert 1 <= fit.scale_estimation_iterations <= 5
+    assert fit.subject_scale_uncertainty_policy == "supplemented-laplace-em"
+    assert 1 <= fit.scale_estimation_iterations <= 12
     assert set(fit.subject_scale_map) == {"drift.stimulus", "boundary"}
     assert set(fit.subject_scale_standard_error_map or ()) == {
         "drift.stimulus",
@@ -212,6 +218,20 @@ def test_subject_scales_are_estimated_by_parameter_with_retained_diagnostics() -
     assert fit.subject_scale_map["drift.stimulus"] > fit.subject_scale_map["boundary"]
     assert np.all(np.isfinite(fit.subject_parameter_scales))
     assert np.all(fit.subject_scale_standard_errors > 0)
+    assert np.all(fit.subject_scale_local_standard_errors > 0)
+    assert fit.subject_scale_covariance.shape == (2, 2)
+    assert fit.subject_scale_em_rate_matrix.shape == (2, 2)
+    assert fit.subject_scale_em_spectral_radius is not None
+    assert fit.subject_scale_em_spectral_radius < 1.0
+    assert set(fit.subject_scale_local_confidence_intervals_95 or ()) == {
+        "drift.stimulus",
+        "boundary",
+    }
+    assert all(
+        0.04 <= lower < upper <= 0.5
+        for lower, upper in (fit.subject_scale_confidence_intervals_95 or {}).values()
+    )
+    assert np.all(fit.subject_scale_standard_errors >= fit.subject_scale_local_standard_errors)
     with pytest.raises(ValueError, match="cannot set WRITEABLE flag"):
         fit.subject_parameter_scales.setflags(write=True)
 
@@ -226,6 +246,53 @@ def test_subject_scale_boundary_diagnostics_use_declared_log_scale_tolerance() -
     assert indicators.tolist() == [True, False, True]
     with pytest.raises(ValueError, match="cannot set WRITEABLE flag"):
         indicators.setflags(write=True)
+
+
+def test_unseen_subject_prediction_integrates_one_random_path_per_subject() -> None:
+    model = hierarchical_model(n_restarts=1)
+    training_design = make_design(n_subjects=4, trials_per_session=45)
+    training = model.simulate(training_design, population_truth(model), seed=191)
+    fit = model.fit(training)
+    unseen_design = make_design(n_subjects=2, trials_per_session=30, seed=192)
+    unseen_columns = {name: unseen_design[name] for name in unseen_design.columns}
+    unseen_columns["subject"] = np.asarray(
+        [f"new-{subject}" for subject in unseen_design["subject"]]
+    )
+    unseen = model.simulate(Study(unseen_columns), population_truth(model), seed=193)
+
+    first = model.predict_new_subjects(unseen, fit, n_draws=64, seed=194)
+    second = model.predict_new_subjects(unseen, fit, n_draws=64, seed=194)
+    plugin = model.predict(unseen, fit)
+
+    assert isinstance(first, UnseenSubjectPosteriorPrediction)
+    assert first.n_draws == 64
+    assert first.subjects == ("new-mouse-0", "new-mouse-1")
+    assert first.random_effect_draws.shape == (64, 2, 2, 2)
+    assert first.draw_pointwise_log_probability.shape == (64, len(unseen))
+    assert first.subject_joint_log_probability.shape == (2,)
+    assert np.all((first.subject_effective_draws >= 1) & (first.subject_effective_draws <= 64))
+    assert np.all(first.subject_log_probability_mcse >= 0)
+    assert not np.array_equal(first.probability, plugin.probability)
+    np.testing.assert_array_equal(first.probability, second.probability)
+    np.testing.assert_array_equal(
+        first.subject_joint_log_probability,
+        second.subject_joint_log_probability,
+    )
+    np.testing.assert_array_equal(first.prediction.probability, first.probability)
+    assert set(first.subject_joint_log_probability_map) == {
+        "new-mouse-0",
+        "new-mouse-1",
+    }
+    for subject_index in range(2):
+        expected_joint = logsumexp(
+            np.sum(
+                first.draw_pointwise_log_probability[:, first.row_subject_indices == subject_index],
+                axis=1,
+            )
+        ) - np.log(first.n_draws)
+        assert first.subject_joint_log_probability[subject_index] == pytest.approx(expected_joint)
+    with pytest.raises(ValueError, match="entirely unseen"):
+        model.predict_new_subjects(training.take([0]), fit, n_draws=8, seed=1)
 
 
 def test_joint_fit_recovers_population_and_subject_trajectory_outputs() -> None:

@@ -1,0 +1,1987 @@
+{
+  "benchmark": "longitudinal DDM scale and unseen-subject predictive uncertainty",
+  "seed": 63901,
+  "repetitions": 20,
+  "design": {
+    "training_subjects": 8,
+    "unseen_subjects_per_run": 4,
+    "sessions": 3,
+    "trials_per_session": 35,
+    "knots": [
+      0.0,
+      2.0
+    ],
+    "true_scales": {
+      "drift.stimulus": 0.2,
+      "boundary": 0.08
+    },
+    "initial_scales": {
+      "drift.stimulus": 0.14,
+      "boundary": 0.14
+    },
+    "scale_bounds": [
+      0.03,
+      0.5
+    ],
+    "predictive_draws": 4096
+  },
+  "scope": {
+    "local_interval": "expected-prior curvature",
+    "supplemented_interval": "forced-EM observed-information correction",
+    "predictive": "empirical-Bayes integration over one random path per new subject",
+    "joint_score": "Monte Carlo log mean of each subject likelihood",
+    "parameter_uncertainty_in_prediction": "not integrated"
+  },
+  "intervals": {
+    "drift.stimulus": {
+      "truth": 0.2,
+      "local_coverage": 0.7,
+      "supplemented_coverage": 1.0,
+      "supplemented_interval_denominator": 18,
+      "mean_local_width": 0.12017050608141175,
+      "mean_supplemented_width": 0.22623015794635717
+    },
+    "boundary": {
+      "truth": 0.08,
+      "local_coverage": 0.65,
+      "supplemented_coverage": 0.8888888888888888,
+      "supplemented_interval_denominator": 18,
+      "mean_local_width": 0.049982264901363545,
+      "mean_supplemented_width": 0.12220704369393487
+    }
+  },
+  "prediction": {
+    "n_unseen_subjects": 80,
+    "mean_joint_log_probability_improvement": 0.7913503325088589,
+    "median_joint_log_probability_improvement": 0.4369998826927386,
+    "random_effect_win_rate": 0.7,
+    "median_effective_draws": 997.6708313758335,
+    "minimum_effective_draws": 70.440420275327,
+    "maximum_log_probability_mcse": 0.11813408098498478
+  },
+  "diagnostics": {
+    "all_outer_fits_converged": true,
+    "supplemented_interval_successes": 18,
+    "supplemented_interval_failures": 2,
+    "mean_scale_em_spectral_radius": 0.7453169300574117,
+    "maximum_scale_em_spectral_radius": 0.9902032360651019
+  },
+  "runs": [
+    {
+      "seed": 63901,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 42,
+          "objective": 331.19230456398634,
+          "gradient_norm": 3.159102752506638,
+          "hessian_condition": 3057.3297681143836,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 331.19230456398634,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.7585718262697354,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.12476033904829589,
+        "boundary": 0.09117431217304194
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.085657425040143,
+          0.1817138700136177
+        ],
+        "boundary": [
+          0.06327987968896698,
+          0.13136490209978471
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.058037325462797426,
+          0.2681919277865961
+        ],
+        "boundary": [
+          0.05662608046525613,
+          0.14680082272916153
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": false,
+        "boundary": true
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -32.58571182071824,
+        "new-1": -52.27556352710792,
+        "new-2": -48.0008759002216,
+        "new-3": -14.325035967473653
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -33.56632896163952,
+        "new-1": -49.74630999884814,
+        "new-2": -47.855878408439786,
+        "new-3": -12.481595583211885
+      },
+      "subject_log_probability_improvement": {
+        "new-0": -0.9806171409212823,
+        "new-1": 2.5292535282597797,
+        "new-2": 0.1449974917818153,
+        "new-3": 1.8434403842617684
+      },
+      "predictive_effective_draws": {
+        "new-0": 2327.404465201198,
+        "new-1": 116.20347402327768,
+        "new-2": 602.8510513803482,
+        "new-3": 558.4899065619257
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.013622329392520593,
+        "new-1": 0.09145215110979804,
+        "new-2": 0.037616344384211575,
+        "new-3": 0.039329119766391515
+      }
+    },
+    {
+      "seed": 64001,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 45,
+          "objective": 283.92280281716364,
+          "gradient_norm": 0.2802742787360258,
+          "hessian_condition": 3297.795959146549,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 283.92280281716364,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.8045425985339415,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.13848440075648363,
+        "boundary": 0.060802571569479685
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.09578230180390795,
+          0.2002241425784977
+        ],
+        "boundary": [
+          0.04235780290569181,
+          0.08727914235053308
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.07448041054876942,
+          0.2574895749309108
+        ],
+        "boundary": [
+          0.03,
+          0.13772009924124318
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -20.872996358012976,
+        "new-1": -58.127456744626436,
+        "new-2": -64.36076067756453,
+        "new-3": -44.89613920281431
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -20.613000078922077,
+        "new-1": -57.28995828222511,
+        "new-2": -61.399395408527496,
+        "new-3": -45.31496314721475
+      },
+      "subject_log_probability_improvement": {
+        "new-0": 0.25999627909089895,
+        "new-1": 0.837498462401328,
+        "new-2": 2.9613652690370316,
+        "new-3": -0.4188239444004367
+      },
+      "predictive_effective_draws": {
+        "new-0": 981.5363617690239,
+        "new-1": 856.741101219431,
+        "new-2": 182.94726808071184,
+        "new-3": 2348.1301235448964
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.027836298364165263,
+        "new-1": 0.030385828065600248,
+        "new-2": 0.07227164381930412,
+        "new-3": 0.013482378516328102
+      }
+    },
+    {
+      "seed": 64101,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 82,
+          "objective": 283.7841707625145,
+          "gradient_norm": 1.8290858745794003,
+          "hessian_condition": 12100.369437046824,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 283.7841707625145,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.8114985524990177,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.26822406598985965,
+        "boundary": 0.068165962486398
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.18133662390254132,
+          0.39674362535170327
+        ],
+        "boundary": [
+          0.047685825189134196,
+          0.09744192164584381
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.1698717899992644,
+          0.42352028889813975
+        ],
+        "boundary": [
+          0.03,
+          0.15523099051600892
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -47.203291731950806,
+        "new-1": -51.704547693193646,
+        "new-2": -50.08439326518716,
+        "new-3": -38.52637430314299
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -45.216362684069786,
+        "new-1": -51.142709778115496,
+        "new-2": -50.459059200180334,
+        "new-3": -38.75252044262914
+      },
+      "subject_log_probability_improvement": {
+        "new-0": 1.98692904788102,
+        "new-1": 0.5618379150781507,
+        "new-2": -0.3746659349931747,
+        "new-3": -0.22614613948615414
+      },
+      "predictive_effective_draws": {
+        "new-0": 342.31903284795254,
+        "new-1": 879.0310570683057,
+        "new-2": 1520.9769710437693,
+        "new-3": 1013.8053009826431
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.05174712224511233,
+        "new-1": 0.029894711825885895,
+        "new-2": 0.02033303866004363,
+        "new-3": 0.027247446133040323
+      }
+    },
+    {
+      "seed": 64201,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=local;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 50,
+          "objective": 420.71313436973907,
+          "gradient_norm": 1.6441067871660755,
+          "hessian_condition": 2467.7078901879354,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 420.71313436973907,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": null,
+      "supplemented_interval_error": "supplemented scale uncertainty requires a stable EM rate matrix",
+      "scale_estimates": {
+        "drift.stimulus": 0.13167431030803478,
+        "boundary": 0.03403204202631821
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.09050459032212982,
+          0.19157176374574658
+        ],
+        "boundary": [
+          0.03,
+          0.048824045031087636
+        ]
+      },
+      "supplemented_intervals": null,
+      "local_covers_truth": {
+        "drift.stimulus": false,
+        "boundary": false
+      },
+      "supplemented_covers_truth": null,
+      "plugin_subject_log_probability": {
+        "new-0": -67.25381347635319,
+        "new-1": -28.141702578788454,
+        "new-2": -37.83225647384802,
+        "new-3": -60.98213512669686
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -67.31202970710493,
+        "new-1": -27.85324166086091,
+        "new-2": -37.387403202268565,
+        "new-3": -60.54233401608951
+      },
+      "subject_log_probability_improvement": {
+        "new-0": -0.05821623075173932,
+        "new-1": 0.28846091792754436,
+        "new-2": 0.4448532715794542,
+        "new-3": 0.4398011106073483
+      },
+      "predictive_effective_draws": {
+        "new-0": 2480.9687048350975,
+        "new-1": 1678.095049582878,
+        "new-2": 1310.2745278495036,
+        "new-3": 1177.5704058536292
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.01260819378043353,
+        "new-1": 0.018757907117573976,
+        "new-2": 0.022785630764676476,
+        "new-3": 0.024601082416520065
+      }
+    },
+    {
+      "seed": 64301,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 60,
+          "objective": 339.4435322372874,
+          "gradient_norm": 3.6998005380951584,
+          "hessian_condition": 9653.896150918197,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 339.4435322372874,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.6947703247115217,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.2488109916613256,
+        "boundary": 0.05142434770282969
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.170048932778162,
+          0.3640535024836241
+        ],
+        "boundary": [
+          0.03589656513285455,
+          0.07366898551084945
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.15769183628383066,
+          0.39258157575174374
+        ],
+        "boundary": [
+          0.03,
+          0.09856888416227315
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": false
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -21.419498225887605,
+        "new-1": -15.359600905390007,
+        "new-2": -70.31090267748415,
+        "new-3": -49.4753276870557
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -18.981234098831695,
+        "new-1": -13.614810964303278,
+        "new-2": -69.13204255257051,
+        "new-3": -46.979698801691
+      },
+      "subject_log_probability_improvement": {
+        "new-0": 2.438264127055909,
+        "new-1": 1.7447899410867294,
+        "new-2": 1.1788601249136406,
+        "new-3": 2.4956288853647024
+      },
+      "predictive_effective_draws": {
+        "new-0": 214.6134885134421,
+        "new-1": 432.63165604510175,
+        "new-2": 366.1003913498718,
+        "new-3": 126.99861882234352
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.06645657974065593,
+        "new-1": 0.045473061476220156,
+        "new-2": 0.04987943458004972,
+        "new-3": 0.08736031132859393
+      }
+    },
+    {
+      "seed": 64401,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=local;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 49,
+          "objective": 334.05159734516525,
+          "gradient_norm": 4.5070764693226755,
+          "hessian_condition": 6175.968091437291,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 334.05159734516525,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": null,
+      "supplemented_interval_error": "supplemented scale uncertainty requires a stable EM rate matrix",
+      "scale_estimates": {
+        "drift.stimulus": 0.1969686379867368,
+        "boundary": 0.04489718887578112
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.13439071373427527,
+          0.28868545506098764
+        ],
+        "boundary": [
+          0.03130435127355799,
+          0.06439224858335348
+        ]
+      },
+      "supplemented_intervals": null,
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": false
+      },
+      "supplemented_covers_truth": null,
+      "plugin_subject_log_probability": {
+        "new-0": -56.26455072704431,
+        "new-1": -79.07266186208513,
+        "new-2": -36.33776671636765,
+        "new-3": -40.56209099874434
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -55.210301066713704,
+        "new-1": -77.36180769307177,
+        "new-2": -35.93928218352494,
+        "new-3": -40.43705309573978
+      },
+      "subject_log_probability_improvement": {
+        "new-0": 1.0542496603306049,
+        "new-1": 1.7108541690133592,
+        "new-2": 0.39848453284271557,
+        "new-3": 0.12503790300456075
+      },
+      "predictive_effective_draws": {
+        "new-0": 426.8832955598367,
+        "new-1": 302.45386670301906,
+        "new-2": 1094.331058208775,
+        "new-3": 1231.7699562848463
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.045814107385166315,
+        "new-1": 0.05534344141752174,
+        "new-2": 0.025880942042427673,
+        "new-3": 0.023829349735513546
+      }
+    },
+    {
+      "seed": 64501,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 66,
+          "objective": 376.10858750935154,
+          "gradient_norm": 2.0844355812918596,
+          "hessian_condition": 3452.0624188811507,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 376.10858750935154,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.7269347569983154,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.14222999197452518,
+        "boundary": 0.06651806136561095
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.09786633856691512,
+          0.20670407121895001
+        ],
+        "boundary": [
+          0.046243500135073,
+          0.0956816087648033
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.07084054986577175,
+          0.28556202140446385
+        ],
+        "boundary": [
+          0.033367069015131964,
+          0.13260536865951889
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -62.03977444789018,
+        "new-1": -57.41193554302898,
+        "new-2": -39.73736016562669,
+        "new-3": -41.16927979874491
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -61.72750583351836,
+        "new-1": -55.668617180274374,
+        "new-2": -39.96829624284408,
+        "new-3": -40.92238270286548
+      },
+      "subject_log_probability_improvement": {
+        "new-0": 0.31226861437182407,
+        "new-1": 1.7433183627546072,
+        "new-2": -0.23093607721739318,
+        "new-3": 0.24689709587943298
+      },
+      "predictive_effective_draws": {
+        "new-0": 1093.4949693599337,
+        "new-1": 328.35825803798406,
+        "new-2": 1909.2805464558414,
+        "new-3": 1043.700423547074
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.025894440049331734,
+        "new-1": 0.05293389789779739,
+        "new-2": 0.016723790074776815,
+        "new-3": 0.026723829687438073
+      }
+    },
+    {
+      "seed": 64601,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 50,
+          "objective": 276.8568756716823,
+          "gradient_norm": 1.6425748152779196,
+          "hessian_condition": 3028.9287124913876,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 276.8568756716823,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.7817064320047368,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.1130607499367598,
+        "boundary": 0.059806421197384024
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.07795483148127963,
+          0.16397615046262046
+        ],
+        "boundary": [
+          0.041628072037470536,
+          0.08592298036813535
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.05104366815538852,
+          0.2504274014427997
+        ],
+        "boundary": [
+          0.03,
+          0.1229635852150338
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": false,
+        "boundary": true
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -65.42602444301306,
+        "new-1": -35.08097921686656,
+        "new-2": -64.75744914548734,
+        "new-3": -104.14906939344213
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -65.04078152895922,
+        "new-1": -35.52410726930825,
+        "new-2": -63.8332230585128,
+        "new-3": -99.26862693462829
+      },
+      "subject_log_probability_improvement": {
+        "new-0": 0.3852429140538476,
+        "new-1": -0.4431280524416934,
+        "new-2": 0.9242260869745422,
+        "new-3": 4.880442458813846
+      },
+      "predictive_effective_draws": {
+        "new-0": 975.4557714420764,
+        "new-1": 2723.028007301145,
+        "new-2": 879.0027960130949,
+        "new-3": 70.440420275327
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.027950168268369827,
+        "new-1": 0.011096290855029247,
+        "new-2": 0.02989532371274713,
+        "new-3": 0.11813408098498478
+      }
+    },
+    {
+      "seed": 64701,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 56,
+          "objective": 330.7313588789042,
+          "gradient_norm": 3.3142696969350576,
+          "hessian_condition": 3868.7753469112085,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 330.7313588789042,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.6472362253303992,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.1421454985772344,
+        "boundary": 0.08607475851767035
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.09809419525741755,
+          0.2059789849210541
+        ],
+        "boundary": [
+          0.059797828749066785,
+          0.12389854629949068
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.07613443685751864,
+          0.265390322694364
+        ],
+        "boundary": [
+          0.04878367363847603,
+          0.1518717944200053
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -69.01694594145022,
+        "new-1": -45.96889527835831,
+        "new-2": -35.5875370886787,
+        "new-3": -59.80886060079663
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -68.19712066296314,
+        "new-1": -46.38963070942803,
+        "new-2": -35.57699581134159,
+        "new-3": -57.25455619486765
+      },
+      "subject_log_probability_improvement": {
+        "new-0": 0.8198252784870732,
+        "new-1": -0.42073543106972267,
+        "new-2": 0.01054127733711141,
+        "new-3": 2.5543044059289812
+      },
+      "predictive_effective_draws": {
+        "new-0": 565.363949905099,
+        "new-1": 1559.0146412363433,
+        "new-2": 1403.7378473189483,
+        "new-3": 253.432881269947
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.03905129734212658,
+        "new-1": 0.01993457267860616,
+        "new-2": 0.021641567584269758,
+        "new-3": 0.0608488391672882
+      }
+    },
+    {
+      "seed": 64801,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 57,
+          "objective": 377.8630237794066,
+          "gradient_norm": 1.5955091571114854,
+          "hessian_condition": 3122.870670552016,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 377.8630237794066,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.588852623984078,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.14924192736957737,
+        "boundary": 0.08588977688386779
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.1031699323561664,
+          0.2158880245078978
+        ],
+        "boundary": [
+          0.05964682508819798,
+          0.12367890096836437
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.0839142820146345,
+          0.26542743797893437
+        ],
+        "boundary": [
+          0.05252954935011708,
+          0.1404362661478676
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -39.26659749033874,
+        "new-1": -32.66194026187201,
+        "new-2": -45.403473336552885,
+        "new-3": -51.73065945751889
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -39.45939616940405,
+        "new-1": -33.041807223757324,
+        "new-2": -45.5547416219931,
+        "new-3": -48.09830624191562
+      },
+      "subject_log_probability_improvement": {
+        "new-0": -0.19279867906531223,
+        "new-1": -0.37986696188531255,
+        "new-2": -0.1512682854402172,
+        "new-3": 3.632353215603267
+      },
+      "predictive_effective_draws": {
+        "new-0": 1615.9750786299578,
+        "new-1": 1890.91815886267,
+        "new-2": 1392.4951607074709,
+        "new-3": 158.1251575093348
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.01935903656104801,
+        "new-1": 0.01687520421474185,
+        "new-2": 0.021774078049579943,
+        "new-3": 0.0779836423622762
+      }
+    },
+    {
+      "seed": 64901,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 62,
+          "objective": 384.1623302668554,
+          "gradient_norm": 1.0300789258577563,
+          "hessian_condition": 3990.7431954390922,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 384.1623302668554,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.621579370578597,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.1411790814028452,
+        "boundary": 0.06534805712344458
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.09744421296799538,
+          0.20454301408640366
+        ],
+        "boundary": [
+          0.045396260013247154,
+          0.09406873096071863
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.07727330140433954,
+          0.25793556977018034
+        ],
+        "boundary": [
+          0.04052417812194999,
+          0.10537828939943196
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -60.56168268667552,
+        "new-1": -41.88780162968773,
+        "new-2": -45.77260409933912,
+        "new-3": -71.97004813900715
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -57.80185256089855,
+        "new-1": -40.814396855330585,
+        "new-2": -44.38564715121644,
+        "new-3": -68.55757413303033
+      },
+      "subject_log_probability_improvement": {
+        "new-0": 2.759830125776965,
+        "new-1": 1.0734047743571438,
+        "new-2": 1.3869569481226804,
+        "new-3": 3.4124740059768186
+      },
+      "predictive_effective_draws": {
+        "new-0": 202.50403407162815,
+        "new-1": 339.3917114109228,
+        "new-2": 418.8808984645521,
+        "new-3": 216.2711327880043
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.06852137541535469,
+        "new-1": 0.0519900682126806,
+        "new-2": 0.04630006675498126,
+        "new-3": 0.06618726836508593
+      }
+    },
+    {
+      "seed": 65001,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 49,
+          "objective": 326.4571163977346,
+          "gradient_norm": 3.596836418394555,
+          "hessian_condition": 3702.9820617146106,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 326.4571163977346,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.732752324605136,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.1383059805743603,
+        "boundary": 0.06247401992300566
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.09557859269141367,
+          0.20013419034525862
+        ],
+        "boundary": [
+          0.04352994740325985,
+          0.08966248291510275
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.07426338690936828,
+          0.25757705187860586
+        ],
+        "boundary": [
+          0.03105867518090136,
+          0.12566547486674987
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -21.343154248794956,
+        "new-1": -32.705196418006096,
+        "new-2": -36.10000498827981,
+        "new-3": -23.61492053786277
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -19.498813442169137,
+        "new-1": -32.275024075335374,
+        "new-2": -35.964341891326505,
+        "new-3": -23.673129438446555
+      },
+      "subject_log_probability_improvement": {
+        "new-0": 1.8443408066258193,
+        "new-1": 0.4301723426707227,
+        "new-2": 0.13566309695330148,
+        "new-3": -0.058208900583785805
+      },
+      "predictive_effective_draws": {
+        "new-0": 423.5535699804441,
+        "new-1": 1052.1576452050783,
+        "new-2": 1198.0336709366545,
+        "new-3": 1655.0535596550137
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.04601470142564446,
+        "new-1": 0.0265793109089813,
+        "new-2": 0.024304416694013262,
+        "new-3": 0.018977812246105195
+      }
+    },
+    {
+      "seed": 65101,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 49,
+          "objective": 422.03349429667463,
+          "gradient_norm": 4.175952702860868,
+          "hessian_condition": 3060.544447893748,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 422.03349429667463,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.6461780265354435,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.14362989484345037,
+        "boundary": 0.13042897579972104
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.09964338635449613,
+          0.20703377762923414
+        ],
+        "boundary": [
+          0.08993836658373199,
+          0.18914861781847495
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.0776760358849273,
+          0.2655844425853829
+        ],
+        "boundary": [
+          0.0865297178459967,
+          0.1965997133891182
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": false
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": false
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -48.67460677675444,
+        "new-1": -32.12250838133275,
+        "new-2": -49.86899227358064,
+        "new-3": -47.33593792800862
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -47.91232757748273,
+        "new-1": -33.250439514879524,
+        "new-2": -47.38036534191146,
+        "new-3": -44.4770848378591
+      },
+      "subject_log_probability_improvement": {
+        "new-0": 0.7622791992717097,
+        "new-1": -1.1279311335467739,
+        "new-2": 2.488626931669181,
+        "new-3": 2.858853090149516
+      },
+      "predictive_effective_draws": {
+        "new-0": 527.2155893703072,
+        "new-1": 1457.7886363964788,
+        "new-2": 125.77453621607935,
+        "new-3": 507.39612808158256
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.04065735124921995,
+        "new-1": 0.02102231600224855,
+        "new-2": 0.08779792861994867,
+        "new-3": 0.04155872672928689
+      }
+    },
+    {
+      "seed": 65201,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 54,
+          "objective": 364.6877066110013,
+          "gradient_norm": 2.804973944399629,
+          "hessian_condition": 1790.129230330042,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 364.6877066110013,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.9902032360651019,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.09310998671403549,
+        "boundary": 0.04522583405112744
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.06434108363228831,
+          0.13474236267816386
+        ],
+        "boundary": [
+          0.03149941006250542,
+          0.06493378960308795
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.03,
+          0.5
+        ],
+        "boundary": [
+          0.03,
+          0.5
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": false,
+        "boundary": false
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -51.29686077914858,
+        "new-1": -41.69369408417644,
+        "new-2": -83.77098439595551,
+        "new-3": -47.977047480032965
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -51.47563493721463,
+        "new-1": -41.71683247490629,
+        "new-2": -82.7862177679702,
+        "new-3": -46.282407380627745
+      },
+      "subject_log_probability_improvement": {
+        "new-0": -0.17877415806604802,
+        "new-1": -0.023138390729847913,
+        "new-2": 0.9847666279853087,
+        "new-3": 1.6946400994052198
+      },
+      "predictive_effective_draws": {
+        "new-0": 2841.8347883108054,
+        "new-1": 2554.605282416278,
+        "new-2": 568.9632000291166,
+        "new-3": 310.37917946745074
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.010381282485141922,
+        "new-1": 0.01213858537372054,
+        "new-2": 0.03890773539565949,
+        "new-3": 0.054575197040719114
+      }
+    },
+    {
+      "seed": 65301,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 40,
+          "objective": 405.1104497372004,
+          "gradient_norm": 6.8245399857561075,
+          "hessian_condition": 2335.5095767340954,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 405.1104497372004,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.9132041364198159,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.11937815034308255,
+        "boundary": 0.06890687825042434
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.08213743271538733,
+          0.17350363053976803
+        ],
+        "boundary": [
+          0.0478088982556447,
+          0.09931535850981878
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.04774635449188002,
+          0.29847603929131883
+        ],
+        "boundary": [
+          0.03,
+          0.2405983690370001
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": false,
+        "boundary": true
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -44.76531078958629,
+        "new-1": -34.643137151199774,
+        "new-2": -45.053322352291495,
+        "new-3": -61.812515513164946
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -44.089033510658595,
+        "new-1": -34.14944323442695,
+        "new-2": -45.39110323850749,
+        "new-3": -61.657345789027495
+      },
+      "subject_log_probability_improvement": {
+        "new-0": 0.6762772789276923,
+        "new-1": 0.4936939167728269,
+        "new-2": -0.3377808862159952,
+        "new-3": 0.15516972413745123
+      },
+      "predictive_effective_draws": {
+        "new-0": 1127.5937190068016,
+        "new-1": 843.7157387569109,
+        "new-2": 1842.9947099280246,
+        "new-3": 1148.4600405019444
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.02535469518702065,
+        "new-1": 0.030680979494398842,
+        "new-2": 0.017277945841667752,
+        "new-3": 0.025034847672028723
+      }
+    },
+    {
+      "seed": 65401,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 60,
+          "objective": 309.8293860472468,
+          "gradient_norm": 2.6576743716924245,
+          "hessian_condition": 2653.6428979085617,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 309.8293860472468,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.8292156064356084,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.10158316603378388,
+        "boundary": 0.05379750310450389
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.07006271288514417,
+          0.14728432851813442
+        ],
+        "boundary": [
+          0.03752880933582131,
+          0.07711865608047987
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.0413476222455537,
+          0.24957032740998708
+        ],
+        "boundary": [
+          0.03,
+          0.10926858605334389
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": false,
+        "boundary": false
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -44.197924913942956,
+        "new-1": -18.690212600192876,
+        "new-2": -27.27914816438605,
+        "new-3": -51.72014636648489
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -44.41610992587161,
+        "new-1": -15.980754162235783,
+        "new-2": -26.855661218858785,
+        "new-3": -50.89368866912605
+      },
+      "subject_log_probability_improvement": {
+        "new-0": -0.2181850119286537,
+        "new-1": 2.7094584379570925,
+        "new-2": 0.42348694552726585,
+        "new-3": 0.8264576973588404
+      },
+      "predictive_effective_draws": {
+        "new-0": 2567.3564762938295,
+        "new-1": 241.23939686526842,
+        "new-2": 1523.3525710548179,
+        "new-3": 951.0729565448274
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.012058216303191312,
+        "new-1": 0.06246656655404255,
+        "new-2": 0.020307804225030358,
+        "new-3": 0.028416554459551265
+      }
+    },
+    {
+      "seed": 65501,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 47,
+          "objective": 374.34008419107556,
+          "gradient_norm": 0.7430917807273781,
+          "hessian_condition": 3383.128925081546,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 374.34008419107556,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.6308566045238314,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.13798678837917408,
+        "boundary": 0.09801593318830096
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.09515605958335335,
+          0.20009607218466516
+        ],
+        "boundary": [
+          0.06794814275932913,
+          0.14138904712674344
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.07484951737922058,
+          0.25438178406324474
+        ],
+        "boundary": [
+          0.06550922587977101,
+          0.14665297948117137
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -56.169099158006105,
+        "new-1": -52.33930767993933,
+        "new-2": -61.27219923180411,
+        "new-3": -35.11461029939587
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -56.849395899424024,
+        "new-1": -53.0223940415113,
+        "new-2": -57.9942060308412,
+        "new-3": -34.68041164461774
+      },
+      "subject_log_probability_improvement": {
+        "new-0": -0.6802967414179193,
+        "new-1": -0.6830863615719664,
+        "new-2": 3.2779932009629107,
+        "new-3": 0.4341986547781289
+      },
+      "predictive_effective_draws": {
+        "new-0": 1163.348327714864,
+        "new-1": 1866.624376184181,
+        "new-2": 296.62284775286474,
+        "new-3": 729.8002529875671
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.024811236201646755,
+        "new-1": 0.01707796835836322,
+        "new-2": 0.05592769880866658,
+        "new-3": 0.03356147068781032
+      }
+    },
+    {
+      "seed": 65601,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 51,
+          "objective": 315.26379375784876,
+          "gradient_norm": 7.4906864979028125,
+          "hessian_condition": 3555.6906364903807,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 315.26379375784876,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.749869705079808,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.14069155139756773,
+        "boundary": 0.08123404525372284
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.09681508348990894,
+          0.20445277658328503
+        ],
+        "boundary": [
+          0.05651620279083927,
+          0.11676244656255495
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.0725984799236893,
+          0.2726518882414714
+        ],
+        "boundary": [
+          0.039448464379341165,
+          0.16728078550352182
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -41.91064939392709,
+        "new-1": -46.534676059539265,
+        "new-2": -52.462850411539634,
+        "new-3": -60.54144945828496
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -42.50553496211983,
+        "new-1": -47.1243675993288,
+        "new-2": -52.27263298933407,
+        "new-3": -59.80089347504087
+      },
+      "subject_log_probability_improvement": {
+        "new-0": -0.5948855681927441,
+        "new-1": -0.5896915397895341,
+        "new-2": 0.19021742220556348,
+        "new-3": 0.7405559832440858
+      },
+      "predictive_effective_draws": {
+        "new-0": 2250.037337527534,
+        "new-1": 1943.0370591552737,
+        "new-2": 1041.0600920286035,
+        "new-3": 652.6735626633754
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.014154340560172757,
+        "new-1": 0.01644942729757463,
+        "new-2": 0.02676926725791801,
+        "new-3": 0.0358933616479695
+      }
+    },
+    {
+      "seed": 65701,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 92,
+          "objective": 355.91002638403467,
+          "gradient_norm": 1.6063345282361017,
+          "hessian_condition": 15761.15065664707,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 355.91002638403467,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.8505977051755513,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.28964988081081877,
+        "boundary": 0.0811518157798838
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.19292669552548466,
+          0.4348649274544752
+        ],
+        "boundary": [
+          0.056835227594610044,
+          0.11587210051036625
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.14501014414419233,
+          0.5
+        ],
+        "boundary": [
+          0.03232157050400747,
+          0.20375300771834906
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": true
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -56.51154111562047,
+        "new-1": -36.37232662125345,
+        "new-2": -25.39211757289839,
+        "new-3": -36.46718238527888
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -54.302854285434094,
+        "new-1": -36.96408128457375,
+        "new-2": -24.86493207198655,
+        "new-3": -36.942718977713014
+      },
+      "subject_log_probability_improvement": {
+        "new-0": 2.208686830186373,
+        "new-1": -0.5917546633203017,
+        "new-2": 0.5271855009118376,
+        "new-3": -0.47553659243413193
+      },
+      "predictive_effective_draws": {
+        "new-0": 215.33047599038167,
+        "new-1": 1319.8374355369774,
+        "new-2": 606.3128292680063,
+        "new-3": 953.2906647868674
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.0663397188673563,
+        "new-1": 0.022663932734688284,
+        "new-2": 0.03749021374382972,
+        "new-3": 0.028373472127129686
+      }
+    },
+    {
+      "seed": 65801,
+      "fit_audit": {
+        "model_name": "hierarchical-smooth-wiener-drift-diffusion",
+        "model_signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.25;subject_parameter_scales=drift.stimulus:0.14,boundary:0.14;estimate_subject_scales=True;subject_scale_bounds=0.03,0.5;scale_max_iterations=20;scale_tolerance=0.04;subject_scale_uncertainty=supplemented;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+        "n_observations": 840,
+        "status": "pass",
+        "numerical": {
+          "converged": true,
+          "optimizer": "joint L-BFGS-B (1 deterministic restarts)",
+          "status": 0,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "n_iterations": 51,
+          "objective": 334.4247863169384,
+          "gradient_norm": 0.9816820251572017,
+          "hessian_condition": 3523.6327132256456,
+          "boundary_estimate": false
+        },
+        "issues": [],
+        "restarts": {
+          "n_restarts": 1,
+          "n_converged": 1,
+          "selected_restart": 0,
+          "selected_converged": true,
+          "selected_objective": 334.4247863169384,
+          "objective_range": 0.0,
+          "relative_objective_range": 0.0,
+          "failed_messages": []
+        },
+        "latent_states": null
+      },
+      "scale_estimation_converged": true,
+      "scale_em_spectral_radius": 0.6371346852827692,
+      "supplemented_interval_error": null,
+      "scale_estimates": {
+        "drift.stimulus": 0.14557901599356224,
+        "boundary": 0.030724782034572535
+      },
+      "local_intervals": {
+        "drift.stimulus": [
+          0.10058122213749136,
+          0.21070781849004921
+        ],
+        "boundary": [
+          0.03,
+          0.04406270131668003
+        ]
+      },
+      "supplemented_intervals": {
+        "drift.stimulus": [
+          0.07879898967472795,
+          0.2689533201521599
+        ],
+        "boundary": [
+          0.03,
+          0.04502997433197803
+        ]
+      },
+      "local_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": false
+      },
+      "supplemented_covers_truth": {
+        "drift.stimulus": true,
+        "boundary": false
+      },
+      "plugin_subject_log_probability": {
+        "new-0": -34.228997971195966,
+        "new-1": -34.999355370772065,
+        "new-2": -16.823003062775964,
+        "new-3": -30.514623367442304
+      },
+      "predictive_subject_log_probability": {
+        "new-0": -34.400191513964366,
+        "new-1": -34.48402116683386,
+        "new-2": -16.402743510311076,
+        "new-3": -29.98393652855549
+      },
+      "subject_log_probability_improvement": {
+        "new-0": -0.1711935427683997,
+        "new-1": 0.5153342039382025,
+        "new-2": 0.4202595524648878,
+        "new-3": 0.5306868388868153
+      },
+      "predictive_effective_draws": {
+        "new-0": 2619.837566862645,
+        "new-1": 1245.5321092347515,
+        "new-2": 1344.0232541258238,
+        "new-3": 1050.9436394270208
+      },
+      "predictive_log_probability_mcse": {
+        "new-0": 0.011730133063236897,
+        "new-1": 0.023640336801728758,
+        "new-2": 0.022361041900884754,
+        "new-3": 0.026599961104430286
+      }
+    }
+  ]
+}
