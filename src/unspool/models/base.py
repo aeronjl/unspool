@@ -37,9 +37,9 @@ class ModelCapabilities:
     """Validated description of what one behavioural estimator exposes.
 
     ``scored_columns`` names the complete observation used by each pointwise likelihood.
-    It is deliberately distinct from the binary choice probability returned by
-    :class:`Prediction`: a future reaction-time model may predict choice while scoring the
-    joint choice and response-time observation.
+    It is deliberately distinct from the choice probabilities returned by
+    :class:`Prediction` or :class:`CategoricalPrediction`: a reaction-time model may
+    predict choice while scoring the joint choice and response-time observation.
     """
 
     scored_columns: tuple[str, ...]
@@ -162,6 +162,86 @@ class Prediction:
         object.__setattr__(self, "linear_predictor", linear_predictor)
         object.__setattr__(self, "mode", mode)
 
+    @property
+    def n_observations(self) -> int:
+        """Number of trial rows represented by the prediction."""
+
+        return len(self.probability)
+
+    def take(self, indices: Sequence[int] | NDArray[np.integer[Any]]) -> Prediction:
+        """Return a protected row subset without changing prediction semantics."""
+
+        return Prediction(
+            probability=self.probability[indices],
+            linear_predictor=self.linear_predictor[indices],
+            mode=self.mode,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class CategoricalPrediction:
+    """Probabilities on one explicit categorical outcome coordinate.
+
+    Rows index trials and columns index ``categories``. Impossible actions may have
+    probability zero and a ``-inf`` linear predictor, which is required for tasks with
+    trial-specific option availability.
+    """
+
+    probability: NDArray[np.float64]
+    linear_predictor: NDArray[np.float64]
+    categories: tuple[Any, ...]
+    mode: PredictionMode
+
+    def __post_init__(self) -> None:
+        probability = _protected_array(self.probability, dtype=np.float64)
+        linear_predictor = _protected_array(self.linear_predictor, dtype=np.float64)
+        categories = tuple(_prediction_category(value) for value in self.categories)
+        mode = PredictionMode(self.mode)
+        if probability.ndim != 2 or probability.shape[1] < 2:
+            raise ValueError("categorical probabilities must have at least two columns")
+        if linear_predictor.shape != probability.shape:
+            raise ValueError("categorical predictors and probabilities must be equally sized")
+        if len(categories) != probability.shape[1]:
+            raise ValueError("categories must name every probability column")
+        keys = tuple((type(value), value) for value in categories)
+        try:
+            unique = set(keys)
+        except TypeError:
+            raise ValueError("prediction categories must be scalar and hashable") from None
+        if len(unique) != len(categories):
+            raise ValueError("prediction categories must be unique")
+        if not np.all(np.isfinite(probability)) or np.any((probability < 0) | (probability > 1)):
+            raise ValueError("categorical probabilities must be finite values in [0, 1]")
+        if not np.allclose(np.sum(probability, axis=1), 1.0, rtol=1e-10, atol=1e-12):
+            raise ValueError("categorical probability rows must sum to one")
+        if np.any(np.isnan(linear_predictor)) or np.any(np.isposinf(linear_predictor)):
+            raise ValueError("categorical predictors may contain finite values or -inf")
+        if np.any(np.all(np.isneginf(linear_predictor), axis=1)):
+            raise ValueError("every prediction row must contain an available category")
+        object.__setattr__(self, "probability", probability)
+        object.__setattr__(self, "linear_predictor", linear_predictor)
+        object.__setattr__(self, "categories", categories)
+        object.__setattr__(self, "mode", mode)
+
+    @property
+    def n_observations(self) -> int:
+        """Number of trial rows represented by the prediction."""
+
+        return self.probability.shape[0]
+
+    def take(self, indices: Sequence[int] | NDArray[np.integer[Any]]) -> CategoricalPrediction:
+        """Return a protected row subset on the same category coordinate."""
+
+        return CategoricalPrediction(
+            probability=self.probability[indices],
+            linear_predictor=self.linear_predictor[indices],
+            categories=self.categories,
+            mode=self.mode,
+        )
+
+
+ModelPrediction = Prediction | CategoricalPrediction
+
 
 @runtime_checkable
 class BehaviourEstimator(Protocol):
@@ -187,7 +267,7 @@ class BehaviourEstimator(Protocol):
         fit: FitResult,
         *,
         mode: PredictionMode = PredictionMode.FILTERED,
-    ) -> Prediction: ...
+    ) -> ModelPrediction: ...
 
     def pointwise_log_prob(
         self,
@@ -196,6 +276,16 @@ class BehaviourEstimator(Protocol):
         *,
         mode: PredictionMode = PredictionMode.FILTERED,
     ) -> NDArray[np.float64]: ...
+
+
+@runtime_checkable
+class CategoricalBehaviourEstimator(BehaviourEstimator, Protocol):
+    """An estimator whose scored choice is represented by stable category codes."""
+
+    @property
+    def categories(self) -> tuple[Any, ...]: ...
+
+    def outcome_codes(self, study: Study) -> NDArray[np.int64]: ...
 
 
 @runtime_checkable
@@ -257,3 +347,12 @@ def _protected_array(
     view = owner.view()
     view.setflags(write=False)
     return view
+
+
+def _prediction_category(value: Any) -> Any:
+    scalar = value.item() if isinstance(value, np.generic) else value
+    if scalar is None or isinstance(scalar, (str, bool, int)):
+        return scalar
+    if isinstance(scalar, float) and np.isfinite(scalar):
+        return scalar
+    raise ValueError(f"prediction category must be a finite scalar: {scalar!r}")

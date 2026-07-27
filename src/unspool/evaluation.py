@@ -10,7 +10,10 @@ from numpy.typing import NDArray
 
 from unspool.models.base import (
     BehaviourEstimator,
+    CategoricalBehaviourEstimator,
+    CategoricalPrediction,
     FitResult,
+    ModelPrediction,
     Prediction,
     PredictionMode,
     _protected_array,
@@ -26,15 +29,28 @@ class FoldEvaluation:
 
     split: ValidationFold
     fit: FitResult
-    prediction: Prediction
+    prediction: ModelPrediction
     pointwise_log_probability: NDArray[np.float64]
+    outcome_codes: NDArray[np.int64] | None = None
 
     def __post_init__(self) -> None:
         scores = _protected_array(self.pointwise_log_probability, dtype=np.float64)
-        if scores.ndim != 1 or scores.shape != self.prediction.probability.shape:
+        if scores.ndim != 1 or scores.shape != (self.prediction.n_observations,):
             raise ValueError("pointwise scores must match the number of predictions")
         if not np.all(np.isfinite(scores)):
             raise ValueError("pointwise scores must be finite")
+        codes = self.outcome_codes
+        if isinstance(self.prediction, CategoricalPrediction):
+            if codes is None:
+                raise ValueError("categorical predictions require observed outcome codes")
+            protected_codes = _protected_array(codes, dtype=np.int64)
+            if protected_codes.shape != scores.shape or np.any(
+                (protected_codes < 0) | (protected_codes >= len(self.prediction.categories))
+            ):
+                raise ValueError("outcome codes must identify one predicted category per row")
+            object.__setattr__(self, "outcome_codes", protected_codes)
+        elif codes is not None:
+            raise ValueError("binary predictions must not attach categorical outcome codes")
         object.__setattr__(self, "pointwise_log_probability", scores)
 
     @property
@@ -100,8 +116,21 @@ def evaluate_splits(
         prediction_rows = np.concatenate((split.prediction_context_indices, split.test_indices))
         prediction_study = study.take(prediction_rows)
         full_prediction = model.predict(prediction_study, fit, mode=prediction_mode)
-        if not isinstance(full_prediction, Prediction):
-            raise TypeError("model.predict must return a Prediction")
+        if not isinstance(full_prediction, (Prediction, CategoricalPrediction)):
+            raise TypeError("model.predict must return Prediction or CategoricalPrediction")
+        if full_prediction.n_observations != len(prediction_study):
+            raise ValueError("model.predict must return one prediction per row")
+        full_codes: NDArray[np.int64] | None = None
+        if isinstance(full_prediction, CategoricalPrediction):
+            if not isinstance(model, CategoricalBehaviourEstimator):
+                raise TypeError(
+                    "categorical predictions require categories and outcome_codes() on the model"
+                )
+            if tuple(model.categories) != full_prediction.categories:
+                raise ValueError("model and prediction category coordinates differ")
+            full_codes = np.asarray(model.outcome_codes(prediction_study), dtype=np.int64)
+            if full_codes.shape != (len(prediction_study),):
+                raise ValueError("outcome_codes must return one code per prediction row")
         full_scores = np.asarray(
             model.pointwise_log_prob(prediction_study, fit, mode=prediction_mode),
             dtype=np.float64,
@@ -113,11 +142,7 @@ def evaluate_splits(
             len(prediction_rows),
             dtype=np.intp,
         )
-        prediction = Prediction(
-            probability=full_prediction.probability[target],
-            linear_predictor=full_prediction.linear_predictor[target],
-            mode=full_prediction.mode,
-        )
+        prediction = full_prediction.take(target)
         scores = full_scores[target]
         evaluations.append(
             FoldEvaluation(
@@ -125,6 +150,7 @@ def evaluate_splits(
                 fit=fit,
                 prediction=prediction,
                 pointwise_log_probability=scores,
+                outcome_codes=None if full_codes is None else full_codes[target],
             )
         )
     return tuple(evaluations)

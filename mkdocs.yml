@@ -85,6 +85,7 @@ nav:
       - Capability matrix: methods/capability-matrix.md
       - Modelling contract: modelling.md
       - Canonical binary baselines: baselines.md
+      - Multinomial and omissions: multinomial.md
       - Static and smooth drift: smooth-drift.md
       - Hierarchical GLM: hierarchical-glm.md
       - Hierarchical smooth GLM: hierarchical-smooth-glm.md

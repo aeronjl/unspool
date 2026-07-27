@@ -60,10 +60,13 @@ their numerical log scores are not interchangeable. Joint models must compete wi
 models scoring the same joint observation, or expose a separately configured choice-only
 marginal estimator.
 
-`Prediction.probability` remains the probability of the declared binary `outcome_column`
-and supports Brier scoring. `pointwise_log_prob` may score a larger declared observation.
-Prospective comparison records both `outcome_column` and `scored_columns`, preserving the
-distinction in serialized reports.
+`Prediction.probability` is a vector for a declared binary `outcome_column`.
+`CategoricalPrediction.probability` is a trial-by-category matrix on an explicit stable
+coordinate. Categorical estimators additionally expose `categories` and
+`outcome_codes(study)`, so evaluation never guesses how source labels map onto probability
+columns. Both forms support Brier scoring; `pointwise_log_prob` may score a larger declared
+observation. Prospective comparison records both `outcome_column` and `scored_columns`,
+preserving the distinction in serialized reports.
 
 ## Fit-result invariants
 

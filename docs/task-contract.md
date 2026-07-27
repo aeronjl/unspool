@@ -65,6 +65,7 @@ choice = ChoiceSpec(
     available_options_column="available_actions",
 )
 encoded = choice.read(study)
+offered = choice.availability(design_study)
 ```
 
 `options` fixes one stable categorical coordinate. `encoded.codes` contains the declared
@@ -72,10 +73,15 @@ option position and uses `-1` only for explicit omissions. `encoded.available` i
 trial-by-option mask. An observed action that was unavailable on that trial is rejected.
 The source choice column is never silently rewritten.
 
+`availability()` validates and returns the same trial-by-option mask without requiring a
+choice column. Generative models use it on a design study before outcomes exist.
+
 Missing values are not omissions by default. Setting `missing_is_omission=True` is an
 explicit scientific assertion that the missing value represents a retained no-response
 trial rather than data loss. A model must still advertise and implement the observation
 semantics it can fit: declaring omissions does not make a binary choice model omission-aware.
+`MultinomialLogit` consumes this coordinate directly and can retain omissions as a modeled
+category; see [multinomial and omission-aware choice](multinomial.md).
 
 ## Rewards and response times
 
@@ -108,9 +114,10 @@ declares their role but does not infer resets or reorder trials.
 
 ## Current boundary
 
-The task layer introduced in 0.21 validates binary and multi-alternative observations, but
-the current first-party choice models remain binary. Fixed history, kernel, design, and
-training-only standardization components are available; migrating the model catalogue onto
-them, richer learned transforms, multinomial likelihoods, and omission-aware mixtures
-remain 0.22 package work. Until then, task validation failing successfully is preferable
-to coercing a richer experiment through a binary estimand.
+The task layer validates binary and multi-alternative observations, and the first
+multinomial likelihood now uses that coordinate without re-encoding source labels. Binary
+baselines and binary RL agents intentionally retain their narrower observation contract.
+Choice-history simulation for a multinomial policy, richer learned transforms, and
+task-specific motor or censoring models remain further catalogue work. Task validation
+failing successfully is preferable to coercing a richer experiment through a different
+estimand.

@@ -39,6 +39,13 @@ def test_fixed_design_builds_labelled_numeric_categorical_and_history_terms() ->
 
     matrix = design.build(make_study())
 
+    assert design.feature_names == (
+        "intercept",
+        "stimulus",
+        "condition['probe']",
+        "choice_lag_1",
+        "choice_lag_2",
+    )
     assert matrix.names == (
         "intercept",
         "stimulus",
@@ -106,6 +113,21 @@ def test_design_rejects_feature_name_collisions() -> None:
     design = DesignSpec(terms=(NumericTerm("stimulus", name="x"), NumericTerm("choice", name="x")))
     with pytest.raises(DesignValidationError, match="collide"):
         design.build(make_study())
+
+
+def test_design_verifies_extension_term_names_before_model_fitting() -> None:
+    class DriftingNamesTerm:
+        signature = "drifting-names"
+        feature_names = ("declared",)
+        required_columns = ("stimulus",)
+
+        def build(self, study):
+            from unspool import FeatureBlock
+
+            return FeatureBlock(("observed",), np.ones((len(study), 1)))
+
+    with pytest.raises(DesignValidationError, match="declared feature_names"):
+        DesignSpec((DriftingNamesTerm(),)).build(make_study())
 
 
 def test_standardization_is_fitted_only_on_the_supplied_training_study() -> None:

@@ -374,8 +374,9 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** make symmetric or asymmetric value updating, unchosen forgetting,
   exponential choice kernels, bias/lapse softmax policies, and reset columns composable in
   a binary RL agent while retaining the original validated Q-learning model.
-- **Planned:** support multinomial and omission-aware choice likelihoods through the common
-  task coordinate.
+- **Implemented:** support multinomial and omission-aware choice likelihoods on the common
+  task coordinate, including finite JSON-scalar labels, trial availability, categorical
+  predictions, prospective comparison, protocol artifacts, and recovery.
 - **Planned:** add the standard input-driven and sticky GLM-HMM variants with state-count,
   occupancy, alignment, and prospective-selection diagnostics.
 - **Planned:** cover standard DDM regressions, collapsing bounds, and race/LBA models through
