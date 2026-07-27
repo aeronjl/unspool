@@ -182,6 +182,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
     label_tolerance: float = 1e-3
     state_occupancy_warning: float = 0.01
     probability_warning_threshold: float = 1e-4
+    stickiness: float = 0.0
 
     def __post_init__(self) -> None:
         BernoulliHistoryGLM.__post_init__(self)
@@ -213,6 +214,8 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
             raise ValueError("state_occupancy_warning must lie strictly between zero and one")
         if not 0 < self.probability_warning_threshold < 0.5:
             raise ValueError("probability_warning_threshold must lie strictly between zero and 0.5")
+        if not np.isfinite(self.stickiness) or self.stickiness < 0:
+            raise ValueError("stickiness must be finite and non-negative")
 
     @property
     def model_name(self) -> str:
@@ -224,7 +227,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         return (
             f"{self.model_name}[states={self.n_states};outcome={self.outcome};"
             f"covariates={covariates};choice_lags={self.choice_lags};"
-            f"label_by={self.label_by};l2={self.l2}]"
+            f"label_by={self.label_by};l2={self.l2};stickiness={self.stickiness}]"
         )
 
     @property
@@ -623,6 +626,14 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         transition_gradient = (
             departures[:, None] * transition[:, :-1] - posterior.transition_counts[:, :-1]
         )
+        if self.stickiness:
+            # A sticky Dirichlet prior adds kappa pseudo-counts to self-transitions.
+            # Constants independent of the parameters are omitted from the MAP objective.
+            loss -= self.stickiness * float(np.sum(np.log(np.diag(transition))))
+            sticky_gradient = self.stickiness * transition[:, :-1]
+            for state in range(self.n_states - 1):
+                sticky_gradient[state, state] -= self.stickiness
+            transition_gradient += sticky_gradient
         gradient = np.concatenate(
             (emission_gradient.ravel(), initial_gradient, transition_gradient.ravel())
         )

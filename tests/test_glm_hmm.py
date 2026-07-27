@@ -185,6 +185,7 @@ def test_analytic_likelihood_gradient_matches_finite_differences() -> None:
         choice_lags=1,
         l2=0.2,
         n_restarts=1,
+        stickiness=1.7,
     )
     parameters = model.parameters_from_components(
         initial_probabilities=[0.6, 0.4],
@@ -213,6 +214,35 @@ def test_analytic_likelihood_gradient_matches_finite_differences() -> None:
         numeric[index] = (positive_value - negative_value) / (2.0 * step)
 
     np.testing.assert_allclose(analytic, numeric, atol=2e-6, rtol=2e-6)
+
+
+def test_sticky_prior_adds_declared_self_transition_pseudocounts() -> None:
+    study = design(n_sessions=2, trials_per_session=10)
+    study = Study(
+        {
+            **{name: study[name] for name in study.columns},
+            "choice": [0, 1] * 10,
+        }
+    )
+    plain = BernoulliGLMHMM(choice_lags=0, n_restarts=1)
+    sticky = BernoulliGLMHMM(choice_lags=0, n_restarts=1, stickiness=2.5)
+    parameters = plain.parameters_from_components(
+        initial_probabilities=[0.6, 0.4],
+        transition_matrix=[[0.8, 0.2], [0.3, 0.7]],
+        emissions={"intercept": [-1.0, 1.0]},
+    )
+    plain_vector = np.asarray([parameters[name] for name in plain.parameter_names])
+    sticky_vector = np.asarray([parameters[name] for name in sticky.parameter_names])
+    outcomes = plain._outcomes(study)
+    features = plain._base_feature_matrix(study, outcomes)
+    sessions = _ordered_session_indices(study)
+
+    plain_loss, _ = plain._objective_gradient(plain_vector, features, outcomes, sessions)
+    sticky_loss, _ = sticky._objective_gradient(sticky_vector, features, outcomes, sessions)
+
+    expected = -sticky.stickiness * np.log([0.8, 0.7]).sum()
+    assert sticky_loss - plain_loss == pytest.approx(expected)
+    assert "stickiness=2.5" in sticky.signature
 
 
 def test_fit_recovers_clear_states_and_retains_restart_diagnostics() -> None:
@@ -328,6 +358,7 @@ def test_smoothed_state_prediction_is_not_silently_substituted() -> None:
         ("label_tolerance", -1.0, "label_tolerance"),
         ("state_occupancy_warning", 1.0, "state_occupancy_warning"),
         ("probability_warning_threshold", 0.5, "probability_warning_threshold"),
+        ("stickiness", -1.0, "stickiness"),
     ],
 )
 def test_glm_hmm_configuration_is_validated(

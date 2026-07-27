@@ -28,6 +28,11 @@ coefficients. Choice history is bounded by sessions and updated recursively duri
 simulation. A transition occurs between consecutive *observed* trials. Gaps in trial
 identifiers do not cause Unspool to invent unobserved transitions.
 
+This is the standard input-driven GLM-HMM convention used in behavioural work: observed
+task inputs enter the state-specific GLM emissions. They do not alter the transition
+matrix. Covariate-dependent transitions are a different model and are not implied by the
+word “input-driven” here.
+
 ```python
 from unspool import BernoulliGLMHMM
 
@@ -58,6 +63,30 @@ components = model.parameter_components(fit)
 Natural probabilities are encoded internally as reference-category logits. The helper
 validates strict positivity and row sums, canonicalizes labels, and returns the exact flat
 mapping needed by simulation and the generic recovery API.
+
+## Optional sticky transition prior
+
+```python
+sticky = BernoulliGLMHMM(
+    covariates=("stimulus",),
+    n_states=3,
+    stickiness=2.0,
+)
+```
+
+Positive `stickiness` performs MAP fitting under a sticky Dirichlet transition prior. It
+adds the declared value as a pseudo-count to every self-transition and leaves off-diagonal
+pseudo-counts at their flat baseline. Equivalently, the optimized objective adds
+
+\[
+-\kappa\sum_k \log A_{kk}.
+\]
+
+This regularizes state persistence; it does not fix dwell times, change the simulator, or
+make the transition matrix trial-varying. `stickiness=0` is the original maximum-
+likelihood model. The value is part of the model signature and must be selected inside
+training data, preferably under nested prospective validation rather than by inspecting a
+full-study state plot.
 
 ## Fitting and numerical diagnostics
 
