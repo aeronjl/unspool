@@ -89,7 +89,7 @@ nav:
       - Hierarchical GLM: hierarchical-glm.md
       - Hierarchical smooth GLM: hierarchical-smooth-glm.md
       - GLM-HMM: glm-hmm.md
-      - Q-learning: q-learning.md
+      - Reinforcement learning: q-learning.md
       - Drift diffusion: drift-diffusion.md
       - Smooth drift diffusion: smooth-ddm.md
       - Hierarchical smooth DDM: hierarchical-smooth-ddm.md

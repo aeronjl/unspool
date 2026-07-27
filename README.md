@@ -27,7 +27,8 @@ stages, and inferred learning landmarks.
 > first modelling, and parameter- and model-recovery contracts are executable, but the API
 > is not yet stable. The model catalogue currently contains static and smoothly time-
 > varying Bernoulli GLMs, static and smooth hierarchical Bernoulli GLMs, a fixed-transition
-> GLM-HMM, a compact binary Q-learning agent, and a joint choice/response-time Wiener
+> GLM-HMM, compact and composable binary reinforcement-learning agents, and a joint
+> choice/response-time Wiener
 > drift-diffusion family with stationary, smooth session-varying, or partially pooled
 > animal-specific trajectories and an optional explicit contaminant mixture for the
 > stationary model.
@@ -170,7 +171,9 @@ perseveration, and win-stay/lose-shift baselines. It also includes a static Bern
 a smoothly time-varying
 competitor with fixed temporal knots, a static partial-pooling Bernoulli GLM, a partially
 pooled smooth trajectory model, a fixed-transition Bernoulli GLM-HMM, and a compact
-session-reset binary Q-learning agent, plus a fixed-parameter Wiener drift-diffusion model
+session-reset binary Q-learning agent plus a composable successor with asymmetric
+learning, forgetting, choice kernels, lapse-softmax policies, and explicit reset columns,
+plus a fixed-parameter Wiener drift-diffusion model
 that jointly scores choice and response time and can include a fixed-support contaminant
 component, and a smooth longitudinal Wiener model for drift, boundary, and starting-bias
 paths, plus a hierarchical Wiener model with shrunken animal-specific trajectories. They
@@ -185,7 +188,7 @@ normalized audit without discarding its model-specific evidence. See the
 [smooth-drift guide](docs/smooth-drift.md),
 [partial-pooling guide](docs/hierarchical-glm.md),
 [partially pooled trajectory guide](docs/hierarchical-smooth-glm.md),
-[GLM-HMM guide](docs/glm-hmm.md), [Q-learning guide](docs/q-learning.md),
+[GLM-HMM guide](docs/glm-hmm.md), [reinforcement-learning guide](docs/q-learning.md),
 [drift-diffusion guide](docs/drift-diffusion.md),
 [session-varying drift-diffusion guide](docs/smooth-ddm.md),
 [hierarchical drift-diffusion guide](docs/hierarchical-smooth-ddm.md),

@@ -197,6 +197,10 @@ class BinaryQLearning:
         return (self.outcome,)
 
     @property
+    def required_task_columns(self) -> tuple[str, ...]:
+        return (self.reward,)
+
+    @property
     def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
         return (PredictionMode.FILTERED,)
 

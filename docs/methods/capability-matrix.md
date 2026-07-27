@@ -19,6 +19,7 @@ its inferential or design coverage remains deliberately narrow.
 | Parameter and model recovery | **Supported** | Evidence is specific to the simulated design and parameter regime. |
 | GLM-HMM | **Experimental** | Fixed transitions; state interpretation requires alignment and competitors. |
 | Binary Q-learning | **Experimental** | Compact two-action, session-reset implementation. |
+| Composable binary RL | **Experimental** | Symmetric/asymmetric updates, unchosen forgetting, choice kernels, lapse-softmax policies, and explicit reset columns; rich assemblies require design-specific recovery. |
 | Static and smooth drift diffusion | **Experimental** | Joint choice/RT data with explicit units and fixed support assumptions. |
 | Hierarchical smooth drift diffusion | **Experimental** | Plug-in population prediction and bounded variance-component estimation. |
 | Threshold learning landmarks | **Experimental** | Fold-fitted plug-in bootstrap; unresolved draws remain visible. |
