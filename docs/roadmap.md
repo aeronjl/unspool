@@ -377,8 +377,10 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** support multinomial and omission-aware choice likelihoods on the common
   task coordinate, including finite JSON-scalar labels, trial availability, categorical
   predictions, prospective comparison, protocol artifacts, and recovery.
-- **Planned:** add the standard input-driven and sticky GLM-HMM variants with state-count,
-  occupancy, alignment, and prospective-selection diagnostics.
+- **Implemented:** expose the standard input-driven GLM-HMM convention through
+  state-specific task-input emissions and add an explicit sticky Dirichlet self-transition
+  prior, retaining state-count, occupancy, alignment, and prospective-selection
+  diagnostics. Covariate-dependent transitions remain a distinct later extension.
 - **Planned:** cover standard DDM regressions, collapsing bounds, and race/LBA models through
   first-party reference components or adapters to mature packages rather than duplicating
   validated solvers.
