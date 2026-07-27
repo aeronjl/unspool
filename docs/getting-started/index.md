@@ -2,6 +2,11 @@
 
 Begin with the scientific boundary, not the model class.
 
+For a complete analysis, encode that boundary in a frozen
+[`StudyProtocol`](../protocols/index.md). The lower-level examples below remain useful for
+interactive exploration, while a protocol adds source and cohort identity, fixed
+candidates, recovery gates, bounded claims, and a portable evidence record.
+
 <figure class="doc-figure">
   <img src="../assets/workflow-map.svg" alt="Four routes from a scientific question through a validation boundary to a bounded result: describing change, predicting later sessions, comparing explanations, and testing identifiability.">
   <figcaption><strong>Workflow map.</strong> The intended generalization target determines the split and evidence object before it determines the model family. This is a conceptual contract diagram.</figcaption>
@@ -55,3 +60,7 @@ DANDI core dependencies. See [data and interoperability](../interoperability.md)
 The [worked studies](../tutorials/index.md) begin with published scientific questions and
 carry them through cohort definition, modelling, validation, figures, and bounded
 interpretation.
+
+The [Cell 2025](../tutorials/cell2025-learning-trajectories.md) and
+[IBL nested-selection](../tutorials/ibl2021-prospective-selection.md) studies are also
+expressed as complete protocol migrations with exact numerical parity tests.

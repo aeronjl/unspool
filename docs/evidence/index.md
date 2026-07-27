@@ -19,3 +19,6 @@ protocol code, source checksums, seeds, fold provenance, audits, and JSON result
 Browse the complete [benchmark directory on GitHub](https://github.com/aeronjl/unspool/tree/main/benchmarks).
 Failed fits, warning audits, unresolved selections, and boundary estimates remain part of
 the record rather than being filtered out of summary pages.
+
+Final protocol studies can be packaged as deterministic, content-addressed archives. Read
+the [evidence-bundle anatomy, integrity, replay, and comparison guide](../protocols/evidence-bundles.md).

@@ -314,6 +314,38 @@ The roadmap is organized by scientific contracts rather than by model count.
   in one cohort. It does not uniquely identify a latent mechanism, establish causality,
   reproduce multimodal/neural analyses, or demonstrate transport to another laboratory.
 
+## 0.20 — Reproducible study protocols
+
+- **Implemented:** make a typed, immutable, versioned `StudyProtocol` the scientific
+  boundary for source provenance, outcome-blind cohorts, units, observations, clocks,
+  panels, estimands, transforms, deployment geometry, fixed candidates, uncertainty,
+  nested selection, exact-design recovery, and bounded reporting.
+- **Implemented:** give each declaration canonical JSON, a stable scientific fingerprint,
+  explicit pre-evidence amendments, and an evidence-backed lifecycle from draft through
+  reported.
+- **Implemented:** compile canonical studies into exact fit, prediction-context, score,
+  and exclusion rows; audit temporal, animal, laboratory, experimental-unit, capability,
+  transform-visibility, and nested-selection boundaries before fitting.
+- **Implemented:** execute candidates through one common runner that retains fits,
+  pointwise predictions, equal-unit and pooled scores, calibration, paired uncertainty,
+  numerical audits, failures, and unresolved decisions.
+- **Implemented:** make model, parameter, and outcome-derived-feature recovery first-class
+  claim gates executed through the identical compiled design.
+- **Implemented:** produce deterministic content-addressed evidence bundles with protocol,
+  amendment, environment, source, cohort, plan, fold, audit, comparison, prediction,
+  recovery, figure, report, replay, and bundle-comparison evidence, without raw-data
+  redistribution or executable serialization.
+- **Implemented:** expose a closed, lean command line for validation, execution,
+  inspection, comparison, and report extraction rather than a general scheduler or
+  arbitrary configuration language.
+- **Implemented:** prove generality by migrating the Cell 2025 flagship and the public IBL
+  same-animal/held-out-laboratory nested-selection study with exact denominator, fold,
+  score, interval, audit, selection, and recovery parity.
+- **Bounded claim:** a protocol and internally consistent evidence bundle make an analysis
+  reviewable and reproducible against its identified source. They do not make the source
+  unbiased, the model identifiable, or the estimand transport beyond its declared
+  population.
+
 ## Later
 
 - Confirm the joint choice/response-time design across animals with subject-balanced

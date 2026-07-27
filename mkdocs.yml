@@ -60,6 +60,11 @@ nav:
   - Home: index.md
   - Start here:
       - Choose a workflow: getting-started/index.md
+      - Study protocols: protocols/index.md
+      - Freeze and amend: protocols/lifecycle.md
+      - Compile and audit: protocols/auditing.md
+      - Protocol command line: protocols/cli.md
+      - Evidence bundles: protocols/evidence-bundles.md
       - Longitudinal study contract: data-contract.md
       - Clocks and transforms: clocks-and-transforms.md
       - Scientific scope: scientific-scope.md
@@ -101,4 +106,7 @@ nav:
       - Roadmap: roadmap.md
   - Reference:
       - Python API: reference/index.md
+      - Protocol schema API: reference/protocol.md
+      - Protocol execution API: reference/execution.md
+      - Reporting and evidence API: reference/evidence-bundles.md
       - Figure provenance: reference/figure-provenance.md

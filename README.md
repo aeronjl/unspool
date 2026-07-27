@@ -55,6 +55,7 @@ Unspool is being designed so that:
 - unresolved landmark-uncertainty draws remain visible in relative-clock distributions;
 - every fitted model can be paired with a generative simulation;
 - convergence failures, boundary estimates, and label ambiguity remain visible;
+- the declared proper score controls selection, comparison, uncertainty, and ranking;
 - recovery is reported for a particular design and sample size, not awarded as a
   universal certificate;
 - individual trajectories remain inspectable when population information is pooled;
@@ -66,6 +67,36 @@ Unspool is being designed so that:
 
 See the [scientific scope](docs/scientific-scope.md) and [roadmap](docs/roadmap.md) for
 the proposed first release.
+
+## Reproducible study protocols
+
+Complete analyses can now be frozen as typed, immutable `StudyProtocol` declarations.
+A protocol fixes source provenance, outcome-blind cohort rules, units, clocks, estimands,
+training-only transforms, deployment geometry, candidates, uncertainty, recovery gates,
+limitations, and prohibited claims before fitting. The compiler then materializes exact
+denominators and audits fit, prediction-context, scored, and excluded rows before the
+common runner can execute.
+
+```python
+materialized = materialize_protocol(protocol.freeze(), source_study)
+compiled = compile_execution_plan(
+    materialized,
+    splits,
+    capabilities=capabilities,
+)
+evaluation = run_protocol(compiled, models)
+```
+
+The final reported analysis can be written as a deterministic, content-addressed evidence
+bundle containing the protocol and amendment history, source and cohort identities,
+execution plan, predictions, numerical audits, comparisons, recovery, figures, and
+bounded report—without pickled model objects or redistributed raw trials.
+
+Read the [study-protocol workflow](docs/protocols/index.md), or inspect the command line:
+
+```bash
+uv run unspool --help
+```
 
 ## First executable contract
 
