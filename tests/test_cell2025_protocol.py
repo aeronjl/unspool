@@ -3,8 +3,11 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from benchmarks.cell2025_flagship.benchmark import MODEL_ORDER
 from benchmarks.cell2025_protocol.benchmark import (
+    DEFAULT_DESTINATION,
     LEGACY_RESULT,
     PROTOCOL_RESULT,
     build_protocol,
@@ -34,6 +37,10 @@ def test_cell_protocol_declares_the_complete_scientific_design() -> None:
     )
 
 
+@pytest.mark.skipif(
+    not DEFAULT_DESTINATION.exists(),
+    reason="checksum-pinned Cell source table is not present in the local public-data cache",
+)
 def test_cell_public_panel_compiles_with_exact_denominators_and_fold_geometry() -> None:
     compiled = compile_protocol()
     recorded = json.loads(PROTOCOL_RESULT.read_text(encoding="utf-8"))
