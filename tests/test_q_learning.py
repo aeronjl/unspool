@@ -97,6 +97,7 @@ def test_natural_parameters_round_trip_through_optimizer_coordinates() -> None:
     assert decoded.choice_bias == pytest.approx(0.15)
     assert decoded.perseveration == pytest.approx(0.3)
     assert tuple(parameters) == model.parameter_names
+    assert model.required_task_columns == ("reward",)
 
 
 def test_simulation_is_recursive_reproducible_and_action_contingent() -> None:

@@ -371,8 +371,9 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** add named bias-only, psychometric, lapse-mixture, perseveration, and
   outcome-conditioned win-stay/lose-shift baselines with complete simulation, fit,
   prediction, score, audit, recovery, reward semantics, and reset boundaries.
-- **Planned:** make value updating, forgetting, asymmetric learning, choice kernels,
-  exploration/lapse policies, and session resets composable RL components.
+- **Implemented:** make symmetric or asymmetric value updating, unchosen forgetting,
+  exponential choice kernels, bias/lapse softmax policies, and reset columns composable in
+  a binary RL agent while retaining the original validated Q-learning model.
 - **Planned:** support multinomial and omission-aware choice likelihoods through the common
   task coordinate.
 - **Planned:** add the standard input-driven and sticky GLM-HMM variants with state-count,

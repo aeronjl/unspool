@@ -1,8 +1,71 @@
-# Session-reset binary Q-learning
+# Reinforcement-learning agents
 
 `BinaryQLearning` is Unspool's first reinforcement-learning reference agent. It is a compact
 two-action Q-learning model intended to compete with history, smooth-drift, and latent-state
 accounts—not a claim that all behavioural learning is model-free value learning.
+
+`BinaryRLAgent` is the composable 0.22 successor. The original model remains available
+unchanged for numerical parity with published Unspool analyses; new work can assemble a
+learning rule, optional forgetting, optional choice kernel, policy, and reset boundary as
+separate immutable components.
+
+## Compose an agent
+
+```python
+from unspool import (
+    AsymmetricLearning,
+    BinaryRLAgent,
+    ChoiceKernel,
+    ResetRule,
+    SoftmaxPolicy,
+    UnchosenForgetting,
+)
+
+model = BinaryRLAgent(
+    learning=AsymmetricLearning(),
+    forgetting=UnchosenForgetting(),
+    choice_kernel=ChoiceKernel(),
+    policy=SoftmaxPolicy(maximum_lapse=0.15),
+    reset=ResetRule(("subject", "session")),
+    n_restarts=5,
+)
+parameters = model.parameters_from_components(
+    positive_learning_rate=0.35,
+    negative_learning_rate=0.12,
+    forgetting_rate=0.08,
+    choice_kernel_rate=0.30,
+    choice_kernel_weight=0.70,
+    inverse_temperature=4.0,
+    choice_bias=0.10,
+    lapse_rate=0.03,
+)
+```
+
+Every assembly has a configuration-specific signature and exact optimizer and natural
+parameter coordinates. Components cannot silently introduce colliding parameter names.
+`SymmetricLearning` supplies one delta-rule rate; `AsymmetricLearning` selects separate
+rates for non-negative and negative reward-prediction errors.
+
+`UnchosenForgetting` moves the unchosen action value toward the declared `initial_value`
+after each outcome. `ChoiceKernel` updates a two-action trace toward the latest choice and
+adds its weighted difference to the policy. These are distinct mechanisms: forgetting
+changes expected reward, whereas a choice kernel changes the policy without changing
+reward value.
+
+`SoftmaxPolicy` always estimates inverse temperature, can omit the fixed action bias, and
+can add a bounded random-response lapse mixture. `maximum_lapse` is fixed before fitting;
+the natural `lapse_rate` must lie below it.
+
+## Reset semantics are data semantics
+
+`ResetRule(("subject", "session"))` is the default and creates a fresh value and kernel
+state at each session. Other reset columns can represent explicit episodes or blocks.
+`ResetRule(("subject",))` carries state across sessions within the supplied study, but it
+must not be used with a validation split whose prediction context omits earlier sessions.
+In that case the model would restart at the beginning of the test table even though its
+scientific specification says to carry state. Session-reset agents remain the safe default
+for ordinary future-session folds until evaluation exposes fitted terminal states as an
+explicit prediction-context object.
 
 ## Generative model
 
@@ -74,6 +137,20 @@ trajectory.prediction_error  # r_t - Q_t(a_t)
 trajectory.post_update  # values after observing r_t
 ```
 
+The composable agent exposes the richer parallel record:
+
+```python
+fit = model.fit(study)
+trajectory = model.trajectory(study, fit)
+
+trajectory.pre_choice_values
+trajectory.post_update_values
+trajectory.pre_choice_kernel
+trajectory.post_update_kernel
+trajectory.prediction_error
+trajectory.probability
+```
+
 Arrays retain the Study's source row order while recursion follows explicit within-subject
 session chronology. Within-session rolling-origin evaluation replays the observed prefix,
 so both values and perseveration reach the held-out block without scoring context trials.
@@ -94,6 +171,12 @@ configured warning scale, and extreme bias or perseveration estimates.
 same status, issue-code, and `RestartAudit` contract used by the other reference models.
 Raw objectives, convergence flags, and optimizer messages remain on `QLearningFitResult`.
 
+`BinaryRLAgent` uses the same deterministic multistart and fit-audit requirements, with a
+numerical gradient because the recursion varies by component assembly. `RLFitResult`
+retains every restart plus a labelled natural-parameter view. The common fit artifact
+continues to record the stable optimizer coordinate; the shared parameter-schema work in
+0.23 will make both coordinates first-class across model families.
+
 ## Recovery and competing explanations
 
 The model satisfies Unspool's generic parameter- and model-recovery contracts. Its tests
@@ -112,8 +195,10 @@ reward schedule, session length, missingness, and candidate set.
 
 ## Current boundary
 
-This first agent has two actions, a single symmetric learning rate, fixed parameters, no
-forgetting or counterfactual updates, and mandatory session resets. It does not yet provide
-partial pooling, across-session value carry-over, asymmetric positive/negative learning,
-model-based planning, or stimulus-conditioned policies. Those are extensions to earn with
-design-specific recovery rather than options to accumulate speculatively.
+The composable layer remains deliberately binary. It now covers symmetric or asymmetric
+chosen-value learning, unchosen forgetting, an exponential choice kernel, bounded lapse,
+and explicit reset columns. It does not yet cover counterfactual updates, Kalman or
+Bayesian learners, model-based planning, stimulus-conditioned policies, partial pooling,
+or multinomial action sets. Component-rich fits can be weakly identified even when the
+optimizer converges; exact-design parameter and model recovery remain mandatory evidence,
+not a property conferred by composition.

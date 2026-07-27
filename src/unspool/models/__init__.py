@@ -63,6 +63,18 @@ from unspool.models.q_learning import (
     QLearningParameters,
     ValueTrajectory,
 )
+from unspool.models.rl import (
+    AsymmetricLearning,
+    BinaryRLAgent,
+    ChoiceKernel,
+    LearningRule,
+    ResetRule,
+    RLFitResult,
+    RLTrajectory,
+    SoftmaxPolicy,
+    SymmetricLearning,
+    UnchosenForgetting,
+)
 from unspool.models.smooth_ddm import (
     DriftDiffusionTrajectory,
     SmoothDriftDiffusionFitResult,
@@ -70,12 +82,15 @@ from unspool.models.smooth_ddm import (
 )
 
 __all__ = [
+    "AsymmetricLearning",
     "BehaviourEstimator",
     "BehaviourModel",
     "BernoulliGLMHMM",
     "BernoulliHistoryGLM",
     "BiasOnly",
     "BinaryQLearning",
+    "BinaryRLAgent",
+    "ChoiceKernel",
     "CoefficientTrajectory",
     "DriftDiffusionFitResult",
     "DriftDiffusionParameters",
@@ -100,6 +115,7 @@ __all__ = [
     "LapsePsychometric",
     "LapsePsychometricFitResult",
     "LapsePsychometricParameters",
+    "LearningRule",
     "ModelCapabilities",
     "ModelDataError",
     "Perseveration",
@@ -108,9 +124,15 @@ __all__ = [
     "Psychometric",
     "QLearningFitResult",
     "QLearningParameters",
+    "RLFitResult",
+    "RLTrajectory",
+    "ResetRule",
     "SmoothBernoulliHistoryGLM",
     "SmoothDriftDiffusionFitResult",
     "SmoothWienerDriftDiffusion",
+    "SoftmaxPolicy",
+    "SymmetricLearning",
+    "UnchosenForgetting",
     "UniformResponseTimeContaminant",
     "UnseenSubjectPosteriorPrediction",
     "UnsupportedPredictionMode",
