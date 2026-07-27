@@ -35,6 +35,11 @@ minimum, not a claim that two animals provide adequate power.
 
 ## What “shape” means here
 
+<figure class="doc-figure doc-figure--wide">
+  <img src="../assets/trajectory-components.svg" alt="Reference, level-shift, amplitude-shift, and sinusoidal shape-change trajectories alongside a heat map of level, amplitude, and shape contrast metrics from the committed benchmark.">
+  <figcaption><strong>Trajectory components.</strong> The left panel defines the simulation geometry; the right panel shows that level, amplitude, and shape metrics respond differently to the three reference contrasts in the committed benchmark.</figcaption>
+</figure>
+
 For a group-mean trajectory \(f(t)\), trapezoidal weights on the declared grid define:
 
 - **level**: the weighted mean of \(f\);
@@ -79,7 +84,7 @@ remain useful.
 
 ## Validation evidence
 
-The matched [`trajectory_shapes` benchmark](../benchmarks/trajectory_shapes/README.md)
+The matched [`trajectory_shapes` benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/trajectory_shapes)
 simulates replicated labs whose generating differences are level-only, amplitude-only, or
 shape-changing. Across 20 pinned repetitions, the decomposition recovers all three
 components and rejects a separate singleton-lab design. This is design-specific recovery

@@ -1,0 +1,101 @@
+site_name: Unspool
+site_description: Prospective modelling and falsification of behavioural trajectories across learning
+site_url: https://aeronjl.github.io/unspool/
+repo_url: https://github.com/aeronjl/unspool
+repo_name: aeronjl/unspool
+edit_uri: edit/main/docs/
+strict: true
+
+theme:
+  name: material
+  features:
+    - navigation.indexes
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/weather-night
+        name: Use dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Use light mode
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - footnotes
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_root_heading: true
+            show_source: false
+
+nav:
+  - Home: index.md
+  - Start here:
+      - Choose a workflow: getting-started/index.md
+      - Longitudinal study contract: data-contract.md
+      - Clocks and transforms: clocks-and-transforms.md
+      - Scientific scope: scientific-scope.md
+  - Worked studies:
+      - Studies overview: tutorials/index.md
+      - Cell 2025 learning strategies: tutorials/cell2025-learning-trajectories.md
+      - IBL learning trajectories: tutorials/ibl2021-learning-trajectories.md
+      - Prospective drift and nested selection: tutorials/ibl2021-prospective-selection.md
+      - Model-recovery design: tutorials/model-recovery-design.md
+  - Methods:
+      - Methods catalog: methods/index.md
+      - Capability matrix: methods/capability-matrix.md
+      - Modelling contract: modelling.md
+      - Static and smooth drift: smooth-drift.md
+      - Hierarchical GLM: hierarchical-glm.md
+      - Hierarchical smooth GLM: hierarchical-smooth-glm.md
+      - GLM-HMM: glm-hmm.md
+      - Q-learning: q-learning.md
+      - Drift diffusion: drift-diffusion.md
+      - Smooth drift diffusion: smooth-ddm.md
+      - Hierarchical smooth DDM: hierarchical-smooth-ddm.md
+  - Design and validation:
+      - Prospective validation: validation.md
+      - Model comparison: comparison.md
+      - Parameter and model recovery: model-recovery.md
+      - Fit diagnostics: diagnostics.md
+      - Estimator contract: estimator-contract.md
+      - Trajectory shapes: trajectory-shapes.md
+  - Data and interoperability:
+      - Tabular, IBL, NWB, and DANDI: interoperability.md
+      - Provenance: provenance.md
+  - Evidence and ideas:
+      - Evidence index: evidence/index.md
+      - Literature guide: literature.md
+      - Philosophy of Unspool: philosophy.md
+      - Roadmap: roadmap.md
+  - Reference:
+      - Python API: reference/index.md
+      - Figure provenance: reference/figure-provenance.md

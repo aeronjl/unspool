@@ -20,6 +20,11 @@ within-subject forecast through calendar time.
 ² The combined population-forecast fold protects both boundaries: the held-out lab is
 absent from fitting, and later sessions from the training labs are excluded too.
 
+<figure class="doc-figure doc-figure--wide">
+  <img src="../assets/validation-splits.svg" alt="A four-panel comparison of forward-session, whole-session, unseen-animal, and held-out-lab future-session validation geometries using blue training blocks, amber test blocks, and grey untargeted sessions.">
+  <figcaption><strong>Four generalization targets.</strong> The colored blocks show which observations train and test each procedure. These geometries answer different scientific questions and their scores are not interchangeable.</figcaption>
+</figure>
+
 ## Forward-session prediction
 
 ```python
@@ -168,11 +173,11 @@ Subjects that do not reach the horizon cause an error rather than silently chang
 membership. Sessions before the horizon from test animals are withheld rather than used as
 prediction context, so hierarchical models must apply their declared unseen-subject policy.
 
-The [replicated IBL prospective benchmark](../benchmarks/ibl2021_prospective/README.md)
+The [replicated IBL prospective benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021_prospective)
 uses this splitter to distinguish future prediction for represented animals from future
 prediction in an entirely unseen lab.
 
-Its [nested-selection successor](../benchmarks/ibl2021_nested_selection/README.md) performs
+Its [nested-selection successor](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021_nested_selection) performs
 candidate and smoothness selection on earlier inner forecasts within each outer training
 study. The outer held-out lab and future session are absent during selection, so the final
 score evaluates the complete training-only procedure.

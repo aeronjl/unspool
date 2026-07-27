@@ -107,13 +107,13 @@ for row in grid.summary():
     print(row.design_name, row.overall_accuracy, row.audit_warning_rate)
 ```
 
-The first bounded [four-family recovery benchmark](../benchmarks/recovery_grid/README.md)
+The first bounded [four-family recovery benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/recovery_grid)
 uses static, smooth, GLM-HMM, and Q-learning candidates on nested 150- and 300-trial
 designs. The smaller cell recovers two of four generating families; the larger recovers
 all four for the exact single-run parameter regimes. The contrast is evidence that the
 answer changes with the design—not an estimate of a general sample-size threshold.
 
-The follow-up [weak-signal benchmark](../benchmarks/weak_signal_recovery/README.md) fixes
+The follow-up [weak-signal benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/weak_signal_recovery) fixes
 the 300-trial design and repeats each stronger and boundary-near regime ten times. Recovery
 falls from 70.0% to 32.5%; the scenario matrix shows subtle drift collapsing toward static
 fits and overlapping HMM emissions collapsing toward static or smooth fits. Wilson

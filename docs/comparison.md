@@ -87,6 +87,11 @@ parameter estimates or predictions need inspection.
 Candidate grids and hyperparameters must not be selected on the folds used for the final
 claim. `nested_select_model` gives the splitter only the outer training study:
 
+<figure class="doc-figure doc-figure--wide">
+  <img src="../assets/nested-selection.svg" alt="Nested selection diagram in which outer training data are split into inner forecasts, candidates are compared, one procedure is selected and refitted, and the outer future test is opened only once.">
+  <figcaption><strong>Nested selection boundary.</strong> Inner forecasts choose the candidate and hyperparameters using only outer-training data. The untouched outer test scores the complete selection procedure.</figcaption>
+</figure>
+
 ```python
 from unspool import nested_select_model
 
@@ -120,7 +125,7 @@ reported as the performance of one fixed model when different candidates were se
 across folds. Likewise, inspecting outer results and then changing the candidate grid
 invalidates the nesting and requires a new untouched evaluation layer or a new study.
 
-The [replicated IBL nested-selection benchmark](../benchmarks/ibl2021_nested_selection/README.md)
+The [replicated IBL nested-selection benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021_nested_selection)
 applies this contract to 78 animals across nine labs. It nests both same-animal session
 forecasting and unseen-lab future-session forecasting, and retains the exact inner targets,
 selected candidate, outer fit audit, and subject-level scores for every outer fold.
@@ -128,7 +133,7 @@ selected candidate, outer fit audit, and subject-level scores for every outer fo
 ## Recovery requirement
 
 Nesting prevents direct test leakage; it does not guarantee reliable selection. The
-[nested selection recovery benchmark](../benchmarks/nested_selection/README.md) tests the
+[nested selection recovery benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/nested_selection) tests the
 whole procedure under stationary and shared-drift generators. It recovers strong drift in
 40/40 outer folds and selects the static model in 37/40 stationary folds, retaining the
 remaining resolution errors rather than treating nesting as a certificate.

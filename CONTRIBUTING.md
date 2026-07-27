@@ -25,6 +25,28 @@ uv build
 
 Use `uv run ruff format .` to apply formatting.
 
+## Documentation changes
+
+Build the documentation in strict mode before submitting a change:
+
+```bash
+uv sync --group docs --locked
+uv run --group docs mkdocs build --strict
+```
+
+Worked studies should identify the scientific question, experimental unit, estimand,
+validation boundary, result, and limitations. If a page adds or changes a figure:
+
+- regenerate it with `uv run --group docs python -m scripts.plot_documentation_figures`;
+- provide conclusion-bearing alternative text and a caption;
+- classify it as empirical or conceptual in the
+  [figure provenance register](docs/reference/figure-provenance.md); and
+- keep the source data or frozen benchmark artifact traceable without committing fetched
+  datasets.
+
+Use `--skip-cell` to regenerate every figure except the Cell reproduction when its
+checksum-pinned source table is not present locally.
+
 ## Scientific changes
 
 A new model or inference path should include:

@@ -16,7 +16,7 @@ The published archive is a research-analysis reference, not the package skeleton
 code adapted from it must retain its license and attribution and be covered by focused
 tests in Unspool.
 
-The first [Cell 2025 benchmark](../benchmarks/cell2025/README.md) independently
+The first [Cell 2025 benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/cell2025) independently
 reimplements one bounded Figure 1 result rather than copying the released notebook. It
 pins the Figshare article version, archive file ID, inner member, byte size, and SHA-256;
 records a verified numerical result; and keeps all paper-specific code outside
@@ -30,20 +30,20 @@ subject/session-aware comparisons. Unspool will extract only concepts that belon
 general library. Research-specific evidence machinery and broad thesis dependencies will
 remain outside the package.
 
-The public [IBL 2021 benchmark](../benchmarks/ibl2021/README.md) independently implements
+The public [IBL 2021 benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021) independently implements
 a smaller, trial-outcome-blind extraction contract rather than copying that programme's
 policy or modelling machinery. It pins 54 public `trials.table` datasets from the fixed
 behaviour release, validates each source hash, and keeps all IBL-specific selection and
 adaptation code outside `src/unspool`. The data remain CC BY 4.0 and are fetched on demand.
 
-The [flagship prospective study](../benchmarks/flagship_longitudinal/README.md) composes
+The [flagship prospective study](https://github.com/aeronjl/unspool/tree/main/benchmarks/flagship_longitudinal) composes
 those two independently implemented adapters without copying either paper's analysis. It
 records the source hashes again, aligns only the declared six-session analysis rank, and
 retains source chronology so that the alignment remains reversible and auditable.
 
 ## NWB/DANDI interoperability anchor
 
-The [NWB/DANDI benchmark](../benchmarks/nwb_dandi_interoperability/README.md) uses published
+The [NWB/DANDI benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/nwb_dandi_interoperability) uses published
 Dandiset `000004`, version `0.220126.1852`, under CC BY 4.0. It pins one NWB asset by exact
 path, asset ID, byte size, and SHA-256. No source file is redistributed: the benchmark
 streams only selected trial-table datasets from the content-addressed public blob. Source

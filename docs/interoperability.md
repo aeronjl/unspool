@@ -4,6 +4,11 @@ Unspool keeps `Study` small and format-independent. Interoperability code conver
 tables into that contract; it does not let file names, dataframe indices, or archive order
 become hidden scientific assumptions.
 
+<figure class="doc-figure doc-figure--wide">
+  <img src="../assets/interoperability-pipeline.svg" alt="Dataframes, IBL ONE, NWB, and DANDI converge on one Study contract, pass through explicit semantic and provenance declarations, and enter the same prospective analysis boundary.">
+  <figcaption><strong>One scientific boundary across formats.</strong> Adapters preserve source identity and translate structure into the Study contract; they never invent chronology, units, or behavioural semantics.</figcaption>
+</figure>
+
 ## Dataframes
 
 `Study.from_dataframe(frame)` preserves dataframe column order and row order while
@@ -56,7 +61,7 @@ uses the explicit `session_order`.
 IBL's source `choice` coding is not Unspool's binary Bernoulli coding. The adapter therefore
 does not silently reinterpret `-1`, `0`, and `+1`; callers must give the source field an
 honest name such as `source_choice` and perform any model-specific recoding explicitly.
-The [replicated IBL benchmark](../benchmarks/ibl2021_replicated/README.md) exercises this
+The [replicated IBL benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021_replicated) exercises this
 contract against 468 checksum-pinned public tables.
 
 ## Reading local NWB sessions
@@ -168,6 +173,6 @@ follows the official [DANDI REST API](https://docs.dandiarchive.org/api/rest-api
 - The ONE adapter is a read-only exact-dataset importer; release discovery, remote mutation,
   and implicit selection by dataset name remain outside its contract.
 
-The [public interoperability benchmark](../benchmarks/nwb_dandi_interoperability/README.md)
+The [public interoperability benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/nwb_dandi_interoperability)
 pins a real DANDI asset and verifies the complete identity, chronology, source-semantics,
 and provenance contract.

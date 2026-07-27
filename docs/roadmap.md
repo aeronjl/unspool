@@ -251,6 +251,25 @@ The roadmap is organized by scientific contracts rather than by model count.
   not a selection-stability sample, and the selected procedure's unseen-lab advantage over
   static remains unresolved.
 
+## 0.17 — Scientist-facing documentation and worked evidence
+
+- **Implemented:** publish the existing scientific contracts as a searchable, strictly
+  validated documentation site organized by question rather than Python module.
+- **Implemented:** distinguish supported, experimental, planned, and out-of-scope
+  capabilities in one scientist-facing matrix.
+- **Implemented:** turn the Cell 2025 reproduction, replicated IBL trajectories,
+  prospective nested selection, and four-family recovery grid into worked literature
+  studies with explicit denominators, estimands, limitations, and reproduction commands.
+- **Implemented:** generate fifteen versioned figures: five empirical or simulation-based
+  evidence displays from checksum-pinned public inputs and committed benchmark results,
+  plus ten clearly labelled conceptual maps of workflow, validation, model structure, and
+  diagnostics. Every figure has descriptive alternative text, an interpretive caption,
+  and an auditable entry in the figure provenance register.
+- **Implemented:** build documentation on every pull request and deploy the exact successful
+  main-branch artifact to GitHub Pages.
+- **Bounded claim:** the site makes current evidence legible; it does not expand the
+  scientific coverage declared by the capability matrix.
+
 ## Later
 
 - Session-varying GLM-HMM parameters

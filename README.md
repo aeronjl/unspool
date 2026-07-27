@@ -1,6 +1,11 @@
 # Unspool
 
 [![CI](https://github.com/aeronjl/unspool/actions/workflows/ci.yml/badge.svg)](https://github.com/aeronjl/unspool/actions/workflows/ci.yml)
+[![Documentation](https://github.com/aeronjl/unspool/actions/workflows/docs.yml/badge.svg)](https://github.com/aeronjl/unspool/actions/workflows/docs.yml)
+
+**[Read the documentation](https://aeronjl.github.io/unspool/)** to choose a
+longitudinal workflow, browse supported and experimental methods, and run worked
+Cell and IBL studies.
 
 > “No two moments are identical in a conscious being.”
 > — Henri Bergson, *The Creative Mind*
@@ -357,6 +362,24 @@ uv run ruff check .
 uv run ruff format --check .
 uv build
 ```
+
+Build or preview the scientist-facing documentation with:
+
+```bash
+uv sync --group docs --locked
+uv run --group docs mkdocs build --strict
+uv run --group docs mkdocs serve
+```
+
+Regenerate the versioned documentation figures with:
+
+```bash
+uv run --group docs python -m scripts.plot_documentation_figures
+```
+
+Use `--skip-cell` when the checksum-pinned Cell source table has not been downloaded yet.
+The [figure provenance register](docs/reference/figure-provenance.md) distinguishes
+conceptual diagrams from displays generated from public data or committed benchmarks.
 
 To apply formatting locally:
 

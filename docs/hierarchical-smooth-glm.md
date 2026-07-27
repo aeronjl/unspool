@@ -59,7 +59,7 @@ from the configured Gaussian penalty. Its optional `subject_deviation_paths` arg
 accepts exact realized paths for recovery experiments, without adding truth columns to the
 fitted data.
 
-The [factorial trajectory benchmark](../benchmarks/trajectory_recovery/README.md) makes
+The [factorial trajectory benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/trajectory_recovery) makes
 five models compete under stationary identical animals, stable individual differences,
 shared drift, and individual drift. The hierarchical smooth model wins only the individual-
 drift regime; simpler accounts win the other three under both trajectory recovery and
