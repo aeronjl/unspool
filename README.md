@@ -53,6 +53,7 @@ Unspool is being designed so that:
 - recovery is reported for a particular design and sample size, not awarded as a
   universal certificate;
 - individual trajectories remain inspectable when population information is pooled;
+- external tables retain explicit identity, chronology, source semantics, and provenance;
 - discrete states must compete against smooth drift, learning, history, and observable
   behavioural alternatives.
 
@@ -88,6 +89,7 @@ cumulative-trial, elapsed-time, task-phase, and landmark-relative clocks prevent
 temporal coordinates from becoming anonymous columns. Behavioural landmarks are fitted
 independently inside each training fold with immutable provenance. See the
 [data contract](docs/data-contract.md),
+[NWB/DANDI interoperability guide](docs/interoperability.md),
 [clock and transform guide](docs/clocks-and-transforms.md), and
 [validation guide](docs/validation.md).
 
@@ -236,6 +238,12 @@ joint log loss; all 480 fits converge. See the
 
 ## Published-data benchmarks
 
+An interoperability benchmark streams a version-pinned 72.6 MB NWB asset from published
+Dandiset `000004` without downloading it wholesale. All 200 source trial IDs, row order,
+time intervals, task phases, stimulus categories, field semantics, and trial-addressable
+asset provenance satisfy the canonical contract. See the
+[NWB/DANDI interoperability benchmark](benchmarks/nwb_dandi_interoperability/README.md).
+
 The first external benchmark reproduces the central longitudinal-behaviour result from
 Liebana, Laffere et al. (2025): bias during days 4–8 predicts the final-five-session
 right-minus-left psychometric-slope asymmetry across 30 mice (`r = 0.69479`,
@@ -298,6 +306,7 @@ uv run python -m benchmarks.ddm_contaminants.benchmark
 uv run python -m benchmarks.smooth_ddm.benchmark
 uv run python -m benchmarks.hierarchical_smooth_ddm.benchmark
 uv run python -m benchmarks.ddm_predictive_uncertainty.benchmark
+uv run --extra dandi python -m benchmarks.nwb_dandi_interoperability.benchmark
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv

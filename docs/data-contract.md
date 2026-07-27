@@ -49,6 +49,11 @@ assert study.chronological_indices().tolist() == [2, 1, 0]
 Inputs are copied and exposed as read-only NumPy arrays. Subsets created with
 `study.take(indices)` pass through the same validation contract.
 
+Pandas-like objects can use `Study.from_dataframe()`. Its index is deliberately ignored;
+the required identity and chronology must remain explicit columns. Local NWB round trips
+and version-pinned DANDI streaming use the same contract and are documented in
+[Tabular, NWB, and DANDI interoperability](interoperability.md).
+
 ## Multiple clocks
 
 `session_order` is only the minimum clock required for session-aware validation. Calendar
