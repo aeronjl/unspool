@@ -443,16 +443,19 @@ The roadmap is organized by scientific contracts rather than by model count.
 
 ## 0.24 — Literature recipes and ecosystem documentation
 
-- **Planned:** publish end-to-end public-data recipes for psychometric/history models,
-  bandit RL, GLM-HMMs, perceptual DDMs, and longitudinal learning comparisons.
-- **Planned:** make every recipe produce publication-quality figures through public APIs,
-  with data provenance, expected runtime, diagnostics, recovery evidence, and explicit
-  claim limits.
-- **Planned:** add task and model decision guides, model cards, and migration guides from
-  hand-written SciPy, `ssm`, hBayesDM, HDDM, and PyDDM workflows.
-- **Planned:** document how downstream libraries contribute task adapters, model
-  components, inference backends, diagnostics, and recipes without adopting Unspool's
-  internal implementations.
+- **In progress:** publish end-to-end public-data recipes for psychometric/history models,
+  bandit RL, GLM-HMMs, perceptual DDMs, and longitudinal learning comparisons. Public Cell
+  and IBL recipes currently cover longitudinal history, GLM-HMM, and DDM workflows; a
+  public bandit recipe remains outstanding.
+- **Implemented:** define a literature-recipe standard requiring source and cohort
+  provenance, expected runtime, observed event, estimand, prospective boundary,
+  diagnostics, exact-design recovery, publication-quality figures, and explicit claim
+  limits.
+- **Implemented:** add a decision-first task/model guide, common-format model cards, and
+  migration guides from hand-written SciPy, `ssm`, hBayesDM, HDDM, and PyDDM workflows.
+- **Implemented:** document how downstream libraries contribute task adapters, estimators,
+  inference backends, diagnostics, and recipes without adopting Unspool internals or using
+  a global plugin registry.
 - **Release boundary:** a new user can reproduce a canonical analysis from the literature,
   understand why each step is present, replace one component, and obtain the same standard
   evidence objects.

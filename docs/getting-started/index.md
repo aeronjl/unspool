@@ -81,7 +81,9 @@ Read [prospective validation](../validation.md) before interpreting the score.
 
 Use [`compare_models`](../comparison.md) for a predeclared candidate set. Use
 `nested_select_model` when candidates or hyperparameters are selected from data before the
-final forecast.
+final forecast. The [model-choice guide](../model-choice-guide.md) routes the observed event,
+deployment target, and proposed mechanism into matched alternatives; the
+[model cards](../model-cards.md) state each first-party family's limits in a common format.
 
 ## I have IBL or NWB data
 
@@ -93,6 +95,11 @@ DANDI core dependencies. See [data and interoperability](../interoperability.md)
 The common [inference backend contract](../inference-backends.md) keeps parameter and task
 semantics fixed while changing search strategy. SciPy L-BFGS-B is available in core;
 install `unspool[optimization]` for the optional PyBADS multistart backend.
+
+If the model or solver should remain in another package, use the
+[extension guide](../extensions.md) rather than copying it into Unspool. Existing SciPy,
+`ssm`, hBayesDM, HDDM, and PyDDM analyses have dedicated
+[migration maps](../migration-guides.md).
 
 ## I have posterior draws from a probabilistic backend
 
@@ -109,7 +116,9 @@ For full posterior inference on the fixed-scale hierarchical Bernoulli history G
 
 The [worked studies](../tutorials/index.md) begin with published scientific questions and
 carry them through cohort definition, modelling, validation, figures, and bounded
-interpretation.
+interpretation. Their common [recipe standard](../tutorials/recipe-contract.md) separates
+exact reproduction, independent reproduction, literature-shaped analysis, and synthetic
+demonstration.
 
 The [Cell 2025](../tutorials/cell2025-learning-trajectories.md) and
 [IBL nested-selection](../tutorials/ibl2021-prospective-selection.md) studies are also

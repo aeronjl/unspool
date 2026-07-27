@@ -4,6 +4,11 @@ Unspool groups methods by the explanation they offer for change. Availability is
 same as validation: consult the [capability matrix](capability-matrix.md) and each model's
 recovery evidence.
 
+If you are starting an analysis rather than browsing implementations, use the
+[model-choice guide](../model-choice-guide.md) first. The [model cards](../model-cards.md)
+then state each family's required observations, prediction semantics, evidence, and
+unsupported uses in a common format.
+
 <figure class="doc-figure doc-figure--wide">
   <img src="../assets/model-atlas.svg" alt="Five conceptual trajectories comparing a static GLM, smooth drift, GLM-HMM regimes, Q-learning value updating, and a drift-diffusion tendency across early-to-late learning.">
   <figcaption><strong>Model-family atlas.</strong> Each family encodes a different explanation of behavioural change. The curves are conceptual signatures, not fitted data or evidence that any family is correct.</figcaption>

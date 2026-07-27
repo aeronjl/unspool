@@ -60,6 +60,8 @@ nav:
   - Home: index.md
   - Start here:
       - Choose a workflow: getting-started/index.md
+      - Choose a model: model-choice-guide.md
+      - Model cards: model-cards.md
       - Study protocols: protocols/index.md
       - Freeze and amend: protocols/lifecycle.md
       - Compile and audit: protocols/auditing.md
@@ -73,6 +75,7 @@ nav:
       - Scientific scope: scientific-scope.md
   - Worked studies:
       - Studies overview: tutorials/index.md
+      - Recipe standard: tutorials/recipe-contract.md
       - Cell 2025 flagship forecast: tutorials/cell2025-learning-trajectories.md
       - IBL learning trajectories: tutorials/ibl2021-learning-trajectories.md
       - Prospective drift and nested selection: tutorials/ibl2021-prospective-selection.md
@@ -114,6 +117,8 @@ nav:
   - Data and interoperability:
       - Tabular, IBL, NWB, and DANDI: interoperability.md
       - Provenance: provenance.md
+      - Migration guides: migration-guides.md
+      - Extend Unspool: extensions.md
   - Evidence and ideas:
       - Evidence index: evidence/index.md
       - Literature guide: literature.md
