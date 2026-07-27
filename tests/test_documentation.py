@@ -25,6 +25,7 @@ EXPECTED_FIGURES = {
     "model-recovery-matrix.svg",
     "nested-selection.svg",
     "sbc-workflow.svg",
+    "sensitivity-specification.svg",
     "trajectory-components.svg",
     "validation-geometry.svg",
     "validation-splits.svg",

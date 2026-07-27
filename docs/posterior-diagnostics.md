@@ -93,7 +93,7 @@ useful, or scientifically calibrated. Use it alongside:
 - posterior predictive checks for observable mismatch;
 - simulation-based calibration and exact-design recovery for inferential calibration;
 - prospective prediction for longitudinal generalization;
-- sensitivity analysis for prior and modelling choices; and
+- [analysis sensitivity](sensitivity-analysis.md) for prior and modelling choices; and
 - pointwise predictive comparison where its assumptions are appropriate.
 
 Those procedures remain separate because they answer different questions. Convergence is

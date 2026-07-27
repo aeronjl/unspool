@@ -147,6 +147,8 @@ reference distribution using [posterior-predictive checks](posterior-predictive-
 To test the joint prior-simulation and inference implementation over repeated synthetic
 studies, use [simulation-based calibration](simulation-based-calibration.md). It consumes
 the same labelled posterior contract without making a sampler part of Unspool core.
+To compare those same labelled parameters across defensible prior, preprocessing, or
+backend refits, use [analysis sensitivity](sensitivity-analysis.md).
 
 ## What this does not claim
 

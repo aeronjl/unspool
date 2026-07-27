@@ -429,8 +429,12 @@ The roadmap is organized by scientific contracts rather than by model count.
   scalar or vector test quantities, with deterministic independent seeds, randomized
   tie ranks, explicit thinning, immutable raw rank evidence, descriptive coverage and
   histogram summaries, and retained simulation, inference, or evaluation failures.
-- **Planned:** add sensitivity and test-retest reliability alongside Unspool's prospective
-  validation and exact-design recovery.
+- **Implemented:** compare declared reference and alternative specifications through an
+  exact-refit sensitivity contract with scenario-stable seeds, immutable scalar metrics,
+  labelled posterior summaries, diagnostic and artifact provenance, reference contrasts,
+  descriptive specification spread, and retained analysis or evaluation failures.
+- **Planned:** add test-retest reliability alongside Unspool's prospective validation and
+  exact-design recovery.
 - **Release boundary:** changing an inference backend must not change task semantics,
   prediction information, split geometry, scored observations, or result interpretation.
 

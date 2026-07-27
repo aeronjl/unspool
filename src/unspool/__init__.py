@@ -342,6 +342,20 @@ from unspool.sbc import (
     SBCTestQuantity,
     run_simulation_based_calibration,
 )
+from unspool.sensitivity import (
+    SensitivityAnalysis,
+    SensitivityContrast,
+    SensitivityError,
+    SensitivityFailure,
+    SensitivityMetric,
+    SensitivityOutcome,
+    SensitivityReport,
+    SensitivityRun,
+    SensitivityScenario,
+    SensitivitySummary,
+    posterior_sensitivity_outcome,
+    run_sensitivity_analysis,
+)
 from unspool.state_alignment import LatentStateAlignment, align_latent_states
 from unspool.study import REQUIRED_COLUMNS, Study, StudyValidationError
 from unspool.task import (
@@ -648,6 +662,16 @@ __all__ = [
     "ScoreMetric",
     "ScoreSummary",
     "SelectionTieBreak",
+    "SensitivityAnalysis",
+    "SensitivityContrast",
+    "SensitivityError",
+    "SensitivityFailure",
+    "SensitivityMetric",
+    "SensitivityOutcome",
+    "SensitivityReport",
+    "SensitivityRun",
+    "SensitivityScenario",
+    "SensitivitySummary",
     "Setting",
     "SmoothBernoulliHistoryGLM",
     "SmoothDriftDiffusionFitResult",
@@ -722,6 +746,7 @@ __all__ = [
     "parameter_space_from_json",
     "posterior_predictive_check",
     "posterior_result_from_arviz",
+    "posterior_sensitivity_outcome",
     "protocol_from_dict",
     "protocol_from_json",
     "psis_loo",
@@ -737,6 +762,7 @@ __all__ = [
     "run_nested_protocol",
     "run_parameter_recovery",
     "run_protocol",
+    "run_sensitivity_analysis",
     "run_simulation_based_calibration",
     "session_order_clock",
     "study_from_dandi",
