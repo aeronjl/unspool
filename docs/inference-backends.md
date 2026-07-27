@@ -101,12 +101,44 @@ and failed attempts survive the portable artifact boundary. Migrating the compos
 DDM, mixture, and GLM-HMM implementations to this contract is incremental compatibility
 work, not a second inference design.
 
-## Next backend
+## Optional PyBADS backend
 
-The next adapter is PyBADS. Its hard/plausible bound distinction maps directly onto
-`ParameterSpace`, while its noisy-objective and search diagnostics will map onto the same
-attempt and run records. PyBADS remains optional: Unspool's core Python and SciPy support
-will not be constrained by an adapter dependency.
+Install the optional extra when BADS is appropriate for a moderately expensive,
+derivative-free likelihood:
+
+```bash
+python -m pip install "unspool[optimization]"
+```
+
+```python
+from unspool import PyBADSMultistart
+
+run = PyBADSMultistart(
+    random_seed=42,
+    max_iterations=200,
+    max_function_evaluations=1_000,
+    function_tolerance=1e-6,
+).run(problem)
+```
+
+`PyBADSMultistart` maps optimizer hard and plausible bounds from the identical
+`ParameterSpace`. Every free parameter must declare two finite plausible bounds and every
+start must lie inside that plausible box; the adapter will not invent or silently expand
+scientific search assumptions. Each start receives the deterministic seed
+`random_seed + attempt_index`, and the legacy NumPy random state is restored after each
+run because PyBADS currently seeds it globally.
+
+The result maps PyBADS `x`, `fval`, iterations, function evaluations, success, and message
+onto `OptimizationAttempt`. PyBADS 1.0.6 currently reports `success=True` even for its
+documented limit terminations, so Unspool conservatively marks messages that reached the
+maximum iteration or function-evaluation count as non-converged. They remain eligible as
+the best finite fallback only when no attempt converged.
+
+This initial adapter is for deterministic objectives. It records zero gradient evaluations
+and leaves gradient norm unavailable; PyBADS' stochastic-objective protocol will require a
+separate noise-aware problem contract rather than overloading the deterministic one.
+PyBADS remains optional, so its dependencies do not constrain Unspool core or the SciPy
+backend.
 
 - [PyBADS API](https://acerbilab.github.io/pybads/api/classes/bads.html)
 - [PyBADS JOSS paper](https://doi.org/10.21105/joss.05694)
@@ -123,3 +155,4 @@ will not be constrained by an adapter dependency.
         - OptimizationRun
         - OptimizationBackend
         - ScipyMultistart
+        - PyBADSMultistart

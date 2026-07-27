@@ -88,6 +88,12 @@ final forecast.
 Optional adapters preserve source identity and provenance without making ONE, PyNWB, or
 DANDI core dependencies. See [data and interoperability](../interoperability.md).
 
+## I need a different optimizer
+
+The common [inference backend contract](../inference-backends.md) keeps parameter and task
+semantics fixed while changing search strategy. SciPy L-BFGS-B is available in core;
+install `unspool[optimization]` for the optional PyBADS multistart backend.
+
 ## I want a complete example
 
 The [worked studies](../tutorials/index.md) begin with published scientific questions and

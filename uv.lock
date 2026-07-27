@@ -341,6 +341,24 @@ wheels = [
 ]
 
 [[package]]
+name = "gpyreg"
+version = "1.0.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "numdifftools" },
+    { name = "numpy" },
+    { name = "pytest" },
+    { name = "pytest-rerunfailures" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ae/f7/dd0ba8807c95d9d5f0ef54071b15ecb7f4dcddd031d87ffb110421ce4ad9/gpyreg-1.0.4.tar.gz", hash = "sha256:bd9f13b1f869be080c88a1dd2c754d0f39178e7ae1595a0e02f5c68cbd0446f9", size = 68616, upload-time = "2026-02-17T11:27:16.816Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b0/6d/a48c54a935a20c4d234a09b7d5016d88a672a31fb47dad81a4ea4528023e/gpyreg-1.0.4-py3-none-any.whl", hash = "sha256:295fc15bea92f2e6013a0e647f1b0bea5d6d0bb355274affa86f0a6702f0d68c", size = 69418, upload-time = "2026-02-17T11:27:15.773Z" },
+]
+
+[[package]]
 name = "griffelib"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -944,6 +962,20 @@ wheels = [
 ]
 
 [[package]]
+name = "numdifftools"
+version = "0.9.42"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/17/94/7c83677dddc78f93230f4c8a6a5faa06c92699a76eb019386a3aed8a9762/numdifftools-0.9.42.tar.gz", hash = "sha256:866675171f293c4bf2f1e1c5bf9b88a07d5396903e3b3e7fcc3879e2a01cfbc1", size = 79612, upload-time = "2025-12-11T12:06:10.54Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/60/60/c7504633e9fe53dc823db5d83dc15651c595cf35d668781832b4d2748272/numdifftools-0.9.42-py3-none-any.whl", hash = "sha256:22f926b8de24aa44f740bc26744a74555c1c80413068b1dee2edb3c3d10566f6", size = 94252, upload-time = "2025-12-11T12:06:09.322Z" },
+]
+
+[[package]]
 name = "numpy"
 version = "2.3.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1272,6 +1304,25 @@ wheels = [
 ]
 
 [[package]]
+name = "pybads"
+version = "1.0.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "gpyreg" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pytest" },
+    { name = "pytest-mock" },
+    { name = "pytest-rerunfailures" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/53/1d/bb8c9315db0df7a0893283c4a7b823397cf4f427ede2b0b3b1f3a681d488/pybads-1.0.6.tar.gz", hash = "sha256:967892b32eb239c3ceba10365bdcde6e13b63d530c5f439d6e26c2ccb2872672", size = 98837, upload-time = "2025-10-16T10:21:31.261Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7c/9d/fc5774df3cc7eb76de3d0300ed8590b18afb41e228d7b1998d83e9613a14/pybads-1.0.6-py3-none-any.whl", hash = "sha256:7ad93570f36ba2c117c21b28861dcdb54fd44d84aa89a74a34980f1043d26274", size = 123114, upload-time = "2025-10-16T10:21:29.53Z" },
+]
+
+[[package]]
 name = "pygments"
 version = "2.20.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1333,6 +1384,31 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e4/47/b9efed96c114afcfa3c9d3fe98a76a1d14c74a9e266d397cf6eb64be5e01/pytest-9.1.1.tar.gz", hash = "sha256:1088fbde8f2b49d95a549a195707afa7a76a3ce9bcadc26b6d71f0ffda5fe313", size = 1636369, upload-time = "2026-06-19T10:58:32.857Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/24/25/1de2678b631f5a49215c6c96fff41ba892b0a34df68d6d80292b1b48aa7f/pytest-9.1.1-py3-none-any.whl", hash = "sha256:37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c", size = 386536, upload-time = "2026-06-19T10:58:31.347Z" },
+]
+
+[[package]]
+name = "pytest-mock"
+version = "3.15.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/68/14/eb014d26be205d38ad5ad20d9a80f7d201472e08167f0bb4361e251084a9/pytest_mock-3.15.1.tar.gz", hash = "sha256:1849a238f6f396da19762269de72cb1814ab44416fa73a8686deac10b0d87a0f", size = 34036, upload-time = "2025-09-16T16:37:27.081Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5a/cc/06253936f4a7fa2e0f48dfe6d851d9c56df896a9ab09ac019d70b760619c/pytest_mock-3.15.1-py3-none-any.whl", hash = "sha256:0a25e2eb88fe5168d535041d09a4529a188176ae608a6d249ee65abc0949630d", size = 10095, upload-time = "2025-09-16T16:37:25.734Z" },
+]
+
+[[package]]
+name = "pytest-rerunfailures"
+version = "16.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/47/60/a90ca1cc6cffcb97b4260ed0ad2b7934b999d7c48abe4ea0840344862a3b/pytest_rerunfailures-16.4.tar.gz", hash = "sha256:8222d17c37eb7b9e4d6fc96a3c724ff4e1a5c97a5cc7cbb2c19e9282cfd21a11", size = 36635, upload-time = "2026-07-01T06:30:56.813Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ce/93/3cdcc4033444e822e01b573414b03fd37fd5533070c750477b8f5fa5224b/pytest_rerunfailures-16.4-py3-none-any.whl", hash = "sha256:f69b5beb39622c90d1e44bd945d826eff6db545dcf0b68f52b7e4ad15eaf6d6c", size = 16955, upload-time = "2026-07-01T06:30:55.333Z" },
 ]
 
 [[package]]
@@ -1823,6 +1899,9 @@ nwb = [
     { name = "h5py" },
     { name = "pynwb" },
 ]
+optimization = [
+    { name = "pybads" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -1841,12 +1920,13 @@ requires-dist = [
     { name = "h5py", marker = "extra == 'nwb'", specifier = ">=3.11" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "one-api", marker = "extra == 'ibl'", specifier = ">=3.5,<4" },
+    { name = "pybads", marker = "extra == 'optimization'", specifier = ">=1.0.6,<2" },
     { name = "pynwb", marker = "extra == 'dandi'", specifier = ">=3.1" },
     { name = "pynwb", marker = "extra == 'nwb'", specifier = ">=3.1" },
     { name = "remfile", marker = "extra == 'dandi'", specifier = ">=0.1" },
     { name = "scipy", specifier = ">=1.15" },
 ]
-provides-extras = ["nwb", "dandi", "ibl"]
+provides-extras = ["nwb", "dandi", "ibl", "optimization"]
 
 [package.metadata.requires-dev]
 dev = [
