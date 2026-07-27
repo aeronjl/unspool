@@ -13,6 +13,15 @@ from unspool.models.base import (
     UnsupportedPredictionMode,
     model_capabilities,
 )
+from unspool.models.baselines import (
+    BiasOnly,
+    LapsePsychometric,
+    LapsePsychometricFitResult,
+    LapsePsychometricParameters,
+    Perseveration,
+    Psychometric,
+    WinStayLoseShift,
+)
 from unspool.models.ddm import (
     DriftDiffusionFitResult,
     DriftDiffusionParameters,
@@ -65,6 +74,7 @@ __all__ = [
     "BehaviourModel",
     "BernoulliGLMHMM",
     "BernoulliHistoryGLM",
+    "BiasOnly",
     "BinaryQLearning",
     "CoefficientTrajectory",
     "DriftDiffusionFitResult",
@@ -87,10 +97,15 @@ __all__ = [
     "HierarchicalSmoothGLMFitResult",
     "HierarchicalSmoothGLMSimulation",
     "HierarchicalSmoothWienerDriftDiffusion",
+    "LapsePsychometric",
+    "LapsePsychometricFitResult",
+    "LapsePsychometricParameters",
     "ModelCapabilities",
     "ModelDataError",
+    "Perseveration",
     "Prediction",
     "PredictionMode",
+    "Psychometric",
     "QLearningFitResult",
     "QLearningParameters",
     "SmoothBernoulliHistoryGLM",
@@ -101,5 +116,6 @@ __all__ = [
     "UnsupportedPredictionMode",
     "ValueTrajectory",
     "WienerDriftDiffusion",
+    "WinStayLoseShift",
     "model_capabilities",
 ]

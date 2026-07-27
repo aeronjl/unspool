@@ -71,11 +71,21 @@ class Study:
         return cls({name: [row[name] for row in rows] for name in names})
 
     @classmethod
-    def from_dataframe(cls, frame: Any) -> Study:
+    def from_dataframe(
+        cls,
+        frame: Any,
+        *,
+        subject: str = "subject",
+        session: str = "session",
+        trial: str = "trial",
+        session_order: str = "session_order",
+    ) -> Study:
         """Construct a study from a pandas-like dataframe without retaining its index.
 
-        Column and row order are preserved. The dataframe index is deliberately ignored:
-        longitudinal identity and chronology must be carried by explicit columns.
+        The four keyword arguments map source columns onto Unspool's canonical identity
+        and chronology names. Column and row order are preserved, with mapped columns
+        renamed in place. The dataframe index is deliberately ignored: longitudinal
+        identity and chronology must be carried by explicit columns.
         """
 
         if not hasattr(frame, "columns") or not hasattr(frame, "__getitem__"):
@@ -87,7 +97,27 @@ class Study:
             raise StudyValidationError("dataframe column names must be non-empty strings")
         if len(set(names)) != len(names):
             raise StudyValidationError("dataframe column names must be unique")
-        return cls({name: np.asarray(frame[name]) for name in names})
+        mapping = {
+            "subject": subject,
+            "session": session,
+            "trial": trial,
+            "session_order": session_order,
+        }
+        if any(not isinstance(name, str) or not name for name in mapping.values()):
+            raise StudyValidationError("dataframe column mappings must be non-empty strings")
+        if len(set(mapping.values())) != len(mapping):
+            raise StudyValidationError("dataframe column mappings must be unique")
+        missing = [source for source in mapping.values() if source not in names]
+        if missing:
+            raise StudyValidationError(f"dataframe is missing mapped columns: {missing}")
+
+        canonical_by_source = {source: canonical for canonical, source in mapping.items()}
+        renamed = tuple(canonical_by_source.get(name, name) for name in names)
+        if len(set(renamed)) != len(renamed):
+            raise StudyValidationError(
+                "dataframe column mapping collides with an existing canonical column"
+            )
+        return cls({canonical_by_source.get(name, name): np.asarray(frame[name]) for name in names})
 
     def __len__(self) -> int:
         return self._length

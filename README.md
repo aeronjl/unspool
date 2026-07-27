@@ -68,6 +68,36 @@ Unspool is being designed so that:
 See the [scientific scope](docs/scientific-scope.md) and [roadmap](docs/roadmap.md) for
 the proposed first release.
 
+## A task before a model
+
+Unspool separates longitudinal identity from task semantics. `Study` records which trial
+occurred when; `TaskSpec` declares choices, omissions, available actions, rewards, response
+times, predictors, blocks, and episodes before any model is fitted.
+
+```python
+from unspool import BernoulliHistoryGLM, ChoiceSpec, TaskSpec, fit_model
+
+task = TaskSpec(
+    choice=ChoiceSpec(options=(0, 1)),
+    predictors=("stimulus",),
+)
+model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1)
+fitted = fit_model(model, study, task=task)
+
+print(fitted.validation.n_trials)
+print(fitted.result.parameters)
+print(fitted.audit().status)
+```
+
+This is the first 0.21 golden path. Prospective claims still belong in fold-aware
+evaluation or a frozen study protocol. Common numeric, categorical, interaction, and
+explicit-reset history terms are available through `DesignSpec`. Read the
+[task contract](docs/task-contract.md) and [fixed design matrices](docs/design-matrices.md).
+Portable `FitArtifact` records then bind a fit to task, complete-data identity, package
+version, labelled parameters, and numerical audits without serializing executable model
+objects; external packages can contribute conforming factories through an explicit local
+`EstimatorRegistry`.
+
 ## Reproducible study protocols
 
 Complete analyses can now be frozen as typed, immutable `StudyProtocol` declarations.
@@ -135,7 +165,9 @@ Leave-subject-out and leave-lab-out folds train on complete disjoint population 
 Lab holdout rejects any subject assigned to more than one lab rather than permitting
 cross-fold leakage.
 
-Nine reference models are executable: a static Bernoulli GLM, a smoothly time-varying
+The executable catalogue begins with named bias-only, psychometric, lapse-psychometric,
+perseveration, and win-stay/lose-shift baselines. It also includes a static Bernoulli GLM,
+a smoothly time-varying
 competitor with fixed temporal knots, a static partial-pooling Bernoulli GLM, a partially
 pooled smooth trajectory model, a fixed-transition Bernoulli GLM-HMM, and a compact
 session-reset binary Q-learning agent, plus a fixed-parameter Wiener drift-diffusion model
@@ -158,6 +190,7 @@ normalized audit without discarding its model-specific evidence. See the
 [session-varying drift-diffusion guide](docs/smooth-ddm.md),
 [hierarchical drift-diffusion guide](docs/hierarchical-smooth-ddm.md),
 and the [model-recovery guide](docs/model-recovery.md),
+plus the [canonical baseline guide](docs/baselines.md),
 or run:
 
 ```bash
