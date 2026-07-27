@@ -66,6 +66,9 @@ nav:
       - Protocol command line: protocols/cli.md
       - Evidence bundles: protocols/evidence-bundles.md
       - Longitudinal study contract: data-contract.md
+      - Behavioural task contract: task-contract.md
+      - Fixed design matrices: design-matrices.md
+      - Fit artifacts and extensions: fit-artifacts.md
       - Clocks and transforms: clocks-and-transforms.md
       - Scientific scope: scientific-scope.md
   - Worked studies:
@@ -81,6 +84,7 @@ nav:
       - Methods catalog: methods/index.md
       - Capability matrix: methods/capability-matrix.md
       - Modelling contract: modelling.md
+      - Canonical binary baselines: baselines.md
       - Static and smooth drift: smooth-drift.md
       - Hierarchical GLM: hierarchical-glm.md
       - Hierarchical smooth GLM: hierarchical-smooth-glm.md

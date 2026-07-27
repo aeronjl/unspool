@@ -346,19 +346,78 @@ The roadmap is organized by scientific contracts rather than by model count.
   unbiased, the model identifiable, or the estimand transport beyond its declared
   population.
 
-## Later
+## 0.21 — Dependable golden path and extension contracts
 
-- Confirm the joint choice/response-time design across animals with subject-balanced
-  evidence and freeze a design-matched recovery analysis before mechanistic interpretation.
+- **Implemented:** map arbitrary dataframe identity columns into the canonical longitudinal
+  names through the documented `Study.from_dataframe()` interface.
+- **Implemented:** introduce a model-independent `TaskSpec` for categorical choices,
+  explicit omissions, trial-specific option availability, bounded scalar rewards, physical
+  response-time units, predictors, blocks, and episodes, with retained denominator audits.
+- **Implemented:** add `fit_model()` as the first task-validated interactive path, retaining
+  the complete model-specific fit and common numerical audit.
+- **Implemented:** define fixed reusable numeric, categorical, interaction, and lagged-
+  history design components with stable names and explicit reset boundaries.
+- **Implemented:** add fixed history kernels and an explicit training-only standardization
+  transform that freezes into the same design-term contract without seeing prediction rows.
+- **Implemented:** stabilize a context-bound common fit-artifact schema and an instance-
+  scoped public estimator registry through which external models can be added without
+  editing Unspool core or serializing executable objects.
+- **Release boundary:** load, specify, fit, diagnose, compare, simulate/recover, and report
+  must form one coherent public workflow, with every result retaining model, task, data,
+  version, and numerical provenance.
 
-- Compare the public latent-state procedure with targeted smooth-drift, history, and
-  learning-agent competitors, including state and model recovery under the exact design.
+## 0.22 — Canonical behavioural model catalogue
 
-- Session-varying GLM-HMM parameters
-- Full propagation of population-parameter and scale uncertainty into predictions
-- Richer mixtures and model plugins
-- NWB-Zarr adapter
-- Population-of-labs uncertainty and hierarchical lab effects
+- **Implemented:** add named bias-only, psychometric, lapse-mixture, perseveration, and
+  outcome-conditioned win-stay/lose-shift baselines with complete simulation, fit,
+  prediction, score, audit, recovery, reward semantics, and reset boundaries.
+- **Planned:** make value updating, forgetting, asymmetric learning, choice kernels,
+  exploration/lapse policies, and session resets composable RL components.
+- **Planned:** support multinomial and omission-aware choice likelihoods through the common
+  task coordinate.
+- **Planned:** add the standard input-driven and sticky GLM-HMM variants with state-count,
+  occupancy, alignment, and prospective-selection diagnostics.
+- **Planned:** cover standard DDM regressions, collapsing bounds, and race/LBA models through
+  first-party reference components or adapters to mature packages rather than duplicating
+  validated solvers.
+- **Release boundary:** every catalogue model must simulate, fit, predict, score pointwise,
+  diagnose, document its assumptions, and participate in design-specific recovery.
 
-Each expansion should be justified by a benchmark or user need and should add recovery
-tests before adding interpretive claims.
+## 0.23 — Fitting and diagnostic interoperability
+
+- **Planned:** give parameters shared transforms, bounds, priors, fixed/free roles, and
+  stable natural and optimizer coordinates.
+- **Planned:** expose deterministic multistart MLE/MAP and PyBADS through one backend
+  contract while retaining every attempted optimum.
+- **Planned:** integrate an established probabilistic-programming backend for full
+  hierarchical posterior inference rather than implementing a new sampler.
+- **Planned:** export labelled posterior, predictive, observed-data, log-likelihood, and
+  diagnostics groups through the current ArviZ/xarray interchange conventions.
+- **Planned:** add posterior predictive checks, simulation-based calibration, PSIS-LOO,
+  sensitivity, and test-retest reliability alongside Unspool's prospective validation and
+  exact-design recovery.
+- **Release boundary:** changing an inference backend must not change task semantics,
+  prediction information, split geometry, scored observations, or result interpretation.
+
+## 0.24 — Literature recipes and ecosystem documentation
+
+- **Planned:** publish end-to-end public-data recipes for psychometric/history models,
+  bandit RL, GLM-HMMs, perceptual DDMs, and longitudinal learning comparisons.
+- **Planned:** make every recipe produce publication-quality figures through public APIs,
+  with data provenance, expected runtime, diagnostics, recovery evidence, and explicit
+  claim limits.
+- **Planned:** add task and model decision guides, model cards, and migration guides from
+  hand-written SciPy, `ssm`, hBayesDM, HDDM, and PyDDM workflows.
+- **Planned:** document how downstream libraries contribute task adapters, model
+  components, inference backends, diagnostics, and recipes without adopting Unspool's
+  internal implementations.
+- **Release boundary:** a new user can reproduce a canonical analysis from the literature,
+  understand why each step is present, replace one component, and obtain the same standard
+  evidence objects.
+
+## Deferred research extensions
+
+Session-varying GLM-HMM research, population-of-laboratories inference, inverse RL,
+agent-discovery models, novel trajectory-shape claims, and further Cell-paper analyses are
+outside the 0.21–0.24 critical path. They may later demonstrate the package, but they will
+not determine its basic architecture.

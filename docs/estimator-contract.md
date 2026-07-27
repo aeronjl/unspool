@@ -78,6 +78,12 @@ At every fold, Unspool verifies that:
 These checks are particularly important for plugins: structural typing alone can establish
 that methods exist, but not that their outputs refer to the model and data supplied.
 
+Third-party packages can bind conforming factories to explicit names with
+`EstimatorRegistry`. Registries are local to the workflow, reject duplicate or drifting
+model identities, and expose a non-executable provider/version manifest. The corresponding
+[`FitArtifact`](fit-artifacts.md) is the portable common result; it does not pickle model
+objects or erase richer model-specific live results.
+
 ## Recovery eligibility
 
 `run_parameter_recovery` validates every truth mapping before simulation, retains the

@@ -50,8 +50,23 @@ Inputs are copied and exposed as read-only NumPy arrays. Subsets created with
 `study.take(indices)` pass through the same validation contract.
 
 Pandas-like objects can use `Study.from_dataframe()`. Its index is deliberately ignored;
-the required identity and chronology must remain explicit columns. Local NWB round trips
-and version-pinned DANDI streaming use the same contract and are documented in
+the required identity and chronology must remain explicit columns. Source column names
+can be mapped without first mutating the dataframe:
+
+```python
+study = Study.from_dataframe(
+    trials,
+    subject="mouse",
+    session="session_id",
+    trial="trial_index",
+    session_order="training_day",
+)
+```
+
+Mapped columns are renamed in their source position and all other columns are retained.
+Their task roles can then be declared with the [behavioural task contract](task-contract.md).
+Local NWB round trips and version-pinned DANDI streaming use the same study contract and
+are documented in
 [Tabular, NWB, and DANDI interoperability](interoperability.md).
 
 ## Multiple clocks

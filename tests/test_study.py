@@ -95,6 +95,47 @@ def test_from_dataframe_uses_explicit_columns_and_ignores_index() -> None:
     assert "index" not in study.columns
 
 
+def test_from_dataframe_maps_source_identity_columns_to_the_canonical_contract() -> None:
+    source = {
+        "mouse": ["a", "a"],
+        "session_id": ["first", "first"],
+        "trial_index": [0, 1],
+        "training_day": [0, 0],
+        "stimulus": [-1.0, 1.0],
+    }
+
+    class Frame:
+        columns = tuple(source)
+
+        def __getitem__(self, name: str) -> np.ndarray:
+            return np.asarray(source[name])
+
+    study = Study.from_dataframe(
+        Frame(),
+        subject="mouse",
+        session="session_id",
+        trial="trial_index",
+        session_order="training_day",
+    )
+
+    assert study.columns == (*REQUIRED_COLUMNS, "stimulus")
+    assert study["subject"].tolist() == ["a", "a"]
+    assert study["stimulus"].tolist() == [-1.0, 1.0]
+
+
+def test_from_dataframe_rejects_missing_or_colliding_mappings() -> None:
+    class Frame:
+        columns = tuple(valid_columns())
+
+        def __getitem__(self, name: str) -> np.ndarray:
+            return np.asarray(valid_columns()[name])
+
+    with pytest.raises(StudyValidationError, match="missing mapped"):
+        Study.from_dataframe(Frame(), subject="mouse")
+    with pytest.raises(StudyValidationError, match="mappings must be unique"):
+        Study.from_dataframe(Frame(), subject="subject", session="subject")
+
+
 def test_from_dataframe_rejects_non_tabular_and_duplicate_columns() -> None:
     with pytest.raises(TypeError, match="dataframe-like"):
         Study.from_dataframe(object())

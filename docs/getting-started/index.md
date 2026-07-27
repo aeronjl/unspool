@@ -30,6 +30,39 @@ study = Study.from_dataframe(
 )
 ```
 
+Next, declare what the task observations mean independently of any model:
+
+```python
+from unspool import ChoiceSpec, TaskSpec
+
+task = TaskSpec(
+    choice=ChoiceSpec(options=(0, 1)),
+    predictors=("stimulus",),
+)
+task.validate(study)
+```
+
+The task contract is where choices, omissions, trial-specific action availability,
+rewards, response times, blocks, and episodes become explicit. See the
+[behavioural task contract](../task-contract.md).
+
+For regression-style models, build a fixed labelled matrix from reusable terms:
+
+```python
+from unspool import DesignSpec, HistoryTerm, NumericTerm
+
+design = DesignSpec(
+    terms=(
+        NumericTerm("stimulus", center=0.0, scale=100.0),
+        HistoryTerm("choice", lags=(1, 2), coding="effect"),
+    )
+)
+matrix = design.build(study)
+```
+
+Read [fixed design matrices](../design-matrices.md) for reset semantics and the boundary
+between fixed declarations and preprocessing that must be learned inside each fold.
+
 ## I want to forecast later sessions
 
 Use expanding or cohort-level forward-session splits. Learned clocks, scalers, landmarks,
