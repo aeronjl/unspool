@@ -14,6 +14,7 @@ from typing import Any, Final
 
 import numpy as np
 
+from unspool.inference import OptimizationRun
 from unspool.parameters import ParameterSpaceProvider
 from unspool.study import Study
 from unspool.task import FittedModel, TaskSpec
@@ -186,6 +187,11 @@ def export_fit(fitted: FittedModel, study: Study) -> FitArtifact:
     if parameter_space is not None:
         diagnostic_record["parameter_space"] = parameter_space.to_dict()
         diagnostic_record["parameter_space_fingerprint"] = parameter_space.fingerprint
+    optimization_run = getattr(result, "optimization_run", None)
+    if optimization_run is not None:
+        if not isinstance(optimization_run, OptimizationRun):
+            raise FitArtifactError("result optimization_run must be an OptimizationRun")
+        diagnostic_record["optimization_run"] = optimization_run.to_dict()
     diagnostics = _sanitize_json(diagnostic_record)
     return FitArtifact(
         schema_version=FIT_ARTIFACT_SCHEMA,

@@ -7,9 +7,9 @@ from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.optimize import minimize
 from scipy.special import expit
 
+from unspool.inference import OptimizationProblem, OptimizationRun, ScipyMultistart
 from unspool.models.base import (
     FitDiagnostics,
     FitResult,
@@ -89,6 +89,7 @@ class QLearningFitResult(FitResult):
     selected_restart: int
     learning_rate: float
     inverse_temperature: float
+    optimization_run: OptimizationRun
 
     def __post_init__(self) -> None:
         FitResult.__post_init__(self)
@@ -101,6 +102,19 @@ class QLearningFitResult(FitResult):
             raise ValueError("restart messages and non-NaN objectives must align")
         if not 0 <= self.selected_restart < len(objectives):
             raise ValueError("selected_restart must identify one restart")
+        if not isinstance(self.optimization_run, OptimizationRun):
+            raise ValueError("optimization_run must be an OptimizationRun")
+        attempts = self.optimization_run.attempts
+        if (
+            len(attempts) != len(objectives)
+            or self.optimization_run.selected_index != self.selected_restart
+            or not np.allclose(
+                [attempt.objective for attempt in attempts], objectives, equal_nan=True
+            )
+            or not np.array_equal([attempt.converged for attempt in attempts], converged)
+            or tuple(attempt.message for attempt in attempts) != messages
+        ):
+            raise ValueError("optimization_run must match retained restart summaries")
         decoded = _decode_parameters(self.estimates)
         if not np.isclose(self.learning_rate, decoded.learning_rate) or not np.isclose(
             self.inverse_temperature, decoded.inverse_temperature
@@ -341,37 +355,29 @@ class BinaryQLearning:
         def objective(vector: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
             return self._objective_gradient(vector, choices, rewards, sessions)
 
-        starts = self._initial_points()
-        bounds = list(self.parameter_space.optimizer_bounds)
-        results = [
-            minimize(
-                objective,
-                start,
-                method="L-BFGS-B",
-                jac=True,
-                bounds=bounds,
-                options={
-                    "maxiter": self.max_iterations,
-                    "ftol": self.tolerance,
-                    "gtol": self.tolerance,
-                },
-            )
-            for start in starts
-        ]
-        restart_objectives = np.asarray(
-            [float(result.fun) if np.isfinite(result.fun) else np.inf for result in results]
+        problem = OptimizationProblem(
+            parameter_space=self.parameter_space,
+            objective=objective,
+            starts=self._initial_points(),
+            has_gradient=True,
+            objective_name="binary_q_learning_negative_log_likelihood",
         )
-        finite = [index for index, value in enumerate(restart_objectives) if np.isfinite(value)]
-        if not finite:
-            messages = "; ".join(str(result.message) for result in results)
+        run = ScipyMultistart(
+            max_iterations=self.max_iterations,
+            function_tolerance=self.tolerance,
+            gradient_tolerance=self.tolerance,
+        ).run(problem)
+        restart_objectives = np.asarray(
+            [attempt.objective for attempt in run.attempts], dtype=np.float64
+        )
+        chosen = run.selected
+        if chosen is None:
+            messages = "; ".join(attempt.message for attempt in run.attempts)
             raise ModelDataError(
                 f"all Q-learning restarts produced non-finite objectives: {messages}"
             )
-        successful = [index for index in finite if results[index].success]
-        eligible = successful if successful else finite
-        selected = min(eligible, key=lambda index: float(restart_objectives[index]))
-        chosen = results[selected]
-        estimates = np.asarray(chosen.x, dtype=np.float64)
+        selected = chosen.index
+        estimates = np.asarray(chosen.estimate, dtype=np.float64)
         value, gradient = objective(estimates)
         hessian = _numerical_hessian(objective, estimates)
         condition = float(np.linalg.cond(hessian))
@@ -387,11 +393,11 @@ class BinaryQLearning:
             or abs(components.perseveration) >= self.coefficient_warning_threshold
         )
         diagnostics = FitDiagnostics(
-            converged=bool(chosen.success),
-            optimizer=f"L-BFGS-B ({self.n_restarts} deterministic restarts)",
-            status=int(chosen.status),
-            message=str(chosen.message),
-            n_iterations=int(chosen.nit),
+            converged=chosen.converged,
+            optimizer=f"{run.backend} ({self.n_restarts} deterministic restarts)",
+            status=chosen.status,
+            message=chosen.message,
+            n_iterations=chosen.n_iterations,
             objective=float(value),
             gradient_norm=float(np.linalg.norm(gradient)),
             hessian_condition=condition,
@@ -407,11 +413,12 @@ class BinaryQLearning:
             n_observations=len(study),
             diagnostics=diagnostics,
             restart_objectives=restart_objectives,
-            restart_converged=np.asarray([result.success for result in results]),
-            restart_messages=tuple(str(result.message) for result in results),
+            restart_converged=np.asarray([attempt.converged for attempt in run.attempts]),
+            restart_messages=tuple(attempt.message for attempt in run.attempts),
             selected_restart=selected,
             learning_rate=components.learning_rate,
             inverse_temperature=components.inverse_temperature,
+            optimization_run=run,
         )
 
     def predict(

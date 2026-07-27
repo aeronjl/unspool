@@ -33,6 +33,11 @@ records distinguish optimizer names and estimates from natural names and estimat
 than implying that transformed values are directly interpretable. Covariance and standard
 errors remain on the optimizer coordinate in this schema.
 
+When a live result exposes an `OptimizationRun`, the artifact also retains its complete
+[multistart evidence](inference-backends.md): backend configuration, deterministic starts,
+all attempted estimates and messages, evaluation counts, and the selected index. Failed
+attempts are not reduced to a convergence rate.
+
 The artifact is deliberately non-executable. Reading it validates data, but does not
 import a class, call a factory, or reconstruct a fitted Python object. Specialized live
 results can contain richer state trajectories, restart arrays, and model-specific

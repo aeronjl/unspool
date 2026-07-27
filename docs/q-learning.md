@@ -177,6 +177,11 @@ and transforms machine-readable through the shared
 Portable fit artifacts record both coordinate identities and estimates, while covariance
 and standard errors remain explicitly on the optimizer scale.
 
+Fitting now runs through the common [deterministic inference backend](inference-backends.md).
+`QLearningFitResult.optimization_run` retains every start, attempted estimate, objective,
+status, message, iteration/evaluation count, and gradient norm. The established restart
+arrays remain as checked compatibility views for diagnostics and existing analyses.
+
 `BinaryRLAgent` uses the same deterministic multistart and fit-audit requirements, with a
 numerical gradient because the recursion varies by component assembly. `RLFitResult`
 retains every restart plus a labelled natural-parameter view; migrating its composable
