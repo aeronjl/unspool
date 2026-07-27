@@ -203,14 +203,14 @@ Current limitations are explicit:
 
 ## Recovery evidence
 
-The [hierarchical Wiener benchmark](../benchmarks/hierarchical_smooth_ddm/README.md) makes
+The [hierarchical Wiener benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/hierarchical_smooth_ddm) makes
 complete pooling, shared smooth, independent smooth, and hierarchical smooth fits compete
 across three regimes. Across 20 repetitions per regime, the scientifically matched model
 wins both subject-path RMSE and fifth-session joint log loss: complete pooling for
 stationary identical animals, shared smooth for shared change, and hierarchical smooth for
 individual change. All 480 fits converge.
 
-The [parameter-specific scale benchmark](../benchmarks/ddm_subject_scale_recovery/README.md)
+The [parameter-specific scale benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ddm_subject_scale_recovery)
 starts drift and boundary components at the same value, estimates them from three training
 sessions, and scores a held-out fourth session against an oracle given the true scales.
 Doubling the cohort from 6 to 12 animals reduces joint scale RMSE from `0.09178` to
@@ -218,7 +218,7 @@ Doubling the cohort from 6 to 12 animals reduces joint scale RMSE from `0.09178`
 log loss is `0.00232` and `0.00080`, respectively. Local interval coverage is only
 50–62.5%, preserving the approximation's calibration limit rather than hiding it.
 
-The [predictive-uncertainty benchmark](../benchmarks/ddm_predictive_uncertainty/README.md)
+The [predictive-uncertainty benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ddm_predictive_uncertainty)
 then compares local and supplemented scale intervals over 20 eight-animal panels. Local
 coverage is 70% for drift scale and 65% for boundary scale. Supplementation is stable in
 18/20 panels and reaches conditional coverage of 100% and 88.9%, respectively. Across 80

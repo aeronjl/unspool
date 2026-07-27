@@ -58,6 +58,11 @@ Declaring global scope is a scientific assertion that a phase label is comparabl
 subjects. Unspool validates the declaration but cannot establish that assertion from the
 table alone.
 
+<figure class="doc-figure">
+  <img src="../assets/clock-boundary.svg" alt="The same ten sessions shown under session-order, cumulative-trial, and elapsed-time clocks, followed by a train-test boundary where an outcome-learned transform is fitted on training sessions and applied unchanged to future sessions.">
+  <figcaption><strong>Clock semantics and leakage boundary.</strong> Design clocks can describe the complete observed study; outcome-learned landmarks and transforms must be fitted inside training folds. The spacing is illustrative.</figcaption>
+</figure>
+
 ## Learned clocks belong inside the fold
 
 A behavioural landmark is different from a design clock because its value is estimated

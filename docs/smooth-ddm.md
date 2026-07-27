@@ -107,7 +107,7 @@ and the earlier learning-focused discussion by
 
 ## Recovery evidence
 
-The [session-varying Wiener benchmark](../benchmarks/smooth_ddm/README.md) compares static
+The [session-varying Wiener benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/smooth_ddm) compares static
 and smooth fits under stationary and changing truth. In 20 matched repetitions per regime,
 the static model wins both training-path RMSE and final-session joint log loss under
 stationarity; the smooth model wins both under the specified change trajectory. This is a

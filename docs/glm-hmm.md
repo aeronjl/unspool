@@ -158,7 +158,7 @@ occupied states, weakly separated emissions, short sessions, or insufficient sta
 can all make a nominally fitted model unrecoverable. The included tests use a deliberately
 clear switching regime and also require it to outperform static and smooth session-time
 GLMs on a future session. The repeated
-[state-alignment benchmark](../benchmarks/state_alignment/README.md) additionally contrasts
+[state-alignment benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/state_alignment) additionally contrasts
 clear and overlapping emissions and verifies exact invariance to inferred-label reversal.
 
 ## Current boundary

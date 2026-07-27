@@ -5,6 +5,11 @@ Multi-restart and latent-state models also retain their model-specific evidence 
 fit-result subclasses. `FitAudit` adds a normalized view across those objects; it does not
 replace, edit, or conditionally discard them.
 
+<figure class="doc-figure">
+  <img src="../assets/diagnostic-layers.svg" alt="Four stacked evidence layers: numerical fit, prospective prediction, parameter recovery, and model recovery, culminating in bounded interpretation.">
+  <figcaption><strong>Evidence is layered.</strong> Numerical convergence is necessary but cannot certify prediction, parameter recovery, model discrimination, or interpretation. This is a conceptual audit hierarchy.</figcaption>
+</figure>
+
 ```python
 fit = model.fit(study)
 audit = fit.audit()

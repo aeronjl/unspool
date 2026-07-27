@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="686.16pt" height="369.36pt" viewBox="0 0 686.16 369.36" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 369.36
+L 686.16 369.36
+L 686.16 0
+L 0 0
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 47.08575 328.711846
+L 639.07425 328.711846
+Q 644.67225 328.711846 644.67225 323.250923
+L 644.67225 276.833077
+Q 644.67225 271.372154 639.07425 271.372154
+L 47.08575 271.372154
+Q 41.48775 271.372154 41.48775 276.833077
+L 41.48775 323.250923
+Q 41.48775 328.711846 47.08575 328.711846
+z
+" clip-path="url(#p6bdfda12b3)" style="fill: #ffffff; stroke: #778092; stroke-width: 1.25; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 92.5695 260.450308
+L 593.5905 260.450308
+Q 599.1885 260.450308 599.1885 254.989385
+L 599.1885 208.571538
+Q 599.1885 203.110615 593.5905 203.110615
+L 92.5695 203.110615
+Q 86.9715 203.110615 86.9715 208.571538
+L 86.9715 254.989385
+Q 86.9715 260.450308 92.5695 260.450308
+z
+" clip-path="url(#p6bdfda12b3)" style="fill: #ffffff; stroke: #4f6d9a; stroke-width: 1.25; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 138.05325 192.188769
+L 548.10675 192.188769
+Q 553.70475 192.188769 553.70475 186.727846
+L 553.70475 140.31
+Q 553.70475 134.849077 548.10675 134.849077
+L 138.05325 134.849077
+Q 132.45525 134.849077 132.45525 140.31
+L 132.45525 186.727846
+Q 132.45525 192.188769 138.05325 192.188769
+z
+" clip-path="url(#p6bdfda12b3)" style="fill: #ffffff; stroke: #2d7f78; stroke-width: 1.25; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 183.537 123.927231
+L 502.623 123.927231
+Q 508.221 123.927231 508.221 118.466308
+L 508.221 72.048462
+Q 508.221 66.587538 502.623 66.587538
+L 183.537 66.587538
+Q 177.939 66.587538 177.939 72.048462
+L 177.939 118.466308
+Q 177.939 123.927231 183.537 123.927231
+z
+" clip-path="url(#p6bdfda12b3)" style="fill: #ffffff; stroke: #c57928; stroke-width: 1.25; stroke-linejoin: miter"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="343.08" y="295.990962" transform="rotate(-0 343.08 295.990962)">Numerical fit</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="343.08" y="312.31168" transform="rotate(-0 343.08 312.31168)">convergence · gradients · boundaries · restarts</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="633.47625" y="301.990535" transform="rotate(-0 633.47625 301.990535)">Can this fitted object be used?</text>
+   </g>
+   <g id="text_4">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #4f6d9a" x="343.08" y="227.729424" transform="rotate(-0 343.08 227.729424)">Prospective prediction</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="343.08" y="244.050141" transform="rotate(-0 343.08 244.050141)">held-out log loss · calibration · aggregation</text>
+   </g>
+   <g id="text_6">
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #4f6d9a" x="633.47625" y="233.728997" transform="rotate(-0 633.47625 233.728997)">Does it forecast the declared future?</text>
+   </g>
+   <g id="text_7">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #2d7f78" x="343.08" y="159.467534" transform="rotate(-0 343.08 159.467534)">Parameter recovery</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="343.08" y="175.788603" transform="rotate(-0 343.08 175.788603)">bias · RMSE · interval coverage</text>
+   </g>
+   <g id="text_9">
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #2d7f78" x="633.47625" y="165.467458" transform="rotate(-0 633.47625 165.467458)">Can this design estimate the parameters?</text>
+   </g>
+   <g id="text_10">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #c57928" x="343.08" y="91.206347" transform="rotate(-0 343.08 91.206347)">Model recovery</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="343.08" y="107.527064" transform="rotate(-0 343.08 107.527064)">confusion matrix · unresolved rate</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #c57928" x="633.47625" y="97.20592" transform="rotate(-0 633.47625 97.20592)">Can this design distinguish explanations?</text>
+   </g>
+   <g id="text_13">
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #26345e" x="343.08" y="35.869846" transform="rotate(-0 343.08 35.869846)">Interpretation</text>
+   </g>
+   <g id="text_14">
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #c57928" x="343.08" y="349.872923" transform="rotate(-0 343.08 349.872923)">Passing one layer never certifies the layers above it</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p6bdfda12b3">
+   <rect x="7.2" y="7.2" width="671.76" height="354.96"/>
+  </clipPath>
+ </defs>
+</svg>

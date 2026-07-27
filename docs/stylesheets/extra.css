@@ -1,0 +1,62 @@
+:root {
+  --md-primary-fg-color: #26345e;
+  --md-primary-fg-color--light: #445684;
+  --md-primary-fg-color--dark: #17213f;
+  --md-accent-fg-color: #c57928;
+}
+
+.md-typeset h1 {
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.md-typeset h2 {
+  letter-spacing: -0.015em;
+}
+
+.md-typeset img {
+  border-radius: 0.35rem;
+}
+
+.md-typeset .doc-figure {
+  margin: 1.6rem auto 2rem;
+  max-width: 52rem;
+}
+
+.md-typeset .doc-figure--wide {
+  max-width: 64rem;
+}
+
+.md-typeset .doc-figure img {
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--md-default-fg-color) 13%, transparent);
+  box-shadow: 0 0.35rem 1.1rem rgb(23 33 63 / 9%);
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+.md-typeset .doc-figure figcaption {
+  color: var(--md-default-fg-color--light);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  margin: 0.7rem auto 0;
+  max-width: 46rem;
+  text-align: left;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .doc-figure img {
+  border-color: rgb(255 255 255 / 16%);
+  box-shadow: 0 0.35rem 1.2rem rgb(0 0 0 / 28%);
+}
+
+.md-typeset .md-button {
+  margin-bottom: 0.5rem;
+  margin-right: 0.35rem;
+}
+
+.md-typeset blockquote {
+  border-left-color: #c57928;
+  color: var(--md-default-fg-color--light);
+  font-size: 1.05rem;
+}

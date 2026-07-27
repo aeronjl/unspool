@@ -168,12 +168,17 @@ fixed-support independent mixture is a deliberately simpler first contract.
 
 ## Recovery evidence
 
-The [fixed-parameter recovery benchmark](../benchmarks/ddm_recovery/README.md) runs 20
+<figure class="doc-figure">
+  <img src="../assets/ddm-recovery.svg" alt="Parameter root-mean-square error versus trial count for drift intercept, drift stimulus, boundary, starting bias, and nondecision time in the committed drift-diffusion recovery benchmark.">
+  <figcaption><strong>Design-specific DDM recovery.</strong> Increasing the simulated trial count reduces RMSE for every fitted parameter. Lines summarize committed repetitions; they are not universal sample-size recommendations.</figcaption>
+</figure>
+
+The [fixed-parameter recovery benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ddm_recovery) runs 20
 repetitions at both 400 and 1,200 trials. All 40 fits pass audit, and RMSE decreases with
 the larger design for every fitted parameter. This validates the implementation in one
 specified regime; it does not establish universal identifiability or interval calibration.
 
-The [contaminant benchmark](../benchmarks/ddm_contaminants/README.md) compares robust and
+The [contaminant benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ddm_contaminants) compares robust and
 naive Wiener fits on 20 matched designs with five-percent contamination. The robust model
 has lower RMSE for every shared parameter and lower future-session joint log loss in all 20
 repetitions. This supports the specified uniform mixture under matched simulation; it does
