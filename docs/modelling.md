@@ -104,9 +104,12 @@ the [session-varying drift-diffusion guide](smooth-ddm.md).
 
 `HierarchicalSmoothWienerDriftDiffusion` adds smooth Gaussian-shrunken animal deviations
 around those population paths. Represented animals use their fitted paths; unseen animals
-use an explicitly recorded population-trajectory plug-in. The fixed-scale MAP contract,
-natural-bound safeguards, arrowhead local uncertainty, and structural recovery benchmark
-are detailed in the [hierarchical drift-diffusion guide](hierarchical-smooth-ddm.md).
+use an explicitly recorded population-trajectory plug-in by default. Its separate
+`predict_new_subjects()` contract integrates fitted random-effect paths and reports
+subject-joint likelihoods with Monte Carlo diagnostics. The fixed- or estimated-scale MAP
+contract, supplemented scale uncertainty, natural-bound safeguards, arrowhead local
+uncertainty, and recovery evidence are detailed in the
+[hierarchical drift-diffusion guide](hierarchical-smooth-ddm.md).
 
 The GLM implementations use SciPy's deterministic L-BFGS-B optimizer. An optional L2
 penalty applies to non-intercept coefficients. Standard errors and 95% coverage summaries

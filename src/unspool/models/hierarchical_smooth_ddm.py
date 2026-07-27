@@ -11,6 +11,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import minimize, minimize_scalar
+from scipy.special import logsumexp
 
 from unspool.models.base import (
     FitDiagnostics,
@@ -94,6 +95,139 @@ class HierarchicalSmoothDriftDiffusionSimulation:
 
 
 @dataclass(frozen=True, slots=True)
+class UnseenSubjectPosteriorPrediction:
+    """Empirical-Bayes random-effect prediction for entirely unseen subjects."""
+
+    subjects: tuple[Any, ...]
+    row_subject_indices: NDArray[np.intp]
+    probability: NDArray[np.float64]
+    draw_probabilities: NDArray[np.float64]
+    draw_pointwise_log_probability: NDArray[np.float64]
+    pointwise_marginal_log_probability: NDArray[np.float64]
+    subject_joint_log_probability: NDArray[np.float64]
+    subject_effective_draws: NDArray[np.float64]
+    subject_log_probability_mcse: NDArray[np.float64]
+    random_effect_draws: NDArray[np.float64]
+    subject_parameters: tuple[str, ...]
+    subject_parameter_scales: NDArray[np.float64]
+    seed: int
+    policy: str = "empirical-bayes-random-effect-monte-carlo"
+
+    def __post_init__(self) -> None:
+        subjects = tuple(_scalar(subject) for subject in self.subjects)
+        row_subjects = _protected_array(self.row_subject_indices, dtype=np.intp)
+        probability = _protected_array(self.probability, dtype=np.float64)
+        draw_probabilities = _protected_array(self.draw_probabilities, dtype=np.float64)
+        draw_pointwise = _protected_array(
+            self.draw_pointwise_log_probability,
+            dtype=np.float64,
+        )
+        pointwise = _protected_array(
+            self.pointwise_marginal_log_probability,
+            dtype=np.float64,
+        )
+        subject_joint = _protected_array(
+            self.subject_joint_log_probability,
+            dtype=np.float64,
+        )
+        effective_draws = _protected_array(self.subject_effective_draws, dtype=np.float64)
+        monte_carlo_error = _protected_array(
+            self.subject_log_probability_mcse,
+            dtype=np.float64,
+        )
+        draws = _protected_array(self.random_effect_draws, dtype=np.float64)
+        parameters = tuple(self.subject_parameters)
+        scales = _protected_array(self.subject_parameter_scales, dtype=np.float64)
+        if not subjects or len(set(subjects)) != len(subjects):
+            raise ValueError("predictive subjects must be non-empty and unique")
+        if row_subjects.ndim != 1 or np.any((row_subjects < 0) | (row_subjects >= len(subjects))):
+            raise ValueError("row subject indices must reference predictive subjects")
+        n_draws = draw_probabilities.shape[0] if draw_probabilities.ndim == 2 else -1
+        if n_draws < 1 or draw_probabilities.shape[1:] != probability.shape:
+            raise ValueError("draw probabilities must align with predicted rows")
+        if draw_pointwise.shape != draw_probabilities.shape:
+            raise ValueError("draw log probabilities must align with predicted rows")
+        if probability.shape != row_subjects.shape or pointwise.shape != probability.shape:
+            raise ValueError("predictive row summaries must have one value per row")
+        if subject_joint.shape != (len(subjects),):
+            raise ValueError("subject joint scores must have one value per subject")
+        if (
+            effective_draws.shape != subject_joint.shape
+            or monte_carlo_error.shape != subject_joint.shape
+        ):
+            raise ValueError("Monte Carlo diagnostics must have one value per subject")
+        expected_draws = (n_draws, len(subjects), len(parameters))
+        if draws.ndim != 4 or draws.shape[:3] != expected_draws:
+            raise ValueError("random-effect draws must align with draws, subjects, and parameters")
+        if scales.shape != (len(parameters),) or np.any(scales <= 0):
+            raise ValueError("predictive scales must align with subject parameters")
+        if not np.all(np.isfinite(draw_probabilities)) or np.any(
+            (draw_probabilities < 0) | (draw_probabilities > 1)
+        ):
+            raise ValueError("draw probabilities must be finite values between zero and one")
+        if (
+            not np.all(np.isfinite(probability))
+            or not np.all(np.isfinite(draw_pointwise))
+            or not np.all(np.isfinite(pointwise))
+        ):
+            raise ValueError("predictive row summaries must be finite")
+        if not np.all(np.isfinite(subject_joint)) or not np.all(np.isfinite(draws)):
+            raise ValueError("predictive scores and random effects must be finite")
+        if (
+            not np.all(np.isfinite(effective_draws))
+            or np.any((effective_draws < 1.0) | (effective_draws > n_draws))
+            or not np.all(np.isfinite(monte_carlo_error))
+            or np.any(monte_carlo_error < 0)
+        ):
+            raise ValueError("Monte Carlo diagnostics must be finite and admissible")
+        if isinstance(self.seed, bool) or not isinstance(self.seed, int) or self.seed < 0:
+            raise ValueError("predictive seed must be a non-negative integer")
+        if self.policy != "empirical-bayes-random-effect-monte-carlo":
+            raise ValueError("unsupported unseen-subject prediction policy")
+        object.__setattr__(self, "subjects", subjects)
+        object.__setattr__(self, "row_subject_indices", row_subjects)
+        object.__setattr__(self, "probability", probability)
+        object.__setattr__(self, "draw_probabilities", draw_probabilities)
+        object.__setattr__(self, "draw_pointwise_log_probability", draw_pointwise)
+        object.__setattr__(self, "pointwise_marginal_log_probability", pointwise)
+        object.__setattr__(self, "subject_joint_log_probability", subject_joint)
+        object.__setattr__(self, "subject_effective_draws", effective_draws)
+        object.__setattr__(self, "subject_log_probability_mcse", monte_carlo_error)
+        object.__setattr__(self, "random_effect_draws", draws)
+        object.__setattr__(self, "subject_parameters", parameters)
+        object.__setattr__(self, "subject_parameter_scales", scales)
+
+    @property
+    def n_draws(self) -> int:
+        return len(self.draw_probabilities)
+
+    @property
+    def prediction(self) -> Prediction:
+        probability = np.clip(
+            self.probability,
+            np.finfo(float).tiny,
+            1.0 - np.finfo(float).eps,
+        )
+        return Prediction(
+            probability=probability,
+            linear_predictor=np.log(probability) - np.log1p(-probability),
+            mode=PredictionMode.FILTERED,
+        )
+
+    @property
+    def subject_joint_log_probability_map(self) -> Mapping[Any, float]:
+        return MappingProxyType(
+            dict(
+                zip(
+                    self.subjects,
+                    self.subject_joint_log_probability.tolist(),
+                    strict=True,
+                )
+            )
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
     """Population paths and shrunken subject deviations from one joint MAP fit."""
 
@@ -106,12 +240,16 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
     subject_smoothness: float
     subject_parameter_scales: NDArray[np.float64] | None = None
     subject_scale_standard_errors: NDArray[np.float64] | None = None
+    subject_scale_local_standard_errors: NDArray[np.float64] | None = None
+    subject_scale_covariance: NDArray[np.float64] | None = None
+    subject_scale_em_rate_matrix: NDArray[np.float64] | None = None
     subject_scale_bounds: tuple[float, float] | None = None
     subject_scales_estimated: bool = False
     subject_scales_at_boundary: NDArray[np.bool_] | None = None
     scale_estimation_iterations: int = 0
     scale_estimation_converged: bool = True
     scale_estimation_policy: str = "fixed"
+    subject_scale_uncertainty_policy: str = "fixed"
     unseen_subject_policy: str = "population-trajectory-plugin"
     uncertainty_policy: str = "arrowhead-local-hessian"
 
@@ -152,6 +290,24 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
             if self.subject_scale_standard_errors is None
             else _protected_array(self.subject_scale_standard_errors, dtype=np.float64)
         )
+        local_standard_errors = (
+            None
+            if self.subject_scale_local_standard_errors is None
+            else _protected_array(
+                self.subject_scale_local_standard_errors,
+                dtype=np.float64,
+            )
+        )
+        scale_covariance = (
+            None
+            if self.subject_scale_covariance is None
+            else _protected_array(self.subject_scale_covariance, dtype=np.float64)
+        )
+        rate_matrix = (
+            None
+            if self.subject_scale_em_rate_matrix is None
+            else _protected_array(self.subject_scale_em_rate_matrix, dtype=np.float64)
+        )
         at_boundary = (
             None
             if self.subject_scales_at_boundary is None
@@ -178,18 +334,52 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
                 or np.any(scale_standard_errors < 0)
             ):
                 raise ValueError("estimated subject scales require finite standard errors")
+            if (
+                local_standard_errors is None
+                or local_standard_errors.shape != scales.shape
+                or not np.all(np.isfinite(local_standard_errors))
+                or np.any(local_standard_errors <= 0)
+            ):
+                raise ValueError("estimated subject scales require local standard errors")
+            if (
+                scale_covariance is None
+                or scale_covariance.shape != (len(scales), len(scales))
+                or not np.all(np.isfinite(scale_covariance))
+            ):
+                raise ValueError("estimated subject scales require a finite covariance")
+            if (
+                not np.allclose(scale_covariance, scale_covariance.T)
+                or np.min(np.linalg.eigvalsh(scale_covariance)) < -1e-10
+            ):
+                raise ValueError("subject scale covariance must be positive semidefinite")
             if at_boundary is None or at_boundary.shape != scales.shape:
                 raise ValueError("estimated subject scales require boundary indicators")
             if self.scale_estimation_policy != "laplace-em":
                 raise ValueError("estimated subject scale policy must be 'laplace-em'")
+            if self.subject_scale_uncertainty_policy == "local-expected-prior-curvature":
+                if rate_matrix is not None:
+                    raise ValueError("local scale uncertainty cannot retain an EM rate matrix")
+            elif self.subject_scale_uncertainty_policy == "supplemented-laplace-em":
+                if (
+                    rate_matrix is None
+                    or rate_matrix.shape != scale_covariance.shape
+                    or not np.all(np.isfinite(rate_matrix))
+                ):
+                    raise ValueError("supplemented scale uncertainty requires an EM rate matrix")
+            else:
+                raise ValueError("unsupported subject scale uncertainty policy")
             object.__setattr__(self, "subject_scale_bounds", bounds)
         elif (
             scale_standard_errors is not None
+            or local_standard_errors is not None
+            or scale_covariance is not None
+            or rate_matrix is not None
             or self.subject_scale_bounds is not None
             or at_boundary is not None
             or self.scale_estimation_iterations != 0
             or not self.scale_estimation_converged
             or self.scale_estimation_policy != "fixed"
+            or self.subject_scale_uncertainty_policy != "fixed"
         ):
             raise ValueError("fixed subject scales cannot retain estimation diagnostics")
         if self.unseen_subject_policy != "population-trajectory-plugin":
@@ -207,6 +397,13 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
             _protected_array(scales, dtype=np.float64),
         )
         object.__setattr__(self, "subject_scale_standard_errors", scale_standard_errors)
+        object.__setattr__(
+            self,
+            "subject_scale_local_standard_errors",
+            local_standard_errors,
+        )
+        object.__setattr__(self, "subject_scale_covariance", scale_covariance)
+        object.__setattr__(self, "subject_scale_em_rate_matrix", rate_matrix)
         object.__setattr__(self, "subject_scales_at_boundary", at_boundary)
 
     @property
@@ -293,17 +490,59 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
 
         if self.subject_scale_standard_errors is None:
             return None
+        return self._subject_scale_intervals(self.subject_scale_standard_errors)
+
+    @property
+    def subject_scale_local_confidence_intervals_95(
+        self,
+    ) -> Mapping[str, tuple[float, float]] | None:
+        """Return uncorrected expected-prior curvature intervals for comparison."""
+
+        if self.subject_scale_local_standard_errors is None:
+            return None
+        return self._subject_scale_intervals(self.subject_scale_local_standard_errors)
+
+    @property
+    def subject_scale_em_spectral_radius(self) -> float | None:
+        """Return the largest absolute EM-rate eigenvalue when supplemented."""
+
+        if self.subject_scale_em_rate_matrix is None:
+            return None
+        return float(np.max(np.abs(np.linalg.eigvals(self.subject_scale_em_rate_matrix))))
+
+    def _subject_scale_intervals(
+        self,
+        standard_errors: NDArray[np.float64],
+    ) -> Mapping[str, tuple[float, float]]:
+        lower_bound, upper_bound = (
+            self.subject_scale_bounds if self.subject_scale_bounds is not None else (0.0, np.inf)
+        )
         intervals = {}
         for parameter, scale, standard_error in zip(
             self.subject_parameters,
             self.subject_parameter_scales,
-            self.subject_scale_standard_errors,
+            standard_errors,
             strict=True,
         ):
             log_standard_error = float(standard_error / scale)
+            log_scale = float(np.log(scale))
             intervals[parameter] = (
-                float(scale * np.exp(-1.96 * log_standard_error)),
-                float(scale * np.exp(1.96 * log_standard_error)),
+                float(
+                    np.exp(
+                        max(
+                            np.log(lower_bound) if lower_bound > 0 else -np.inf,
+                            log_scale - 1.96 * log_standard_error,
+                        )
+                    )
+                ),
+                float(
+                    np.exp(
+                        min(
+                            np.log(upper_bound),
+                            log_scale + 1.96 * log_standard_error,
+                        )
+                    )
+                ),
             )
         return MappingProxyType(intervals)
 
@@ -325,6 +564,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
     subject_scale_bounds: tuple[float, float] = (0.05, 2.0)
     scale_max_iterations: int = 12
     scale_tolerance: float = 0.01
+    subject_scale_uncertainty: str = "local"
     subject_smoothness: float = 10.0
 
     def __post_init__(self) -> None:
@@ -344,6 +584,12 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
             raise ValueError("scale_max_iterations must be a positive integer")
         if not np.isfinite(self.scale_tolerance) or self.scale_tolerance <= 0:
             raise ValueError("scale_tolerance must be finite and positive")
+        if self.subject_scale_uncertainty not in {"local", "supplemented"}:
+            raise ValueError("subject_scale_uncertainty must be 'local' or 'supplemented'")
+        if self.subject_scale_uncertainty == "supplemented" and not self.estimate_subject_scales:
+            raise ValueError(
+                "supplemented subject-scale uncertainty requires estimate_subject_scales=True"
+            )
         if not np.isfinite(self.subject_smoothness) or self.subject_smoothness <= 0:
             raise ValueError("subject_smoothness must be finite and positive")
         if self.subject_parameters is None:
@@ -418,6 +664,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
             f"subject_scale_bounds={self.subject_scale_bounds[0]},{self.subject_scale_bounds[1]};"
             f"scale_max_iterations={self.scale_max_iterations};"
             f"scale_tolerance={self.scale_tolerance};"
+            f"subject_scale_uncertainty={self.subject_scale_uncertainty};"
             f"subject_smoothness={self.subject_smoothness};"
             f"nondecision_bounds={nondecision}]"
         )
@@ -605,58 +852,72 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
             )
             return fitted, objectives, selected_index
 
+        log_scale_bounds = tuple(np.log(self.subject_scale_bounds))
+
+        def em_scale_update(
+            input_scales: NDArray[np.float64],
+            initial_points: Sequence[NDArray[np.float64]],
+        ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+            scale_objective = objective_for(input_scales)
+            scale_results, _, scale_selected = optimize_joint(
+                scale_objective,
+                initial_points,
+            )
+            scale_point = np.asarray(scale_results[scale_selected].x, dtype=np.float64)
+            scale_deviations = scale_point[n_population:].reshape(
+                len(subjects),
+                len(self.subject_parameters or ()),
+                len(self.knots),
+            )
+            conditional_covariances = _conditional_deviation_covariances(
+                scale_objective,
+                scale_point,
+                n_population=n_population,
+                deviation_bounds=deviation_bounds,
+                n_subjects=len(subjects),
+            )
+            updated_scales = np.empty_like(input_scales)
+            for parameter_index in range(len(self.subject_parameters or ())):
+                block_start = parameter_index * len(self.knots)
+                block_stop = block_start + len(self.knots)
+                covariance_blocks = tuple(
+                    covariance[block_start:block_stop, block_start:block_stop]
+                    for covariance in conditional_covariances
+                )
+                parameter_deviations = scale_deviations[:, parameter_index, :]
+                scale_fit = minimize_scalar(
+                    _expected_subject_prior_objective,
+                    args=(
+                        parameter_deviations,
+                        covariance_blocks,
+                        self.subject_smoothness,
+                        self.knots,
+                    ),
+                    bounds=log_scale_bounds,
+                    method="bounded",
+                    options={"xatol": self.scale_tolerance / 10.0},
+                )
+                updated_scales[parameter_index] = float(np.exp(scale_fit.x))
+            return updated_scales, scale_point
+
         subject_scales = self._configured_subject_scales()
         scale_standard_errors: NDArray[np.float64] | None = None
+        scale_local_standard_errors: NDArray[np.float64] | None = None
+        scale_covariance: NDArray[np.float64] | None = None
+        scale_rate_matrix: NDArray[np.float64] | None = None
         scale_at_boundary: NDArray[np.bool_] | None = None
         scale_iterations = 0
         scale_converged = True
         if self.estimate_subject_scales:
             scale_converged = False
             warm_start: NDArray[np.float64] | None = None
-            log_bounds = tuple(np.log(self.subject_scale_bounds))
             for iteration in range(1, self.scale_max_iterations + 1):
                 scale_iterations = iteration
-                scale_objective = objective_for(subject_scales)
                 initial_points = starts if warm_start is None else (warm_start,)
-                scale_results, _, scale_selected = optimize_joint(
-                    scale_objective,
+                updated_scales, scale_point = em_scale_update(
+                    subject_scales,
                     initial_points,
                 )
-                scale_point = np.asarray(scale_results[scale_selected].x, dtype=np.float64)
-                scale_deviations = scale_point[n_population:].reshape(
-                    len(subjects),
-                    len(self.subject_parameters or ()),
-                    len(self.knots),
-                )
-                conditional_covariances = _conditional_deviation_covariances(
-                    scale_objective,
-                    scale_point,
-                    n_population=n_population,
-                    deviation_bounds=deviation_bounds,
-                    n_subjects=len(subjects),
-                )
-                updated_scales = np.empty_like(subject_scales)
-                for parameter_index in range(len(self.subject_parameters or ())):
-                    block_start = parameter_index * len(self.knots)
-                    block_stop = block_start + len(self.knots)
-                    covariance_blocks = tuple(
-                        covariance[block_start:block_stop, block_start:block_stop]
-                        for covariance in conditional_covariances
-                    )
-                    parameter_deviations = scale_deviations[:, parameter_index, :]
-                    scale_fit = minimize_scalar(
-                        _expected_subject_prior_objective,
-                        args=(
-                            parameter_deviations,
-                            covariance_blocks,
-                            self.subject_smoothness,
-                            self.knots,
-                        ),
-                        bounds=log_bounds,
-                        method="bounded",
-                        options={"xatol": self.scale_tolerance / 10.0},
-                    )
-                    updated_scales[parameter_index] = float(np.exp(scale_fit.x))
                 maximum_change = float(
                     np.max(np.abs(np.log(updated_scales) - np.log(subject_scales)))
                 )
@@ -700,7 +961,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
                 deviation_bounds=deviation_bounds,
                 n_subjects=len(subjects),
             )
-            scale_standard_errors = np.empty_like(subject_scales)
+            scale_local_standard_errors = np.empty_like(subject_scales)
             for parameter_index, scale in enumerate(subject_scales):
                 block_start = parameter_index * len(self.knots)
                 block_stop = block_start + len(self.knots)
@@ -708,13 +969,67 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
                     covariance[block_start:block_stop, block_start:block_stop]
                     for covariance in final_conditional_covariances
                 )
-                scale_standard_errors[parameter_index] = _scale_standard_error(
+                scale_local_standard_errors[parameter_index] = _scale_standard_error(
                     scale,
                     deviations[:, parameter_index, :],
                     covariance_blocks,
                     subject_smoothness=self.subject_smoothness,
                     knots=self.knots,
                 )
+            local_log_covariance = np.diag((scale_local_standard_errors / subject_scales) ** 2)
+            if self.subject_scale_uncertainty == "supplemented":
+                if not scale_converged:
+                    raise ModelDataError("supplemented scale uncertainty requires EM convergence")
+                scale_rate_matrix = np.empty(
+                    (len(subject_scales), len(subject_scales)),
+                    dtype=np.float64,
+                )
+                center = np.log(subject_scales)
+                step = max(0.02, self.scale_tolerance / 2.0)
+                for input_parameter in range(len(subject_scales)):
+                    lower_point = center.copy()
+                    upper_point = center.copy()
+                    lower_point[input_parameter] = max(
+                        lower_point[input_parameter] - step,
+                        log_scale_bounds[0],
+                    )
+                    upper_point[input_parameter] = min(
+                        upper_point[input_parameter] + step,
+                        log_scale_bounds[1],
+                    )
+                    lower_update, _ = em_scale_update(
+                        np.exp(lower_point),
+                        (joint_estimates,),
+                    )
+                    upper_update, _ = em_scale_update(
+                        np.exp(upper_point),
+                        (joint_estimates,),
+                    )
+                    scale_rate_matrix[:, input_parameter] = (
+                        np.log(upper_update) - np.log(lower_update)
+                    ) / (upper_point[input_parameter] - lower_point[input_parameter])
+                if np.max(np.abs(np.linalg.eigvals(scale_rate_matrix))) >= 1.0:
+                    raise ModelDataError(
+                        "supplemented scale uncertainty requires a stable EM rate matrix"
+                    )
+                complete_information = np.linalg.pinv(
+                    local_log_covariance,
+                    hermitian=True,
+                )
+                observed_information = (
+                    np.eye(len(subject_scales)) - scale_rate_matrix
+                ) @ complete_information
+                observed_information = 0.5 * (observed_information + observed_information.T)
+                if np.min(np.linalg.eigvalsh(observed_information)) <= 0:
+                    raise ModelDataError("supplemented scale information is not positive definite")
+                log_covariance = np.linalg.pinv(
+                    observed_information,
+                    hermitian=True,
+                )
+            else:
+                log_covariance = local_log_covariance
+            scale_covariance = np.diag(subject_scales) @ log_covariance @ np.diag(subject_scales)
+            scale_standard_errors = np.sqrt(np.maximum(np.diag(scale_covariance), 0.0))
         population_standard_errors = np.sqrt(np.maximum(np.diag(population_covariance), 0.0))
         subject_standard_errors = np.sqrt(
             np.maximum(
@@ -786,6 +1101,9 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
             subject_smoothness=self.subject_smoothness,
             subject_parameter_scales=subject_scales,
             subject_scale_standard_errors=scale_standard_errors,
+            subject_scale_local_standard_errors=scale_local_standard_errors,
+            subject_scale_covariance=scale_covariance,
+            subject_scale_em_rate_matrix=scale_rate_matrix,
             subject_scale_bounds=self.subject_scale_bounds
             if self.estimate_subject_scales
             else None,
@@ -794,6 +1112,117 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
             scale_estimation_iterations=scale_iterations,
             scale_estimation_converged=scale_converged,
             scale_estimation_policy="laplace-em" if self.estimate_subject_scales else "fixed",
+            subject_scale_uncertainty_policy=(
+                f"{self.subject_scale_uncertainty}-expected-prior-curvature"
+                if self.estimate_subject_scales and self.subject_scale_uncertainty == "local"
+                else "supplemented-laplace-em"
+                if self.estimate_subject_scales
+                else "fixed"
+            ),
+        )
+
+    def predict_new_subjects(
+        self,
+        study: Study,
+        fit: FitResult,
+        *,
+        n_draws: int,
+        seed: int,
+    ) -> UnseenSubjectPosteriorPrediction:
+        """Integrate fitted random-effect paths for entirely unseen subjects."""
+
+        hierarchical_fit = self._validated_hierarchical_fit(fit)
+        if isinstance(n_draws, bool) or not isinstance(n_draws, int) or n_draws < 2:
+            raise ValueError("n_draws must be an integer of at least two")
+        if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
+            raise ValueError("predictive seed must be a non-negative integer")
+        subjects = tuple(_scalar(subject) for subject in study.subjects)
+        overlap = set(subjects) & set(hierarchical_fit.subjects)
+        if overlap:
+            raise ValueError("predict_new_subjects requires entirely unseen subjects")
+
+        outcomes = self._outcomes(study)
+        response_times = self.response_time.read(study).seconds
+        features = self._feature_matrix(study)
+        basis = self._time_basis(study)
+        row_subjects = _row_subject_indices(study, subjects)
+        generator = np.random.default_rng(seed)
+        n_rows = len(study)
+        n_coefficients = len(self.coefficient_names)
+        probabilities = np.empty((n_draws, n_rows), dtype=np.float64)
+        log_probabilities = np.empty_like(probabilities)
+        deviations = np.empty(
+            (
+                n_draws,
+                len(subjects),
+                len(hierarchical_fit.subject_parameters),
+                len(self.knots),
+            ),
+            dtype=np.float64,
+        )
+        for draw in range(n_draws):
+            deviations[draw] = self._draw_subject_deviations(
+                subjects,
+                hierarchical_fit.population_knot_values,
+                generator,
+                scales=hierarchical_fit.subject_parameter_scales,
+            )
+            trial_values = self._subject_trial_values_from_basis(
+                basis,
+                hierarchical_fit.estimates,
+                deviations[draw],
+                row_subjects,
+            )
+            drifts = np.sum(features * trial_values[:, :n_coefficients], axis=1)
+            probabilities[draw] = _upper_boundary_probability(
+                drifts,
+                boundary=trial_values[:, n_coefficients],
+                starting_bias=trial_values[:, n_coefficients + 1],
+            )
+            log_probabilities[draw] = _wiener_log_density(
+                response_times - trial_values[:, n_coefficients + 2],
+                outcomes,
+                drifts,
+                boundary=trial_values[:, n_coefficients],
+                starting_bias=trial_values[:, n_coefficients + 1],
+                terms=self.density_terms,
+            )
+
+        log_draws = np.log(float(n_draws))
+        subject_joint = np.empty(len(subjects), dtype=np.float64)
+        effective_draws = np.empty(len(subjects), dtype=np.float64)
+        monte_carlo_error = np.empty(len(subjects), dtype=np.float64)
+        for subject in range(len(subjects)):
+            log_weights = np.sum(
+                log_probabilities[:, row_subjects == subject],
+                axis=1,
+            )
+            log_weight_sum = float(logsumexp(log_weights))
+            subject_joint[subject] = log_weight_sum - log_draws
+            normalized_weights = np.exp(log_weights - log_weight_sum)
+            effective_draws[subject] = 1.0 / float(np.sum(normalized_weights**2))
+            shifted_weights = np.exp(log_weights - float(np.max(log_weights)))
+            monte_carlo_error[subject] = float(
+                np.std(shifted_weights, ddof=1) / np.sqrt(n_draws) / np.mean(shifted_weights)
+            )
+        return UnseenSubjectPosteriorPrediction(
+            subjects=subjects,
+            row_subject_indices=row_subjects,
+            probability=np.mean(probabilities, axis=0),
+            draw_probabilities=probabilities,
+            draw_pointwise_log_probability=log_probabilities,
+            pointwise_marginal_log_probability=logsumexp(
+                log_probabilities,
+                axis=0,
+            )
+            - log_draws,
+            subject_joint_log_probability=subject_joint,
+            subject_effective_draws=effective_draws,
+            subject_log_probability_mcse=monte_carlo_error,
+            random_effect_draws=deviations,
+            subject_parameters=hierarchical_fit.subject_parameters,
+            subject_parameter_scales=hierarchical_fit.subject_parameter_scales,
+            seed=seed,
         )
 
     def predict(
@@ -1018,9 +1447,12 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
         subjects: tuple[Any, ...],
         population_knots: NDArray[np.float64],
         generator: np.random.Generator,
+        *,
+        scales: NDArray[np.float64] | None = None,
     ) -> NDArray[np.float64]:
         covariances = tuple(
-            np.linalg.pinv(penalty, hermitian=True) for penalty in self._subject_penalty_matrices()
+            np.linalg.pinv(penalty, hermitian=True)
+            for penalty in self._subject_penalty_matrices(scales)
         )
         deviations = np.empty(
             (len(subjects), len(self.subject_parameters or ()), len(self.knots)),

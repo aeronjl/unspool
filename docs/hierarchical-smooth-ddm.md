@@ -64,6 +64,7 @@ model = HierarchicalSmoothWienerDriftDiffusion(
     subject_parameter_scales={"drift.stimulus": 0.15, "boundary": 0.15},
     estimate_subject_scales=True,
     subject_scale_bounds=(0.03, 0.5),
+    subject_scale_uncertainty="supplemented",
 )
 
 fit = model.fit(training_study)
@@ -84,10 +85,26 @@ estimates scales from each training study before scoring its held-out sessions o
 on the fit result. A bound hit means the design did not resolve heterogeneity beyond the
 declared range; it is not evidence that the true variance equals the bound.
 
-Scale standard errors use final expected-prior curvature in log-scale coordinates, and
-`subject_scale_confidence_intervals_95` applies a delta-method transformation. The pinned
-recovery benchmark shows that these local intervals are too narrow in its finite design,
-so they are optimization diagnostics rather than calibrated posterior intervals.
+The default `subject_scale_uncertainty="local"` uses final expected-prior curvature in
+log-scale coordinates. The parameter-specific recovery benchmark shows that these local
+intervals are too narrow in its finite design, so they are optimization diagnostics rather
+than calibrated posterior intervals.
+
+The opt-in `"supplemented"` mode differentiates one forced EM update around the fitted
+log scales and uses its rate matrix to correct the complete-data information for missing
+information. This follows the supplemented EM construction of
+[Meng and Rubin (1991)](https://doi.org/10.1080/01621459.1991.10475130), applied to
+Unspool's approximate Laplace-EM map. The fit retains both
+`subject_scale_local_standard_errors` and the selected
+`subject_scale_standard_errors`, plus `subject_scale_covariance`,
+`subject_scale_em_rate_matrix`, and `subject_scale_em_spectral_radius`. Reported 95%
+intervals are transformed on the log scale and clipped only to the declared scale bounds.
+
+Supplementation requires a converged scale procedure, an EM spectral radius below one,
+and positive observed information. A failed condition raises `ModelDataError`; Unspool
+does not manufacture a covariance by clipping eigenvalues. The pinned benchmark resolves
+18/20 panels and leaves two stability failures visible, so this is a guarded finite-design
+improvement rather than a universal calibration guarantee.
 
 Population simulation parameters retain the smooth Wiener's stable natural-scale
 coordinates. `simulate_with_effects()` either draws deviation paths from the configured
@@ -127,8 +144,36 @@ approximation conditional on the fitted penalties.
 
 For an animal present during fitting, prediction uses its fitted population-plus-deviation
 trajectory. A completely unseen animal uses the population trajectory plug-in, recorded as
-`unseen_subject_policy="population-trajectory-plugin"`. No uncertainty for a new random
-effect is integrated into that prediction.
+`unseen_subject_policy="population-trajectory-plugin"`. This remains the deterministic
+`predict()` behavior, making generic prospective evaluation reproducible and cheap.
+
+For a predictive distribution over new heterogeneity, use the explicit Monte Carlo API:
+
+```python
+predictive = model.predict_new_subjects(
+    held_out_animals,
+    fit,
+    n_draws=4096,
+    seed=812,
+)
+
+print(predictive.prediction.probability)
+print(predictive.subject_joint_log_probability_map)
+print(predictive.subject_effective_draws)
+print(predictive.subject_log_probability_mcse)
+```
+
+Every draw samples one smooth deviation path per unseen animal and reuses it across all of
+that animal's rows. This preserves within-animal dependence. The result distinguishes
+pointwise marginal joint densities from the scientifically appropriate subject-joint
+score, which takes the log only after multiplying each draw's trial densities. It also
+retains marginal choice probabilities, the random-effect draws, effective draw counts,
+and delta-method log-score Monte Carlo standard errors. The method rejects any animal that
+appeared in the fit, preventing accidental replacement of fitted individual trajectories.
+
+This distribution conditions on the fitted population trajectories and scale estimates;
+it does not integrate their uncertainty. It is therefore empirical-Bayes random-effect
+prediction, not full Bayesian posterior prediction.
 
 Use complete-subject holdouts to test the population policy and cohort-forward session
 splits to test future sessions of represented animals. These are different generalization
@@ -145,10 +190,13 @@ see [Wiecki, Sofer, and Frank (2013)](https://pmc.ncbi.nlm.nih.gov/articles/PMC3
 Current limitations are explicit:
 
 - scale estimation is empirical-Bayes Laplace-EM rather than full posterior inference;
+- supplemented scale intervals remain a local numerical approximation and can be
+  unresolved when the fitted EM map is unstable;
 - all parameter-specific components share one path-smoothness value;
 - subject deviations for stationary non-decision time are not supported;
 - contaminant mixtures and within-decision time-varying dynamics are not supported;
-- unseen-animal predictions are plug-ins rather than posterior predictive distributions;
+- unseen-animal random-effect prediction does not propagate population or scale
+  uncertainty;
 - lab-level structure and aligned cross-lab trajectory comparisons remain future work.
 
 ## Recovery evidence
@@ -168,10 +216,19 @@ Doubling the cohort from 6 to 12 animals reduces joint scale RMSE from `0.09178`
 log loss is `0.00232` and `0.00080`, respectively. Local interval coverage is only
 50–62.5%, preserving the approximation's calibration limit rather than hiding it.
 
+The [predictive-uncertainty benchmark](../benchmarks/ddm_predictive_uncertainty/README.md)
+then compares local and supplemented scale intervals over 20 eight-animal panels. Local
+coverage is 70% for drift scale and 65% for boundary scale. Supplementation is stable in
+18/20 panels and reaches conditional coverage of 100% and 88.9%, respectively. Across 80
+entirely new animals, integrating fitted random effects improves mean subject-joint log
+probability by `0.79135` and wins for 70%; effective draws and score Monte Carlo errors
+remain attached to every subject.
+
 Run the example and benchmark with:
 
 ```bash
 uv run python examples/hierarchical_smooth_drift_diffusion.py
 uv run python -m benchmarks.hierarchical_smooth_ddm.benchmark
 uv run python -m benchmarks.ddm_subject_scale_recovery.benchmark
+uv run python -m benchmarks.ddm_predictive_uncertainty.benchmark
 ```

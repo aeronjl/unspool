@@ -180,6 +180,14 @@ an oracle. Local interval coverage is only 50–62.5%, so Unspool reports those 
 diagnostics rather than calibrated uncertainty. See the
 [parameter-specific DDM scale benchmark](benchmarks/ddm_subject_scale_recovery/README.md).
 
+An opt-in supplemented EM correction now accounts for uncertainty omitted by that local
+scale curvature, while refusing unstable covariance estimates. Across 20 eight-animal
+panels it returns 18 finite intervals: conditional coverage is 100% for drift scale and
+88.9% for boundary scale, versus 70% and 65% locally. Empirical-Bayes integration over
+random-effect paths improves mean joint log probability by `0.79135` across 80 entirely
+unseen animals and wins for 70% of them, with Monte Carlo precision retained per animal.
+See the [DDM predictive-uncertainty benchmark](benchmarks/ddm_predictive_uncertainty/README.md).
+
 A latent-state recovery benchmark separates arbitrary HMM label names from recovered state
 identity. Across 20 clear-state and 20 overlapping-state fits, aligned metrics are invariant
 to complete label reversal. Clear states reach 91.85% decoded accuracy with no ambiguous
@@ -289,6 +297,7 @@ uv run python -m benchmarks.ddm_recovery.benchmark
 uv run python -m benchmarks.ddm_contaminants.benchmark
 uv run python -m benchmarks.smooth_ddm.benchmark
 uv run python -m benchmarks.hierarchical_smooth_ddm.benchmark
+uv run python -m benchmarks.ddm_predictive_uncertainty.benchmark
 uv run python -m benchmarks.cell2025.fetch_data
 uv run python -m benchmarks.cell2025.benchmark \
   benchmarks/cell2025/data/long_term_learning_dataset_preprocessed_behaviour_all.csv

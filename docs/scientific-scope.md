@@ -36,7 +36,8 @@ fixed-knot partially pooled subject trajectories; a fixed-transition Bernoulli G
 a session-reset binary Q-learning agent; an explicit response-time schema and fixed-
 parameter Wiener drift-diffusion model with an optional explicit contaminant mixture;
 smooth session-varying Wiener drift, boundary, and starting-bias paths;
-partially pooled population and animal-specific Wiener trajectories;
+partially pooled population and animal-specific Wiener trajectories with opt-in
+supplemented variance-component uncertainty and empirical-Bayes unseen-animal prediction;
 design-specific parameter and model recovery; and a first named four-family recovery grid
 plus repeated boundary-near regimes with retained fit audits and truth-aware permutation-
 invariant latent-state recovery.

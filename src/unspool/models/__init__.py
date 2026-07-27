@@ -41,6 +41,7 @@ from unspool.models.hierarchical_smooth_ddm import (
     HierarchicalSmoothDriftDiffusionFitResult,
     HierarchicalSmoothDriftDiffusionSimulation,
     HierarchicalSmoothWienerDriftDiffusion,
+    UnseenSubjectPosteriorPrediction,
 )
 from unspool.models.hierarchical_smooth_glm import (
     HierarchicalSmoothBernoulliHistoryGLM,
@@ -96,6 +97,7 @@ __all__ = [
     "SmoothDriftDiffusionFitResult",
     "SmoothWienerDriftDiffusion",
     "UniformResponseTimeContaminant",
+    "UnseenSubjectPosteriorPrediction",
     "UnsupportedPredictionMode",
     "ValueTrajectory",
     "WienerDriftDiffusion",
