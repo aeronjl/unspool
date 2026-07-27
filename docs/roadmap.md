@@ -403,8 +403,11 @@ The roadmap is organized by scientific contracts rather than by model count.
   of the identical backend contract, requiring declared finite plausible bounds, restoring
   upstream global RNG state, retaining backend failures, and conservatively distinguishing
   limit termination from convergence without changing model or task semantics.
-- **Planned:** integrate an established probabilistic-programming backend for full
-  hierarchical posterior inference rather than implementing a new sampler.
+- **Implemented:** integrate established PyMC NUTS sampling for the existing fixed-scale
+  hierarchical Bernoulli history GLM, reusing task validation and filtered-history design,
+  preserving its flat/L2/Gaussian prior semantics, retaining likelihood and predictive
+  groups, and rejecting empirical-Bayes scale estimation until a full-posterior scale prior
+  is explicitly declared; test real PyMC 5 and 6 paths under dedicated CI.
 - **Implemented:** retain immutable, fully labelled posterior, predictive, observed-data,
   constant-data, pointwise log-likelihood, and per-draw diagnostic groups in a NumPy-native
   result with explicit model, backend, and parameter-space provenance; export and import

@@ -101,17 +101,31 @@ The [subject-scale recovery benchmark](https://github.com/aeronjl/unspool/tree/m
 crosses two population sizes with three true scales, checks approximate interval coverage,
 and compares future-session predictions with an oracle given the true scale.
 
+## Full posterior inference with PyMC
+
+The optional [PyMC backend](pymc-backend.md) samples the fixed-scale version of this same
+model with NUTS. It preserves the flat intercept, L2-equivalent population priors, Gaussian
+subject deviations, filtered-history design, and task denominator while returning labelled
+posterior, likelihood, predictive, observed-data, and sampler-diagnostic groups.
+
+This is full posterior inference conditional on the declared fixed `subject_scale`. The
+`estimate_subject_scale=True` Laplace path remains empirical Bayes and is rejected by the
+adapter because it does not define a full-posterior scale prior.
+
 ## Current boundary
 
-This remains deliberately short of a full hierarchical Bayesian model:
+The deterministic MAP and empirical-Bayes paths remain deliberately short of a full
+hierarchical Bayesian model. The optional fixed-scale PyMC path propagates coefficient and
+subject-deviation uncertainty, but the family as a whole still has these boundaries:
 
 - there is one independent, shared scale for every coefficient rather than separate or
   correlated variance components;
 - scale estimation uses a Laplace approximation and local-Hessian uncertainty rather than
-  a posterior distribution;
+  a posterior distribution; the PyMC path conditions on a fixed scale;
 - estimated-scale subject standard errors are conditional on population coefficients and
   the fitted scale;
-- predictions do not integrate parameter or random-effect uncertainty;
+- deterministic-path predictions do not integrate parameter or random-effect uncertainty;
+  the first PyMC adapter currently retains in-sample posterior predictive draws only;
 - subject coefficients are static across sessions;
 - there are no nested lab effects, correlated random effects, or missing-data model.
 

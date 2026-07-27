@@ -56,6 +56,10 @@ probabilistic = [
     "arviz>=0.22,<1.2 ; python_full_version < '3.12'",
     "arviz>=1.2,<2 ; python_full_version >= '3.12'",
 ]
+bayesian = [
+    "pymc>=5.28,<6 ; python_full_version < '3.12'",
+    "pymc>=6.1,<7 ; python_full_version >= '3.12'",
+]
 
 [dependency-groups]
 dev = [

@@ -101,6 +101,10 @@ draws, predictions, pointwise likelihood, sampler diagnostics, observed data, an
 provenance without making ArviZ a core dependency. Install `unspool[probabilistic]` only for
 ArviZ/xarray export or import.
 
+For full posterior inference on the fixed-scale hierarchical Bernoulli history GLM, install
+`unspool[bayesian]` and use the task-validated
+[PyMC backend](../pymc-backend.md).
+
 ## I want a complete example
 
 The [worked studies](../tutorials/index.md) begin with published scientific questions and

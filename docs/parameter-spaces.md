@@ -122,12 +122,13 @@ conversion contract lands; they are not relabelled as natural-scale uncertainty.
 | ArviZ / xarray | coordinate labels and parameter-space fingerprint | labelled posterior, predictive, likelihood, and diagnostic groups |
 
 The shared [deterministic inference contract](inference-backends.md), SciPy multistart
-implementation, and optional PyBADS adapter now consume this parameter space directly.
-PyDDM, HSSM, and ArviZ adapters are subsequent 0.23 work. The contract remains usable
-without optional dependencies and does not make HSSM's current Python requirements part of
-Unspool core. It follows PyBADS' distinction between hard and plausible bounds and prepares
-for ArviZ's labelled inference-data groups rather than inventing a parallel posterior
-format.
+implementation, and optional PyBADS adapter consume this parameter space directly. The
+ArviZ result adapter now retains labelled groups and the fingerprint when one exists. The
+first [PyMC backend](pymc-backend.md) preserves the older hierarchical GLM's explicit
+fixed-scale prior semantics, but that model does not yet expose `ParameterSpaceProvider`,
+so its posterior result correctly leaves the parameter-space fingerprint unset rather than
+manufacturing one. PyDDM and HSSM adapters remain later 0.23 work. Optional dependencies do
+not become part of Unspool core.
 
 - [PyBADS API](https://acerbilab.github.io/pybads/api/classes/bads.html)
 - [PyDDM documentation](https://pyddm.readthedocs.io/)

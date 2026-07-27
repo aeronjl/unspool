@@ -16,6 +16,11 @@ output contract is documented under [labelled posterior results](posterior-resul
 natural-scale draws, predictive groups, pointwise likelihood, diagnostics, observed data,
 and provenance with optional ArviZ/xarray interchange.
 
+The first established full-posterior implementation is the optional
+[PyMC hierarchical GLM backend](pymc-backend.md). It samples the existing fixed-scale
+partial-pooling model while preserving its task, design matrix, likelihood, and prior
+semantics.
+
 ## Run multistart maximum likelihood
 
 ```python
