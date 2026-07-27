@@ -52,6 +52,7 @@ bounded claims.
 | `interoperability-pipeline.svg` | Show how supported sources converge on the same study contract |
 | `sbc-workflow.svg` | Separate prior simulation, posterior inference, rank evidence, and bounded SBC interpretation |
 | `sensitivity-specification.svg` | Show declared refits, common metrics, and a descriptive specification curve without a robustness threshold |
+| `reliability-agreement.svg` | Contrast stable subject ordering with absolute agreement and Bland-Altman evidence |
 
 Conceptual figures contain schematic or simulated values chosen for explanation. They are
 not estimates from a study and should not be cited as results.

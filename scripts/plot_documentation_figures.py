@@ -56,6 +56,7 @@ def main() -> None:
     _plot_diagnostic_layers(args.output_dir / "diagnostic-layers.svg")
     _plot_sbc_workflow(args.output_dir / "sbc-workflow.svg")
     _plot_sensitivity_specification(args.output_dir / "sensitivity-specification.svg")
+    _plot_reliability_agreement(args.output_dir / "reliability-agreement.svg")
     _plot_interoperability(args.output_dir / "interoperability-pipeline.svg")
     _plot_hierarchical_pooling(args.output_dir / "hierarchical-pooling.svg")
     _plot_ddm_recovery(args.output_dir / "ddm-recovery.svg")
@@ -549,6 +550,86 @@ def _plot_sensitivity_specification(path: Path) -> None:
         4.58,
         "Sensitivity is a comparison, not a verdict",
         ha="center",
+        color=INDIGO,
+        weight="bold",
+    )
+    _save(figure, path)
+
+
+def _plot_reliability_agreement(path: Path) -> None:
+    first = np.linspace(0.15, 0.85, 18)
+    noise = np.asarray(
+        [
+            -0.025,
+            0.012,
+            -0.018,
+            0.021,
+            -0.006,
+            0.016,
+            -0.009,
+            0.024,
+            -0.015,
+            0.006,
+            0.019,
+            -0.011,
+            0.008,
+            -0.022,
+            0.014,
+            -0.004,
+            0.018,
+            -0.007,
+        ]
+    )
+    second = first + 0.12 + noise
+    pair_mean = (first + second) / 2.0
+    difference = second - first
+    bias = float(np.mean(difference))
+    spread = float(np.std(difference, ddof=1))
+    lower = bias - 1.96 * spread
+    upper = bias + 1.96 * spread
+
+    figure, axes = plt.subplots(1, 2, figsize=(10.5, 4.5))
+    consistency, agreement = axes
+    consistency.scatter(first, second, color=INDIGO, s=30)
+    limits = (0.05, 1.05)
+    consistency.plot(limits, limits, linestyle="--", color=MUTED, linewidth=1.2)
+    consistency.set(
+        xlim=limits,
+        ylim=limits,
+        xlabel="Test estimate",
+        ylabel="Retest estimate",
+        title="Ordering can persist despite an occasion shift",
+    )
+    consistency.text(
+        0.08,
+        0.97,
+        "high consistency",
+        color=TEAL,
+        weight="bold",
+        transform=consistency.transAxes,
+    )
+    consistency.text(
+        0.08,
+        0.90,
+        "poor identity-line agreement",
+        color=AMBER,
+        transform=consistency.transAxes,
+    )
+
+    agreement.scatter(pair_mean, difference, color=BLUE, s=30)
+    agreement.axhline(bias, color=INDIGO, linewidth=1.4, label="mean difference")
+    agreement.axhline(lower, color=AMBER, linestyle="--", linewidth=1.2)
+    agreement.axhline(upper, color=AMBER, linestyle="--", linewidth=1.2)
+    agreement.axhline(0, color=MUTED, linewidth=0.9)
+    agreement.set(
+        xlabel="Pair mean",
+        ylabel="Retest - test",
+        title="Bland-Altman agreement view",
+    )
+    agreement.text(pair_mean.min(), bias + 0.005, "mean shift", color=INDIGO, fontsize=8)
+    agreement.text(pair_mean.min(), upper + 0.005, "limits of agreement", color=AMBER, fontsize=8)
+    figure.suptitle(
+        "Consistency and absolute agreement are different claims",
         color=INDIGO,
         weight="bold",
     )

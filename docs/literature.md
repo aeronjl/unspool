@@ -75,6 +75,19 @@ complementary efficient diagnostic, not silently substituted for those refits.
 - [Schad, Betancourt, and Vasishth (2021)](https://doi.org/10.1037/met0000275)
 - [Kallioinen et al. (2024)](https://doi.org/10.1007/s11222-023-10366-5)
 
+## Reliability of individual computational measures
+
+Stable group effects do not imply stable individual differences. Computational parameters
+can show high ordering consistency but poor absolute agreement, and plug-in estimates can
+confound trial-level estimation error with true between-occasion change. Unspool therefore
+reports several named consistency and agreement quantities, preserves the paired subjects,
+and keeps hierarchical joint reliability modelling as a distinct extension.
+
+- [Test-retest reliability guide](test-retest-reliability.md)
+- [Chen et al. (2021)](https://doi.org/10.1016/j.neuroimage.2021.118647)
+- [Schaaf et al. (2024)](https://doi.org/10.3758/s13428-023-02203-4)
+- [Williams et al. (2025)](https://doi.org/10.3758/s13428-025-02599-1)
+
 ## Documentation commitments
 
 Future literature examples should prioritize:
