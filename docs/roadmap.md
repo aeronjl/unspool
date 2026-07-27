@@ -389,8 +389,11 @@ The roadmap is organized by scientific contracts rather than by model count.
 
 ## 0.23 — Fitting and diagnostic interoperability
 
-- **Planned:** give parameters shared transforms, bounds, priors, fixed/free roles, and
-  stable natural and optimizer coordinates.
+- **Implemented:** define a portable, content-addressed parameter space with stable natural
+  and optimizer coordinates, transforms, scientific and plausible bounds, numerical fit
+  bounds, fixed/free roles, normalized priors, density Jacobians, strict round trips, and
+  fit-artifact metadata; integrate it through the reference Q-learning optimizer as the
+  first backwards-compatible consumer.
 - **Planned:** expose deterministic multistart MLE/MAP and PyBADS through one backend
   contract while retaining every attempted optimum.
 - **Planned:** integrate an established probabilistic-programming backend for full

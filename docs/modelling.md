@@ -9,6 +9,9 @@ states, reinforcement learning, or population structure are added.
 Objects satisfying `BehaviourEstimator` provide fitting, prediction, and pointwise scoring.
 `GenerativeBehaviourModel` adds named parameters and simulation; `BehaviourModel` remains
 the backwards-compatible name for this full generative contract.
+Models that expose [`ParameterSpaceProvider`](parameter-spaces.md) additionally distinguish
+scientific natural parameters from transformed optimizer coordinates and publish portable
+bounds, fixed values, and priors for inference adapters.
 
 | Method or property | Contract |
 | --- | --- |

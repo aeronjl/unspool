@@ -99,6 +99,7 @@ nav:
       - Model comparison: comparison.md
       - Parameter and model recovery: model-recovery.md
       - Fit diagnostics: diagnostics.md
+      - Parameter spaces and backends: parameter-spaces.md
       - Estimator contract: estimator-contract.md
       - Trajectory shapes: trajectory-shapes.md
   - Data and interoperability:
