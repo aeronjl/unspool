@@ -22,6 +22,8 @@ Without the downloaded Cell table, regenerate every other figure with `--skip-ce
 | `cell2025-strategy.svg` | 30 animals; checksum-pinned Cell 2025 behavioural table | Independent reproduction of the reported early-bias/late-strategy association |
 | `ibl-learning-trajectories.svg` | 78 animals, nine laboratories, 468 checksum-pinned IBL sessions | Outcome-blind retrieval and the descriptive geometry of early-to-late accuracy |
 | `ibl-prospective-selection.svg` | Subject-level scores from the committed nested-selection benchmark | Training-only smoothness selection and untouched future-session performance |
+| `ibl-choice-response-time.svg` | 111 untouched trials from one outcome-blindly selected, checksum-pinned IBL subject | Joint response-time, conditional-accuracy, contaminant-responsibility, and prospective DDM evidence |
+| `ibl-glmhmm-states.svg` | 150 untouched choices plus training-only state-count selection from the same IBL subject | Fitted latent structure, near-tied inner selection, and outer GLM-HMM versus static-GLM evidence |
 | `model-recovery-matrix.svg` | Committed sparse and dense four-family simulation benchmark | Whether this analysis design can distinguish the candidate generators |
 | `hierarchical-pooling.svg` | Committed hierarchical-GLM recovery benchmark | How partial pooling responds to increasing true between-animal variation |
 | `ddm-recovery.svg` | Committed drift-diffusion recovery benchmark | Parameter recovery error at the benchmark's two trial counts |

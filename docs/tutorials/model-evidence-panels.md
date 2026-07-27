@@ -60,13 +60,13 @@ the model family.
 
 ## Coverage boundary
 
-This first standardized atlas covers the four choice-only families that participate in one
+This standardized atlas covers the four choice-only families that participate in one
 matched recovery grid. Drift-diffusion models score choice and response time jointly and
 therefore need an expanded panel containing the response-time distribution, conditional
-accuracy, contaminant responsibilities, and physical-unit checks. The current
-[drift-diffusion recovery evidence](../drift-diffusion.md#recovery-evidence) remains valid;
-its richer end-to-end panel is the next extension rather than being forced into a
-choice-only template.
+accuracy, contaminant responsibilities, and physical-unit checks. The public
+[choice/response-time study](ibl2021-choice-response-time.md) now provides that extension;
+it complements, rather than replaces, the repeated
+[drift-diffusion recovery evidence](../drift-diffusion.md#recovery-evidence).
 
 ## Reproduce it
 

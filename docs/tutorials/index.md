@@ -27,6 +27,24 @@ inside outer training data.
 
 [Open the prospective IBL study](ibl2021-prospective-selection.md)
 
+## Joint choice and response time
+
+Fit naive and contaminant-aware Wiener drift-diffusion models to two late-training
+sessions from one outcome-blindly selected IBL animal, then score both choice and
+movement-onset latency in an untouched session. The negative robust-versus-naive result
+and warning-level fit audit remain visible.
+
+[Open the choice/response-time study](ibl2021-choice-response-time.md)
+
+## Literature-shaped latent strategies
+
+Turn the question posed by Ashwood et al. into a bounded prospective GLM-HMM example.
+State count is selected in an earlier session, the selected model is compared with a
+static history GLM in a later untouched session, and near-tied selection and numerical
+warnings constrain interpretation.
+
+[Open the GLM-HMM study](ashwood2022-glm-hmm.md)
+
 ## Can the design distinguish the models?
 
 Compare static, smooth, GLM-HMM, and Q-learning generators under sparse and dense versions
