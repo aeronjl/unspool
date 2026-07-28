@@ -44,12 +44,12 @@
     "cell2025-trajectories.svg": {
       "classification": "exact-reproduction",
       "generator": "scripts/plot_documentation_figures.py",
-      "source": "Released Gaussian-process trajectories and checksum-pinned clustering membership",
+      "source": "Checksum-pinned released Gaussian-process trajectories plus exact-stack Figure 1H/1J soft-DTW replay",
       "unit": "animal trajectory",
-      "denominator": "30 animals",
-      "estimand": "Right-minus-left psychometric slope over normalized within-animal training progress",
-      "claim": "The released retrospective visualization is reconstructed while its continuous overlap remains visible",
-      "published_target": "Cell 2025 behavioural trajectory visualization"
+      "denominator": "30 animals, 100 released interpolation points per animal",
+      "estimand": "Right-minus-left psychometric slope over session and left-versus-right psychometric-slope paths",
+      "claim": "Cell Figure 1H/1J is replayed while the three soft-DTW centroids remain bounded retrospective summaries of continuous diversity",
+      "published_target": "Cell 2025 Figure 1H and 1J"
     },
     "chen2021-bandit.svg": {
       "classification": "literature-shaped-analysis",

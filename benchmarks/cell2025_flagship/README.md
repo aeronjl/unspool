@@ -54,3 +54,17 @@ The resulting semantic memberships are checked animal by animal against the rele
 CSV. The released Q-value pickle is decoded into safe, reviewable JSON and summarized as
 a retrospective result; Unspool does not claim to have independently reoptimized that
 115-minute fit.
+
+The same isolated stack produces the audited Figure 1H/1J centroid artifact directly
+from the checksum-pinned released GP fits:
+
+```bash
+.venv-cell2025-release/bin/python \
+  -m benchmarks.cell2025_flagship.released_figure1hj
+```
+
+`figure1hj_trajectories.json` records the distinct panel contracts, both sets of
+soft-DTW centroids, exact semantic memberships, and numerical versions. Its companion
+`figure1hj_audit.json` traces the paper panel, released notebook cells, source checksums,
+preserved geometry, intentional documentation changes, and the boundary that this is a
+released-fit replay rather than an independent raw-trial GP refit.

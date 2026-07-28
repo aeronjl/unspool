@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "paper": {
+    "title": "Dopamine encodes deep network teaching signals for individual learning trajectories",
+    "doi": "10.1016/j.cell.2025.05.025",
+    "license": "CC BY 4.0",
+    "pdf_sha256": "6b878f65d764f0d46f6becb3869531baf351f7e00df1900294275c3c57ba6501",
+    "pdf_page": 3,
+    "journal_page": 3790
+  },
+  "released_analysis": {
+    "doi": "10.6084/m9.figshare.28877942.v1",
+    "github": "https://github.com/SamuelLiebana/da_long_term_learning",
+    "commit": "2faa4680d5e9c0d6a9df516e3dede8c641e39a72",
+    "license": "MIT",
+    "notebook": "scripts/behaviour.ipynb",
+    "figure_1j_cell": 8,
+    "figure_1h_cell": 25,
+    "environment": {
+      "python": "3.12.4",
+      "numpy": "1.26.4",
+      "pandas": "2.2.2",
+      "scipy": "1.13.1",
+      "scikit_learn": "1.5.1",
+      "tslearn": "0.6.3"
+    },
+    "trajectory_source_member": "data/psych_metric_trajectory_fit_df.csv",
+    "trajectory_source_sha256": "e5cd064e575fe792a1e2b265ef05f7fb23daa68131fea0e230a2ad2a5b6664ee",
+    "cluster_source_member": "data/left_right_balanced_cluster_df.csv",
+    "cluster_source_sha256": "6cd23f17c6634532bab1af5fd11ed212c8d9431a81a80c8ad28261fb63ab49dc",
+    "colour_variable": "prop_below",
+    "colour_anchors_rgb": [
+      [0.3, 0.5, 0.3],
+      [0.0, 0.5, 0.0],
+      [1.0, 0.5, 0.0],
+      [0.5, 0.0, 0.5],
+      [0.5, 0.3, 0.5]
+    ]
+  },
+  "panels": {
+    "1H": {
+      "x": "Released interpolated session coordinate",
+      "y": "Gaussian-process right psychometric slope minus left psychometric slope",
+      "thin_paths": "One released Gaussian-process trajectory per mouse",
+      "thick_paths": "One soft-DTW centroid fitted separately within each released Figure 1J cluster",
+      "clustering": "TimeSeriesKMeans(n_clusters=1, metric=softdtw, max_iter=20, random_state=0) on [session, right-left slope]",
+      "x_limits": [0.0, 25.0],
+      "y_limits": [-1.0, 1.0],
+      "x_ticks": [1.0, 10.0, 20.0],
+      "y_ticks": [-1.0, -0.5, 0.0, 0.5, 1.0],
+      "reference_geometry": "horizontal zero line",
+      "start_marker": "cyan",
+      "end_marker": "navy"
+    },
+    "1J": {
+      "x": "Released Gaussian-process right psychometric slope",
+      "y": "Released Gaussian-process left psychometric slope",
+      "thin_paths": "One released trajectory per mouse",
+      "thick_paths": "Three soft-DTW centroids",
+      "clustering": "TimeSeriesKMeans(n_clusters=3, metric=softdtw, max_iter=20, random_state=1) on [right slope, left slope]",
+      "x_limits": [-0.35, 1.02],
+      "y_limits": [-0.35, 1.02],
+      "x_ticks": [0.0, 0.5, 1.0],
+      "y_ticks": [0.0, 0.5, 1.0],
+      "reference_geometry": ["left slope = right slope", "left slope = 1 - right slope"],
+      "start_marker": "cyan",
+      "end_marker": "navy"
+    }
+  },
+  "unspool_display": {
+    "asset": "docs/assets/cell2025-trajectories.svg",
+    "classification": "exact-reproduction",
+    "preserved": [
+      "all 30 checksum-pinned released Gaussian-process paths",
+      "100 released interpolation points per mouse",
+      "continuous prop_below colour mapping",
+      "exact released soft-DTW specifications and semantic memberships",
+      "separate Figure 1H and Figure 1J coordinate systems",
+      "published limits, ticks, reference lines, and naive/expert endpoint colours"
+    ],
+    "changed": [
+      "The two source panels are composed side by side in one SVG",
+      "DejaVu Sans replaces Arial to satisfy the documentation figure standard",
+      "Line widths and marker sizes are reduced for the smaller documentation canvas",
+      "Panel letters, concise titles, cluster labels, and a standalone endpoint key are added",
+      "The released centroid learning-progress gradient is described precisely as increasing brightness rather than hue"
+    ],
+    "claim_boundary": "This replays released Gaussian-process fits and clustering; it does not independently refit the Gaussian processes from raw trials or establish three biological types."
+  }
+}

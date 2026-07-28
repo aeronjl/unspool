@@ -13,7 +13,9 @@ from typing import Any
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.collections import LineCollection
+from matplotlib.colors import LinearSegmentedColormap, hsv_to_rgb, rgb_to_hsv
+from matplotlib.lines import Line2D
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Rectangle
 from scipy import stats
 
@@ -87,7 +89,6 @@ def main() -> None:
     _plot_ibl_choice_rt(args.output_dir / "ibl-choice-response-time.svg")
     _plot_ibl_glm_hmm(args.output_dir / "ibl-glmhmm-states.svg")
     _plot_cell_flagship_forecast(args.output_dir / "cell2025-forecast.svg")
-    _plot_cell_flagship_trajectories(args.output_dir / "cell2025-trajectories.svg")
     _plot_cell_flagship_recovery(args.output_dir / "cell2025-recovery.svg")
     _plot_cell_flagship_qvalue_rt(args.output_dir / "cell2025-qvalue-response-time.svg")
     _plot_chen_bandit(args.output_dir / "chen2021-bandit.svg")
@@ -107,6 +108,10 @@ def main() -> None:
             args.cell_data,
             args.cell_figure1_colours,
             args.output_dir / "cell2025-strategy.svg",
+        )
+        _plot_cell_flagship_trajectories(
+            args.cell_figure1_colours,
+            args.output_dir / "cell2025-trajectories.svg",
         )
     _plot_ibl_trajectories(args.output_dir / "ibl-learning-trajectories.svg")
     _plot_ibl_selection(args.output_dir / "ibl-prospective-selection.svg")
@@ -1225,49 +1230,212 @@ def _plot_cell_flagship_forecast(path: Path) -> None:
     _save(figure, path)
 
 
-def _plot_cell_flagship_trajectories(path: Path) -> None:
-    artifact_path = ROOT / "benchmarks" / "cell2025_flagship" / "trajectory_clusters.json"
-    payload = json.loads(artifact_path.read_text(encoding="utf-8"))
-    colors = {"left": BLUE, "balanced": MUTED, "right": AMBER}
-    labels = payload["semantic_label_by_subject"]
-    trajectories = payload["fitted_trajectories"]
-    progress = np.linspace(0, 1, 100)
-    figure, axis = plt.subplots(figsize=(8.7, 5.0))
-    first = {name: True for name in colors}
-    for subject in payload["subject_order"]:
-        group = labels[subject]
-        row = trajectories[subject]
-        asymmetry = np.asarray(row["right_slope"]) - np.asarray(row["left_slope"])
-        axis.plot(
-            progress,
-            asymmetry,
-            color=colors[group],
-            linewidth=1.05,
-            alpha=0.46,
-            label=f"{group} visualization label" if first[group] else None,
+def _plot_cell_flagship_trajectories(trajectory_path: Path, path: Path) -> None:
+    """Reproduce Cell 2025 Figure 1H/1J from checksum-pinned released fits."""
+
+    from benchmarks.cell2025.fetch_data import sha256
+
+    audit = json.loads(
+        (ROOT / "benchmarks" / "cell2025_flagship" / "figure1hj_audit.json").read_text(
+            encoding="utf-8"
         )
-        first[group] = False
-    axis.axhline(0, color=INK, linewidth=0.9, alpha=0.65)
-    axis.set(
-        xlabel="Within-animal training progress (normalized)",
-        ylabel="GP right-minus-left psychometric slope",
-        title="Released trajectory labels summarize overlapping continuous paths",
-        xlim=(0, 1),
-        xticks=(0, 0.5, 1),
-        xticklabels=("first", "middle", "last"),
     )
-    axis.grid(axis="y", color="#edf0f5", linewidth=0.8)
-    axis.legend(frameon=False, ncol=3, loc="upper left")
-    axis.text(
-        0.99,
-        0.02,
-        "30 animals · exact released membership match\nlabels are not prospective classes",
-        transform=axis.transAxes,
-        ha="right",
-        va="bottom",
+    artifact = json.loads(
+        (ROOT / "benchmarks" / "cell2025_flagship" / "figure1hj_trajectories.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    expected_digest = audit["released_analysis"]["trajectory_source_sha256"]
+    observed_digest = sha256(trajectory_path)
+    if observed_digest != expected_digest:
+        raise ValueError(
+            "Cell Figure 1 trajectory-table checksum mismatch: "
+            f"observed {observed_digest}, expected {expected_digest}"
+        )
+
+    rows_by_subject: dict[str, list[dict[str, str]]] = {}
+    with trajectory_path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            rows_by_subject.setdefault(row["mouseNum"], []).append(row)
+    if set(rows_by_subject) != set(artifact["subject_order"]):
+        raise ValueError("Cell Figure 1 animal identities differ from the audited artifact")
+
+    anchors = [tuple(values) for values in audit["released_analysis"]["colour_anchors_rgb"]]
+    colour_map = LinearSegmentedColormap.from_list(
+        "cell2025_left_balanced_right",
+        anchors,
+        N=100,
+    )
+    paths: dict[str, np.ndarray] = {}
+    subject_colours: dict[str, Any] = {}
+    for subject in artifact["subject_order"]:
+        rows = sorted(
+            rows_by_subject[subject], key=lambda row: float(row["sessionNum_interpolated"])
+        )
+        paths[subject] = np.asarray(
+            [
+                (
+                    float(row["sessionNum_interpolated"]),
+                    float(row["psych_right_slopes"]),
+                    float(row["psych_left_slopes"]),
+                )
+                for row in rows
+            ],
+            dtype=np.float64,
+        )
+        subject_colours[subject] = colour_map(float(rows[0]["prop_below"]))
+
+    figure, axes = plt.subplots(1, 2, figsize=(9.25, 4.55))
+    axis_h, axis_j = axes
+    for subject in artifact["subject_order"]:
+        values = paths[subject]
+        colour = subject_colours[subject]
+        difference = values[:, 1] - values[:, 2]
+        axis_h.plot(values[:, 0], difference, color=colour, linewidth=0.8, alpha=0.3)
+        axis_h.scatter(
+            (values[0, 0], values[-1, 0]),
+            (difference[0], difference[-1]),
+            color=("cyan", "navy"),
+            s=10,
+            alpha=0.3,
+            edgecolors="none",
+            zorder=3,
+        )
+        axis_j.plot(values[:, 1], values[:, 2], color=colour, linewidth=0.8, alpha=0.3)
+        axis_j.scatter(
+            (values[0, 1], values[-1, 1]),
+            (values[0, 2], values[-1, 2]),
+            color=("cyan", "navy"),
+            s=10,
+            alpha=0.3,
+            edgecolors="none",
+            zorder=3,
+        )
+
+    semantic_order = ("left", "balanced", "right")
+    for semantic in semantic_order:
+        average_colour = colour_map(artifact["average_prop_below"][semantic])
+        center_h = np.asarray(artifact["slope_difference_centers"][semantic])
+        axis_h.plot(
+            center_h[:, 0],
+            center_h[:, 1],
+            color=average_colour,
+            linewidth=3.4,
+            solid_capstyle="round",
+            zorder=4,
+        )
+        axis_h.scatter(
+            (center_h[0, 0], center_h[-1, 0]),
+            (center_h[0, 1], center_h[-1, 1]),
+            color=("cyan", "navy"),
+            s=34,
+            edgecolors="white",
+            linewidths=0.55,
+            zorder=5,
+        )
+        axis_h.annotate(
+            semantic,
+            center_h[84],
+            xytext=(4, 0),
+            textcoords="offset points",
+            va="center",
+            color=average_colour,
+            fontsize=7.2,
+            weight="semibold",
+        )
+
+        center_j = np.asarray(artifact["right_left_centers"][semantic])
+        points = center_j.reshape(-1, 1, 2)
+        segments = np.concatenate((points[:-1], points[1:]), axis=1)
+        rgb = np.repeat(np.asarray(average_colour[:3])[None, :], len(center_j), axis=0)
+        hsv = rgb_to_hsv(rgb)
+        hsv[:, 2] = np.linspace(0, 1, len(center_j))
+        gradient = hsv_to_rgb(hsv)
+        axis_j.add_collection(
+            LineCollection(
+                segments,
+                colors=gradient[:-1],
+                linewidths=3.4,
+                capstyle="round",
+                zorder=4,
+            )
+        )
+        axis_j.scatter(
+            (center_j[0, 0], center_j[-1, 0]),
+            (center_j[0, 1], center_j[-1, 1]),
+            color=("cyan", "navy"),
+            s=34,
+            edgecolors="white",
+            linewidths=0.55,
+            zorder=5,
+        )
+
+    contract_h = audit["panels"]["1H"]
+    axis_h.axhline(0, color=INK, linestyle="--", linewidth=0.9, alpha=0.75, zorder=0)
+    axis_h.set(
+        xlim=contract_h["x_limits"],
+        ylim=contract_h["y_limits"],
+        xticks=contract_h["x_ticks"],
+        yticks=contract_h["y_ticks"],
+        xlabel="Session",
+        ylabel="R-L psychometric slope",
+        title="Strategy asymmetry across training",
+    )
+
+    contract_j = audit["panels"]["1J"]
+    reference = np.linspace(contract_j["x_limits"][0], contract_j["x_limits"][1], 100)
+    axis_j.plot(reference, reference, color=INK, linestyle="--", linewidth=0.8, zorder=0)
+    axis_j.plot(reference, 1 - reference, color=INK, linestyle="--", linewidth=0.8, zorder=0)
+    axis_j.set(
+        xlim=contract_j["x_limits"],
+        ylim=contract_j["y_limits"],
+        xticks=contract_j["x_ticks"],
+        yticks=contract_j["y_ticks"],
+        xlabel="Right psychometric slope",
+        ylabel="Left psychometric slope",
+        title="Three soft-DTW summaries of continuous paths",
+        aspect="equal",
+    )
+    for axis, label in zip(axes, ("H", "J"), strict=True):
+        axis.text(
+            -0.16,
+            1.06,
+            label,
+            transform=axis.transAxes,
+            fontsize=11,
+            weight="bold",
+            color=INK,
+        )
+
+    endpoint_handles = (
+        Line2D([], [], marker="o", linestyle="none", color="cyan", markersize=5, label="naive"),
+        Line2D([], [], marker="o", linestyle="none", color="navy", markersize=5, label="expert"),
+        Line2D([], [], color=INK, linewidth=3.0, label="soft-DTW centroid"),
+        Line2D([], [], color=MUTED, linewidth=0.9, alpha=0.55, label="individual mouse"),
+    )
+    figure.legend(
+        handles=endpoint_handles,
+        frameon=False,
+        ncol=4,
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.005),
+        fontsize=7.5,
+    )
+    figure.suptitle(
+        "Exact replay of released Cell Figure 1H and 1J trajectories",
+        weight="semibold",
+    )
+    figure.text(
+        0.5,
+        -0.03,
+        "30 mice · released GP fits · cluster curves are retrospective visual summaries, "
+        "not natural kinds",
+        ha="center",
         color=MUTED,
+        fontsize=7.2,
     )
-    _save(figure, path)
+    figure.subplots_adjust(bottom=0.18, top=0.82, wspace=0.34)
+    _save(figure, path, tight=False)
 
 
 def _plot_cell_flagship_recovery(path: Path) -> None:
