@@ -75,12 +75,15 @@ def test_release_orientation_documents_are_in_the_strict_site_navigation() -> No
     navigation = (ROOT / "mkdocs.yml").read_text(encoding="utf-8")
     promised_pages = (
         "getting-started/index.md",
+        "getting-started/installation.md",
+        "getting-started/first-analysis.md",
         "model-choice-guide.md",
         "model-cards.md",
         "tutorials/recipe-contract.md",
         "tutorials/chen2021-bandit.md",
         "migration-guides.md",
         "extensions.md",
+        "reference/validation-and-comparison.md",
         "roadmap.md",
     )
 

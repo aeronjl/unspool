@@ -19,6 +19,7 @@ Without the downloaded Cell table, regenerate every other figure with `--skip-ce
 
 | Figure | Scientific unit and source | What the display supports |
 | --- | --- | --- |
+| `first-analysis.svg` | Six synthetic animals; exact checked-in quickstart with one protected future session | The end-to-end first-use path and animal-level paired forecast differences |
 | `cell2025-strategy.svg` | 30 animals; checksum-pinned Cell 2025 behavioural table | Independent reproduction of the reported early-bias/late-strategy association |
 | `cell2025-trajectories.svg` | 30 released Gaussian-process trajectories; checksum-pinned clustering membership | Exact reproduction of the retrospective visualization while showing continuous overlap |
 | `cell2025-qvalue-response-time.svg` | Released first-five-day Q-value summary and independent paired response-time summaries for 30 animals | Bounded retrospective model evidence and descriptive response-time change |

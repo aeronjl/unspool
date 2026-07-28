@@ -1,125 +1,72 @@
 # Choose a workflow
 
-Begin with the scientific boundary, not the model class.
+Start with the claim and the deployment boundary, not the most elaborate model.
 
-For a complete analysis, encode that boundary in a frozen
-[`StudyProtocol`](../protocols/index.md). The lower-level examples below remain useful for
-interactive exploration, while a protocol adds source and cohort identity, fixed
-candidates, recovery gates, bounded claims, and a portable evidence record.
+If this is your first visit, use the [installation guide](installation.md) and run the
+[first prospective analysis](first-analysis.md). It produces a protected future-session
+score, an animal-level figure, and fit audits from one complete script.
+
+[Install Unspool](installation.md){ .md-button }
+[Run the first analysis](first-analysis.md){ .md-button .md-button--primary }
 
 <figure class="doc-figure">
   <img src="../assets/workflow-map.svg" alt="Four routes from a scientific question through a validation boundary to a bounded result: describing change, predicting later sessions, comparing explanations, and testing identifiability.">
   <figcaption><strong>Workflow map.</strong> The intended generalization target determines the split and evidence object before it determines the model family. This is a conceptual contract diagram.</figcaption>
 </figure>
 
-## I have a trial table
+## Start from the work you need to do
 
-Map the four identity and chronology columns—`subject`, `session`, `trial`, and
-`session_order`—into a [`Study`](../data-contract.md). Source order and additional columns
-are retained. Unspool will not infer chronology from filenames or row order.
+| I need to… | Begin here | You should leave with… |
+| --- | --- | --- |
+| Bring a trial table into Unspool | [Longitudinal study contract](../data-contract.md) | explicit subject, session, trial, and chronology columns |
+| Forecast genuinely later behaviour | [Prospective validation](../validation.md) | a leakage-safe split and held-out score |
+| Compare scientific explanations | [Model-choice guide](../model-choice-guide.md) | a matched candidate set and declared alternatives |
+| Tune or select models | [Nested comparison](../comparison.md) | selection contained inside each training boundary |
+| Test whether the design can identify a claim | [Recovery design](../tutorials/model-recovery-design.md) | parameter and model-recovery evidence |
+| Freeze an analysis before fitting | [Study protocols](../protocols/index.md) | a validated, auditable scientific declaration |
+| Read IBL, NWB, or DANDI data | [Data interoperability](../interoperability.md) | canonical trials plus source provenance |
+| Rework an existing analysis | [Migration guides](../migration-guides.md) | an explicit map from familiar tooling to Unspool |
+| Extend the model catalogue | [Extension guide](../extensions.md) | a tested estimator or adapter boundary |
 
-```python
-from unspool import Study
+## The minimum analysis path
 
-study = Study.from_dataframe(
-    trials,
-    subject="mouse",
-    session="session_id",
-    trial="trial_index",
-    session_order="training_day",
-)
-```
+### 1. Preserve identity and chronology
 
-Next, declare what the task observations mean independently of any model:
+Map the four required columns into a [`Study`](../data-contract.md). Source order and
+additional columns are retained; Unspool does not infer chronology from filenames or row
+position.
 
-```python
-from unspool import ChoiceSpec, TaskSpec
+### 2. Declare observations independently of a model
 
-task = TaskSpec(
-    choice=ChoiceSpec(options=(0, 1)),
-    predictors=("stimulus",),
-)
-task.validate(study)
-```
+A [`TaskSpec`](../task-contract.md) states choices, omissions, predictors, rewards,
+response times, blocks, and episodes. This prevents model-specific preprocessing from
+quietly changing the scientific denominator.
 
-The task contract is where choices, omissions, trial-specific action availability,
-rewards, response times, blocks, and episodes become explicit. See the
-[behavioural task contract](../task-contract.md).
+### 3. Protect the intended future
 
-For regression-style models, build a fixed labelled matrix from reusable terms:
+Choose a splitter for later sessions, unseen animals, held-out laboratories, or a combined
+boundary. Learned clocks, scalers, landmarks, and hyperparameters must be fitted again
+inside each training fold.
 
-```python
-from unspool import DesignSpec, HistoryTerm, NumericTerm
+### 4. Compare matched candidates
 
-design = DesignSpec(
-    terms=(
-        NumericTerm("stimulus", center=0.0, scale=100.0),
-        HistoryTerm("choice", lags=(1, 2), coding="effect"),
-    )
-)
-matrix = design.build(study)
-```
+Use [`compare_models`](../comparison.md) for a predeclared candidate set, or
+`nested_select_model` when model structure or regularization is learned from data. Keep
+simple observable competitors next to drift, latent-state, RL, or DDM accounts.
 
-Read [fixed design matrices](../design-matrices.md) for reset semantics and the boundary
-between fixed declarations and preprocessing that must be learned inside each fold.
+### 5. Bound the interpretation
 
-## I want to forecast later sessions
+Fit audits establish numerical credibility. Prospective scores establish out-of-sample
+performance. Recovery establishes what this design can distinguish. None substitutes for
+the others.
 
-Use expanding or cohort-level forward-session splits. Learned clocks, scalers, landmarks,
-and model choices must be fitted again inside each training fold.
+## Continue with public evidence
 
-```python
-from unspool import cohort_forward_session_splits, evaluate_splits
+The [worked studies](../tutorials/index.md) carry published scientific questions through
+cohort definition, modelling, validation, figures, and bounded interpretation. The common
+[recipe standard](../tutorials/recipe-contract.md) labels exact reproduction, independent
+reproduction, literature-shaped analysis, and synthetic demonstration so visual
+similarity is never mistaken for numerical parity.
 
-splits = cohort_forward_session_splits(study, min_train_sessions=5, horizon=1)
-report = evaluate_splits(model, study, splits)
-```
-
-Read [prospective validation](../validation.md) before interpreting the score.
-
-## I want to compare explanations
-
-Use [`compare_models`](../comparison.md) for a predeclared candidate set. Use
-`nested_select_model` when candidates or hyperparameters are selected from data before the
-final forecast. The [model-choice guide](../model-choice-guide.md) routes the observed event,
-deployment target, and proposed mechanism into matched alternatives; the
-[model cards](../model-cards.md) state each first-party family's limits in a common format.
-
-## I have IBL or NWB data
-
-Optional adapters preserve source identity and provenance without making ONE, PyNWB, or
-DANDI core dependencies. See [data and interoperability](../interoperability.md).
-
-## I need a different optimizer
-
-The common [inference backend contract](../inference-backends.md) keeps parameter and task
-semantics fixed while changing search strategy. SciPy L-BFGS-B is available in core;
-install `unspool[optimization]` for the optional PyBADS multistart backend.
-
-If the model or solver should remain in another package, use the
-[extension guide](../extensions.md) rather than copying it into Unspool. Existing SciPy,
-`ssm`, hBayesDM, HDDM, and PyDDM analyses have dedicated
-[migration maps](../migration-guides.md).
-
-## I have posterior draws from a probabilistic backend
-
-The [labelled posterior-result contract](../posterior-results.md) retains natural-scale
-draws, predictions, pointwise likelihood, sampler diagnostics, observed data, and scientific
-provenance without making ArviZ a core dependency. Install `unspool[probabilistic]` only for
-ArviZ/xarray export or import.
-
-For full posterior inference on the fixed-scale hierarchical Bernoulli history GLM, install
-`unspool[bayesian]` and use the task-validated
-[PyMC backend](../pymc-backend.md).
-
-## I want a complete example
-
-The [worked studies](../tutorials/index.md) begin with published scientific questions and
-carry them through cohort definition, modelling, validation, figures, and bounded
-interpretation. Their common [recipe standard](../tutorials/recipe-contract.md) separates
-exact reproduction, independent reproduction, literature-shaped analysis, and synthetic
-demonstration.
-
-The [Cell 2025](../tutorials/cell2025-learning-trajectories.md) and
-[IBL nested-selection](../tutorials/ibl2021-prospective-selection.md) studies are also
-expressed as complete protocol migrations with exact numerical parity tests.
+[Browse worked studies](../tutorials/index.md){ .md-button .md-button--primary }
+[Read the API map](../reference/index.md){ .md-button }

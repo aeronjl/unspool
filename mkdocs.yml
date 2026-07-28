@@ -10,8 +10,13 @@ theme:
   name: material
   features:
     - navigation.indexes
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
+    - navigation.path
+    - navigation.prune
     - navigation.top
+    - navigation.footer
     - search.highlight
     - search.suggest
     - content.code.copy
@@ -41,7 +46,12 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
+  - pymdownx.snippets:
+      base_path:
+        - .
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
   - tables
   - toc:
       permalink: true
@@ -58,21 +68,45 @@ plugins:
 
 nav:
   - Home: index.md
-  - Start here:
-      - Choose a workflow: getting-started/index.md
+  - Start:
+      - Start here: getting-started/index.md
+      - Installation: getting-started/installation.md
+      - First analysis: getting-started/first-analysis.md
+      - Core concepts:
+          - Longitudinal study contract: data-contract.md
+          - Behavioural task contract: task-contract.md
+          - Clocks and transforms: clocks-and-transforms.md
+          - Fixed design matrices: design-matrices.md
       - Choose a model: model-choice-guide.md
       - Model cards: model-cards.md
-      - Study protocols: protocols/index.md
-      - Freeze and amend: protocols/lifecycle.md
-      - Compile and audit: protocols/auditing.md
-      - Protocol command line: protocols/cli.md
-      - Evidence bundles: protocols/evidence-bundles.md
-      - Longitudinal study contract: data-contract.md
-      - Behavioural task contract: task-contract.md
-      - Fixed design matrices: design-matrices.md
-      - Fit artifacts and extensions: fit-artifacts.md
-      - Clocks and transforms: clocks-and-transforms.md
       - Scientific scope: scientific-scope.md
+  - Workflows:
+      - Analysis workflows: workflows/index.md
+      - Forecast and compare:
+          - Prospective validation: validation.md
+          - Model comparison: comparison.md
+      - Establish credibility:
+          - Parameter and model recovery: model-recovery.md
+          - Fit diagnostics: diagnostics.md
+      - Freeze and audit:
+          - Study protocols: protocols/index.md
+          - Freeze and amend: protocols/lifecycle.md
+          - Compile and audit: protocols/auditing.md
+          - Protocol command line: protocols/cli.md
+          - Evidence bundles: protocols/evidence-bundles.md
+      - Advanced validation:
+          - Parameter spaces and backends: parameter-spaces.md
+          - Deterministic inference backends: inference-backends.md
+          - Labelled posterior results: posterior-results.md
+          - Posterior convergence diagnostics: posterior-diagnostics.md
+          - Posterior-predictive checks: posterior-predictive-checks.md
+          - Simulation-based calibration: simulation-based-calibration.md
+          - Analysis sensitivity: sensitivity-analysis.md
+          - Test-retest reliability: test-retest-reliability.md
+          - PSIS-LOO predictive evaluation: psis-loo.md
+          - PyMC hierarchical GLM backend: pymc-backend.md
+          - Estimator contract: estimator-contract.md
+          - Trajectory shapes: trajectory-shapes.md
   - Worked studies:
       - Studies overview: tutorials/index.md
       - Recipe standard: tutorials/recipe-contract.md
@@ -84,8 +118,8 @@ nav:
       - Literature-shaped GLM-HMM: tutorials/ashwood2022-glm-hmm.md
       - Model-recovery design: tutorials/model-recovery-design.md
       - Reading a model evidence panel: tutorials/model-evidence-panels.md
-  - Methods:
-      - Methods catalog: methods/index.md
+  - Models:
+      - Model catalog: methods/index.md
       - Capability matrix: methods/capability-matrix.md
       - Modelling contract: modelling.md
       - Canonical binary baselines: baselines.md
@@ -98,36 +132,31 @@ nav:
       - Drift diffusion: drift-diffusion.md
       - Smooth drift diffusion: smooth-ddm.md
       - Hierarchical smooth DDM: hierarchical-smooth-ddm.md
-  - Design and validation:
-      - Prospective validation: validation.md
-      - Model comparison: comparison.md
-      - Parameter and model recovery: model-recovery.md
-      - Fit diagnostics: diagnostics.md
-      - Parameter spaces and backends: parameter-spaces.md
-      - Deterministic inference backends: inference-backends.md
-      - Labelled posterior results: posterior-results.md
-      - Posterior convergence diagnostics: posterior-diagnostics.md
-      - Posterior-predictive checks: posterior-predictive-checks.md
-      - Simulation-based calibration: simulation-based-calibration.md
-      - Analysis sensitivity: sensitivity-analysis.md
-      - Test-retest reliability: test-retest-reliability.md
-      - PSIS-LOO predictive evaluation: psis-loo.md
-      - PyMC hierarchical GLM backend: pymc-backend.md
-      - Estimator contract: estimator-contract.md
-      - Trajectory shapes: trajectory-shapes.md
-  - Data and interoperability:
+  - Data:
       - Tabular, IBL, NWB, and DANDI: interoperability.md
+      - Fit artifacts and extensions: fit-artifacts.md
       - Provenance: provenance.md
       - Migration guides: migration-guides.md
       - Extend Unspool: extensions.md
-  - Evidence and ideas:
-      - Evidence index: evidence/index.md
-      - Literature guide: literature.md
-      - Philosophy of Unspool: philosophy.md
-      - Roadmap: roadmap.md
   - Reference:
-      - Python API: reference/index.md
+      - Python API map: reference/index.md
+      - Studies and tasks: reference/study-and-task.md
+      - Clocks, transforms, and design: reference/time-and-design.md
+      - Validation and comparison: reference/validation-and-comparison.md
+      - Observable choice models: reference/choice-models.md
+      - Latent states and reinforcement learning: reference/latent-and-rl-models.md
+      - Drift-diffusion models: reference/drift-diffusion-models.md
+      - Recovery: reference/recovery.md
+      - Diagnostics and sensitivity: reference/diagnostics.md
+      - Inference and parameters: reference/inference.md
+      - Posterior results: reference/posterior.md
+      - Data adapters: reference/data-adapters.md
       - Protocol schema API: reference/protocol.md
       - Protocol execution API: reference/execution.md
       - Reporting and evidence API: reference/evidence-bundles.md
       - Figure provenance: reference/figure-provenance.md
+  - About:
+      - Evidence index: evidence/index.md
+      - Literature guide: literature.md
+      - Philosophy of Unspool: philosophy.md
+      - Roadmap: roadmap.md
