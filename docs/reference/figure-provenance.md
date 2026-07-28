@@ -30,7 +30,7 @@ Without the downloaded Cell table, regenerate every other figure with `--skip-ce
 | --- | --- | --- | --- |
 | `first-analysis.svg` | Demonstration | Six synthetic animals; exact checked-in quickstart with one protected future session | The end-to-end first-use path and animal-level paired forecast differences |
 | `cell2025-strategy.svg` | Independent reproduction | 30 animals; checksum-pinned Cell 2025 behavioural table and released continuous colour artifact | Cell Figure 1G and 1I, including the exact paper-day windows and both non-causal associations |
-| `cell2025-trajectories.svg` | Exact reproduction | 30 released Gaussian-process trajectories; checksum-pinned clustering membership | The retrospective visualization while showing continuous overlap |
+| `cell2025-trajectories.svg` | Exact reproduction | 30 × 100 checksum-pinned released Gaussian-process points; exact-stack Figure 1H/1J soft-DTW replay | Both published trajectory geometries and centroids, while keeping the clusters bounded as retrospective summaries of continuous overlap |
 | `cell2025-qvalue-response-time.svg` | Mixed evidence | Released first-five-day Q-value summary and independent paired response-time summaries for 30 animals | Bounded retrospective model evidence and descriptive response-time change |
 | `cell2025-forecast.svg` | Literature-shaped analysis | 30 animals, 73,042 trials, six historical-cohort forecast folds | Animal-balanced final-five-session performance and predeclared paired comparisons |
 | `cell2025-recovery.svg` | Synthetic benchmark | Exact Cell trial/contrast/session geometry; structural and feature-recovery simulations | Which candidate explanations the flagship design can and cannot distinguish |

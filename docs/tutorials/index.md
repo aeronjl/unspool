@@ -15,6 +15,13 @@ windows, continuous colour mapping, and every intentional rendering difference.
 
 [Reproduce Cell Figure 1G and 1I](cell2025-figure1gi-reproduction.md)
 
+Next, replay the released Gaussian-process trajectories and soft-DTW centroids from
+Figure 1H and 1J. The panel audit preserves their distinct coordinate systems, traces the
+exact numerical environment, and keeps the three retrospective summaries subordinate to
+the continuous animal-level paths.
+
+[Reproduce Cell Figure 1H and 1J](cell2025-figure1hj-reproduction.md)
+
 Then forecast each animal's final five observed sessions from its first eight days using a
 completed historical cohort. The flagship chapter combines source-level provenance,
 animal-balanced model comparison, exact-design recovery, and explicit unresolved claims.

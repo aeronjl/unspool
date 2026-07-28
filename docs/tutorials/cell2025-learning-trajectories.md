@@ -52,12 +52,15 @@ released target. Panel identifiers were checked against the paper PDF, the relea
 `behaviour.ipynb`, and the checksum-pinned source artifacts. The dedicated
 [Figure 1G/I reproduction audit](cell2025-figure1gi-reproduction.md) records the source
 revision, panel geometry, colour variable, preserved choices, and intentional changes.
+The companion [Figure 1H/J trajectory audit](cell2025-figure1hj-reproduction.md) separately
+records the released GP paths, both soft-DTW computations, and their claim boundary.
 
 | Unspool display | Published or released target | Relationship | Preserved | Changed or unavailable |
 | --- | --- | --- | --- | --- |
 | `cell2025-strategy.svg`, G | Cell Figure 1G: early bias versus late bias | Independent reproduction | public trials, exclusions, animal unit, days 4-8 and final-five-paper-day windows, axes, continuous colour variable | paired into one SVG; DejaVu Sans; seeded confidence band |
 | `cell2025-strategy.svg`, I | Cell Figure 1I: early bias versus late R-L slope | Independent reproduction | public trials, exclusions, animal unit, windows, axes, continuous colour variable | paired into one SVG; DejaVu Sans; seeded confidence band |
-| `cell2025-trajectories.svg` | Cell Figure 1H metric and released Figure 1J clustering result | Exact released-result reconstruction | released GP paths, ordering, memberships, normalized progress | compact slope-difference display; no cluster means or raw day axis |
+| `cell2025-trajectories.svg`, H | Cell Figure 1H: R-L slope over session | Exact released-fit replay | 30 released GP paths, session axis, one within-group soft-DTW centroid per Figure 1J membership, endpoints, continuous colour | paired into one SVG; DejaVu Sans; compact line widths and labels |
+| `cell2025-trajectories.svg`, J | Cell Figure 1J: right versus left slope paths | Exact released-fit replay | 30 released GP paths, three-cluster soft-DTW centroids, equal axes, references, endpoints, learning-progress gradient | paired into one SVG; DejaVu Sans; compact line widths and endpoint key |
 | `cell2025-qvalue-response-time.svg`, A | Cell Figure S1Q: first-five-day Q-value comparison | Released result | released per-animal BIC summary | no independent reoptimization; compact aggregate display |
 | `cell2025-qvalue-response-time.svg`, B | Cell Figures S1D-S1F: response-time changes through learning | Independent reproduction | public trials, response-time definition, animal pairing | new first-session versus final-five-session summary, not a panel replica |
 | `cell2025-forecast.svg` | No published target | Literature-shaped analysis | public behavioural cohort and chronology | new candidates, prospective boundary, estimand, uncertainty |
@@ -85,8 +88,9 @@ released numerical environment and its implicit alphabetical animal ordering. Th
 semantic membership matches the released CSV for all 30 animals.
 
 <figure class="doc-figure doc-figure--wide" data-figure-kind="Exact reproduction">
-  <img src="../../assets/cell2025-trajectories.svg" alt="Thirty overlapping right-minus-left psychometric-slope trajectories across normalized training progress, colored by the released left, balanced, and right visualization labels.">
-  <figcaption><strong>Exact reproduction · the labels summarize continuous diversity.</strong> Individual paths overlap and change through training. The colours reconstruct the released retrospective visualization; they are not prospective classes or evidence for three biological kinds.<span class="doc-figure__meta"><strong>Unit:</strong> animal trajectory · <strong>n:</strong> 30 released trajectories · <strong>Estimand:</strong> GP right-minus-left psychometric slope over normalized training progress · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
+  <img src="../../assets/cell2025-trajectories.svg" alt="Two-panel exact replay of 30 released mouse learning trajectories and their soft-DTW centroids in Cell Figure 1H session-by-asymmetry and Figure 1J right-by-left slope coordinates.">
+  <a class="doc-figure__full-resolution" href="../../assets/cell2025-trajectories.svg" target="_blank" rel="noopener">Open full-resolution Figure 1H/J ↗</a>
+  <figcaption><strong>Exact reproduction · Cell Figure 1H and 1J.</strong> Individual released GP paths overlap and change through training; thick paths are the exact released soft-DTW visual summaries in each panel's distinct geometry. The continuous colours and three retrospective centroids are not prospective classes or evidence for three biological kinds.<span class="doc-figure__meta"><strong>Unit:</strong> animal trajectory · <strong>n:</strong> 30 mice × 100 interpolation points · <strong>Estimands:</strong> R-L slope over session and left-versus-right slope paths · <a href="../cell2025-figure1hj-reproduction/">panel audit</a> · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 ### Reward history and response time
