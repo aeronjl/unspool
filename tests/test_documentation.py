@@ -177,6 +177,26 @@ def test_figure_provenance_register_covers_every_figure() -> None:
         assert f"`{name}`" in register
 
 
+def test_cell_figure1gi_asset_and_chapter_name_both_published_panels() -> None:
+    chapter = (ROOT / "docs" / "tutorials" / "cell2025-figure1gi-reproduction.md").read_text(
+        encoding="utf-8"
+    )
+    root = ElementTree.parse(ASSETS / "cell2025-strategy.svg").getroot()
+    figure_text = " ".join("".join(node.itertext()) for node in root.iter())
+    text_labels = {
+        "".join(node.itertext()).strip()
+        for node in root.findall(".//{http://www.w3.org/2000/svg}text")
+    }
+
+    assert "Figure 1G and 1I" in chapter
+    assert "final-five-**paper-day** window" in chapter
+    assert 'class="doc-figure__full-resolution"' in chapter
+    assert "Independent reproduction of Cell Figure 1G and 1I" in figure_text
+    assert {"G", "I"} <= text_labels
+    assert "Early bias (days 4-8)" in figure_text
+    assert "DejaVu Sans" in (ASSETS / "cell2025-strategy.svg").read_text(encoding="utf-8")
+
+
 def test_model_cards_cover_every_first_party_family() -> None:
     cards = (ROOT / "docs" / "model-cards.md").read_text()
 

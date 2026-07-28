@@ -1,12 +1,24 @@
 import csv
+import json
 from pathlib import Path
 
 import numpy as np
 
-from benchmarks.cell2025.benchmark import calculate_session_metrics, load_study
+from benchmarks.cell2025.benchmark import (
+    EXPECTED,
+    calculate_figure1_subject_metrics,
+    calculate_session_metrics,
+    load_study,
+)
+
+ROOT = Path(__file__).parents[1]
 
 
-def _write_synthetic_source(path: Path) -> None:
+def _write_synthetic_source(
+    path: Path,
+    *,
+    session_numbers: tuple[int, ...] = tuple(range(1, 10)),
+) -> None:
     fieldnames = [
         "expRef",
         "trialNumber",
@@ -24,12 +36,12 @@ def _write_synthetic_source(path: Path) -> None:
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
-        for session in range(1, 10):
+        for date_index, session in enumerate(session_numbers, start=1):
             for trial in range(1, 81):
                 side = -1 if trial <= 30 else 0 if trial <= 50 else 1
                 writer.writerow(
                     {
-                        "expRef": f"2026-01-{session:02d}_1_DAP001",
+                        "expRef": f"2026-01-{date_index:02d}_1_DAP001",
                         "trialNumber": trial,
                         "repeatNumber": 1,
                         "contrastLeft": 0.5 if side == -1 else 0.0,
@@ -65,6 +77,49 @@ def test_cell2025_adapter_builds_a_session_aware_study(tmp_path: Path) -> None:
     assert np.array_equal(study["source_trial"], study["trial"])
     assert len(metrics) == 9
     assert all(metric.subject == "DAP001" for metric in metrics)
+
+
+def test_figure1_late_window_uses_paper_days_not_five_observed_rows(tmp_path: Path) -> None:
+    source = tmp_path / "sparse-days.csv"
+    _write_synthetic_source(source, session_numbers=(1, 2, 4, 5, 6, 7, 8, 15, 16))
+
+    study = load_study(source)
+    session_metrics = calculate_session_metrics(study)
+    summary = calculate_figure1_subject_metrics(
+        study,
+        session_metrics=session_metrics,
+    )[0]
+    late_rows = [row for row in session_metrics if 11 < row.session_order <= 16]
+
+    assert len(late_rows) == 2
+    assert summary.late_bias == np.mean([row.zero_bias for row in late_rows])
+    assert summary.late_slope_difference == np.mean(
+        [row.right_slope - row.left_slope for row in late_rows]
+    )
+
+
+def test_figure1gi_audit_freezes_the_panel_contract() -> None:
+    audit = json.loads(
+        (ROOT / "benchmarks" / "cell2025" / "figure1gi_audit.json").read_text(encoding="utf-8")
+    )
+
+    assert audit["schema_version"] == 1
+    assert audit["paper"]["pdf_page"] == 3
+    assert audit["released_analysis"]["commit"] == ("2faa4680d5e9c0d6a9df516e3dede8c641e39a72")
+    assert audit["released_analysis"]["colour_variable"] == "prop_below"
+    assert set(audit["panels"]) == {"1G", "1I"}
+    assert np.isclose(
+        audit["panels"]["1G"]["reproduced_r"],
+        EXPECTED["early_late_bias_r"],
+        rtol=1e-15,
+    )
+    assert np.isclose(
+        audit["panels"]["1I"]["reproduced_r"],
+        EXPECTED["early_bias_late_slope_r"],
+        rtol=1e-15,
+    )
+    assert "paper-day" in audit["panels"]["1G"]["y"]
+    assert audit["unspool_display"]["bootstrap_seed"] == 202501
 
 
 def test_distinct_source_sessions_survive_a_paper_session_collision(tmp_path: Path) -> None:

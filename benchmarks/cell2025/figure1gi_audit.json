@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "paper": {
+    "title": "Dopamine encodes deep network teaching signals for individual learning trajectories",
+    "doi": "10.1016/j.cell.2025.05.025",
+    "license": "CC BY 4.0",
+    "pdf_sha256": "6b878f65d764f0d46f6becb3869531baf351f7e00df1900294275c3c57ba6501",
+    "pdf_page": 3,
+    "journal_page": 3790
+  },
+  "released_analysis": {
+    "doi": "10.6084/m9.figshare.28877942.v1",
+    "github": "https://github.com/SamuelLiebana/da_long_term_learning",
+    "commit": "2faa4680d5e9c0d6a9df516e3dede8c641e39a72",
+    "license": "MIT",
+    "notebook": "scripts/behaviour.ipynb",
+    "environment": {
+      "python": "3.12.4",
+      "numpy": "1.26.4",
+      "matplotlib": "3.8.4",
+      "seaborn": "0.13.2",
+      "scipy": "1.13.1"
+    },
+    "colour_source_member": "data/psych_metric_trajectory_fit_df.csv",
+    "colour_source_sha256": "e5cd064e575fe792a1e2b265ef05f7fb23daa68131fea0e230a2ad2a5b6664ee",
+    "colour_variable": "prop_below",
+    "colour_anchors_rgb": [
+      [0.3, 0.5, 0.3],
+      [0.0, 0.5, 0.0],
+      [1.0, 0.5, 0.0],
+      [0.5, 0.0, 0.5],
+      [0.5, 0.3, 0.5]
+    ]
+  },
+  "source_data": {
+    "doi": "10.6084/m9.figshare.28877912.v1",
+    "member": "data/long_term_learning_dataset_preprocessed_behaviour_all.csv",
+    "member_sha256": "94a6d541bfde731f769e02a68dbc652ab5b73dbc1ec13b8b7c8100d181b8048a",
+    "retained_animals": 30,
+    "retained_trials": 192238
+  },
+  "panels": {
+    "1G": {
+      "released_heading": "Figure 1G: Early bias vs Late bias",
+      "x": "Mean zero-contrast bias over paper days 4-8",
+      "y": "Mean zero-contrast bias over the final five paper-day indices",
+      "unit": "animal",
+      "n": 30,
+      "statistic": "Pearson correlation",
+      "reported_r": -0.53,
+      "reported_p": "p < 0.01",
+      "reproduced_r": -0.5276390751832067,
+      "reproduced_p": 0.0027312381517590164,
+      "x_limits": [-0.4, 0.4],
+      "y_limits": [-0.4, 0.4],
+      "x_ticks": [-0.25, 0.0, 0.25],
+      "y_ticks": [-0.25, 0.0, 0.25]
+    },
+    "1I": {
+      "released_heading": "Figure 1I: Early bias vs. Late slope diff",
+      "x": "Mean zero-contrast bias over paper days 4-8",
+      "y": "Mean right-minus-left psychometric slope over the final five paper-day indices",
+      "unit": "animal",
+      "n": 30,
+      "statistic": "Pearson correlation",
+      "reported_r": 0.69,
+      "reported_p": "p < 0.0001",
+      "reproduced_r": 0.6947896564480975,
+      "reproduced_p": 0.000020429013100548865,
+      "x_limits": [-0.5, 0.5],
+      "y_limits": [-1.02, 1.02],
+      "x_ticks": [-0.5, 0.0, 0.5],
+      "y_ticks": [-1.0, -0.5, 0.0, 0.5, 1.0]
+    }
+  },
+  "unspool_display": {
+    "asset": "docs/assets/cell2025-strategy.svg",
+    "classification": "independent-reproduction",
+    "preserved": [
+      "animal-level estimands",
+      "days 4-8 and final-five-paper-day windows",
+      "Pearson correlations",
+      "published axis limits and ticks",
+      "zero-reference guides",
+      "continuous prop_below colour mapping",
+      "linear regression and 95% animal-level confidence band"
+    ],
+    "changed": [
+      "The two separately exported source panels are composed side by side",
+      "DejaVu Sans replaces Arial to satisfy the documentation figure standard",
+      "The confidence band uses 2000 seeded animal bootstrap samples rather than the released unseeded seaborn bootstrap",
+      "Panel letters and compact source notes are added for standalone interpretation"
+    ],
+    "bootstrap_seed": 202501,
+    "bootstrap_repeats": 2000
+  }
+}

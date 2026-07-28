@@ -1,6 +1,7 @@
 # Cell 2025 longitudinal-behaviour benchmark
 
-This benchmark reproduces one bounded result from Figure 1 of Liebana, Laffere et al.,
+This benchmark independently reproduces two bounded panels from Figure 1 of Liebana,
+Laffere et al.,
 “Dopamine encodes deep network teaching signals for individual learning trajectories,”
 *Cell* 188 (2025), 3789–3805.e33
 ([article DOI](https://doi.org/10.1016/j.cell.2025.05.025)). It tests the paper's central
@@ -27,7 +28,10 @@ uv run python -m benchmarks.cell2025.benchmark \
 ```
 
 The input is ignored by Git. The small, machine-readable output from the verified run is
-committed as [`result.json`](result.json).
+committed as [`result.json`](result.json). The panel-level
+[`figure1gi_audit.json`](figure1gi_audit.json) additionally freezes the paper page,
+released-analysis commit and environment, variable definitions, axes, colour artifact,
+reported and reproduced statistics, and intentional rendering changes.
 
 ## Numerical contract
 
@@ -36,7 +40,9 @@ The benchmark follows the Figure 1 definitions in the paper and released analysi
 - exclude no-go and repeat trials, trials with within-session response-time z-score at or
   above 2, shaped animals, and non-learner animals;
 - retain the 30 mice observed from the first two sessions onward;
-- define early bias over days 4–8 and late quantities over each animal's final five sessions;
+- define early bias over days 4–8 and late quantities with the released
+  `max_day - 5 < day <= max_day` rule (the final five paper-day indices, not necessarily
+  five observed sessions);
 - calculate Pearson correlations for early versus late bias (Figure 1G) and early bias
   versus late right-minus-left psychometric slope (Figure 1I).
 
@@ -57,7 +63,8 @@ causality, recover the trajectory clusters, or validate the paper's neural claim
   [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Analysis reference: Figshare article
   [`10.6084/m9.figshare.28877942.v1`](https://doi.org/10.6084/m9.figshare.28877942.v1),
-  MIT licensed.
+  MIT licensed; panel definitions were audited against `scripts/behaviour.ipynb` at
+  commit `2faa4680d5e9c0d6a9df516e3dede8c641e39a72`.
 - Unspool code: independently reimplemented rather than copied from the released notebook.
 
 The input member is

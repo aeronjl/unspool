@@ -34,12 +34,12 @@
     "cell2025-strategy.svg": {
       "classification": "independent-reproduction",
       "generator": "scripts/plot_documentation_figures.py",
-      "source": "Checksum-pinned Cell 2025 public behavioural trial table",
+      "source": "Checksum-pinned Cell 2025 public behavioural trial table and released continuous prop_below colour artifact",
       "unit": "animal",
       "denominator": "30 animals, 192238 retained trials",
-      "estimand": "Pearson association between early zero-contrast bias and final-five-session psychometric asymmetry",
-      "claim": "The reported early-to-late strategy association is independently recovered without establishing causality",
-      "published_target": "Cell 2025 early-bias and later-strategy association"
+      "estimand": "Pearson associations of days 4-8 bias with final-five-paper-day bias and right-minus-left psychometric slope",
+      "claim": "Cell Figure 1G and 1I are independently recovered without treating either association as causal",
+      "published_target": "Cell 2025 Figure 1G and 1I"
     },
     "cell2025-trajectories.svg": {
       "classification": "exact-reproduction",

@@ -9,10 +9,15 @@ minimum evidence required before a new example joins this list.
 
 ## Cell 2025 flagship forecast
 
-Reproduce the public behavioural results from 30 mice in Liebana, Laffere et al., then
-forecast each animal's final five sessions from its first eight days using a completed
-historical cohort. The chapter combines source-level provenance, animal-balanced model
-comparison, exact-design recovery, and explicit unresolved claims.
+Start with a panel-level independent reproduction of Figure 1G and 1I from 30 mice. The
+worked audit traces the paper PDF, released notebook revision, source checksums, exact
+windows, continuous colour mapping, and every intentional rendering difference.
+
+[Reproduce Cell Figure 1G and 1I](cell2025-figure1gi-reproduction.md)
+
+Then forecast each animal's final five observed sessions from its first eight days using a
+completed historical cohort. The flagship chapter combines source-level provenance,
+animal-balanced model comparison, exact-design recovery, and explicit unresolved claims.
 
 [Open the Cell flagship study](cell2025-learning-trajectories.md)
 

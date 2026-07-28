@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import sys
-from collections import defaultdict
 from itertools import pairwise
 from pathlib import Path
 from typing import Any
@@ -13,7 +13,9 @@ from typing import Any
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Rectangle
+from scipy import stats
 
 from scripts.figure_style import (
     AMBER,
@@ -37,12 +39,26 @@ DEFAULT_CELL_DATA = (
     / "data"
     / "long_term_learning_dataset_preprocessed_behaviour_all.csv"
 )
+DEFAULT_CELL_FIGURE1_COLOURS = (
+    ROOT
+    / "benchmarks"
+    / "cell2025_flagship"
+    / "data"
+    / "released"
+    / "psych_metric_trajectory_fit_df.csv"
+)
 DEFAULT_OUTPUT = ROOT / "docs" / "assets"
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cell-data", type=Path, default=DEFAULT_CELL_DATA)
+    parser.add_argument(
+        "--cell-figure1-colours",
+        type=Path,
+        default=DEFAULT_CELL_FIGURE1_COLOURS,
+        help="checksum-pinned released trajectory table containing the Figure 1 colour variable",
+    )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument(
         "--skip-cell",
@@ -81,7 +97,17 @@ def main() -> None:
                 f"Cell table not found at {args.cell_data}; run "
                 "`uv run python -m benchmarks.cell2025.fetch_data` or pass --skip-cell"
             )
-        _plot_cell_strategy(args.cell_data, args.output_dir / "cell2025-strategy.svg")
+        if not args.cell_figure1_colours.exists():
+            raise FileNotFoundError(
+                f"Cell Figure 1 colour table not found at {args.cell_figure1_colours}; run "
+                "`uv run python -m benchmarks.cell2025_flagship.fetch_released_artifacts` "
+                "or pass --skip-cell"
+            )
+        _plot_cell_strategy(
+            args.cell_data,
+            args.cell_figure1_colours,
+            args.output_dir / "cell2025-strategy.svg",
+        )
     _plot_ibl_trajectories(args.output_dir / "ibl-learning-trajectories.svg")
     _plot_ibl_selection(args.output_dir / "ibl-prospective-selection.svg")
     _plot_recovery_matrix(args.output_dir / "model-recovery-matrix.svg")
@@ -961,47 +987,149 @@ def _plot_validation_geometry(path: Path) -> None:
     _save(figure, path)
 
 
-def _plot_cell_strategy(data_path: Path, path: Path) -> None:
-    from benchmarks.cell2025.benchmark import calculate_session_metrics, load_study
+def _plot_cell_strategy(data_path: Path, colour_path: Path, path: Path) -> None:
+    """Independently reproduce Cell 2025 Figure 1G and 1I."""
 
-    study = load_study(data_path)
-    rows_by_subject: dict[str, list[Any]] = defaultdict(list)
-    for row in calculate_session_metrics(study):
-        rows_by_subject[row.subject].append(row)
-    early_bias: list[float] = []
-    late_slope: list[float] = []
-    for rows in rows_by_subject.values():
-        rows.sort(key=lambda row: row.session_order)
-        maximum = rows[-1].session_order
-        early = [row for row in rows if 3 < row.session_order <= 8]
-        late = [row for row in rows if maximum - 5 < row.session_order <= maximum]
-        early_bias.append(float(np.mean([row.zero_bias for row in early])))
-        late_slope.append(float(np.mean([row.right_slope - row.left_slope for row in late])))
-    x = np.asarray(early_bias)
-    y = np.asarray(late_slope)
-    slope, intercept = np.polyfit(x, y, 1)
-    line_x = np.linspace(float(x.min()) - 0.01, float(x.max()) + 0.01, 100)
-    correlation = float(np.corrcoef(x, y)[0, 1])
-    figure, axis = plt.subplots(figsize=(7.3, 4.4))
-    axis.scatter(x, y, s=42, color=INDIGO, edgecolor="white", linewidth=0.7, alpha=0.9, zorder=3)
-    axis.plot(line_x, intercept + slope * line_x, color=AMBER, linewidth=2.1)
-    axis.axhline(0, color=LIGHT, linewidth=1, zorder=0)
-    axis.axvline(0, color=LIGHT, linewidth=1, zorder=0)
-    axis.set(
-        xlabel="Early zero-contrast bias (days 4-8)",
-        ylabel="Late right-minus-left psychometric slope",
-        title="Early strategy predicts late strategy across animals",
+    from benchmarks.cell2025.benchmark import (
+        calculate_figure1_subject_metrics,
+        load_study,
     )
-    axis.text(
-        0.04,
-        0.93,
-        f"30 mice  ·  r = {correlation:.3f}  ·  p = 2.04 x 10^-5",
-        transform=axis.transAxes,
-        color=AMBER,
-        weight="bold",
+    from benchmarks.cell2025.fetch_data import sha256
+
+    audit = json.loads(
+        (ROOT / "benchmarks" / "cell2025" / "figure1gi_audit.json").read_text(encoding="utf-8")
     )
-    axis.grid(color="#edf0f5", linewidth=0.8)
+    expected_colour_digest = audit["released_analysis"]["colour_source_sha256"]
+    observed_colour_digest = sha256(colour_path)
+    if observed_colour_digest != expected_colour_digest:
+        raise ValueError(
+            "Cell Figure 1 colour-table checksum mismatch: "
+            f"observed {observed_colour_digest}, expected {expected_colour_digest}"
+        )
+
+    colour_position: dict[str, float] = {}
+    with colour_path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            colour_position.setdefault(row["mouseNum"], float(row["prop_below"]))
+
+    summaries = calculate_figure1_subject_metrics(load_study(data_path))
+    subjects = [row.subject for row in summaries]
+    if set(subjects) != set(colour_position):
+        raise ValueError("Cell Figure 1 animal identities differ between raw and released tables")
+
+    anchors = [tuple(values) for values in audit["released_analysis"]["colour_anchors_rgb"]]
+    colour_map = LinearSegmentedColormap.from_list(
+        "cell2025_left_balanced_right",
+        anchors,
+        N=100,
+    )
+    point_colours = [colour_map(colour_position[subject]) for subject in subjects]
+    early_bias = np.asarray([row.early_bias for row in summaries])
+    panels = (
+        (
+            "G",
+            np.asarray([row.late_bias for row in summaries]),
+            "Late bias",
+            "Early bias reverses in the final paper-day window",
+        ),
+        (
+            "I",
+            np.asarray([row.late_slope_difference for row in summaries]),
+            "Late slope difference (R-L)",
+            "Early bias predicts later psychometric asymmetry",
+        ),
+    )
+
+    figure, axes = plt.subplots(1, 2, figsize=(8.3, 4.15))
+    for axis, (panel_name, outcome, ylabel, title) in zip(axes, panels, strict=True):
+        contract = audit["panels"][f"1{panel_name}"]
+        line_x = np.linspace(contract["x_limits"][0], contract["x_limits"][1], 160)
+        line, lower, upper = _bootstrap_regression_band(
+            early_bias,
+            outcome,
+            line_x,
+            seed=int(audit["unspool_display"]["bootstrap_seed"]),
+            repeats=int(audit["unspool_display"]["bootstrap_repeats"]),
+        )
+        correlation = stats.pearsonr(early_bias, outcome)
+        axis.fill_between(line_x, lower, upper, color=INK, alpha=0.13, linewidth=0)
+        axis.plot(line_x, line, color=INK, linewidth=1.7, zorder=2)
+        axis.scatter(
+            early_bias,
+            outcome,
+            s=37,
+            c=point_colours,
+            edgecolor="white",
+            linewidth=0.65,
+            zorder=3,
+        )
+        axis.axhline(0, color=MUTED, linestyle="--", linewidth=0.9, zorder=0)
+        axis.axvline(0, color=MUTED, linestyle="--", linewidth=0.9, zorder=0)
+        axis.set(
+            xlim=contract["x_limits"],
+            ylim=contract["y_limits"],
+            xticks=contract["x_ticks"],
+            yticks=contract["y_ticks"],
+            xlabel="Early bias (days 4-8)",
+            ylabel=ylabel,
+            title=title,
+        )
+        axis.text(
+            -0.16,
+            1.06,
+            panel_name,
+            transform=axis.transAxes,
+            fontsize=11,
+            weight="bold",
+            color=INK,
+        )
+        annotation_y = 0.07 if panel_name == "G" else 0.95
+        axis.text(
+            0.04,
+            annotation_y,
+            f"r = {correlation.statistic:.3f}\np = {correlation.pvalue:.2g}",
+            transform=axis.transAxes,
+            va="bottom" if panel_name == "G" else "top",
+            color=INK,
+            fontsize=8,
+        )
+    figure.suptitle(
+        "Independent reproduction of Cell Figure 1G and 1I",
+        weight="semibold",
+    )
+    figure.text(
+        0.5,
+        -0.005,
+        "30 mice · continuous colour reproduces the released trajectory-asymmetry mapping",
+        ha="center",
+        color=MUTED,
+        fontsize=7.5,
+    )
     _save(figure, path)
+
+
+def _bootstrap_regression_band(
+    x: np.ndarray,
+    y: np.ndarray,
+    line_x: np.ndarray,
+    *,
+    seed: int,
+    repeats: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return an OLS line and deterministic paired-animal bootstrap band."""
+
+    slope, intercept = np.polyfit(x, y, 1)
+    line = intercept + slope * line_x
+    generator = np.random.default_rng(seed)
+    fits = np.empty((repeats, len(line_x)), dtype=float)
+    for repeat in range(repeats):
+        indices = generator.integers(0, len(x), size=len(x))
+        sampled_x = x[indices]
+        sampled_y = y[indices]
+        sampled_slope, sampled_intercept = np.polyfit(sampled_x, sampled_y, 1)
+        fits[repeat] = sampled_intercept + sampled_slope * line_x
+    lower, upper = np.quantile(fits, (0.025, 0.975), axis=0)
+    return line, lower, upper
 
 
 def _plot_cell_flagship_forecast(path: Path) -> None:

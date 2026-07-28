@@ -67,6 +67,18 @@ class SessionMetrics:
 
 
 @dataclass(frozen=True)
+class Figure1SubjectMetrics:
+    """Animal-level quantities used by Cell 2025 Figure 1G and 1I."""
+
+    subject: str
+    early_bias: float
+    late_bias: float
+    late_slope_difference: float
+    first_session_accuracy: float
+    last_session_accuracy: float
+
+
+@dataclass(frozen=True)
 class BenchmarkResult:
     benchmark: str
     source_doi: str
@@ -217,6 +229,53 @@ def calculate_session_metrics(study: Study) -> list[SessionMetrics]:
     return rows
 
 
+def calculate_figure1_subject_metrics(
+    study: Study,
+    *,
+    session_metrics: list[SessionMetrics] | None = None,
+) -> list[Figure1SubjectMetrics]:
+    """Return the published animal-level summaries for Figure 1G and 1I.
+
+    Early bias is the mean zero-contrast bias over paper days 4--8. Late bias
+    and right-minus-left psychometric slope are averaged over the final five
+    paper-day indices, matching the released ``max_day - 5 < day <= max_day``
+    rule. The function deliberately returns the plotted animal-level rows so
+    documentation figures do not reconstruct hidden analysis state.
+    """
+
+    by_subject: dict[str, list[SessionMetrics]] = defaultdict(list)
+    rows_to_summarize = (
+        calculate_session_metrics(study) if session_metrics is None else session_metrics
+    )
+    for row in rows_to_summarize:
+        by_subject[row.subject].append(row)
+
+    summaries: list[Figure1SubjectMetrics] = []
+    for subject in sorted(by_subject):
+        rows = sorted(by_subject[subject], key=lambda row: row.session_order)
+        maximum = rows[-1].session_order
+        early = [row for row in rows if 3 < row.session_order <= 8]
+        late = [row for row in rows if maximum - 5 < row.session_order <= maximum]
+        if not early or not late:
+            raise ValueError(
+                f"{subject} cannot supply the Figure 1G/I windows: "
+                f"{len(early)} early days and {len(late)} late-day summaries"
+            )
+        summaries.append(
+            Figure1SubjectMetrics(
+                subject=subject,
+                early_bias=float(np.mean([row.zero_bias for row in early])),
+                late_bias=float(np.mean([row.zero_bias for row in late])),
+                late_slope_difference=float(
+                    np.mean([row.right_slope - row.left_slope for row in late])
+                ),
+                first_session_accuracy=rows[0].accuracy,
+                last_session_accuracy=rows[-1].accuracy,
+            )
+        )
+    return summaries
+
+
 def run(path: Path, *, check: bool = True) -> BenchmarkResult:
     """Run the Figure 1 reproduction and optionally enforce its numerical contract."""
 
@@ -227,31 +286,16 @@ def run(path: Path, *, check: bool = True) -> BenchmarkResult:
         )
     study = load_study(path)
     session_rows = calculate_session_metrics(study)
-    by_subject: dict[str, list[SessionMetrics]] = defaultdict(list)
-    for row in session_rows:
-        by_subject[row.subject].append(row)
-
-    early_bias: list[float] = []
-    late_bias: list[float] = []
-    late_slope_difference: list[float] = []
-    first_accuracy: list[float] = []
-    last_accuracy: list[float] = []
-    for rows in by_subject.values():
-        rows.sort(key=lambda row: row.session_order)
-        maximum = rows[-1].session_order
-        early = [row for row in rows if 3 < row.session_order <= 8]
-        late = [row for row in rows if maximum - 5 < row.session_order <= maximum]
-        early_bias.append(float(np.mean([row.zero_bias for row in early])))
-        late_bias.append(float(np.mean([row.zero_bias for row in late])))
-        late_slope_difference.append(
-            float(np.mean([row.right_slope - row.left_slope for row in late]))
-        )
-        first_accuracy.append(rows[0].accuracy)
-        last_accuracy.append(rows[-1].accuracy)
+    summaries = calculate_figure1_subject_metrics(study, session_metrics=session_rows)
+    early_bias = [row.early_bias for row in summaries]
+    late_bias = [row.late_bias for row in summaries]
+    late_slope_difference = [row.late_slope_difference for row in summaries]
+    first_accuracy = [row.first_session_accuracy for row in summaries]
+    last_accuracy = [row.last_session_accuracy for row in summaries]
 
     bias_correlation = stats.pearsonr(early_bias, late_bias)
     slope_correlation = stats.pearsonr(early_bias, late_slope_difference)
-    eligible_subjects = set(by_subject)
+    eligible_subjects = {row.subject for row in summaries}
     source_sessions = {
         (str(subject), str(session))
         for subject, session in zip(study["subject"], study["session"], strict=True)
@@ -259,7 +303,7 @@ def run(path: Path, *, check: bool = True) -> BenchmarkResult:
     }
     values = {
         "n_trials": len(study),
-        "n_subjects": len(by_subject),
+        "n_subjects": len(summaries),
         "n_source_sessions": len(source_sessions),
         "n_sessions": len(session_rows),
         "early_late_bias_r": float(bias_correlation.statistic),

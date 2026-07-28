@@ -80,6 +80,7 @@ def test_release_orientation_documents_are_in_the_strict_site_navigation() -> No
         "model-choice-guide.md",
         "model-cards.md",
         "tutorials/recipe-contract.md",
+        "tutorials/cell2025-figure1gi-reproduction.md",
         "tutorials/chen2021-bandit.md",
         "migration-guides.md",
         "extensions.md",

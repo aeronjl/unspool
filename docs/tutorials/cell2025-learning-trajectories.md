@@ -48,30 +48,34 @@ and combines them only when applying the paper's paper-day summary rule.
 ### Source-to-display correspondence
 
 This table fixes the relationship between each Unspool display and the published or
-released target. Exact paper-panel identifiers will be added only after the complete
-paper-layout audit; until then, correspondence is stated at the reported-result level
-rather than guessed from visual similarity.
+released target. Panel identifiers were checked against the paper PDF, the released
+`behaviour.ipynb`, and the checksum-pinned source artifacts. The dedicated
+[Figure 1G/I reproduction audit](cell2025-figure1gi-reproduction.md) records the source
+revision, panel geometry, colour variable, preserved choices, and intentional changes.
 
 | Unspool display | Published or released target | Relationship | Preserved | Changed or unavailable |
 | --- | --- | --- | --- | --- |
-| `cell2025-strategy.svg` | Reported early-bias/later-strategy association | Independent reproduction | public trials, exclusions, animal unit, early and late summaries | plotting geometry; no neural variables |
-| `cell2025-trajectories.svg` | Released GP trajectory and soft-DTW visualization | Exact reproduction | released paths, ordering, memberships, normalized progress | explanatory annotation added |
-| `cell2025-qvalue-response-time.svg`, A | Released first-five-day Q-value comparison | Released result | released per-animal BIC summary | no independent reoptimization |
-| `cell2025-qvalue-response-time.svg`, B | Reported response-time change through learning | Independent reproduction | public trials, response-time definition, animal pairing | compact first-versus-final-five display |
+| `cell2025-strategy.svg`, G | Cell Figure 1G: early bias versus late bias | Independent reproduction | public trials, exclusions, animal unit, days 4-8 and final-five-paper-day windows, axes, continuous colour variable | paired into one SVG; DejaVu Sans; seeded confidence band |
+| `cell2025-strategy.svg`, I | Cell Figure 1I: early bias versus late R-L slope | Independent reproduction | public trials, exclusions, animal unit, windows, axes, continuous colour variable | paired into one SVG; DejaVu Sans; seeded confidence band |
+| `cell2025-trajectories.svg` | Cell Figure 1H metric and released Figure 1J clustering result | Exact released-result reconstruction | released GP paths, ordering, memberships, normalized progress | compact slope-difference display; no cluster means or raw day axis |
+| `cell2025-qvalue-response-time.svg`, A | Cell Figure S1Q: first-five-day Q-value comparison | Released result | released per-animal BIC summary | no independent reoptimization; compact aggregate display |
+| `cell2025-qvalue-response-time.svg`, B | Cell Figures S1D-S1F: response-time changes through learning | Independent reproduction | public trials, response-time definition, animal pairing | new first-session versus final-five-session summary, not a panel replica |
 | `cell2025-forecast.svg` | No published target | Literature-shaped analysis | public behavioural cohort and chronology | new candidates, prospective boundary, estimand, uncertainty |
 | `cell2025-recovery.svg` | No published target | Synthetic benchmark | exact public trial/session/contrast geometry | simulated outcomes and declared generators |
 
-### Early and late strategy
+### Early bias, late bias, and late asymmetry
 
-<figure class="doc-figure" data-figure-kind="Independent reproduction">
-  <img src="../../assets/cell2025-strategy.svg" alt="Animal-level scatter plot showing a positive association between early zero-contrast bias and the final-five-session right-minus-left psychometric slope, with 30 observations and a fitted line.">
-  <figcaption><strong>Independent reproduction · published strategy association.</strong> Early bias over days 4–8 predicts final-five-session psychometric asymmetry: <em>r</em> = 0.69479, <em>p</em> = 2.04 × 10⁻⁵. This animal-level association does not establish that early bias causes later strategy.<span class="doc-figure__meta"><strong>Unit:</strong> animal · <strong>n:</strong> 30 animals, 192,238 retained trials · <strong>Estimand:</strong> Pearson early-bias/later-asymmetry association · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Independent reproduction">
+  <img src="../../assets/cell2025-strategy.svg" alt="Two animal-level scatter plots reconstructing Cell Figure 1G and 1I: early bias is negatively associated with late bias and positively associated with late right-minus-left psychometric slope across 30 mice.">
+  <a class="doc-figure__full-resolution" href="../../assets/cell2025-strategy.svg" target="_blank" rel="noopener">Open full-resolution Figure 1G/I ↗</a>
+  <figcaption><strong>Independent reproduction · Cell Figure 1G and 1I.</strong> Bias over days 4-8 is negatively associated with bias in the final five-paper-day window (<em>r</em> = -0.52764, <em>p</em> = 0.00273) and positively associated with late right-minus-left psychometric slope (<em>r</em> = 0.69479, <em>p</em> = 2.04 × 10⁻⁵). Axis geometry and the released continuous mouse colours are preserved; DejaVu Sans and a seeded animal bootstrap make the documentation rendering reproducible. Neither association establishes that early bias causes later strategy.<span class="doc-figure__meta"><strong>Unit:</strong> animal · <strong>n:</strong> 30 animals, 192,238 retained trials · <strong>Estimands:</strong> two Pearson early-bias/late-behaviour associations · <a href="../cell2025-figure1gi-reproduction/">panel audit</a> · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 Mean non-zero-stimulus accuracy rises from `0.51734` in the first session to `0.75803`
-in the last. The complementary early-versus-late bias reversal is also recovered
-(`r = −0.52764`, `p = 0.00273`). These are animal-level associations, not evidence that
-early bias causes the later strategy.
+in the last. These are animal-level associations, not evidence that early bias causes the
+later strategy. See the [panel-level audit](cell2025-figure1gi-reproduction.md) for the
+released notebook contract and the distinction between final-five-paper-day and
+last-five-observed-session windows.
 
 ### Continuous trajectories, not natural kinds
 
