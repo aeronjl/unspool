@@ -27,6 +27,8 @@ jobs:
         run: uv python install 3.12
       - name: Sync documentation environment
         run: uv sync --group docs --locked --python 3.12
+      - name: Run the documented first analysis
+        run: uv run --group docs python examples/first_analysis.py first-analysis.svg
       - name: Build documentation
         run: uv run --group docs mkdocs build --strict
       - if: github.event_name != 'pull_request'

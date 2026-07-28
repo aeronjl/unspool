@@ -21,6 +21,7 @@ analysis.
 
 | I want to… | Start with |
 | --- | --- |
+| Install the package and run a complete analysis | [Ten-minute first analysis](getting-started/first-analysis.md) |
 | Freeze a complete study before fitting | [Study protocols](protocols/index.md) |
 | Represent trials without losing session or animal identity | [Longitudinal study contract](data-contract.md) |
 | Choose the time coordinate for learning | [Clocks and transforms](clocks-and-transforms.md) |
@@ -54,6 +55,7 @@ The current evidence programme includes:
 - training-only nested model and smoothness selection; and
 - parameter- and model-recovery benchmarks that retain ambiguity and numerical warnings.
 
-[Browse the worked studies](tutorials/index.md){ .md-button .md-button--primary }
+[Run the first analysis](getting-started/first-analysis.md){ .md-button .md-button--primary }
+[Browse the worked studies](tutorials/index.md){ .md-button }
 [Author a study protocol](protocols/index.md){ .md-button }
 [Read the philosophy](philosophy.md){ .md-button }

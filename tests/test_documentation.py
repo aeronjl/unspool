@@ -16,6 +16,7 @@ EXPECTED_FIGURES = {
     "clock-boundary.svg",
     "ddm-recovery.svg",
     "diagnostic-layers.svg",
+    "first-analysis.svg",
     "hierarchical-pooling.svg",
     "ibl-learning-trajectories.svg",
     "ibl-choice-response-time.svg",
@@ -76,3 +77,22 @@ def test_model_cards_cover_every_first_party_family() -> None:
 
     for name in MODEL_CARD_CLASSES:
         assert f"`{name}`" in cards
+
+
+def test_first_analysis_is_executable(tmp_path: Path) -> None:
+    """Keep the visible quickstart on the tested public API."""
+
+    import runpy
+    import sys
+
+    example = ROOT / "examples" / "first_analysis.py"
+    output = tmp_path / "first-analysis.svg"
+    original_argv = sys.argv
+    try:
+        sys.argv = [str(example), str(output)]
+        runpy.run_path(str(example), run_name="__main__")
+    finally:
+        sys.argv = original_argv
+
+    assert output.is_file()
+    assert output.stat().st_size > 1_000
