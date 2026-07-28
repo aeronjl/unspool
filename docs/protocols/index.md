@@ -11,7 +11,7 @@ serialization. Python code supplies a source adapter, registered estimators, and
 registered splitter; the compiler checks those implementations against the frozen
 declaration before a fit can begin.
 
-<figure class="doc-figure">
+<figure class="doc-figure" data-figure-kind="Conceptual">
   <img src="../assets/workflow-map.svg" alt="A scientific question passes through a frozen study contract, materialized cohort, audited execution plan, evaluation, recovery, and bounded report.">
   <figcaption><strong>The protocol boundary.</strong> Design choices become reviewable before outcomes from the scoring set can influence them.</figcaption>
 </figure>

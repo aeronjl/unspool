@@ -4,9 +4,9 @@ A fitted curve is not a complete scientific result. Unspool's reporting target i
 of evidence that lets a reader move from observed behaviour to a bounded model claim
 without losing the validation boundary or the design's known ambiguities.
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Synthetic benchmark">
   <img src="../../assets/choice-model-evidence-atlas.svg" alt="Four rows for static GLM, smooth GLM, GLM-HMM, and Q-learning, each showing observed session choice rates, fitted model-specific structure, predicted and observed choices in an untouched fifth session, calibration residuals, and dense-design model-recovery scores.">
-  <figcaption><strong>Four model families, one evidential grammar.</strong> Each row is a deterministic representative fit from the dense four-family recovery design. The panels show a single run; the recovery column comes from the committed matched benchmark and prevents the representative example from standing in for repeated evidence.</figcaption>
+  <figcaption><strong>Synthetic benchmark · four model families, one evidential grammar.</strong> Each row is a deterministic representative fit from the dense four-family recovery design. The panels show a single run; the recovery column comes from the committed matched benchmark and prevents the representative example from standing in for repeated evidence.<span class="doc-figure__meta"><strong>Unit:</strong> simulated study · <strong>n:</strong> 4 generating families under one 300-trial design · <strong>Estimand:</strong> fitted structure, future prediction, calibration, and family recovery · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 ## 1. Observed behaviour

@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Unspool documentation figure generator</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -302,76 +302,76 @@ L 733.59 307.511709
 " clip-path="url(#p5ce33ae54b)" style="fill: none; stroke: #778092; stroke-linecap: square"/>
    </g>
    <g id="text_1">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #26345e" x="422.28" y="52.601973" transform="rotate(-0 422.28 52.601973)">Observed event</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #26345e" x="422.28" y="52.601973" transform="rotate(-0 422.28 52.601973)">Observed event</text>
    </g>
    <g id="text_2">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="422.28" y="68.989308" transform="rotate(-0 422.28 68.989308)">what is scored on each trial?</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="422.28" y="68.989308" transform="rotate(-0 422.28 68.989308)">what is scored on each trial?</text>
    </g>
    <g id="text_3">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #4f6d9a" x="202.428305" y="146.493099" transform="rotate(-0 202.428305 146.493099)">Choice</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4f6d9a" x="202.428305" y="146.493099" transform="rotate(-0 202.428305 146.493099)">Choice</text>
    </g>
    <g id="text_4">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="202.428305" y="162.880434" transform="rotate(-0 202.428305 162.880434)">binary or categorical</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="202.428305" y="162.880434" transform="rotate(-0 202.428305 162.880434)">binary or categorical</text>
    </g>
    <g id="text_5">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #c57928" x="642.131695" y="146.493099" transform="rotate(-0 642.131695 146.493099)">Choice + response time</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #c57928" x="642.131695" y="146.493099" transform="rotate(-0 642.131695 146.493099)">Choice + response time</text>
    </g>
    <g id="text_6">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="642.131695" y="162.880434" transform="rotate(-0 642.131695 162.880434)">joint event and physical units</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="642.131695" y="162.880434" transform="rotate(-0 642.131695 162.880434)">joint event and physical units</text>
    </g>
    <g id="text_7">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #4f6d9a" x="91.623051" y="251.829348" transform="rotate(-0 91.623051 251.829348)">Observable structure</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4f6d9a" x="91.623051" y="251.829348" transform="rotate(-0 91.623051 251.829348)">Observable structure</text>
    </g>
    <g id="text_8">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="91.623051" y="270.546827" transform="rotate(-0 91.623051 270.546827)">baseline · history GLM</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="91.623051" y="270.546827" transform="rotate(-0 91.623051 270.546827)">baseline · history GLM</text>
    </g>
    <g id="text_9">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #2d7f78" x="249.916271" y="251.829348" transform="rotate(-0 249.916271 251.829348)">Smooth change</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #2d7f78" x="249.916271" y="251.829348" transform="rotate(-0 249.916271 251.829348)">Smooth change</text>
    </g>
    <g id="text_10">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="249.916271" y="270.546827" transform="rotate(-0 249.916271 270.546827)">smooth or hierarchical GLM</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="249.916271" y="270.546827" transform="rotate(-0 249.916271 270.546827)">smooth or hierarchical GLM</text>
    </g>
    <g id="text_11">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #26345e" x="408.209492" y="251.829348" transform="rotate(-0 408.209492 251.829348)">Discrete regimes</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #26345e" x="408.209492" y="251.829348" transform="rotate(-0 408.209492 251.829348)">Discrete regimes</text>
    </g>
    <g id="text_12">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="408.209492" y="270.546827" transform="rotate(-0 408.209492 270.546827)">GLM-HMM + competitors</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="408.209492" y="270.546827" transform="rotate(-0 408.209492 270.546827)">GLM-HMM + competitors</text>
    </g>
    <g id="text_13">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #c57928" x="566.502712" y="251.829348" transform="rotate(-0 566.502712 251.829348)">Reward updating</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #c57928" x="566.502712" y="251.829348" transform="rotate(-0 566.502712 251.829348)">Reward updating</text>
    </g>
    <g id="text_14">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="566.502712" y="270.546827" transform="rotate(-0 566.502712 270.546827)">RL + history competitors</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="566.502712" y="270.546827" transform="rotate(-0 566.502712 270.546827)">RL + history competitors</text>
    </g>
    <g id="text_15">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #c57928" x="733.59" y="251.829348" transform="rotate(-0 733.59 251.829348)">Wiener DDM</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #c57928" x="733.59" y="251.829348" transform="rotate(-0 733.59 251.829348)">Wiener DDM</text>
    </g>
    <g id="text_16">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="733.59" y="270.546827" transform="rotate(-0 733.59 270.546827)">static · smooth · pooled</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="733.59" y="270.546827" transform="rotate(-0 733.59 270.546827)">static · smooth · pooled</text>
    </g>
    <g id="text_17">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #4f6d9a" x="153.181525" y="362.346742" transform="rotate(-0 153.181525 362.346742)">Deployment boundary</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4f6d9a" x="153.181525" y="362.346742" transform="rotate(-0 153.181525 362.346742)">Deployment boundary</text>
    </g>
    <g id="text_18">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="153.181525" y="380.598192" transform="rotate(-0 153.181525 380.598192)">future trial · session · subject · lab</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="153.181525" y="380.598192" transform="rotate(-0 153.181525 380.598192)">future trial · session · subject · lab</text>
    </g>
    <g id="text_19">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #2d7f78" x="422.631763" y="362.346742" transform="rotate(-0 422.631763 362.346742)">Matched alternatives</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #2d7f78" x="422.631763" y="362.346742" transform="rotate(-0 422.631763 362.346742)">Matched alternatives</text>
    </g>
    <g id="text_20">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="422.631763" y="380.598192" transform="rotate(-0 422.631763 380.598192)">same observed event and test rows</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="422.631763" y="380.598192" transform="rotate(-0 422.631763 380.598192)">same observed event and test rows</text>
    </g>
    <g id="text_21">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #c57928" x="691.378475" y="362.346742" transform="rotate(-0 691.378475 362.346742)">Recovery + diagnostics</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #c57928" x="691.378475" y="362.346742" transform="rotate(-0 691.378475 362.346742)">Recovery + diagnostics</text>
    </g>
    <g id="text_22">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="691.378475" y="380.598192" transform="rotate(-0 691.378475 380.598192)">design-specific claim limit</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="691.378475" y="380.598192" transform="rotate(-0 691.378475 380.598192)">design-specific claim limit</text>
    </g>
    <g id="text_23">
-    <text style="font-weight: 700; font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="412.430644" y="300.912595" transform="rotate(-0 412.430644 300.912595)">for every candidate</text>
+    <text style="font-weight: 700; font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="412.430644" y="300.912595" transform="rotate(-0 412.430644 300.912595)">for every candidate</text>
    </g>
    <g id="text_24">
-    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #26345e" x="422.28" y="15.558281" transform="rotate(-0 422.28 15.558281)">Choose the claim before the mechanism</text>
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #26345e" x="422.28" y="15.558281" transform="rotate(-0 422.28 15.558281)">Choose the claim before the mechanism</text>
    </g>
   </g>
  </g>

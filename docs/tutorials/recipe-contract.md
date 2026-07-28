@@ -85,9 +85,21 @@ implementation.
 ### 9. Figures as evidence objects
 
 Every empirical figure must identify its source artifact, unit, denominator, and supported
-claim in the [figure-provenance register](../reference/figure-provenance.md). Conceptual
-figures must say that their values are schematic. Prefer panels that expose observations,
-predictions, calibration, fit diagnostics, and recovery rather than ornamental summaries.
+claim in the [figure-provenance register](../reference/figure-provenance.md) and follow the
+[scientific figure standard](../reference/figure-standard.md). Its evidence classification
+must be visible rather than implied by the chapter title. Conceptual figures must say that
+their values are schematic. Prefer panels that expose observations, predictions,
+calibration, fit diagnostics, and recovery rather than ornamental summaries.
+
+A recipe that claims exact or independent reproduction includes a correspondence table:
+
+| Unspool display | Published target | Relationship | Preserved | Changed or unavailable |
+| --- | --- | --- | --- | --- |
+| `example.svg`, panel A | Paper Figure X, panel Y | Independent reproduction | outcome, cohort rule, unit | visual geometry |
+
+Composite displays receive one row per panel when their evidence relationships differ.
+If the original panel has not been verified, name the reported quantity and mark exact
+panel correspondence unresolved.
 
 ### 10. Result and claim limits
 
@@ -155,6 +167,8 @@ A proposed recipe is ready for review when:
 - expensive benchmark outputs are deterministic, schema-checked, and committed with their
   generating command;
 - every displayed number can be traced to a data or benchmark artifact;
+- every figure has a visible evidence classification and complete manifest record;
+- reproduction claims include checked source-panel correspondence and explicit changes;
 - code uses public Unspool interfaces rather than internal helpers; and
 - the title and conclusion accurately identify reproduction, adaptation, or demonstration.
 

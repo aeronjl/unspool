@@ -1,8 +1,8 @@
 # Partial pooling with fixed or estimated scale
 
-<figure class="doc-figure">
+<figure class="doc-figure" data-figure-kind="Synthetic benchmark">
   <img src="../assets/hierarchical-pooling.svg" alt="Two benchmark plots showing subject-coefficient RMSE and prospective log loss for complete pooling, partial pooling, and independent fits as true between-animal variation increases.">
-  <figcaption><strong>Pooling benchmark.</strong> Across the committed fixed-scale simulation, partial pooling has the lowest mean subject-coefficient RMSE and prospective log loss in all three heterogeneity regimes. This validates the declared design, not every population.</figcaption>
+  <figcaption><strong>Synthetic benchmark · pooling under heterogeneity.</strong> Across the committed fixed-scale simulation, partial pooling has the lowest mean subject-coefficient RMSE and prospective log loss in all three heterogeneity regimes. This validates the declared design, not every population.<span class="doc-figure__meta"><strong>Unit:</strong> simulated subject · <strong>n:</strong> declared subjects across three heterogeneity regimes · <strong>Estimands:</strong> coefficient RMSE and prospective log loss · <a href="../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 `HierarchicalBernoulliHistoryGLM` is Unspool's first population model. It extends the

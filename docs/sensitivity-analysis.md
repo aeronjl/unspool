@@ -5,7 +5,7 @@ window, omission rule, preprocessing choice, or inference backend. Unspool repre
 question as an explicit set of refits with one declared reference—not as an unrecorded
 sequence of exploratory reruns.
 
-<figure markdown="span">
+<figure class="doc-figure" data-figure-kind="Conceptual">
   <img src="assets/sensitivity-specification.svg" alt="A conceptual specification curve shows seven scenario estimates with intervals and a marked reference. A parallel workflow declares scenarios, refits each with a stable seed, extracts common metrics, and retains differences, intervals, and failures.">
   <figcaption>A sensitivity report keeps the full specification set. Its spread is
   descriptive evidence; Unspool does not invent a universal robustness cutoff.</figcaption>

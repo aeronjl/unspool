@@ -33,9 +33,9 @@ model adds a uniform 50 ms–3 s response component with a fitted mixture probab
 larger than 0.3. Posterior contaminant responsibilities remain probabilities—not automatic
 trial exclusions.
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Literature-shaped analysis">
   <img src="../../assets/ibl-choice-response-time.svg" alt="Four panels compare observed and posterior-predictive response times, observed and predicted conditional accuracy, model-dependent contaminant responsibilities, and held-out joint log density for naive and robust diffusion models in one IBL animal.">
-  <figcaption><strong>A joint outcome needs a joint diagnostic.</strong> The display keeps physical response-time units, choice accuracy, model-dependent responsibilities, and untouched-session evidence together. One posterior-predictive draw illustrates fitted implications rather than uncertainty.</figcaption>
+  <figcaption><strong>Literature-shaped analysis · a joint outcome needs a joint diagnostic.</strong> The display keeps physical response-time units, choice accuracy, model-dependent responsibilities, and untouched-session evidence together. One posterior-predictive draw illustrates fitted implications rather than uncertainty; one selected animal cannot establish a population process.<span class="doc-figure__meta"><strong>Unit:</strong> eligible trial from one animal · <strong>n:</strong> 153 training and 111 untouched trials · <strong>Estimand:</strong> mean held-out joint choice/response-time log density · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 ## Result

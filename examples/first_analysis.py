@@ -55,7 +55,15 @@ def make_example_study() -> Study:
 def run_analysis(output: Path = Path("first-analysis.svg")):
     """Validate, forecast, compare, and plot one complete analysis."""
 
-    mpl.rcParams.update({"svg.fonttype": "none", "svg.hashsalt": "unspool-first-analysis-v1"})
+    mpl.rcParams.update(
+        {
+            "font.family": "sans-serif",
+            "font.sans-serif": ["DejaVu Sans"],
+            "mathtext.fontset": "dejavusans",
+            "svg.fonttype": "none",
+            "svg.hashsalt": "unspool-first-analysis-v1",
+        }
+    )
     study = make_example_study()
 
     # Declare the observations before fitting a model.

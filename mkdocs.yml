@@ -5,6 +5,9 @@ repo_url: https://github.com/aeronjl/unspool
 repo_name: aeronjl/unspool
 edit_uri: edit/main/docs/
 strict: true
+exclude_docs: |
+  * 2.md
+  **/* 2.md
 
 theme:
   name: material
@@ -154,6 +157,7 @@ nav:
       - Protocol schema API: reference/protocol.md
       - Protocol execution API: reference/execution.md
       - Reporting and evidence API: reference/evidence-bundles.md
+      - Scientific figure standard: reference/figure-standard.md
       - Figure provenance: reference/figure-provenance.md
   - About:
       - Evidence index: evidence/index.md

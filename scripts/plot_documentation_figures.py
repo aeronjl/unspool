@@ -15,6 +15,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Rectangle
 
+from scripts.figure_style import (
+    AMBER,
+    BLUE,
+    INDIGO,
+    INK,
+    LIGHT,
+    MUTED,
+    TEAL,
+    configure_figure_style,
+    save_svg,
+)
+
 ROOT = Path(__file__).parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
@@ -26,13 +38,6 @@ DEFAULT_CELL_DATA = (
     / "long_term_learning_dataset_preprocessed_behaviour_all.csv"
 )
 DEFAULT_OUTPUT = ROOT / "docs" / "assets"
-INDIGO = "#26345e"
-BLUE = "#4f6d9a"
-AMBER = "#c57928"
-TEAL = "#2d7f78"
-INK = "#202534"
-MUTED = "#778092"
-LIGHT = "#e8ebf2"
 
 
 def main() -> None:
@@ -84,25 +89,7 @@ def main() -> None:
 
 
 def _configure_style() -> None:
-    mpl.rcParams.update(
-        {
-            "axes.edgecolor": "#c5cad5",
-            "axes.labelcolor": INK,
-            "axes.spines.right": False,
-            "axes.spines.top": False,
-            "axes.titlecolor": INK,
-            "axes.titleweight": "semibold",
-            "figure.facecolor": "white",
-            "font.family": "DejaVu Sans",
-            "font.size": 9,
-            "savefig.facecolor": "white",
-            "svg.fonttype": "none",
-            "svg.hashsalt": "unspool-documentation-v1",
-            "text.color": INK,
-            "xtick.color": MUTED,
-            "ytick.color": MUTED,
-        }
-    )
+    configure_figure_style()
 
 
 def _box(
@@ -1565,7 +1552,7 @@ def _plot_choice_model_evidence_atlas(path: Path) -> None:
     )
     for axis, title in zip(axes[0], titles, strict=True):
         axis.set_title(title)
-    axes[0, 2].legend(frameon=False, fontsize=6.5, loc="lower right")
+    axes[0, 2].legend(frameon=False, fontsize=7, loc="lower right")
     axes[-1, 0].set_xlabel("Session")
     axes[-1, 2].set_xlabel("Future-session trial bin")
     axes[-1, 3].set_xlabel("Predicted choice probability")
@@ -1984,14 +1971,7 @@ def _load(name: str) -> dict[str, Any]:
 
 
 def _save(figure: plt.Figure, path: Path, *, tight: bool = True) -> None:
-    if tight:
-        figure.tight_layout()
-    figure.savefig(path, format="svg", bbox_inches="tight", metadata={"Date": None})
-    plt.close(figure)
-    # Matplotlib writes spaces at the end of multiline SVG path commands. Normalizing
-    # them keeps generated assets reviewable and makes `git diff --check` meaningful.
-    lines = path.read_text(encoding="utf-8").splitlines()
-    path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
+    save_svg(figure, path, tight=tight)
 
 
 if __name__ == "__main__":

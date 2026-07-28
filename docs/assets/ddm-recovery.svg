@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Unspool documentation figure generator</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -136,7 +136,7 @@ L 0 2
      </g>
     </g>
     <g id="text_4">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="323.439062" y="315.537328" transform="rotate(-0 323.439062 315.537328)">Trials in the recovery design</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="323.439062" y="315.537328" transform="rotate(-0 323.439062 315.537328)">Trials in the recovery design</text>
     </g>
    </g>
    <g id="matplotlib.axis_2">
@@ -157,7 +157,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_5">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="40.239063" y="283.087254" transform="rotate(-0 40.239063 283.087254)">0.00</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="40.239063" y="283.087254" transform="rotate(-0 40.239063 283.087254)">0.00</text>
      </g>
     </g>
     <g id="ytick_2">
@@ -172,7 +172,7 @@ L 599.639062 241.674671
       </g>
      </g>
      <g id="text_6">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="40.239063" y="245.093616" transform="rotate(-0 40.239063 245.093616)">0.02</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="40.239063" y="245.093616" transform="rotate(-0 40.239063 245.093616)">0.02</text>
      </g>
     </g>
     <g id="ytick_3">
@@ -187,7 +187,7 @@ L 599.639062 203.681033
       </g>
      </g>
      <g id="text_7">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="40.239063" y="207.099978" transform="rotate(-0 40.239063 207.099978)">0.04</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="40.239063" y="207.099978" transform="rotate(-0 40.239063 207.099978)">0.04</text>
      </g>
     </g>
     <g id="ytick_4">
@@ -202,7 +202,7 @@ L 599.639062 165.687395
       </g>
      </g>
      <g id="text_8">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="40.239063" y="169.10634" transform="rotate(-0 40.239063 169.10634)">0.06</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="40.239063" y="169.10634" transform="rotate(-0 40.239063 169.10634)">0.06</text>
      </g>
     </g>
     <g id="ytick_5">
@@ -217,7 +217,7 @@ L 599.639062 127.693757
       </g>
      </g>
      <g id="text_9">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="40.239063" y="131.112702" transform="rotate(-0 40.239063 131.112702)">0.08</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="40.239063" y="131.112702" transform="rotate(-0 40.239063 131.112702)">0.08</text>
      </g>
     </g>
     <g id="ytick_6">
@@ -232,7 +232,7 @@ L 599.639062 89.700119
       </g>
      </g>
      <g id="text_10">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="40.239063" y="93.119064" transform="rotate(-0 40.239063 93.119064)">0.10</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="40.239063" y="93.119064" transform="rotate(-0 40.239063 93.119064)">0.10</text>
      </g>
     </g>
     <g id="ytick_7">
@@ -247,11 +247,11 @@ L 599.639062 51.706481
       </g>
      </g>
      <g id="text_11">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="40.239063" y="55.125426" transform="rotate(-0 40.239063 55.125426)">0.12</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="40.239063" y="55.125426" transform="rotate(-0 40.239063 55.125426)">0.12</text>
      </g>
     </g>
     <g id="text_12">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="14.037891" y="154.241469" transform="rotate(-90 14.037891 154.241469)">Parameter RMSE</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="14.037891" y="154.241469" transform="rotate(-90 14.037891 154.241469)">Parameter RMSE</text>
     </g>
    </g>
    <g id="line2d_23">
@@ -375,7 +375,7 @@ L 599.639062 287.076625
 " style="fill: none; stroke: #c5cad5; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_13">
-    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="323.439062" y="15.406313" transform="rotate(-0 323.439062 15.406313)">More trials improve every recovered DDM parameter</text>
+    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="323.439062" y="15.406313" transform="rotate(-0 323.439062 15.406313)">More trials improve every recovered DDM parameter</text>
    </g>
    <g id="legend_1">
     <g id="line2d_28">
@@ -388,7 +388,7 @@ L 449.446875 31.230141
      </g>
     </g>
     <g id="text_14">
-     <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="455.446875" y="33.855141" transform="rotate(-0 455.446875 33.855141)">intercept</text>
+     <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="455.446875" y="33.855141" transform="rotate(-0 455.446875 33.855141)">intercept</text>
     </g>
     <g id="line2d_29">
      <path d="M 434.446875 42.480727
@@ -400,7 +400,7 @@ L 449.446875 42.480727
      </g>
     </g>
     <g id="text_15">
-     <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="455.446875" y="45.105727" transform="rotate(-0 455.446875 45.105727)">stimulus</text>
+     <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="455.446875" y="45.105727" transform="rotate(-0 455.446875 45.105727)">stimulus</text>
     </g>
     <g id="line2d_30">
      <path d="M 434.446875 53.731313
@@ -412,7 +412,7 @@ L 449.446875 53.731313
      </g>
     </g>
     <g id="text_16">
-     <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="455.446875" y="56.356313" transform="rotate(-0 455.446875 56.356313)">boundary</text>
+     <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="455.446875" y="56.356313" transform="rotate(-0 455.446875 56.356313)">boundary</text>
     </g>
     <g id="line2d_31">
      <path d="M 506.183203 31.230141
@@ -424,7 +424,7 @@ L 521.183203 31.230141
      </g>
     </g>
     <g id="text_17">
-     <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="527.183203" y="33.855141" transform="rotate(-0 527.183203 33.855141)">starting_bias</text>
+     <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="527.183203" y="33.855141" transform="rotate(-0 527.183203 33.855141)">starting_bias</text>
     </g>
     <g id="line2d_32">
      <path d="M 506.183203 42.480727
@@ -436,7 +436,7 @@ L 521.183203 42.480727
      </g>
     </g>
     <g id="text_18">
-     <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="527.183203" y="45.105727" transform="rotate(-0 527.183203 45.105727)">nondecision_time</text>
+     <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="527.183203" y="45.105727" transform="rotate(-0 527.183203 45.105727)">nondecision_time</text>
     </g>
    </g>
   </g>

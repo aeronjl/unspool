@@ -45,11 +45,27 @@ the Figure 1 reproduction retains:
 Two source sessions for DAP021 share paper day 1. Unspool preserves both source identities
 and combines them only when applying the paper's paper-day summary rule.
 
+### Source-to-display correspondence
+
+This table fixes the relationship between each Unspool display and the published or
+released target. Exact paper-panel identifiers will be added only after the complete
+paper-layout audit; until then, correspondence is stated at the reported-result level
+rather than guessed from visual similarity.
+
+| Unspool display | Published or released target | Relationship | Preserved | Changed or unavailable |
+| --- | --- | --- | --- | --- |
+| `cell2025-strategy.svg` | Reported early-bias/later-strategy association | Independent reproduction | public trials, exclusions, animal unit, early and late summaries | plotting geometry; no neural variables |
+| `cell2025-trajectories.svg` | Released GP trajectory and soft-DTW visualization | Exact reproduction | released paths, ordering, memberships, normalized progress | explanatory annotation added |
+| `cell2025-qvalue-response-time.svg`, A | Released first-five-day Q-value comparison | Released result | released per-animal BIC summary | no independent reoptimization |
+| `cell2025-qvalue-response-time.svg`, B | Reported response-time change through learning | Independent reproduction | public trials, response-time definition, animal pairing | compact first-versus-final-five display |
+| `cell2025-forecast.svg` | No published target | Literature-shaped analysis | public behavioural cohort and chronology | new candidates, prospective boundary, estimand, uncertainty |
+| `cell2025-recovery.svg` | No published target | Synthetic benchmark | exact public trial/session/contrast geometry | simulated outcomes and declared generators |
+
 ### Early and late strategy
 
-<figure class="doc-figure">
+<figure class="doc-figure" data-figure-kind="Independent reproduction">
   <img src="../../assets/cell2025-strategy.svg" alt="Animal-level scatter plot showing a positive association between early zero-contrast bias and the final-five-session right-minus-left psychometric slope, with 30 observations and a fitted line.">
-  <figcaption><strong>Published association, independently reproduced.</strong> Early bias over days 4–8 predicts final-five-session psychometric asymmetry: <em>r</em> = 0.69479, <em>p</em> = 2.04 × 10⁻⁵. The animal is the experimental unit.</figcaption>
+  <figcaption><strong>Independent reproduction · published strategy association.</strong> Early bias over days 4–8 predicts final-five-session psychometric asymmetry: <em>r</em> = 0.69479, <em>p</em> = 2.04 × 10⁻⁵. This animal-level association does not establish that early bias causes later strategy.<span class="doc-figure__meta"><strong>Unit:</strong> animal · <strong>n:</strong> 30 animals, 192,238 retained trials · <strong>Estimand:</strong> Pearson early-bias/later-asymmetry association · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 Mean non-zero-stimulus accuracy rises from `0.51734` in the first session to `0.75803`
@@ -64,9 +80,9 @@ Gaussian processes and visualizes three soft-DTW clusters. Reproduction required
 released numerical environment and its implicit alphabetical animal ordering. The final
 semantic membership matches the released CSV for all 30 animals.
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Exact reproduction">
   <img src="../../assets/cell2025-trajectories.svg" alt="Thirty overlapping right-minus-left psychometric-slope trajectories across normalized training progress, colored by the released left, balanced, and right visualization labels.">
-  <figcaption><strong>The labels summarize continuous diversity.</strong> Individual paths overlap and change through training. The colors reproduce a retrospective visualization; they are not prospective classes or evidence for three biological kinds.</figcaption>
+  <figcaption><strong>Exact reproduction · the labels summarize continuous diversity.</strong> Individual paths overlap and change through training. The colours reconstruct the released retrospective visualization; they are not prospective classes or evidence for three biological kinds.<span class="doc-figure__meta"><strong>Unit:</strong> animal trajectory · <strong>n:</strong> 30 released trajectories · <strong>Estimand:</strong> GP right-minus-left psychometric slope over normalized training progress · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 ### Reward history and response time
@@ -80,9 +96,9 @@ An independent chronometric summary finds mean response time falling from `3.714
 first session to `0.949 s` over the final five (`paired p = 9.16 × 10⁻¹¹`). This is a
 descriptive choice-completion measure; response time is not part of the prospective model.
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Mixed evidence">
   <img src="../../assets/cell2025-qvalue-response-time.svg" alt="Two panels showing mean BIC for five released Q-value models and paired first-session versus final-five-session response times for 30 animals.">
-  <figcaption><strong>Two bounded descriptive layers.</strong> The left panel safely summarizes the released retrospective fit; the right independently shows faster responses across learning. Neither identifies a dopaminergic mechanism.</figcaption>
+  <figcaption><strong>Mixed evidence · two bounded descriptive layers.</strong> The left panel summarizes a released retrospective fit; the right independently shows faster responses across learning. Neither identifies a dopaminergic mechanism.<span class="doc-figure__meta"><strong>Unit:</strong> animal · <strong>n:</strong> 30 animals · <strong>Estimands:</strong> released mean BIC and paired first-versus-final-five response time · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 ## Layer B: freeze a new forecast before fitting
@@ -116,9 +132,9 @@ feature to the forecast phase and added a generic late-phase control.
 
 ## Prospective result
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Literature-shaped analysis">
   <img src="../../assets/cell2025-forecast.svg" alt="Six model log-loss estimates with animal-bootstrap intervals and three pairwise early-bias contrasts. Early bias clearly improves on complete pooling, while comparisons with a late-phase control and hierarchical smooth trajectory cross zero.">
-  <figcaption><strong>Forecastability without overclaiming model identity.</strong> Early bias has the lowest mean log loss, but only its improvement over the pooled psychometric model is resolved by the frozen animal bootstrap.</figcaption>
+  <figcaption><strong>Literature-shaped analysis · forecastability without overclaiming model identity.</strong> Early bias has the lowest mean log loss, but only its improvement over the pooled psychometric model is resolved by the frozen animal bootstrap. This new analysis has no claimed paper-panel counterpart.<span class="doc-figure__meta"><strong>Unit:</strong> animal · <strong>n:</strong> 30 animals, 73,042 trials, 6 folds · <strong>Estimand:</strong> animal-balanced final-five-session choice log loss with animal-bootstrap intervals · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 | Candidate | Animal-balanced log loss | 95% interval |
@@ -148,9 +164,9 @@ Recovery reuses all 73,042 trial positions, contrasts, animal identities, sessio
 coordinates, and six forecast folds. This matters: generic toy recovery would not audit
 the actual claim.
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Synthetic benchmark">
   <img src="../../assets/cell2025-recovery.svg" alt="A structural model-recovery matrix with 11 of 12 correct selections and stacked bars showing early-bias feature selection in null, predictive, and reward-history simulations.">
-  <figcaption><strong>Exact-design falsification.</strong> Stable heterogeneity, shared drift, and individual drift recover in all three repeats. Complete pooling is mistaken for shared drift once. The outcome-derived feature is sensitive but not perfectly specific.</figcaption>
+  <figcaption><strong>Synthetic benchmark · exact-design falsification.</strong> Stable heterogeneity, shared drift, and individual drift recover in all three repeats. Complete pooling is mistaken for shared drift once. The outcome-derived feature is sensitive but not perfectly specific; the result is conditional on the tested generators.<span class="doc-figure__meta"><strong>Unit:</strong> simulation repeat · <strong>n:</strong> 12 structural and 36 feature-recovery simulations · <strong>Estimand:</strong> generating-family and feature-selection proportion · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 Structural recovery resolves all 12 simulations and selects the generating family in 11.

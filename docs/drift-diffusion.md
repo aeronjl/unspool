@@ -168,9 +168,9 @@ fixed-support independent mixture is a deliberately simpler first contract.
 
 ## Recovery evidence
 
-<figure class="doc-figure">
+<figure class="doc-figure" data-figure-kind="Synthetic benchmark">
   <img src="../assets/ddm-recovery.svg" alt="Parameter root-mean-square error versus trial count for drift intercept, drift stimulus, boundary, starting bias, and nondecision time in the committed drift-diffusion recovery benchmark.">
-  <figcaption><strong>Design-specific DDM recovery.</strong> Increasing the simulated trial count reduces RMSE for every fitted parameter. Lines summarize committed repetitions; they are not universal sample-size recommendations.</figcaption>
+  <figcaption><strong>Synthetic benchmark · design-specific DDM recovery.</strong> Increasing the simulated trial count reduces RMSE for every fitted parameter. Lines summarize committed repetitions; they are not universal sample-size recommendations.<span class="doc-figure__meta"><strong>Unit:</strong> simulation repeat · <strong>n:</strong> declared repeats at two trial counts · <strong>Estimand:</strong> parameter root-mean-square error · <a href="../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 The [fixed-parameter recovery benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ddm_recovery) runs 20

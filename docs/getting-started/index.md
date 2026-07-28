@@ -9,7 +9,7 @@ score, an animal-level figure, and fit audits from one complete script.
 [Install Unspool](installation.md){ .md-button }
 [Run the first analysis](first-analysis.md){ .md-button .md-button--primary }
 
-<figure class="doc-figure">
+<figure class="doc-figure" data-figure-kind="Conceptual">
   <img src="../assets/workflow-map.svg" alt="Four routes from a scientific question through a validation boundary to a bounded result: describing change, predicting later sessions, comparing explanations, and testing identifiability.">
   <figcaption><strong>Workflow map.</strong> The intended generalization target determines the split and evidence object before it determines the model family. This is a conceptual contract diagram.</figcaption>
 </figure>

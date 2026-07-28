@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Unspool documentation figure generator</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -49,7 +49,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_1">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="54.781484" y="330.435219" transform="rotate(-0 54.781484 330.435219)">first</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="54.781484" y="330.435219" transform="rotate(-0 54.781484 330.435219)">first</text>
      </g>
     </g>
     <g id="xtick_2">
@@ -59,7 +59,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_2">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="329.36043" y="330.435219" transform="rotate(-0 329.36043 330.435219)">middle</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="329.36043" y="330.435219" transform="rotate(-0 329.36043 330.435219)">middle</text>
      </g>
     </g>
     <g id="xtick_3">
@@ -69,11 +69,11 @@ L 0 3.5
       </g>
      </g>
      <g id="text_3">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="603.939375" y="330.435219" transform="rotate(-0 603.939375 330.435219)">last</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="603.939375" y="330.435219" transform="rotate(-0 603.939375 330.435219)">last</text>
      </g>
     </g>
     <g id="text_4">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="329.36043" y="343.435922" transform="rotate(-0 329.36043 343.435922)">Within-animal training progress (normalized)</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="329.36043" y="343.435922" transform="rotate(-0 329.36043 343.435922)">Within-animal training progress (normalized)</text>
     </g>
    </g>
    <g id="matplotlib.axis_2">
@@ -94,7 +94,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_5">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="47.781484" y="285.179248" transform="rotate(-0 47.781484 285.179248)">−0.75</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="47.781484" y="285.179248" transform="rotate(-0 47.781484 285.179248)">−0.75</text>
      </g>
     </g>
     <g id="ytick_2">
@@ -109,7 +109,7 @@ L 603.939375 244.283488
       </g>
      </g>
      <g id="text_6">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="47.781484" y="247.702433" transform="rotate(-0 47.781484 247.702433)">−0.50</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="47.781484" y="247.702433" transform="rotate(-0 47.781484 247.702433)">−0.50</text>
      </g>
     </g>
     <g id="ytick_3">
@@ -124,7 +124,7 @@ L 603.939375 206.806673
       </g>
      </g>
      <g id="text_7">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="47.781484" y="210.225619" transform="rotate(-0 47.781484 210.225619)">−0.25</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="47.781484" y="210.225619" transform="rotate(-0 47.781484 210.225619)">−0.25</text>
      </g>
     </g>
     <g id="ytick_4">
@@ -139,7 +139,7 @@ L 603.939375 169.329859
       </g>
      </g>
      <g id="text_8">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="47.781484" y="172.748804" transform="rotate(-0 47.781484 172.748804)">0.00</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="47.781484" y="172.748804" transform="rotate(-0 47.781484 172.748804)">0.00</text>
      </g>
     </g>
     <g id="ytick_5">
@@ -154,7 +154,7 @@ L 603.939375 131.853044
       </g>
      </g>
      <g id="text_9">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="47.781484" y="135.271989" transform="rotate(-0 47.781484 135.271989)">0.25</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="47.781484" y="135.271989" transform="rotate(-0 47.781484 135.271989)">0.25</text>
      </g>
     </g>
     <g id="ytick_6">
@@ -169,7 +169,7 @@ L 603.939375 94.376229
       </g>
      </g>
      <g id="text_10">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="47.781484" y="97.795175" transform="rotate(-0 47.781484 97.795175)">0.50</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="47.781484" y="97.795175" transform="rotate(-0 47.781484 97.795175)">0.50</text>
      </g>
     </g>
     <g id="ytick_7">
@@ -184,11 +184,11 @@ L 603.939375 56.899415
       </g>
      </g>
      <g id="text_11">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="47.781484" y="60.31836" transform="rotate(-0 47.781484 60.31836)">0.75</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="47.781484" y="60.31836" transform="rotate(-0 47.781484 60.31836)">0.75</text>
      </g>
     </g>
     <g id="text_12">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="14.038594" y="169.001469" transform="rotate(-90 14.038594 169.001469)">GP right-minus-left psychometric slope</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="14.038594" y="169.001469" transform="rotate(-90 14.038594 169.001469)">GP right-minus-left psychometric slope</text>
     </g>
    </g>
    <g id="line2d_18">
@@ -3297,11 +3297,11 @@ L 603.939375 316.596625
 " style="fill: none; stroke: #c5cad5; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_13">
-    <text style="font-size: 9px; font-family: 'DejaVu Sans'; fill: #778092" transform="translate(383.460296 296.82737)">30 animals · exact released membership match</text>
-    <text style="font-size: 9px; font-family: 'DejaVu Sans'; fill: #778092" transform="translate(446.186077 307.62983)">labels are not prospective classes</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; fill: #778092" transform="translate(383.460296 296.82737)">30 animals · exact released membership match</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; fill: #778092" transform="translate(446.186077 307.62983)">labels are not prospective classes</text>
    </g>
    <g id="text_14">
-    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="329.36043" y="15.406312" transform="rotate(-0 329.36043 15.406312)">Released trajectory labels summarize overlapping continuous paths</text>
+    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="329.36043" y="15.406312" transform="rotate(-0 329.36043 15.406312)">Released trajectory labels summarize overlapping continuous paths</text>
    </g>
    <g id="legend_1">
     <g id="line2d_49">
@@ -3311,7 +3311,7 @@ L 80.881484 33.194906
 " style="fill: none; stroke: #778092; stroke-opacity: 0.46; stroke-width: 1.05; stroke-linecap: square"/>
     </g>
     <g id="text_15">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="88.081484" y="36.344906" transform="rotate(-0 88.081484 36.344906)">balanced visualization label</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="88.081484" y="36.344906" transform="rotate(-0 88.081484 36.344906)">balanced visualization label</text>
     </g>
     <g id="line2d_50">
      <path d="M 230.931172 33.194906
@@ -3320,7 +3320,7 @@ L 248.931172 33.194906
 " style="fill: none; stroke: #c57928; stroke-opacity: 0.46; stroke-width: 1.05; stroke-linecap: square"/>
     </g>
     <g id="text_16">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="256.131172" y="36.344906" transform="rotate(-0 256.131172 36.344906)">right visualization label</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="256.131172" y="36.344906" transform="rotate(-0 256.131172 36.344906)">right visualization label</text>
     </g>
     <g id="line2d_51">
      <path d="M 378.978359 33.194906
@@ -3329,7 +3329,7 @@ L 396.978359 33.194906
 " style="fill: none; stroke: #4f6d9a; stroke-opacity: 0.46; stroke-width: 1.05; stroke-linecap: square"/>
     </g>
     <g id="text_17">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="404.178359" y="36.344906" transform="rotate(-0 404.178359 36.344906)">left visualization label</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="404.178359" y="36.344906" transform="rotate(-0 404.178359 36.344906)">left visualization label</text>
     </g>
    </g>
   </g>

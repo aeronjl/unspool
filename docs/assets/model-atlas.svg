@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Unspool documentation figure generator</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -300,7 +300,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_1">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="41.513516" y="234.140484" transform="rotate(-0 41.513516 234.140484)">early</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="41.513516" y="234.140484" transform="rotate(-0 41.513516 234.140484)">early</text>
      </g>
     </g>
     <g id="xtick_2">
@@ -310,7 +310,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_2">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="177.049094" y="234.140484" transform="rotate(-0 177.049094 234.140484)">late</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="177.049094" y="234.140484" transform="rotate(-0 177.049094 234.140484)">late</text>
      </g>
     </g>
    </g>
@@ -332,7 +332,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_3">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="223.720836" transform="rotate(-0 34.513516 223.720836)">0.1</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="223.720836" transform="rotate(-0 34.513516 223.720836)">0.1</text>
      </g>
     </g>
     <g id="ytick_2">
@@ -347,7 +347,7 @@ L 177.049094 198.607838
       </g>
      </g>
      <g id="text_4">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="202.026783" transform="rotate(-0 34.513516 202.026783)">0.2</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="202.026783" transform="rotate(-0 34.513516 202.026783)">0.2</text>
      </g>
     </g>
     <g id="ytick_3">
@@ -362,7 +362,7 @@ L 177.049094 176.913785
       </g>
      </g>
      <g id="text_5">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="180.33273" transform="rotate(-0 34.513516 180.33273)">0.3</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="180.33273" transform="rotate(-0 34.513516 180.33273)">0.3</text>
      </g>
     </g>
     <g id="ytick_4">
@@ -377,7 +377,7 @@ L 177.049094 155.219732
       </g>
      </g>
      <g id="text_6">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="158.638678" transform="rotate(-0 34.513516 158.638678)">0.4</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="158.638678" transform="rotate(-0 34.513516 158.638678)">0.4</text>
      </g>
     </g>
     <g id="ytick_5">
@@ -392,7 +392,7 @@ L 177.049094 133.52568
       </g>
      </g>
      <g id="text_7">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="136.944625" transform="rotate(-0 34.513516 136.944625)">0.5</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="136.944625" transform="rotate(-0 34.513516 136.944625)">0.5</text>
      </g>
     </g>
     <g id="ytick_6">
@@ -407,7 +407,7 @@ L 177.049094 111.831627
       </g>
      </g>
      <g id="text_8">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="115.250572" transform="rotate(-0 34.513516 115.250572)">0.6</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="115.250572" transform="rotate(-0 34.513516 115.250572)">0.6</text>
      </g>
     </g>
     <g id="ytick_7">
@@ -422,7 +422,7 @@ L 177.049094 90.137574
       </g>
      </g>
      <g id="text_9">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="93.55652" transform="rotate(-0 34.513516 93.55652)">0.7</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="93.55652" transform="rotate(-0 34.513516 93.55652)">0.7</text>
      </g>
     </g>
     <g id="ytick_8">
@@ -437,7 +437,7 @@ L 177.049094 68.443521
       </g>
      </g>
      <g id="text_10">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="71.862467" transform="rotate(-0 34.513516 71.862467)">0.8</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="71.862467" transform="rotate(-0 34.513516 71.862467)">0.8</text>
      </g>
     </g>
     <g id="ytick_9">
@@ -452,11 +452,11 @@ L 177.049094 46.749469
       </g>
      </g>
      <g id="text_11">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="50.168414" transform="rotate(-0 34.513516 50.168414)">0.9</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="50.168414" transform="rotate(-0 34.513516 50.168414)">0.9</text>
      </g>
     </g>
     <g id="text_12">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="14.038594" y="133.52568" transform="rotate(-90 14.038594 133.52568)">Illustrative latent decision tendency</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="14.038594" y="133.52568" transform="rotate(-90 14.038594 133.52568)">Illustrative latent decision tendency</text>
     </g>
    </g>
    <g id="line2d_21">
@@ -593,10 +593,10 @@ L 177.049094 220.301891
 " style="fill: none; stroke: #c5cad5; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_13">
-    <text style="font-weight: 700; font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #26345e" x="109.281305" y="209.888745" transform="rotate(-0 109.281305 209.888745)">fixed effects</text>
+    <text style="font-weight: 700; font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #26345e" x="109.281305" y="209.888745" transform="rotate(-0 109.281305 209.888745)">fixed effects</text>
    </g>
    <g id="text_14">
-    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="109.281305" y="40.749469" transform="rotate(-0 109.281305 40.749469)">Static GLM</text>
+    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="109.281305" y="40.749469" transform="rotate(-0 109.281305 40.749469)">Static GLM</text>
    </g>
   </g>
   <g id="axes_2">
@@ -867,7 +867,7 @@ z
       </g>
      </g>
      <g id="text_15">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="207.649094" y="234.140484" transform="rotate(-0 207.649094 234.140484)">early</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="207.649094" y="234.140484" transform="rotate(-0 207.649094 234.140484)">early</text>
      </g>
     </g>
     <g id="xtick_4">
@@ -877,7 +877,7 @@ z
       </g>
      </g>
      <g id="text_16">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="343.184672" y="234.140484" transform="rotate(-0 343.184672 234.140484)">late</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="343.184672" y="234.140484" transform="rotate(-0 343.184672 234.140484)">late</text>
      </g>
     </g>
    </g>
@@ -1125,10 +1125,10 @@ L 343.184672 220.301891
 " style="fill: none; stroke: #c5cad5; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_17">
-    <text style="font-weight: 700; font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #4f6d9a" x="275.416883" y="209.888745" transform="rotate(-0 275.416883 209.888745)">continuous change</text>
+    <text style="font-weight: 700; font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4f6d9a" x="275.416883" y="209.888745" transform="rotate(-0 275.416883 209.888745)">continuous change</text>
    </g>
    <g id="text_18">
-    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="275.416883" y="40.749469" transform="rotate(-0 275.416883 40.749469)">Smooth drift</text>
+    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="275.416883" y="40.749469" transform="rotate(-0 275.416883 40.749469)">Smooth drift</text>
    </g>
   </g>
   <g id="axes_3">
@@ -1399,7 +1399,7 @@ z
       </g>
      </g>
      <g id="text_19">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="373.784672" y="234.140484" transform="rotate(-0 373.784672 234.140484)">early</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="373.784672" y="234.140484" transform="rotate(-0 373.784672 234.140484)">early</text>
      </g>
     </g>
     <g id="xtick_6">
@@ -1409,7 +1409,7 @@ z
       </g>
      </g>
      <g id="text_20">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="509.32025" y="234.140484" transform="rotate(-0 509.32025 234.140484)">late</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="509.32025" y="234.140484" transform="rotate(-0 509.32025 234.140484)">late</text>
      </g>
     </g>
    </g>
@@ -1657,10 +1657,10 @@ L 509.32025 220.301891
 " style="fill: none; stroke: #c5cad5; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_21">
-    <text style="font-weight: 700; font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #2d7f78" x="441.552461" y="209.888745" transform="rotate(-0 441.552461 209.888745)">discrete regimes</text>
+    <text style="font-weight: 700; font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #2d7f78" x="441.552461" y="209.888745" transform="rotate(-0 441.552461 209.888745)">discrete regimes</text>
    </g>
    <g id="text_22">
-    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="441.552461" y="40.749469" transform="rotate(-0 441.552461 40.749469)">GLM-HMM</text>
+    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="441.552461" y="40.749469" transform="rotate(-0 441.552461 40.749469)">GLM-HMM</text>
    </g>
   </g>
   <g id="axes_4">
@@ -1931,7 +1931,7 @@ z
       </g>
      </g>
      <g id="text_23">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="539.92025" y="234.140484" transform="rotate(-0 539.92025 234.140484)">early</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="539.92025" y="234.140484" transform="rotate(-0 539.92025 234.140484)">early</text>
      </g>
     </g>
     <g id="xtick_8">
@@ -1941,7 +1941,7 @@ z
       </g>
      </g>
      <g id="text_24">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="675.455828" y="234.140484" transform="rotate(-0 675.455828 234.140484)">late</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="675.455828" y="234.140484" transform="rotate(-0 675.455828 234.140484)">late</text>
      </g>
     </g>
    </g>
@@ -2189,10 +2189,10 @@ L 675.455828 220.301891
 " style="fill: none; stroke: #c5cad5; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_25">
-    <text style="font-weight: 700; font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #c57928" x="607.688039" y="209.888745" transform="rotate(-0 607.688039 209.888745)">value updating</text>
+    <text style="font-weight: 700; font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #c57928" x="607.688039" y="209.888745" transform="rotate(-0 607.688039 209.888745)">value updating</text>
    </g>
    <g id="text_26">
-    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="607.688039" y="40.749469" transform="rotate(-0 607.688039 40.749469)">Q-learning</text>
+    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="607.688039" y="40.749469" transform="rotate(-0 607.688039 40.749469)">Q-learning</text>
    </g>
   </g>
   <g id="axes_5">
@@ -2463,7 +2463,7 @@ z
       </g>
      </g>
      <g id="text_27">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="706.055828" y="234.140484" transform="rotate(-0 706.055828 234.140484)">early</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="706.055828" y="234.140484" transform="rotate(-0 706.055828 234.140484)">early</text>
      </g>
     </g>
     <g id="xtick_10">
@@ -2473,7 +2473,7 @@ z
       </g>
      </g>
      <g id="text_28">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="841.591406" y="234.140484" transform="rotate(-0 841.591406 234.140484)">late</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="841.591406" y="234.140484" transform="rotate(-0 841.591406 234.140484)">late</text>
      </g>
     </g>
    </g>
@@ -2721,14 +2721,14 @@ L 841.591406 220.301891
 " style="fill: none; stroke: #c5cad5; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_29">
-    <text style="font-weight: 700; font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #8a5d83" x="773.823617" y="209.888745" transform="rotate(-0 773.823617 209.888745)">choice + response time</text>
+    <text style="font-weight: 700; font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #8a5d83" x="773.823617" y="209.888745" transform="rotate(-0 773.823617 209.888745)">choice + response time</text>
    </g>
    <g id="text_30">
-    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="773.823617" y="40.749469" transform="rotate(-0 773.823617 40.749469)">Drift diffusion</text>
+    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="773.823617" y="40.749469" transform="rotate(-0 773.823617 40.749469)">Drift diffusion</text>
    </g>
   </g>
   <g id="text_31">
-   <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="428.311406" y="15.406312" transform="rotate(-0 428.311406 15.406312)">Different model families encode different explanations of change</text>
+   <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="428.311406" y="15.406312" transform="rotate(-0 428.311406 15.406312)">Different model families encode different explanations of change</text>
   </g>
  </g>
  <defs>

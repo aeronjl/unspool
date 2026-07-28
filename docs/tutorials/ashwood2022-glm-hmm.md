@@ -33,9 +33,9 @@ Both candidates score choice only. Within the test session, probabilities are fi
 one step ahead: an observed choice may update the state distribution used for the next
 trial, but no future choice is visible before it is scored.
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Literature-shaped analysis">
   <img src="../../assets/ibl-glmhmm-states.svg" alt="Four panels show filtered latent-state probabilities in the untouched session, fitted state-specific emission coefficients, the fitted transition matrix, and inner state-count selection beside outer static-GLM and GLM-HMM log losses.">
-  <figcaption><strong>Latent structure stays attached to its validation boundary.</strong> State probabilities and coefficients describe the selected fit; the two loss panels show how it was selected and whether that procedure survived the untouched session.</figcaption>
+  <figcaption><strong>Literature-shaped analysis · latent structure stays attached to its validation boundary.</strong> State probabilities and coefficients describe the selected fit; the loss panels show selection and untouched-session performance. Near-tied state counts and warning-level diagnostics preclude a claim of four biological strategies.<span class="doc-figure__meta"><strong>Unit:</strong> eligible choice from one animal · <strong>n:</strong> 893 choices, including 150 untouched choices · <strong>Estimand:</strong> training-only state-count selection and future-session log loss · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 ## Result

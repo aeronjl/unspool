@@ -5,7 +5,7 @@ two genuinely comparable occasions. It is not one number. Stable ordering across
 linear consistency, absolute agreement, systematic occasion shift, and within-animal error
 are different properties.
 
-<figure markdown="span">
+<figure class="doc-figure" data-figure-kind="Conceptual">
   <img src="assets/reliability-agreement.svg" alt="The left panel shows test and retest estimates with preserved ordering but a systematic upward shift away from the identity line. The right Bland-Altman panel plots retest-minus-test differences against pair means with the mean difference and limits of agreement.">
   <figcaption>High correlation can coexist with poor absolute agreement. A reliability
   report should show both the paired estimates and their differences.</figcaption>

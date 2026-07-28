@@ -29,6 +29,8 @@ jobs:
         run: uv sync --group docs --locked --python 3.12
       - name: Run the documented first analysis
         run: uv run --group docs python examples/first_analysis.py first-analysis.svg
+      - name: Validate documentation figures
+        run: uv run --group docs pytest tests/test_documentation.py
       - name: Build documentation
         run: uv run --group docs mkdocs build --strict
       - if: github.event_name != 'pull_request'

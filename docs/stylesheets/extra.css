@@ -19,8 +19,13 @@
 }
 
 .md-typeset .doc-figure {
+  background: color-mix(in srgb, var(--md-default-bg-color) 96%, var(--md-primary-fg-color));
+  border: 1px solid color-mix(in srgb, var(--md-default-fg-color) 13%, transparent);
+  border-radius: 0.55rem;
+  box-shadow: 0 0.35rem 1.1rem rgb(23 33 63 / 7%);
   margin: 1.6rem auto 2rem;
   max-width: 52rem;
+  padding: 0.7rem;
 }
 
 .md-typeset .doc-figure--wide {
@@ -29,25 +34,68 @@
 
 .md-typeset .doc-figure img {
   background: #fff;
-  border: 1px solid color-mix(in srgb, var(--md-default-fg-color) 13%, transparent);
-  box-shadow: 0 0.35rem 1.1rem rgb(23 33 63 / 9%);
+  border: 1px solid color-mix(in srgb, var(--md-default-fg-color) 10%, transparent);
   display: block;
   height: auto;
   width: 100%;
 }
 
+.md-typeset .doc-figure::before {
+  background: color-mix(in srgb, var(--md-accent-fg-color) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--md-accent-fg-color) 34%, transparent);
+  border-radius: 999px;
+  color: var(--md-default-fg-color);
+  content: attr(data-figure-kind);
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  line-height: 1;
+  margin: 0 0 0.55rem;
+  padding: 0.32rem 0.48rem;
+  text-transform: uppercase;
+}
+
 .md-typeset .doc-figure figcaption {
   color: var(--md-default-fg-color--light);
   font-size: 0.76rem;
+  font-style: normal;
   line-height: 1.45;
-  margin: 0.7rem auto 0;
+  margin: 0.75rem auto 0.15rem;
   max-width: 46rem;
   text-align: left;
 }
 
+.md-typeset .doc-figure .doc-figure__meta {
+  border-top: 1px solid color-mix(in srgb, var(--md-default-fg-color) 12%, transparent);
+  display: block;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  margin-top: 0.55rem;
+  padding-top: 0.5rem;
+}
+
 [data-md-color-scheme="slate"] .md-typeset .doc-figure img {
   border-color: rgb(255 255 255 / 16%);
-  box-shadow: 0 0.35rem 1.2rem rgb(0 0 0 / 28%);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .doc-figure {
+  box-shadow: 0 0.35rem 1.2rem rgb(0 0 0 / 22%);
+}
+
+@media screen and (max-width: 44.9844em) {
+  .md-typeset .doc-figure {
+    border-left: 0;
+    border-radius: 0;
+    border-right: 0;
+    margin-left: -0.8rem;
+    margin-right: -0.8rem;
+    padding: 0.6rem 0.8rem;
+  }
+
+  .md-typeset .doc-figure figcaption {
+    font-size: 0.72rem;
+  }
 }
 
 .md-typeset .md-button {

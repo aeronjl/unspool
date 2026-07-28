@@ -9,7 +9,7 @@ If you are starting an analysis rather than browsing implementations, use the
 then state each family's required observations, prediction semantics, evidence, and
 unsupported uses in a common format.
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Conceptual">
   <img src="../assets/model-atlas.svg" alt="Five conceptual trajectories comparing a static GLM, smooth drift, GLM-HMM regimes, Q-learning value updating, and a drift-diffusion tendency across early-to-late learning.">
   <figcaption><strong>Model-family atlas.</strong> Each family encodes a different explanation of behavioural change. The curves are conceptual signatures, not fitted data or evidence that any family is correct.</figcaption>
 </figure>
