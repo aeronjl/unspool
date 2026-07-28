@@ -40,6 +40,13 @@
   width: 100%;
 }
 
+.md-typeset .doc-figure .doc-figure__full-resolution {
+  display: inline-block;
+  font-size: 0.66rem;
+  font-weight: 600;
+  margin-top: 0.45rem;
+}
+
 .md-typeset .doc-figure::before {
   background: color-mix(in srgb, var(--md-accent-fg-color) 13%, transparent);
   border: 1px solid color-mix(in srgb, var(--md-accent-fg-color) 34%, transparent);

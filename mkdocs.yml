@@ -113,6 +113,7 @@ nav:
   - Worked studies:
       - Studies overview: tutorials/index.md
       - Recipe standard: tutorials/recipe-contract.md
+      - Cell 2025 Figure 1 reproduction: tutorials/cell2025-figure1gi-reproduction.md
       - Cell 2025 flagship forecast: tutorials/cell2025-learning-trajectories.md
       - IBL learning trajectories: tutorials/ibl2021-learning-trajectories.md
       - Prospective drift and nested selection: tutorials/ibl2021-prospective-selection.md

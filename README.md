@@ -329,8 +329,9 @@ time intervals, task phases, stimulus categories, field semantics, and trial-add
 asset provenance satisfy the canonical contract. See the
 [NWB/DANDI interoperability benchmark](benchmarks/nwb_dandi_interoperability/README.md).
 
-The first external benchmark reproduces the central longitudinal-behaviour result from
-Liebana, Laffere et al. (2025): bias during days 4–8 predicts the final-five-session
+The first external benchmark reproduces two central longitudinal-behaviour panels from
+Liebana, Laffere et al. (2025): bias during days 4–8 is negatively associated with bias in
+the final-five-paper-day window (`r = -0.52764`) and positively associated with its
 right-minus-left psychometric-slope asymmetry across 30 mice (`r = 0.69479`,
 `p = 2.04e-05`). The workflow fetches only the required member of the versioned public
 Figshare archive, verifies its checksum, maps trials to `Study`, and enforces a numerical

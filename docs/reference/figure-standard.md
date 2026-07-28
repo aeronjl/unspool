@@ -117,6 +117,7 @@ Generated SVGs must be deterministic, versioned, and reviewable:
 
 ```bash
 uv run python -m benchmarks.cell2025.fetch_data
+uv run python -m benchmarks.cell2025_flagship.fetch_released_artifacts
 uv run --group docs python -m scripts.plot_documentation_figures
 uv run --group docs pytest tests/test_documentation.py
 uv run --group docs mkdocs build --strict
