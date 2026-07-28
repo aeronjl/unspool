@@ -80,10 +80,14 @@ def test_model_cards_cover_every_first_party_family() -> None:
 
 
 def test_first_analysis_is_executable(tmp_path: Path) -> None:
-    """Keep the visible quickstart on the tested public API."""
+    """Keep the visible quickstart on the tested public API when plotting is installed."""
 
     import runpy
     import sys
+
+    import pytest
+
+    pytest.importorskip("matplotlib")
 
     example = ROOT / "examples" / "first_analysis.py"
     output = tmp_path / "first-analysis.svg"
