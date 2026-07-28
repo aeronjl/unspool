@@ -84,6 +84,7 @@ def test_release_orientation_documents_are_in_the_strict_site_navigation() -> No
         "migration-guides.md",
         "extensions.md",
         "reference/validation-and-comparison.md",
+        "reference/figure-standard.md",
         "roadmap.md",
     )
 

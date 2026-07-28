@@ -87,7 +87,7 @@ parameter estimates or predictions need inspection.
 Candidate grids and hyperparameters must not be selected on the folds used for the final
 claim. `nested_select_model` gives the splitter only the outer training study:
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Conceptual">
   <img src="../assets/nested-selection.svg" alt="Nested selection diagram in which outer training data are split into inner forecasts, candidates are compared, one procedure is selected and refitted, and the outer future test is opened only once.">
   <figcaption><strong>Nested selection boundary.</strong> Inner forecasts choose the candidate and hyperparameters using only outer-training data. The untouched outer test scores the complete selection procedure.</figcaption>
 </figure>

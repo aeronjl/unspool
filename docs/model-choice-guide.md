@@ -4,7 +4,7 @@ Do not begin with “Should I fit an RL model or a GLM-HMM?” Begin with the ev
 predict, the future in which it must work, and the scientific contrast that could make its
 mechanism informative. Model choice comes after those commitments.
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Conceptual">
   <img src="assets/model-choice-workflow.svg" alt="A decision workflow starts from whether the scored event is choice alone or joint choice and response time, routes choice models by observable structure, smooth change, discrete regimes, or reward updating, and finishes with a deployment boundary, matched alternatives, and recovery diagnostics.">
   <figcaption><strong>Decision order.</strong> A mechanism earns interpretation only after
   the observed event, deployment boundary, alternatives, and recovery design are fixed.</figcaption>

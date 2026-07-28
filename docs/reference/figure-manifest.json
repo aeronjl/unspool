@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "figures": {
+    "cell2025-forecast.svg": {
+      "classification": "literature-shaped-analysis",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Frozen Cell 2025 flagship benchmark using the checksum-pinned public behavioural table",
+      "unit": "animal",
+      "denominator": "30 animals, 73042 trials, 6 forecast folds",
+      "estimand": "Animal-balanced held-out choice log loss in the final five sessions",
+      "claim": "Early behaviour improves forecasting over complete pooling, without uniquely selecting a trajectory mechanism",
+      "published_target": "New prospective analysis; no published paper panel is claimed"
+    },
+    "cell2025-qvalue-response-time.svg": {
+      "classification": "mixed-evidence",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Checksum-pinned released Q-value summary and independently recomputed response-time summaries",
+      "unit": "animal",
+      "denominator": "30 animals",
+      "estimand": "Released mean BIC by candidate and paired first-session versus final-five-session mean response time",
+      "claim": "The released model ranking and descriptive response-time reduction are separate retrospective evidence layers",
+      "published_target": "Cell 2025 first-five-day Q-value comparison and learning-related response-time result"
+    },
+    "cell2025-recovery.svg": {
+      "classification": "synthetic-benchmark",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Frozen exact-design simulations using Cell trial, contrast, session, subject, and fold geometry",
+      "unit": "simulation repeat",
+      "denominator": "12 structural and 36 feature-recovery simulations",
+      "estimand": "Generating-family and outcome-derived-feature selection proportions",
+      "claim": "The prospective design resolves its main declared distinctions while retaining visible ambiguities",
+      "published_target": "New design audit; no published paper panel is claimed"
+    },
+    "cell2025-strategy.svg": {
+      "classification": "independent-reproduction",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Checksum-pinned Cell 2025 public behavioural trial table",
+      "unit": "animal",
+      "denominator": "30 animals, 192238 retained trials",
+      "estimand": "Pearson association between early zero-contrast bias and final-five-session psychometric asymmetry",
+      "claim": "The reported early-to-late strategy association is independently recovered without establishing causality",
+      "published_target": "Cell 2025 early-bias and later-strategy association"
+    },
+    "cell2025-trajectories.svg": {
+      "classification": "exact-reproduction",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Released Gaussian-process trajectories and checksum-pinned clustering membership",
+      "unit": "animal trajectory",
+      "denominator": "30 animals",
+      "estimand": "Right-minus-left psychometric slope over normalized within-animal training progress",
+      "claim": "The released retrospective visualization is reconstructed while its continuous overlap remains visible",
+      "published_target": "Cell 2025 behavioural trajectory visualization"
+    },
+    "chen2021-bandit.svg": {
+      "classification": "literature-shaped-analysis",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Checksum-pinned Chen et al. restless-bandit trials and frozen Unspool benchmark",
+      "unit": "mouse",
+      "denominator": "32 mice, 25279 trials, one session-8 forecast fold",
+      "estimand": "Animal-balanced held-out log loss and exact-design WSLS/Q-learning recovery",
+      "claim": "Reward-sensitive models forecast better than static accounts, while WSLS and Q-learning remain empirically unresolved",
+      "published_target": "New prospective model comparison; the paper's sex-effect result is not reproduced"
+    },
+    "choice-model-evidence-atlas.svg": {
+      "classification": "synthetic-benchmark",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Deterministic representative fits and frozen dense four-family recovery benchmark",
+      "unit": "simulated study",
+      "denominator": "4 generating families under one 300-trial design",
+      "estimand": "Observed behaviour, fitted structure, future prediction, calibration, and model-recovery score",
+      "claim": "Different model families can share one evidential grammar without erasing family-specific structure",
+      "published_target": "Not applicable; synthetic reporting standard"
+    },
+    "clock-boundary.svg": {
+      "classification": "conceptual",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Schematic values",
+      "unit": "not applicable",
+      "denominator": "not applicable",
+      "estimand": "Conceptual comparison of clocks and training-only transform fitting",
+      "claim": "Time coordinates and outcome-learned transforms must respect the validation boundary",
+      "published_target": "Not applicable"
+    },
+    "ddm-recovery.svg": {
+      "classification": "synthetic-benchmark",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Frozen drift-diffusion recovery benchmark",
+      "unit": "simulation repeat",
+      "denominator": "Declared repeats at two trial counts",
+      "estimand": "Parameter root-mean-square error by trial count",
+      "claim": "Recoverability changes with parameter and experimental information",
+      "published_target": "Not applicable; synthetic design audit"
+    },
+    "diagnostic-layers.svg": {
+      "classification": "conceptual",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Schematic values",
+      "unit": "not applicable",
+      "denominator": "not applicable",
+      "estimand": "Conceptual hierarchy of numerical, predictive, and recovery evidence",
+      "claim": "Convergence, prediction, parameter recovery, and model recovery answer different questions",
+      "published_target": "Not applicable"
+    },
+    "first-analysis.svg": {
+      "classification": "demonstration",
+      "generator": "examples/first_analysis.py",
+      "source": "Deterministically simulated psychometric choices",
+      "unit": "animal",
+      "denominator": "6 synthetic animals, 5 sessions each, 1200 trials",
+      "estimand": "Animal-level improvement in protected fifth-session log loss",
+      "claim": "The complete public-API workflow produces paired future-session evidence and a figure",
+      "published_target": "Not applicable; API demonstration"
+    },
+    "hierarchical-pooling.svg": {
+      "classification": "synthetic-benchmark",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Frozen hierarchical-GLM recovery benchmark",
+      "unit": "simulated subject",
+      "denominator": "Declared subjects and between-subject variation grid",
+      "estimand": "Subject-coefficient RMSE and prospective log loss by pooling strategy",
+      "claim": "Partial pooling adapts to heterogeneous simulated populations",
+      "published_target": "Not applicable; synthetic design audit"
+    },
+    "ibl-choice-response-time.svg": {
+      "classification": "literature-shaped-analysis",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Checksum-pinned IBL sessions and frozen decision-model benchmark",
+      "unit": "eligible trial from one outcome-blindly selected animal",
+      "denominator": "153 training and 111 untouched test trials",
+      "estimand": "Mean held-out joint choice and response-time log density per eligible trial",
+      "claim": "A contaminant component does not improve this animal's predeclared future-session score",
+      "published_target": "New prospective diagnostic; no IBL paper panel is claimed"
+    },
+    "ibl-glmhmm-states.svg": {
+      "classification": "literature-shaped-analysis",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Checksum-pinned IBL sessions and frozen GLM-HMM benchmark",
+      "unit": "eligible choice from one outcome-blindly selected animal",
+      "denominator": "893 choices across 6 sessions; 150 untouched choices",
+      "estimand": "Training-only state-count selection and untouched-session choice log loss",
+      "claim": "The selected GLM-HMM predicts this session better while near-tied selection and fit warnings limit state interpretation",
+      "published_target": "Structural analogue of Ashwood et al.; not a reproduction"
+    },
+    "ibl-learning-trajectories.svg": {
+      "classification": "literature-shaped-analysis",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Checksum-pinned IBL sessions selected by an outcome-blind endpoint rule",
+      "unit": "animal within laboratory",
+      "denominator": "78 animals, 9 laboratories, 468 sessions",
+      "estimand": "Animal-weighted easy-trial accuracy across six ordinal endpoint positions",
+      "claim": "The retrieval rule exposes comparable early-to-late descriptive geometry, not an unbiased population learning curve",
+      "published_target": "New longitudinal rendering of the IBL 2021 public task"
+    },
+    "ibl-prospective-selection.svg": {
+      "classification": "literature-shaped-analysis",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Frozen IBL prospective and nested-selection benchmarks",
+      "unit": "subject",
+      "denominator": "78 animals across 9 laboratories",
+      "estimand": "Training-only smoothness selection and paired untouched future-session log-loss difference",
+      "claim": "Stronger declared regularization improves the untouched score while cross-lab generality remains unresolved",
+      "published_target": "New prospective analysis; no IBL paper panel is claimed"
+    },
+    "interoperability-pipeline.svg": {
+      "classification": "conceptual",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Schematic values",
+      "unit": "not applicable",
+      "denominator": "not applicable",
+      "estimand": "Conceptual mapping from data sources to one longitudinal study contract",
+      "claim": "Different adapters should converge before modelling and validation",
+      "published_target": "Not applicable"
+    },
+    "model-atlas.svg": {
+      "classification": "conceptual",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Schematic model trajectories",
+      "unit": "not applicable",
+      "denominator": "not applicable",
+      "estimand": "Conceptual comparison of trajectory assumptions",
+      "claim": "Model families encode distinct kinds of longitudinal change",
+      "published_target": "Not applicable"
+    },
+    "model-choice-workflow.svg": {
+      "classification": "conceptual",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Schematic workflow",
+      "unit": "not applicable",
+      "denominator": "not applicable",
+      "estimand": "Decision path from scored event and claim to alternatives and recovery",
+      "claim": "The observed event and deployment boundary should precede model-family choice",
+      "published_target": "Not applicable"
+    },
+    "model-recovery-matrix.svg": {
+      "classification": "synthetic-benchmark",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Frozen sparse and dense four-family recovery benchmark",
+      "unit": "simulated study",
+      "denominator": "4 generating families at 150 and 300 trials",
+      "estimand": "Generating-versus-selected candidate family under prospective scoring",
+      "claim": "The dense declared design resolves distinctions that remain ambiguous in the sparse design",
+      "published_target": "Not applicable; synthetic design audit"
+    },
+    "nested-selection.svg": {
+      "classification": "conceptual",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Schematic workflow",
+      "unit": "not applicable",
+      "denominator": "not applicable",
+      "estimand": "Conceptual placement of inner selection inside outer evaluation",
+      "claim": "The outer test set remains untouched by candidate selection",
+      "published_target": "Not applicable"
+    },
+    "reliability-agreement.svg": {
+      "classification": "conceptual",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Schematic paired estimates",
+      "unit": "simulated subject",
+      "denominator": "Illustrative sample only",
+      "estimand": "Rank stability and Bland-Altman agreement",
+      "claim": "Correlation and absolute agreement are distinct reliability properties",
+      "published_target": "Not applicable"
+    },
+    "sbc-workflow.svg": {
+      "classification": "conceptual",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Schematic workflow and ranks",
+      "unit": "not applicable",
+      "denominator": "not applicable",
+      "estimand": "Simulation-based calibration loop and retained failure evidence",
+      "claim": "SBC tests an inference implementation under its declared generative prior",
+      "published_target": "Not applicable"
+    },
+    "sensitivity-specification.svg": {
+      "classification": "conceptual",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Schematic scenario estimates",
+      "unit": "not applicable",
+      "denominator": "7 illustrative scenarios",
+      "estimand": "Conceptual exact-refit specification curve",
+      "claim": "Sensitivity analysis retains scenario definitions, comparable metrics, and failures",
+      "published_target": "Not applicable"
+    },
+    "trajectory-components.svg": {
+      "classification": "synthetic-benchmark",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Frozen trajectory-shape benchmark",
+      "unit": "simulated trajectory",
+      "denominator": "Declared reference and perturbation trajectories",
+      "estimand": "Level, amplitude, and residual shape contrasts",
+      "claim": "Trajectory comparisons can separate offsets, rescaling, and residual shape change",
+      "published_target": "Not applicable; synthetic design audit"
+    },
+    "validation-geometry.svg": {
+      "classification": "conceptual",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Schematic workflow",
+      "unit": "not applicable",
+      "denominator": "not applicable",
+      "estimand": "Conceptual path from observations to bounded interpretation",
+      "claim": "Validation and recovery constrain model interpretation jointly",
+      "published_target": "Not applicable"
+    },
+    "validation-splits.svg": {
+      "classification": "conceptual",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Schematic train-test blocks",
+      "unit": "not applicable",
+      "denominator": "not applicable",
+      "estimand": "Comparison of four prospective validation geometries",
+      "claim": "Different deployment questions require different protected boundaries",
+      "published_target": "Not applicable"
+    },
+    "workflow-map.svg": {
+      "classification": "conceptual",
+      "generator": "scripts/plot_documentation_figures.py",
+      "source": "Schematic workflow",
+      "unit": "not applicable",
+      "denominator": "not applicable",
+      "estimand": "Routing from scientific question to validation boundary and evidence object",
+      "claim": "The claim and deployment boundary should determine the workflow",
+      "published_target": "Not applicable"
+    }
+  }
+}

@@ -1,5 +1,7 @@
 """Structural checks for the versioned documentation figures."""
 
+import json
+import re
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -53,16 +55,119 @@ MODEL_CARD_CLASSES = {
     "WienerDriftDiffusion",
     "WinStayLoseShift",
 }
+FIGURE_CLASSES = {
+    "conceptual": "Conceptual",
+    "demonstration": "Demonstration",
+    "exact-reproduction": "Exact reproduction",
+    "independent-reproduction": "Independent reproduction",
+    "literature-shaped-analysis": "Literature-shaped analysis",
+    "mixed-evidence": "Mixed evidence",
+    "released-result": "Released result",
+    "synthetic-benchmark": "Synthetic benchmark",
+}
+MANIFEST_FIELDS = {
+    "classification",
+    "generator",
+    "source",
+    "unit",
+    "denominator",
+    "estimand",
+    "claim",
+    "published_target",
+}
+
+
+def _figure_manifest() -> dict[str, dict[str, str]]:
+    path = ROOT / "docs" / "reference" / "figure-manifest.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == 1
+    return payload["figures"]
 
 
 def test_documentation_figures_are_versioned_valid_svgs() -> None:
-    actual = {path.name for path in ASSETS.glob("*.svg")}
+    actual = {path.name for path in ASSETS.glob("*.svg") if not path.stem.endswith(" 2")}
 
     assert actual == EXPECTED_FIGURES
-    for figure in sorted(ASSETS.glob("*.svg")):
+    for figure in (ASSETS / name for name in sorted(EXPECTED_FIGURES)):
         root = ElementTree.parse(figure).getroot()
         assert root.tag == "{http://www.w3.org/2000/svg}svg"
         assert figure.stat().st_size > 1_000
+
+
+def test_documentation_figures_use_searchable_sans_serif_text() -> None:
+    """Keep scientific typography modern, legible, and accessible in SVG output."""
+
+    for figure in (ASSETS / name for name in sorted(EXPECTED_FIGURES)):
+        root = ElementTree.parse(figure).getroot()
+        text_nodes = root.findall(".//{http://www.w3.org/2000/svg}text")
+        assert text_nodes, f"{figure.name} converted all text to paths"
+        for node in text_nodes:
+            style = node.attrib.get("style", "")
+            descendant_styles = " ".join(child.attrib.get("style", "") for child in node.iter())
+            families = re.findall(r"font-family:\s*([^;]+)", descendant_styles)
+            assert families, f"{figure.name} has text without an explicit font family"
+            assert all("sans" in family.lower() for family in families), (
+                f"{figure.name} uses non-sans typography: {families}"
+            )
+            size = re.search(r"font-size:\s*([0-9.]+)px", style)
+            if size:
+                assert float(size.group(1)) >= 7.0, (
+                    f"{figure.name} has base text below 7 pt: {size.group(1)}"
+                )
+
+
+def test_figure_manifest_is_complete_and_typed() -> None:
+    manifest = _figure_manifest()
+
+    assert set(manifest) == EXPECTED_FIGURES
+    for name, record in manifest.items():
+        assert set(record) == MANIFEST_FIELDS, name
+        assert record["classification"] in FIGURE_CLASSES, name
+        assert all(isinstance(value, str) and value.strip() for value in record.values()), name
+
+
+def test_rendered_figure_cards_match_the_manifest() -> None:
+    """Require visible classification, alternative text, and metadata-bearing captions."""
+
+    manifest = _figure_manifest()
+    documents = sorted((ROOT / "docs").rglob("*.md"))
+    documents = [
+        path
+        for path in documents
+        if not path.name.endswith(" 2.md") and path.name != "figure-standard.md"
+    ]
+    blocks: list[tuple[Path, str, str]] = []
+    for document in documents:
+        source = document.read_text(encoding="utf-8")
+        for match in re.finditer(r"<figure\b(?P<attrs>.*?)>(?P<body>.*?)</figure>", source, re.S):
+            if "doc-figure" in match.group("attrs"):
+                blocks.append((document, match.group("attrs"), match.group("body")))
+
+    assert blocks
+    displayed: set[str] = set()
+    for document, attrs, body in blocks:
+        kind = re.search(r'data-figure-kind="([^"]+)"', attrs)
+        assert kind, f"{document} has an unclassified figure"
+        image = re.search(r'<img\b[^>]*src="[^"]*/([^/"]+\.svg)"[^>]*>', body, re.S)
+        assert image, f"{document} has a figure without an SVG image"
+        name = image.group(1)
+        displayed.add(name)
+        assert name in manifest, f"{document} displays unregistered {name}"
+        expected_kind = FIGURE_CLASSES[manifest[name]["classification"]]
+        assert kind.group(1) == expected_kind, f"{document}: {name} classification mismatch"
+        alt = re.search(r'<img\b[^>]*alt="([^"]+)"', body, re.S)
+        assert alt and len(alt.group(1).strip()) >= 40, f"{document}: {name} needs useful alt text"
+        caption = re.search(r"<figcaption>(.*?)</figcaption>", body, re.S)
+        assert caption, f"{document}: {name} needs a caption"
+        if manifest[name]["classification"] != "conceptual":
+            assert expected_kind.lower() in caption.group(1).lower(), (
+                f"{document}: {name} caption must name its evidence class"
+            )
+            assert 'class="doc-figure__meta"' in caption.group(1), (
+                f"{document}: {name} needs visible unit and estimand metadata"
+            )
+
+    assert displayed <= EXPECTED_FIGURES
 
 
 def test_figure_provenance_register_covers_every_figure() -> None:

@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Unspool documentation figure generator</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -143,16 +143,16 @@ z
     </g>
    </g>
    <g id="text_1">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #4f6d9a" x="93.988125" y="58.282536" transform="rotate(-0 93.988125 58.282536)">Session order</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #4f6d9a" x="93.988125" y="58.282536" transform="rotate(-0 93.988125 58.282536)">Session order</text>
    </g>
    <g id="text_2">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #2d7f78" x="93.988125" y="99.100151" transform="rotate(-0 93.988125 99.100151)">Cumulative trials</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #2d7f78" x="93.988125" y="99.100151" transform="rotate(-0 93.988125 99.100151)">Cumulative trials</text>
    </g>
    <g id="text_3">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #c57928" x="93.988125" y="139.917765" transform="rotate(-0 93.988125 139.917765)">Elapsed time</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #c57928" x="93.988125" y="139.917765" transform="rotate(-0 93.988125 139.917765)">Elapsed time</text>
    </g>
    <g id="text_4">
-    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="90.737077" y="15.406313" transform="rotate(-0 90.737077 15.406313)">The same observations imply different scientific clocks</text>
+    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="90.737077" y="15.406313" transform="rotate(-0 90.737077 15.406313)">The same observations imply different scientific clocks</text>
    </g>
   </g>
   <g id="axes_2">
@@ -278,55 +278,55 @@ L 480.862778 196.042973
 " clip-path="url(#p129ad65bd3)" style="fill: none; stroke-dasharray: 4.44,1.92; stroke-dashoffset: 0; stroke: #202534; stroke-width: 1.2"/>
    </g>
    <g id="text_5">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="123.247552" y="283.464182" transform="rotate(-0 123.247552 283.464182)">1</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #ffffff" x="123.247552" y="283.464182" transform="rotate(-0 123.247552 283.464182)">1</text>
    </g>
    <g id="text_6">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="188.268503" y="283.464182" transform="rotate(-0 188.268503 283.464182)">2</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #ffffff" x="188.268503" y="283.464182" transform="rotate(-0 188.268503 283.464182)">2</text>
    </g>
    <g id="text_7">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="253.289453" y="283.464182" transform="rotate(-0 253.289453 283.464182)">3</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #ffffff" x="253.289453" y="283.464182" transform="rotate(-0 253.289453 283.464182)">3</text>
    </g>
    <g id="text_8">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="318.310403" y="283.464182" transform="rotate(-0 318.310403 283.464182)">4</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #ffffff" x="318.310403" y="283.464182" transform="rotate(-0 318.310403 283.464182)">4</text>
    </g>
    <g id="text_9">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="383.331353" y="283.464182" transform="rotate(-0 383.331353 283.464182)">5</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #ffffff" x="383.331353" y="283.464182" transform="rotate(-0 383.331353 283.464182)">5</text>
    </g>
    <g id="text_10">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="448.352303" y="283.464182" transform="rotate(-0 448.352303 283.464182)">6</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #ffffff" x="448.352303" y="283.464182" transform="rotate(-0 448.352303 283.464182)">6</text>
    </g>
    <g id="text_11">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="513.373253" y="283.464182" transform="rotate(-0 513.373253 283.464182)">7</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #ffffff" x="513.373253" y="283.464182" transform="rotate(-0 513.373253 283.464182)">7</text>
    </g>
    <g id="text_12">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="578.394203" y="283.464182" transform="rotate(-0 578.394203 283.464182)">8</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #ffffff" x="578.394203" y="283.464182" transform="rotate(-0 578.394203 283.464182)">8</text>
    </g>
    <g id="text_13">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="643.415153" y="283.464182" transform="rotate(-0 643.415153 283.464182)">9</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #ffffff" x="643.415153" y="283.464182" transform="rotate(-0 643.415153 283.464182)">9</text>
    </g>
    <g id="text_14">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="708.436103" y="283.464182" transform="rotate(-0 708.436103 283.464182)">10</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #ffffff" x="708.436103" y="283.464182" transform="rotate(-0 708.436103 283.464182)">10</text>
    </g>
    <g id="text_15">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #4f6d9a" x="285.799928" y="233.857781" transform="rotate(-0 285.799928 233.857781)">TRAIN</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4f6d9a" x="285.799928" y="233.857781" transform="rotate(-0 285.799928 233.857781)">TRAIN</text>
    </g>
    <g id="text_16">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #c57928" x="610.904678" y="233.857781" transform="rotate(-0 610.904678 233.857781)">FUTURE TEST</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #c57928" x="610.904678" y="233.857781" transform="rotate(-0 610.904678 233.857781)">FUTURE TEST</text>
    </g>
    <g id="text_17">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #4f6d9a" x="246.787357" y="340.035487" transform="rotate(-0 246.787357 340.035487)">Fit landmark and transform</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4f6d9a" x="246.787357" y="340.035487" transform="rotate(-0 246.787357 340.035487)">Fit landmark and transform</text>
    </g>
    <g id="text_18">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="246.787357" y="349.931407" transform="rotate(-0 246.787357 349.931407)">training outcomes only</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="246.787357" y="349.931407" transform="rotate(-0 246.787357 349.931407)">training outcomes only</text>
    </g>
    <g id="text_19">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #c57928" x="580.019726" y="340.035487" transform="rotate(-0 580.019726 340.035487)">Apply unchanged to future</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #c57928" x="580.019726" y="340.035487" transform="rotate(-0 580.019726 340.035487)">Apply unchanged to future</text>
    </g>
    <g id="text_20">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="580.019726" y="349.931407" transform="rotate(-0 580.019726 349.931407)">no refit · no recentering</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="580.019726" y="349.931407" transform="rotate(-0 580.019726 349.931407)">no refit · no recentering</text>
    </g>
    <g id="text_21">
-    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="90.737077" y="190.042973" transform="rotate(-0 90.737077 190.042973)">Outcome-learned clocks stay inside each training fold</text>
+    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="90.737077" y="190.042973" transform="rotate(-0 90.737077 190.042973)">Outcome-learned clocks stay inside each training fold</text>
    </g>
   </g>
  </g>

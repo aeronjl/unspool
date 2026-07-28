@@ -35,9 +35,9 @@ minimum, not a claim that two animals provide adequate power.
 
 ## What “shape” means here
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Synthetic benchmark">
   <img src="../assets/trajectory-components.svg" alt="Reference, level-shift, amplitude-shift, and sinusoidal shape-change trajectories alongside a heat map of level, amplitude, and shape contrast metrics from the committed benchmark.">
-  <figcaption><strong>Trajectory components.</strong> The left panel defines the simulation geometry; the right panel shows that level, amplitude, and shape metrics respond differently to the three reference contrasts in the committed benchmark.</figcaption>
+  <figcaption><strong>Synthetic benchmark · trajectory components.</strong> The left panel defines the simulation geometry; the right panel shows that level, amplitude, and shape metrics respond differently to the three reference contrasts in the committed benchmark. The separation is conditional on these declared perturbations.<span class="doc-figure__meta"><strong>Unit:</strong> simulated trajectory · <strong>n:</strong> declared reference and perturbation trajectories · <strong>Estimand:</strong> level, amplitude, and residual shape contrasts · <a href="../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 For a group-mean trajectory \(f(t)\), trapezoidal weights on the declared grid define:

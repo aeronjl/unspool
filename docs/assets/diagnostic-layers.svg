@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Unspool documentation figure generator</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -81,46 +81,46 @@ z
 " clip-path="url(#p6bdfda12b3)" style="fill: #ffffff; stroke: #c57928; stroke-width: 1.25; stroke-linejoin: miter"/>
    </g>
    <g id="text_1">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="343.08" y="295.990962" transform="rotate(-0 343.08 295.990962)">Numerical fit</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="343.08" y="295.990962" transform="rotate(-0 343.08 295.990962)">Numerical fit</text>
    </g>
    <g id="text_2">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="343.08" y="312.31168" transform="rotate(-0 343.08 312.31168)">convergence · gradients · boundaries · restarts</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="343.08" y="312.31168" transform="rotate(-0 343.08 312.31168)">convergence · gradients · boundaries · restarts</text>
    </g>
    <g id="text_3">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="633.47625" y="301.990535" transform="rotate(-0 633.47625 301.990535)">Can this fitted object be used?</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="633.47625" y="301.990535" transform="rotate(-0 633.47625 301.990535)">Can this fitted object be used?</text>
    </g>
    <g id="text_4">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #4f6d9a" x="343.08" y="227.729424" transform="rotate(-0 343.08 227.729424)">Prospective prediction</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4f6d9a" x="343.08" y="227.729424" transform="rotate(-0 343.08 227.729424)">Prospective prediction</text>
    </g>
    <g id="text_5">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="343.08" y="244.050141" transform="rotate(-0 343.08 244.050141)">held-out log loss · calibration · aggregation</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="343.08" y="244.050141" transform="rotate(-0 343.08 244.050141)">held-out log loss · calibration · aggregation</text>
    </g>
    <g id="text_6">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #4f6d9a" x="633.47625" y="233.728997" transform="rotate(-0 633.47625 233.728997)">Does it forecast the declared future?</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #4f6d9a" x="633.47625" y="233.728997" transform="rotate(-0 633.47625 233.728997)">Does it forecast the declared future?</text>
    </g>
    <g id="text_7">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #2d7f78" x="343.08" y="159.467534" transform="rotate(-0 343.08 159.467534)">Parameter recovery</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #2d7f78" x="343.08" y="159.467534" transform="rotate(-0 343.08 159.467534)">Parameter recovery</text>
    </g>
    <g id="text_8">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="343.08" y="175.788603" transform="rotate(-0 343.08 175.788603)">bias · RMSE · interval coverage</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="343.08" y="175.788603" transform="rotate(-0 343.08 175.788603)">bias · RMSE · interval coverage</text>
    </g>
    <g id="text_9">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #2d7f78" x="633.47625" y="165.467458" transform="rotate(-0 633.47625 165.467458)">Can this design estimate the parameters?</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #2d7f78" x="633.47625" y="165.467458" transform="rotate(-0 633.47625 165.467458)">Can this design estimate the parameters?</text>
    </g>
    <g id="text_10">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #c57928" x="343.08" y="91.206347" transform="rotate(-0 343.08 91.206347)">Model recovery</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #c57928" x="343.08" y="91.206347" transform="rotate(-0 343.08 91.206347)">Model recovery</text>
    </g>
    <g id="text_11">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="343.08" y="107.527064" transform="rotate(-0 343.08 107.527064)">confusion matrix · unresolved rate</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="343.08" y="107.527064" transform="rotate(-0 343.08 107.527064)">confusion matrix · unresolved rate</text>
    </g>
    <g id="text_12">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #c57928" x="633.47625" y="97.20592" transform="rotate(-0 633.47625 97.20592)">Can this design distinguish explanations?</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #c57928" x="633.47625" y="97.20592" transform="rotate(-0 633.47625 97.20592)">Can this design distinguish explanations?</text>
    </g>
    <g id="text_13">
-    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #26345e" x="343.08" y="35.869846" transform="rotate(-0 343.08 35.869846)">Interpretation</text>
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #26345e" x="343.08" y="35.869846" transform="rotate(-0 343.08 35.869846)">Interpretation</text>
    </g>
    <g id="text_14">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #c57928" x="343.08" y="349.872923" transform="rotate(-0 343.08 349.872923)">Passing one layer never certifies the layers above it</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #c57928" x="343.08" y="349.872923" transform="rotate(-0 343.08 349.872923)">Passing one layer never certifies the layers above it</text>
    </g>
   </g>
  </g>

@@ -9,7 +9,10 @@ This is a **literature-shaped prospective analysis**, not a reproduction of the 
 reported sex effect. The bounded question is: *after seven sessions from the same animals,
 which standard behavioural account best forecasts their eighth session?*
 
-![Four-panel restless-bandit evidence display: an example held-out session, animal-balanced model scores, paired animal differences, and a model-recovery matrix.](../assets/chen2021-bandit.svg)
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Literature-shaped analysis">
+  <img src="../../assets/chen2021-bandit.svg" alt="Four-panel restless-bandit evidence display: an example held-out session, animal-balanced model scores, paired animal differences, and a model-recovery matrix.">
+  <figcaption><strong>Literature-shaped analysis · reward-sensitive accounts improve the future-session forecast.</strong> Q-learning's point estimate is better than win–stay/lose–shift, but their paired animal interval crosses zero. This is a new prospective analysis rather than a reproduction of the paper's sex effect.<span class="doc-figure__meta"><strong>Unit:</strong> mouse · <strong>n:</strong> 32 mice, 25,279 trials · <strong>Estimand:</strong> animal-balanced session-8 log loss with animal-bootstrap uncertainty · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
+</figure>
 
 ## Source and runtime
 

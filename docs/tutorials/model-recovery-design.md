@@ -16,9 +16,9 @@ candidate set. The sparse design has 30 trials per session; the dense design con
 same first 30 rows plus 30 more trials per session. Candidates are selected by future-trial
 mean log probability over expanding prospective folds.
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Synthetic benchmark">
   <img src="../../assets/model-recovery-matrix.svg" alt="Two confusion matrices compare generating and selected model families under matched 150-trial and 300-trial designs; the dense design recovers all four families while the sparse design confuses two.">
-  <figcaption><strong>Model recovery changes with experimental information.</strong> The same candidate families and decision rule succeed in the dense design but remain ambiguous in the sparse design.</figcaption>
+  <figcaption><strong>Synthetic benchmark · model recovery changes with experimental information.</strong> The same candidate families and decision rule succeed in the dense design but remain ambiguous in the sparse design. This does not establish a universal trial threshold.<span class="doc-figure__meta"><strong>Unit:</strong> simulated study · <strong>n:</strong> 4 generating families at 150 and 300 trials · <strong>Estimand:</strong> generating-versus-selected family under prospective scoring · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 At 150 trials, stationary and Q-learning truths are recovered. Smooth drift is selected as

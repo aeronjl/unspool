@@ -25,7 +25,7 @@ absent from fitting, and later sessions from the training labs are excluded too.
 have completed training before the forecast animals are observed. It is not an online
 same-cohort split.
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Conceptual">
   <img src="../assets/validation-splits.svg" alt="A four-panel comparison of forward-session, whole-session, unseen-animal, and held-out-lab future-session validation geometries using blue training blocks, amber test blocks, and grey untargeted sessions.">
   <figcaption><strong>Four generalization targets.</strong> The colored blocks show which observations train and test each procedure. These geometries answer different scientific questions and their scores are not interchangeable.</figcaption>
 </figure>

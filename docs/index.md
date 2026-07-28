@@ -34,7 +34,7 @@ analysis.
 
 ## The evidence path
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Conceptual">
   <img src="assets/validation-geometry.svg" alt="Observed trials pass through explicit clocks and training-only transforms, then enter prospective model comparison and recovery checks before a bounded interpretation is made.">
   <figcaption><strong>The evidence path.</strong> Every interpretive claim remains connected to its time coordinate, validation boundary, numerical audit, and recovery evidence.</figcaption>
 </figure>

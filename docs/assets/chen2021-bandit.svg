@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Unspool documentation figure generator</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -49,7 +49,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_1">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="56.990729" y="266.294981" transform="rotate(-0 56.990729 266.294981)">0</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="56.990729" y="266.294981" transform="rotate(-0 56.990729 266.294981)">0</text>
      </g>
     </g>
     <g id="xtick_2">
@@ -59,7 +59,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_2">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="119.524927" y="266.294981" transform="rotate(-0 119.524927 266.294981)">20</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="119.524927" y="266.294981" transform="rotate(-0 119.524927 266.294981)">20</text>
      </g>
     </g>
     <g id="xtick_3">
@@ -69,7 +69,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_3">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="182.059124" y="266.294981" transform="rotate(-0 182.059124 266.294981)">40</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="182.059124" y="266.294981" transform="rotate(-0 182.059124 266.294981)">40</text>
      </g>
     </g>
     <g id="xtick_4">
@@ -79,7 +79,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_4">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="244.593321" y="266.294981" transform="rotate(-0 244.593321 266.294981)">60</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="244.593321" y="266.294981" transform="rotate(-0 244.593321 266.294981)">60</text>
      </g>
     </g>
     <g id="xtick_5">
@@ -89,7 +89,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_5">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="307.127519" y="266.294981" transform="rotate(-0 307.127519 266.294981)">80</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="307.127519" y="266.294981" transform="rotate(-0 307.127519 266.294981)">80</text>
      </g>
     </g>
     <g id="xtick_6">
@@ -99,11 +99,11 @@ L 0 3.5
       </g>
      </g>
      <g id="text_6">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="369.661716" y="266.294981" transform="rotate(-0 369.661716 266.294981)">100</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="369.661716" y="266.294981" transform="rotate(-0 369.661716 266.294981)">100</text>
      </g>
     </g>
     <g id="text_7">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="211.762868" y="279.295684" transform="rotate(-0 211.762868 279.295684)">trial</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="211.762868" y="279.295684" transform="rotate(-0 211.762868 279.295684)">trial</text>
     </g>
    </g>
    <g id="matplotlib.axis_2">
@@ -119,7 +119,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_8">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="241.251947" transform="rotate(-0 34.513516 241.251947)">0.0</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="241.251947" transform="rotate(-0 34.513516 241.251947)">0.0</text>
      </g>
     </g>
     <g id="ytick_2">
@@ -129,7 +129,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_9">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="204.691726" transform="rotate(-0 34.513516 204.691726)">0.2</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="204.691726" transform="rotate(-0 34.513516 204.691726)">0.2</text>
      </g>
     </g>
     <g id="ytick_3">
@@ -139,7 +139,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_10">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="168.131505" transform="rotate(-0 34.513516 168.131505)">0.4</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="168.131505" transform="rotate(-0 34.513516 168.131505)">0.4</text>
      </g>
     </g>
     <g id="ytick_4">
@@ -149,7 +149,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_11">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="131.571284" transform="rotate(-0 34.513516 131.571284)">0.6</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="131.571284" transform="rotate(-0 34.513516 131.571284)">0.6</text>
      </g>
     </g>
     <g id="ytick_5">
@@ -159,7 +159,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_12">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="95.011063" transform="rotate(-0 34.513516 95.011063)">0.8</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="95.011063" transform="rotate(-0 34.513516 95.011063)">0.8</text>
      </g>
     </g>
     <g id="ytick_6">
@@ -169,11 +169,11 @@ L -3.5 0
       </g>
      </g>
      <g id="text_13">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="58.450842" transform="rotate(-0 34.513516 58.450842)">1.0</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="58.450842" transform="rotate(-0 34.513516 58.450842)">1.0</text>
      </g>
     </g>
     <g id="text_14">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="14.038594" y="146.432449" transform="rotate(-90 14.038594 146.432449)">probability / action</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="14.038594" y="146.432449" transform="rotate(-90 14.038594 146.432449)">probability / action</text>
     </g>
    </g>
    <g id="line2d_13">
@@ -434,7 +434,7 @@ z
     </g>
    </g>
    <g id="text_15">
-    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="211.762868" y="34.407808" transform="rotate(-0 211.762868 34.407808)">A · Untouched session 8 · mouse 01</text>
+    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="211.762868" y="34.407808" transform="rotate(-0 211.762868 34.407808)">A · Untouched session 8 · mouse 01</text>
    </g>
    <g id="PathCollection_2">
     <defs>
@@ -537,7 +537,7 @@ L 124.537399 49.576714
 " style="fill: none; stroke: #4f6d9a; stroke-width: 2; stroke-linecap: square"/>
     </g>
     <g id="text_16">
-     <text style="font-size: 7px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="130.137399" y="52.026714" transform="rotate(-0 130.137399 52.026714)">left reward probability</text>
+     <text style="font-size: 7px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="130.137399" y="52.026714" transform="rotate(-0 130.137399 52.026714)">left reward probability</text>
     </g>
     <g id="line2d_16">
      <path d="M 110.537399 60.077261
@@ -546,7 +546,7 @@ L 124.537399 60.077261
 " style="fill: none; stroke: #c57928; stroke-width: 2; stroke-linecap: square"/>
     </g>
     <g id="text_17">
-     <text style="font-size: 7px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="130.137399" y="62.527261" transform="rotate(-0 130.137399 62.527261)">right reward probability</text>
+     <text style="font-size: 7px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="130.137399" y="62.527261" transform="rotate(-0 130.137399 62.527261)">right reward probability</text>
     </g>
     <g id="PathCollection_3">
      <g>
@@ -554,7 +554,7 @@ L 124.537399 60.077261
      </g>
     </g>
     <g id="text_18">
-     <text style="font-size: 7px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="246.22693" y="52.026714" transform="rotate(-0 246.22693 52.026714)">unrewarded choice</text>
+     <text style="font-size: 7px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="246.22693" y="52.026714" transform="rotate(-0 246.22693 52.026714)">unrewarded choice</text>
     </g>
     <g id="PathCollection_4">
      <g>
@@ -562,7 +562,7 @@ L 124.537399 60.077261
      </g>
     </g>
     <g id="text_19">
-     <text style="font-size: 7px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202534" x="246.22693" y="62.527261" transform="rotate(-0 246.22693 62.527261)">rewarded choice</text>
+     <text style="font-size: 7px; font-family: 'DejaVu Sans', sans-serif; text-anchor: start; fill: #202534" x="246.22693" y="62.527261" transform="rotate(-0 246.22693 62.527261)">rewarded choice</text>
     </g>
    </g>
   </g>
@@ -583,7 +583,7 @@ z
       </g>
      </g>
      <g id="text_20">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; fill: #778092" transform="translate(437.050302 271.794882) rotate(-18)">Bias</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; fill: #778092" transform="translate(437.050302 271.794882) rotate(-18)">Bias</text>
      </g>
     </g>
     <g id="xtick_8">
@@ -593,7 +593,7 @@ z
       </g>
      </g>
      <g id="text_21">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; fill: #778092" transform="translate(519.779183 285.085751) rotate(-18)">Perseveration</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; fill: #778092" transform="translate(519.779183 285.085751) rotate(-18)">Perseveration</text>
      </g>
     </g>
     <g id="xtick_9">
@@ -603,7 +603,7 @@ z
       </g>
      </g>
      <g id="text_22">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; fill: #778092" transform="translate(640.340315 273.790994) rotate(-18)">WSLS</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; fill: #778092" transform="translate(640.340315 273.790994) rotate(-18)">WSLS</text>
      </g>
     </g>
     <g id="xtick_10">
@@ -613,7 +613,7 @@ z
       </g>
      </g>
      <g id="text_23">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; fill: #778092" transform="translate(733.079917 280.577242) rotate(-18)">Q-learning</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; fill: #778092" transform="translate(733.079917 280.577242) rotate(-18)">Q-learning</text>
      </g>
     </g>
    </g>
@@ -625,7 +625,7 @@ z
       </g>
      </g>
      <g id="text_24">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="422.827985" y="234.910049" transform="rotate(-0 422.827985 234.910049)">0.58</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="422.827985" y="234.910049" transform="rotate(-0 422.827985 234.910049)">0.58</text>
      </g>
     </g>
     <g id="ytick_8">
@@ -635,7 +635,7 @@ z
       </g>
      </g>
      <g id="text_25">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="422.827985" y="208.969987" transform="rotate(-0 422.827985 208.969987)">0.60</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="422.827985" y="208.969987" transform="rotate(-0 422.827985 208.969987)">0.60</text>
      </g>
     </g>
     <g id="ytick_9">
@@ -645,7 +645,7 @@ z
       </g>
      </g>
      <g id="text_26">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="422.827985" y="183.029926" transform="rotate(-0 422.827985 183.029926)">0.62</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="422.827985" y="183.029926" transform="rotate(-0 422.827985 183.029926)">0.62</text>
      </g>
     </g>
     <g id="ytick_10">
@@ -655,7 +655,7 @@ z
       </g>
      </g>
      <g id="text_27">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="422.827985" y="157.089864" transform="rotate(-0 422.827985 157.089864)">0.64</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="422.827985" y="157.089864" transform="rotate(-0 422.827985 157.089864)">0.64</text>
      </g>
     </g>
     <g id="ytick_11">
@@ -665,7 +665,7 @@ z
       </g>
      </g>
      <g id="text_28">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="422.827985" y="131.149802" transform="rotate(-0 422.827985 131.149802)">0.66</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="422.827985" y="131.149802" transform="rotate(-0 422.827985 131.149802)">0.66</text>
      </g>
     </g>
     <g id="ytick_12">
@@ -675,7 +675,7 @@ z
       </g>
      </g>
      <g id="text_29">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="422.827985" y="105.209741" transform="rotate(-0 422.827985 105.209741)">0.68</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="422.827985" y="105.209741" transform="rotate(-0 422.827985 105.209741)">0.68</text>
      </g>
     </g>
     <g id="ytick_13">
@@ -685,7 +685,7 @@ z
       </g>
      </g>
      <g id="text_30">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="422.827985" y="79.269679" transform="rotate(-0 422.827985 79.269679)">0.70</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="422.827985" y="79.269679" transform="rotate(-0 422.827985 79.269679)">0.70</text>
      </g>
     </g>
     <g id="ytick_14">
@@ -695,11 +695,11 @@ z
       </g>
      </g>
      <g id="text_31">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="422.827985" y="53.329617" transform="rotate(-0 422.827985 53.329617)">0.72</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="422.827985" y="53.329617" transform="rotate(-0 422.827985 53.329617)">0.72</text>
      </g>
     </g>
     <g id="text_32">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="396.626814" y="146.432449" transform="rotate(-90 396.626814 146.432449)">held-out log loss · lower is better</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="396.626814" y="146.432449" transform="rotate(-90 396.626814 146.432449)">held-out log loss · lower is better</text>
     </g>
    </g>
    <g id="LineCollection_1">
@@ -769,7 +769,7 @@ L 770.32669 252.45709
 " style="fill: none; stroke: #c5cad5; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_33">
-    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="600.077338" y="34.407808" transform="rotate(-0 600.077338 34.407808)">B · Animal-balanced future-session score</text>
+    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="600.077338" y="34.407808" transform="rotate(-0 600.077338 34.407808)">B · Animal-balanced future-session score</text>
    </g>
   </g>
   <g id="axes_3">
@@ -885,7 +885,7 @@ z
       </g>
      </g>
      <g id="text_34">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="58.726937" y="533.236004" transform="rotate(-0 58.726937 533.236004)">−0.15</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="58.726937" y="533.236004" transform="rotate(-0 58.726937 533.236004)">−0.15</text>
      </g>
     </g>
     <g id="xtick_12">
@@ -895,7 +895,7 @@ z
       </g>
      </g>
      <g id="text_35">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="109.851849" y="533.236004" transform="rotate(-0 109.851849 533.236004)">−0.10</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="109.851849" y="533.236004" transform="rotate(-0 109.851849 533.236004)">−0.10</text>
      </g>
     </g>
     <g id="xtick_13">
@@ -905,7 +905,7 @@ z
       </g>
      </g>
      <g id="text_36">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="160.97676" y="533.236004" transform="rotate(-0 160.97676 533.236004)">−0.05</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="160.97676" y="533.236004" transform="rotate(-0 160.97676 533.236004)">−0.05</text>
      </g>
     </g>
     <g id="xtick_14">
@@ -915,7 +915,7 @@ z
       </g>
      </g>
      <g id="text_37">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="212.101672" y="533.236004" transform="rotate(-0 212.101672 533.236004)">0.00</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="212.101672" y="533.236004" transform="rotate(-0 212.101672 533.236004)">0.00</text>
      </g>
     </g>
     <g id="xtick_15">
@@ -925,7 +925,7 @@ z
       </g>
      </g>
      <g id="text_38">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="263.226584" y="533.236004" transform="rotate(-0 263.226584 533.236004)">0.05</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="263.226584" y="533.236004" transform="rotate(-0 263.226584 533.236004)">0.05</text>
      </g>
     </g>
     <g id="xtick_16">
@@ -935,7 +935,7 @@ z
       </g>
      </g>
      <g id="text_39">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="314.351495" y="533.236004" transform="rotate(-0 314.351495 533.236004)">0.10</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="314.351495" y="533.236004" transform="rotate(-0 314.351495 533.236004)">0.10</text>
      </g>
     </g>
     <g id="xtick_17">
@@ -945,11 +945,11 @@ z
       </g>
      </g>
      <g id="text_40">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="365.476407" y="533.236004" transform="rotate(-0 365.476407 533.236004)">0.15</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="365.476407" y="533.236004" transform="rotate(-0 365.476407 533.236004)">0.15</text>
      </g>
     </g>
     <g id="text_41">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="211.762868" y="546.236707" transform="rotate(-0 211.762868 546.236707)">WSLS log loss - Q-learning log loss</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="211.762868" y="546.236707" transform="rotate(-0 211.762868 546.236707)">WSLS log loss - Q-learning log loss</text>
     </g>
    </g>
    <g id="matplotlib.axis_6">
@@ -960,7 +960,7 @@ z
       </g>
      </g>
      <g id="text_42">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="522.817059" transform="rotate(-0 34.513516 522.817059)">0</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="522.817059" transform="rotate(-0 34.513516 522.817059)">0</text>
      </g>
     </g>
     <g id="ytick_16">
@@ -970,7 +970,7 @@ z
       </g>
      </g>
      <g id="text_43">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="498.188803" transform="rotate(-0 34.513516 498.188803)">1</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="498.188803" transform="rotate(-0 34.513516 498.188803)">1</text>
      </g>
     </g>
     <g id="ytick_17">
@@ -980,7 +980,7 @@ z
       </g>
      </g>
      <g id="text_44">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="473.560548" transform="rotate(-0 34.513516 473.560548)">2</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="473.560548" transform="rotate(-0 34.513516 473.560548)">2</text>
      </g>
     </g>
     <g id="ytick_18">
@@ -990,7 +990,7 @@ z
       </g>
      </g>
      <g id="text_45">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="448.932292" transform="rotate(-0 34.513516 448.932292)">3</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="448.932292" transform="rotate(-0 34.513516 448.932292)">3</text>
      </g>
     </g>
     <g id="ytick_19">
@@ -1000,7 +1000,7 @@ z
       </g>
      </g>
      <g id="text_46">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="424.304036" transform="rotate(-0 34.513516 424.304036)">4</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="424.304036" transform="rotate(-0 34.513516 424.304036)">4</text>
      </g>
     </g>
     <g id="ytick_20">
@@ -1010,7 +1010,7 @@ z
       </g>
      </g>
      <g id="text_47">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="399.67578" transform="rotate(-0 34.513516 399.67578)">5</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="399.67578" transform="rotate(-0 34.513516 399.67578)">5</text>
      </g>
     </g>
     <g id="ytick_21">
@@ -1020,7 +1020,7 @@ z
       </g>
      </g>
      <g id="text_48">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="375.047525" transform="rotate(-0 34.513516 375.047525)">6</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="375.047525" transform="rotate(-0 34.513516 375.047525)">6</text>
      </g>
     </g>
     <g id="ytick_22">
@@ -1030,7 +1030,7 @@ z
       </g>
      </g>
      <g id="text_49">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="350.419269" transform="rotate(-0 34.513516 350.419269)">7</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="350.419269" transform="rotate(-0 34.513516 350.419269)">7</text>
      </g>
     </g>
     <g id="ytick_23">
@@ -1040,11 +1040,11 @@ z
       </g>
      </g>
      <g id="text_50">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="34.513516" y="325.791013" transform="rotate(-0 34.513516 325.791013)">8</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="34.513516" y="325.791013" transform="rotate(-0 34.513516 325.791013)">8</text>
      </g>
     </g>
     <g id="text_51">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="22.625156" y="413.373473" transform="rotate(-90 22.625156 413.373473)">animals</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="22.625156" y="413.373473" transform="rotate(-90 22.625156 413.373473)">animals</text>
     </g>
    </g>
    <g id="line2d_48">
@@ -1101,10 +1101,10 @@ L 382.01222 519.398114
 " style="fill: none; stroke: #c5cad5; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_52">
-    <text style="font-weight: 700; font-size: 8px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #c57928" x="375.202246" y="324.030046" transform="rotate(-0 375.202246 324.030046)">95% bootstrap interval crosses zero</text>
+    <text style="font-weight: 700; font-size: 8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #c57928" x="375.202246" y="324.030046" transform="rotate(-0 375.202246 324.030046)">95% bootstrap interval crosses zero</text>
    </g>
    <g id="text_53">
-    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="211.762868" y="301.348832" transform="rotate(-0 211.762868 301.348832)">C · Paired animal differences</text>
+    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="211.762868" y="301.348832" transform="rotate(-0 211.762868 301.348832)">C · Paired animal differences</text>
    </g>
   </g>
   <g id="axes_4">
@@ -1128,7 +1128,7 @@ iVBORw0KGgoAAAANSUhEUgAAAScAAAEnCAYAAADrWoVBAAAEAUlEQVR4nO3WsQ3CQBAAQZvIKZ2QUBWU
       </g>
      </g>
      <g id="text_54">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="547.065017" y="533.236004" transform="rotate(-0 547.065017 533.236004)">WSLS</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="547.065017" y="533.236004" transform="rotate(-0 547.065017 533.236004)">WSLS</text>
      </g>
     </g>
     <g id="xtick_19">
@@ -1138,11 +1138,11 @@ iVBORw0KGgoAAAANSUhEUgAAAScAAAEnCAYAAADrWoVBAAAEAUlEQVR4nO3WsQ3CQBAAQZvIKZ2QUBWU
       </g>
      </g>
      <g id="text_55">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #778092" x="653.089658" y="533.236707" transform="rotate(-0 653.089658 533.236707)">Q-learning</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #778092" x="653.089658" y="533.236707" transform="rotate(-0 653.089658 533.236707)">Q-learning</text>
      </g>
     </g>
     <g id="text_56">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="600.077338" y="546.237411" transform="rotate(-0 600.077338 546.237411)">selected model</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="600.077338" y="546.237411" transform="rotate(-0 600.077338 546.237411)">selected model</text>
     </g>
    </g>
    <g id="matplotlib.axis_8">
@@ -1153,7 +1153,7 @@ iVBORw0KGgoAAAANSUhEUgAAAScAAAEnCAYAAADrWoVBAAAEAUlEQVR4nO3WsQ3CQBAAQZvIKZ2QUBWU
       </g>
      </g>
      <g id="text_57">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="487.052697" y="363.780098" transform="rotate(-0 487.052697 363.780098)">WSLS</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="487.052697" y="363.780098" transform="rotate(-0 487.052697 363.780098)">WSLS</text>
      </g>
     </g>
     <g id="ytick_25">
@@ -1163,11 +1163,11 @@ iVBORw0KGgoAAAANSUhEUgAAAScAAAEnCAYAAADrWoVBAAAEAUlEQVR4nO3WsQ3CQBAAQZvIKZ2QUBWU
       </g>
      </g>
      <g id="text_58">
-      <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #778092" x="487.052697" y="469.80509" transform="rotate(-0 487.052697 469.80509)">Q-learning</text>
+      <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: end; fill: #778092" x="487.052697" y="469.80509" transform="rotate(-0 487.052697 469.80509)">Q-learning</text>
      </g>
     </g>
     <g id="text_59">
-     <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="433.591369" y="413.373473" transform="rotate(-90 433.591369 413.373473)">generating regime</text>
+     <text style="font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="433.591369" y="413.373473" transform="rotate(-90 433.591369 413.373473)">generating regime</text>
     </g>
    </g>
    <g id="patch_24">
@@ -1181,23 +1181,23 @@ L 706.101979 519.398114
 " style="fill: none; stroke: #c5cad5; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_60">
-    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="547.065017" y="363.47834" transform="rotate(-0 547.065017 363.47834)">5</text>
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #ffffff" x="547.065017" y="363.47834" transform="rotate(-0 547.065017 363.47834)">5</text>
    </g>
    <g id="text_61">
-    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="653.089658" y="363.47834" transform="rotate(-0 653.089658 363.47834)">0</text>
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="653.089658" y="363.47834" transform="rotate(-0 653.089658 363.47834)">0</text>
    </g>
    <g id="text_62">
-    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="547.065017" y="469.502981" transform="rotate(-0 547.065017 469.502981)">0</text>
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="547.065017" y="469.502981" transform="rotate(-0 547.065017 469.502981)">0</text>
    </g>
    <g id="text_63">
-    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #ffffff" x="653.089658" y="469.502981" transform="rotate(-0 653.089658 469.502981)">5</text>
+    <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #ffffff" x="653.089658" y="469.502981" transform="rotate(-0 653.089658 469.502981)">5</text>
    </g>
    <g id="text_64">
-    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="600.077338" y="301.348832" transform="rotate(-0 600.077338 301.348832)">D · Exact-design model recovery</text>
+    <text style="font-weight: 600; font-size: 10.8px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="600.077338" y="301.348832" transform="rotate(-0 600.077338 301.348832)">D · Exact-design model recovery</text>
    </g>
   </g>
   <g id="text_65">
-   <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #26345e" x="392.99976" y="17.077969" transform="rotate(-0 392.99976 17.077969)">Restless bandit: reward history and incremental value learning</text>
+   <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #26345e" x="392.99976" y="17.077969" transform="rotate(-0 392.99976 17.077969)">Restless bandit: reward history and incremental value learning</text>
   </g>
  </g>
  <defs>

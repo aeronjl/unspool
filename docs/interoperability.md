@@ -4,7 +4,7 @@ Unspool keeps `Study` small and format-independent. Interoperability code conver
 tables into that contract; it does not let file names, dataframe indices, or archive order
 become hidden scientific assumptions.
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Conceptual">
   <img src="../assets/interoperability-pipeline.svg" alt="Dataframes, IBL ONE, NWB, and DANDI converge on one Study contract, pass through explicit semantic and provenance declarations, and enter the same prospective analysis boundary.">
   <figcaption><strong>One scientific boundary across formats.</strong> Adapters preserve source identity and translate structure into the Study contract; they never invent chronology, units, or behavioural semantics.</figcaption>
 </figure>

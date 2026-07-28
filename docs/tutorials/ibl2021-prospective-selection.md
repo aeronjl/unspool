@@ -42,9 +42,9 @@ each outer training study. Same-animal inner folds forecast positions 3 and 4 fr
 prefixes. Lab-transfer inner folds forecast position 4 in an inner held-out lab. Position 5
 and the outer held-out lab remain structurally absent from selection.
 
-<figure class="doc-figure doc-figure--wide">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Literature-shaped analysis">
   <img src="../../assets/ibl-prospective-selection.svg" alt="Training-only candidate scores select smoothness nine, followed by paired subject-level outer-test log-loss differences for represented animals and held-out laboratory transfer.">
-  <figcaption><strong>Nested selection without test-set reuse.</strong> Candidate choice happens inside the outer training study; paired points and intervals summarize the untouched future-session evaluation.</figcaption>
+  <figcaption><strong>Literature-shaped analysis · nested selection without test-set reuse.</strong> Candidate choice happens inside the outer training study; paired points and intervals summarize the untouched future-session evaluation. The result does not establish transport beyond the fixed IBL laboratories.<span class="doc-figure__meta"><strong>Unit:</strong> subject · <strong>n:</strong> 78 animals across 9 laboratories · <strong>Estimand:</strong> paired untouched-session log-loss difference after training-only smoothness selection · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 Smoothness 9 is selected in the one represented-animal fold and all nine held-out-lab

@@ -5,7 +5,7 @@ distribution that generated its inputs. Repeatedly draw parameters from the decl
 prior, simulate one complete `Study`, run the same posterior inference users will run, and
 rank each simulated truth among the retained posterior draws.
 
-<figure markdown="span">
+<figure class="doc-figure" data-figure-kind="Conceptual">
   <img src="assets/sbc-workflow.svg" alt="A repeated simulation-based calibration loop: draw a latent truth from the prior, simulate an observed Study, infer a labelled posterior, randomize the truth rank among posterior draws, and retain both ranks and failures.">
   <figcaption>A prior-SBC repetition tests the joint simulator–inference pipeline. The
   finite rank histogram is evidence to inspect, not an automatic certificate.</figcaption>

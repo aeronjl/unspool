@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Unspool documentation figure generator</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -185,52 +185,52 @@ L 642.806182 39.538286
 " clip-path="url(#pb0f5614a36)" style="fill: none; stroke: #c57928; stroke-width: 1.5; stroke-linecap: square"/>
    </g>
    <g id="text_1">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #4f6d9a" x="84.456" y="148.491814" transform="rotate(-0 84.456 148.491814)">Outer training</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4f6d9a" x="84.456" y="148.491814" transform="rotate(-0 84.456 148.491814)">Outer training</text>
    </g>
    <g id="text_2">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="84.456" y="176.734964" transform="rotate(-0 84.456 176.734964)">future test absent</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="84.456" y="176.734964" transform="rotate(-0 84.456 176.734964)">future test absent</text>
    </g>
    <g id="text_3">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #2d7f78" x="247.747091" y="82.609294" transform="rotate(-0 247.747091 82.609294)">inner fold 1</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #2d7f78" x="247.747091" y="82.609294" transform="rotate(-0 247.747091 82.609294)">inner fold 1</text>
    </g>
    <g id="text_4">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="247.747091" y="95.505232" transform="rotate(-0 247.747091 95.505232)">earlier → later</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="247.747091" y="95.505232" transform="rotate(-0 247.747091 95.505232)">earlier → later</text>
    </g>
    <g id="text_5">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #2d7f78" x="247.747091" y="149.980722" transform="rotate(-0 247.747091 149.980722)">inner fold 2</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #2d7f78" x="247.747091" y="149.980722" transform="rotate(-0 247.747091 149.980722)">inner fold 2</text>
    </g>
    <g id="text_6">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="247.747091" y="162.876661" transform="rotate(-0 247.747091 162.876661)">earlier → later</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="247.747091" y="162.876661" transform="rotate(-0 247.747091 162.876661)">earlier → later</text>
    </g>
    <g id="text_7">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #2d7f78" x="247.747091" y="217.352151" transform="rotate(-0 247.747091 217.352151)">inner fold 3</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #2d7f78" x="247.747091" y="217.352151" transform="rotate(-0 247.747091 217.352151)">inner fold 3</text>
    </g>
    <g id="text_8">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="247.747091" y="230.248089" transform="rotate(-0 247.747091 230.248089)">earlier → later</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="247.747091" y="230.248089" transform="rotate(-0 247.747091 230.248089)">earlier → later</text>
    </g>
    <g id="text_9">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #2d7f78" x="411.038182" y="146.740156" transform="rotate(-0 411.038182 146.740156)">Candidate ledger</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #2d7f78" x="411.038182" y="146.740156" transform="rotate(-0 411.038182 146.740156)">Candidate ledger</text>
    </g>
    <g id="text_10">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="411.038182" y="179.564564" transform="rotate(-0 411.038182 179.564564)">static · smooth 1 · 3 · 9</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="411.038182" y="179.564564" transform="rotate(-0 411.038182 179.564564)">static · smooth 1 · 3 · 9</text>
    </g>
    <g id="text_11">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #4f6d9a" x="574.329273" y="148.491814" transform="rotate(-0 574.329273 148.491814)">Select + refit</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4f6d9a" x="574.329273" y="148.491814" transform="rotate(-0 574.329273 148.491814)">Select + refit</text>
    </g>
    <g id="text_12">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="574.329273" y="176.734964" transform="rotate(-0 574.329273 176.734964)">training only</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="574.329273" y="176.734964" transform="rotate(-0 574.329273 176.734964)">training only</text>
    </g>
    <g id="text_13">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #c57928" x="716.550545" y="148.491462" transform="rotate(-0 716.550545 148.491462)">Outer test</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #c57928" x="716.550545" y="148.491462" transform="rotate(-0 716.550545 148.491462)">Outer test</text>
    </g>
    <g id="text_14">
-    <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #202534" x="716.550545" y="176.734964" transform="rotate(-0 716.550545 176.734964)">opened once</text>
+    <text style="font-size: 7.5px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #202534" x="716.550545" y="176.734964" transform="rotate(-0 716.550545 176.734964)">opened once</text>
    </g>
    <g id="text_15">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #c57928" x="404.014909" y="26.064" transform="rotate(-0 404.014909 26.064)">No outer outcome enters candidate or hyperparameter selection</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #c57928" x="404.014909" y="26.064" transform="rotate(-0 404.014909 26.064)">No outer outcome enters candidate or hyperparameter selection</text>
    </g>
    <g id="text_16">
-    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #26345e" x="404.014909" y="275.338286" transform="rotate(-0 404.014909 275.338286)">The final score evaluates the complete selection procedure</text>
+    <text style="font-weight: 700; font-size: 9px; font-family: 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #26345e" x="404.014909" y="275.338286" transform="rotate(-0 404.014909 275.338286)">The final score evaluates the complete selection procedure</text>
    </g>
   </g>
  </g>
