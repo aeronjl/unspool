@@ -342,9 +342,40 @@ def _copy_columns(
         array = np.array(values, copy=True)
         if array.ndim != 1:
             raise StudyValidationError(f"column {name!r} must be one-dimensional")
+        _canonicalize_signed_zeros(array)
         array.setflags(write=False)
         arrays[name] = array
     return arrays
+
+
+def _canonicalize_signed_zeros(array: NDArray[Any]) -> None:
+    """Replace every ``-0.0`` in ``array`` with ``+0.0``, in place.
+
+    IEEE 754 keeps two zeros and they compare equal, so no computation downstream of a
+    study can tell them apart. Provenance can. Behavio hashes a study's *values* into
+    ``FitArtifact`` content addresses through ``json.dumps``, which writes ``-0.0`` and
+    ``0.0`` as different text, so a column built two arithmetically equivalent ways used
+    to land on two digests: ``np.einsum`` normalises ``-0.0`` to ``+0.0`` and elementwise
+    ``*`` does not, ``0.0 * -1`` is ``-0.0`` and ``0.0 * 1`` is not, and a reader that
+    parses ``"-0"`` differs from one that parses ``"0"``. Three separate defects of that
+    shape were fixed one at a time before the invariant was moved here, where it belongs:
+    a column's digest must depend on the column's values and not on the code path that
+    produced them.
+
+    This is the *ingest* boundary and only the ingest boundary. Intermediate arrays --
+    a :class:`behavio.design.FeatureBlock`, a design matrix -- are not canonicalised,
+    because they are not hashed; a design term still multiplies exactly as IEEE says it
+    should, and its ``-0.0`` becomes ``0.0`` only if and when it is stored in a study.
+    """
+
+    if array.dtype.kind in "fc":
+        array[array == 0] = 0
+        return
+    if array.dtype.kind != "O":
+        return
+    for index, value in enumerate(array):
+        if isinstance(value, (float, np.floating)) and value == 0 and np.signbit(value):
+            array[index] = type(value)(0.0)
 
 
 def _validate_columns(arrays: Mapping[str, NDArray[Any]]) -> tuple[int, tuple[Any, ...]]:

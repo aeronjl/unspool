@@ -195,7 +195,10 @@ def test_a_fit_reports_a_natural_threshold_with_an_interval_covering_the_truth(
     assert 0 < summary.lapse_rate_interval[0] < summary.lapse_rate_interval[1] < 0.2
     assert summary.slope_at_threshold > 0
     assert summary.interval_level == 0.95
-    assert fit.link is link
+    # ``PsychometricFitResult.link`` is gone: the link is a declared configuration and is
+    # already spelled out by the fit's own identity, so the subclass was duplicating it.
+    assert fit.model_name == f"psychometric-{link.value}"
+    assert model.summarize(fit).link is link
 
 
 def test_the_weibull_threshold_is_estimated_on_a_log_coordinate() -> None:
@@ -357,7 +360,6 @@ def test_the_erf_model_predicts_the_released_two_gamma_curve() -> None:
             DerivedQuantity("guess_rate", 0.06),
             DerivedQuantity("lapse_rate", 0.11),
         ),
-        link=model.link,
         restart_objectives=fit.restart_objectives,
         restart_converged=fit.restart_converged,
         restart_messages=fit.restart_messages,

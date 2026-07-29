@@ -98,6 +98,15 @@ Every deterministic restart, its objective, and the selected optimum stay on
 `PsychometricFitResult`. There is no unseeded randomness anywhere in the fit: the restart
 schedule is derived from the observed stimulus levels and an empirical midpoint crossing.
 
+That restart evidence is the whole reason the subclass exists: it is produced by fitting
+and nothing short of refitting recomputes it. The class carried more once — a `link` field
+and typed `threshold` / `width` / `guess_rate` / `lapse_rate` readers — and both are gone.
+The link is a declared configuration already spelled out by `model_name` and
+`model_signature`, and the four natural parameters live in `FitResult.derived`, where they
+carry their own standard errors and intervals and where a consumer typed on plain
+`FitResult` can see them. Read them with `fit.derived_value("threshold")`, or ask
+`summarize()` for the whole coordinate at once.
+
 ## Promoting the IBL benchmark model
 
 `benchmarks/ibl2021_psychometrics` contains an independent implementation of the released

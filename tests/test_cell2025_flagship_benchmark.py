@@ -183,12 +183,30 @@ def test_committed_flagship_evidence_matches_the_frozen_contract() -> None:
     assert sum(reward_counts.values()) == 12
 
 
-#: The panel digest produced by the hand-written interaction loop, before those columns
-#: became `InteractionTerm` products. `interchange` hashes values *and* column order, so
-#: this pins both halves: `einsum` once normalised `-0.0` to `+0.0`, and appending the
-#: interaction predictors once moved them out of their published positions. Neither moved
-#: a fitted number, and neither may move this digest either.
-PRISTINE_PANEL_DIGEST = "26fb0d2e8c418b6a6d3e75f1eaf83e727b1b55d90518eb3e42130417f1268d5f"
+#: The panel digest. `interchange` hashes values *and* column order, so this pins both
+#: halves: appending the interaction predictors instead of restoring their published
+#: positions would move it without moving a single value.
+#:
+#: It moved once, deliberately, when `Study` began canonicalising `-0.0` to `+0.0` on
+#: ingest. This constant used to be the digest the hand-written interaction loop produced,
+#: and its whole point was that `-0.0` survived into the panel: `np.einsum` normalises the
+#: sign of a zero and elementwise `*` does not, so the digest was the evidence that
+#: `InteractionTerm` multiplies rather than contracts. That property is still true and is
+#: still tested, in `tests/test_design.py` and `tests/test_model_design.py`, where the
+#: comparison is against a `FeatureBlock` and no study is involved.
+#:
+#: What changed is where the invariant lives. A study column's content address must depend
+#: on the column's values and not on which arithmetically equivalent expression produced
+#: them, and three separate defects of exactly that shape had been fixed one at a time
+#: before the rule was moved to the ingest boundary. Both signed zeros in this panel --
+#: 960 in `forecast_phase_left_contrast` and 960 in `early_bias_forecast_left_contrast` --
+#: are now `+0.0`. The panel was diffed against the one the old constant describes: every
+#: one of the twenty-five columns is numerically equal element for element, and those two
+#: columns are the only ones whose bytes differ at all. This digest is a self-consistency
+#: check on Behavio's own construction, not published evidence, so it was recomputed --
+#: by running the builder, not by copying a failure message.
+#: Previously: `26fb0d2e8c418b6a6d3e75f1eaf83e727b1b55d90518eb3e42130417f1268d5f`.
+PRISTINE_PANEL_DIGEST = "1a568502ffcd5970cc532f5e9089109d7fb6bb8f6b394e067ceca4126caf001d"
 
 
 def test_the_panel_digest_survives_the_interaction_term_migration() -> None:
@@ -198,8 +216,31 @@ def test_the_panel_digest_survives_the_interaction_term_migration() -> None:
     assert _study_record(panel)["sha256"] == PRISTINE_PANEL_DIGEST
 
 
-def test_the_panel_retains_the_signed_zeros_the_hand_written_products_produced() -> None:
-    panel = build_forecast_panel(synthetic_source_study())
+def test_the_panel_carries_no_signed_zeros_because_a_study_canonicalises_them() -> None:
+    """The reversal of `..._retains_the_signed_zeros_the_hand_written_products_produced`.
 
-    signed = np.copysign(1.0, panel["forecast_phase_left_contrast"])
-    assert np.any((panel["forecast_phase_left_contrast"] == 0.0) & (signed < 0.0))
+    That test asserted the opposite: that `forecast_phase_left_contrast` still held a
+    `-0.0`, because at the time the *only* defence against two identical panels landing on
+    two content addresses was that every code path had to produce the same signed zero as
+    every other. Pinning the sign was a way of pinning agreement between code paths.
+
+    `Study` now canonicalises `-0.0` to `+0.0` on ingest, so agreement is guaranteed by
+    construction and there is nothing left for the sign to certify. Asserting a `-0.0`
+    survives would now assert that the canonicalisation had failed -- the old test and the
+    new invariant cannot both hold, and the invariant is the stronger statement. The
+    columns that used to carry the signed zeros are named explicitly, so this stays a real
+    check on the panel rather than a vacuous sweep over columns that never had one.
+    """
+
+    panel = build_forecast_panel(synthetic_source_study())
+    formerly_signed = ("forecast_phase_left_contrast", "early_bias_forecast_left_contrast")
+
+    for column in formerly_signed:
+        values = np.asarray(panel[column], dtype=np.float64)
+        assert np.any(values == 0.0), f"{column} must contain a zero for this to bite"
+        assert not np.any(np.signbit(values) & (values == 0.0))
+    # And the invariant holds for the panel as a whole, not only where it used to fail.
+    for column in panel.columns:
+        values = np.asarray(panel[column])
+        if values.dtype.kind == "f":
+            assert not np.any(np.signbit(values) & (values == 0.0)), column

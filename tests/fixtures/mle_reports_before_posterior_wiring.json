@@ -135,6 +135,7 @@
         "audit_status": "pass",
         "fit_audits": [
           {
+            "convergence": "converged",
             "issues": [],
             "latent_states": null,
             "model_name": "bias-only",
@@ -155,6 +156,7 @@
             "status": "pass"
           },
           {
+            "convergence": "converged",
             "issues": [],
             "latent_states": null,
             "model_name": "bias-only",
@@ -175,6 +177,7 @@
             "status": "pass"
           },
           {
+            "convergence": "converged",
             "issues": [],
             "latent_states": null,
             "model_name": "bias-only",
@@ -195,6 +198,7 @@
             "status": "pass"
           },
           {
+            "convergence": "converged",
             "issues": [],
             "latent_states": null,
             "model_name": "bias-only",
@@ -250,6 +254,7 @@
         "audit_status": "pass",
         "fit_audits": [
           {
+            "convergence": "converged",
             "issues": [],
             "latent_states": null,
             "model_name": "bernoulli-history-glm",
@@ -270,6 +275,7 @@
             "status": "pass"
           },
           {
+            "convergence": "converged",
             "issues": [],
             "latent_states": null,
             "model_name": "bernoulli-history-glm",
@@ -290,6 +296,7 @@
             "status": "pass"
           },
           {
+            "convergence": "converged",
             "issues": [],
             "latent_states": null,
             "model_name": "bernoulli-history-glm",
@@ -310,6 +317,7 @@
             "status": "pass"
           },
           {
+            "convergence": "converged",
             "issues": [],
             "latent_states": null,
             "model_name": "bernoulli-history-glm",
@@ -553,6 +561,7 @@
               "audit_status": "pass",
               "fit_audits": [
                 {
+                  "convergence": "converged",
                   "issues": [],
                   "latent_states": null,
                   "model_name": "bias-only",
@@ -573,6 +582,7 @@
                   "status": "pass"
                 },
                 {
+                  "convergence": "converged",
                   "issues": [],
                   "latent_states": null,
                   "model_name": "bias-only",
@@ -622,6 +632,7 @@
               "audit_status": "pass",
               "fit_audits": [
                 {
+                  "convergence": "converged",
                   "issues": [],
                   "latent_states": null,
                   "model_name": "bernoulli-history-glm",
@@ -642,6 +653,7 @@
                   "status": "pass"
                 },
                 {
+                  "convergence": "converged",
                   "issues": [],
                   "latent_states": null,
                   "model_name": "bernoulli-history-glm",
@@ -736,6 +748,7 @@
         },
         "outer_mean_log_loss": 0.6664741854841122,
         "selected_fit_audit": {
+          "convergence": "converged",
           "issues": [],
           "latent_states": null,
           "model_name": "bernoulli-history-glm",
@@ -835,6 +848,7 @@
               "audit_status": "pass",
               "fit_audits": [
                 {
+                  "convergence": "converged",
                   "issues": [],
                   "latent_states": null,
                   "model_name": "bias-only",
@@ -855,6 +869,7 @@
                   "status": "pass"
                 },
                 {
+                  "convergence": "converged",
                   "issues": [],
                   "latent_states": null,
                   "model_name": "bias-only",
@@ -904,6 +919,7 @@
               "audit_status": "pass",
               "fit_audits": [
                 {
+                  "convergence": "converged",
                   "issues": [],
                   "latent_states": null,
                   "model_name": "bernoulli-history-glm",
@@ -924,6 +940,7 @@
                   "status": "pass"
                 },
                 {
+                  "convergence": "converged",
                   "issues": [],
                   "latent_states": null,
                   "model_name": "bernoulli-history-glm",
@@ -1018,6 +1035,7 @@
         },
         "outer_mean_log_loss": 0.543021647916869,
         "selected_fit_audit": {
+          "convergence": "converged",
           "issues": [],
           "latent_states": null,
           "model_name": "bernoulli-history-glm",
@@ -1103,6 +1121,7 @@
           "stimulus": 0.7435658897368453
         },
         "fit_audit": {
+          "convergence": "converged",
           "issues": [],
           "latent_states": null,
           "model_name": "bernoulli-history-glm",
@@ -1143,6 +1162,7 @@
           "stimulus": 0.4963439389290957
         },
         "fit_audit": {
+          "convergence": "converged",
           "issues": [],
           "latent_states": null,
           "model_name": "bernoulli-history-glm",
@@ -1183,6 +1203,7 @@
           "stimulus": 1.464479809739834
         },
         "fit_audit": {
+          "convergence": "converged",
           "issues": [],
           "latent_states": null,
           "model_name": "bernoulli-history-glm",
@@ -1223,6 +1244,7 @@
           "stimulus": 1.297264409763259
         },
         "fit_audit": {
+          "convergence": "converged",
           "issues": [],
           "latent_states": null,
           "model_name": "bernoulli-history-glm",

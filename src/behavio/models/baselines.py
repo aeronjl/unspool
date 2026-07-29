@@ -51,6 +51,18 @@ class _DelegatedGLMBaseline:
         return self._glm().scored_columns
 
     @property
+    def required_task_columns(self) -> tuple[str, ...]:
+        """No predictive context by default: these baselines read only their own history.
+
+        ``BehaviourEstimator`` now requires this declaration, and the empty tuple is a
+        real answer rather than a missing one -- ``BiasOnly`` is a stationary intercept and
+        ``Perseveration`` reads only the outcome column it also scores. ``Psychometric``
+        overrides it with its stimulus.
+        """
+
+        return ()
+
+    @property
     def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
         return self._glm().supported_prediction_modes
 
@@ -420,10 +432,13 @@ class LapsePsychometricParameters:
 class LapsePsychometricFitResult(FitResult):
     """Lapse-psychometric fit retaining every deterministic restart.
 
-    The four restart fields are the :class:`~behavio.contracts.MultistartFit` contract.
-    ``lapse_rate`` is the natural coordinate of ``lapse_logit`` and is read from
+    The four restart fields are the :class:`~behavio.contracts.MultistartFit` contract and
+    are the whole reason this subclass exists: they are evidence only fitting produced, and
+    :meth:`~behavio.contracts.FitResult.audit` reads them structurally to build a
+    :class:`~behavio.contracts.RestartAudit`. The ``lapse_rate`` reader is gone; the lapse
+    rate is the natural coordinate of ``lapse_logit`` and lives in
     :attr:`~behavio.contracts.FitResult.derived`, where it carries a delta-method standard
-    error rather than being a bare number.
+    error rather than being a bare number a subclass renamed.
     """
 
     restart_objectives: NDArray[np.float64]
@@ -444,17 +459,12 @@ class LapsePsychometricFitResult(FitResult):
             raise ValueError("selected_restart must identify one restart")
         if "lapse_rate" not in self.derived_values:
             raise ValueError("a lapse-psychometric fit must declare a derived lapse_rate")
-        if not np.isfinite(self.lapse_rate) or not 0 < self.lapse_rate < 1:
+        lapse_rate = self.derived_value("lapse_rate")
+        if not np.isfinite(lapse_rate) or not 0 < lapse_rate < 1:
             raise ValueError("lapse_rate must lie strictly between zero and one")
         object.__setattr__(self, "restart_objectives", objectives)
         object.__setattr__(self, "restart_converged", converged)
         object.__setattr__(self, "restart_messages", messages)
-
-    @property
-    def lapse_rate(self) -> float:
-        """Probability of a stimulus-independent random response."""
-
-        return self.derived_value("lapse_rate")
 
 
 @dataclass(frozen=True, slots=True)

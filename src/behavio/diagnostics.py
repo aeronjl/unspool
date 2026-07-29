@@ -40,6 +40,7 @@ import numpy as np
 
 from behavio.contracts.audit import (
     AuditSeverity,
+    ConvergenceStatus,
     FitAudit,
     FitAuditPolicy,
     FitAuditStatus,
@@ -54,6 +55,7 @@ from behavio.contracts.estimator import FitResult, register_fit_auditor
 
 __all__ = [
     "AuditSeverity",
+    "ConvergenceStatus",
     "FitAudit",
     "FitAuditPolicy",
     "FitAuditStatus",
@@ -142,16 +144,25 @@ def audit_fit(fit: FitResult, *, policy: FitAuditPolicy | None = None) -> FitAud
 def _common_issues(fit: FitResult, policy: FitAuditPolicy) -> list[FitIssue]:
     """Derive the issues common to every fit.
 
-    Optimizer-shaped diagnostics are optional: ``None`` means the procedure that
-    produced the fit has no such quantity -- a sampler projected by
-    :func:`behavio.contracts.posterior.posterior_point_summary`, for example. Absent
-    diagnostics are skipped rather than reported, while non-finite ones are still
-    reported exactly as before, so maximum-likelihood audits are unchanged.
+    Search-shaped diagnostics are optional: ``None`` means the procedure that produced the
+    fit has no such quantity -- a sampler projected by
+    :func:`behavio.contracts.posterior.posterior_point_summary`, or a closed-form
+    estimator, for example. Absent diagnostics are skipped rather than reported, while
+    non-finite ones are still reported exactly as before, so maximum-likelihood audits are
+    unchanged.
+
+    ``converged`` is the case that needs three values rather than two, and it is tested
+    against ``None`` explicitly rather than for truthiness. A closed-form estimator leaves
+    it absent because it never searched; reading that absence as falsy would report
+    ``optimizer_nonconvergence`` against an exact solution, which is precisely the
+    spurious error that used to force such an estimator to claim ``converged=True``. The
+    distinction is not merely suppressed here -- it is reported, as
+    :attr:`~behavio.contracts.audit.FitAudit.convergence`.
     """
 
     diagnostics = fit.diagnostics
     issues: list[FitIssue] = []
-    if not diagnostics.converged:
+    if diagnostics.convergence is ConvergenceStatus.NOT_CONVERGED:
         issues.append(
             FitIssue(
                 code="optimizer_nonconvergence",

@@ -18,6 +18,9 @@ from behavio import Study, model_capabilities, run_parameter_recovery
 from behavio.contracts import (
     BehaviourModel,
     CategoricalBehaviourEstimator,
+    ConvergenceStatus,
+    FitAuditStatus,
+    FitResult,
     ModelDataError,
     PredictionMode,
     UnsupportedPredictionMode,
@@ -29,7 +32,6 @@ from behavio.models import (
     MetaSDT,
     RateCorrection,
     RatingCounts,
-    SignalDetectionFitResult,
     UnequalVarianceSDT,
     detection_rates,
     equal_variance_summary,
@@ -41,6 +43,18 @@ from behavio.models import (
 
 #: Macmillan and Creelman (2005), chapter 1: H = .67, F = .16.
 TEXTBOOK = DetectionCounts(hits=67, misses=33, false_alarms=16, correct_rejections=84)
+
+
+def _type2_side(fit: FitResult, side: str) -> tuple[float, ...]:
+    """Read one side's type-2 criteria off a meta-d' fit's derived quantities.
+
+    ``MetaSDTFitResult`` used to expose this as two properties. It was deleted along with
+    its detection-theory siblings: it added no evidence, only names for entries of
+    ``derived``, and a test is exactly the place where naming them locally costs nothing.
+    """
+
+    prefix = f"type2_criterion_{side}_"
+    return tuple(value for name, value in fit.derived_values.items() if name.startswith(prefix))
 
 
 def detection_design(n_trials: int = 1_200, *, seed: int = 4) -> Study:
@@ -176,11 +190,14 @@ def test_extreme_rates_force_an_explicit_correction_choice_in_the_estimator() ->
     with pytest.raises(ModelDataError, match="LOG_LINEAR"):
         EqualVarianceSDT().fit(study)
 
-    corrected = EqualVarianceSDT(correction=RateCorrection.LOG_LINEAR).fit(study)
+    model = EqualVarianceSDT(correction=RateCorrection.LOG_LINEAR)
+    corrected = model.fit(study)
+    rates = model.summarize(study).rates
 
     assert np.isfinite(corrected.parameters["d_prime"])
-    assert corrected.summary.rates.correction is RateCorrection.LOG_LINEAR
-    assert corrected.summary.rates.correction_applied is True
+    assert rates.correction is RateCorrection.LOG_LINEAR
+    assert rates.correction_applied is True
+    assert corrected.derived_value("hit_rate") == pytest.approx(rates.hit_rate)
     assert corrected.diagnostics.boundary_estimate is True
     assert "correction=log-linear" in corrected.diagnostics.message
 
@@ -195,7 +212,7 @@ def test_equal_variance_estimator_satisfies_the_model_contract() -> None:
 
     assert isinstance(model, BehaviourModel)
     assert model_capabilities(model).can_recover_parameters
-    assert isinstance(fit, SignalDetectionFitResult)
+    assert type(fit) is FitResult
     assert fit.model_name == model.model_name
     assert fit.parameters["d_prime"] == pytest.approx(1.5, abs=0.15)
     assert fit.parameters["criterion"] == pytest.approx(-0.25, abs=0.1)
@@ -204,6 +221,9 @@ def test_equal_variance_estimator_satisfies_the_model_contract() -> None:
     assert prediction.probability.shape == (len(study),)
     assert np.all(np.isfinite(model.pointwise_log_prob(study, fit)))
     assert model.summarize(study).d_prime == pytest.approx(fit.parameters["d_prime"])
+    # The structured summary is a function of the study and the declared correction, so it
+    # lives on the model; only its scalar indices ride along on the fit.
+    assert fit.derived_value("hit_rate") == pytest.approx(model.summarize(study).rates.hit_rate)
 
     with pytest.raises(UnsupportedPredictionMode):
         model.predict(study, fit, mode=PredictionMode.SMOOTHED)
@@ -335,13 +355,19 @@ def test_unequal_variance_estimator_recovers_a_wider_signal_distribution() -> No
 
     assert isinstance(model, BehaviourModel)
     assert isinstance(model, CategoricalBehaviourEstimator)
-    assert fit.signal_mean == pytest.approx(1.2, abs=0.15)
-    assert fit.signal_sd == pytest.approx(1.4, abs=0.2)
-    assert fit.z_roc_slope == pytest.approx(1.0 / fit.signal_sd)
-    assert fit.d_a == pytest.approx(
-        np.sqrt(2.0) * fit.signal_mean / np.sqrt(1.0 + fit.signal_sd**2)
+    signal_mean = fit.derived_value("signal_mean")
+    signal_sd = fit.derived_value("signal_sd")
+    criteria = [
+        value for name, value in fit.derived_values.items() if name.startswith("criterion_")
+    ]
+    assert type(fit) is FitResult
+    assert signal_mean == pytest.approx(1.2, abs=0.15)
+    assert signal_sd == pytest.approx(1.4, abs=0.2)
+    assert fit.derived_value("z_roc_slope") == pytest.approx(1.0 / signal_sd)
+    assert fit.derived_value("d_a") == pytest.approx(
+        np.sqrt(2.0) * signal_mean / np.sqrt(1.0 + signal_sd**2)
     )
-    assert list(fit.criteria) == sorted(fit.criteria)
+    assert criteria == sorted(criteria)
     assert prediction.categories == model.ratings
     assert prediction.probability.shape == (len(study), 6)
     assert np.allclose(prediction.probability.sum(axis=1), 1.0)
@@ -369,9 +395,11 @@ def test_unequal_variance_maximum_likelihood_and_z_roc_regression_broadly_agree(
     fit = model.fit(study)
     regression = z_roc_summary(model.counts(study))
 
-    assert regression.d_a == pytest.approx(fit.d_a, abs=0.1)
-    assert regression.slope == pytest.approx(fit.z_roc_slope, abs=0.1)
-    assert regression.area_under_curve == pytest.approx(fit.area_under_curve, abs=0.02)
+    assert regression.d_a == pytest.approx(fit.derived_value("d_a"), abs=0.1)
+    assert regression.slope == pytest.approx(fit.derived_value("z_roc_slope"), abs=0.1)
+    assert regression.area_under_curve == pytest.approx(
+        fit.derived_value("area_under_curve"), abs=0.02
+    )
 
 
 def test_unequal_variance_participates_in_parameter_recovery() -> None:
@@ -403,22 +431,24 @@ def test_meta_d_prime_of_an_ideal_observer_is_the_type_one_d_prime() -> None:
 
     fit = model.fit(study)
 
-    assert fit.type1_d_prime == pytest.approx(1.5, abs=0.05)
-    assert fit.meta_d_prime == pytest.approx(fit.type1_d_prime, abs=0.05)
-    assert fit.m_ratio == pytest.approx(1.0, abs=0.03)
-    assert fit.m_diff == pytest.approx(0.0, abs=0.05)
-    assert np.allclose(fit.type2_criteria_yes, [0.5, 1.0, 1.5], atol=0.05)
-    assert np.allclose(fit.type2_criteria_no, [-0.5, -1.0, -1.5], atol=0.05)
+    assert fit.derived_value("d_prime") == pytest.approx(1.5, abs=0.05)
+    assert fit.derived_value("meta_d_prime") == pytest.approx(
+        fit.derived_value("d_prime"), abs=0.05
+    )
+    assert fit.derived_value("m_ratio") == pytest.approx(1.0, abs=0.03)
+    assert fit.derived_value("m_diff") == pytest.approx(0.0, abs=0.05)
+    assert np.allclose(_type2_side(fit, "yes"), [0.5, 1.0, 1.5], atol=0.05)
+    assert np.allclose(_type2_side(fit, "no"), [-0.5, -1.0, -1.5], atol=0.05)
 
 
 def test_noisy_confidence_lowers_meta_d_prime_without_touching_type_one() -> None:
     ideal = MetaSDT().fit(ideal_observer(60_000, seed=11))
     noisy = MetaSDT().fit(ideal_observer(60_000, confidence_noise=0.9, seed=11))
 
-    assert noisy.type1_d_prime == pytest.approx(ideal.type1_d_prime)
-    assert noisy.meta_d_prime < 0.7 * noisy.type1_d_prime
-    assert noisy.m_ratio < 0.7
-    assert noisy.m_diff < 0
+    assert noisy.derived_value("d_prime") == pytest.approx(ideal.derived_value("d_prime"))
+    assert noisy.derived_value("meta_d_prime") < 0.7 * noisy.derived_value("d_prime")
+    assert noisy.derived_value("m_ratio") < 0.7
+    assert noisy.derived_value("m_diff") < 0
 
 
 def test_meta_d_prime_holds_the_type_one_fit_and_its_relative_criterion_fixed() -> None:
@@ -428,23 +458,157 @@ def test_meta_d_prime_holds_the_type_one_fit_and_its_relative_criterion_fixed() 
     fit = model.fit(study)
     closed_form = equal_variance_summary(model.type1_counts(study))
 
-    assert fit.type1_d_prime == pytest.approx(closed_form.d_prime)
-    assert fit.type1_criterion == pytest.approx(closed_form.criterion)
+    assert fit.derived_value("d_prime") == pytest.approx(closed_form.d_prime)
+    assert fit.derived_value("criterion") == pytest.approx(closed_form.criterion)
     assert fit.parameters["d_prime"] == pytest.approx(closed_form.d_prime)
-    assert fit.relative_criterion == pytest.approx(closed_form.criterion / closed_form.d_prime)
+    assert fit.derived_value("relative_criterion") == pytest.approx(
+        closed_form.criterion / closed_form.d_prime
+    )
     # The criterion the meta model uses keeps c' rather than c: c_meta / meta-d' == c / d'.
-    meta_criterion = fit.meta_d_prime * fit.relative_criterion
-    assert meta_criterion / fit.meta_d_prime == pytest.approx(fit.relative_criterion)
-    assert fit.m_ratio == pytest.approx(1.0, abs=0.05)
+    meta_criterion = fit.derived_value("meta_d_prime") * fit.derived_value("relative_criterion")
+    assert meta_criterion / fit.derived_value("meta_d_prime") == pytest.approx(
+        fit.derived_value("relative_criterion")
+    )
+    assert fit.derived_value("m_ratio") == pytest.approx(1.0, abs=0.05)
 
 
 def test_meta_d_prime_type_two_criteria_stay_ordered_and_on_their_own_side() -> None:
     fit = MetaSDT().fit(ideal_observer(20_000, criterion=-0.3, seed=31))
 
-    assert all(value < 0 for value in fit.type2_criteria_no)
-    assert all(value > 0 for value in fit.type2_criteria_yes)
-    assert list(fit.type2_criteria_no) == sorted(fit.type2_criteria_no, reverse=True)
-    assert list(fit.type2_criteria_yes) == sorted(fit.type2_criteria_yes)
+    assert all(value < 0 for value in _type2_side(fit, "no"))
+    assert all(value > 0 for value in _type2_side(fit, "yes"))
+    assert list(_type2_side(fit, "no")) == sorted(_type2_side(fit, "no"), reverse=True)
+    assert list(_type2_side(fit, "yes")) == sorted(_type2_side(fit, "yes"))
+
+
+def test_the_equal_variance_fit_is_a_plain_fit_result_with_no_convergence_claim() -> None:
+    """A z-transform has nothing to converge, and the audit must say so rather than guess.
+
+    The fit used to write ``converged=True, status=0`` about a computation that never
+    searched, purely so that ``audit_fit`` -- which read the flag for falsity -- would not
+    invent a numerical failure. Both fields are now absent and the audit reports
+    ``INAPPLICABLE``, which is the distinction the boolean could not carry.
+    """
+
+    model = EqualVarianceSDT()
+    study = model.simulate(detection_design(2_000), {"d_prime": 1.1, "criterion": 0.1}, seed=19)
+
+    fit = model.fit(study)
+    audit = fit.audit()
+
+    assert type(fit) is FitResult
+    assert fit.diagnostics.converged is None
+    assert fit.diagnostics.status is None
+    assert fit.diagnostics.optimizer == "closed-form z-transform"
+    assert not fit.diagnostics.failed_to_converge
+    assert audit.convergence is ConvergenceStatus.INAPPLICABLE
+    assert "optimizer_nonconvergence" not in audit.issue_codes
+    assert audit.status is FitAuditStatus.PASS
+    assert audit.to_dict()["convergence"] == "inapplicable"
+    assert audit.to_dict()["numerical"]["converged"] is None
+
+
+def test_a_closed_form_fit_is_not_reported_as_a_failed_recovery_run() -> None:
+    """The consumer-side half of the same change.
+
+    ``run_parameter_recovery`` records one convergence flag per run. Reading an absent
+    ``converged`` as falsy would mark every closed-form run as failed, which is the
+    spurious error the old ``converged=True`` was papering over from the other side.
+    """
+
+    model = EqualVarianceSDT()
+    report = run_parameter_recovery(
+        model, detection_design(2_000), [{"d_prime": 1.0, "criterion": 0.0}], repeats=2, seed=23
+    )
+
+    assert np.all(report.converged)
+
+
+def test_meta_d_prime_publishes_its_type_one_rates_without_a_subclass() -> None:
+    """``MetaSDTFitResult.rates`` is gone; the record and the numbers each found a home.
+
+    :class:`CorrectedRates` is a deterministic function of the study and the model's
+    declared correction, so it belongs on the model, where ``type1_summary`` computes it.
+    The two numbers a reader wants off the fit ride along in ``derived``, and whether the
+    declared correction actually fired stays visible in the diagnostic message.
+    """
+
+    study = ideal_observer(4_000, seed=41)
+    model = MetaSDT(correction=RateCorrection.LOG_LINEAR)
+
+    fit = model.fit(study)
+    rates = model.type1_summary(study).rates
+
+    assert type(fit) is FitResult
+    assert rates.correction is RateCorrection.LOG_LINEAR
+    assert fit.derived_value("hit_rate") == pytest.approx(rates.hit_rate)
+    assert fit.derived_value("false_alarm_rate") == pytest.approx(rates.false_alarm_rate)
+    assert "correction=log-linear" in fit.diagnostics.message
+    assert "applied=True" in fit.diagnostics.message
+
+
+def test_the_joint_prediction_marginalises_over_confidence_without_parsing_a_label() -> None:
+    """The point of composite categories: the response margin without string surgery.
+
+    The joint cells used to be labelled ``"no-3"``, so a caller wanting ``P(response)``
+    had to split on a hyphen and know which half meant what. ``marginal("response")``
+    sums the cells that share a response, which is exact because the cells of one row
+    partition that row's probability.
+    """
+
+    study = ideal_observer(3_000, criterion=0.2, seed=57)
+    model = MetaSDT()
+    fit = model.fit(study)
+
+    prediction = model.predict(study, fit)
+    response = prediction.marginal("response")
+    confidence = prediction.marginal("confidence")
+
+    assert prediction.is_composite
+    assert prediction.category_factors == model.scored_columns
+    assert prediction.factor_levels("response") == (0, 1)
+    assert prediction.factor_levels("confidence") == (4, 3, 2, 1)
+    assert response.categories == (0, 1)
+    assert not response.is_composite
+    assert confidence.categories == (4, 3, 2, 1)
+    assert np.allclose(response.probability.sum(axis=1), 1.0)
+    # Marginalising is a partition, so it must agree with summing the columns by hand.
+    by_hand = prediction.probability[:, model.n_confidence :].sum(axis=1)
+    assert np.allclose(response.probability[:, 1], by_hand)
+    assert np.allclose(response.linear_predictor, np.log(response.probability))
+
+
+def test_marginalising_a_scalar_or_unknown_coordinate_fails_loudly() -> None:
+    model = UnequalVarianceSDT()
+    study = model.simulate(
+        Study(
+            {
+                "subject": ["a"] * 600,
+                "session": ["s"] * 600,
+                "trial": list(range(600)),
+                "session_order": [0] * 600,
+                "signal": np.tile([0, 1], 300),
+            }
+        ),
+        dict(
+            model.parameters_from_components(
+                signal_mean=1.0, signal_sd=1.0, criteria=[-1.0, -0.4, 0.1, 0.7, 1.4]
+            )
+        ),
+        seed=3,
+    )
+    scalar = model.predict(study, model.fit(study))
+
+    assert not scalar.is_composite
+    assert scalar.category_factors is None
+    with pytest.raises(ValueError, match="no factors to marginalise"):
+        scalar.marginal("rating")
+
+    joint = MetaSDT().predict(
+        ideal_observer(800, seed=9), MetaSDT().fit(ideal_observer(800, seed=9))
+    )
+    with pytest.raises(KeyError, match="unknown category factor"):
+        joint.marginal("stimulus")
 
 
 def test_meta_d_prime_scores_the_joint_response_and_confidence_cell() -> None:
@@ -458,15 +622,16 @@ def test_meta_d_prime_scores_the_joint_response_and_confidence_cell() -> None:
     assert isinstance(model, CategoricalBehaviourEstimator)
     assert model.scored_columns == ("response", "confidence")
     assert prediction.categories == (
-        "no-4",
-        "no-3",
-        "no-2",
-        "no-1",
-        "yes-1",
-        "yes-2",
-        "yes-3",
-        "yes-4",
+        (0, 4),
+        (0, 3),
+        (0, 2),
+        (0, 1),
+        (1, 1),
+        (1, 2),
+        (1, 3),
+        (1, 4),
     )
+    assert prediction.category_factors == ("response", "confidence")
     assert np.allclose(prediction.probability.sum(axis=1), 1.0)
     codes = model.outcome_codes(study)
     assert np.allclose(scores, np.log(prediction.probability[np.arange(len(codes)), codes]))
@@ -490,9 +655,9 @@ def test_meta_d_prime_simulation_reproduces_its_own_estimates() -> None:
     fit = model.fit(study)
 
     assert isinstance(model, BehaviourModel)
-    assert fit.type1_d_prime == pytest.approx(1.6, abs=0.06)
-    assert fit.meta_d_prime == pytest.approx(1.1, abs=0.08)
-    assert fit.m_ratio == pytest.approx(1.1 / 1.6, abs=0.06)
+    assert fit.derived_value("d_prime") == pytest.approx(1.6, abs=0.06)
+    assert fit.derived_value("meta_d_prime") == pytest.approx(1.1, abs=0.08)
+    assert fit.derived_value("m_ratio") == pytest.approx(1.1 / 1.6, abs=0.06)
     assert set(study.columns) >= {"signal", "response", "confidence"}
 
 

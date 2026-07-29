@@ -800,7 +800,17 @@ def mle_report_payload() -> dict[str, Any]:
 
 
 def test_every_maximum_likelihood_report_is_byte_identical_to_the_pre_wiring_output() -> None:
-    """The golden file was generated before a single posterior line was wired in."""
+    """The golden file was generated before a single posterior line was wired in.
+
+    It was regenerated once, when ``FitAudit.to_dict`` gained a ``convergence`` key. That
+    key exists because ``FitDiagnostics.converged`` became three-valued: a procedure that
+    solves rather than searches now leaves it absent, and the audit reports *inapplicable*
+    rather than laundering the distinction through a fabricated ``converged=True``. The
+    regenerated file differs from its predecessor by twenty-two inserted lines and zero
+    deleted ones, every one of them ``"convergence": "converged"``. No estimate, score,
+    interval, standard error or study digest moved, which is exactly what this fixture
+    exists to establish -- so the pin was recomputed rather than the assertion loosened.
+    """
 
     expected = GOLDEN.read_text(encoding="utf-8")
 

@@ -78,9 +78,12 @@ CLOSED_FORM_SUMMARIES = {
 # drawn, not a promise about what a caller may draw -- and stay in ``behavio.plot``.
 #
 # The detection-theory and psychometric records: ``PsychometricFitResult``,
-# ``PsychometricParameters``, ``PsychometricSummary``, ``SignalDetectionFitResult``,
-# ``UnequalVarianceFitResult``, ``MetaSDTFitResult``, ``SignalDetectionSummary``,
-# ``CorrectedRates`` and ``ZRocSummary``. These follow the principle already applied to
+# ``PsychometricParameters``, ``PsychometricSummary``, ``SignalDetectionSummary``,
+# ``CorrectedRates`` and ``ZRocSummary``. (``SignalDetectionFitResult``,
+# ``UnequalVarianceFitResult`` and ``MetaSDTFitResult`` were deleted once a fit could carry
+# ``derived`` quantities directly; the two surviving records earn their place by holding
+# per-fit multistart evidence rather than typed readers over ``derived``.)
+# These follow the principle already applied to
 # ``DeclarationCheck`` and its neighbours: a type the user reads back off a call stays free to
 # gain fields. ``DetectionCounts``, ``RatingCounts``, ``RateCorrection`` and
 # ``PsychometricLink`` are arguments the user does write down, but each is reachable only
@@ -207,8 +210,8 @@ OBSERVED_BEHAVIOUR_SURFACE = {
 #: mechanism by which derived scientific quantities became first-class rather than an ad-hoc
 #: dictionary, so its presence -- not its field list -- is the promise.
 #:
-#: The rest of that widening is deliberately unpinned. ``MultistartFit``, ``LatentStateFit`` and
-#: ``TaskColumnEstimator`` were promoted mainly so ``behavio.diagnostics`` could stop duck-typing
+#: The rest of that widening is deliberately unpinned. ``MultistartFit`` and ``LatentStateFit``
+#: were promoted mainly so ``behavio.diagnostics`` could stop duck-typing
 #: against private names; they describe evidence the library reads out of a fit it did not write,
 #: which is internal mechanism by the same argument that keeps ``FitAuditor`` and
 #: ``posterior_draw_matrix`` out. ``natural_quantities`` and ``natural_covariance`` are helpers

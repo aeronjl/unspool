@@ -19,17 +19,21 @@ A training/test partition                        :class:`ValidationFold`
 A reporting coordinate distinct from the fit     :class:`NaturalParameterisation`
 A retained multistart optimizer                  :class:`MultistartFit`
 A retained latent-state fit                      :class:`LatentStateFit`
-Predictive context a model reads                 :class:`TaskColumnEstimator`
 ===============================================  =====================================
 
-The last four are *optional widenings*: a model that implements none of them is described
+The last three are *optional widenings*: a model that implements none of them is described
 exactly as it was before they existed. :class:`NaturalParameterisation` names the
 coordinate a result is reported in, which is not in general the coordinate it is estimated
 in; :class:`MultistartFit` and :class:`LatentStateFit` name the evidence that
 :class:`RestartAudit` and :class:`LatentStateAudit` are derived from, which used to be
-duck-typed against a private protocol in ``behavio.diagnostics``; and
-:class:`TaskColumnEstimator` names the predictive context a model consumes without
-scoring, which every model already declared by convention.
+duck-typed against a private protocol in ``behavio.diagnostics``.
+
+A fourth widening, ``TaskColumnEstimator``, has been removed rather than kept: the
+predictive context a model reads but does not score is now ``required_task_columns`` on
+:class:`BehaviourEstimator` itself. It was a side protocol only so that models which had
+not yet written the declaration down were not evicted from the base contract, and every
+first-party model declares it. A model that reads nothing but the column it scores
+declares ``()``.
 
 Layering rule
 -------------
@@ -60,6 +64,7 @@ from behavio.contracts.adapter import (
 )
 from behavio.contracts.audit import (
     AuditSeverity,
+    ConvergenceStatus,
     FitAudit,
     FitAuditPolicy,
     FitAuditStatus,
@@ -86,7 +91,6 @@ from behavio.contracts.estimator import (
     ModelPrediction,
     Prediction,
     PredictionMode,
-    TaskColumnEstimator,
     UnsupportedPredictionMode,
     fit_auditor,
     model_capabilities,
@@ -131,6 +135,7 @@ __all__ = [
     "BehaviourModel",
     "CategoricalBehaviourEstimator",
     "CategoricalPrediction",
+    "ConvergenceStatus",
     "DerivedQuantity",
     "FitAudit",
     "FitAuditPolicy",
@@ -164,7 +169,6 @@ __all__ = [
     "SourceType",
     "StudyAdapter",
     "StudyTransform",
-    "TaskColumnEstimator",
     "TransformProvenance",
     "UnsupportedPredictionMode",
     "ValidationFold",

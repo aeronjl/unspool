@@ -93,6 +93,49 @@ Local NWB round trips and version-pinned DANDI streaming use the same study cont
 are documented in
 [Tabular, NWB, and DANDI interoperability](interoperability.md).
 
+## Signed zeros are canonicalised on ingest
+
+A study replaces every `-0.0` with `+0.0` as columns are copied in. IEEE 754 keeps two
+zeros and they compare equal, so nothing downstream of a study — no fit, score, prediction
+or design matrix — can tell them apart.
+
+Provenance can. Behavio hashes a study's values into
+[`FitArtifact`](fit-artifacts.md) content addresses through `json.dumps`, which writes
+`-0.0` and `0.0` as different text, so the *same* column used to land on two different
+digests depending on which arithmetically equivalent expression produced it: `np.einsum`
+normalises the sign of a zero and elementwise `*` does not, `0.0 * -1` is `-0.0` and
+`0.0 * 1` is not. Three separate defects of exactly that shape were fixed one at a time
+before the rule was moved here. A column's content address must depend on the column's
+values and on nothing else.
+
+Only the sign of a zero is touched. Negative subnormals, negative infinity, `NaN` and every
+other value survive bit for bit, and the rule applies to float, complex and object columns
+alike. It is an *ingest* boundary and only that: intermediate arrays such as a
+`FeatureBlock` or a design matrix are not canonicalised, because they are not hashed, so
+`InteractionTerm` still multiplies exactly as IEEE says it should and its `-0.0` becomes
+`0.0` only if and when it is stored in a study.
+
+```python
+import numpy as np
+from behavio import Study
+from behavio.interchange import _study_record
+
+identity = {"subject": ["m", "m"], "session": ["d", "d"], "trial": [0, 1], "session_order": [0, 0]}
+stimulus = np.asarray([-2.0, 0.0])
+gate = np.asarray([0.0, -1.0])
+
+# Two equivalent constructions disagree on the sign of a zero...
+assert np.array_equal(stimulus * gate, np.einsum("i,i->i", stimulus, gate))
+assert np.signbit(stimulus * gate).any()
+assert not np.signbit(np.einsum("i,i->i", stimulus, gate)).any()
+
+# ...but the two studies agree on one content address.
+multiplied = Study({**identity, "interaction": stimulus * gate})
+contracted = Study({**identity, "interaction": np.einsum("i,i->i", stimulus, gate)})
+assert not np.signbit(multiplied["interaction"]).any()
+assert _study_record(multiplied)["sha256"] == _study_record(contracted)["sha256"]
+```
+
 ## Planned designs
 
 A simulation, a recovery study, or a worked example does not start from a file. It starts

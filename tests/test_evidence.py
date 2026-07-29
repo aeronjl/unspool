@@ -43,8 +43,22 @@ from behavio.runner import run_nested_protocol
 #: actually runs. Only the protocol fingerprint changed; every fitted number is unchanged.
 #: Previously: bundle ``0dd4026a143cc4a08ec6c318574cb088bd92364f5ba8af5deb1b225fe437af82``,
 #: zip ``7bd4c89a98cc5782bf581b04ba2f7a99c921a80243721ef502c9335217ad5d22``.
-SCHEMA_1_BUNDLE_ID = "dac213700d892e96f7394c9015cbd5b92fd46f86bd8def03bf78caa234474437"
-SCHEMA_1_ZIP_SHA256 = "d248c6da5e21ff2079975487f68236d2c84fa3aa01b972ea728af977c7fd77b9"
+#:
+#: They moved a second time, when ``FitAudit.to_dict`` gained a ``convergence`` key.
+#: ``FitDiagnostics.converged`` is now three-valued -- a procedure that solves rather than
+#: searches leaves it absent, and the audit reports *inapplicable* instead of the
+#: fabricated ``converged=True`` that used to keep ``audit_fit`` quiet -- so every audit
+#: payload carries the distinction explicitly. The bundle was diffed file by file against
+#: the one the previous constants describe: the only content difference anywhere in the
+#: seventeen archived files is four inserted ``"convergence": "converged"`` lines in
+#: ``audits/fits.json`` and ``comparison/evaluation.json``. Every other identity here --
+#: the evaluation, report and protocol artifact fingerprints, and the bundle and zip
+#: digests -- moved only because it hashes those payloads. No estimate, score, interval or
+#: study digest changed, so the constants were recomputed rather than the check relaxed.
+#: Previously: bundle ``dac213700d892e96f7394c9015cbd5b92fd46f86bd8def03bf78caa234474437``,
+#: zip ``d248c6da5e21ff2079975487f68236d2c84fa3aa01b972ea728af977c7fd77b9``.
+SCHEMA_1_BUNDLE_ID = "294a26f658c331e22218fd00531cd35a2f0ddd66268086eb20fb7c672e715418"
+SCHEMA_1_ZIP_SHA256 = "7155e4957ce5cd007751d278ae62be88f22af18cd1906687cf53282b6d14d609"
 
 
 def reported():

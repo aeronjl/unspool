@@ -66,7 +66,9 @@ p(y=1\mid x)=\frac{\lambda}{2} + (1-\lambda)\,
 unconstrained `lapse_logit`; `parameter_components()` reports the natural lapse rate.
 Every deterministic restart and the selected optimum remain on
 `LapsePsychometricFitResult`, so a lapse parameter cannot silently absorb poor local
-optimization.
+optimization. That restart evidence is all the subclass adds; the lapse rate itself is
+read with `fit.derived_value("lapse_rate")`, where it carries a delta-method standard
+error rather than being a bare number a subclass renamed.
 
 A lapse mixture is still only one account of asymptotic errors. It should be compared with
 stimulus nonlinearities, history, contaminants, state mixtures, and task-specific motor or

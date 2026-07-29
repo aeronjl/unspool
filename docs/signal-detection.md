@@ -156,13 +156,34 @@ from behavio import MetaSDT
 
 model = MetaSDT(confidence_levels=(1, 2, 3, 4))
 fit = model.fit(study)
-fit.meta_d_prime, fit.m_ratio, fit.m_diff
-fit.type2_criteria_no, fit.type2_criteria_yes
+fit.derived_value("meta_d_prime"), fit.derived_value("m_ratio"), fit.derived_value("m_diff")
+fit.derived_values  # the type-2 criteria arrive as type2_criterion_no_k / _yes_k
 ```
 
+`MetaSDT` returns a plain `FitResult`. It used to return a `MetaSDTFitResult` whose
+properties renamed entries of `derived`; the numbers were always in `derived`, so the
+subclass only decided who was allowed to read them by name. The one structured record it
+carried, the corrected type-1 `rates`, is a deterministic function of the study and the
+model's declared `correction` and now lives on the model as `model.type1_summary(study)`.
+The two rates themselves ride along in `derived`, and whether the declared correction
+actually fired stays visible in the fit's diagnostic message.
+
 `MetaSDT` scores the **joint** response-and-confidence cell, so its prediction is a
-categorical distribution over `2K` cells labelled `"no-k"` and `"yes-k"`, and its
-`scored_columns` are `("response", "confidence")`. Its simulator draws the response from
+categorical distribution over `2K` cells named by the composite categories
+`(response, confidence)` — `(0, 3)` is "responded no at confidence 3" — under the declared
+factorisation `("response", "confidence")`, and its `scored_columns` are
+`("response", "confidence")`. Those cells used to be labelled with the strings `"no-k"`
+and `"yes-k"`, which every caller wanting one margin had to parse apart; ask the
+prediction instead:
+
+```python
+prediction = model.predict(study, fit)
+prediction.marginal("response")  # P(response), summing over confidence
+prediction.marginal("confidence")  # P(confidence), summing over response
+```
+
+Marginalising is exact rather than approximate: the cells of one row partition that row's
+probability. Its simulator draws the response from
 the type-1 model and then the confidence bin from the meta model's conditional
 distribution, which is precisely the factorisation the likelihood uses, so simulate-and-
 refit recovery tests the estimator rather than a different model.

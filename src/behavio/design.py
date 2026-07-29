@@ -405,17 +405,17 @@ class InteractionTerm:
         left = self.left.build(study)
         right = self.right.build(study)
         # Broadcast multiplication rather than np.einsum("ij,ik->ijk", ...): einsum reduces
-        # through a sum and so returns +0.0 where IEEE multiplication returns -0.0, which
-        # makes an interaction column built here differ from the same column multiplied out
-        # by hand. The values are equal as numbers, but Study columns are hashed into
-        # FitArtifact provenance, so the sign of a zero decides whether two identical
-        # studies share a fingerprint. The layout is the one einsum produced: feature j of
-        # the left block varies slowest, feature k of the right block fastest.
+        # through a sum and so returns +0.0 where IEEE multiplication returns -0.0. This
+        # term must agree bit for bit with the same column multiplied out by hand, and
+        # elementwise multiplication is simply the correct answer -- einsum was the
+        # deviation. The layout is the one einsum produced: feature j of the left block
+        # varies slowest, feature k of the right block fastest.
         #
-        # Follow-up, deliberately not done here: canonicalising signed zeros at the Study
-        # boundary would fix the class rather than this instance, but it would move the
-        # hash of every existing study that already contains a -0.0. That is a breaking
-        # provenance change and needs an audit of the committed artefacts first.
+        # The provenance argument that first motivated this line has since been settled a
+        # level up: `Study` canonicalises -0.0 to +0.0 on ingest, so the sign of a zero can
+        # no longer decide whether two identical studies share a content address. That is
+        # the class fix; this line remains because agreeing with IEEE multiplication is
+        # worth having on its own, and because a FeatureBlock is not a Study.
         values = (left.values[:, :, None] * right.values[:, None, :]).reshape(len(study), -1)
         return FeatureBlock(names=self.feature_names, values=values)
 

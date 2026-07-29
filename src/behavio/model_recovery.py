@@ -548,7 +548,7 @@ def run_model_recovery(
                     aggregation_column=aggregation_column,
                 )
                 candidate_converged = all(
-                    evaluation.fit.diagnostics.converged for evaluation in evaluations
+                    not evaluation.fit.diagnostics.failed_to_converge for evaluation in evaluations
                 )
                 converged[run, column] = candidate_converged
                 run_failures.append(_failure_message(evaluations))
@@ -707,7 +707,7 @@ def _failure_message(evaluations: tuple[FoldEvaluation, ...]) -> str:
     failures: list[str] = []
     for fold, evaluation in enumerate(evaluations):
         diagnostics = evaluation.fit.diagnostics
-        if not diagnostics.converged:
+        if diagnostics.failed_to_converge:
             failures.append(f"fold {fold}: {diagnostics.message}")
     return "; ".join(failures)
 

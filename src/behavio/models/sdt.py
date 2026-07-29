@@ -579,25 +579,6 @@ def _summary_quantities(summary: SignalDetectionSummary) -> tuple[DerivedQuantit
 
 
 @dataclass(frozen=True, slots=True)
-class SignalDetectionFitResult(FitResult):
-    """An equal-variance fit that keeps its rates, its correction, and its bias indices.
-
-    ``summary`` is retained as a field because it is a structured record -- rates, the
-    declared correction, and whether that correction changed anything -- rather than a
-    scalar. Its scalar indices are additionally published as
-    :attr:`~behavio.contracts.FitResult.derived` so that a consumer typed on plain
-    ``FitResult`` sees them.
-    """
-
-    summary: SignalDetectionSummary
-
-    def __post_init__(self) -> None:
-        FitResult.__post_init__(self)
-        if not isinstance(self.summary, SignalDetectionSummary):
-            raise TypeError("summary must be a SignalDetectionSummary")
-
-
-@dataclass(frozen=True, slots=True)
 class EqualVarianceSDT:
     """Equal-variance yes/no detection with a declared correction for extreme rates.
 
@@ -655,7 +636,15 @@ class EqualVarianceSDT:
         )
 
     def summarize(self, study: Study) -> SignalDetectionSummary:
-        """Return the closed-form summary under this model's declared correction."""
+        """Return the closed-form summary under this model's declared correction.
+
+        This is where the structured record lives. :meth:`fit` used to return a
+        ``SignalDetectionFitResult`` carrying the same :class:`SignalDetectionSummary` as
+        a field, which duplicated it: the summary is a deterministic function of the study
+        and this model's declared correction, not of the fit, and a fit result exists to
+        carry what only fitting produced. Its scalar indices still travel on the fit as
+        :attr:`~behavio.contracts.FitResult.derived`.
+        """
 
         return equal_variance_summary(self.counts(study), correction=self.correction)
 
@@ -674,7 +663,7 @@ class EqualVarianceSDT:
         columns[self.response] = generator.binomial(1, probability).astype(np.int8)
         return Study(columns)
 
-    def fit(self, study: Study) -> SignalDetectionFitResult:
+    def fit(self, study: Study) -> FitResult:
         counts = self.counts(study)
         summary = equal_variance_summary(counts, correction=self.correction)
         if summary.is_degenerate:
@@ -716,7 +705,7 @@ class EqualVarianceSDT:
             objective=objective,
             boundary_estimate=bool(raw.is_degenerate),
         )
-        return SignalDetectionFitResult(
+        return FitResult(
             model_name=self.model_name,
             model_signature=self.signature,
             parameter_names=self.parameter_names,
@@ -726,7 +715,6 @@ class EqualVarianceSDT:
             n_observations=len(study),
             diagnostics=diagnostics,
             derived=_summary_quantities(summary),
-            summary=summary,
         )
 
     def predict(
@@ -770,65 +758,6 @@ class EqualVarianceSDT:
     def _fit_vector(self, fit: FitResult) -> tuple[float, float]:
         _validate_fit(self, fit)
         return float(fit.estimates[0]), float(fit.estimates[1])
-
-
-@dataclass(frozen=True, slots=True)
-class UnequalVarianceFitResult(FitResult):
-    """An unequal-variance rating fit with its criteria and its ROC indices.
-
-    This class adds no fields. It is a typed reader over
-    :attr:`~behavio.contracts.FitResult.derived`: the signal distribution and the ordered
-    criteria are the model's natural coordinate and the ROC indices are functions of it,
-    so the numbers live in one place and this class only names them.
-    """
-
-    def __post_init__(self) -> None:
-        FitResult.__post_init__(self)
-        missing = sorted(
-            {"signal_mean", "signal_sd", "d_a", "z_roc_slope", "area_under_curve"}
-            - set(self.derived_values)
-        )
-        if missing:
-            raise ValueError(f"an unequal-variance fit must declare derived {missing}")
-        if any(later <= earlier for earlier, later in pairwise(self.criteria)):
-            raise ValueError("rating criteria must be strictly increasing")
-
-    @property
-    def signal_mean(self) -> float:
-        """Mean of the signal evidence distribution, the noise mean being zero."""
-
-        return self.derived_value("signal_mean")
-
-    @property
-    def signal_sd(self) -> float:
-        """Standard deviation of the signal evidence distribution."""
-
-        return self.derived_value("signal_sd")
-
-    @property
-    def criteria(self) -> tuple[float, ...]:
-        """The strictly increasing rating criteria, in evidence units."""
-
-        values = self.derived_values
-        return tuple(value for name, value in values.items() if name.startswith("criterion_"))
-
-    @property
-    def d_a(self) -> float:
-        """Unequal-variance sensitivity ``sqrt(2) mu / sqrt(1 + sigma^2)``."""
-
-        return self.derived_value("d_a")
-
-    @property
-    def z_roc_slope(self) -> float:
-        """Slope of the z-ROC line, which is the reciprocal of the signal SD."""
-
-        return self.derived_value("z_roc_slope")
-
-    @property
-    def area_under_curve(self) -> float:
-        """Area under the binormal ROC, ``A_z = Phi(d_a / sqrt(2))``."""
-
-        return self.derived_value("area_under_curve")
 
 
 @dataclass(frozen=True, slots=True)
@@ -1021,7 +950,7 @@ class UnequalVarianceSDT:
         columns[self.rating] = np.asarray(self.ratings, dtype=np.int64)[draws]
         return Study(columns)
 
-    def fit(self, study: Study) -> UnequalVarianceFitResult:
+    def fit(self, study: Study) -> FitResult:
         counts = self.counts(study)
         starts, bounds = self._start_schedule(counts)
         objective = self._objective_factory(counts)
@@ -1063,7 +992,7 @@ class UnequalVarianceSDT:
                 "area_under_curve", area, description="binormal ROC area Phi(d_a / sqrt(2))"
             ),
         )
-        return UnequalVarianceFitResult(
+        return FitResult(
             model_name=self.model_name,
             model_signature=self.signature,
             parameter_names=self.parameter_names,
@@ -1195,105 +1124,16 @@ class UnequalVarianceSDT:
 
 
 @dataclass(frozen=True, slots=True)
-class MetaSDTFitResult(FitResult):
-    """A meta-d' fit with its type-1 anchor, its type-2 criteria, and its M measures.
-
-    ``type2_criteria_no`` and ``type2_criteria_yes`` are expressed in the meta model's own
-    evidence units *relative to the type-1 criterion*, which the fit holds at zero. The
-    "no" criteria are negative and ordered from the criterion outward; the "yes" criteria
-    are positive and likewise ordered outward, so index zero of each is the boundary
-    between the two lowest confidence levels.
-
-    Apart from ``rates``, which is a structured record of the type-1 table and the
-    correction that produced it, this class adds no fields: it is a typed reader over
-    :attr:`~behavio.contracts.FitResult.derived`.
-    """
-
-    rates: CorrectedRates
-
-    def __post_init__(self) -> None:
-        FitResult.__post_init__(self)
-        if not isinstance(self.rates, CorrectedRates):
-            raise TypeError("rates must be a CorrectedRates")
-        missing = sorted(
-            {"d_prime", "criterion", "relative_criterion", "meta_d_prime", "m_ratio", "m_diff"}
-            - set(self.derived_values)
-        )
-        if missing:
-            raise ValueError(f"a meta-d' fit must declare derived {missing}")
-        no = self.type2_criteria_no
-        yes = self.type2_criteria_yes
-        if len(no) != len(yes) or not no:
-            raise ValueError("each response side needs the same number of type-2 criteria")
-        if any(value >= 0 for value in no) or any(value <= 0 for value in yes):
-            raise ValueError("type-2 criteria must stay on their own side of the criterion")
-        if any(later >= earlier for earlier, later in pairwise(no)):
-            raise ValueError("type-2 criteria for 'no' responses must decrease outward")
-        if any(later <= earlier for earlier, later in pairwise(yes)):
-            raise ValueError("type-2 criteria for 'yes' responses must increase outward")
-
-    @property
-    def type1_d_prime(self) -> float:
-        """Type-1 sensitivity, held fixed while the meta model was fitted."""
-
-        return self.derived_value("d_prime")
-
-    @property
-    def type1_criterion(self) -> float:
-        """Type-1 criterion, held fixed while the meta model was fitted."""
-
-        return self.derived_value("criterion")
-
-    @property
-    def relative_criterion(self) -> float:
-        """The type-1 criterion's relative position ``c / d'``."""
-
-        return self.derived_value("relative_criterion")
-
-    @property
-    def meta_d_prime(self) -> float:
-        """Type-1 sensitivity implied by the observed confidence data."""
-
-        return self.derived_value("meta_d_prime")
-
-    @property
-    def m_ratio(self) -> float:
-        """Metacognitive efficiency ``meta-d' / d'``."""
-
-        return self.derived_value("m_ratio")
-
-    @property
-    def m_diff(self) -> float:
-        """Metacognitive efficiency ``meta-d' - d'``."""
-
-        return self.derived_value("m_diff")
-
-    @property
-    def type2_criteria_no(self) -> tuple[float, ...]:
-        """Type-2 criteria for "no" responses, negative and ordered outward."""
-
-        return self._type2_side("no")
-
-    @property
-    def type2_criteria_yes(self) -> tuple[float, ...]:
-        """Type-2 criteria for "yes" responses, positive and ordered outward."""
-
-        return self._type2_side("yes")
-
-    def _type2_side(self, side: str) -> tuple[float, ...]:
-        prefix = f"type2_criterion_{side}_"
-        return tuple(
-            value for name, value in self.derived_values.items() if name.startswith(prefix)
-        )
-
-
-@dataclass(frozen=True, slots=True)
 class MetaSDT:
     """Meta-d' after Maniscalco and Lau (2012), with the type-1 fit held fixed.
 
     The scored observation is the *joint* response-and-confidence cell, so the model
-    predicts a categorical distribution over ``2K`` cells labelled ``"no-k"`` and
-    ``"yes-k"``. Its likelihood factorises exactly as the estimator does: the type-1
+    predicts a categorical distribution over ``2K`` cells named by the composite
+    categories ``(response, confidence)`` -- ``(0, 3)`` is "responded no at confidence 3"
+    -- under the declared factorisation ``("response", "confidence")``. A caller wanting
+    the response margin calls
+    :meth:`~behavio.contracts.CategoricalPrediction.marginal`; nothing has to parse a
+    label. Its likelihood factorises exactly as the estimator does: the type-1
     response probability comes from the type-1 model :math:`(d', c)`, and the confidence
     distribution conditional on stimulus and response comes from the meta model. Fitting
     therefore proceeds in two stages -- a closed-form type-1 z-transform, then a
@@ -1373,9 +1213,21 @@ class MetaSDT:
 
     @property
     def categories(self) -> tuple[Any, ...]:
-        no = tuple(f"no-{level}" for level in reversed(self.confidence_levels))
-        yes = tuple(f"yes-{level}" for level in self.confidence_levels)
+        """The ``2K`` joint cells as ``(response, confidence)`` pairs.
+
+        Ordered from most confident "no" through to most confident "yes", which is the
+        order :meth:`outcome_codes` assigns and the order a type-2 ROC is read in.
+        """
+
+        no = tuple((0, level) for level in reversed(self.confidence_levels))
+        yes = tuple((1, level) for level in self.confidence_levels)
         return (*no, *yes)
+
+    @property
+    def category_factors(self) -> tuple[str, ...]:
+        """The factors a joint category names, which are the scored columns themselves."""
+
+        return self.scored_columns
 
     @property
     def scored_columns(self) -> tuple[str, ...]:
@@ -1523,6 +1375,19 @@ class MetaSDT:
             _study_binary(study, self.response, "response"),
         )
 
+    def type1_summary(self, study: Study) -> SignalDetectionSummary:
+        """Return the type-1 anchor the meta fit holds fixed, with its corrected rates.
+
+        This is where the structured :class:`CorrectedRates` record lives. :meth:`fit` used
+        to carry a copy of it on a ``MetaSDTFitResult``, which duplicated a deterministic
+        function of the study and this model's declared ``correction`` onto a result whose
+        job is to carry what only fitting produced. The rates themselves still travel on
+        the fit as :attr:`~behavio.contracts.FitResult.derived`, and whether the declared
+        correction actually fired is recorded in the fit's diagnostic message.
+        """
+
+        return equal_variance_summary(self.type1_counts(study), correction=self.correction)
+
     def outcome_codes(self, study: Study) -> NDArray[np.int64]:
         """Return the zero-based joint response-and-confidence cell for every trial."""
 
@@ -1556,8 +1421,8 @@ class MetaSDT:
         columns[self.confidence] = confidence.astype(np.int64)
         return Study(columns)
 
-    def fit(self, study: Study) -> MetaSDTFitResult:
-        type1 = equal_variance_summary(self.type1_counts(study), correction=self.correction)
+    def fit(self, study: Study) -> FitResult:
+        type1 = self.type1_summary(study)
         if type1.is_degenerate or not np.isfinite(type1.d_prime):
             raise ModelDataError(
                 "meta-d' needs a finite type-1 d'; declare a RateCorrection to repair an "
@@ -1605,7 +1470,14 @@ class MetaSDT:
         covariance[2:, 2:] = meta_covariance
         meta_d_prime = float(meta_coordinate[0])
         joint = self._joint_objective(counts, type1.d_prime, type1.criterion, meta_coordinate)
+        rates = type1.rates
         efficiency = (
+            DerivedQuantity("hit_rate", rates.hit_rate, description="corrected type-1 hit rate"),
+            DerivedQuantity(
+                "false_alarm_rate",
+                rates.false_alarm_rate,
+                description="corrected type-1 false-alarm rate",
+            ),
             DerivedQuantity(
                 "relative_criterion",
                 float(type1.relative_criterion),
@@ -1618,7 +1490,7 @@ class MetaSDT:
                 "m_diff", float(meta_d_prime - type1.d_prime), description="meta-d' - d'"
             ),
         )
-        return MetaSDTFitResult(
+        return FitResult(
             model_name=self.model_name,
             model_signature=self.signature,
             parameter_names=self.parameter_names,
@@ -1630,7 +1502,11 @@ class MetaSDT:
                 converged=bool(result.success),
                 optimizer="closed-form type-1 z-transform, then L-BFGS-B multistart",
                 status=int(result.status),
-                message=str(result.message),
+                message=(
+                    f"{result.message} (type-1 table of {rates.n_signal} signal and "
+                    f"{rates.n_noise} noise trials under correction="
+                    f"{rates.correction.value}, applied={rates.correction_applied})"
+                ),
                 n_iterations=int(result.nit),
                 objective=joint,
                 gradient_norm=float(np.linalg.norm(gradient)),
@@ -1643,7 +1519,6 @@ class MetaSDT:
                 ),
             ),
             derived=(*natural_quantities(self, estimates, covariance), *efficiency),
-            rates=type1.rates,
         )
 
     def predict(
@@ -1663,6 +1538,7 @@ class MetaSDT:
             linear_predictor=np.log(np.clip(probability, PROBABILITY_FLOOR, 1.0)),
             categories=self.categories,
             mode=PredictionMode.FILTERED,
+            category_factors=self.category_factors,
         )
 
     def pointwise_log_prob(

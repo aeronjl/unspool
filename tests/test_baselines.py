@@ -57,7 +57,10 @@ def test_lapse_psychometric_retains_natural_rate_and_restart_evidence() -> None:
     assert isinstance(model, BehaviourModel)
     assert isinstance(fit, LapsePsychometricFitResult)
     assert len(fit.restart_objectives) == 4
-    assert fit.lapse_rate == pytest.approx(components.lapse_rate)
+    # The typed ``lapse_rate`` reader is gone; the rate lives in ``derived``, where it
+    # carries a delta-method standard error rather than being a bare renamed number.
+    assert fit.derived_value("lapse_rate") == pytest.approx(components.lapse_rate)
+    assert fit.derived_quantities["lapse_rate"].standard_error > 0
     assert 0 < components.lapse_rate < model.maximum_lapse
     assert components.slope > 0.5
     assert model.predict(study, fit).probability.min() >= components.lapse_rate / 2

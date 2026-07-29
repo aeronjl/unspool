@@ -16,6 +16,21 @@ in one direction only.
 
 ## Estimators, fits, and predictions
 
+`BehaviourEstimator` requires `required_task_columns`. It used to live on a separate
+`TaskColumnEstimator` protocol, which has been removed: every estimator can say which
+columns it reads but does not score, and one that reads nothing beyond its scored column
+answers `()`. `model_capabilities(...).required_task_columns` surfaces the validated
+answer, and `behavio.task.TaskSpec.validate_model` checks that each named column carries a
+declared task role.
+
+`CategoricalPrediction.categories` accepts **tuples** as well as scalars. A tuple category
+names one cell of a joint observation — meta-d' scores `(response, confidence)` together —
+and must be accompanied by `category_factors`, which names the tuple positions. Given
+that, `marginal(factor)` sums out the other factors exactly, so a caller wanting one
+margin of a jointly scored model never parses a label. Before tuples were admitted, such a
+model had to flatten a cell into a string like `"no-3"` even though its `scored_columns`
+already declared the observation joint.
+
 ::: behavio.contracts.estimator
     options:
       members_order: source
@@ -23,6 +38,23 @@ in one direction only.
       show_source: false
 
 ## Fit evidence and audit vocabulary
+
+`FitDiagnostics.converged` and `.status` are optional, alongside the five search-shaped
+diagnostics that were already optional. A procedure that solves rather than searches — the
+equal-variance z-transform, say — leaves them absent, because *it did not converge* and
+*there was nothing to converge* are different claims and a boolean cannot hold both.
+
+The distinction is reported rather than merely tolerated. `ConvergenceStatus` is
+three-valued and both `FitDiagnostics.convergence` and `FitAudit.convergence` return it,
+`FitAudit.to_dict()` carries it under `"convergence"`, and `audit_fit` raises
+`optimizer_nonconvergence` only for `NOT_CONVERGED`. Consumers deciding whether a run is
+usable should ask `FitDiagnostics.failed_to_converge` rather than `not converged`; the
+latter answers the question wrongly for a closed-form fit, whose flag is absent rather
+than false.
+
+`optimizer` stays mandatory. Every fit can answer *what computed this* — for a searching
+estimator the optimizer, for a closed-form one the solution method — so only the questions
+a non-searching procedure genuinely cannot answer were widened.
 
 ::: behavio.contracts.audit
     options:

@@ -16,8 +16,14 @@ comparison boundary used by joint response-time models.
 
 - stable `model_name` and configuration-specific `signature` values;
 - the complete tuple of `scored_columns` used by its likelihood;
+- `required_task_columns`, the predictive context it reads but does not score;
 - its supported filtered or smoothed prediction modes;
 - `fit`, `predict`, and `pointwise_log_prob` methods.
+
+`required_task_columns` is mandatory and may be `()`. It was briefly carried by a separate
+`TaskColumnEstimator` protocol so that models which had not yet declared it were not
+evicted from the base contract; that protocol is gone. A model whose likelihood reads
+nothing but the column it scores declares the empty tuple, which is an answer.
 
 `GenerativeBehaviourModel` extends that contract with stable `parameter_names` and
 `simulate`. `BehaviourModel` remains the backwards-compatible public name for the full
@@ -65,6 +71,14 @@ their numerical log scores are not interchangeable. Joint models must compete wi
 models scoring the same joint observation, or expose a separately configured choice-only
 marginal estimator.
 
+A model scoring a joint observation may name its prediction columns with **composite
+categories**: each entry of `CategoricalPrediction.categories` is a tuple, and
+`category_factors` names the tuple positions. `MetaSDT` scores the joint
+`(response, confidence)` cell and labels its columns `(0, 3)` rather than `"no-3"`, so
+`prediction.marginal("response")` sums out confidence exactly instead of a caller
+splitting a string. The factorisation is required whenever the categories are tuples: an
+unlabelled tuple is no more readable than the string it replaces.
+
 `Prediction.probability` is a vector for a declared binary `outcome_column`.
 `CategoricalPrediction.probability` is a trial-by-category matrix on an explicit stable
 coordinate. Categorical estimators additionally expose `categories` and
@@ -85,6 +99,16 @@ At every fold, Behavio verifies that:
 
 These checks are particularly important for plugins: structural typing alone can establish
 that methods exist, but not that their outputs refer to the model and data supplied.
+
+A `FitResult` carries the estimates, their uncertainty, the numerical diagnostics, and the
+scalar `derived` quantities a scientist publishes. A model-specific subclass is justified
+only by evidence that *fitting itself produced* and that nothing short of refitting
+recomputes — the retained restarts of a [`MultistartFit`](diagnostics.md), for instance.
+It is not justified by wanting typed names for entries of `derived`, nor by a structured
+record that is a deterministic function of the study and the model's own configuration:
+that belongs on the model, as a method. `EqualVarianceSDT.summarize(study)` and
+`MetaSDT.type1_summary(study)` are where the detection-theory summaries live for exactly
+that reason.
 
 Third-party packages can bind conforming factories to explicit names with
 `EstimatorRegistry`. Registries are local to the workflow, reject duplicate or drifting

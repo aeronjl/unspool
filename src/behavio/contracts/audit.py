@@ -36,29 +36,88 @@ class FitAuditStatus(StrEnum):
     FAIL = "fail"
 
 
-@dataclass(frozen=True, slots=True)
-class FitDiagnostics:
-    """Optimizer and numerical diagnostics that remain attached to a fit.
+class ConvergenceStatus(StrEnum):
+    """What a fit's retained evidence says about convergence.
 
-    ``n_iterations``, ``objective``, ``gradient_norm``, ``hessian_condition`` and
-    ``boundary_estimate`` are optimizer-shaped. They accept ``None`` to mean *this
-    quantity does not exist for the procedure that produced the fit* -- for example a
-    posterior projected to a point summary by
-    :func:`behavio.contracts.posterior.posterior_point_summary`. ``None`` is deliberately
-    distinct from a non-finite value: ``audit_fit`` reports non-finite diagnostics as
-    issues and skips absent ones. Every field remains a required constructor argument, so
-    a fit can never omit a diagnostic by accident.
+    :attr:`INAPPLICABLE` is the reason this enum exists. A three-valued answer is needed
+    because ``converged=False`` and *there was nothing to converge* are different claims
+    and a boolean cannot hold both: reading a closed-form estimator's absent convergence
+    flag as falsy manufactures a numerical failure out of an exact solution.
     """
 
-    converged: bool
+    #: The procedure searched and reported success.
+    CONVERGED = "converged"
+    #: The procedure searched and did not reach its own convergence criterion.
+    NOT_CONVERGED = "not-converged"
+    #: The procedure did not search, so convergence is not a question it can answer.
+    INAPPLICABLE = "inapplicable"
+
+
+@dataclass(frozen=True, slots=True)
+class FitDiagnostics:
+    """Numerical diagnostics that remain attached to a fit.
+
+    ``converged``, ``status``, ``n_iterations``, ``objective``, ``gradient_norm``,
+    ``hessian_condition`` and ``boundary_estimate`` are all *search*-shaped. They accept
+    ``None`` to mean *this quantity does not exist for the procedure that produced the
+    fit* -- a posterior projected to a point summary by
+    :func:`behavio.contracts.posterior.posterior_point_summary`, or the equal-variance
+    z-transform, which solves rather than searches. ``None`` is deliberately distinct both
+    from a non-finite value and, for ``converged``, from ``False``:
+    :func:`behavio.diagnostics.audit_fit` reports non-finite diagnostics as issues, reports
+    ``converged=False`` as a numerical failure, and reports ``converged=None`` as
+    :attr:`ConvergenceStatus.INAPPLICABLE` without raising an issue at all.
+
+    ``optimizer`` names the numerical procedure that produced the estimates and stays
+    mandatory, because every fit can answer *what computed this*: for a searching
+    estimator that is the optimizer, for a closed-form estimator the solution method. Only
+    the questions a non-searching procedure genuinely cannot answer were widened.
+
+    Every field remains a required constructor argument, so a fit can never omit a
+    diagnostic by accident.
+    """
+
+    converged: bool | None
     optimizer: str
-    status: int
+    status: int | None
     message: str
     n_iterations: int | None
     objective: float | None
     gradient_norm: float | None
     hessian_condition: float | None
     boundary_estimate: bool | None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.optimizer, str) or not self.optimizer:
+            raise ValueError("a fit must name the procedure that produced it")
+        if self.converged is not None and not isinstance(self.converged, (bool, np.bool_)):
+            raise ValueError("converged must be boolean or None")
+        if self.converged is None and self.status is not None:
+            raise ValueError(
+                "a procedure with no convergence question cannot report a convergence status"
+            )
+        if self.converged is not None:
+            object.__setattr__(self, "converged", bool(self.converged))
+
+    @property
+    def convergence(self) -> ConvergenceStatus:
+        """Three-valued reading of :attr:`converged`."""
+
+        if self.converged is None:
+            return ConvergenceStatus.INAPPLICABLE
+        return ConvergenceStatus.CONVERGED if self.converged else ConvergenceStatus.NOT_CONVERGED
+
+    @property
+    def failed_to_converge(self) -> bool:
+        """Whether the procedure searched for an answer and did not reach one.
+
+        This, not ``not converged``, is the question every consumer of a fit is actually
+        asking when it decides whether a run is usable. ``not converged`` answers it wrongly
+        for a closed-form estimator, whose ``converged`` is absent rather than false; a
+        recovery grid reading it that way would report an exact solution as a failed run.
+        """
+
+        return self.convergence is ConvergenceStatus.NOT_CONVERGED
 
     @classmethod
     def closed_form(
@@ -72,22 +131,21 @@ class FitDiagnostics:
         """Diagnostics for an estimator that solves rather than searches.
 
         A closed-form estimator -- the equal-variance z-transform, say -- has no optimizer,
-        no iterations, no gradient and no Hessian, and forcing it to fill those fields in
-        makes it advertise a convergence that was never in question. This constructor
-        names the *procedure* instead of an optimizer and leaves every optimizer-shaped
-        diagnostic absent. ``converged`` and ``status`` remain ``True`` and ``0``: there
-        was nothing to converge, so the audit must not report a failure, and
-        :func:`behavio.diagnostics.audit_fit` reads them exactly as it always has. The
-        record is bit-identical to writing the same fields by hand, so no maximum-
-        likelihood behaviour changes.
+        no iterations, no gradient and no Hessian, and no convergence: it does not
+        approach an answer, it computes one. This constructor names the *procedure* that
+        computed it and leaves every search-shaped diagnostic absent, ``converged`` and
+        ``status`` included. The audit reads that absence as
+        :attr:`ConvergenceStatus.INAPPLICABLE` and raises no issue, which is what
+        ``converged=True, status=0`` used to buy at the cost of claiming a convergence
+        that was never in question.
         """
 
         if not isinstance(procedure, str) or not procedure:
             raise ValueError("a closed-form procedure needs a non-empty name")
         return cls(
-            converged=True,
+            converged=None,
             optimizer=procedure,
-            status=0,
+            status=None,
             message=message,
             n_iterations=None,
             objective=objective,
@@ -315,6 +373,19 @@ class FitAudit:
         return FitAuditStatus.PASS
 
     @property
+    def convergence(self) -> ConvergenceStatus:
+        """Whether the fit converged, failed to converge, or could not be asked.
+
+        :attr:`status` collapses every issue into pass/warning/fail, and a closed-form
+        estimator passes for the same reason a converged optimizer does. That is correct
+        but uninformative, so the audit reports the distinction separately rather than
+        making a reader infer it from the absence of an ``optimizer_nonconvergence``
+        issue.
+        """
+
+        return self.numerical.convergence
+
+    @property
     def issue_codes(self) -> tuple[str, ...]:
         """Stable issue codes suitable for filtering reports and recovery grids."""
 
@@ -329,6 +400,7 @@ class FitAudit:
             "model_signature": self.model_signature,
             "n_observations": self.n_observations,
             "status": self.status.value,
+            "convergence": self.convergence.value,
             "numerical": {
                 "converged": diagnostics.converged,
                 "optimizer": diagnostics.optimizer,

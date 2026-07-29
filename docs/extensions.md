@@ -26,16 +26,23 @@ re-export them, so older imports keep working.
 | A training/test partition | `ValidationFold` | fold-fitted transforms, evaluation, comparison, and recovery |
 | A complete public analysis | literature-recipe contract | documentation and evidence-bundle integration |
 
-Four of these surfaces are optional widenings that only refine what a model already does.
-Implement them when they say something true about your estimator, and nothing changes if
-you do not:
+Three of these surfaces are optional widenings that only refine what a model already
+does. Implement them when they say something true about your estimator, and nothing
+changes if you do not:
 
 | You already have | Implement | What becomes available |
 | --- | --- | --- |
 | A reporting coordinate that is not the estimated one | `NaturalParameterisation` | derived quantities with delta-method standard errors, and recovery reported in both coordinates without pooling them |
 | Numbers a scientist would publish that the optimizer never sees | `DerivedQuantity` on `FitResult.derived` | those numbers reach comparison, evidence bundles, and `export_fit` instead of being dropped |
 | A multistart optimizer whose restarts you retain | `MultistartFit` | an automatic `RestartAudit` in every fit audit |
-| Predictive context you read but do not score | `TaskColumnEstimator` | `model_capabilities(...).required_task_columns`, and task-role validation |
+
+`required_task_columns` used to appear in that table, behind a separate
+`TaskColumnEstimator` protocol. It is now a member of `BehaviourEstimator` itself and the
+side protocol is gone. "What columns does this model need?" is the first question anyone
+asks of an estimator and every estimator can answer it: a model whose likelihood reads
+nothing but the column it scores returns `()`, which is an answer rather than a refusal to
+answer. The declaration was optional only to avoid evicting models that had not yet
+written it down.
 
 Do not implement simulation merely to satisfy a protocol. A prediction-only external
 estimator can be compared prospectively; it becomes eligible for recovery only when its

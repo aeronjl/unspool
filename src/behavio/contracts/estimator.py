@@ -54,9 +54,10 @@ class ModelCapabilities:
     ``required_task_columns`` names the predictive context the model consumes but does not
     score -- the stimulus a psychometric curve is a function of, the reward a learner
     updates on. Every column here must carry a declared task role, which
-    :meth:`behavio.task.TaskSpec.validate_model` enforces. It defaults to ``()`` because
-    the declaration is optional: a model that reads nothing but its scored column has no
-    predictive context to declare.
+    :meth:`behavio.task.TaskSpec.validate_model` enforces. It defaults to ``()`` so that
+    the *empty* declaration can be written by omission; the declaration itself is not
+    optional, because :class:`BehaviourEstimator` requires it. A model that reads nothing
+    but its scored column answers ``()``, which is an answer, not a refusal to answer.
     """
 
     scored_columns: tuple[str, ...]
@@ -329,17 +330,33 @@ class CategoricalPrediction:
     Rows index trials and columns index ``categories``. Impossible actions may have
     probability zero and a ``-inf`` linear predictor, which is required for tasks with
     trial-specific option availability.
+
+    Composite categories
+    --------------------
+    A category is either a scalar or a **tuple of scalars**, and a tuple category is how a
+    model that scores a joint observation names its cells. Meta-d' scores the joint
+    ``(response, confidence)`` outcome; before tuples were admitted it had to encode a
+    cell as the string ``"no-3"``, which every consumer wanting the response margin had to
+    parse. ``scored_columns=("response", "confidence")`` already said the observation was
+    joint, so only the labels were stringly typed.
+
+    ``category_factors`` names the tuple positions and is required exactly when the
+    categories are tuples: an unlabelled tuple is no more readable than the string it
+    replaces. Its names normally match the model's ``scored_columns``. With it,
+    :meth:`marginal` marginalises over the other factors without anyone parsing a label.
     """
 
     probability: NDArray[np.float64]
     linear_predictor: NDArray[np.float64]
     categories: tuple[Any, ...]
     mode: PredictionMode
+    category_factors: tuple[str, ...] | None = None
 
     def __post_init__(self) -> None:
         probability = protected_array(self.probability, dtype=np.float64)
         linear_predictor = protected_array(self.linear_predictor, dtype=np.float64)
         categories = tuple(_prediction_category(value) for value in self.categories)
+        factors = _category_factors(categories, self.category_factors)
         mode = PredictionMode(self.mode)
         if probability.ndim != 2 or probability.shape[1] < 2:
             raise ValueError("categorical probabilities must have at least two columns")
@@ -347,7 +364,7 @@ class CategoricalPrediction:
             raise ValueError("categorical predictors and probabilities must be equally sized")
         if len(categories) != probability.shape[1]:
             raise ValueError("categories must name every probability column")
-        keys = tuple((type(value), value) for value in categories)
+        keys = tuple(_category_key(value) for value in categories)
         try:
             unique = set(keys)
         except TypeError:
@@ -365,6 +382,7 @@ class CategoricalPrediction:
         object.__setattr__(self, "probability", probability)
         object.__setattr__(self, "linear_predictor", linear_predictor)
         object.__setattr__(self, "categories", categories)
+        object.__setattr__(self, "category_factors", factors)
         object.__setattr__(self, "mode", mode)
 
     @property
@@ -372,6 +390,57 @@ class CategoricalPrediction:
         """Number of trial rows represented by the prediction."""
 
         return self.probability.shape[0]
+
+    @property
+    def is_composite(self) -> bool:
+        """Whether each category names a cell of a declared factorisation."""
+
+        return self.category_factors is not None
+
+    def factor_levels(self, factor: str) -> tuple[Any, ...]:
+        """Return one declared factor's distinct levels in first-appearance order."""
+
+        position = self._factor_position(factor)
+        levels: list[Any] = []
+        seen: set[Any] = set()
+        for category in self.categories:
+            level = category[position]
+            key = _category_key(level)
+            if key not in seen:
+                seen.add(key)
+                levels.append(level)
+        return tuple(levels)
+
+    def marginal(self, factor: str) -> CategoricalPrediction:
+        """Sum out every factor but ``factor`` and return the marginal prediction.
+
+        This is the operation a caller of a joint-scoring model actually wants -- "what
+        does this model say about the response, ignoring confidence?" -- and it is exact,
+        because the cells of one row partition that row's probability. The marginal's
+        linear predictor is the log of the marginal probability, ``-inf`` for a level the
+        row cannot reach; it is not a sum of the joint linear predictors, which are not
+        additive in probability.
+        """
+
+        levels = self.factor_levels(factor)
+        if len(levels) < 2:
+            raise ValueError(
+                f"factor {factor!r} has a single level, so its marginal is not a "
+                "categorical prediction"
+            )
+        position = self._factor_position(factor)
+        index = {_category_key(level): column for column, level in enumerate(levels)}
+        probability = np.zeros((self.n_observations, len(levels)), dtype=np.float64)
+        for column, category in enumerate(self.categories):
+            probability[:, index[_category_key(category[position])]] += self.probability[:, column]
+        with np.errstate(divide="ignore"):
+            linear_predictor = np.log(probability)
+        return CategoricalPrediction(
+            probability=probability,
+            linear_predictor=linear_predictor,
+            categories=levels,
+            mode=self.mode,
+        )
 
     def take(self, indices: Sequence[int] | NDArray[np.integer[Any]]) -> CategoricalPrediction:
         """Return a protected row subset on the same category coordinate."""
@@ -381,7 +450,21 @@ class CategoricalPrediction:
             linear_predictor=self.linear_predictor[indices],
             categories=self.categories,
             mode=self.mode,
+            category_factors=self.category_factors,
         )
+
+    def _factor_position(self, factor: str) -> int:
+        if self.category_factors is None:
+            raise ValueError(
+                "this prediction declares scalar categories, so it has no factors to "
+                "marginalise over"
+            )
+        try:
+            return self.category_factors.index(factor)
+        except ValueError:
+            raise KeyError(
+                f"unknown category factor {factor!r}; declared: {list(self.category_factors)}"
+            ) from None
 
 
 ModelPrediction = Prediction | CategoricalPrediction
@@ -389,7 +472,15 @@ ModelPrediction = Prediction | CategoricalPrediction
 
 @runtime_checkable
 class BehaviourEstimator(Protocol):
-    """Minimum fitting, prediction, and pointwise-scoring contract."""
+    """Minimum fitting, prediction, and pointwise-scoring contract.
+
+    ``required_task_columns`` is a member of this protocol rather than of a side protocol.
+    "What columns does this model need?" is the first question anyone asks of an estimator,
+    and every estimator can answer it: a model whose likelihood reads nothing but its
+    scored column answers ``()``. It used to live on a separate ``TaskColumnEstimator``
+    only to avoid evicting models that had not yet written the declaration down, and that
+    reason has expired.
+    """
 
     @property
     def model_name(self) -> str: ...
@@ -399,6 +490,9 @@ class BehaviourEstimator(Protocol):
 
     @property
     def scored_columns(self) -> tuple[str, ...]: ...
+
+    @property
+    def required_task_columns(self) -> tuple[str, ...]: ...
 
     @property
     def supported_prediction_modes(self) -> tuple[PredictionMode, ...]: ...
@@ -420,22 +514,6 @@ class BehaviourEstimator(Protocol):
         *,
         mode: PredictionMode = PredictionMode.FILTERED,
     ) -> NDArray[np.float64]: ...
-
-
-@runtime_checkable
-class TaskColumnEstimator(BehaviourEstimator, Protocol):
-    """An estimator that declares the predictive context it reads but does not score.
-
-    This is deliberately a separate protocol rather than a member of
-    :class:`BehaviourEstimator`. "What columns does this model need" is the first question
-    a user asks, but a model whose likelihood reads nothing but its scored column has
-    nothing to answer, and requiring the declaration would exclude such an estimator from
-    the base contract for no gain. :func:`model_capabilities` surfaces the answer for
-    either kind.
-    """
-
-    @property
-    def required_task_columns(self) -> tuple[str, ...]: ...
 
 
 @runtime_checkable
@@ -492,17 +570,23 @@ def model_capabilities(model: BehaviourEstimator) -> ModelCapabilities:
 
 
 def model_task_columns(model: Any) -> tuple[str, ...]:
-    """Return the validated predictive context an estimator declares, or ``()``.
+    """Return the validated predictive context an estimator declares.
 
-    An estimator that does not satisfy :class:`TaskColumnEstimator` declares nothing and
-    gets an empty tuple; one that does gets its declaration checked here rather than only
-    at task-validation time, so a malformed declaration is a model defect that surfaces
-    from :func:`model_capabilities`.
+    The declaration is checked here rather than only at task-validation time, so a
+    malformed one is a model defect that surfaces from :func:`model_capabilities`.
+
+    A missing declaration still yields ``()`` rather than raising, because
+    :class:`behavio.contracts.posterior.PosteriorBehaviourEstimator` does not yet require
+    it and :func:`behavio.contracts.posterior.posterior_model_capabilities` routes through
+    here. For the frequentist contract the tolerance is unreachable: an estimator without
+    ``required_task_columns`` is not a :class:`BehaviourEstimator`, and
+    :func:`model_capabilities` rejects it before reaching this call.
     """
 
-    if not isinstance(model, TaskColumnEstimator):
+    declared = getattr(model, "required_task_columns", None)
+    if declared is None:
         return ()
-    return validate_required_task_columns(model.required_task_columns)
+    return validate_required_task_columns(declared)
 
 
 def validate_required_task_columns(columns: Any) -> tuple[str, ...]:
@@ -541,9 +625,58 @@ def validate_parameter_names(names: Any) -> tuple[str, ...]:
 
 
 def _prediction_category(value: Any) -> Any:
+    """Normalize one category label, which is a scalar or a tuple of scalars."""
+
+    if isinstance(value, tuple):
+        if not value:
+            raise ValueError("a composite prediction category must name at least one factor")
+        return tuple(_prediction_scalar(item) for item in value)
+    return _prediction_scalar(value)
+
+
+def _prediction_scalar(value: Any) -> Any:
     scalar = value.item() if isinstance(value, np.generic) else value
     if scalar is None or isinstance(scalar, (str, bool, int)):
         return scalar
     if isinstance(scalar, float) and np.isfinite(scalar):
         return scalar
     raise ValueError(f"prediction category must be a finite scalar: {scalar!r}")
+
+
+def _category_key(value: Any) -> Any:
+    """Return a hashable identity that keeps ``0``, ``0.0``, ``False`` and ``"0"`` apart.
+
+    Recursing into tuples is what keeps the distinction inside a composite category, where
+    ``(0, 1)`` and ``(False, 1)`` are equal and equally hashed as plain tuples.
+    """
+
+    if isinstance(value, tuple):
+        return (tuple, tuple(_category_key(item) for item in value))
+    return (type(value), value)
+
+
+def _category_factors(categories: tuple[Any, ...], factors: Any) -> tuple[str, ...] | None:
+    """Validate a declared factorisation against the categories it is meant to name."""
+
+    composite = [isinstance(category, tuple) for category in categories]
+    if any(composite) and not all(composite):
+        raise ValueError("prediction categories must be either all scalar or all composite")
+    if not any(composite):
+        if factors is not None:
+            raise ValueError("category_factors requires composite (tuple) categories")
+        return None
+    arities = {len(category) for category in categories}
+    if len(arities) != 1:
+        raise ValueError("composite prediction categories must all name the same factors")
+    if factors is None:
+        raise ValueError("composite prediction categories require declared category_factors")
+    if isinstance(factors, str):
+        raise ValueError("category_factors must be a tuple of factor names")
+    names = tuple(factors)
+    if any(not isinstance(name, str) or not name for name in names):
+        raise ValueError("category_factors must contain non-empty strings")
+    if len(set(names)) != len(names):
+        raise ValueError("category_factors must be unique")
+    if len(names) != arities.pop():
+        raise ValueError("category_factors must name every position of a composite category")
+    return names

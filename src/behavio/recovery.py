@@ -740,7 +740,7 @@ def _optimized_run(
         standard_errors=np.asarray(fit.standard_errors, dtype=np.float64),
         interval_lower=absent,
         interval_upper=absent,
-        converged=bool(fit.diagnostics.converged),
+        converged=not fit.diagnostics.failed_to_converge,
         message=fit.diagnostics.message,
         audit=fit.audit(policy=audit_policy),
         posterior_audit=None,

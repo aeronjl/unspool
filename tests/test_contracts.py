@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import graphlib
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -744,6 +745,14 @@ def test_the_multistart_contract_is_what_produces_a_restart_audit() -> None:
 
 
 def test_a_closed_form_estimator_records_a_procedure_not_an_optimizer() -> None:
+    """A procedure that solves rather than searches leaves every search field absent.
+
+    ``converged=True, status=0`` used to be written here, and the comment that defended it
+    said the quiet part: it was a claim made *so that the audit would not complain*, not a
+    measurement. Both fields are now ``None``, which is what "there was nothing to
+    converge" actually looks like in a record.
+    """
+
     diagnostics = contracts.FitDiagnostics.closed_form(
         procedure="closed-form z-transform",
         message="two-by-two table",
@@ -755,25 +764,84 @@ def test_a_closed_form_estimator_records_a_procedure_not_an_optimizer() -> None:
     assert diagnostics.n_iterations is None
     assert diagnostics.gradient_norm is None
     assert diagnostics.hessian_condition is None
-    # ``converged`` stays true because there was nothing to converge, so an audit of a
-    # closed-form fit must not manufacture a convergence failure.
-    assert diagnostics.converged and diagnostics.status == 0
+    assert diagnostics.converged is None
+    assert diagnostics.status is None
+    assert diagnostics.convergence is contracts.ConvergenceStatus.INAPPLICABLE
+    assert not diagnostics.failed_to_converge
     with pytest.raises(ValueError, match="non-empty name"):
         contracts.FitDiagnostics.closed_form(procedure="", message="x")
+
+
+def test_the_audit_separates_non_convergence_from_an_inapplicable_question() -> None:
+    """Three fits, three different answers, and only one of them is an issue."""
+
+    searched = _mle_fit()
+    failed = replace(
+        searched,
+        diagnostics=replace(searched.diagnostics, converged=False, status=1),
+    )
+    solved = replace(
+        searched,
+        diagnostics=contracts.FitDiagnostics.closed_form(
+            procedure="closed-form z-transform", message="two-by-two table", objective=1.0
+        ),
+    )
+
+    assert searched.audit().convergence is contracts.ConvergenceStatus.CONVERGED
+    assert failed.audit().convergence is contracts.ConvergenceStatus.NOT_CONVERGED
+    assert solved.audit().convergence is contracts.ConvergenceStatus.INAPPLICABLE
+
+    assert "optimizer_nonconvergence" not in searched.audit().issue_codes
+    assert "optimizer_nonconvergence" in failed.audit().issue_codes
+    # The distinction that used to be impossible: an absent flag is not a failed one.
+    assert "optimizer_nonconvergence" not in solved.audit().issue_codes
+    assert failed.audit().status is contracts.FitAuditStatus.FAIL
+    assert solved.audit().status is contracts.FitAuditStatus.PASS
+    assert solved.audit().to_dict()["convergence"] == "inapplicable"
+
+
+def test_a_procedure_with_no_convergence_question_cannot_report_a_status() -> None:
+    with pytest.raises(ValueError, match="convergence status"):
+        contracts.FitDiagnostics(
+            converged=None,
+            optimizer="closed-form z-transform",
+            status=0,
+            message="x",
+            n_iterations=None,
+            objective=None,
+            gradient_norm=None,
+            hessian_condition=None,
+            boundary_estimate=None,
+        )
+    with pytest.raises(ValueError, match="name the procedure"):
+        contracts.FitDiagnostics(
+            converged=True,
+            optimizer="",
+            status=0,
+            message="x",
+            n_iterations=None,
+            objective=None,
+            gradient_norm=None,
+            hessian_condition=None,
+            boundary_estimate=None,
+        )
 
 
 def test_required_task_columns_is_part_of_the_contract_and_is_surfaced() -> None:
     from behavio.models import EqualVarianceSDT
 
     model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0)
-    assert isinstance(model, contracts.TaskColumnEstimator)
+    assert isinstance(model, contracts.BehaviourEstimator)
     assert contracts.model_capabilities(model).required_task_columns == ("stimulus",)
     assert contracts.model_task_columns(EqualVarianceSDT()) == ("signal",)
 
     class _Silent:
+        """An estimator whose likelihood reads nothing but the column it scores."""
+
         model_name = "silent"
         signature = "silent[v1]"
         scored_columns = ("choice",)
+        required_task_columns = ()
         supported_prediction_modes = (PredictionMode.FILTERED,)
 
         def fit(self, study: Study) -> FitResult:  # pragma: no cover - never called
@@ -786,7 +854,7 @@ def test_required_task_columns_is_part_of_the_contract_and_is_surfaced() -> None
             raise NotImplementedError  # pragma: no cover - never called
 
     silent = _Silent()
-    assert not isinstance(silent, contracts.TaskColumnEstimator)
+    assert isinstance(silent, contracts.BehaviourEstimator)
     assert contracts.model_capabilities(silent).required_task_columns == ()
     with pytest.raises(ValueError, match="tuple of column names"):
         contracts.validate_required_task_columns("stimulus")
@@ -818,3 +886,102 @@ def _psychometric_study() -> Study:
             "choice": generator.binomial(1, probability).astype(np.int8),
         }
     )
+
+
+def _joint_prediction() -> contracts.CategoricalPrediction:
+    probability = np.asarray([[0.4, 0.1, 0.2, 0.3], [0.1, 0.2, 0.3, 0.4]])
+    return contracts.CategoricalPrediction(
+        probability=probability,
+        linear_predictor=np.log(probability),
+        categories=(("no", 2), ("no", 1), ("yes", 1), ("yes", 2)),
+        mode=PredictionMode.FILTERED,
+        category_factors=("response", "confidence"),
+    )
+
+
+def test_a_composite_category_names_a_joint_cell_and_can_be_marginalised() -> None:
+    """Tuple categories replace the stringly typed joint labels a model used to emit.
+
+    ``_prediction_category`` admitted only scalars, so a model scoring a joint observation
+    had to flatten a cell into a string like ``"no-2"`` and every caller wanting one
+    margin had to parse it back apart. ``scored_columns`` already said the observation was
+    joint; only the labels were not.
+    """
+
+    prediction = _joint_prediction()
+    response = prediction.marginal("response")
+
+    assert prediction.is_composite
+    assert prediction.categories[0] == ("no", 2)
+    assert prediction.factor_levels("response") == ("no", "yes")
+    assert prediction.factor_levels("confidence") == (2, 1)
+    assert response.categories == ("no", "yes")
+    assert response.category_factors is None
+    assert np.allclose(response.probability, [[0.5, 0.5], [0.3, 0.7]])
+    assert np.allclose(response.linear_predictor, np.log(response.probability))
+    assert np.allclose(prediction.marginal("confidence").probability, [[0.7, 0.3], [0.5, 0.5]])
+    # A row subset keeps the factorisation, or the margin would be lost on every fold.
+    assert prediction.take([1]).category_factors == ("response", "confidence")
+    assert prediction.take([1]).categories == prediction.categories
+
+
+def test_a_composite_category_must_be_labelled_and_uniformly_shaped() -> None:
+    """An unlabelled tuple is no more readable than the string it replaces."""
+
+    probability = np.asarray([[0.5, 0.5]])
+    predictor = np.log(probability)
+
+    def build(categories: Any, factors: Any = None) -> contracts.CategoricalPrediction:
+        return contracts.CategoricalPrediction(
+            probability=probability,
+            linear_predictor=predictor,
+            categories=categories,
+            mode=PredictionMode.FILTERED,
+            category_factors=factors,
+        )
+
+    with pytest.raises(ValueError, match="require declared category_factors"):
+        build((("no", 1), ("yes", 1)))
+    with pytest.raises(ValueError, match="all scalar or all composite"):
+        build((("no", 1), "yes"), ("response", "confidence"))
+    with pytest.raises(ValueError, match="same factors"):
+        build((("no", 1), ("yes", 1, 2)), ("response", "confidence"))
+    with pytest.raises(ValueError, match="every position"):
+        build((("no", 1), ("yes", 1)), ("response",))
+    with pytest.raises(ValueError, match="must be unique"):
+        build((("no", 1), ("yes", 1)), ("response", "response"))
+    with pytest.raises(ValueError, match="requires composite"):
+        build(("no", "yes"), ("response",))
+    with pytest.raises(ValueError, match="at least one factor"):
+        build(((), ("yes", 1)), ("response", "confidence"))
+    with pytest.raises(ValueError, match="finite scalar"):
+        build((("no", float("nan")), ("yes", 1)), ("response", "confidence"))
+
+
+def test_composite_categories_keep_the_scalar_identity_rule_inside_a_tuple() -> None:
+    """``0`` and ``False`` stay distinct at every depth, as they already did at the top.
+
+    Uniqueness has always been decided on ``(type, value)`` rather than on ``==``, so a
+    scalar ``0`` and a scalar ``False`` are two categories. Hashing a tuple directly would
+    silently drop that rule one level down, because ``(0, 1) == (False, 1)`` and the two
+    hash alike; the check therefore recurses into the tuple.
+    """
+
+    probability = np.asarray([[0.5, 0.5]])
+    distinct = contracts.CategoricalPrediction(
+        probability=probability,
+        linear_predictor=np.log(probability),
+        categories=((0, 1), (False, 1)),
+        mode=PredictionMode.FILTERED,
+        category_factors=("response", "confidence"),
+    )
+
+    assert distinct.factor_levels("response") == (0, False)
+    with pytest.raises(ValueError, match="categories must be unique"):
+        contracts.CategoricalPrediction(
+            probability=probability,
+            linear_predictor=np.log(probability),
+            categories=((0, 1), (0, 1)),
+            mode=PredictionMode.FILTERED,
+            category_factors=("response", "confidence"),
+        )

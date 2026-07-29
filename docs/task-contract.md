@@ -40,9 +40,11 @@ print(fitted.audit().status)
 `fit_model()` is the small interactive golden path. It validates the task, confirms that
 the estimator scores observations declared by that task, fits the model, checks result
 identity and row counts, and returns the task denominators beside the raw `FitResult`.
-Models may also declare `required_task_columns` for predictive context that they consume
-but do not score—for example, reward in a win-stay/lose-shift model. Those columns must
-have an explicit predictor, reward, response-time, block, episode, or availability role.
+Every model declares `required_task_columns` for predictive context that it consumes but
+does not score—for example, reward in a win-stay/lose-shift model. The declaration is part
+of the `BehaviourEstimator` contract rather than optional, and a model that reads nothing
+but the column it scores declares `()`. Those columns must have an explicit predictor,
+reward, response-time, block, episode, or availability role.
 Prospective scientific claims should still use the fold-aware comparison or protocol
 runner, which refits the model independently inside every training fold. Reusable numeric,
 categorical, interaction, and history terms are described in the

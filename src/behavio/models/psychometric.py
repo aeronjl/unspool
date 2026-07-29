@@ -281,18 +281,24 @@ class PsychometricSummary:
 
 @dataclass(frozen=True, slots=True)
 class PsychometricFitResult(FitResult):
-    """A psychometric fit that retains its natural scale and every deterministic restart.
+    """A psychometric fit that retains every deterministic restart.
 
-    The four restart fields are the :class:`~behavio.contracts.MultistartFit` contract, so
+    This subclass survives the removal of its detection-theory siblings, and it survives
+    for one reason: the four restart fields are evidence that *only fitting produced*.
+    They are the :class:`~behavio.contracts.MultistartFit` contract, so
     :meth:`~behavio.contracts.FitResult.audit` derives a
     :class:`~behavio.contracts.RestartAudit` from this fit without either side knowing
-    about the other. ``link`` stays a field because it is a declared configuration, not a
-    number; the natural threshold, width and rates are read from
-    :attr:`~behavio.contracts.FitResult.derived`, where they carry their own standard
-    errors and intervals.
+    about the other, and nothing recomputes them short of refitting. Six other models in
+    the catalogue carry the same four fields for the same reason.
+
+    Everything that was *not* such evidence has gone. ``link`` was a declared
+    configuration already spelled out by ``model_name`` and ``model_signature``, and the
+    typed ``threshold`` / ``width`` / ``guess_rate`` / ``lapse_rate`` readers only renamed
+    entries of :attr:`~behavio.contracts.FitResult.derived`, where those quantities carry
+    their own standard errors and intervals and where a consumer typed on plain
+    ``FitResult`` can already see them.
     """
 
-    link: PsychometricLink
     restart_objectives: NDArray[np.float64]
     restart_converged: NDArray[np.bool_]
     restart_messages: tuple[str, ...]
@@ -300,7 +306,6 @@ class PsychometricFitResult(FitResult):
 
     def __post_init__(self) -> None:
         FitResult.__post_init__(self)
-        object.__setattr__(self, "link", PsychometricLink(self.link))
         objectives = protected_array(self.restart_objectives, dtype=np.float64)
         converged = protected_array(self.restart_converged, dtype=np.bool_)
         messages = tuple(self.restart_messages)
@@ -315,34 +320,13 @@ class PsychometricFitResult(FitResult):
         )
         if missing:
             raise ValueError(f"a psychometric fit must declare derived {missing}")
-        PsychometricParameters(self.threshold, self.width, self.guess_rate, self.lapse_rate)
+        values = self.derived_values
+        PsychometricParameters(
+            values["threshold"], values["width"], values["guess_rate"], values["lapse_rate"]
+        )
         object.__setattr__(self, "restart_objectives", objectives)
         object.__setattr__(self, "restart_converged", converged)
         object.__setattr__(self, "restart_messages", messages)
-
-    @property
-    def threshold(self) -> float:
-        """Stimulus level at which the link reaches one half."""
-
-        return self.derived_value("threshold")
-
-    @property
-    def width(self) -> float:
-        """Curve width, in stimulus units for every link but the Weibull."""
-
-        return self.derived_value("width")
-
-    @property
-    def guess_rate(self) -> float:
-        """Lower asymptote of the curve."""
-
-        return self.derived_value("guess_rate")
-
-    @property
-    def lapse_rate(self) -> float:
-        """Gap between the upper asymptote and one."""
-
-        return self.derived_value("lapse_rate")
 
 
 @dataclass(frozen=True, slots=True)
@@ -763,7 +747,6 @@ class PsychometricFunction:
             n_observations=len(study),
             diagnostics=diagnostics,
             derived=summary.derived_quantities(),
-            link=self.link,
             restart_objectives=objectives,
             restart_converged=np.asarray([bool(item.success) for item in results]),
             restart_messages=tuple(str(item.message) for item in results),

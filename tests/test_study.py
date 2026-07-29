@@ -401,3 +401,71 @@ def test_factorial_reproduces_a_hand_rolled_grid_exactly() -> None:
     assert built.columns == hand.columns
     for column in hand.columns:
         np.testing.assert_array_equal(np.asarray(built[column]), np.asarray(hand[column]))
+
+
+def test_a_study_canonicalises_signed_zeros_so_a_digest_depends_only_on_values() -> None:
+    """Two arithmetically equivalent constructions must land on one content address.
+
+    ``-0.0`` and ``+0.0`` compare equal and are indistinguishable to everything downstream
+    of a study, so no fit, score or prediction can tell them apart. Provenance can:
+    Behavio hashes a study's values through ``json.dumps``, which writes them as different
+    text. Before this invariant, the *same* column produced two digests depending on how
+    it was computed -- ``np.einsum`` normalises the sign of a zero and elementwise ``*``
+    does not, and three separate defects of that shape were fixed one at a time. The class
+    fix is here, at ingest, so a column's digest depends on its values and nothing else.
+    """
+
+    from behavio.interchange import _study_record
+
+    stimulus = np.asarray([-2.0, 0.0, 1.5, 0.0])
+    gate = np.asarray([0.0, -1.0, 1.0, 1.0])
+    by_multiplication = stimulus * gate
+    by_contraction = np.einsum("i,i->i", stimulus, gate)
+
+    assert np.array_equal(by_multiplication, by_contraction)
+    assert np.any(np.signbit(by_multiplication) & (by_multiplication == 0.0))
+    assert not np.any(np.signbit(by_contraction) & (by_contraction == 0.0))
+
+    def study_from(values: np.ndarray) -> Study:
+        return Study({**valid_columns(), "interaction": values})
+
+    multiplied = study_from(by_multiplication)
+    contracted = study_from(by_contraction)
+
+    assert not np.any(np.signbit(multiplied["interaction"]))
+    assert multiplied["interaction"].tobytes() == contracted["interaction"].tobytes()
+    assert _study_record(multiplied)["sha256"] == _study_record(contracted)["sha256"]
+
+
+def test_canonicalising_a_zero_leaves_every_other_value_bit_for_bit_alone() -> None:
+    """The invariant may only touch the sign of a zero, including the awkward values."""
+
+    values = np.asarray([-0.0, 0.0, -1e-320, -np.inf, np.inf, np.nan, -1.5, 5e-324])
+    study = Study({**valid_columns(), "probe": values[:4]})
+    stored = np.asarray(study["probe"])
+
+    assert stored[0] == 0.0 and not np.signbit(stored[0])
+    assert stored[1] == 0.0 and not np.signbit(stored[1])
+    # A subnormal is not a zero, so its sign is data and must survive untouched.
+    assert stored[2] == -1e-320 and np.signbit(stored[2])
+    assert np.isneginf(stored[3])
+
+    tail = Study({**valid_columns(), "probe": values[4:]})
+    kept = np.asarray(tail["probe"])
+    assert np.isposinf(kept[0]) and np.isnan(kept[1])
+    assert kept[2] == -1.5 and kept[3] == 5e-324
+
+
+def test_canonicalisation_reaches_object_columns_and_skips_non_numeric_ones() -> None:
+    study = Study(
+        {
+            **valid_columns(),
+            "mixed": np.asarray([-0.0, "text", 3, -0.0], dtype=object),
+            "label": ["a", "b", "c", "d"],
+        }
+    )
+
+    mixed = list(study["mixed"])
+    assert not np.signbit(mixed[0]) and not np.signbit(mixed[3])
+    assert mixed[1] == "text" and mixed[2] == 3
+    assert study["label"].tolist() == ["a", "b", "c", "d"]

@@ -91,6 +91,12 @@ class FitOnlyEstimator:
         return self.delegate.scored_columns
 
     @property
+    def required_task_columns(self) -> tuple[str, ...]:
+        # Now part of ``BehaviourEstimator`` rather than of a side protocol, so a
+        # third-party-style estimator has to answer it to satisfy the contract at all.
+        return self.delegate.required_task_columns
+
+    @property
     def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
         return self.delegate.supported_prediction_modes
 
