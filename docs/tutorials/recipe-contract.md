@@ -15,14 +15,20 @@ What failed? Which claim remains justified?
 Name the paper, public data release, retrieval route, license or access boundary, file
 identity, and exact part of the published analysis being adapted. Distinguish:
 
-- **exact reproduction:** the released inputs and specification reconstruct a reported
-  result;
-- **independent reproduction:** the same scientific quantity is recomputed from source
-  trials;
-- **literature-shaped analysis:** a new bounded question uses the paper's task or model
-  structure; and
+- **published parity:** the same scientific quantity is recomputed from source trials and
+  checked against the value printed in the paper inside a declared tolerance;
+- **independent analysis:** the same scientific quantity is recomputed from source trials,
+  with no printed value available to compare against;
+- **released replay:** the released inputs and specification reconstruct a reported result
+  without an independent refit;
+- **literature-shaped:** a new bounded question uses the paper's task or model structure;
+  and
 - **demonstration:** synthetic or small data illustrate the API without an empirical
   claim.
+
+A recipe that checks published values records them in a `published_claims.json` beside its
+`result.json`, and a failed comparison is retained as **failed parity** rather than removed
+or retitled.
 
 ### 2. Runtime profile
 
@@ -91,11 +97,12 @@ must be visible rather than implied by the chapter title. Conceptual figures mus
 their values are schematic. Prefer panels that expose observations, predictions,
 calibration, fit diagnostics, and recovery rather than ornamental summaries.
 
-A recipe that claims exact or independent reproduction includes a correspondence table:
+A recipe that claims published parity, independent analysis, or released replay includes
+a correspondence table:
 
 | Unspool display | Published target | Relationship | Preserved | Changed or unavailable |
 | --- | --- | --- | --- | --- |
-| `example.svg`, panel A | Paper Figure X, panel Y | Independent reproduction | outcome, cohort rule, unit | visual geometry |
+| `example.svg`, panel A | Paper Figure X, panel Y | Published parity | outcome, cohort rule, unit | visual geometry |
 
 Composite displays receive one row per panel when their evidence relationships differ.
 If the original panel has not been verified, name the reported quantity and mark exact
@@ -145,7 +152,7 @@ fit all candidates only on training data, and compare matched held-out observati
 
 | Recipe | Classification | Observed event | Deployment boundary | Main remaining boundary |
 | --- | --- | --- | --- | --- |
-| Cell 2025 flagship | Independent reproduction plus new prospective analysis | Binary choice | Later sessions in a completed historical cohort | Full neural and clustering claims excluded |
+| Cell 2025 flagship | Published parity plus new prospective analysis | Binary choice | Later sessions in a completed historical cohort | Full neural and clustering claims excluded |
 | IBL trajectories | Literature-shaped descriptive analysis | Session accuracy | Outcome-blind endpoint windows | Not an unbiased population learning curve |
 | IBL prospective selection | Literature-shaped prospective analysis | Binary choice | Later session and held-out lab | Fixed empirical labs, plug-in population prediction |
 | IBL choice/RT | Literature-shaped prospective analysis | Choice + movement-onset RT | Untouched later session | One selected animal; negative robustification result retained |

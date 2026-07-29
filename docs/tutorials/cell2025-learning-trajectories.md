@@ -57,21 +57,21 @@ records the released GP paths, both soft-DTW computations, and their claim bound
 
 | Unspool display | Published or released target | Relationship | Preserved | Changed or unavailable |
 | --- | --- | --- | --- | --- |
-| `cell2025-strategy.svg`, G | Cell Figure 1G: early bias versus late bias | Independent reproduction | public trials, exclusions, animal unit, days 4-8 and final-five-paper-day windows, axes, continuous colour variable | paired into one SVG; DejaVu Sans; seeded confidence band |
-| `cell2025-strategy.svg`, I | Cell Figure 1I: early bias versus late R-L slope | Independent reproduction | public trials, exclusions, animal unit, windows, axes, continuous colour variable | paired into one SVG; DejaVu Sans; seeded confidence band |
+| `cell2025-strategy.svg`, G | Cell Figure 1G: early bias versus late bias | Published parity | public trials, exclusions, animal unit, days 4-8 and final-five-paper-day windows, axes, continuous colour variable | paired into one SVG; DejaVu Sans; seeded confidence band |
+| `cell2025-strategy.svg`, I | Cell Figure 1I: early bias versus late R-L slope | Published parity | public trials, exclusions, animal unit, windows, axes, continuous colour variable | paired into one SVG; DejaVu Sans; seeded confidence band |
 | `cell2025-trajectories.svg`, H | Cell Figure 1H: R-L slope over session | Exact released-fit replay | 30 released GP paths, session axis, one within-group soft-DTW centroid per Figure 1J membership, endpoints, continuous colour | paired into one SVG; DejaVu Sans; compact line widths and labels |
 | `cell2025-trajectories.svg`, J | Cell Figure 1J: right versus left slope paths | Exact released-fit replay | 30 released GP paths, three-cluster soft-DTW centroids, equal axes, references, endpoints, learning-progress gradient | paired into one SVG; DejaVu Sans; compact line widths and endpoint key |
-| `cell2025-qvalue-response-time.svg`, A | Cell Figure S1Q: first-five-day Q-value comparison | Released result | released per-animal BIC summary | no independent reoptimization; compact aggregate display |
-| `cell2025-qvalue-response-time.svg`, B | Cell Figures S1D-S1F: response-time changes through learning | Independent reproduction | public trials, response-time definition, animal pairing | new first-session versus final-five-session summary, not a panel replica |
-| `cell2025-forecast.svg` | No published target | Literature-shaped analysis | public behavioural cohort and chronology | new candidates, prospective boundary, estimand, uncertainty |
+| `cell2025-qvalue-response-time.svg`, A | Cell Figure S1Q: first-five-day Q-value comparison | Released replay | released per-animal BIC summary | no independent reoptimization; compact aggregate display |
+| `cell2025-qvalue-response-time.svg`, B | Cell Figures S1D-S1F: response-time changes through learning | Published parity | public trials, response-time definition, animal pairing | new first-session versus final-five-session summary, not a panel replica |
+| `cell2025-forecast.svg` | No published target | Literature-shaped | public behavioural cohort and chronology | new candidates, prospective boundary, estimand, uncertainty |
 | `cell2025-recovery.svg` | No published target | Synthetic benchmark | exact public trial/session/contrast geometry | simulated outcomes and declared generators |
 
 ### Early bias, late bias, and late asymmetry
 
-<figure class="doc-figure doc-figure--wide" data-figure-kind="Independent reproduction">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Published parity">
   <img src="../../assets/cell2025-strategy.svg" alt="Two animal-level scatter plots reconstructing Cell Figure 1G and 1I: early bias is negatively associated with late bias and positively associated with late right-minus-left psychometric slope across 30 mice.">
   <a class="doc-figure__full-resolution" href="../../assets/cell2025-strategy.svg" target="_blank" rel="noopener">Open full-resolution Figure 1G/I ↗</a>
-  <figcaption><strong>Independent reproduction · Cell Figure 1G and 1I.</strong> Bias over days 4-8 is negatively associated with bias in the final five-paper-day window (<em>r</em> = -0.52764, <em>p</em> = 0.00273) and positively associated with late right-minus-left psychometric slope (<em>r</em> = 0.69479, <em>p</em> = 2.04 × 10⁻⁵). Axis geometry and the released continuous mouse colours are preserved; DejaVu Sans and a seeded animal bootstrap make the documentation rendering reproducible. Neither association establishes that early bias causes later strategy.<span class="doc-figure__meta"><strong>Unit:</strong> animal · <strong>n:</strong> 30 animals, 192,238 retained trials · <strong>Estimands:</strong> two Pearson early-bias/late-behaviour associations · <a href="../cell2025-figure1gi-reproduction/">panel audit</a> · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
+  <figcaption><strong>Published parity · Cell Figure 1G and 1I.</strong> Bias over days 4-8 is negatively associated with bias in the final five-paper-day window (<em>r</em> = -0.52764, <em>p</em> = 0.00273) and positively associated with late right-minus-left psychometric slope (<em>r</em> = 0.69479, <em>p</em> = 2.04 × 10⁻⁵). Axis geometry and the released continuous mouse colours are preserved; DejaVu Sans and a seeded animal bootstrap make the documentation rendering reproducible. Neither association establishes that early bias causes later strategy.<span class="doc-figure__meta"><strong>Unit:</strong> animal · <strong>n:</strong> 30 animals, 192,238 retained trials · <strong>Estimands:</strong> two Pearson early-bias/late-behaviour associations · <a href="../cell2025-figure1gi-reproduction/">panel audit</a> · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 Mean non-zero-stimulus accuracy rises from `0.51734` in the first session to `0.75803`
@@ -87,10 +87,10 @@ Gaussian processes and visualizes three soft-DTW clusters. Reproduction required
 released numerical environment and its implicit alphabetical animal ordering. The final
 semantic membership matches the released CSV for all 30 animals.
 
-<figure class="doc-figure doc-figure--wide" data-figure-kind="Exact reproduction">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Released replay">
   <img src="../../assets/cell2025-trajectories.svg" alt="Two-panel exact replay of 30 released mouse learning trajectories and their soft-DTW centroids in Cell Figure 1H session-by-asymmetry and Figure 1J right-by-left slope coordinates.">
   <a class="doc-figure__full-resolution" href="../../assets/cell2025-trajectories.svg" target="_blank" rel="noopener">Open full-resolution Figure 1H/J ↗</a>
-  <figcaption><strong>Exact reproduction · Cell Figure 1H and 1J.</strong> Individual released GP paths overlap and change through training; thick paths are the exact released soft-DTW visual summaries in each panel's distinct geometry. The continuous colours and three retrospective centroids are not prospective classes or evidence for three biological kinds.<span class="doc-figure__meta"><strong>Unit:</strong> animal trajectory · <strong>n:</strong> 30 mice × 100 interpolation points · <strong>Estimands:</strong> R-L slope over session and left-versus-right slope paths · <a href="../cell2025-figure1hj-reproduction/">panel audit</a> · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
+  <figcaption><strong>Released replay · Cell Figure 1H and 1J.</strong> Individual released GP paths overlap and change through training; thick paths are the exact released soft-DTW visual summaries in each panel's distinct geometry. The continuous colours and three retrospective centroids are not prospective classes or evidence for three biological kinds.<span class="doc-figure__meta"><strong>Unit:</strong> animal trajectory · <strong>n:</strong> 30 mice × 100 interpolation points · <strong>Estimands:</strong> R-L slope over session and left-versus-right slope paths · <a href="../cell2025-figure1hj-reproduction/">panel audit</a> · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 ### Reward history and response time
@@ -140,9 +140,9 @@ feature to the forecast phase and added a generic late-phase control.
 
 ## Prospective result
 
-<figure class="doc-figure doc-figure--wide" data-figure-kind="Literature-shaped analysis">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Literature-shaped">
   <img src="../../assets/cell2025-forecast.svg" alt="Six model log-loss estimates with animal-bootstrap intervals and three pairwise early-bias contrasts. Early bias clearly improves on complete pooling, while comparisons with a late-phase control and hierarchical smooth trajectory cross zero.">
-  <figcaption><strong>Literature-shaped analysis · forecastability without overclaiming model identity.</strong> Early bias has the lowest mean log loss, but only its improvement over the pooled psychometric model is resolved by the frozen animal bootstrap. This new analysis has no claimed paper-panel counterpart.<span class="doc-figure__meta"><strong>Unit:</strong> animal · <strong>n:</strong> 30 animals, 73,042 trials, 6 folds · <strong>Estimand:</strong> animal-balanced final-five-session choice log loss with animal-bootstrap intervals · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
+  <figcaption><strong>Literature-shaped · forecastability without overclaiming model identity.</strong> Early bias has the lowest mean log loss, but only its improvement over the pooled psychometric model is resolved by the frozen animal bootstrap. This new analysis has no claimed paper-panel counterpart.<span class="doc-figure__meta"><strong>Unit:</strong> animal · <strong>n:</strong> 30 animals, 73,042 trials, 6 folds · <strong>Estimand:</strong> animal-balanced final-five-session choice log loss with animal-bootstrap intervals · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 | Candidate | Animal-balanced log loss | 95% interval |

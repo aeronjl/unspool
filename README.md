@@ -261,18 +261,23 @@ singleton design is rejected as inferentially unready. See the
 
 The longitudinal Wiener hierarchy now supports named drift and boundary heterogeneity and
 can estimate each scale inside the training fold with bounded Laplace-EM updates. In a
-prospective 6-versus-12-animal benchmark, joint scale RMSE falls from `0.09178` to
-`0.05138`; all 16 fits converge and mean future-session log loss stays within `0.00233` of
-an oracle. Local interval coverage is only 50–62.5%, so Unspool reports those intervals as
-diagnostics rather than calibrated uncertainty. See the
+prospective 6-versus-12-animal benchmark, joint scale RMSE falls from `0.06144` to
+`0.04806`; all 16 fits converge and mean future-session log loss stays within `0.00081` of
+an oracle. Scale intervals now default to the Louis observed-information correction rather
+than the complete-data curvature, and coverage across the four parameter-by-cohort cells
+is 87.5–100% against a nominal 95%. Those intervals are conservative, not exact: their
+standard errors run up to `2.07x` the Monte Carlo sampling spread of the estimates
+themselves. The drift-scale point estimate also remains biased low by 21–28%, an EM/Laplace
+shrinkage the wider interval partly absorbs rather than removes. See the
 [parameter-specific DDM scale benchmark](benchmarks/ddm_subject_scale_recovery/README.md).
 
-An opt-in supplemented EM correction now accounts for uncertainty omitted by that local
-scale curvature, while refusing unstable covariance estimates. Across 20 eight-animal
-panels it returns 18 finite intervals: conditional coverage is 100% for drift scale and
-88.9% for boundary scale, versus 70% and 65% locally. Empirical-Bayes integration over
-random-effect paths improves mean joint log probability by `0.79135` across 80 entirely
-unseen animals and wins for 70% of them, with Monte Carlo precision retained per animal.
+An opt-in supplemented EM correction accounts for the same omitted uncertainty by a
+different route, while refusing unstable covariance estimates. Across 20 eight-animal
+panels it now returns 20 finite intervals: conditional coverage is 100% for both drift and
+boundary scale, versus 50% and 85% under the uncorrected local curvature. Empirical-Bayes
+integration over random-effect paths improves mean joint log probability by `0.98299`
+across 80 entirely unseen animals and wins for 68.75% of them, with Monte Carlo precision
+retained per animal.
 See the [DDM predictive-uncertainty benchmark](benchmarks/ddm_predictive_uncertainty/README.md).
 
 A latent-state recovery benchmark separates arbitrary HMM label names from recovered state
@@ -329,13 +334,27 @@ time intervals, task phases, stimulus categories, field semantics, and trial-add
 asset provenance satisfy the canonical contract. See the
 [NWB/DANDI interoperability benchmark](benchmarks/nwb_dandi_interoperability/README.md).
 
-The first external benchmark reproduces two central longitudinal-behaviour panels from
+Four papers are held to the published-parity contract: Liebana, Laffere et al. (2025),
+International Brain Laboratory et al. (2021), Ashwood et al. (2022), and Chen et al.
+(2021). Each declares the values printed in its paper, the tolerance those values are
+checked against, and the tolerance's justification, in a `published_claims.json` that
+[`tests/test_published_parity.py`](tests/test_published_parity.py) revalidates offline.
+Claims that do not reproduce are recorded as `failed-parity` and retained rather than
+tuned away: the IBL cohort size and six of Ashwood's model-derived quantities currently
+fail, each for a documented reason.
+
+One of those benchmarks reproduces two central longitudinal-behaviour panels from
 Liebana, Laffere et al. (2025): bias during days 4–8 is negatively associated with bias in
 the final-five-paper-day window (`r = -0.52764`) and positively associated with its
 right-minus-left psychometric-slope asymmetry across 30 mice (`r = 0.69479`,
 `p = 2.04e-05`). The workflow fetches only the required member of the versioned public
 Figshare archive, verifies its checksum, maps trials to `Study`, and enforces a numerical
-regression contract. See the [Cell 2025 benchmark](benchmarks/cell2025/README.md).
+regression contract. Both correlations are additionally checked against the values printed
+in the paper (`-0.53` and `0.69`) by
+[`published_claims.json`](benchmarks/cell2025/published_claims.json), which declares the
+two-decimal rounding tolerance and is revalidated offline by
+[`tests/test_published_parity.py`](tests/test_published_parity.py). See the
+[Cell 2025 benchmark](benchmarks/cell2025/README.md).
 
 The [Cell behavioural flagship](benchmarks/cell2025_flagship/README.md) retains that
 reproduction and freezes a separate historical-cohort forecast: 25 completed reference

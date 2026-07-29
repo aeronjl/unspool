@@ -9,8 +9,10 @@ reproduced.
 
 Liebana, Laffere et al. (2025) followed individual learning trajectories and related early
 choice strategy to later psychometric structure. Unspool independently reproduces the
-bounded behavioural result from Figure 1 using the public trial table. It does not yet
-reproduce the complete behavioural clustering or any neural analysis.
+bounded behavioural result from Figure 1 using the public trial table, and checks the
+recomputed correlations against the values printed in the paper through
+[`published_claims.json`](https://github.com/aeronjl/unspool/blob/main/benchmarks/cell2025/published_claims.json).
+It does not yet reproduce the complete behavioural clustering or any neural analysis.
 
 - [Worked study](tutorials/cell2025-learning-trajectories.md)
 - [Source article](https://doi.org/10.1016/j.cell.2025.05.025)
@@ -31,12 +33,15 @@ labs remain explicit limitations.
 
 GLM-HMMs and reinforcement-learning agents are common explanations of nonstationary choice.
 Unspool makes them compete with observable history and smooth-drift accounts, then tests
-whether the study design recovers the generating family. A bounded public-data analogue
-of Ashwood et al. selects GLM-HMM state count in an earlier session and scores the selected
-procedure in an untouched session. It does not claim that a latent state or learning rate
-is mechanistically identified.
+whether the study design recovers the generating family. The Ashwood et al. benchmark goes
+further than an analogue: it recomputes the paper's own published values from the paper's
+own public data, under tolerances frozen before any fit was run. The cohort reproduces
+exactly and eight of fourteen checkable claims pass; the six that fail are retained, each
+moving in the direction its declared modelling substitution predicts. It does not claim
+that a latent state or learning rate is mechanistically identified.
 
-- [Literature-shaped GLM-HMM study](tutorials/ashwood2022-glm-hmm.md)
+- [Ashwood 2022 GLM-HMM parity study](tutorials/ashwood2022-glm-hmm.md)
+- [IBL 2021 psychometrics parity study](tutorials/ibl2021-psychometrics.md)
 - [Recovery study](tutorials/model-recovery-design.md)
 - [GLM-HMM assumptions](glm-hmm.md)
 - [Q-learning assumptions](q-learning.md)

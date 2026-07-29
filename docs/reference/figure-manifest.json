@@ -1,8 +1,23 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "evidence_ladder": [
+    "published-parity",
+    "independent-analysis",
+    "released-replay",
+    "literature-shaped",
+    "demonstration"
+  ],
+  "retained_outcomes": [
+    "failed-parity"
+  ],
+  "non_comparative_classifications": [
+    "mixed-evidence",
+    "synthetic-benchmark",
+    "conceptual"
+  ],
   "figures": {
     "cell2025-forecast.svg": {
-      "classification": "literature-shaped-analysis",
+      "classification": "literature-shaped",
       "generator": "scripts/plot_documentation_figures.py",
       "source": "Frozen Cell 2025 flagship benchmark using the checksum-pinned public behavioural table",
       "unit": "animal",
@@ -32,7 +47,7 @@
       "published_target": "New design audit; no published paper panel is claimed"
     },
     "cell2025-strategy.svg": {
-      "classification": "independent-reproduction",
+      "classification": "published-parity",
       "generator": "scripts/plot_documentation_figures.py",
       "source": "Checksum-pinned Cell 2025 public behavioural trial table and released continuous prop_below colour artifact",
       "unit": "animal",
@@ -42,7 +57,7 @@
       "published_target": "Cell 2025 Figure 1G and 1I"
     },
     "cell2025-trajectories.svg": {
-      "classification": "exact-reproduction",
+      "classification": "released-replay",
       "generator": "scripts/plot_documentation_figures.py",
       "source": "Checksum-pinned released Gaussian-process trajectories plus exact-stack Figure 1H/1J soft-DTW replay",
       "unit": "animal trajectory",
@@ -52,7 +67,7 @@
       "published_target": "Cell 2025 Figure 1H and 1J"
     },
     "chen2021-bandit.svg": {
-      "classification": "literature-shaped-analysis",
+      "classification": "literature-shaped",
       "generator": "scripts/plot_documentation_figures.py",
       "source": "Checksum-pinned Chen et al. restless-bandit trials and frozen Unspool benchmark",
       "unit": "mouse",
@@ -122,7 +137,7 @@
       "published_target": "Not applicable; synthetic design audit"
     },
     "ibl-choice-response-time.svg": {
-      "classification": "literature-shaped-analysis",
+      "classification": "literature-shaped",
       "generator": "scripts/plot_documentation_figures.py",
       "source": "Checksum-pinned IBL sessions and frozen decision-model benchmark",
       "unit": "eligible trial from one outcome-blindly selected animal",
@@ -132,7 +147,7 @@
       "published_target": "New prospective diagnostic; no IBL paper panel is claimed"
     },
     "ibl-glmhmm-states.svg": {
-      "classification": "literature-shaped-analysis",
+      "classification": "literature-shaped",
       "generator": "scripts/plot_documentation_figures.py",
       "source": "Checksum-pinned IBL sessions and frozen GLM-HMM benchmark",
       "unit": "eligible choice from one outcome-blindly selected animal",
@@ -142,7 +157,7 @@
       "published_target": "Structural analogue of Ashwood et al.; not a reproduction"
     },
     "ibl-learning-trajectories.svg": {
-      "classification": "literature-shaped-analysis",
+      "classification": "literature-shaped",
       "generator": "scripts/plot_documentation_figures.py",
       "source": "Checksum-pinned IBL sessions selected by an outcome-blind endpoint rule",
       "unit": "animal within laboratory",
@@ -152,7 +167,7 @@
       "published_target": "New longitudinal rendering of the IBL 2021 public task"
     },
     "ibl-prospective-selection.svg": {
-      "classification": "literature-shaped-analysis",
+      "classification": "literature-shaped",
       "generator": "scripts/plot_documentation_figures.py",
       "source": "Frozen IBL prospective and nested-selection benchmarks",
       "unit": "subject",

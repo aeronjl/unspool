@@ -64,9 +64,9 @@ the others.
 
 The [worked studies](../tutorials/index.md) carry published scientific questions through
 cohort definition, modelling, validation, figures, and bounded interpretation. The common
-[recipe standard](../tutorials/recipe-contract.md) labels exact reproduction, independent
-reproduction, literature-shaped analysis, and synthetic demonstration so visual
-similarity is never mistaken for numerical parity.
+[recipe standard](../tutorials/recipe-contract.md) labels published parity, independent
+analysis, released replay, literature-shaped analysis, and synthetic demonstration so
+visual similarity is never mistaken for numerical parity.
 
 [Browse worked studies](../tutorials/index.md){ .md-button .md-button--primary }
 [Read the API map](../reference/index.md){ .md-button }

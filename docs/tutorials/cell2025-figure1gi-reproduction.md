@@ -9,20 +9,24 @@
 
 ## Result first
 
-<figure class="doc-figure doc-figure--wide" data-figure-kind="Independent reproduction">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Published parity">
   <img src="../../assets/cell2025-strategy.svg" alt="Two animal-level scatter plots reconstructing Cell Figure 1G and 1I: early bias is negatively associated with late bias and positively associated with late right-minus-left psychometric slope across 30 mice.">
   <a class="doc-figure__full-resolution" href="../../assets/cell2025-strategy.svg" target="_blank" rel="noopener">Open full-resolution Figure 1G/I ↗</a>
-  <figcaption><strong>Independent reproduction · Cell Figure 1G and 1I.</strong> The checksum-pinned trial table recovers the published early-to-late bias reversal and early-bias/later-asymmetry relationship. The regression band is a deterministic paired-animal bootstrap; colour preserves the released continuous trajectory-asymmetry variable rather than replacing it with three discrete classes.<span class="doc-figure__meta"><strong>Unit:</strong> animal · <strong>n:</strong> 30 animals, 192,238 retained trials · <strong>Estimands:</strong> Pearson early-bias/late-bias and early-bias/late-slope correlations · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
+  <figcaption><strong>Published parity · Cell Figure 1G and 1I.</strong> The checksum-pinned trial table recovers the published early-to-late bias reversal and early-bias/later-asymmetry relationship. The regression band is a deterministic paired-animal bootstrap; colour preserves the released continuous trajectory-asymmetry variable rather than replacing it with three discrete classes.<span class="doc-figure__meta"><strong>Unit:</strong> animal · <strong>n:</strong> 30 animals, 192,238 retained trials · <strong>Estimands:</strong> Pearson early-bias/late-bias and early-bias/late-slope correlations · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
-| Panel | Published quantity | Paper | Independent reproduction |
+| Panel | Published quantity | Paper | Unspool |
 | --- | --- | ---: | ---: |
 | 1G | Early bias versus late bias | <em>r</em> = -0.53, <em>p</em> < 0.01 | <em>r</em> = -0.52764, <em>p</em> = 0.00273 |
 | 1I | Early bias versus late R-L slope | <em>r</em> = 0.69, <em>p</em> < 0.0001 | <em>r</em> = 0.69479, <em>p</em> = 2.04 × 10<sup>-5</sup> |
 
 The paper reports rounded coefficients and thresholded p values in the display. Unspool
-shows the independently recomputed values at greater precision; it does not compare the
-rounded labels as though they were separate targets.
+shows the independently recomputed values at greater precision. The machine-readable
+[`published_claims.json`](https://github.com/aeronjl/unspool/blob/main/benchmarks/cell2025/published_claims.json)
+records each printed value, the recomputed value, and the rounding tolerance that separates
+them, so the comparison is a checked contract rather than a visual impression. Both
+correlations agree with the printed values inside the two-decimal rounding tolerance, and
+both p values stay below the printed thresholds.
 
 ## What like-for-like means here
 
@@ -84,8 +88,10 @@ session identity is retained even where two DAP021 sessions share paper day 1.
 
 These changes improve determinism, accessibility, and standalone interpretation. They do
 not alter the plotted observations or estimands. Because the correlations are recomputed
-from public trials rather than replayed from a released result file, the evidence class is
-**independent reproduction**, not “released result.”
+from public trials rather than replayed from a released result file, and because the
+recomputed values are checked against the numbers printed in the paper by
+[`published_claims.json`](https://github.com/aeronjl/unspool/blob/main/benchmarks/cell2025/published_claims.json),
+the evidence class is **published parity**, not “released replay.”
 
 ## Reproduce it
 

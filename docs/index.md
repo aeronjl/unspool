@@ -48,8 +48,8 @@ distinguished them at all.
 
 The current evidence programme includes:
 
-- an exact reproduction of public behavioural results in Liebana, Laffere et al. (2025),
-  followed by a frozen historical-cohort forecast of final-session choices;
+- a published-parity reproduction of public behavioural results in Liebana, Laffere et al.
+  (2025), followed by a frozen historical-cohort forecast of final-session choices;
 - an outcome-blind 78-animal, nine-lab IBL cohort with 468 checksum-pinned sessions;
 - same-animal and held-out-lab future-session prediction;
 - training-only nested model and smoothness selection; and

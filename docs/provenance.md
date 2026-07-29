@@ -3,6 +3,37 @@
 Unspool is a new library, but its scientific questions and some future reference
 implementations have a traceable history.
 
+## Two machine-readable contracts
+
+Every committed `benchmarks/*/result.json` carries a `provenance` block written by
+[`benchmarks/provenance.py`](https://github.com/aeronjl/unspool/blob/main/benchmarks/provenance.py)
+at the moment the file is written:
+
+```json
+"provenance": {
+  "schema_version": 1,
+  "git_describe": "41b8cd3-dirty",
+  "python": "3.12.13",
+  "libraries": {"numpy": "2.3.5", "scipy": "1.18.0", "unspool": "0.1.0"}
+}
+```
+
+The block deliberately records no wall-clock timestamp. A result that is regenerated on an
+unchanged tree at unchanged library versions must be byte-identical, so a changed file
+always means changed numbers rather than a changed date. A `-dirty` suffix means the
+producing tree had uncommitted changes.
+
+A benchmark that checks a value printed in someone else's paper also carries a
+`published_claims.json` beside its result. Each claim names the paper, the accession and
+member checksum of the input, the published value, the observed value, an explicit
+tolerance with a written rationale, and a status of `pass`, `fail`, or `waived`. No claim
+may remain `pending`. `tests/test_published_parity.py` walks every such file offline,
+re-reads each observed value out of the committed result, and recomputes the comparison,
+so a silent drift away from a published number fails the default test run. A comparison
+that does not recover the published value is recorded as `fail` and retained; the ladder in
+the [figure standard](reference/figure-standard.md) keeps a `failed-parity` label for
+exactly that outcome.
+
 ## Cell 2025 anchor
 
 Liebana, Laffere et al., “Dopamine encodes deep network teaching signals for individual
@@ -23,9 +54,9 @@ records a verified numerical result; and keeps all paper-specific code outside
 `src/unspool`. The data remain CC BY 4.0 and are fetched on demand rather than redistributed.
 
 The subsequent [Cell behavioural flagship](https://github.com/aeronjl/unspool/tree/main/benchmarks/cell2025_flagship)
-retains that independent reproduction and adds a separately named prospective estimand.
-It also verifies the released trajectory membership in a pinned compatibility environment
-and converts the released Q-value pickle into reviewable JSON without executing or
+retains that published-parity reproduction and adds a separately named prospective
+estimand. It also verifies the released trajectory membership in a pinned compatibility
+environment and converts the released Q-value pickle into reviewable JSON without executing or
 redistributing the raw artifact. Paper-specific fitting and compatibility code remains in
 the benchmark; only the general historical-cohort splitter and comparison provenance enter
 the library.

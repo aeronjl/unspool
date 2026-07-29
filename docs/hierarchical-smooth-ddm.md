@@ -85,14 +85,23 @@ estimates scales from each training study before scoring its held-out sessions o
 on the fit result. A bound hit means the design did not resolve heterogeneity beyond the
 declared range; it is not evidence that the true variance equals the bound.
 
-The default `subject_scale_uncertainty="local"` uses final expected-prior curvature in
-log-scale coordinates. The parameter-specific recovery benchmark shows that these local
-intervals are too narrow in its finite design, so they are optimization diagnostics rather
-than calibrated posterior intervals.
+The opt-in `subject_scale_uncertainty="local"` mode uses final expected-prior curvature in
+log-scale coordinates. That curvature is complete-data information, which is never smaller
+than the information the marginal likelihood actually carries, so local intervals are
+systematically too narrow. They are optimization diagnostics rather than calibrated
+posterior intervals and are retained only for comparison.
 
-The opt-in `"supplemented"` mode differentiates one forced EM update around the fitted
-log scales and uses its rate matrix to correct the complete-data information for missing
-information. This follows the supplemented EM construction of
+The default `"observed"` mode subtracts the conditional variance of the complete-data
+score from that curvature, which is the observed-information identity of
+[Louis (1982)](https://doi.org/10.1111/j.2517-6161.1982.tb01203.x). For a Gaussian
+deviation prior every term is closed form in the conditional means and covariances the
+E-step already computes, so the correction adds no optimization and cannot fail on a
+stability condition. A non-positive-definite corrected information raises
+`ModelDataError` rather than being clipped.
+
+The opt-in `"supplemented"` mode instead differentiates one forced EM update around the
+fitted log scales and uses its rate matrix to correct the complete-data information for
+missing information. This follows the supplemented EM construction of
 [Meng and Rubin (1991)](https://doi.org/10.1080/01621459.1991.10475130), applied to
 Unspool's approximate Laplace-EM map. The fit retains both
 `subject_scale_local_standard_errors` and the selected
@@ -102,9 +111,11 @@ intervals are transformed on the log scale and clipped only to the declared scal
 
 Supplementation requires a converged scale procedure, an EM spectral radius below one,
 and positive observed information. A failed condition raises `ModelDataError`; Unspool
-does not manufacture a covariance by clipping eigenvalues. The pinned benchmark resolves
-18/20 panels and leaves two stability failures visible, so this is a guarded finite-design
-improvement rather than a universal calibration guarantee.
+does not manufacture a covariance by clipping eigenvalues. The pinned benchmark now
+resolves 20/20 panels, with a maximum spectral radius of `0.89677`; the refusal path is
+retained and still fires on an unstable map, but this pinned design no longer exercises
+it. That is a guarded finite-design improvement rather than a universal calibration
+guarantee.
 
 Population simulation parameters retain the smooth Wiener's stable natural-scale
 coordinates. `simulate_with_effects()` either draws deviation paths from the configured
@@ -213,18 +224,27 @@ individual change. All 480 fits converge.
 The [parameter-specific scale benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ddm_subject_scale_recovery)
 starts drift and boundary components at the same value, estimates them from three training
 sessions, and scores a held-out fourth session against an oracle given the true scales.
-Doubling the cohort from 6 to 12 animals reduces joint scale RMSE from `0.09178` to
-`0.05138`; all 16 variance procedures and final fits converge. Mean excess future-session
-log loss is `0.00232` and `0.00080`, respectively. Local interval coverage is only
-50–62.5%, preserving the approximation's calibration limit rather than hiding it.
+Doubling the cohort from 6 to 12 animals reduces joint scale RMSE from `0.06144` to
+`0.04806`; all 16 variance procedures and final fits converge. Mean excess future-session
+log loss is `0.00081` and `0.00070`, respectively. Under the default Louis
+observed-information interval, coverage over the four parameter-by-cohort cells is
+100%, 100%, 100%, and 87.5% against a nominal 95%.
+
+Two limits survive that improvement and must be read alongside it. First, the corrected
+interval is conservative rather than exact: its standard error runs from `0.92x` to `2.07x`
+the Monte Carlo sampling spread of the estimates depending on the cell, and over-covers in
+three of four cells. Second, the drift-scale point estimate is biased low — mean `0.15827` at six
+animals and `0.17412` at twelve, against a truth of `0.22`, or 21–28% low in both cohorts.
+That is EM/Laplace shrinkage in the point estimate, not a simulation artefact, and the
+wide interval partly absorbs it. It is an open gap, not a resolved one.
 
 The [predictive-uncertainty benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ddm_predictive_uncertainty)
 then compares local and supplemented scale intervals over 20 eight-animal panels. Local
-coverage is 70% for drift scale and 65% for boundary scale. Supplementation is stable in
-18/20 panels and reaches conditional coverage of 100% and 88.9%, respectively. Across 80
-entirely new animals, integrating fitted random effects improves mean subject-joint log
-probability by `0.79135` and wins for 70%; effective draws and score Monte Carlo errors
-remain attached to every subject.
+coverage is 50% for drift scale and 85% for boundary scale. Supplementation is stable in
+all 20 panels and reaches conditional coverage of 100% for both. Across 80 entirely new
+animals, integrating fitted random effects improves mean subject-joint log probability by
+`0.98299` and wins for 68.75%; effective draws and score Monte Carlo errors remain
+attached to every subject.
 
 Run the example and benchmark with:
 

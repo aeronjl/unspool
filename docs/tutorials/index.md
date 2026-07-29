@@ -9,8 +9,8 @@ minimum evidence required before a new example joins this list.
 
 ## Cell 2025 flagship forecast
 
-Start with a panel-level independent reproduction of Figure 1G and 1I from 30 mice. The
-worked audit traces the paper PDF, released notebook revision, source checksums, exact
+Start with a panel-level published-parity reproduction of Figure 1G and 1I from 30 mice.
+The worked audit traces the paper PDF, released notebook revision, source checksums, exact
 windows, continuous colour mapping, and every intentional rendering difference.
 
 [Reproduce Cell Figure 1G and 1I](cell2025-figure1gi-reproduction.md)
@@ -52,14 +52,24 @@ and warning-level fit audit remain visible.
 
 [Open the choice/response-time study](ibl2021-choice-response-time.md)
 
-## Literature-shaped latent strategies
+## Published parity: Ashwood et al. 2022 latent strategies
 
-Turn the question posed by Ashwood et al. into a bounded prospective GLM-HMM example.
-State count is selected in an earlier session, the selected model is compared with a
-static history GLM in a later untouched session, and near-tied selection and numerical
-warnings constrain interpretation.
+Reproduce the published GLM-HMM result from the paper's own public data. The cohort
+reproduces exactly, and the model-derived quantities are compared against the values
+printed in the paper under tolerances frozen before any fit was run. Six of fourteen
+checkable claims fail, each in the direction its declared substitution predicts, and
+the failures are retained rather than tuned away.
 
-[Open the GLM-HMM study](ashwood2022-glm-hmm.md)
+[Open the GLM-HMM parity study](ashwood2022-glm-hmm.md)
+
+## Published parity: IBL 2021 psychometrics
+
+Reproduce the standardised training curves and psychometric summaries from the IBL's
+2021 reproducibility paper. Five of six checkable values reproduce; the number of mice
+reaching proficiency does not, because a substantial part of the published cohort is
+absent from the public release.
+
+[Open the IBL parity study](ibl2021-psychometrics.md)
 
 ## Restless-bandit reinforcement learning
 

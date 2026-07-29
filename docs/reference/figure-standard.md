@@ -30,18 +30,40 @@ not depend on an internal helper.
 
 ## Classification is visible
 
-Every display carries one of these labels in the figure card and in its caption:
+Every display carries one of these labels in the figure card and in its caption. The
+comparative classes form a ladder, strongest evidence first:
 
 | Classification | Meaning |
 | --- | --- |
-| Exact reproduction | Released inputs and the released specification reconstruct a reported display or result. |
-| Independent reproduction | The published scientific quantity is recomputed from source observations. |
-| Literature-shaped analysis | A new bounded question uses a published task, dataset, or model structure. |
-| Released result | A checksum-pinned released result is summarized without claiming an independent refit. |
+| Published parity | The published scientific quantity is recomputed from source observations and checked against the value printed in the paper inside a declared tolerance. |
+| Independent analysis | The published scientific quantity is recomputed from source observations, but no printed value is available to compare against. |
+| Released replay | The authors' released artifacts are re-executed at pinned library versions, reconstructing a display or result without an independent refit. |
+| Literature-shaped | A new bounded question uses a published task, dataset, or model structure. |
+| Demonstration | Small simulated data teach an API without an empirical claim. |
+
+Two further labels sit outside the ladder because they describe an outcome or a mixture
+rather than a rung:
+
+| Classification | Meaning |
+| --- | --- |
+| Failed parity | A published value was checked and not recovered. The display and its numbers are retained, never deleted or relabelled. |
 | Mixed evidence | Panels combine clearly identified evidence classes. |
 | Synthetic benchmark | Known generators test recovery, calibration, or software behaviour under a declared design. |
-| Demonstration | Small simulated data teach an API without an empirical claim. |
 | Conceptual | Values and geometry are schematic rather than study estimates. |
+
+The ordered list is machine-readable in
+[`figure-manifest.json`](figure-manifest.json) under `evidence_ladder`.
+
+### Why released replay sits below published parity
+
+An earlier version of this ladder ranked “exact reproduction” at the top. That label meant
+re-executing the authors' own released artifacts at pinned library versions, which is a
+*lower* epistemic bar than recomputing a quantity from source observations and comparing it
+to the number the paper printed: a released replay can only fail if the replay stack
+changed, never if the original analysis was wrong. The labels have therefore been corrected
+so the name matches the bar. This is a correction of vocabulary, not a demotion of the
+work; the Cell Figure 1H/1J display is unchanged, and its own audit already recorded that
+the Gaussian processes are “not independently refit.”
 
 “Replication” is not a generic badge. A display that changes the outcome, cohort,
 candidate set, validation boundary, or estimand is literature-shaped even when it uses the
@@ -53,11 +75,11 @@ Use the following markup for a new display:
 
 ```html
 <figure class="doc-figure doc-figure--wide"
-        data-figure-kind="Independent reproduction">
+        data-figure-kind="Published parity">
   <img src="../../assets/example.svg"
        alt="Conclusion-bearing description that does not rely on colour.">
   <figcaption>
-    <strong>Independent reproduction · concise result.</strong>
+    <strong>Published parity · concise result.</strong>
     Interpret the visible pattern and its uncertainty.
     <span class="doc-figure__meta">
       <strong>Unit:</strong> animal · <strong>n:</strong> 30 ·
@@ -88,7 +110,7 @@ its first result figure:
 
 | Unspool display | Published target | Relationship | Preserved | Changed or unavailable |
 | --- | --- | --- | --- | --- |
-| `example.svg`, panel A | Paper Figure X, panel Y | Independent reproduction | cohort rule, outcome, unit | plotting geometry |
+| `example.svg`, panel A | Paper Figure X, panel Y | Published parity | cohort rule, outcome, unit | plotting geometry |
 
 Use exact paper panel identifiers only after checking the paper and released analysis.
 When panel identity is uncertain, name the reported quantity and say that exact panel
@@ -113,7 +135,12 @@ text when they help a screen-reader user reconstruct the display.
 
 ## Reproducibility contract
 
-Generated SVGs must be deterministic, versioned, and reviewable:
+Generated SVGs must be deterministic under the locked plotting stack, versioned, and
+reviewable. Determinism is a property of `uv.lock`, not of matplotlib generally: text is
+emitted as searchable nodes rather than paths, element identifiers are salted to a fixed
+value, and the typeface is the one shipped with matplotlib rather than a system font, so
+regeneration on the locked environment reproduces every committed byte. A different
+matplotlib will shift sub-pixel layout metrics without changing any plotted value.
 
 ```bash
 uv run python -m benchmarks.cell2025.fetch_data
@@ -127,6 +154,12 @@ The documentation tests reject unregistered assets, serif typography, converted 
 paths, missing alternative text, unknown classification labels, incomplete provenance
 records, and figures without captions. Expensive numerical evidence remains frozen in its
 benchmark artifact; the plotting layer must not silently create new scientific results.
+
+Determinism is enforced rather than asserted. The documentation workflow regenerates every
+figure that needs no download and fails on any difference from the committed asset; the
+nightly benchmark workflow fetches the pinned public inputs and repeats the check across
+the complete set. A figure that drifts because the locked plotting stack moved therefore
+fails the build instead of being discovered later in a diff.
 
 ## Review questions
 

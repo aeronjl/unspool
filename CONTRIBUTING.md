@@ -25,6 +25,31 @@ uv build
 
 Use `uv run ruff format .` to apply formatting.
 
+The default `pytest` run deselects the `slow` marker so it stays fast enough to run on
+every change. The slow tier re-executes the offline benchmarks at committed scale and
+asserts each module's own `contract_passed` gate:
+
+```bash
+uv run pytest -m slow
+```
+
+The nightly [benchmarks workflow](.github/workflows/benchmarks.yml) runs that tier and the
+published-parity contract on a schedule and on demand. Benchmarks that need network access
+or a large downloaded dataset stay out of both paths.
+
+## Benchmark results
+
+`benchmarks/*/result.json` is written through
+[`benchmarks/provenance.py`](benchmarks/provenance.py), which stamps the git revision,
+Python version, and library versions the numbers came from. Never hand-edit a result file
+or copy a stamp between runs: the stamp is a claim about which code produced the numbers.
+Regenerate the benchmark instead, and if a value moves, say so in the change description.
+
+A benchmark that checks a value printed in someone else's paper carries a
+`published_claims.json` beside its result. Add a claim rather than a bare assertion, give
+the tolerance a written rationale, and record a comparison that fails as `fail` rather than
+widening the tolerance to fit.
+
 ## Documentation changes
 
 Build the documentation in strict mode before submitting a change:

@@ -77,10 +77,14 @@ convergence flag, and optimizer message, plus the selected restart, minimum obse
 response time, number of observations assigned the finite log-density floor, and fitted
 posterior contaminant responsibilities when that component is configured.
 
-Simulation uses vectorized Euler-Maruyama paths and linearly interpolates each boundary
-crossing within its final time step. `simulation_time_step` controls the accuracy/cost
-tradeoff, and simulation fails visibly if a path exceeds `simulation_max_time`. The
-analytic likelihood itself is not discretized.
+Simulation uses vectorized Euler-Maruyama paths. A step whose endpoints both lie inside
+the corridor may still have crossed a boundary, so each such step draws its absorption
+from the exact single-boundary Brownian-bridge probability; endpoint crossings keep the
+linear within-step interpolation. Without that bridge test the discretized paths overshoot
+both boundaries, which inflated upper-boundary probability and mean decision time at every
+step size tested. `simulation_time_step` controls the residual accuracy/cost tradeoff, and
+simulation fails visibly if a path exceeds `simulation_max_time`. The analytic likelihood
+itself is not discretized.
 
 ```python
 from unspool import WienerDriftDiffusion

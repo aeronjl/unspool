@@ -26,19 +26,26 @@ Without the downloaded Cell table, regenerate every other figure with `--skip-ce
 
 ## Evidence figures
 
+Classifications follow the corrected ladder in the
+[figure standard](figure-standard.md): published parity, then independent analysis, then
+released replay, then literature-shaped, then demonstration. The Cell Figure 1H/1J display
+is labelled a released replay because it re-executes the authors' released artifacts rather
+than refitting them, which its own audit already recorded. The label changed; the work and
+its numbers did not.
+
 | Figure | Classification | Scientific unit and source | What the display supports |
 | --- | --- | --- | --- |
 | `first-analysis.svg` | Demonstration | Six synthetic animals; exact checked-in quickstart with one protected future session | The end-to-end first-use path and animal-level paired forecast differences |
-| `cell2025-strategy.svg` | Independent reproduction | 30 animals; checksum-pinned Cell 2025 behavioural table and released continuous colour artifact | Cell Figure 1G and 1I, including the exact paper-day windows and both non-causal associations |
-| `cell2025-trajectories.svg` | Exact reproduction | 30 × 100 checksum-pinned released Gaussian-process points; exact-stack Figure 1H/1J soft-DTW replay | Both published trajectory geometries and centroids, while keeping the clusters bounded as retrospective summaries of continuous overlap |
+| `cell2025-strategy.svg` | Published parity | 30 animals; checksum-pinned Cell 2025 behavioural table and released continuous colour artifact | Cell Figure 1G and 1I, including the exact paper-day windows and both non-causal associations |
+| `cell2025-trajectories.svg` | Released replay | 30 × 100 checksum-pinned released Gaussian-process points; exact-stack Figure 1H/1J soft-DTW replay | Both published trajectory geometries and centroids, while keeping the clusters bounded as retrospective summaries of continuous overlap |
 | `cell2025-qvalue-response-time.svg` | Mixed evidence | Released first-five-day Q-value summary and independent paired response-time summaries for 30 animals | Bounded retrospective model evidence and descriptive response-time change |
-| `cell2025-forecast.svg` | Literature-shaped analysis | 30 animals, 73,042 trials, six historical-cohort forecast folds | Animal-balanced final-five-session performance and predeclared paired comparisons |
+| `cell2025-forecast.svg` | Literature-shaped | 30 animals, 73,042 trials, six historical-cohort forecast folds | Animal-balanced final-five-session performance and predeclared paired comparisons |
 | `cell2025-recovery.svg` | Synthetic benchmark | Exact Cell trial/contrast/session geometry; structural and feature-recovery simulations | Which candidate explanations the flagship design can and cannot distinguish |
-| `ibl-learning-trajectories.svg` | Literature-shaped analysis | 78 animals, nine laboratories, 468 checksum-pinned IBL sessions | Outcome-blind retrieval and the descriptive geometry of early-to-late accuracy |
-| `ibl-prospective-selection.svg` | Literature-shaped analysis | Subject-level scores from the committed nested-selection benchmark | Training-only smoothness selection and untouched future-session performance |
-| `ibl-choice-response-time.svg` | Literature-shaped analysis | 111 untouched trials from one outcome-blindly selected, checksum-pinned IBL subject | Joint response-time, conditional-accuracy, contaminant-responsibility, and prospective DDM evidence |
-| `ibl-glmhmm-states.svg` | Literature-shaped analysis | 150 untouched choices plus training-only state-count selection from the same IBL subject | Fitted latent structure, near-tied inner selection, and outer GLM-HMM versus static-GLM evidence |
-| `chen2021-bandit.svg` | Literature-shaped analysis | 32 mice, 25,279 checksum-pinned restless-bandit trials, one session-8 forecast fold, and fixed exact-design simulations | Observed task dynamics, animal-balanced held-out comparison, paired uncertainty, and conditional WSLS/Q-learning recovery |
+| `ibl-learning-trajectories.svg` | Literature-shaped | 78 animals, nine laboratories, 468 checksum-pinned IBL sessions | Outcome-blind retrieval and the descriptive geometry of early-to-late accuracy |
+| `ibl-prospective-selection.svg` | Literature-shaped | Subject-level scores from the committed nested-selection benchmark | Training-only smoothness selection and untouched future-session performance |
+| `ibl-choice-response-time.svg` | Literature-shaped | 111 untouched trials from one outcome-blindly selected, checksum-pinned IBL subject | Joint response-time, conditional-accuracy, contaminant-responsibility, and prospective DDM evidence |
+| `ibl-glmhmm-states.svg` | Literature-shaped | 150 untouched choices plus training-only state-count selection from the same IBL subject | Fitted latent structure, near-tied inner selection, and outer GLM-HMM versus static-GLM evidence |
+| `chen2021-bandit.svg` | Literature-shaped | 32 mice, 25,279 checksum-pinned restless-bandit trials, one session-8 forecast fold, and fixed exact-design simulations | Observed task dynamics, animal-balanced held-out comparison, paired uncertainty, and conditional WSLS/Q-learning recovery |
 | `model-recovery-matrix.svg` | Synthetic benchmark | Committed sparse and dense four-family simulation benchmark | Whether this analysis design can distinguish the candidate generators |
 | `hierarchical-pooling.svg` | Synthetic benchmark | Committed hierarchical-GLM recovery benchmark | How partial pooling responds to increasing true between-animal variation |
 | `ddm-recovery.svg` | Synthetic benchmark | Committed drift-diffusion recovery benchmark | Parameter recovery error at the benchmark's two trial counts |

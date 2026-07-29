@@ -27,9 +27,9 @@ and row-level provenance.
 
 ## What changes across the six windows?
 
-<figure class="doc-figure doc-figure--wide" data-figure-kind="Literature-shaped analysis">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Literature-shaped">
   <img src="../../assets/ibl-learning-trajectories.svg" alt="Nine laboratory-level easy-trial accuracy trajectories across six outcome-blind endpoint positions, with a bold animal-weighted population trajectory rising from early to late training.">
-  <figcaption><strong>Literature-shaped analysis · longitudinal IBL retrieval.</strong> Thin lines preserve laboratory-level variation; the bold population line weights animals equally rather than laboratories. The transition-conditioned cohort is not an unbiased population learning curve.<span class="doc-figure__meta"><strong>Unit:</strong> animal within laboratory · <strong>n:</strong> 78 animals, 9 laboratories, 468 sessions · <strong>Estimand:</strong> animal-weighted easy-trial accuracy across ordinal endpoint positions · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
+  <figcaption><strong>Literature-shaped · longitudinal IBL retrieval.</strong> Thin lines preserve laboratory-level variation; the bold population line weights animals equally rather than laboratories. The transition-conditioned cohort is not an unbiased population learning curve.<span class="doc-figure__meta"><strong>Unit:</strong> animal within laboratory · <strong>n:</strong> 78 animals, 9 laboratories, 468 sessions · <strong>Estimand:</strong> animal-weighted easy-trial accuracy across ordinal endpoint positions · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 All 78 animals have higher mean easy-trial accuracy in the final three windows than in the

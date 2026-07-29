@@ -10,10 +10,10 @@
 
 ## Result first
 
-<figure class="doc-figure doc-figure--wide" data-figure-kind="Exact reproduction">
+<figure class="doc-figure doc-figure--wide" data-figure-kind="Released replay">
   <img src="../../assets/cell2025-trajectories.svg" alt="Two-panel replay of Cell Figure 1H and 1J showing 30 overlapping mouse learning trajectories, three soft-DTW centroids, and distinct session-by-asymmetry and right-by-left slope geometries.">
   <a class="doc-figure__full-resolution" href="../../assets/cell2025-trajectories.svg" target="_blank" rel="noopener">Open full-resolution Figure 1H/J ↗</a>
-  <figcaption><strong>Exact reproduction · Cell Figure 1H and 1J.</strong> Thin curves are the 30 checksum-pinned released Gaussian-process fits; thick curves replay the released soft-DTW centroids in each panel's original coordinates. Cyan and navy mark the naive and expert ends of training. The clusters summarize a continuum for visualization; they are not prospective labels or evidence for three biological kinds.<span class="doc-figure__meta"><strong>Unit:</strong> animal trajectory · <strong>n:</strong> 30 mice × 100 released interpolation points · <strong>Estimands:</strong> R-L slope over session and left-versus-right slope paths · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
+  <figcaption><strong>Released replay · Cell Figure 1H and 1J.</strong> Thin curves are the 30 checksum-pinned released Gaussian-process fits; thick curves replay the released soft-DTW centroids in each panel's original coordinates. Cyan and navy mark the naive and expert ends of training. The clusters summarize a continuum for visualization; they are not prospective labels or evidence for three biological kinds.<span class="doc-figure__meta"><strong>Unit:</strong> animal trajectory · <strong>n:</strong> 30 mice × 100 released interpolation points · <strong>Estimands:</strong> R-L slope over session and left-versus-right slope paths · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
 The replay matches the released left, balanced, and right memberships for all 30 mice:
