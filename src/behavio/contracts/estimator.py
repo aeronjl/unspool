@@ -14,7 +14,7 @@ cycle and no function-local import whose only purpose is to dodge one.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from types import MappingProxyType
 from typing import Any, Protocol, runtime_checkable
@@ -50,18 +50,27 @@ class ModelCapabilities:
     It is deliberately distinct from the choice probabilities returned by
     :class:`Prediction` or :class:`CategoricalPrediction`: a reaction-time model may
     predict choice while scoring the joint choice and response-time observation.
+
+    ``required_task_columns`` names the predictive context the model consumes but does not
+    score -- the stimulus a psychometric curve is a function of, the reward a learner
+    updates on. Every column here must carry a declared task role, which
+    :meth:`behavio.task.TaskSpec.validate_model` enforces. It defaults to ``()`` because
+    the declaration is optional: a model that reads nothing but its scored column has no
+    predictive context to declare.
     """
 
     scored_columns: tuple[str, ...]
     prediction_modes: tuple[PredictionMode, ...]
     can_simulate: bool
     can_recover_parameters: bool
+    required_task_columns: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if isinstance(self.scored_columns, str):
             raise ValueError("scored_columns must be a tuple of column names")
         columns = tuple(self.scored_columns)
         modes = tuple(PredictionMode(mode) for mode in self.prediction_modes)
+        required = validate_required_task_columns(self.required_task_columns)
         if not columns or len(set(columns)) != len(columns):
             raise ValueError("scored_columns must be non-empty and unique")
         if any(not isinstance(column, str) or not column for column in columns):
@@ -74,13 +83,90 @@ class ModelCapabilities:
             raise ValueError("capability flags must be boolean")
         if self.can_recover_parameters and not self.can_simulate:
             raise ValueError("parameter recovery requires simulation")
+        overlap = sorted(set(required) & set(columns))
+        if overlap:
+            raise ValueError(f"required_task_columns must not repeat a scored column: {overlap}")
         object.__setattr__(self, "scored_columns", columns)
         object.__setattr__(self, "prediction_modes", modes)
+        object.__setattr__(self, "required_task_columns", required)
+
+
+@dataclass(frozen=True, slots=True)
+class DerivedQuantity:
+    """One reportable function of a fit's estimates.
+
+    ``parameters`` and ``standard_error_map`` are keyed on the *optimizer* coordinate,
+    which is unconstrained by design and is therefore frequently not the quantity anyone
+    publishes: a psychophysicist asks for a threshold, not a ``log_width``, and a
+    metacognition experiment reports ``m_ratio``, which is not estimated at all. A derived
+    quantity carries that number with whatever uncertainty the model can honestly attach
+    to it.
+
+    ``standard_error`` is normally a delta-method propagation of the estimated covariance
+    and ``interval`` is normally formed on the coordinate that was estimated and then
+    mapped back, so that it can never leave the quantity's admissible range. Both are
+    optional: ``None`` means *this model does not claim an uncertainty for this quantity*,
+    which is distinct from claiming a non-finite one. ``interval_level`` is required
+    whenever ``interval`` is present, because an interval without its level is unreadable.
+    """
+
+    name: str
+    value: float
+    standard_error: float | None = None
+    interval: tuple[float, float] | None = None
+    interval_level: float | None = None
+    description: str = ""
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.name, str) or not self.name:
+            raise ValueError("a derived quantity needs a non-empty name")
+        if not isinstance(self.description, str):
+            raise ValueError("a derived quantity description must be a string")
+        object.__setattr__(self, "value", float(self.value))
+        if self.standard_error is not None:
+            error = float(self.standard_error)
+            if error < 0:
+                raise ValueError("a derived standard error must be non-negative")
+            object.__setattr__(self, "standard_error", error)
+        if self.interval is None:
+            if self.interval_level is not None:
+                raise ValueError("interval_level requires an interval")
+            return
+        bounds = tuple(float(value) for value in self.interval)
+        if len(bounds) != 2:
+            raise ValueError("a derived interval must be a lower and an upper bound")
+        if np.isfinite(bounds[0]) and np.isfinite(bounds[1]) and bounds[0] > bounds[1]:
+            raise ValueError("derived interval bounds must be ordered")
+        if self.interval_level is None or not 0 < float(self.interval_level) < 1:
+            raise ValueError("an interval requires a level strictly between zero and one")
+        object.__setattr__(self, "interval", bounds)
+        object.__setattr__(self, "interval_level", float(self.interval_level))
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-shaped record of the quantity and its declared uncertainty."""
+
+        return {
+            "name": self.name,
+            "value": self.value,
+            "standard_error": self.standard_error,
+            "interval": None if self.interval is None else list(self.interval),
+            "interval_level": self.interval_level,
+            "description": self.description,
+        }
 
 
 @dataclass(frozen=True, slots=True)
 class FitResult:
-    """Immutable parameter estimates and diagnostics for one fitted model."""
+    """Immutable parameter estimates and diagnostics for one fitted model.
+
+    ``derived`` is the optional, default-empty place for functions of the estimates that a
+    scientist would publish but the optimizer never sees. It is keyword-only so that a
+    model-specific subclass can keep adding required fields after it, and it defaults to
+    ``()`` so that a model that declares nothing behaves exactly as it did before the
+    field existed. A derived name may coincide with a parameter name -- a psychometric
+    threshold is estimated directly under four of the five links -- in which case the two
+    describe the same number on the same scale.
+    """
 
     model_name: str
     model_signature: str
@@ -90,9 +176,17 @@ class FitResult:
     covariance: NDArray[np.float64]
     n_observations: int
     diagnostics: FitDiagnostics
+    derived: tuple[DerivedQuantity, ...] = field(default=(), kw_only=True)
 
     def __post_init__(self) -> None:
         names = tuple(self.parameter_names)
+        derived = tuple(self.derived)
+        if any(not isinstance(quantity, DerivedQuantity) for quantity in derived):
+            raise ValueError("derived must contain DerivedQuantity values")
+        derived_names = [quantity.name for quantity in derived]
+        if len(set(derived_names)) != len(derived_names):
+            raise ValueError("derived quantity names must be unique within one fit")
+        object.__setattr__(self, "derived", derived)
         if not names or len(set(names)) != len(names):
             raise ValueError("parameter_names must be non-empty and unique")
         estimates = protected_array(self.estimates, dtype=np.float64)
@@ -126,6 +220,29 @@ class FitResult:
         return MappingProxyType(
             dict(zip(self.parameter_names, self.standard_errors.tolist(), strict=True))
         )
+
+    @property
+    def derived_quantities(self) -> Mapping[str, DerivedQuantity]:
+        """Every declared derived quantity keyed by its name, in declaration order."""
+
+        return MappingProxyType({quantity.name: quantity for quantity in self.derived})
+
+    @property
+    def derived_values(self) -> Mapping[str, float]:
+        """Point values of the declared derived quantities, keyed by name."""
+
+        return MappingProxyType({quantity.name: quantity.value for quantity in self.derived})
+
+    def derived_value(self, name: str) -> float:
+        """Return one declared derived quantity's value or raise a readable error."""
+
+        try:
+            return self.derived_values[name]
+        except KeyError:
+            raise KeyError(
+                f"{self.model_name!r} declares no derived quantity {name!r}; "
+                f"available: {sorted(self.derived_values)}"
+            ) from None
 
     def audit(self, *, policy: FitAuditPolicy | None = None) -> FitAudit:
         """Normalize all available diagnostics without removing their raw evidence."""
@@ -306,6 +423,22 @@ class BehaviourEstimator(Protocol):
 
 
 @runtime_checkable
+class TaskColumnEstimator(BehaviourEstimator, Protocol):
+    """An estimator that declares the predictive context it reads but does not score.
+
+    This is deliberately a separate protocol rather than a member of
+    :class:`BehaviourEstimator`. "What columns does this model need" is the first question
+    a user asks, but a model whose likelihood reads nothing but its scored column has
+    nothing to answer, and requiring the declaration would exclude such an estimator from
+    the base contract for no gain. :func:`model_capabilities` surfaces the answer for
+    either kind.
+    """
+
+    @property
+    def required_task_columns(self) -> tuple[str, ...]: ...
+
+
+@runtime_checkable
 class CategoricalBehaviourEstimator(BehaviourEstimator, Protocol):
     """An estimator whose scored choice is represented by stable category codes."""
 
@@ -354,7 +487,35 @@ def model_capabilities(model: BehaviourEstimator) -> ModelCapabilities:
         prediction_modes=tuple(model.supported_prediction_modes),
         can_simulate=generative,
         can_recover_parameters=generative,
+        required_task_columns=model_task_columns(model),
     )
+
+
+def model_task_columns(model: Any) -> tuple[str, ...]:
+    """Return the validated predictive context an estimator declares, or ``()``.
+
+    An estimator that does not satisfy :class:`TaskColumnEstimator` declares nothing and
+    gets an empty tuple; one that does gets its declaration checked here rather than only
+    at task-validation time, so a malformed declaration is a model defect that surfaces
+    from :func:`model_capabilities`.
+    """
+
+    if not isinstance(model, TaskColumnEstimator):
+        return ()
+    return validate_required_task_columns(model.required_task_columns)
+
+
+def validate_required_task_columns(columns: Any) -> tuple[str, ...]:
+    """Check and return a possibly empty tuple of unique, non-empty column names."""
+
+    if isinstance(columns, str):
+        raise ValueError("required_task_columns must be a tuple of column names")
+    required = tuple(columns)
+    if len(set(required)) != len(required):
+        raise ValueError("required_task_columns must be unique")
+    if any(not isinstance(column, str) or not column for column in required):
+        raise ValueError("required_task_columns must contain non-empty strings")
+    return required
 
 
 def validate_model_identity(model: Any) -> None:

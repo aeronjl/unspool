@@ -16,6 +16,7 @@ from scipy.special import erf, expit, ndtr
 from behavio import Study, model_capabilities, run_parameter_recovery
 from behavio.contracts import (
     BehaviourModel,
+    DerivedQuantity,
     ModelDataError,
     PredictionMode,
     UnsupportedPredictionMode,
@@ -350,11 +351,13 @@ def test_the_erf_model_predicts_the_released_two_gamma_curve() -> None:
         covariance=np.eye(len(model.parameter_names)),
         n_observations=len(study),
         diagnostics=fit.diagnostics,
+        derived=(
+            DerivedQuantity("threshold", -4.0),
+            DerivedQuantity("width", 18.0),
+            DerivedQuantity("guess_rate", 0.06),
+            DerivedQuantity("lapse_rate", 0.11),
+        ),
         link=model.link,
-        threshold=-4.0,
-        width=18.0,
-        guess_rate=0.06,
-        lapse_rate=0.11,
         restart_objectives=fit.restart_objectives,
         restart_converged=fit.restart_converged,
         restart_messages=fit.restart_messages,

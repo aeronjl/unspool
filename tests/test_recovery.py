@@ -113,3 +113,90 @@ def test_parameter_recovery_arguments_are_validated(
             repeats=repeats,
             seed=seed,
         )
+
+
+def test_a_model_with_no_reparameterisation_reports_exactly_one_coordinate() -> None:
+    """A model declaring nothing is byte-identical to before the natural coordinate."""
+
+    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.05)
+    report = run_parameter_recovery(
+        model,
+        recovery_design(),
+        [{"intercept": -0.2, "stimulus": 0.6, "choice_lag_1": 0.2}],
+        repeats=2,
+        seed=7,
+    )
+
+    assert report.natural_names == ()
+    assert report.natural_true_values is None
+    assert report.natural_estimates is None
+    assert report.natural_summary() == ()
+    payload = report.to_dict()
+    assert "natural_summary" not in payload
+    assert "coordinate" not in payload
+    assert "natural" not in payload["runs"][0]
+    assert set(payload["runs"][0]) == {
+        "seed",
+        "truth",
+        "estimate",
+        "standard_error",
+        "converged",
+        "message",
+        "fit_audit",
+    }
+
+
+def test_recovery_reports_both_coordinates_without_ever_pooling_them() -> None:
+    from behavio.models import PsychometricFunction
+    from behavio.recovery import ESTIMATED_COORDINATE, NATURAL_COORDINATE, WALD_INTERVAL
+
+    model = PsychometricFunction(stimulus="stimulus", outcome="choice", n_restarts=2)
+    truth = model.parameters_from_components(
+        threshold=0.2, width=0.6, guess_rate=0.05, lapse_rate=0.05
+    )
+    report = run_parameter_recovery(model, recovery_design(), [dict(truth)], repeats=3, seed=11)
+
+    estimated = {summary.parameter: summary for summary in report.summary()}
+    natural = {summary.parameter: summary for summary in report.natural_summary()}
+
+    # The estimated coordinate is where coverage is computed, and it is unreadable.
+    assert set(estimated) == {"threshold", "log_width", "guess_logit", "lapse_logit"}
+    assert all(summary.interval_kind == WALD_INTERVAL for summary in estimated.values())
+    # The natural coordinate is readable and carries no coverage field at all.
+    assert set(natural) == {"threshold", "width", "guess_rate", "lapse_rate"}
+    assert all(summary.coordinate == NATURAL_COORDINATE for summary in natural.values())
+    assert not hasattr(natural["width"], "coverage_95")
+    assert natural["width"].n_successful == estimated["log_width"].n_successful
+
+    # ``width`` and ``log_width`` are different numbers about the same parameter and are
+    # never mixed: one is the exponential of the other, run for run.
+    assert report.natural_estimates is not None
+    log_width_column = report.parameter_names.index("log_width")
+    width_column = report.natural_names.index("width")
+    assert np.allclose(
+        report.natural_estimates[:, width_column],
+        np.exp(report.estimates[:, log_width_column]),
+    )
+
+    payload = report.to_dict()
+    assert payload["coordinate"] == ESTIMATED_COORDINATE
+    assert [row["parameter"] for row in payload["natural_summary"]] == list(report.natural_names)
+    assert all("coverage_95" not in row for row in payload["natural_summary"])
+    assert set(payload["runs"][0]["natural"]) == {"truth", "estimate"}
+    json.dumps(payload, allow_nan=False)
+
+
+def test_a_failed_run_has_no_natural_image_and_is_excluded_from_both_summaries() -> None:
+    from behavio.models import PsychometricFunction
+    from behavio.recovery import _natural_coordinate
+
+    model = PsychometricFunction(stimulus="stimulus", outcome="choice", n_restarts=1)
+    true_values = np.asarray([[0.2, np.log(0.6), 0.0, 0.0], [np.nan] * 4])
+    estimates = np.asarray([[0.2, np.log(0.6), 0.0, 0.0], [np.nan] * 4])
+
+    names, truth, natural = _natural_coordinate(model, true_values, estimates)
+
+    assert names == ("threshold", "width", "guess_rate", "lapse_rate")
+    assert truth is not None and natural is not None
+    assert np.all(np.isfinite(truth[0])) and np.all(np.isnan(truth[1]))
+    assert np.all(np.isnan(natural[1]))

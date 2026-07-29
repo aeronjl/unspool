@@ -153,4 +153,43 @@ synchronisation lineage. From there the composition continues through
 [interval policies](interval-policy.md), as described in the
 [boundary overview](observed-behaviour.md).
 
+## From pose to a `Study`
+
+A pose is in seconds; a [`Study`](data-contract.md) is in trials and has no time
+column. `behavio.trialization` closes that gap. Declare when the trials started
+on the pose's own clock, then reduce the derived covariate over trial windows:
+
+```python
+from behavio.trialization import (
+    MaximumValue,
+    TrialTiming,
+    TrialWindow,
+    attach_trial_columns,
+    reduce_covariate_to_trials,
+)
+
+timing = TrialTiming.from_arrays(
+    subject="mouse-07",
+    session="day-04",
+    onset_s=cue_times,
+    clock_id="camera-0",
+)
+peak_speed = reduce_covariate_to_trials(
+    pose.speed(minimum_confidence=0.9),
+    timing=timing,
+    window=TrialWindow(start_offset_s=0.0, stop_offset_s=1.0),
+    reducer=MaximumValue(),
+    max_gap_s=2 / 30.0,
+    minimum_coverage=0.8,
+)
+study = attach_trial_columns(study, [peak_speed])
+```
+
+`subject` and `session` accept any hashable identifier, matching `Study`, so an
+integer subject id joins without a lossy `str()`. Trials whose window ran past
+the end of the video, straddled a tracking dropout, or fell below
+`minimum_coverage` arrive as `NaN` with an explanatory status column rather than
+as a confident number. See
+[From seconds to trials](observed-behaviour.md#from-seconds-to-trials).
+
 Signatures are in the [observed behaviour API](reference/observed-behaviour.md).

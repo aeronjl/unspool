@@ -51,10 +51,11 @@ Vision, 12*(6):25.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from types import MappingProxyType
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -63,6 +64,7 @@ from scipy.special import erf, expit, logit, ndtr, ndtri
 
 from behavio._internal.arrays import protected_array
 from behavio.contracts import (
+    DerivedQuantity,
     FitDiagnostics,
     FitResult,
     ModelDataError,
@@ -75,6 +77,9 @@ from behavio.study import REQUIRED_COLUMNS, Study
 
 #: Probability floor used when a curve is evaluated at a saturated guess or lapse rate.
 PROBABILITY_FLOOR = 1e-12
+
+#: Interval level carried by the derived quantities a fit publishes without being asked.
+DEFAULT_INTERVAL_LEVEL = 0.95
 
 _INV_SQRT_TWO_PI = float(1.0 / np.sqrt(2.0 * np.pi))
 _GUMBEL_HALF = float(np.log(np.log(2.0)))
@@ -220,16 +225,74 @@ class PsychometricSummary:
             lapse_rate=self.lapse_rate,
         )
 
+    def derived_quantities(self) -> tuple[DerivedQuantity, ...]:
+        """Return this summary as contract-level derived quantities.
+
+        This is the natural coordinate a psychophysicist publishes, carried on the fit so
+        that a consumer typed on plain :class:`~behavio.contracts.FitResult` -- model
+        comparison, an evidence bundle, ``export_fit`` -- sees a threshold rather than a
+        ``log_width``. The intervals are the summary's own, formed on the estimated
+        coordinate and mapped back, so none of them can leave its parameter's range. A rate
+        that was declared rather than estimated keeps its zero standard error and its
+        degenerate interval, which is the honest description of a fixed quantity.
+        """
+
+        fixed_note = "declared rather than estimated"
+        return (
+            DerivedQuantity(
+                "threshold",
+                self.threshold,
+                standard_error=self.threshold_standard_error,
+                interval=self.threshold_interval,
+                interval_level=self.interval_level,
+                description="stimulus level at which the link reaches one half",
+            ),
+            DerivedQuantity(
+                "width",
+                self.width,
+                standard_error=self.width_standard_error,
+                interval=self.width_interval,
+                interval_level=self.interval_level,
+                description="curve width in stimulus units",
+            ),
+            DerivedQuantity(
+                "guess_rate",
+                self.guess_rate,
+                standard_error=self.guess_rate_standard_error,
+                interval=self.guess_rate_interval,
+                interval_level=self.interval_level,
+                description=fixed_note if self.guess_rate_is_fixed else "lower asymptote",
+            ),
+            DerivedQuantity(
+                "lapse_rate",
+                self.lapse_rate,
+                standard_error=self.lapse_rate_standard_error,
+                interval=self.lapse_rate_interval,
+                interval_level=self.interval_level,
+                description=fixed_note if self.lapse_rate_is_fixed else "upper asymptote gap",
+            ),
+            DerivedQuantity(
+                "slope_at_threshold",
+                self.slope_at_threshold,
+                description="d psi / d x at the threshold, in probability per stimulus unit",
+            ),
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class PsychometricFitResult(FitResult):
-    """A psychometric fit that retains its natural scale and every deterministic restart."""
+    """A psychometric fit that retains its natural scale and every deterministic restart.
+
+    The four restart fields are the :class:`~behavio.contracts.MultistartFit` contract, so
+    :meth:`~behavio.contracts.FitResult.audit` derives a
+    :class:`~behavio.contracts.RestartAudit` from this fit without either side knowing
+    about the other. ``link`` stays a field because it is a declared configuration, not a
+    number; the natural threshold, width and rates are read from
+    :attr:`~behavio.contracts.FitResult.derived`, where they carry their own standard
+    errors and intervals.
+    """
 
     link: PsychometricLink
-    threshold: float
-    width: float
-    guess_rate: float
-    lapse_rate: float
     restart_objectives: NDArray[np.float64]
     restart_converged: NDArray[np.bool_]
     restart_messages: tuple[str, ...]
@@ -247,10 +310,39 @@ class PsychometricFitResult(FitResult):
             raise ValueError("restart messages must have one value per restart")
         if not 0 <= self.selected_restart < len(objectives):
             raise ValueError("selected_restart must identify one restart")
+        missing = sorted(
+            {"threshold", "width", "guess_rate", "lapse_rate"} - set(self.derived_values)
+        )
+        if missing:
+            raise ValueError(f"a psychometric fit must declare derived {missing}")
         PsychometricParameters(self.threshold, self.width, self.guess_rate, self.lapse_rate)
         object.__setattr__(self, "restart_objectives", objectives)
         object.__setattr__(self, "restart_converged", converged)
         object.__setattr__(self, "restart_messages", messages)
+
+    @property
+    def threshold(self) -> float:
+        """Stimulus level at which the link reaches one half."""
+
+        return self.derived_value("threshold")
+
+    @property
+    def width(self) -> float:
+        """Curve width, in stimulus units for every link but the Weibull."""
+
+        return self.derived_value("width")
+
+    @property
+    def guess_rate(self) -> float:
+        """Lower asymptote of the curve."""
+
+        return self.derived_value("guess_rate")
+
+    @property
+    def lapse_rate(self) -> float:
+        """Gap between the upper asymptote and one."""
+
+        return self.derived_value("lapse_rate")
 
 
 @dataclass(frozen=True, slots=True)
@@ -365,6 +457,88 @@ class PsychometricFunction:
     def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
         return (PredictionMode.FILTERED,)
 
+    @property
+    def natural_names(self) -> tuple[str, ...]:
+        """The reported coordinate: threshold, width, and the estimated rates.
+
+        A rate declared fixed is not part of this coordinate for the same reason it is not
+        part of ``parameter_names``: it was not estimated, so there is nothing to report an
+        uncertainty for and nothing for a Jacobian to differentiate.
+        """
+
+        names = ["threshold", "width"]
+        if self.fixed_guess_rate is None:
+            names.append("guess_rate")
+        if self.fixed_lapse_rate is None:
+            names.append("lapse_rate")
+        return tuple(names)
+
+    def to_natural(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> Mapping[str, float]:
+        """Decode the estimated coordinate into threshold, width, and estimated rates."""
+
+        components = self._decode(self._natural_input(estimates))
+        values = {"threshold": components.threshold, "width": components.width}
+        if self.fixed_guess_rate is None:
+            values["guess_rate"] = components.guess_rate
+        if self.fixed_lapse_rate is None:
+            values["lapse_rate"] = components.lapse_rate
+        return MappingProxyType(values)
+
+    def from_natural(self, natural: Mapping[str, float]) -> Mapping[str, float]:
+        """Encode a complete natural mapping onto the estimated coordinate."""
+
+        if not isinstance(natural, Mapping) or set(natural) != set(self.natural_names):
+            raise ValueError("natural parameters must match the model exactly")
+        return self.parameters_from_components(
+            threshold=natural["threshold"],
+            width=natural["width"],
+            guess_rate=natural.get("guess_rate"),
+            lapse_rate=natural.get("lapse_rate"),
+        )
+
+    def natural_jacobian(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> NDArray[np.float64]:
+        """Return the derivative of the natural parameters at one estimated coordinate.
+
+        The map is diagonal: each natural parameter is a monotone function of exactly one
+        estimated coordinate. That is not true of every reparameterisation -- the detection-
+        theory rating criteria are not -- which is why the contract passes a full Jacobian
+        rather than a per-parameter derivative.
+        """
+
+        coordinate = self._natural_input(estimates)
+        width = len(self.parameter_names)
+        jacobian = np.zeros((len(self.natural_names), width), dtype=np.float64)
+        log_stimulus = _LINKS[self.link].log_stimulus
+        jacobian[0, 0] = float(np.exp(coordinate[0])) if log_stimulus else 1.0
+        jacobian[1, 1] = float(np.exp(coordinate[1]))
+        row = 2
+        for fixed, maximum in (
+            (self.fixed_guess_rate, self.maximum_guess),
+            (self.fixed_lapse_rate, self.maximum_lapse),
+        ):
+            if fixed is not None:
+                continue
+            relative = float(expit(coordinate[row]))
+            jacobian[row, row] = maximum * relative * (1.0 - relative)
+            row += 1
+        return jacobian
+
+    def _natural_input(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> NDArray[np.float64]:
+        try:
+            vector = np.asarray(estimates, dtype=np.float64)
+        except (TypeError, ValueError):
+            raise ValueError("estimates must contain finite numeric values") from None
+        width = len(self.parameter_names)
+        if vector.shape != (width,) or not np.all(np.isfinite(vector)):
+            raise ValueError(f"estimates must contain {width} finite values")
+        return vector
+
     def parameters_from_components(
         self,
         *,
@@ -374,6 +548,8 @@ class PsychometricFunction:
         lapse_rate: float | None = None,
     ) -> Mapping[str, float]:
         """Encode natural parameters onto the estimated coordinate.
+
+        Keyword-argument façade over :meth:`from_natural`, which shares this encoding.
 
         A rate declared fixed on the model must be omitted here or supplied equal to its
         fixed value; an estimated rate must lie strictly inside its declared bound, because
@@ -416,8 +592,26 @@ class PsychometricFunction:
         if not 0 < level < 1:
             raise ValueError("level must lie strictly between zero and one")
         self._validate_fit(fit)
-        coordinate = np.asarray(fit.estimates, dtype=np.float64)
-        errors = np.asarray(fit.standard_errors, dtype=np.float64)
+        return self._summarize(
+            np.asarray(fit.estimates, dtype=np.float64),
+            np.asarray(fit.standard_errors, dtype=np.float64),
+            level=level,
+        )
+
+    def _summarize(
+        self,
+        coordinate: NDArray[np.float64],
+        errors: NDArray[np.float64],
+        *,
+        level: float,
+    ) -> PsychometricSummary:
+        """Summarize one estimated coordinate and its standard errors.
+
+        Split out of :meth:`summarize` so that :meth:`fit` can attach the same natural
+        estimates and intervals to the fit result it is constructing, without either the
+        summary or the fit becoming the other's prerequisite.
+        """
+
         components = self._decode(coordinate)
         quantile = float(ndtri(0.5 + 0.5 * level))
         log_stimulus = _LINKS[self.link].log_stimulus
@@ -542,7 +736,8 @@ class PsychometricFunction:
             lambda coordinate: self._objective(coordinate, values, outcomes)[1], estimates
         )
         covariance = covariance_from_hessian(hessian)
-        components = self._decode(estimates)
+        standard_errors = np.sqrt(np.maximum(np.diag(covariance), 0.0))
+        summary = self._summarize(estimates, standard_errors, level=DEFAULT_INTERVAL_LEVEL)
         at_bound = [
             abs(float(estimate) - float(low)) < 1e-6 or abs(float(estimate) - float(high)) < 1e-6
             for estimate, (low, high) in zip(estimates, bounds, strict=True)
@@ -563,15 +758,12 @@ class PsychometricFunction:
             model_signature=self.signature,
             parameter_names=self.parameter_names,
             estimates=estimates,
-            standard_errors=np.sqrt(np.maximum(np.diag(covariance), 0.0)),
+            standard_errors=standard_errors,
             covariance=covariance,
             n_observations=len(study),
             diagnostics=diagnostics,
+            derived=summary.derived_quantities(),
             link=self.link,
-            threshold=components.threshold,
-            width=components.width,
-            guess_rate=components.guess_rate,
-            lapse_rate=components.lapse_rate,
             restart_objectives=objectives,
             restart_converged=np.asarray([bool(item.success) for item in results]),
             restart_messages=tuple(str(item.message) for item in results),

@@ -167,6 +167,59 @@ DATA_SOURCE_AND_VERIFICATION_SURFACE = {
     "verify_candidate_declarations",
 }
 
+#: The bridge from continuously observed behaviour to trial-level ``Study`` columns. This is a
+#: headline capability with a small closed API: declare when the trials happened
+#: (``TrialTiming``), declare the window to summarise (``TrialWindow``), reduce a covariate or an
+#: ethogram over it, and join the result onto a study. Those five names are the whole call path,
+#: and every one of them is something the user writes down, so the same rule that pinned
+#: ``read_table`` / ``TableSource`` applies here.
+#:
+#: ``TrialCoverageStatus`` was considered and deliberately left unpinned, which is where this
+#: differs from ``SourceType`` and ``SessionOrderPolicy``. Those two are pinned because
+#: ``StudyAdapter`` *annotates* protocol members with them: an implementer cannot write the
+#: contract down without importing them. Nothing here forces that. The enum appears in no pinned
+#: signature; it is a ``StrEnum``, so ``reduction.status[i] == "ok"`` is a correct comparison
+#: rather than a workaround, and ``attach_trial_columns`` coerces it with ``str()`` on the way
+#: into the study, so the column a user actually reads back holds plain strings. A name earns a
+#: pin by being unavoidable, and this one is avoidable.
+#:
+#: Also unpinned, though all remain exported: the reducers (``MeanValue``, ``MedianValue``,
+#: ``MinimumValue``, ``MaximumValue``, ``FractionOfTimeInState``, ``EventCount``,
+#: ``FirstOccurrenceLatency``) and the two reducer protocols, because the set is explicitly
+#: designed to be open and will grow -- pinning today's members would imply the list is the
+#: promise, when the protocol is; ``TrialReduction``, a report you read back rather than
+#: construct, which should stay free to gain fields; ``TrializationError``, whose base
+#: ``ValueError`` is what a caller catches; and ``trial_timing_from_events``, one optional way to
+#: build a ``TrialTiming`` that the pinned constructor does not depend on.
+OBSERVED_BEHAVIOUR_SURFACE = {
+    "TrialTiming",
+    "TrialWindow",
+    "reduce_covariate_to_trials",
+    "reduce_annotations_to_trials",
+    "attach_trial_columns",
+}
+
+#: Two contracts promoted out of ``behavio.contracts`` that a user writes code against.
+#: ``NaturalParameterisation`` is an extension surface in the same sense as
+#: ``PosteriorBehaviourEstimator``: a third party implements it to declare that a result is
+#: reported in a coordinate other than the one it was estimated in, and an extension point nobody
+#: can rely on is not an extension point. ``DerivedQuantity`` is read off every fit and is the
+#: mechanism by which derived scientific quantities became first-class rather than an ad-hoc
+#: dictionary, so its presence -- not its field list -- is the promise.
+#:
+#: The rest of that widening is deliberately unpinned. ``MultistartFit``, ``LatentStateFit`` and
+#: ``TaskColumnEstimator`` were promoted mainly so ``behavio.diagnostics`` could stop duck-typing
+#: against private names; they describe evidence the library reads out of a fit it did not write,
+#: which is internal mechanism by the same argument that keeps ``FitAuditor`` and
+#: ``posterior_draw_matrix`` out. ``natural_quantities`` and ``natural_covariance`` are helpers
+#: for the model author implementing ``NaturalParameterisation``, reachable through
+#: ``behavio.contracts`` alongside ``model_task_columns`` and ``validate_required_task_columns``,
+#: which are not re-exported at the top level at all.
+MODEL_EXTENSION_SURFACE = {
+    "NaturalParameterisation",
+    "DerivedQuantity",
+}
+
 
 def test_completed_release_surface_is_public_and_explicit() -> None:
     promised = (
@@ -176,6 +229,8 @@ def test_completed_release_surface_is_public_and_explicit() -> None:
         | INTEROPERABILITY_AND_EVIDENCE
         | POSTERIOR_EXTENSION_SURFACE
         | DATA_SOURCE_AND_VERIFICATION_SURFACE
+        | OBSERVED_BEHAVIOUR_SURFACE
+        | MODEL_EXTENSION_SURFACE
     )
 
     assert promised <= set(behavio.__all__)

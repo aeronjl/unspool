@@ -97,12 +97,14 @@ from scipy.special import ndtr, ndtri
 from behavio._internal.arrays import protected_array
 from behavio.contracts import (
     CategoricalPrediction,
+    DerivedQuantity,
     FitDiagnostics,
     FitResult,
     ModelDataError,
     Prediction,
     PredictionMode,
     UnsupportedPredictionMode,
+    natural_quantities,
 )
 from behavio.models._numerics import (
     covariance_from_hessian,
@@ -548,9 +550,44 @@ def z_roc_summary(
     )
 
 
+def _summary_quantities(summary: SignalDetectionSummary) -> tuple[DerivedQuantity, ...]:
+    """Return the bias and nonparametric indices of one equal-variance summary.
+
+    ``d_prime`` and ``criterion`` are absent because they *are* the estimated coordinate
+    and already carry standard errors on the fit. Everything here is a function of them or
+    of the rates, and none of these indices has an agreed sampling distribution, so each is
+    reported without an uncertainty rather than with a fabricated one.
+    """
+
+    rates = summary.rates
+    return (
+        DerivedQuantity("hit_rate", rates.hit_rate, description="corrected hit rate"),
+        DerivedQuantity(
+            "false_alarm_rate", rates.false_alarm_rate, description="corrected false-alarm rate"
+        ),
+        DerivedQuantity(
+            "relative_criterion", summary.relative_criterion, description="c divided by d'"
+        ),
+        DerivedQuantity("beta", summary.beta, description="likelihood ratio at the criterion"),
+        DerivedQuantity("log_beta", summary.log_beta, description="natural log of beta"),
+        DerivedQuantity("log10_beta", summary.log10_beta, description="base-ten log of beta"),
+        DerivedQuantity("a_prime", summary.a_prime, description="Grier (1971) A'"),
+        DerivedQuantity(
+            "b_double_prime_d", summary.b_double_prime_d, description="Donaldson (1992) B''_D"
+        ),
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class SignalDetectionFitResult(FitResult):
-    """An equal-variance fit that keeps its rates, its correction, and its bias indices."""
+    """An equal-variance fit that keeps its rates, its correction, and its bias indices.
+
+    ``summary`` is retained as a field because it is a structured record -- rates, the
+    declared correction, and whether that correction changed anything -- rather than a
+    scalar. Its scalar indices are additionally published as
+    :attr:`~behavio.contracts.FitResult.derived` so that a consumer typed on plain
+    ``FitResult`` sees them.
+    """
 
     summary: SignalDetectionSummary
 
@@ -669,19 +706,14 @@ class EqualVarianceSDT:
         probability = self._yes_probability(signals, summary.d_prime, summary.criterion)
         objective = -float(np.sum(_bernoulli_log_prob(responses, probability)))
         raw = detection_rates(counts, correction=RateCorrection.NONE)
-        diagnostics = FitDiagnostics(
-            converged=True,
-            optimizer="closed-form z-transform",
-            status=0,
+        diagnostics = FitDiagnostics.closed_form(
+            procedure="closed-form z-transform",
             message=(
                 f"z-transform of {rates.n_signal} signal and {rates.n_noise} noise trials "
                 f"under correction={rates.correction.value} "
                 f"(applied={rates.correction_applied})"
             ),
-            n_iterations=None,
             objective=objective,
-            gradient_norm=None,
-            hessian_condition=None,
             boundary_estimate=bool(raw.is_degenerate),
         )
         return SignalDetectionFitResult(
@@ -693,6 +725,7 @@ class EqualVarianceSDT:
             covariance=covariance,
             n_observations=len(study),
             diagnostics=diagnostics,
+            derived=_summary_quantities(summary),
             summary=summary,
         )
 
@@ -741,21 +774,61 @@ class EqualVarianceSDT:
 
 @dataclass(frozen=True, slots=True)
 class UnequalVarianceFitResult(FitResult):
-    """An unequal-variance rating fit with its criteria and its ROC indices."""
+    """An unequal-variance rating fit with its criteria and its ROC indices.
 
-    signal_mean: float
-    signal_sd: float
-    criteria: tuple[float, ...]
-    d_a: float
-    z_roc_slope: float
-    area_under_curve: float
+    This class adds no fields. It is a typed reader over
+    :attr:`~behavio.contracts.FitResult.derived`: the signal distribution and the ordered
+    criteria are the model's natural coordinate and the ROC indices are functions of it,
+    so the numbers live in one place and this class only names them.
+    """
 
     def __post_init__(self) -> None:
         FitResult.__post_init__(self)
-        criteria = tuple(float(value) for value in self.criteria)
-        if any(later <= earlier for earlier, later in pairwise(criteria)):
+        missing = sorted(
+            {"signal_mean", "signal_sd", "d_a", "z_roc_slope", "area_under_curve"}
+            - set(self.derived_values)
+        )
+        if missing:
+            raise ValueError(f"an unequal-variance fit must declare derived {missing}")
+        if any(later <= earlier for earlier, later in pairwise(self.criteria)):
             raise ValueError("rating criteria must be strictly increasing")
-        object.__setattr__(self, "criteria", criteria)
+
+    @property
+    def signal_mean(self) -> float:
+        """Mean of the signal evidence distribution, the noise mean being zero."""
+
+        return self.derived_value("signal_mean")
+
+    @property
+    def signal_sd(self) -> float:
+        """Standard deviation of the signal evidence distribution."""
+
+        return self.derived_value("signal_sd")
+
+    @property
+    def criteria(self) -> tuple[float, ...]:
+        """The strictly increasing rating criteria, in evidence units."""
+
+        values = self.derived_values
+        return tuple(value for name, value in values.items() if name.startswith("criterion_"))
+
+    @property
+    def d_a(self) -> float:
+        """Unequal-variance sensitivity ``sqrt(2) mu / sqrt(1 + sigma^2)``."""
+
+        return self.derived_value("d_a")
+
+    @property
+    def z_roc_slope(self) -> float:
+        """Slope of the z-ROC line, which is the reciprocal of the signal SD."""
+
+        return self.derived_value("z_roc_slope")
+
+    @property
+    def area_under_curve(self) -> float:
+        """Area under the binormal ROC, ``A_z = Phi(d_a / sqrt(2))``."""
+
+        return self.derived_value("area_under_curve")
 
 
 @dataclass(frozen=True, slots=True)
@@ -833,10 +906,70 @@ class UnequalVarianceSDT:
     def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
         return (PredictionMode.FILTERED,)
 
+    @property
+    def natural_names(self) -> tuple[str, ...]:
+        """The reported coordinate: a signal distribution and ordered criteria."""
+
+        criteria = tuple(f"criterion_{index}" for index in range(1, self.n_ratings))
+        return ("signal_mean", "signal_sd", *criteria)
+
+    def to_natural(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> Mapping[str, float]:
+        """Decode the estimated coordinate into a signal distribution and criteria."""
+
+        coordinate = _natural_input(estimates, len(self.parameter_names))
+        criteria = self._criteria(coordinate)
+        decoded = {
+            "signal_mean": float(coordinate[0]),
+            "signal_sd": float(np.exp(coordinate[1])),
+        }
+        for index, value in enumerate(criteria.tolist(), start=1):
+            decoded[f"criterion_{index}"] = float(value)
+        return MappingProxyType(decoded)
+
+    def from_natural(self, natural: Mapping[str, float]) -> Mapping[str, float]:
+        """Encode a signal distribution and ordered criteria onto the estimated coordinate."""
+
+        if not isinstance(natural, Mapping) or set(natural) != set(self.natural_names):
+            raise ValueError("natural parameters must match the model exactly")
+        criteria = [natural[f"criterion_{index}"] for index in range(1, self.n_ratings)]
+        return self.parameters_from_components(
+            signal_mean=natural["signal_mean"],
+            signal_sd=natural["signal_sd"],
+            criteria=criteria,
+        )
+
+    def natural_jacobian(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> NDArray[np.float64]:
+        """Return the derivative of the criteria and signal distribution.
+
+        A criterion is the first criterion plus the cumulative sum of positive gaps, so
+        criterion ``i`` depends on the first criterion and on every gap up to ``i``. Writing
+        that dependence down is exactly what lets a delta-method standard error be reported
+        on a criterion, which the optimizer never estimates directly.
+        """
+
+        coordinate = _natural_input(estimates, len(self.parameter_names))
+        width = len(self.parameter_names)
+        jacobian = np.zeros((len(self.natural_names), width), dtype=np.float64)
+        jacobian[0, 0] = 1.0
+        jacobian[1, 1] = float(np.exp(coordinate[1]))
+        gaps = np.exp(np.asarray(coordinate[3:], dtype=np.float64))
+        for row in range(self.n_ratings - 1):
+            jacobian[2 + row, 2] = 1.0
+            for gap_index in range(row):
+                jacobian[2 + row, 3 + gap_index] = float(gaps[gap_index])
+        return jacobian
+
     def parameters_from_components(
         self, *, signal_mean: float, signal_sd: float, criteria: Sequence[float]
     ) -> Mapping[str, float]:
-        """Encode a signal distribution and ordered criteria onto the estimated coordinate."""
+        """Encode a signal distribution and ordered criteria onto the estimated coordinate.
+
+        Keyword-argument façade over :meth:`from_natural`, which owns the encoding.
+        """
 
         values = tuple(float(value) for value in criteria)
         if len(values) != self.n_ratings - 1:
@@ -920,6 +1053,16 @@ class UnequalVarianceSDT:
         signal_mean = float(estimates[0])
         signal_sd = float(np.exp(estimates[1]))
         area = float(ndtr(signal_mean / np.sqrt(1.0 + signal_sd**2)))
+        d_a = float(np.sqrt(2.0) * signal_mean / np.sqrt(1.0 + signal_sd**2))
+        indices = (
+            DerivedQuantity("d_a", d_a, description="sqrt(2) mu / sqrt(1 + sigma^2)"),
+            DerivedQuantity(
+                "z_roc_slope", float(1.0 / signal_sd), description="slope of the z-ROC line"
+            ),
+            DerivedQuantity(
+                "area_under_curve", area, description="binormal ROC area Phi(d_a / sqrt(2))"
+            ),
+        )
         return UnequalVarianceFitResult(
             model_name=self.model_name,
             model_signature=self.signature,
@@ -928,6 +1071,7 @@ class UnequalVarianceSDT:
             standard_errors=np.sqrt(np.maximum(np.diag(covariance), 0.0)),
             covariance=covariance,
             n_observations=len(study),
+            derived=(*natural_quantities(self, estimates, covariance), *indices),
             diagnostics=FitDiagnostics(
                 converged=bool(result.success),
                 optimizer="L-BFGS-B deterministic multistart",
@@ -944,12 +1088,6 @@ class UnequalVarianceSDT:
                     )
                 ),
             ),
-            signal_mean=signal_mean,
-            signal_sd=signal_sd,
-            criteria=tuple(self._criteria(estimates).tolist()),
-            d_a=float(np.sqrt(2.0) * signal_mean / np.sqrt(1.0 + signal_sd**2)),
-            z_roc_slope=float(1.0 / signal_sd),
-            area_under_curve=area,
         )
 
     def predict(
@@ -1065,24 +1203,26 @@ class MetaSDTFitResult(FitResult):
     "no" criteria are negative and ordered from the criterion outward; the "yes" criteria
     are positive and likewise ordered outward, so index zero of each is the boundary
     between the two lowest confidence levels.
+
+    Apart from ``rates``, which is a structured record of the type-1 table and the
+    correction that produced it, this class adds no fields: it is a typed reader over
+    :attr:`~behavio.contracts.FitResult.derived`.
     """
 
-    type1_d_prime: float
-    type1_criterion: float
-    relative_criterion: float
-    meta_d_prime: float
-    m_ratio: float
-    m_diff: float
-    type2_criteria_no: tuple[float, ...]
-    type2_criteria_yes: tuple[float, ...]
     rates: CorrectedRates
 
     def __post_init__(self) -> None:
         FitResult.__post_init__(self)
         if not isinstance(self.rates, CorrectedRates):
             raise TypeError("rates must be a CorrectedRates")
-        no = tuple(float(value) for value in self.type2_criteria_no)
-        yes = tuple(float(value) for value in self.type2_criteria_yes)
+        missing = sorted(
+            {"d_prime", "criterion", "relative_criterion", "meta_d_prime", "m_ratio", "m_diff"}
+            - set(self.derived_values)
+        )
+        if missing:
+            raise ValueError(f"a meta-d' fit must declare derived {missing}")
+        no = self.type2_criteria_no
+        yes = self.type2_criteria_yes
         if len(no) != len(yes) or not no:
             raise ValueError("each response side needs the same number of type-2 criteria")
         if any(value >= 0 for value in no) or any(value <= 0 for value in yes):
@@ -1091,8 +1231,60 @@ class MetaSDTFitResult(FitResult):
             raise ValueError("type-2 criteria for 'no' responses must decrease outward")
         if any(later <= earlier for earlier, later in pairwise(yes)):
             raise ValueError("type-2 criteria for 'yes' responses must increase outward")
-        object.__setattr__(self, "type2_criteria_no", no)
-        object.__setattr__(self, "type2_criteria_yes", yes)
+
+    @property
+    def type1_d_prime(self) -> float:
+        """Type-1 sensitivity, held fixed while the meta model was fitted."""
+
+        return self.derived_value("d_prime")
+
+    @property
+    def type1_criterion(self) -> float:
+        """Type-1 criterion, held fixed while the meta model was fitted."""
+
+        return self.derived_value("criterion")
+
+    @property
+    def relative_criterion(self) -> float:
+        """The type-1 criterion's relative position ``c / d'``."""
+
+        return self.derived_value("relative_criterion")
+
+    @property
+    def meta_d_prime(self) -> float:
+        """Type-1 sensitivity implied by the observed confidence data."""
+
+        return self.derived_value("meta_d_prime")
+
+    @property
+    def m_ratio(self) -> float:
+        """Metacognitive efficiency ``meta-d' / d'``."""
+
+        return self.derived_value("m_ratio")
+
+    @property
+    def m_diff(self) -> float:
+        """Metacognitive efficiency ``meta-d' - d'``."""
+
+        return self.derived_value("m_diff")
+
+    @property
+    def type2_criteria_no(self) -> tuple[float, ...]:
+        """Type-2 criteria for "no" responses, negative and ordered outward."""
+
+        return self._type2_side("no")
+
+    @property
+    def type2_criteria_yes(self) -> tuple[float, ...]:
+        """Type-2 criteria for "yes" responses, positive and ordered outward."""
+
+        return self._type2_side("yes")
+
+    def _type2_side(self, side: str) -> tuple[float, ...]:
+        prefix = f"type2_criterion_{side}_"
+        return tuple(
+            value for name, value in self.derived_values.items() if name.startswith(prefix)
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -1197,6 +1389,80 @@ class MetaSDT:
     def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
         return (PredictionMode.FILTERED,)
 
+    @property
+    def natural_names(self) -> tuple[str, ...]:
+        """The reported coordinate: the type-1 anchor and ordered type-2 criteria."""
+
+        criteria = tuple(
+            f"type2_criterion_{side}_{index}"
+            for side in ("no", "yes")
+            for index in range(1, self.n_confidence)
+        )
+        return ("d_prime", "criterion", "meta_d_prime", *criteria)
+
+    def to_natural(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> Mapping[str, float]:
+        """Decode the estimated coordinate into ordered type-2 criteria."""
+
+        coordinate = _natural_input(estimates, len(self.parameter_names))
+        criteria_no, criteria_yes = self._type2_criteria(coordinate[2:])
+        decoded = {
+            "d_prime": float(coordinate[0]),
+            "criterion": float(coordinate[1]),
+            "meta_d_prime": float(coordinate[2]),
+        }
+        for side, values in (("no", criteria_no), ("yes", criteria_yes)):
+            for index, value in enumerate(values.tolist(), start=1):
+                decoded[f"type2_criterion_{side}_{index}"] = float(value)
+        return MappingProxyType(decoded)
+
+    def from_natural(self, natural: Mapping[str, float]) -> Mapping[str, float]:
+        """Encode a type-1 anchor and ordered type-2 criteria onto the estimated coordinate."""
+
+        if not isinstance(natural, Mapping) or set(natural) != set(self.natural_names):
+            raise ValueError("natural parameters must match the model exactly")
+        sides = {
+            side: [
+                natural[f"type2_criterion_{side}_{index}"] for index in range(1, self.n_confidence)
+            ]
+            for side in ("no", "yes")
+        }
+        return self.parameters_from_components(
+            d_prime=natural["d_prime"],
+            criterion=natural["criterion"],
+            meta_d_prime=natural["meta_d_prime"],
+            type2_criteria_no=sides["no"],
+            type2_criteria_yes=sides["yes"],
+        )
+
+    def natural_jacobian(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> NDArray[np.float64]:
+        """Return the derivative of the type-2 criteria with respect to their log gaps.
+
+        The type-1 anchor and meta-d' are estimated directly, so the first three rows are
+        the identity. Each type-2 criterion is a signed cumulative sum of positive gaps, so
+        it depends on every gap up to its own index on its own side and on nothing else --
+        which is precisely why the criteria can never cross the type-1 criterion or fall
+        out of order.
+        """
+
+        coordinate = _natural_input(estimates, len(self.parameter_names))
+        width = self.n_confidence - 1
+        jacobian = np.zeros((len(self.natural_names), len(self.parameter_names)), np.float64)
+        for index in range(3):
+            jacobian[index, index] = 1.0
+        gaps = np.exp(np.asarray(coordinate[3:], dtype=np.float64))
+        for side_index, sign in enumerate((-1.0, 1.0)):
+            offset = side_index * width
+            for row in range(width):
+                for gap_index in range(row + 1):
+                    jacobian[3 + offset + row, 3 + offset + gap_index] = sign * float(
+                        gaps[offset + gap_index]
+                    )
+        return jacobian
+
     def parameters_from_components(
         self,
         *,
@@ -1208,7 +1474,8 @@ class MetaSDT:
     ) -> Mapping[str, float]:
         """Encode a type-1 anchor and ordered type-2 criteria onto the estimated coordinate.
 
-        The type-2 criteria are given relative to the type-1 criterion: negative and
+        Keyword-argument façade over :meth:`from_natural`, which owns the encoding. The
+        type-2 criteria are given relative to the type-1 criterion: negative and
         decreasing for "no" responses, positive and increasing for "yes" responses.
         """
 
@@ -1337,8 +1604,20 @@ class MetaSDT:
         covariance[0, 1] = covariance[1, 0] = 0.5 * (variance_false_alarm - variance_hit)
         covariance[2:, 2:] = meta_covariance
         meta_d_prime = float(meta_coordinate[0])
-        criteria_no, criteria_yes = self._type2_criteria(meta_coordinate)
         joint = self._joint_objective(counts, type1.d_prime, type1.criterion, meta_coordinate)
+        efficiency = (
+            DerivedQuantity(
+                "relative_criterion",
+                float(type1.relative_criterion),
+                description="c divided by d', the position the meta fit holds fixed",
+            ),
+            DerivedQuantity(
+                "m_ratio", float(meta_d_prime / type1.d_prime), description="meta-d' / d'"
+            ),
+            DerivedQuantity(
+                "m_diff", float(meta_d_prime - type1.d_prime), description="meta-d' - d'"
+            ),
+        )
         return MetaSDTFitResult(
             model_name=self.model_name,
             model_signature=self.signature,
@@ -1363,14 +1642,7 @@ class MetaSDT:
                     )
                 ),
             ),
-            type1_d_prime=float(type1.d_prime),
-            type1_criterion=float(type1.criterion),
-            relative_criterion=float(type1.relative_criterion),
-            meta_d_prime=meta_d_prime,
-            m_ratio=float(meta_d_prime / type1.d_prime),
-            m_diff=float(meta_d_prime - type1.d_prime),
-            type2_criteria_no=tuple(criteria_no.tolist()),
-            type2_criteria_yes=tuple(criteria_yes.tolist()),
+            derived=(*natural_quantities(self, estimates, covariance), *efficiency),
             rates=type1.rates,
         )
 
@@ -1520,6 +1792,20 @@ class MetaSDT:
         if unknown:
             raise ModelDataError(f"observed confidence outside the declared levels: {unknown}")
         return values
+
+
+def _natural_input(
+    estimates: Sequence[float] | NDArray[np.floating[Any]], width: int
+) -> NDArray[np.float64]:
+    """Validate one estimated coordinate before mapping it onto the natural one."""
+
+    try:
+        vector = np.asarray(estimates, dtype=np.float64)
+    except (TypeError, ValueError):
+        raise ValueError("estimates must contain finite numeric values") from None
+    if vector.shape != (width,) or not np.all(np.isfinite(vector)):
+        raise ValueError(f"estimates must contain {width} finite values")
+    return vector
 
 
 def _one_over_2n(rate: float, denominator: int) -> float:

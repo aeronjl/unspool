@@ -83,3 +83,68 @@ def test_fit_artifact_rejects_nonportable_study_values() -> None:
 
     with pytest.raises(FitArtifactError, match="not portable JSON data"):
         export_fit(fitted, opaque)
+
+
+def psychometric_example():
+    from behavio.models import PsychometricFunction
+
+    levels = np.linspace(-2.0, 2.0, 9)
+    stimulus = np.repeat(levels, 8)
+    rows = stimulus.size
+    design = Study(
+        {
+            "subject": ["a"] * rows,
+            "session": ["s"] * rows,
+            "trial": list(range(rows)),
+            "session_order": [0] * rows,
+            "stimulus": stimulus,
+        }
+    )
+    model = PsychometricFunction(stimulus="stimulus", outcome="choice", n_restarts=2)
+    truth = model.parameters_from_components(
+        threshold=0.2, width=0.6, guess_rate=0.05, lapse_rate=0.05
+    )
+    study = model.simulate(design, dict(truth), seed=3)
+    task = TaskSpec(choice=ChoiceSpec(options=(0, 1)), predictors=("stimulus",))
+    return fit_model(model, study, task=task), study
+
+
+def test_derived_quantities_reach_the_exported_artifact() -> None:
+    fitted, study = psychometric_example()
+
+    artifact = export_fit(fitted, study)
+    payload = artifact.to_dict()
+    by_name = {record["name"]: record for record in payload["derived"]}
+
+    # The estimated coordinate is still ``log_width``; the published width is beside it.
+    assert [record["name"] for record in payload["parameters"]][1] == "log_width"
+    assert by_name["width"]["interval_level"] == 0.95
+    assert by_name["width"]["standard_error"] is not None
+    assert len(by_name["width"]["interval"]) == 2
+    assert by_name["slope_at_threshold"]["standard_error"] is None
+    restored = fit_artifact_from_json(artifact.canonical_json())
+    assert restored.to_dict() == payload
+    assert restored.fingerprint == artifact.fingerprint
+    json.dumps(payload, allow_nan=False)
+
+
+def test_an_artifact_without_derived_quantities_is_byte_identical() -> None:
+    fitted, study = fitted_example()
+
+    artifact = export_fit(fitted, study)
+    payload = artifact.to_dict()
+
+    assert artifact.derived == ()
+    assert "derived" not in payload
+    # An artifact written before derived quantities existed still decodes unchanged.
+    assert fit_artifact_from_dict(payload).fingerprint == artifact.fingerprint
+
+
+def test_the_artifact_reader_rejects_a_malformed_derived_block() -> None:
+    fitted, study = psychometric_example()
+    payload = export_fit(fitted, study).to_dict()
+
+    with pytest.raises(FitArtifactError, match="derived must be an array"):
+        fit_artifact_from_dict({**payload, "derived": "width"})
+    with pytest.raises(FitArtifactError, match="derived quantity names must be unique"):
+        fit_artifact_from_dict({**payload, "derived": [{"name": "w"}, {"name": "w"}]})

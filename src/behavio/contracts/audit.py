@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 import numpy as np
 
@@ -60,6 +60,42 @@ class FitDiagnostics:
     hessian_condition: float | None
     boundary_estimate: bool | None
 
+    @classmethod
+    def closed_form(
+        cls,
+        *,
+        procedure: str,
+        message: str,
+        objective: float | None = None,
+        boundary_estimate: bool | None = None,
+    ) -> FitDiagnostics:
+        """Diagnostics for an estimator that solves rather than searches.
+
+        A closed-form estimator -- the equal-variance z-transform, say -- has no optimizer,
+        no iterations, no gradient and no Hessian, and forcing it to fill those fields in
+        makes it advertise a convergence that was never in question. This constructor
+        names the *procedure* instead of an optimizer and leaves every optimizer-shaped
+        diagnostic absent. ``converged`` and ``status`` remain ``True`` and ``0``: there
+        was nothing to converge, so the audit must not report a failure, and
+        :func:`behavio.diagnostics.audit_fit` reads them exactly as it always has. The
+        record is bit-identical to writing the same fields by hand, so no maximum-
+        likelihood behaviour changes.
+        """
+
+        if not isinstance(procedure, str) or not procedure:
+            raise ValueError("a closed-form procedure needs a non-empty name")
+        return cls(
+            converged=True,
+            optimizer=procedure,
+            status=0,
+            message=message,
+            n_iterations=None,
+            objective=objective,
+            gradient_norm=None,
+            hessian_condition=None,
+            boundary_estimate=boundary_estimate,
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class FitAuditPolicy:
@@ -92,6 +128,59 @@ class FitIssue:
         object.__setattr__(self, "severity", AuditSeverity(self.severity))
 
 
+@runtime_checkable
+class MultistartFit(Protocol):
+    """A fit result that retains every restart of a deterministic multistart optimizer.
+
+    This is the contract behind :class:`RestartAudit`. It was previously a *private*
+    protocol inside ``behavio.diagnostics``, so eight models populated these four exact
+    attribute names by copying an implementation rather than by reading a contract, and a
+    ninth got a restart audit only because its author matched the names character for
+    character. The names are the contract, and they are now declared where a model author
+    will find them.
+
+    The raw restart evidence stays on the fit rather than being replaced by its summary:
+    ``RestartAudit`` is a comparable digest, and a scientific requirement of this package
+    is that optimization failures remain visible in full.
+    """
+
+    restart_objectives: Any
+    """One objective value per restart, in restart order."""
+
+    restart_converged: Any
+    """One convergence flag per restart, aligned with ``restart_objectives``."""
+
+    restart_messages: tuple[str, ...]
+    """One optimizer message per restart, aligned with ``restart_objectives``."""
+
+    selected_restart: int
+    """Index of the restart whose estimates the fit reports."""
+
+
+@runtime_checkable
+class LatentStateFit(Protocol):
+    """A fit result that retains the label and occupancy evidence of a latent-state model.
+
+    The counterpart of :class:`MultistartFit` for :class:`LatentStateAudit`, promoted out
+    of ``behavio.diagnostics`` for the same reason and on the same terms.
+    """
+
+    state_occupancy: Any
+    """Fitted occupancy of each latent state."""
+
+    state_separation: float
+    """Non-negative separation between the fitted state emissions."""
+
+    label_order_gap: float
+    """Non-negative margin by which the canonical state ordering is decided."""
+
+    label_ambiguous: bool
+    """Whether the fitted ordering is too close to name states stably."""
+
+    low_occupancy: bool
+    """Whether any state's fitted occupancy is too low to interpret."""
+
+
 @dataclass(frozen=True, slots=True)
 class RestartAudit:
     """Comparable summary of a multi-restart optimizer's retained outcomes."""
@@ -116,6 +205,45 @@ class RestartAudit:
             raise ValueError("restart objective ranges must be non-negative")
         object.__setattr__(self, "failed_messages", tuple(self.failed_messages))
 
+    @classmethod
+    def from_fit(cls, fit: Any) -> RestartAudit | None:
+        """Summarize a :class:`MultistartFit`, or return ``None`` for any other fit.
+
+        The relative objective range is scaled by the best retained objective, floored at
+        one, so a model whose objective is near zero cannot manufacture a disagreement
+        warning out of a rounding difference. Only converged restarts with finite
+        objectives are eligible, and fewer than two of them means there is nothing to
+        disagree about.
+        """
+
+        if not isinstance(fit, MultistartFit):
+            return None
+        objectives = np.asarray(fit.restart_objectives, dtype=np.float64)
+        converged = np.asarray(fit.restart_converged, dtype=np.bool_)
+        messages = tuple(fit.restart_messages)
+        selected = int(fit.selected_restart)
+        eligible = objectives[converged & np.isfinite(objectives)]
+        if len(eligible) >= 2:
+            objective_range = float(np.max(eligible) - np.min(eligible))
+            relative_range = objective_range / max(1.0, abs(float(np.min(eligible))))
+        else:
+            objective_range = 0.0
+            relative_range = 0.0
+        return cls(
+            n_restarts=len(objectives),
+            n_converged=int(np.count_nonzero(converged)),
+            selected_restart=selected,
+            selected_converged=bool(converged[selected]),
+            selected_objective=float(objectives[selected]),
+            objective_range=objective_range,
+            relative_objective_range=relative_range,
+            failed_messages=tuple(
+                message
+                for message, successful in zip(messages, converged, strict=True)
+                if not successful
+            ),
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class LatentStateAudit:
@@ -135,6 +263,22 @@ class LatentStateAudit:
             raise ValueError("minimum_occupancy must lie between zero and one")
         if self.state_separation < 0 or self.label_order_gap < 0:
             raise ValueError("latent-state separation diagnostics must be non-negative")
+
+    @classmethod
+    def from_fit(cls, fit: Any) -> LatentStateAudit | None:
+        """Summarize a :class:`LatentStateFit`, or return ``None`` for any other fit."""
+
+        if not isinstance(fit, LatentStateFit):
+            return None
+        occupancy = np.asarray(fit.state_occupancy, dtype=np.float64)
+        return cls(
+            n_states=len(occupancy),
+            minimum_occupancy=float(np.min(occupancy)),
+            state_separation=float(fit.state_separation),
+            label_order_gap=float(fit.label_order_gap),
+            label_ambiguous=bool(fit.label_ambiguous),
+            low_occupancy=bool(fit.low_occupancy),
+        )
 
 
 @dataclass(frozen=True, slots=True)

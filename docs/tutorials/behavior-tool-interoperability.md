@@ -322,8 +322,41 @@ without changing the time grid or bridging excluded spans, and reports every
 session's retained denominator and exclusion reasons. See the
 [event-kernel method contract](https://aeronjl.github.io/fipha/event-kernel-encoding/).
 
-To model the behaviour itself across sessions rather than against a signal,
-assemble the trial-level summaries into a [`Study`](../data-contract.md) and
+To model the behaviour itself across sessions rather than against a signal, the
+trial-level summaries are computed here rather than assembled elsewhere. Declare
+the trial timing on the same clock and reduce the covariate and the bouts over
+trial windows:
+
+```python
+from behavio.trialization import (
+    MaximumValue,
+    TrialTiming,
+    TrialWindow,
+    attach_trial_columns,
+    reduce_covariate_to_trials,
+)
+
+timing = TrialTiming.from_arrays(
+    subject="mouse-07",
+    session="day-04",
+    onset_s=boris.point_events["cue"],
+    clock_id="acquisition",
+).synchronized_to(clock_synchronization)
+
+peak_speed = reduce_covariate_to_trials(
+    aligned_speed,
+    timing=timing,
+    window=TrialWindow(start_offset_s=0.0, stop_offset_s=1.0),
+    reducer=MaximumValue(),
+    max_gap_s=2 / camera_fps,
+    minimum_coverage=0.8,
+)
+study = attach_trial_columns(study, [peak_speed])
+```
+
+Each column arrives with its coverage and status, so a trial whose window ran
+past the end of the video is visibly `NaN` rather than a confident number. See
+[From seconds to trials](../observed-behaviour.md#from-seconds-to-trials), then
 follow the [prospective validation workflow](../validation.md).
 
 ## What this example proves—and does not

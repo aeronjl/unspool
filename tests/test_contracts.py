@@ -65,6 +65,8 @@ BACK_COMPATIBLE_HOMES = {
         "FitDiagnostics",
         "FitIssue",
         "LatentStateAudit",
+        "LatentStateFit",
+        "MultistartFit",
         "RestartAudit",
     ),
     "behavio.inference": ("ObjectiveTarget", "OptimizationBackend", "PriorMeasure"),
@@ -588,3 +590,231 @@ def _study() -> Study:
     )
     TaskSpec(choice=ChoiceSpec(options=(0, 1))).validate(study)
     return study
+
+
+# --------------------------------------------------------------------------------------
+# Derived quantities, the natural parameterisation, and the multistart contract.
+#
+# These three widenings share one rule: a model that declares nothing behaves exactly as it
+# did before they existed. Every test below either exercises a declaration or asserts that
+# absence of one is inert.
+# --------------------------------------------------------------------------------------
+
+
+def test_a_fit_declaring_no_derived_quantities_is_unchanged() -> None:
+    fit = _mle_fit()
+
+    assert fit.derived == ()
+    assert dict(fit.derived_values) == {}
+    assert dict(fit.derived_quantities) == {}
+    assert dict(fit.parameters) == {"a": 0.5, "b": -0.25}
+    assert fit.audit().status is FitAuditStatus.PASS
+    with pytest.raises(KeyError, match="declares no derived quantity"):
+        fit.derived_value("threshold")
+
+
+def test_a_derived_quantity_carries_a_value_and_an_optional_uncertainty() -> None:
+    bare = contracts.DerivedQuantity("m_ratio", 0.8)
+    full = contracts.DerivedQuantity(
+        "threshold",
+        -4.0,
+        standard_error=0.5,
+        interval=(-5.0, -3.0),
+        interval_level=0.95,
+        description="stimulus level at the curve midpoint",
+    )
+
+    assert bare.standard_error is None and bare.interval is None
+    assert full.to_dict()["interval"] == [-5.0, -3.0]
+    assert bare.to_dict()["interval_level"] is None
+    with pytest.raises(ValueError, match="requires a level"):
+        contracts.DerivedQuantity("threshold", 1.0, interval=(0.0, 2.0))
+    with pytest.raises(ValueError, match="interval_level requires an interval"):
+        contracts.DerivedQuantity("threshold", 1.0, interval_level=0.95)
+    with pytest.raises(ValueError, match="bounds must be ordered"):
+        contracts.DerivedQuantity("threshold", 1.0, interval=(2.0, 0.0), interval_level=0.95)
+    with pytest.raises(ValueError, match="non-negative"):
+        contracts.DerivedQuantity("threshold", 1.0, standard_error=-0.1)
+
+
+def test_derived_quantity_names_must_be_unique_within_one_fit() -> None:
+    with pytest.raises(ValueError, match="unique within one fit"):
+        FitResult(
+            model_name="demo",
+            model_signature="demo[v1]",
+            parameter_names=("a",),
+            estimates=np.array([1.0]),
+            standard_errors=np.array([0.1]),
+            covariance=np.eye(1),
+            n_observations=8,
+            diagnostics=_mle_fit().diagnostics,
+            derived=(
+                contracts.DerivedQuantity("threshold", 1.0),
+                contracts.DerivedQuantity("threshold", 2.0),
+            ),
+        )
+
+
+def test_derived_quantities_reach_a_consumer_typed_on_plain_fit_result() -> None:
+    from behavio.models import PsychometricFunction
+
+    model = PsychometricFunction(stimulus="stimulus", outcome="choice")
+    fit: FitResult = model.fit(_psychometric_study())
+
+    assert set(fit.derived_values) >= {"threshold", "width", "guess_rate", "lapse_rate"}
+    threshold = fit.derived_quantities["threshold"]
+    assert threshold.interval_level == 0.95
+    assert threshold.interval is not None and threshold.interval[0] <= threshold.value
+    # The estimated coordinate is unchanged: derived quantities are additional, never a
+    # replacement for the numbers the optimizer actually searched.
+    assert fit.parameter_names == ("threshold", "log_width", "guess_logit", "lapse_logit")
+
+
+def test_the_natural_contract_is_optional_and_a_declining_model_is_inert() -> None:
+    plain = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0)
+
+    assert not isinstance(plain, contracts.NaturalParameterisation)
+    with pytest.raises(TypeError, match="NaturalParameterisation"):
+        contracts.natural_quantities(plain, np.zeros(2), np.eye(2))  # type: ignore[arg-type]
+
+
+def test_the_natural_jacobian_propagates_uncertainty_off_the_optimizer_scale() -> None:
+    from behavio.models import UnequalVarianceSDT
+
+    model = UnequalVarianceSDT()
+    assert isinstance(model, contracts.NaturalParameterisation)
+    coordinate = np.asarray(
+        list(
+            model.parameters_from_components(
+                signal_mean=1.2, signal_sd=1.3, criteria=[-1.0, -0.3, 0.2, 0.9, 1.5]
+            ).values()
+        )
+    )
+
+    natural = model.to_natural(coordinate)
+    assert natural["signal_sd"] == pytest.approx(1.3)
+    assert natural["criterion_3"] == pytest.approx(0.2)
+    # A round trip returns the coordinate the optimizer searched.
+    encoded = model.from_natural(natural)
+    assert np.allclose(list(encoded.values()), coordinate)
+
+    analytic = model.natural_jacobian(coordinate)
+    numeric = np.zeros_like(analytic)
+    step = 1e-6
+    for column in range(coordinate.size):
+        shifted = coordinate.copy()
+        shifted[column] += step
+        forward = model.to_natural(shifted)
+        shifted[column] -= 2 * step
+        backward = model.to_natural(shifted)
+        numeric[:, column] = [
+            (forward[name] - backward[name]) / (2 * step) for name in model.natural_names
+        ]
+    assert np.allclose(analytic, numeric, atol=1e-5)
+
+    covariance = np.eye(coordinate.size) * 0.04
+    quantities = contracts.natural_quantities(model, coordinate, covariance)
+    assert tuple(item.name for item in quantities) == model.natural_names
+    assert all(item.standard_error is not None and item.interval is None for item in quantities)
+
+    # The propagated covariance is a full matrix, not a diagonal: the cumulative-sum
+    # construction correlates neighbouring criteria even from independent gaps.
+    propagated = contracts.natural_covariance(model, coordinate, covariance)
+    assert propagated.shape == (len(model.natural_names), len(model.natural_names))
+    assert np.allclose(propagated, propagated.T)
+    assert propagated[3, 4] != 0.0
+    assert np.allclose([item.standard_error for item in quantities], np.sqrt(np.diag(propagated)))
+
+
+def test_the_multistart_contract_is_what_produces_a_restart_audit() -> None:
+    from behavio.models import PsychometricFunction
+
+    fit = PsychometricFunction(stimulus="stimulus", outcome="choice").fit(_psychometric_study())
+
+    assert isinstance(fit, contracts.MultistartFit)
+    assert not isinstance(_mle_fit(), contracts.MultistartFit)
+    audit = contracts.RestartAudit.from_fit(fit)
+    assert audit is not None
+    assert audit.n_restarts == len(fit.restart_objectives)
+    assert audit.selected_restart == fit.selected_restart
+    assert contracts.RestartAudit.from_fit(_mle_fit()) is None
+    assert contracts.LatentStateAudit.from_fit(fit) is None
+    # The public constructor is exactly what ``audit_fit`` now dispatches to.
+    assert fit.audit().restarts == audit
+
+
+def test_a_closed_form_estimator_records_a_procedure_not_an_optimizer() -> None:
+    diagnostics = contracts.FitDiagnostics.closed_form(
+        procedure="closed-form z-transform",
+        message="two-by-two table",
+        objective=12.0,
+        boundary_estimate=False,
+    )
+
+    assert diagnostics.optimizer == "closed-form z-transform"
+    assert diagnostics.n_iterations is None
+    assert diagnostics.gradient_norm is None
+    assert diagnostics.hessian_condition is None
+    # ``converged`` stays true because there was nothing to converge, so an audit of a
+    # closed-form fit must not manufacture a convergence failure.
+    assert diagnostics.converged and diagnostics.status == 0
+    with pytest.raises(ValueError, match="non-empty name"):
+        contracts.FitDiagnostics.closed_form(procedure="", message="x")
+
+
+def test_required_task_columns_is_part_of_the_contract_and_is_surfaced() -> None:
+    from behavio.models import EqualVarianceSDT
+
+    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0)
+    assert isinstance(model, contracts.TaskColumnEstimator)
+    assert contracts.model_capabilities(model).required_task_columns == ("stimulus",)
+    assert contracts.model_task_columns(EqualVarianceSDT()) == ("signal",)
+
+    class _Silent:
+        model_name = "silent"
+        signature = "silent[v1]"
+        scored_columns = ("choice",)
+        supported_prediction_modes = (PredictionMode.FILTERED,)
+
+        def fit(self, study: Study) -> FitResult:  # pragma: no cover - never called
+            raise NotImplementedError
+
+        def predict(self, study: Study, fit: FitResult, *, mode: Any = None) -> Any:
+            raise NotImplementedError  # pragma: no cover - never called
+
+        def pointwise_log_prob(self, study: Study, fit: FitResult, *, mode: Any = None) -> Any:
+            raise NotImplementedError  # pragma: no cover - never called
+
+    silent = _Silent()
+    assert not isinstance(silent, contracts.TaskColumnEstimator)
+    assert contracts.model_capabilities(silent).required_task_columns == ()
+    with pytest.raises(ValueError, match="tuple of column names"):
+        contracts.validate_required_task_columns("stimulus")
+    with pytest.raises(ValueError, match="must be unique"):
+        contracts.validate_required_task_columns(("stimulus", "stimulus"))
+    with pytest.raises(ValueError, match="repeat a scored column"):
+        contracts.ModelCapabilities(
+            scored_columns=("choice",),
+            prediction_modes=(PredictionMode.FILTERED,),
+            can_simulate=False,
+            can_recover_parameters=False,
+            required_task_columns=("choice",),
+        )
+
+
+def _psychometric_study() -> Study:
+    levels = np.linspace(-2.0, 2.0, 9)
+    stimulus = np.repeat(levels, 12)
+    generator = np.random.default_rng(4)
+    probability = 0.05 + 0.9 / (1.0 + np.exp(-(stimulus - 0.2) / 0.5))
+    rows = stimulus.size
+    return Study(
+        {
+            "subject": ["m1"] * rows,
+            "session": ["s1"] * rows,
+            "session_order": [1] * rows,
+            "trial": list(range(1, rows + 1)),
+            "stimulus": stimulus,
+            "choice": generator.binomial(1, probability).astype(np.int8),
+        }
+    )

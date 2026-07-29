@@ -8,20 +8,26 @@ silently.
 
 from __future__ import annotations
 
+from collections.abc import Hashable
 from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from behavio._arrays import _readonly_float, _validate_time
+from behavio._arrays import _identity, _readonly_float, _validate_time
 
 
 @dataclass(frozen=True)
 class BehaviorCovariate:
-    """One timestamped external covariate with an explicit validity mask."""
+    """One timestamped external covariate with an explicit validity mask.
 
-    subject: str
-    session: str
+    ``subject`` and ``session`` accept any hashable identifier, matching
+    :class:`behavio.study.Study`, so an integer subject id survives the join
+    onto a trial-level study without a lossy ``str()``.
+    """
+
+    subject: Hashable
+    session: Hashable
     name: str
     time_s: NDArray[np.float64]
     values: NDArray[np.float64]
@@ -51,6 +57,8 @@ class BehaviorCovariate:
             raise ValueError("clock synchronization IDs must be non-empty")
         valid &= np.isfinite(values)
         valid.setflags(write=False)
+        object.__setattr__(self, "subject", _identity(self.subject, name="subject"))
+        object.__setattr__(self, "session", _identity(self.session, name="session"))
         object.__setattr__(self, "time_s", time_s)
         object.__setattr__(self, "values", values)
         object.__setattr__(self, "valid", valid)

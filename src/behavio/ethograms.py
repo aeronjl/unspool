@@ -12,7 +12,7 @@ not read as ``from __future__ import annotations`` at a glance.
 from __future__ import annotations
 
 import csv
-from collections.abc import Mapping, Sequence
+from collections.abc import Hashable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -20,7 +20,7 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import ArrayLike
 
-from behavio._arrays import _readonly_float, _validate_time
+from behavio._arrays import _identity, _readonly_float, _validate_time
 from behavio.covariates import BehaviorCovariate
 
 
@@ -57,10 +57,14 @@ class IntervalEncodingInputs:
 
 @dataclass(frozen=True)
 class BehaviorAnnotations:
-    """Point events and intervals discovered by an external behavior tool."""
+    """Point events and intervals discovered by an external behavior tool.
 
-    subject: str
-    session: str
+    ``subject`` and ``session`` accept any hashable identifier, matching
+    :class:`behavio.study.Study`.
+    """
+
+    subject: Hashable
+    session: Hashable
     point_events: Mapping[str, tuple[float, ...]]
     intervals: tuple[BehaviorInterval, ...]
     source: str
@@ -83,6 +87,8 @@ class BehaviorAnnotations:
             if any(not np.isfinite(value) for value in values):
                 raise ValueError("point-event times must be finite")
             normalized[label] = tuple(sorted(values))
+        object.__setattr__(self, "subject", _identity(self.subject, name="subject"))
+        object.__setattr__(self, "session", _identity(self.session, name="session"))
         object.__setattr__(self, "point_events", normalized)
         object.__setattr__(
             self,

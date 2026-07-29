@@ -109,4 +109,52 @@ them onto a recording clock is
 which transforms point and interval times while retaining their point-versus-state
 semantics.
 
+## From an ethogram to a `Study`
+
+Point events and bouts also reduce to trial columns through
+`behavio.trialization`. Because annotations often already encode trial
+structure, they can supply the trial timing as well:
+
+```python
+from behavio.trialization import (
+    FractionOfTimeInState,
+    TrialWindow,
+    attach_trial_columns,
+    reduce_annotations_to_trials,
+    trial_timing_from_events,
+)
+
+timing = trial_timing_from_events(
+    annotations,
+    onset_label="cue",
+    offset_label="reward",
+)
+rearing = reduce_annotations_to_trials(
+    annotations,
+    timing=timing,
+    window=TrialWindow(
+        start_offset_s=0.0,
+        stop_offset_s=0.0,
+        start_anchor="onset",
+        stop_anchor="offset",
+    ),
+    reducer=FractionOfTimeInState("rear"),
+    observed_span_s=(0.0, session_duration_s),
+    minimum_coverage=1.0,
+)
+study = attach_trial_columns(study, [rearing])
+```
+
+The label is always the caller's: nothing decides which of a session's events
+delimits a trial. `FractionOfTimeInState`, `EventCount` and
+`FirstOccurrenceLatency` ship; the reducer protocol is open.
+
+An ethogram carries no sampling grid, so the span the annotator actually scored
+cannot be inferred from it and must be declared as `observed_span_s`. Inside a
+covered window, the absence of a bout is a real zero rather than missing data,
+which is why a covered trial always reports a value — and why a `NaN` latency
+with status `ok` means the behaviour was observed not to occur, not that the
+window was unobserved. See
+[From seconds to trials](observed-behaviour.md#from-seconds-to-trials).
+
 Signatures are in the [observed behaviour API](reference/observed-behaviour.md).

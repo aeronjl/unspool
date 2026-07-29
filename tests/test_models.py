@@ -138,6 +138,7 @@ def test_model_satisfies_public_contract() -> None:
         prediction_modes=(PredictionMode.FILTERED,),
         can_simulate=True,
         can_recover_parameters=True,
+        required_task_columns=("stimulus",),
     )
 
 

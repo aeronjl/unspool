@@ -6,7 +6,7 @@ ethogram, so that what those tools observed can be modelled, related to a
 neural signal, or carried across sessions without silently losing confidence,
 missingness, or clock identity.
 
-That boundary is four small modules, one per thing being carried:
+That boundary is five small modules, one per thing being carried:
 
 | Module | Holds | Page |
 |---|---|---|
@@ -14,6 +14,7 @@ That boundary is four small modules, one per thing being carried:
 | `behavio.ethograms` | `BehaviorInterval`, `BehaviorAnnotations`, and the Keypoint-MoSeq and BORIS readers | [Ethograms](ethograms.md) |
 | `behavio.covariates` | `BehaviorCovariate` | [Behavioural covariates](covariates.md) |
 | `behavio.sync` | `ClockSynchronization` and `fit_clock_synchronization()` | [Clock synchronisation](clock-synchronization.md) |
+| `behavio.trialization` | `TrialTiming`, `TrialWindow`, the reducers, and `attach_trial_columns()` | [From seconds to trials](#from-seconds-to-trials) |
 
 Readers live with the type they produce rather than in a module of their own,
 because a reader is only ever a thin translation into one of these types.
@@ -45,7 +46,7 @@ because a reader is only ever a thin translation into one of these types.
 | movement | pose input/output across tools, kinematics, regions of interest | its `poses` dataset, via `pose_from_movement()` |
 | Keypoint-MoSeq | unsupervised behavioural state discovery | frame-level syllable labels, run-length encoded as bouts |
 | BORIS | human ethogram annotation | distinct point events and state intervals |
-| Behavio | the shared behavioural types below, interval policies, clocks, models and prospective validation | typed pose, covariates, point events and intervals |
+| Behavio | the shared behavioural types below, interval policies, trialization onto a `Study`, clocks, models and prospective validation | typed pose, covariates, point events and intervals |
 | fipha | optical signal identity, QC, preprocessing, neural alignment and inference | Behavio's types, through `fipha[behavior]` |
 
 This division follows the scientific capabilities of the source tools.
@@ -85,6 +86,11 @@ Interoperability is valid only when these fields remain explicit:
 Every type in this boundary carries them, so a value never arrives without the
 clock it was measured on.
 
+`subject` and `session` are *any hashable value*, the same contract a `Study`
+uses. An integer subject id read out of NWB stays an integer all the way to the
+trial column; nothing on this path needs a lossy `str()` to make two halves of
+the package agree on who an animal is.
+
 !!! note "Not the longitudinal clocks"
     `clock_id` here names a hardware time coordinate in seconds. It is
     unrelated to the [longitudinal clocks](clocks-and-transforms.md) that place
@@ -110,15 +116,147 @@ The composition is:
 3. apply an [auditable interval policy](interval-policy.md) to the discovered
    [bouts](ethograms.md), so merging, filtering and contextualisation are
    ordered and recorded;
-4. align it without crossing invalid spans and retain the resulting mask; then
-5. either model it here, or hand the point events, interval edges, covariate
-   values and masks to a recording package.
+4. align it without crossing invalid spans and retain the resulting mask;
+5. declare trial timing on that clock, reduce the covariate and the bouts over
+   trial windows, and attach the results as `Study` columns with their coverage
+   (["From seconds to trials"](#from-seconds-to-trials)); then
+6. model it here — or hand the point events, interval edges, covariate values
+   and masks to a recording package, which is a different job rather than the
+   only remaining option.
 
-See the [worked interoperability tutorial](tutorials/behavior-tool-interoperability.md).
+See the [worked interoperability tutorial](tutorials/behavior-tool-interoperability.md)
+and `examples/behavior_interoperability.py`, whose every `Study` column is
+reduced from the pose, ethograms and synchronised covariate above it.
+
 For photometry specifically, `fipha` consumes `interval_encoding_inputs()` and
 `normalized_progress()` directly in its event-kernel models; the return of a
-trial-level neural summary to a Behavio `Study` is documented in its
+trial-level *neural* summary to a Behavio `Study` is documented in its
 [Behavio interoperability contract](https://aeronjl.github.io/fipha/behavio-interoperability/).
+Behavioural quantities no longer need that round trip: `behavio.trialization`
+computes them here.
+
+!!! warning "What the bridge still does not do"
+    - It reduces **one** covariate or ethogram per call, for **one**
+      subject/session. Reducing a cohort means looping and passing the
+      reductions together to `attach_trial_columns()`; there is no cohort-level
+      driver.
+    - It reduces a covariate to a *scalar per trial*. Peri-event time
+      histograms, trial-by-time matrices and warped trial averages are not
+      expressible as a `Study` column and are not implemented anywhere here.
+    - Coverage is computed against the covariate's own sampled span. A camera
+      that ran but produced systematically invalid samples is reported as
+      uncovered, not as a hardware fault; distinguishing them is source-tool QC.
+    - `TrialTiming` describes one session's trials. It is not persisted in any
+      interchange artifact, so a declared timing has to be re-declared rather
+      than read back from a saved study.
+
+## From seconds to trials
+
+A `PoseTrajectory` lives in float64 seconds on a named hardware clock. A `Study`
+has one row per trial and **no time column at all** — its four required columns
+are `subject`, `session`, `trial` and `session_order`. The two therefore cannot
+be related until something supplies the missing coordinate: when each trial
+started. `behavio.trialization` is that bridge.
+
+### Trial timing is declared, never inferred
+
+`TrialTiming` is the declaration. It names the clock its onsets sit on, carries
+optional offsets, and uses the same `subject`/`session`/`trial` keys the study
+does — which is why no time column is added to `Study`, and why the join is
+exact rather than positional:
+
+```python
+from behavio.trialization import TrialTiming
+
+timing = TrialTiming.from_arrays(
+    subject="mouse-07",
+    session="day-04",
+    onset_s=cue_times,
+    offset_s=response_times,
+    clock_id="camera-0",
+)
+```
+
+`trial_timing_from_events()` derives the same object from an ethogram when the
+trial structure is already annotated, but the caller still names the label:
+nothing here decides which of a session's events delimits a trial.
+
+Onsets and trial numbers must both increase strictly, so trial order in time and
+trial order in the study can never disagree silently.
+
+### Clocks are related, not renamed
+
+A covariate on one clock and onsets on another are refused, exactly as
+`aligned_to()` refuses a clock mismatch. The fix is not to rename a clock but to
+fit the mapping and move the timing through it, which also appends the
+synchronisation id to the timing's lineage:
+
+```python
+timing = timing.synchronized_to(clock_synchronization)
+```
+
+### Windows
+
+`TrialWindow` is anchored to the declared onset or offset, so onset-locked,
+offset-locked, whole-trial (`onset` to `offset`) and mixed windows are all
+expressible. An offset-locked window against a timing that declares no offsets
+raises rather than assuming a trial duration. Whether a window may run into the
+next trial is a scientific choice, so it is declared:
+`on_next_trial_overlap="reject"` (the default) refuses it and
+`"allow"` accepts it while still recording `overlaps_next_trial` per trial.
+
+### Reducers
+
+The shipped reducers are `MeanValue`, `MedianValue`, `MinimumValue` and
+`MaximumValue` for covariates, and `FractionOfTimeInState`, `EventCount` and
+`FirstOccurrenceLatency` for ethograms. The set is open: `TrialCovariateReducer`
+and `TrialAnnotationReducer` are protocols, so a project can add its own without
+changing this module.
+
+### Coverage is part of the answer
+
+A reduction never returns a bare number. `TrialReduction` carries the value, the
+fraction of the window actually covered by valid observation, and a
+`TrialCoverageStatus` per trial:
+
+| Status | Meaning | Value |
+|---|---|---|
+| `ok` | the whole window was observed | reported |
+| `partial_coverage` | some of the window was unobserved, but at least `minimum_coverage` | reported |
+| `below_minimum_coverage` | less of the window was observed than declared acceptable | `NaN` |
+| `no_valid_samples` | the window contains no sample the mask accepted | `NaN` |
+| `outside_observed_span` | the window lies outside the recording entirely | `NaN` |
+| `not_reduced` | the study row was not covered by any reduction | `NaN` |
+
+Coverage uses the same `max_gap_s` rule as
+[`aligned_to()`](covariates.md): consecutive valid samples further apart than
+that do not span the time between them, so a window straddling a dropout reports
+the fraction it really saw. `attach_trial_columns()` writes `name`,
+`name_coverage` and `name_status` together by default, so a downstream model
+cannot read the number without being able to see what supported it.
+
+For an ethogram there is no sampling grid, so the span the annotator scored
+cannot be inferred and must be declared as `observed_span_s`. Inside a covered
+window the absence of a bout is a real zero, not missing data — which is why a
+covered trial always reports a value, and why `FirstOccurrenceLatency` returning
+`NaN` with status `ok` means *censored*, not *unobserved*.
+
+### Leakage
+
+Every shipped reducer reads only the samples inside one trial's own window, so
+it is fold-independent by construction and safe to apply before splitting.
+Anything that must **learn** from data — a threshold, a normalisation, a
+baseline — is not a reducer. Produce the raw per-trial column here, then fit the
+learned step as a `StudyTransform` inside a training fold with
+[`fit_transform_split()`](clocks-and-transforms.md). Reducers declare this with
+`fold_independent`; one that declares `False` is refused rather than quietly
+applied to a whole study.
+
+### Row order
+
+`attach_trial_columns()` writes each value to the row position its key already
+occupies. Source row order and subject/session boundaries are preserved; the
+study is never sorted into the reduction's order.
 
 ## Gaps exposed by the examples
 

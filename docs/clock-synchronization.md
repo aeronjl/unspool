@@ -110,6 +110,22 @@ operations are therefore ordered:
 Renaming `video` to `photometry`, or directly interpolating between them, skips the
 second step and is rejected by the typed boundary.
 
+## Trial timing is transformed the same way
+
+Trial onsets are a physical measurement like any other, so
+[`TrialTiming`](observed-behaviour.md#from-seconds-to-trials) moves between
+clocks through the same accepted mapping rather than around it:
+
+```python
+timing = timing.synchronized_to(synchronization, maximum_extrapolation_s=0.0)
+```
+
+The returned timing carries the target `clock_id` and appends the
+`synchronization_id` to its lineage. `reduce_covariate_to_trials()` and
+`reduce_annotations_to_trials()` refuse a covariate on one clock and onsets on
+another, so the only route from a camera-clock ethogram to acquisition-clock
+trial columns runs through an accepted synchronisation.
+
 ## Extrapolation policy
 
 By default, `transform_time()` and the typed synchronization methods refuse every

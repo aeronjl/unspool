@@ -1,4 +1,11 @@
-"""Compose external pose and state outputs onto one clock and one Study."""
+"""Compose external pose and state outputs onto one clock and one Study.
+
+Every column of the returned ``Study`` is reduced from the pose, ethograms and
+synchronised covariate built above it. Nothing is asserted by hand: the trial
+timing is declared from the BORIS cue events, moved onto the acquisition clock
+through the fitted synchronisation, and each trial column is a windowed
+reduction that carries its own coverage and status.
+"""
 
 from __future__ import annotations
 
@@ -13,6 +20,16 @@ from behavio.sync import (
     ClockPulseMatches,
     ClockSynchronizationSpec,
     fit_clock_synchronization,
+)
+from behavio.trialization import (
+    EventCount,
+    FractionOfTimeInState,
+    MaximumValue,
+    TrialTiming,
+    TrialWindow,
+    attach_trial_columns,
+    reduce_annotations_to_trials,
+    reduce_covariate_to_trials,
 )
 
 
@@ -69,10 +86,10 @@ def run() -> dict[str, Any]:
     )
     boris = annotations_from_boris(
         {
-            "Behavior": ["cue", "investigate"],
-            "Type": ["POINT", "STATE"],
-            "Start": [0.1, 0.2],
-            "Stop": [np.nan, 0.5],
+            "Behavior": ["cue", "cue", "investigate"],
+            "Type": ["POINT", "POINT", "STATE"],
+            "Start": [0.1, 0.3, 0.2],
+            "Stop": [np.nan, np.nan, 0.5],
         },
         subject="mouse-1",
         session="day-1",
@@ -114,15 +131,58 @@ def run() -> dict[str, Any]:
     encoding_inputs = boris.interval_encoding_inputs(edge="onset")
     events = {**moseq.event_times(), **boris.event_times()}
 
-    # Trial-level summaries carry explicit longitudinal coordinates.
-    study = Study.from_columns(
-        {
-            "subject": ["mouse-1", "mouse-1"],
-            "session": ["day-1", "day-2"],
-            "trial": [0, 0],
-            "session_order": [0, 1],
-            "approach_response": [0.12, 0.18],
-        }
+    # Trial timing is declared, not guessed: the BORIS cue events delimit trials,
+    # and they are already on the acquisition clock because the annotations were
+    # synchronised above. The reductions below refuse any other clock.
+    timing = TrialTiming.from_arrays(
+        subject=dlc_pose.subject,
+        session=dlc_pose.session,
+        onset_s=boris.point_events["cue"],
+        clock_id="acquisition",
+        source="boris:cue",
+        clock_synchronization_ids=boris.clock_synchronization_ids,
+    )
+    window = TrialWindow(start_offset_s=0.0, stop_offset_s=0.2)
+    peak_speed = reduce_covariate_to_trials(
+        aligned_speed,
+        timing=timing,
+        window=window,
+        reducer=MaximumValue(),
+        max_gap_s=0.11,
+        minimum_coverage=0.5,
+        name="peak_speed",
+    )
+    approach_time = reduce_annotations_to_trials(
+        moseq,
+        timing=timing,
+        window=window,
+        reducer=FractionOfTimeInState("approach"),
+        observed_span_s=(float(acquisition_time[0]), float(acquisition_time[-1])),
+        minimum_coverage=0.5,
+        name="approach_fraction",
+    )
+    investigate_bouts = reduce_annotations_to_trials(
+        boris,
+        timing=timing,
+        window=window,
+        reducer=EventCount("investigate", include_points=False),
+        observed_span_s=(float(acquisition_time[0]), float(acquisition_time[-1])),
+        minimum_coverage=0.5,
+        name="investigate_onsets",
+    )
+
+    # One row per declared trial, with longitudinal coordinates the trial columns
+    # are then joined onto by subject, session and trial.
+    study = attach_trial_columns(
+        Study.from_columns(
+            {
+                "subject": [timing.subject] * timing.n_trials,
+                "session": [timing.session] * timing.n_trials,
+                "trial": list(timing.trial),
+                "session_order": [0] * timing.n_trials,
+            }
+        ),
+        [peak_speed, approach_time, investigate_bouts],
     )
     return {
         "deeplabcut_pose": dlc_pose,
@@ -133,6 +193,8 @@ def run() -> dict[str, Any]:
         "aligned_speed": aligned_speed,
         "events": events,
         "encoding_inputs": encoding_inputs,
+        "trial_timing": timing,
+        "trial_reductions": (peak_speed, approach_time, investigate_bouts),
         "study": study,
     }
 
@@ -142,3 +204,6 @@ if __name__ == "__main__":
     print("Event predictors:", sorted(result["events"]))
     print("Aligned speed valid samples:", int(result["aligned_speed"].valid.sum()))
     print("Study columns:", result["study"].columns)
+    print("Peak speed per trial:", result["study"]["peak_speed"].tolist())
+    print("Approach fraction per trial:", result["study"]["approach_fraction"].tolist())
+    print("Trial coverage status:", result["study"]["peak_speed_status"].tolist())

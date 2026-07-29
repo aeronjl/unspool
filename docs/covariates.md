@@ -46,4 +46,28 @@ not synchronisation — fit an explicit transform first, with
     unrelated to the [longitudinal clocks](clocks-and-transforms.md) that place
     a `Study` in learning time.
 
+## Reduction to trial columns
+
+`reduce_covariate_to_trials()` in `behavio.trialization` turns a covariate into
+one value per declared trial, and `attach_trial_columns()` joins those values
+onto a `Study` by `subject`/`session`/`trial`. `MeanValue`, `MedianValue`,
+`MinimumValue` and `MaximumValue` ship; the `TrialCovariateReducer` protocol is
+open.
+
+The mask survives that step too. Reduction takes the same `max_gap_s` rule
+`aligned_to()` uses, and reports per trial how much of the window was actually
+covered by valid observation. A trial whose window was mostly invalid, mostly a
+gap, or entirely past the end of the recording returns `NaN` with a status
+naming which of those happened, so a partially observed trial is never mistaken
+for a confident measurement. See
+[From seconds to trials](observed-behaviour.md#from-seconds-to-trials).
+
+Every shipped reducer reads only one trial's own window, so it is
+fold-independent and safe to apply before splitting. A reduction that must
+*learn* a threshold or a baseline is not a reducer: produce the raw column here
+and fit the learned step inside a training fold with `fit_transform_split()`.
+
+`subject` and `session` accept any hashable identifier, matching `Study`, so an
+integer subject id joins without a lossy `str()`.
+
 Signatures are in the [observed behaviour API](reference/observed-behaviour.md).

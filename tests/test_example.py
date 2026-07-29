@@ -1,7 +1,10 @@
 import runpy
 from pathlib import Path
 
+import pytest
 from pytest import CaptureFixture
+
+from behavio.study import REQUIRED_COLUMNS
 
 
 def test_static_glm_example_runs_end_to_end(capsys: CaptureFixture[str]) -> None:
@@ -229,6 +232,36 @@ def test_behavior_interoperability_example_runs_end_to_end(
     assert "Event predictors: ['approach', 'cue', 'investigate', 'pause']" in output
     assert "Aligned speed valid samples: 4" in output
     assert "Study columns:" in output
+
+
+def test_behavior_interoperability_example_computes_every_study_column() -> None:
+    """The Study must be reduced from the observed behaviour, not asserted by hand."""
+
+    import numpy as np
+
+    example = Path(__file__).parents[1] / "examples" / "behavior_interoperability.py"
+
+    outcome = runpy.run_path(str(example))["run"]()
+
+    study = outcome["study"]
+    timing = outcome["trial_timing"]
+    assert timing.clock_id == "acquisition"
+    assert timing.clock_synchronization_ids == (
+        outcome["clock_synchronization"].synchronization_id,
+    )
+    assert len(study) == timing.n_trials
+    assert study["trial"].tolist() == list(timing.trial)
+
+    # Every non-required column is a reduction, and each carries coverage and status.
+    reduced = [name for name in study.columns if name not in REQUIRED_COLUMNS]
+    for reduction in outcome["trial_reductions"]:
+        assert set(reduction.column_names) <= set(reduced)
+        assert np.all(np.asarray(study[reduction.name]) == pytest.approx(reduction.values))
+
+    # The MoSeq 'approach' bout covers the whole second cue window and half the first.
+    assert study["approach_fraction"] == pytest.approx([0.4995, 1.0], abs=1e-3)
+    assert study["investigate_onsets"].tolist() == [1.0, 0.0]
+    assert np.all(np.isfinite(np.asarray(study["peak_speed"], dtype=float)))
 
 
 def test_interval_policy_example_records_its_whole_ledger() -> None:

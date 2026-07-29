@@ -10,7 +10,7 @@ confidence and clock identity survive the boundary.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Hashable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -18,7 +18,7 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from behavio._arrays import _readonly_float, _validate_time
+from behavio._arrays import _identity, _readonly_float, _validate_time
 from behavio.covariates import BehaviorCovariate
 
 
@@ -43,10 +43,14 @@ def _time_from_fps(
 
 @dataclass(frozen=True)
 class PoseTrajectory:
-    """One tracked 2D or 3D keypoint from an external pose tool."""
+    """One tracked 2D or 3D keypoint from an external pose tool.
 
-    subject: str
-    session: str
+    ``subject`` and ``session`` accept any hashable identifier, matching
+    :class:`behavio.study.Study`.
+    """
+
+    subject: Hashable
+    session: Hashable
     keypoint: str
     time_s: NDArray[np.float64]
     x: NDArray[np.float64]
@@ -91,6 +95,8 @@ class PoseTrajectory:
         finite_confidence = confidence[np.isfinite(confidence)]
         if np.any(finite_confidence < 0):
             raise ValueError("confidence-like scores must be non-negative")
+        object.__setattr__(self, "subject", _identity(self.subject, name="subject"))
+        object.__setattr__(self, "session", _identity(self.session, name="session"))
         object.__setattr__(self, "time_s", time_s)
         object.__setattr__(self, "x", x)
         object.__setattr__(self, "y", y)

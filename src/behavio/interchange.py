@@ -45,6 +45,7 @@ class FitArtifact:
     covariance: tuple[tuple[float | None, ...], ...]
     diagnostics: Mapping[str, Any]
     audit: Mapping[str, Any]
+    derived: tuple[Mapping[str, Any], ...] = ()
 
     def __post_init__(self) -> None:
         if self.schema_version != FIT_ARTIFACT_SCHEMA:
@@ -74,12 +75,19 @@ class FitArtifact:
         for row in covariance:
             if any(value is not None and not np.isfinite(value) for value in row):
                 raise FitArtifactError("finite covariance entries or null are required")
+        derived = tuple(_freeze_json(dict(quantity)) for quantity in self.derived)
+        derived_names = tuple(quantity.get("name") for quantity in derived)
+        if any(not isinstance(name, str) or not name for name in derived_names):
+            raise FitArtifactError("derived quantities must have non-empty names")
+        if len(set(derived_names)) != len(derived_names):
+            raise FitArtifactError("derived quantity names must be unique")
         object.__setattr__(self, "task", _freeze_json(dict(self.task)))
         object.__setattr__(self, "data", _freeze_json(dict(self.data)))
         object.__setattr__(self, "parameters", parameters)
         object.__setattr__(self, "covariance", covariance)
         object.__setattr__(self, "diagnostics", _freeze_json(dict(self.diagnostics)))
         object.__setattr__(self, "audit", _freeze_json(dict(self.audit)))
+        object.__setattr__(self, "derived", derived)
 
     @property
     def fingerprint(self) -> str:
@@ -88,9 +96,14 @@ class FitArtifact:
         return hashlib.sha256(self.canonical_json().encode("utf-8")).hexdigest()
 
     def to_dict(self) -> dict[str, Any]:
-        """Return a fresh standards-compliant JSON representation."""
+        """Return a fresh standards-compliant JSON representation.
 
-        return {
+        ``derived`` appears only when the fit declared derived quantities, so a model that
+        declares none produces exactly the record -- and exactly the
+        :attr:`fingerprint` -- that it produced before derived quantities existed.
+        """
+
+        payload: dict[str, Any] = {
             "schema_version": self.schema_version,
             "behavio_version": self.behavio_version,
             "model": {
@@ -105,6 +118,9 @@ class FitArtifact:
             "diagnostics": _thaw_json(self.diagnostics),
             "audit": _thaw_json(self.audit),
         }
+        if self.derived:
+            payload["derived"] = [_thaw_json(quantity) for quantity in self.derived]
+        return payload
 
     def canonical_json(self) -> str:
         """Serialize deterministically without NaN or executable objects."""
@@ -193,6 +209,7 @@ def export_fit(fitted: FittedModel, study: Study) -> FitArtifact:
             raise FitArtifactError("result optimization_run must be an OptimizationRun")
         diagnostic_record["optimization_run"] = optimization_run.to_dict()
     diagnostics = _sanitize_json(diagnostic_record)
+    derived = tuple(_sanitize_json(quantity.to_dict()) for quantity in result.derived)
     return FitArtifact(
         schema_version=FIT_ARTIFACT_SCHEMA,
         behavio_version=_package_version(),
@@ -207,6 +224,7 @@ def export_fit(fitted: FittedModel, study: Study) -> FitArtifact:
         ),
         diagnostics=diagnostics,
         audit=_sanitize_json(fitted.audit().to_dict()),
+        derived=derived,
     )
 
 
@@ -226,11 +244,18 @@ def fit_artifact_from_dict(payload: Mapping[str, Any]) -> FitArtifact:
         "diagnostics",
         "audit",
     }
-    if set(payload) != expected:
+    # ``derived`` is optional so that an artifact written before derived quantities
+    # existed still decodes, and so that a model declaring none is byte-identical.
+    optional = {"derived"}
+    if set(payload) - optional != expected:
         raise FitArtifactError(
             f"fit artifact fields differ; missing={sorted(expected - set(payload))}, "
-            f"extra={sorted(set(payload) - expected)}"
+            f"extra={sorted(set(payload) - expected - optional)}"
         )
+    if "derived" in payload and (
+        isinstance(payload["derived"], (str, bytes)) or not isinstance(payload["derived"], Sequence)
+    ):
+        raise FitArtifactError("derived must be an array")
     model = payload["model"]
     if not isinstance(model, Mapping) or set(model) != {"name", "signature", "result_type"}:
         raise FitArtifactError("model must contain name, signature, and result_type")
@@ -258,6 +283,7 @@ def fit_artifact_from_dict(payload: Mapping[str, Any]) -> FitArtifact:
             covariance=tuple(tuple(row) for row in payload["covariance"]),
             diagnostics=payload["diagnostics"],
             audit=payload["audit"],
+            derived=tuple(payload.get("derived", ())),
         )
     except (TypeError, KeyError) as error:
         raise FitArtifactError("fit artifact contains invalid value types") from error

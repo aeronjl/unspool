@@ -30,6 +30,19 @@ in one direction only.
       show_root_heading: false
       show_source: false
 
+## The natural parameterisation
+
+The coordinate a model is estimated in is not in general the coordinate it is reported in.
+This optional contract names the second one and gives the delta method what it needs to
+carry uncertainty onto it. A model that declares nothing here behaves exactly as it did
+before the contract existed.
+
+::: behavio.contracts.natural
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
 ## Sampled estimators and the point-summary projection
 
 ::: behavio.contracts.posterior

@@ -12,6 +12,24 @@ would substitute a normal approximation to a posterior the sampler already chara
 exactly. The two are never pooled: one call recovers one model and therefore produces one
 interval kind.
 
+Two coordinates, never pooled
+-----------------------------
+Recovery is assessed in the coordinate the model was *estimated* in, because that is where
+a Wald interval is honest: a positive scale parameter's interval belongs on the log scale
+and a bounded rate's belongs on a logit scale, and coverage computed anywhere else is
+wrong. That coordinate is frequently unreadable -- ``log_width``, ``guess_logit`` -- so a
+model that declares a
+:class:`~behavio.contracts.natural.NaturalParameterisation` additionally gets its bias,
+RMSE and correlation reported in the coordinate it publishes in.
+
+The two are kept structurally apart rather than by convention.
+:class:`ParameterRecoverySummary` and :class:`NaturalRecoverySummary` are different types,
+they are returned by different methods (:meth:`ParameterRecoveryReport.summary` and
+:meth:`ParameterRecoveryReport.natural_summary`), and the natural type has no coverage
+field at all -- so a natural-coordinate coverage number cannot be read off it, because it
+does not exist. This is the discipline ``interval_kind`` already applies to Wald against
+posterior-quantile coverage.
+
 Failed runs are evidence
 ------------------------
 A simulation or refit that raises is retained as a failed run with non-finite estimates
@@ -29,6 +47,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from behavio._internal.arrays import protected_array
+from behavio.contracts.natural import NaturalParameterisation
 from behavio.contracts.posterior import (
     AnyGenerativeBehaviourModel,
     GenerativePosteriorBehaviourModel,
@@ -64,6 +83,12 @@ POSTERIOR_QUANTILE_INTERVAL = "posterior-quantile"
 #: Issue code attached to a recovery run whose simulation or refit raised.
 RUN_FAILURE_CODE = "recovery_run_failed"
 
+#: The coordinate a model is estimated in, and the only one coverage is computed in.
+ESTIMATED_COORDINATE = "estimated"
+
+#: The coordinate a model declares it reports in, when it declares one.
+NATURAL_COORDINATE = "natural"
+
 _NORMAL_95 = 1.959963984540054
 _COVERAGE_QUANTILES = (0.025, 0.975)
 
@@ -84,6 +109,26 @@ class ParameterRecoverySummary:
     n_successful: int
     n_with_uncertainty: int
     interval_kind: str = WALD_INTERVAL
+
+
+@dataclass(frozen=True, slots=True)
+class NaturalRecoverySummary:
+    """Recovery metrics for one parameter in the coordinate the model reports in.
+
+    There is deliberately no coverage field. Coverage is computed once, in the coordinate
+    the model was estimated in, and lives on :class:`ParameterRecoverySummary`; a delta-
+    method interval on a transformed parameter is a different and generally worse
+    approximation, and offering a slot for one here would invite the two to be compared.
+    ``coordinate`` names this row's coordinate so a summary can never be mistaken for the
+    estimated-coordinate one it sits beside.
+    """
+
+    parameter: str
+    bias: float
+    rmse: float
+    correlation: float
+    n_successful: int
+    coordinate: str = NATURAL_COORDINATE
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,6 +153,9 @@ class ParameterRecoveryReport:
     interval_lower: NDArray[np.float64] | None = None
     interval_upper: NDArray[np.float64] | None = None
     posterior_audits: tuple[PosteriorAudit | None, ...] = ()
+    natural_names: tuple[str, ...] = ()
+    natural_true_values: NDArray[np.float64] | None = None
+    natural_estimates: NDArray[np.float64] | None = None
 
     def __post_init__(self) -> None:
         names = tuple(self.parameter_names)
@@ -158,6 +206,22 @@ class ParameterRecoveryReport:
             raise ValueError("a Wald report derives its interval from the standard errors")
         elif posterior_audits:
             raise ValueError("a Wald report has no posterior audits to retain")
+        natural_names = tuple(self.natural_names)
+        if natural_names:
+            if len(set(natural_names)) != len(natural_names):
+                raise ValueError("natural_names must be unique")
+            if self.natural_true_values is None or self.natural_estimates is None:
+                raise ValueError("a declared natural coordinate must retain its values")
+            natural_truth = protected_array(self.natural_true_values, dtype=np.float64)
+            natural_estimate = protected_array(self.natural_estimates, dtype=np.float64)
+            natural_shape = (len(self.messages), len(natural_names))
+            if natural_truth.shape != natural_shape or natural_estimate.shape != natural_shape:
+                raise ValueError("natural arrays must have one row per recovery run")
+            object.__setattr__(self, "natural_true_values", natural_truth)
+            object.__setattr__(self, "natural_estimates", natural_estimate)
+        elif self.natural_true_values is not None or self.natural_estimates is not None:
+            raise ValueError("natural values require declared natural_names")
+        object.__setattr__(self, "natural_names", natural_names)
         object.__setattr__(self, "posterior_audits", posterior_audits)
         object.__setattr__(self, "parameter_names", names)
         object.__setattr__(self, "true_values", true_values)
@@ -244,14 +308,7 @@ class ParameterRecoveryReport:
                     coverage = float(np.mean(covered))
                 else:
                     coverage = float("nan")
-            truth_scale = max(1.0, float(np.max(np.abs(truth), initial=0.0)))
-            estimate_scale = max(1.0, float(np.max(np.abs(estimate), initial=0.0)))
-            truth_varies = n_successful >= 2 and np.ptp(truth) > 1e-12 * truth_scale
-            estimate_varies = n_successful >= 2 and np.ptp(estimate) > 1e-12 * estimate_scale
-            if n_successful >= 2 and truth_varies and estimate_varies:
-                correlation = float(np.corrcoef(truth, estimate)[0, 1])
-            else:
-                correlation = float("nan")
+            correlation = _association(truth, estimate, n_successful)
             summaries.append(
                 ParameterRecoverySummary(
                     parameter=name,
@@ -266,12 +323,59 @@ class ParameterRecoveryReport:
             )
         return tuple(summaries)
 
+    def natural_summary(self) -> tuple[NaturalRecoverySummary, ...]:
+        """Summarize bias, RMSE and association in the model's reported coordinate.
+
+        Empty unless the model declared a
+        :class:`~behavio.contracts.natural.NaturalParameterisation`. Eligibility is the
+        same as :meth:`summary` -- a failed audit is excluded, a warning is not -- so the
+        two summaries describe the same runs seen through two coordinates. Coverage is
+        absent by construction; see this module's docstring.
+        """
+
+        if not self.natural_names:
+            return ()
+        assert self.natural_true_values is not None and self.natural_estimates is not None
+        audit_eligible = np.asarray(
+            [audit.status is not FitAuditStatus.FAIL for audit in self.audits],
+            dtype=np.bool_,
+        )
+        summaries: list[NaturalRecoverySummary] = []
+        for column, name in enumerate(self.natural_names):
+            truth_column = self.natural_true_values[:, column]
+            estimate_column = self.natural_estimates[:, column]
+            valid = audit_eligible & np.isfinite(estimate_column) & np.isfinite(truth_column)
+            n_successful = int(np.sum(valid))
+            truth = truth_column[valid]
+            estimate = estimate_column[valid]
+            if n_successful:
+                error = estimate - truth
+                bias = float(np.mean(error))
+                rmse = float(np.sqrt(np.mean(error**2)))
+            else:
+                bias = rmse = float("nan")
+            summaries.append(
+                NaturalRecoverySummary(
+                    parameter=name,
+                    bias=bias,
+                    rmse=rmse,
+                    correlation=_association(truth, estimate, n_successful),
+                    n_successful=n_successful,
+                )
+            )
+        return tuple(summaries)
+
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable record of every run and summary denominator.
 
         ``coverage_interval``, per-summary ``interval_kind``, and the per-run ``interval``
         and ``posterior_audit`` entries appear only for a posterior-derived report, so a
         maximum-likelihood record is exactly what it was before sampled models existed.
+
+        ``coordinate``, ``natural_summary`` and the per-run ``natural`` entries appear only
+        when the model declared a natural parameterisation, so a model that declares none
+        produces a byte-identical record. The estimated-coordinate ``summary`` is never
+        rewritten: the natural block is added beside it, labelled, and carries no coverage.
         """
 
         summaries = self.summary()
@@ -325,13 +429,43 @@ class ParameterRecoveryReport:
                     "message": self.messages[index],
                     "fit_audit": _json_safe(self.audits[index].to_dict()),
                     **(self._run_posterior_payload(index) if sampled else {}),
+                    **(self._run_natural_payload(index) if self.natural_names else {}),
                 }
                 for index in range(self.n_runs)
             ],
         }
         if sampled:
             payload["coverage_interval"] = self.interval_kind
+        if self.natural_names:
+            payload["coordinate"] = ESTIMATED_COORDINATE
+            payload["natural_names"] = list(self.natural_names)
+            payload["natural_summary"] = [
+                {
+                    "parameter": summary.parameter,
+                    "coordinate": summary.coordinate,
+                    "bias": _json_float(summary.bias),
+                    "rmse": _json_float(summary.rmse),
+                    "correlation": _json_float(summary.correlation),
+                    "n_successful": summary.n_successful,
+                }
+                for summary in self.natural_summary()
+            ]
         return payload
+
+    def _run_natural_payload(self, index: int) -> dict[str, Any]:
+        assert self.natural_true_values is not None and self.natural_estimates is not None
+        return {
+            "natural": {
+                "truth": {
+                    name: _json_float(self.natural_true_values[index, column])
+                    for column, name in enumerate(self.natural_names)
+                },
+                "estimate": {
+                    name: _json_float(self.natural_estimates[index, column])
+                    for column, name in enumerate(self.natural_names)
+                },
+            }
+        }
 
     def _run_posterior_payload(self, index: int) -> dict[str, Any]:
         assert self.interval_lower is not None and self.interval_upper is not None
@@ -365,6 +499,14 @@ def run_parameter_recovery(
     never detached from the conditions under which it was assessed. A run whose simulation
     or refit raises is retained with non-finite estimates and a failing audit instead of
     aborting the experiment.
+
+    A model that declares a
+    :class:`~behavio.contracts.natural.NaturalParameterisation` additionally has its truth
+    and its estimates mapped onto the coordinate it reports in, and the report gains a
+    :meth:`ParameterRecoveryReport.natural_summary`. Coverage is still computed only in the
+    estimated coordinate, where the Wald interval is honest; the two coordinates are
+    carried in separate arrays, summarized by separate methods, and returned as separate
+    types.
 
     A :class:`~behavio.contracts.posterior.GenerativePosteriorBehaviourModel` is sampled
     rather than optimized. Its posterior is audited, projected through ``point_summary``,
@@ -460,6 +602,9 @@ def run_parameter_recovery(
             posterior_audits.append(outcome.posterior_audit)
             run += 1
 
+    natural_names, natural_truth, natural_estimates = _natural_coordinate(
+        model, true_values, estimates
+    )
     return ParameterRecoveryReport(
         model_name=model.model_name,
         model_signature=model.signature,
@@ -479,7 +624,47 @@ def run_parameter_recovery(
         interval_lower=interval_lower if sampled else None,
         interval_upper=interval_upper if sampled else None,
         posterior_audits=tuple(posterior_audits) if sampled else (),
+        natural_names=natural_names,
+        natural_true_values=natural_truth,
+        natural_estimates=natural_estimates,
     )
+
+
+def _natural_coordinate(
+    model: AnyGenerativeBehaviourModel,
+    true_values: NDArray[np.float64],
+    estimates: NDArray[np.float64],
+) -> tuple[tuple[str, ...], NDArray[np.float64] | None, NDArray[np.float64] | None]:
+    """Map truth and estimates onto the model's reported coordinate, when it declares one.
+
+    A run whose estimate is non-finite -- a failed run, or one whose optimizer produced
+    nothing usable -- has no natural image, and neither does one the model itself refuses
+    to decode. Both become a row of NaN rather than an exception, for the same reason a
+    failed run is retained rather than aborting the experiment: the run is evidence about
+    the design, and it is excluded from the summary by the same audit rule as everywhere
+    else.
+    """
+
+    if not isinstance(model, NaturalParameterisation):
+        return (), None, None
+    names = tuple(model.natural_names)
+    if not names:
+        return (), None, None
+    natural_truth = np.full((true_values.shape[0], len(names)), np.nan, dtype=np.float64)
+    natural_estimates = np.full_like(natural_truth, np.nan)
+    for row in range(true_values.shape[0]):
+        for target, source in (
+            (natural_truth, true_values[row]),
+            (natural_estimates, estimates[row]),
+        ):
+            if not np.all(np.isfinite(source)):
+                continue
+            try:
+                decoded = model.to_natural(source)
+            except (ValueError, TypeError, ArithmeticError):
+                continue
+            target[row] = [float(decoded[name]) for name in names]
+    return names, natural_truth, natural_estimates
 
 
 @dataclass(frozen=True, slots=True)
@@ -637,6 +822,24 @@ def _failed_run(
         ),
         posterior_audit=None,
     )
+
+
+def _association(
+    truth: NDArray[np.float64], estimate: NDArray[np.float64], n_successful: int
+) -> float:
+    """Correlate truth with estimate, or return NaN when either barely varies.
+
+    Shared by both coordinates so that a natural-coordinate correlation is computed under
+    exactly the same degeneracy rule as the estimated-coordinate one.
+    """
+
+    if n_successful < 2:
+        return float("nan")
+    truth_scale = max(1.0, float(np.max(np.abs(truth), initial=0.0)))
+    estimate_scale = max(1.0, float(np.max(np.abs(estimate), initial=0.0)))
+    if np.ptp(truth) <= 1e-12 * truth_scale or np.ptp(estimate) <= 1e-12 * estimate_scale:
+        return float("nan")
+    return float(np.corrcoef(truth, estimate)[0, 1])
 
 
 def _json_float(value: float) -> float | None:

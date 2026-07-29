@@ -2,8 +2,9 @@
 
 Typed boundaries for pose, ethograms, and continuous behavioural covariates, the
 readers that fill them from community tools, the matched-pulse clock transform
-that moves them between devices, and the ordered interval policies that decide
-which bouts enter an analysis.
+that moves them between devices, the trialization layer that reduces them onto a
+`Study`, and the ordered interval policies that decide which bouts enter an
+analysis.
 
 Start from [Observed behaviour and behaviour-tool
 interoperability](../observed-behaviour.md) for the contracts these signatures
@@ -53,6 +54,17 @@ in seconds, not the [longitudinal clocks](../clocks-and-transforms.md) in
 `behavio.clocks`.
 
 ::: behavio.sync
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+## Trialization
+
+The bridge from observed seconds to `Study` trial columns. See
+[From seconds to trials](../observed-behaviour.md#from-seconds-to-trials).
+
+::: behavio.trialization
     options:
       members_order: source
       show_root_heading: false

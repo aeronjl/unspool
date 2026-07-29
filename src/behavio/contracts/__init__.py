@@ -16,7 +16,20 @@ An optimizer                                     :class:`OptimizationBackend`
 A behavioural summary                            :class:`PredictiveDiscrepancy`
 A fold-fitted temporal transform                 :class:`StudyTransform`
 A training/test partition                        :class:`ValidationFold`
+A reporting coordinate distinct from the fit     :class:`NaturalParameterisation`
+A retained multistart optimizer                  :class:`MultistartFit`
+A retained latent-state fit                      :class:`LatentStateFit`
+Predictive context a model reads                 :class:`TaskColumnEstimator`
 ===============================================  =====================================
+
+The last four are *optional widenings*: a model that implements none of them is described
+exactly as it was before they existed. :class:`NaturalParameterisation` names the
+coordinate a result is reported in, which is not in general the coordinate it is estimated
+in; :class:`MultistartFit` and :class:`LatentStateFit` name the evidence that
+:class:`RestartAudit` and :class:`LatentStateAudit` are derived from, which used to be
+duck-typed against a private protocol in ``behavio.diagnostics``; and
+:class:`TaskColumnEstimator` names the predictive context a model consumes without
+scoring, which every model already declared by convention.
 
 Layering rule
 -------------
@@ -53,6 +66,8 @@ from behavio.contracts.audit import (
     FitDiagnostics,
     FitIssue,
     LatentStateAudit,
+    LatentStateFit,
+    MultistartFit,
     RestartAudit,
 )
 from behavio.contracts.backend import ObjectiveTarget, OptimizationBackend, PriorMeasure
@@ -62,6 +77,7 @@ from behavio.contracts.estimator import (
     BehaviourModel,
     CategoricalBehaviourEstimator,
     CategoricalPrediction,
+    DerivedQuantity,
     FitAuditor,
     FitResult,
     GenerativeBehaviourModel,
@@ -70,12 +86,20 @@ from behavio.contracts.estimator import (
     ModelPrediction,
     Prediction,
     PredictionMode,
+    TaskColumnEstimator,
     UnsupportedPredictionMode,
     fit_auditor,
     model_capabilities,
+    model_task_columns,
     register_fit_auditor,
+    validate_required_task_columns,
 )
 from behavio.contracts.fold import ValidationFold
+from behavio.contracts.natural import (
+    NaturalParameterisation,
+    natural_covariance,
+    natural_quantities,
+)
 from behavio.contracts.parameters import ParameterSpaceProvider
 from behavio.contracts.posterior import (
     AnyBehaviourEstimator,
@@ -107,6 +131,7 @@ __all__ = [
     "BehaviourModel",
     "CategoricalBehaviourEstimator",
     "CategoricalPrediction",
+    "DerivedQuantity",
     "FitAudit",
     "FitAuditPolicy",
     "FitAuditStatus",
@@ -118,9 +143,12 @@ __all__ = [
     "GenerativeBehaviourModel",
     "GenerativePosteriorBehaviourModel",
     "LatentStateAudit",
+    "LatentStateFit",
     "ModelCapabilities",
     "ModelDataError",
     "ModelPrediction",
+    "MultistartFit",
+    "NaturalParameterisation",
     "ObjectiveTarget",
     "OptimizationBackend",
     "ParameterSpaceProvider",
@@ -136,6 +164,7 @@ __all__ = [
     "SourceType",
     "StudyAdapter",
     "StudyTransform",
+    "TaskColumnEstimator",
     "TransformProvenance",
     "UnsupportedPredictionMode",
     "ValidationFold",
@@ -144,6 +173,9 @@ __all__ = [
     "fit_auditor",
     "is_posterior_estimator",
     "model_capabilities",
+    "model_task_columns",
+    "natural_covariance",
+    "natural_quantities",
     "posterior_draw_matrix",
     "posterior_log_predictive_density",
     "posterior_model_capabilities",
@@ -151,4 +183,5 @@ __all__ = [
     "posterior_point_summary",
     "posterior_summary_message",
     "register_fit_auditor",
+    "validate_required_task_columns",
 ]

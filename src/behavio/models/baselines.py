@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from types import MappingProxyType
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -12,6 +13,7 @@ from scipy.optimize import minimize
 from scipy.special import expit, logit
 
 from behavio._internal.arrays import protected_array
+from behavio.contracts import natural_quantities
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -414,13 +416,18 @@ class LapsePsychometricParameters:
 
 @dataclass(frozen=True, slots=True)
 class LapsePsychometricFitResult(FitResult):
-    """Lapse-psychometric fit retaining every deterministic restart."""
+    """Lapse-psychometric fit retaining every deterministic restart.
+
+    The four restart fields are the :class:`~behavio.contracts.MultistartFit` contract.
+    ``lapse_rate`` is the natural coordinate of ``lapse_logit`` and is read from
+    :attr:`~behavio.contracts.FitResult.derived`, where it carries a delta-method standard
+    error rather than being a bare number.
+    """
 
     restart_objectives: NDArray[np.float64]
     restart_converged: NDArray[np.bool_]
     restart_messages: tuple[str, ...]
     selected_restart: int
-    lapse_rate: float
 
     def __post_init__(self) -> None:
         FitResult.__post_init__(self)
@@ -433,11 +440,19 @@ class LapsePsychometricFitResult(FitResult):
             raise ValueError("restart messages and non-NaN objectives must align")
         if not 0 <= self.selected_restart < len(objectives):
             raise ValueError("selected_restart must identify one restart")
+        if "lapse_rate" not in self.derived_values:
+            raise ValueError("a lapse-psychometric fit must declare a derived lapse_rate")
         if not np.isfinite(self.lapse_rate) or not 0 < self.lapse_rate < 1:
             raise ValueError("lapse_rate must lie strictly between zero and one")
         object.__setattr__(self, "restart_objectives", objectives)
         object.__setattr__(self, "restart_converged", converged)
         object.__setattr__(self, "restart_messages", messages)
+
+    @property
+    def lapse_rate(self) -> float:
+        """Probability of a stimulus-independent random response."""
+
+        return self.derived_value("lapse_rate")
 
 
 @dataclass(frozen=True, slots=True)
@@ -506,6 +521,63 @@ class LapsePsychometric:
     def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
         return (PredictionMode.FILTERED,)
 
+    @property
+    def natural_names(self) -> tuple[str, ...]:
+        """The reported coordinate: a slope in stimulus units and a probability."""
+
+        return ("intercept", "slope", "lapse_rate")
+
+    def to_natural(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> Mapping[str, float]:
+        """Decode the optimizer coordinate into an interpretable lapse rate."""
+
+        components = self.parameter_components(
+            dict(zip(self.parameter_names, self._natural_input(estimates).tolist(), strict=True))
+        )
+        return MappingProxyType(
+            {
+                "intercept": components.intercept,
+                "slope": components.slope,
+                "lapse_rate": components.lapse_rate,
+            }
+        )
+
+    def from_natural(self, natural: Mapping[str, float]) -> Mapping[str, float]:
+        """Encode a complete natural mapping onto the optimizer coordinate."""
+
+        if not isinstance(natural, Mapping) or set(natural) != set(self.natural_names):
+            raise ValueError("natural parameters must match the model exactly")
+        return self.parameters_from_components(
+            intercept=natural["intercept"],
+            slope=natural["slope"],
+            lapse_rate=natural["lapse_rate"],
+        )
+
+    def natural_jacobian(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> NDArray[np.float64]:
+        """Return the derivative of the natural parameters at one optimizer coordinate."""
+
+        coordinate = self._natural_input(estimates)
+        relative = float(expit(coordinate[2]))
+        jacobian = np.zeros((3, 3), dtype=np.float64)
+        jacobian[0, 0] = 1.0
+        jacobian[1, 1] = 1.0
+        jacobian[2, 2] = self.maximum_lapse * relative * (1.0 - relative)
+        return jacobian
+
+    def _natural_input(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> NDArray[np.float64]:
+        try:
+            vector = np.asarray(estimates, dtype=np.float64)
+        except (TypeError, ValueError):
+            raise ValueError("estimates must contain finite numeric values") from None
+        if vector.shape != (3,) or not np.all(np.isfinite(vector)):
+            raise ValueError("estimates must contain three finite values")
+        return vector
+
     def parameters_from_components(
         self,
         *,
@@ -513,7 +585,10 @@ class LapsePsychometric:
         slope: float,
         lapse_rate: float,
     ) -> Mapping[str, float]:
-        """Validate and encode a natural lapse rate on the optimizer coordinate."""
+        """Validate and encode a natural lapse rate on the optimizer coordinate.
+
+        Keyword-argument façade over :meth:`from_natural`, which shares this encoding.
+        """
 
         components = LapsePsychometricParameters(intercept, slope, lapse_rate)
         if components.lapse_rate >= self.maximum_lapse:
@@ -598,7 +673,6 @@ class LapsePsychometric:
         condition = float(np.linalg.cond(hessian))
         covariance = np.linalg.pinv(hessian, hermitian=True)
         standard_errors = np.sqrt(np.maximum(np.diag(covariance), 0.0))
-        lapse_rate = float(self.maximum_lapse * expit(estimates[2]))
         diagnostics = FitDiagnostics(
             converged=bool(result.success),
             optimizer="L-BFGS-B multistart",
@@ -622,11 +696,11 @@ class LapsePsychometric:
             covariance=covariance,
             n_observations=len(study),
             diagnostics=diagnostics,
+            derived=natural_quantities(self, estimates, covariance),
             restart_objectives=objectives,
             restart_converged=np.asarray([item.success for item in results]),
             restart_messages=tuple(str(item.message) for item in results),
             selected_restart=selected,
-            lapse_rate=lapse_rate,
         )
 
     def predict(
