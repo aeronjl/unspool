@@ -5,9 +5,25 @@ repo_url: https://github.com/aeronjl/behavio
 repo_name: aeronjl/behavio
 edit_uri: edit/main/docs/
 strict: true
-exclude_docs: |
-  * 2.md
-  **/* 2.md
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  nav:
+    omitted_files: warn
+    not_found: warn
+    absolute_links: warn
+  links:
+    not_found: warn
+    absolute_links: info
+    unrecognized_links: warn
+
+# Scientific decision records are a contributor resource. They build so that
+# in-repo links resolve, but they are deliberately kept out of the reader-facing
+# nav. Any OTHER page missing from the nav is a bug and fails the strict build.
+not_in_nav: |
+  /decisions/*
 
 theme:
   name: material
@@ -124,6 +140,7 @@ nav:
       - IBL 2021 published parity: tutorials/ibl2021-psychometrics.md
       - Model-recovery design: tutorials/model-recovery-design.md
       - Reading a model evidence panel: tutorials/model-evidence-panels.md
+      - Pose and behaviour-tool interoperability: tutorials/behavior-tool-interoperability.md
   - Models:
       - Model catalog: methods/index.md
       - Capability matrix: methods/capability-matrix.md
@@ -140,6 +157,12 @@ nav:
       - Hierarchical smooth DDM: hierarchical-smooth-ddm.md
   - Data:
       - Tabular, IBL, NWB, and DANDI: interoperability.md
+      - Observed behaviour: observed-behaviour.md
+      - Pose trajectories: pose.md
+      - Ethograms: ethograms.md
+      - Behavioural covariates: covariates.md
+      - Clock synchronisation: clock-synchronization.md
+      - Auditable interval and bout policies: interval-policy.md
       - Fit artifacts and extensions: fit-artifacts.md
       - Provenance: provenance.md
       - Migration guides: migration-guides.md
@@ -157,6 +180,7 @@ nav:
       - Inference and parameters: reference/inference.md
       - Posterior results: reference/posterior.md
       - Data adapters: reference/data-adapters.md
+      - Observed behaviour API: reference/observed-behaviour.md
       - Protocol schema API: reference/protocol.md
       - Protocol execution API: reference/execution.md
       - Reporting and evidence API: reference/evidence-bundles.md
@@ -164,6 +188,8 @@ nav:
       - Figure provenance: reference/figure-provenance.md
   - About:
       - Evidence index: evidence/index.md
+      - Behaviour-tool validation matrix: evidence/interoperability-validation-v0.1.md
+      - Scientific decision records: decisions/README.md
       - Literature guide: literature.md
       - Philosophy of Behavio: philosophy.md
       - Roadmap: roadmap.md

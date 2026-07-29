@@ -4,6 +4,12 @@ Behavio keeps `Study` small and format-independent. Interoperability code conver
 tables into that contract; it does not let file names, dataframe indices, or archive order
 become hidden scientific assumptions.
 
+!!! tip "Looking for pose, ethograms, or bouts?"
+    This page is about *trial tables*. Continuously sampled behaviour - keypoint
+    trajectories, discovered state bouts, human ethograms, and the clock
+    transforms that put them on one time coordinate - has its own boundary:
+    [Observed behaviour](observed-behaviour.md).
+
 <figure class="doc-figure doc-figure--wide" data-figure-kind="Conceptual">
   <img src="../assets/interoperability-pipeline.svg" alt="Dataframes, IBL ONE, NWB, and DANDI converge on one Study contract, pass through explicit semantic and provenance declarations, and enter the same prospective analysis boundary.">
   <figcaption><strong>One scientific boundary across formats.</strong> Adapters preserve source identity and translate structure into the Study contract; they never invent chronology, units, or behavioural semantics.</figcaption>

@@ -216,3 +216,34 @@ def test_contaminant_ddm_example_exposes_mixture_truth_and_responsibility(
     assert "generated contaminants:" in output
     assert "posterior expected count:" in output
     assert "contaminant_probability" in output
+
+
+def test_behavior_interoperability_example_runs_end_to_end(
+    capsys: CaptureFixture[str],
+) -> None:
+    example = Path(__file__).parents[1] / "examples" / "behavior_interoperability.py"
+
+    runpy.run_path(str(example), run_name="__main__")
+
+    output = capsys.readouterr().out
+    assert "Event predictors: ['approach', 'cue', 'investigate', 'pause']" in output
+    assert "Aligned speed valid samples: 4" in output
+    assert "Study columns:" in output
+
+
+def test_interval_policy_example_records_its_whole_ledger() -> None:
+    example = Path(__file__).parents[1] / "examples" / "interval_policy.py"
+
+    outcome = runpy.run_path(str(example))["run"]()
+
+    result = outcome["result"]
+    assert result.input_interval_count == 3
+    assert [row.operation_id for row in result.ledger][:2] == [
+        "merge-groom",
+        "merge-groom",
+    ]
+    assert len(result.evidence_fingerprint) == 64
+    assert sorted(outcome["encoding_inputs"].events) == [
+        "groom@baseline",
+        "locomotion@test",
+    ]

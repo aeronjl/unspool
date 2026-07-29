@@ -42,6 +42,11 @@ Repository = "https://github.com/aeronjl/behavio"
 behavio = "behavio.cli:main"
 
 [project.optional-dependencies]
+readers = [
+    "h5py>=3.11",
+    "pandas>=2.2",
+    "tables>=3.10",
+]
 nwb = [
     "h5py>=3.11",
     "pynwb>=3.1",
@@ -68,8 +73,15 @@ bayesian = [
 
 [dependency-groups]
 dev = [
+    # h5py, pandas, tables and xarray back the reader fixtures: the
+    # pinned DeepLabCut, SLEAP, Keypoint-MoSeq and BORIS writer contracts, and
+    # the duck-typed `movement` poses dataset.
+    "h5py>=3.11",
+    "pandas>=2.2",
     "pytest>=8.4.0",
     "ruff>=0.12.0",
+    "tables>=3.10",
+    "xarray>=2025.1",
 ]
 docs = [
     "matplotlib>=3.9",

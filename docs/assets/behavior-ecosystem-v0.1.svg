@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="610" viewBox="0 0 1200 610" role="img" aria-labelledby="title desc">
+  <title id="title">Behavior and photometry ecosystem boundaries</title>
+  <desc id="desc">DeepLabCut and SLEAP feed pose trajectories and covariates. Keypoint-MoSeq and BORIS feed point events and intervals. fipha relates them to optical signals and passes summaries to Behavio.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8f7ff"/>
+      <stop offset="1" stop-color="#eef8f7"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#261c46" flood-opacity="0.12"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#69558f"/>
+    </marker>
+    <style>
+      .heading { font: 700 25px system-ui, sans-serif; fill: #241b3d; }
+      .label { font: 700 18px system-ui, sans-serif; fill: #241b3d; }
+      .body { font: 400 15px system-ui, sans-serif; fill: #4c4560; }
+      .small { font: 600 13px system-ui, sans-serif; fill: #665c77; letter-spacing: .03em; }
+      .source { fill: #ffffff; stroke: #c9c0dd; stroke-width: 1.5; }
+      .boundary { fill: #f0ecfa; stroke: #8a70b6; stroke-width: 1.7; }
+      .core { fill: #2f2550; stroke: #2f2550; stroke-width: 2; }
+      .core-label { font: 700 22px system-ui, sans-serif; fill: #ffffff; }
+      .core-body { font: 400 15px system-ui, sans-serif; fill: #e9e4f5; }
+      .peer { fill: #e4f5f1; stroke: #3e8e82; stroke-width: 1.7; }
+      .line { fill: none; stroke: #69558f; stroke-width: 2.2; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1200" height="610" rx="26" fill="url(#background)"/>
+  <text x="54" y="55" class="heading" style="font-family: system-ui, sans-serif; font-size: 25px; font-weight: 700">Compose established behavior tools—do not duplicate them</text>
+
+  <g filter="url(#shadow)">
+    <rect x="55" y="105" width="215" height="92" rx="15" class="source"/>
+    <text x="78" y="138" class="label" style="font-family: system-ui, sans-serif; font-size: 18px; font-weight: 700">DeepLabCut</text>
+    <text x="78" y="164" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">keypoints · likelihood</text>
+    <text x="78" y="184" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">scorer · individual</text>
+
+    <rect x="55" y="218" width="215" height="92" rx="15" class="source"/>
+    <text x="78" y="251" class="label" style="font-family: system-ui, sans-serif; font-size: 18px; font-weight: 700">SLEAP</text>
+    <text x="78" y="277" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">nodes · tracks · scores</text>
+    <text x="78" y="297" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">declared array axes</text>
+
+    <rect x="55" y="331" width="215" height="92" rx="15" class="source"/>
+    <text x="78" y="364" class="label" style="font-family: system-ui, sans-serif; font-size: 18px; font-weight: 700">Keypoint-MoSeq</text>
+    <text x="78" y="390" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">syllable per frame</text>
+    <text x="78" y="410" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">model-specific labels</text>
+
+    <rect x="55" y="444" width="215" height="92" rx="15" class="source"/>
+    <text x="78" y="477" class="label" style="font-family: system-ui, sans-serif; font-size: 18px; font-weight: 700">BORIS</text>
+    <text x="78" y="503" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">POINT · STATE</text>
+    <text x="78" y="523" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">human ethogram</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="365" y="127" width="235" height="92" rx="15" class="boundary"/>
+    <text x="389" y="159" class="label" style="font-family: system-ui, sans-serif; font-size: 18px; font-weight: 700">PoseTrajectory</text>
+    <text x="389" y="185" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">coordinates · confidence</text>
+    <text x="389" y="205" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">identity · units · clock</text>
+
+    <rect x="365" y="240" width="235" height="92" rx="15" class="boundary"/>
+    <text x="389" y="272" class="label" style="font-family: system-ui, sans-serif; font-size: 18px; font-weight: 700">BehaviorCovariate</text>
+    <text x="389" y="298" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">values · validity mask</text>
+    <text x="389" y="318" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">gap-safe alignment</text>
+
+    <rect x="365" y="353" width="235" height="92" rx="15" class="boundary"/>
+    <text x="389" y="385" class="label" style="font-family: system-ui, sans-serif; font-size: 18px; font-weight: 700">Point events</text>
+    <text x="389" y="411" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">named instants</text>
+    <text x="389" y="431" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">explicit onset / offset</text>
+
+    <rect x="365" y="466" width="235" height="92" rx="15" class="boundary"/>
+    <text x="389" y="498" class="label" style="font-family: system-ui, sans-serif; font-size: 18px; font-weight: 700">Intervals</text>
+    <text x="389" y="524" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">start · stop · duration</text>
+    <text x="389" y="544" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">optional progress</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="706" y="196" width="280" height="218" rx="22" class="core"/>
+    <text x="739" y="241" class="core-label" style="font-family: system-ui, sans-serif; font-size: 22px; font-weight: 700">fipha</text>
+    <text x="739" y="278" class="core-body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">optical identity and QC</text>
+    <text x="739" y="307" class="core-body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">preprocessing provenance</text>
+    <text x="739" y="336" class="core-body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">neural event alignment</text>
+    <text x="739" y="365" class="core-body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">animal-aware inference</text>
+    <text x="739" y="394" class="core-body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">trial / session summaries</text>
+
+    <rect x="1025" y="235" width="135" height="140" rx="18" class="peer"/>
+    <text x="1046" y="275" class="label" style="font-family: system-ui, sans-serif; font-size: 18px; font-weight: 700">Behavio</text>
+    <text x="1046" y="305" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">longitudinal</text>
+    <text x="1046" y="326" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">clocks · models</text>
+    <text x="1046" y="347" class="body" style="font-family: system-ui, sans-serif; font-size: 15px; font-weight: 400">forward tests</text>
+  </g>
+
+  <path d="M270 151 C320 151 319 170 365 170" class="line"/>
+  <path d="M270 264 C320 264 319 196 365 196" class="line"/>
+  <path d="M270 377 C320 377 319 397 365 397" class="line"/>
+  <path d="M270 490 C320 490 319 500 365 500" class="line"/>
+  <path d="M600 173 C654 173 653 251 706 251" class="line"/>
+  <path d="M600 286 C654 286 653 286 706 286" class="line"/>
+  <path d="M600 399 C654 399 653 330 706 330" class="line"/>
+  <path d="M600 512 C654 512 653 365 706 365" class="line"/>
+  <path d="M986 305 L1025 305" class="line"/>
+
+  <text x="1024" y="414" class="small" style="font-family: system-ui, sans-serif; font-size: 13px; font-weight: 600">VALIDATED TRIAL TABLE</text>
+</svg>

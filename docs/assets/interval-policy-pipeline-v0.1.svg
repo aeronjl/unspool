@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">Auditable interval policy pipeline</title>
+  <desc id="desc">External behavior bouts enter an explicitly ordered policy and produce transformed annotations, a lineage ledger, an evidence fingerprint, and encoding inputs.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8f6ff"/>
+      <stop offset="1" stop-color="#edf9f7"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#66558f"/>
+    </marker>
+    <style>
+      .title{font:700 25px system-ui,sans-serif;fill:#241d38}.label{font:650 17px system-ui,sans-serif;fill:#2e2545}.small{font:500 14px system-ui,sans-serif;fill:#544b66}.box{fill:#fff;stroke:#b7a9d7;stroke-width:2}.op{fill:#f3effc;stroke:#8f79c2;stroke-width:2}.out{fill:#ecf8f5;stroke:#469d8b;stroke-width:2}.line{stroke:#66558f;stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="520" rx="22" fill="url(#bg)"/>
+  <text x="48" y="50" class="title" style="font-family: system-ui, sans-serif; font-size: 25px; font-weight: 700">A bout policy is an ordered, fingerprinted scientific decision</text>
+  <rect x="48" y="95" width="220" height="132" rx="16" class="box"/>
+  <text x="70" y="128" class="label" style="font-family: system-ui, sans-serif; font-size: 17px; font-weight: 650">External annotations</text>
+  <text x="70" y="158" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">label · start · stop</text>
+  <text x="70" y="182" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">optional confidence</text>
+  <text x="70" y="206" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">source + synchronized clock</text>
+  <path d="M268 161 H320" class="line"/>
+  <rect x="325" y="88" width="540" height="146" rx="18" class="op"/>
+  <text x="348" y="121" class="label" style="font-family: system-ui, sans-serif; font-size: 17px; font-weight: 650">Explicit operation order</text>
+  <rect x="348" y="143" width="88" height="52" rx="10" class="box"/><text x="370" y="175" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">filter</text>
+  <rect x="449" y="143" width="88" height="52" rx="10" class="box"/><text x="470" y="175" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">merge</text>
+  <rect x="550" y="143" width="88" height="52" rx="10" class="box"/><text x="573" y="175" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">split</text>
+  <rect x="651" y="143" width="88" height="52" rx="10" class="box"/><text x="665" y="175" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">context</text>
+  <rect x="752" y="143" width="88" height="52" rx="10" class="box"/><text x="767" y="175" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">overlap</text>
+  <path d="M865 161 H917" class="line"/>
+  <rect x="922" y="95" width="230" height="132" rx="16" class="out"/>
+  <text x="944" y="128" class="label" style="font-family: system-ui, sans-serif; font-size: 17px; font-weight: 650">Analysis intervals</text>
+  <text x="944" y="158" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">physical edges retained</text>
+  <text x="944" y="182" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">duration + progress ready</text>
+  <text x="944" y="206" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">point events unchanged</text>
+  <path d="M595 234 V280" class="line"/>
+  <rect x="105" y="292" width="300" height="154" rx="16" class="out"/>
+  <text x="128" y="326" class="label" style="font-family: system-ui, sans-serif; font-size: 17px; font-weight: 650">Complete lineage ledger</text>
+  <text x="128" y="358" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">kept · removed · merged</text>
+  <text x="128" y="382" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">split · relabelled · trimmed</text>
+  <text x="128" y="414" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">input IDs → output IDs + reason</text>
+  <rect x="450" y="292" width="300" height="154" rx="16" class="out"/>
+  <text x="473" y="326" class="label" style="font-family: system-ui, sans-serif; font-size: 17px; font-weight: 650">Stable evidence identity</text>
+  <text x="473" y="358" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">policy + order + source metadata</text>
+  <text x="473" y="382" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">annotations + ledger + counts</text>
+  <text x="473" y="414" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">canonical JSON → SHA-256</text>
+  <rect x="795" y="292" width="300" height="154" rx="16" class="out"/>
+  <text x="818" y="326" class="label" style="font-family: system-ui, sans-serif; font-size: 17px; font-weight: 650">Existing model boundary</text>
+  <text x="818" y="358" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">onsets · offsets · duration</text>
+  <text x="818" y="382" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">physical bounds · progress kernels</text>
+  <text x="818" y="414" class="small" style="font-family: system-ui, sans-serif; font-size: 14px; font-weight: 500">no behavior rediscovery</text>
+  <path d="M595 280 C520 270 350 270 255 292" class="line"/>
+  <path d="M595 280 V292" class="line"/>
+  <path d="M595 280 C680 270 850 270 945 292" class="line"/>
+</svg>

@@ -54,6 +54,7 @@ from behavio.compiler import (
     compile_execution_plan,
     materialize_protocol,
 )
+from behavio.covariates import BehaviorCovariate
 from behavio.design import (
     CategoricalTerm,
     DesignMatrix,
@@ -76,6 +77,16 @@ from behavio.diagnostics import (
     LatentStateAudit,
     RestartAudit,
     audit_fit,
+)
+from behavio.ethograms import (
+    BehaviorAnnotations,
+    BehaviorInterval,
+    IntervalEncodingInputs,
+    annotations_from_boris,
+    annotations_from_boris_aggregated_file,
+    annotations_from_boris_tabular_file,
+    annotations_from_moseq,
+    annotations_from_moseq_results_h5,
 )
 from behavio.evaluation import FoldEvaluation, evaluate_splits
 from behavio.evidence import (
@@ -114,6 +125,20 @@ from behavio.interchange import (
     export_fit,
     fit_artifact_from_dict,
     fit_artifact_from_json,
+)
+from behavio.interval_policy import (
+    ContextualizeIntervals,
+    FilterIntervals,
+    IntervalOperation,
+    IntervalPolicy,
+    IntervalPolicyContext,
+    IntervalPolicyLedgerEntry,
+    IntervalPolicyResult,
+    IntervalSnapshot,
+    MergeIntervals,
+    ResolveIntervalOverlaps,
+    SplitIntervals,
+    apply_interval_policy,
 )
 from behavio.model_recovery import (
     ModelRecoveryGridReport,
@@ -201,6 +226,14 @@ from behavio.parameters import (
     PriorSpec,
     parameter_space_from_dict,
     parameter_space_from_json,
+)
+from behavio.pose import (
+    PoseTrajectory,
+    pose_from_deeplabcut,
+    pose_from_deeplabcut_file,
+    pose_from_movement,
+    pose_from_sleap,
+    pose_from_sleap_analysis_h5,
 )
 from behavio.posterior import (
     POSTERIOR_GROUPS,
@@ -369,6 +402,12 @@ from behavio.sensitivity import (
 )
 from behavio.state_alignment import LatentStateAlignment, align_latent_states
 from behavio.study import REQUIRED_COLUMNS, Study, StudyValidationError
+from behavio.sync import (
+    ClockPulseMatches,
+    ClockSynchronization,
+    ClockSynchronizationSpec,
+    fit_clock_synchronization,
+)
 from behavio.task import (
     ChoiceData,
     ChoiceSpec,
@@ -436,6 +475,9 @@ __all__ = [
     "AsymmetricLearning",
     "AuditLevel",
     "AuditSeverity",
+    "BehaviorAnnotations",
+    "BehaviorCovariate",
+    "BehaviorInterval",
     "BehaviourEstimator",
     "BehaviourModel",
     "BernoulliGLMHMM",
@@ -461,8 +503,11 @@ __all__ = [
     "ChoiceKernel",
     "ChoiceSpec",
     "ClockKind",
+    "ClockPulseMatches",
     "ClockScope",
     "ClockSpec",
+    "ClockSynchronization",
+    "ClockSynchronizationSpec",
     "ClockValidationError",
     "ClockedStudy",
     "CoefficientTrajectory",
@@ -474,6 +519,7 @@ __all__ = [
     "CompiledFold",
     "CompiledInnerFold",
     "CompiledProtocol",
+    "ContextualizeIntervals",
     "DANDIAdapterError",
     "DANDINWBSource",
     "DesignMatrix",
@@ -496,6 +542,7 @@ __all__ = [
     "ExactRecoveryRun",
     "ExecutionPlan",
     "FeatureBlock",
+    "FilterIntervals",
     "FilteredStateProbabilities",
     "FitArtifact",
     "FitArtifactError",
@@ -534,6 +581,13 @@ __all__ = [
     "IdentityRecord",
     "InferenceError",
     "InteractionTerm",
+    "IntervalEncodingInputs",
+    "IntervalOperation",
+    "IntervalPolicy",
+    "IntervalPolicyContext",
+    "IntervalPolicyLedgerEntry",
+    "IntervalPolicyResult",
+    "IntervalSnapshot",
     "LandmarkClockSamples",
     "LandmarkNotFoundError",
     "LandmarkUncertaintyEstimate",
@@ -546,6 +600,7 @@ __all__ = [
     "LifecycleEvent",
     "MaterializedStudy",
     "MeanDiscrepancy",
+    "MergeIntervals",
     "ModelCapabilities",
     "ModelDataError",
     "ModelPrediction",
@@ -591,6 +646,7 @@ __all__ = [
     "PointwisePrediction",
     "PopulationForecastSplit",
     "PopulationValidationSplit",
+    "PoseTrajectory",
     "PosteriorAudit",
     "PosteriorAuditIssue",
     "PosteriorAuditPolicy",
@@ -657,6 +713,7 @@ __all__ = [
     "ReportedProtocol",
     "ReportingSpec",
     "ResetRule",
+    "ResolveIntervalOverlaps",
     "ResolvedDANDIAsset",
     "ResponseTimeSpec",
     "ResponseTimeUnit",
@@ -694,6 +751,7 @@ __all__ = [
     "SmoothWienerDriftDiffusion",
     "SoftmaxPolicy",
     "SourceSpec",
+    "SplitIntervals",
     "StandardizeTerm",
     "Study",
     "StudyProtocol",
@@ -733,6 +791,12 @@ __all__ = [
     "__version__",
     "add_study_trials",
     "align_latent_states",
+    "annotations_from_boris",
+    "annotations_from_boris_aggregated_file",
+    "annotations_from_boris_tabular_file",
+    "annotations_from_moseq",
+    "annotations_from_moseq_results_h5",
+    "apply_interval_policy",
     "assess_test_retest_reliability",
     "audit_fit",
     "audit_posterior",
@@ -748,6 +812,7 @@ __all__ = [
     "export_fit",
     "fit_artifact_from_dict",
     "fit_artifact_from_json",
+    "fit_clock_synchronization",
     "fit_model",
     "fit_transform_split",
     "fit_transform_splits",
@@ -763,6 +828,11 @@ __all__ = [
     "nested_select_model",
     "parameter_space_from_dict",
     "parameter_space_from_json",
+    "pose_from_deeplabcut",
+    "pose_from_deeplabcut_file",
+    "pose_from_movement",
+    "pose_from_sleap",
+    "pose_from_sleap_analysis_h5",
     "posterior_predictive_check",
     "posterior_result_from_arviz",
     "posterior_sensitivity_outcome",

@@ -8,6 +8,8 @@ from xml.etree import ElementTree
 ROOT = Path(__file__).parents[1]
 ASSETS = ROOT / "docs" / "assets"
 EXPECTED_FIGURES = {
+    "behavior-ecosystem-v0.1.svg",
+    "interval-policy-pipeline-v0.1.svg",
     "cell2025-strategy.svg",
     "cell2025-forecast.svg",
     "cell2025-qvalue-response-time.svg",

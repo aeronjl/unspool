@@ -70,6 +70,7 @@ Install only the interface used by the analysis:
 
 | Need | uv | pip from a checkout |
 | --- | --- | --- |
+| Pose and ethogram readers | `uv sync --extra readers` | `python -m pip install -e ".[readers]"` |
 | NWB read/write | `uv sync --extra nwb` | `python -m pip install -e ".[nwb]"` |
 | DANDI-backed NWB | `uv sync --extra dandi` | `python -m pip install -e ".[dandi]"` |
 | IBL ONE | `uv sync --extra ibl` | `python -m pip install -e ".[ibl]"` |

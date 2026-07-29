@@ -37,6 +37,7 @@ use these pages when you need exact signatures, return types, and public attribu
 | [Protocol execution](execution.md) | compilation, materialization, running, exact-design recovery | [Compile and audit](../protocols/auditing.md) |
 | [Reporting and evidence](evidence-bundles.md) | bounded reports and content-addressed evidence bundles | [Evidence bundles](../protocols/evidence-bundles.md) |
 | [Data adapters](data-adapters.md) | NWB, DANDI, IBL ONE, and fit-artifact interchange | [Interoperability](../interoperability.md) |
+| [Observed behaviour](observed-behaviour.md) | pose, covariates, ethograms, DeepLabCut/SLEAP/MoSeq/BORIS readers, clock synchronisation, interval policies | [Observed behaviour](../observed-behaviour.md) |
 
 The stable public import surface remains `behavio`. Optional data-source, optimization,
 and probabilistic dependencies are required only when their corresponding APIs are used.

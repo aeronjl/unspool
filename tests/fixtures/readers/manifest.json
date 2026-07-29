@@ -1,0 +1,96 @@
+{
+  "schema_version": "1",
+  "captured_at": "2026-07-27",
+  "fixtures": [
+    {
+      "file": "sleap-small-robot.analysis.h5",
+      "tool": "SLEAP",
+      "fixture_kind": "official_upstream_test_artifact",
+      "repository": "https://github.com/talmolab/sleap",
+      "upstream_path": "tests/data/hdf5_format_v1/small_robot.000_small_robot_3_frame.analysis.h5",
+      "file_commit": "8ab323e060d827adc03e629122723aa54e1ca950",
+      "repository_head_at_capture": "369b77280790cc025d8d3af8cdf00c6ba48ef6f9",
+      "sha256": "21446732fe6a9efabf6456e4f154de911ee091aca0fa0c74718f12d4316f82de",
+      "license": "BSD-3-Clause-Clear",
+      "notes": "Legacy Analysis HDF5 without dimension attributes; explicit MATLAB-compatible axis order is required. Point scores include values above one."
+    },
+    {
+      "file": "boris-test-export-events-tabular.csv",
+      "tool": "BORIS",
+      "fixture_kind": "official_upstream_test_artifact",
+      "repository": "https://github.com/olivierfriard/BORIS",
+      "upstream_path": "tests/files/test_export_events_tabular.csv",
+      "file_commit": "1f6149f68e7c4df28d92fb50a8f8a38ed7a377d2",
+      "repository_head_at_capture": "e7aadfd25a5311b76bc6357921da81d28cfce9ec",
+      "sha256": "54554a4c9cc31f7bea29579e5436facefa0b1c0efb15b12ec700ba04d7131442",
+      "license": "GPL-3.0-only",
+      "notes": "Official tabular export with metadata preamble, two subjects, and paired START/STOP state rows. Test-only and not included in the package wheel."
+    },
+    {
+      "file": "deeplabcut-3.0.0-single.h5",
+      "tool": "DeepLabCut",
+      "fixture_kind": "upstream_release_writer_contract_artifact",
+      "repository": "https://github.com/DeepLabCut/DeepLabCut",
+      "upstream_path": "deeplabcut/utils/auxiliaryfunctions.py::save_data",
+      "file_commit": "cdc87245bfa7df19eb5752b1c9578a30d009ba40",
+      "release": "v3.0.0",
+      "repository_head_at_capture": "2df0f46c8c8c56c8238b46b3d58384163bafb2f0",
+      "sha256": "5b9e9baba3ef5771a691c6067bd68220bedbe10765b11b2714c5632694d374e1",
+      "license": "BSD-3-Clause fixture values; writer source LGPL-3.0-only",
+      "notes": "Synthetic numerical values serialized with the exact DeepLabCut v3.0.0 prediction DataFrame contract: scorer/bodyparts/coords MultiIndex, likelihood columns, df_with_missing HDF5 key and table format. Generated with pandas 3.0.5 and PyTables 3.11.1; this is writer-contract parity, not a model-inference result."
+    },
+    {
+      "file": "deeplabcut-3.0.0-multi.h5",
+      "tool": "DeepLabCut",
+      "fixture_kind": "upstream_release_writer_contract_artifact",
+      "repository": "https://github.com/DeepLabCut/DeepLabCut",
+      "upstream_path": "deeplabcut/utils/auxiliaryfunctions.py::save_data",
+      "file_commit": "cdc87245bfa7df19eb5752b1c9578a30d009ba40",
+      "release": "v3.0.0",
+      "repository_head_at_capture": "2df0f46c8c8c56c8238b46b3d58384163bafb2f0",
+      "sha256": "9d744d672adc702ddda2fff498488e3cb326fcd785a9c790ce3a68f73905fb0c",
+      "license": "BSD-3-Clause fixture values; writer source LGPL-3.0-only",
+      "notes": "Synthetic numerical values serialized with the exact DeepLabCut v3.0.0 multi-animal prediction contract, including an explicit individuals level. Generated with pandas 3.0.5 and PyTables 3.11.1; this is writer-contract parity, not a model-inference result."
+    },
+    {
+      "file": "keypoint-moseq-0.6.8-results.h5",
+      "tool": "Keypoint-MoSeq",
+      "fixture_kind": "upstream_release_writer_contract_artifact",
+      "repository": "https://github.com/dattalab/keypoint-moseq",
+      "upstream_path": "keypoint_moseq/io.py::save_hdf5",
+      "file_commit": "3f030754868696c43c61a01ac997b3109fc58bf4",
+      "release": "0.6.8",
+      "repository_head_at_capture": "3f030754868696c43c61a01ac997b3109fc58bf4",
+      "sha256": "d9adcb6b096e7567e06e34b1f4b8d6dfb67259f708f8e5f5c7e9776a49530969",
+      "license": "BSD-3-Clause fixture values",
+      "notes": "Synthetic result arrays serialized by the pinned 0.6.8 save_hdf5 implementation. The package's unconditional jax-cuda12-pjrt dependency is not resolvable on Apple Silicon, so the NumPy-only writer implementation was executed directly; jax.device_get is identity for these leaves."
+    },
+    {
+      "file": "sleap-io-0.9.2-standard.analysis.h5",
+      "tool": "SLEAP",
+      "fixture_kind": "official_upstream_prediction_exported_by_release_writer",
+      "repository": "https://github.com/talmolab/sleap-io",
+      "upstream_path": "tests/data/slp/centered_pair_predictions.slp",
+      "file_commit": "80bbcd9c3b005a7616c14b875b761071f10ecde6",
+      "release": "v0.9.2",
+      "repository_head_at_capture": "80bbcd9c3b005a7616c14b875b761071f10ecde6",
+      "source_sha256": "e6eace7b07fc888eceb641a314f4eeeab1101036271f780ae290d5747ce5fd16",
+      "sha256": "ff7af9f57d689486340670336d42be7f467a4251bced5f8d3ada585ff8cb4fd3",
+      "license": "BSD-3-Clause",
+      "notes": "Official centered-pair prediction SLP exported with sleap-io 0.9.2 and preset=standard. Path-valued JSON provenance was string-normalized because the release writer otherwise raises TypeError; pose, score, identity and dimension arrays are unchanged."
+    },
+    {
+      "file": "boris-9.13.0-aggregated.tsv",
+      "tool": "BORIS",
+      "fixture_kind": "official_upstream_test_artifact",
+      "repository": "https://github.com/olivierfriard/BORIS",
+      "upstream_path": "tests/files/test_export_aggregated_events_test_full_1.tsv",
+      "file_commit": "e7aadfd25a5311b76bc6357921da81d28cfce9ec",
+      "release": "v9.13.0",
+      "repository_head_at_capture": "e7aadfd25a5311b76bc6357921da81d28cfce9ec",
+      "sha256": "1eeb914f1b7a4147c6cd0cf9387232dbd9757eacd2e773f879e7fca40a2a6e5a",
+      "license": "GPL-3.0-only",
+      "notes": "Official aggregated-event TSV with both POINT and STATE rows and multiple focal subjects. Test-only and not included in the package wheel."
+    }
+  ]
+}

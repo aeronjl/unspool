@@ -16,6 +16,16 @@
     "conceptual"
   ],
   "figures": {
+    "behavior-ecosystem-v0.1.svg": {
+      "classification": "conceptual",
+      "generator": "Hand-authored SVG committed with the page; moved from fipha unchanged apart from the package rename",
+      "source": "No data; a boundary diagram of the observed-behaviour exchange types and the tools that produce them",
+      "unit": "none",
+      "denominator": "none",
+      "estimand": "none",
+      "claim": "Pose estimators, state discovery and ethogram tools each retain their own semantics across a small typed boundary",
+      "published_target": "Conceptual diagram; no published panel is claimed"
+    },
     "cell2025-forecast.svg": {
       "classification": "literature-shaped",
       "generator": "scripts/plot_documentation_figures.py",
@@ -185,6 +195,16 @@
       "estimand": "Conceptual mapping from data sources to one longitudinal study contract",
       "claim": "Different adapters should converge before modelling and validation",
       "published_target": "Not applicable"
+    },
+    "interval-policy-pipeline-v0.1.svg": {
+      "classification": "conceptual",
+      "generator": "Hand-authored SVG committed with the page; moved from fipha unchanged",
+      "source": "No data; a diagram of the ordered filter, merge, split, context and overlap operations and their ledger",
+      "unit": "none",
+      "denominator": "none",
+      "estimand": "none",
+      "claim": "Interval-policy order is part of the estimand and is recorded operation by operation",
+      "published_target": "Conceptual diagram; no published panel is claimed"
     },
     "model-atlas.svg": {
       "classification": "conceptual",
