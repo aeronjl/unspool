@@ -93,6 +93,45 @@ Local NWB round trips and version-pinned DANDI streaming use the same study cont
 are documented in
 [Tabular, NWB, and DANDI interoperability](interoperability.md).
 
+## Planned designs
+
+A simulation, a recovery study, or a worked example does not start from a file. It starts
+from a *planned* design: every subject runs every session, and every session runs the same
+number of trials. `Study.factorial()` builds that crossed grid, so the three nested
+comprehensions it replaces cannot get `session_order` subtly wrong:
+
+```python
+design = Study.factorial(
+    trials=120,
+    subjects=("mouse-a", "mouse-b", "mouse-c"),
+    sessions=5,
+    columns={"stimulus": lambda rng, n_rows: rng.normal(size=n_rows)},
+    seed=2025,
+)
+```
+
+Rows are emitted subject-major, then in session order, then in trial order, so
+`chronological_indices()` returns `0, 1, 2, ...`. `session_order` is the zero-based
+position of a session within its subject, which is exactly the pair of invariants above:
+constant inside a `(subject, session)` pair, and one-to-one within a subject.
+
+`subjects` and `sessions` are a count, a single label, or an explicit sequence of labels.
+When each subject's sessions carry the subject's own name, `session_label(subject, order)`
+supplies them; its results must stay unique within a subject.
+
+`columns` adds per-trial columns and accepts three kinds of value:
+
+| Value | Meaning |
+| --- | --- |
+| A constant, such as `"lab-1"` or `0.0` | Broadcast to every row. |
+| A sequence of exactly one value per row | Used in row order. |
+| A *draw*, `draw(generator, n_rows)` | Called with a seeded `numpy.random.Generator`. |
+
+A draw requires `seed`, and every draw consumes that one generator in `columns` order.
+Randomness in a planned design is therefore reproducible from the arguments alone: there
+is no way to reach an unseeded global stream through this constructor, and a supplied seed
+that no column uses is an error rather than a silent no-op.
+
 ## Multiple clocks
 
 `session_order` is only the minimum clock required for session-aware validation. Calendar

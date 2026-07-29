@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -11,6 +11,8 @@ from scipy.special import expit
 
 from behavio._internal.arrays import protected_array
 from behavio.inference import OptimizationProblem, OptimizationRun, ScipyMultistart
+from behavio.models._kernels.bernoulli import ordered_session_indices
+from behavio.models._kernels.curvature import finite_difference_hessian, offset_steps
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -19,7 +21,6 @@ from behavio.models.base import (
     PredictionMode,
     UnsupportedPredictionMode,
 )
-from behavio.models.glm import _ordered_session_indices
 from behavio.parameters import ParameterSpace, ParameterSpec, ParameterTransform
 from behavio.study import REQUIRED_COLUMNS, Study
 
@@ -324,7 +325,7 @@ class BinaryQLearning:
         choices = np.zeros(len(design), dtype=np.int8)
         rewards = np.zeros(len(design), dtype=np.int8)
 
-        for session_indices in _ordered_session_indices(design):
+        for session_indices in ordered_session_indices(design):
             values = np.full(2, self.initial_value, dtype=np.float64)
             previous_choice = 0.0
             for index in session_indices:
@@ -350,7 +351,7 @@ class BinaryQLearning:
 
         choices = self._choices(study)
         rewards = self._rewards(study)
-        sessions = _ordered_session_indices(study)
+        sessions = ordered_session_indices(study)
 
         def objective(vector: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
             return self._objective_gradient(vector, choices, rewards, sessions)
@@ -379,7 +380,11 @@ class BinaryQLearning:
         selected = chosen.index
         estimates = np.asarray(chosen.estimate, dtype=np.float64)
         value, gradient = objective(estimates)
-        hessian = _numerical_hessian(objective, estimates)
+        hessian = finite_difference_hessian(
+            lambda vector: objective(vector)[1],
+            estimates,
+            steps=offset_steps(estimates, scale=1e-5),
+        )
         condition = float(np.linalg.cond(hessian))
         covariance = np.linalg.pinv(hessian, hermitian=True)
         standard_errors = np.sqrt(np.maximum(np.diag(covariance), 0.0))
@@ -465,7 +470,7 @@ class BinaryQLearning:
         post_update = np.empty_like(pre_choice)
         prediction_error = np.empty(len(study), dtype=np.float64)
         linear_predictor = np.empty(len(study), dtype=np.float64)
-        for session_indices in _ordered_session_indices(study):
+        for session_indices in ordered_session_indices(study):
             values = np.full(2, self.initial_value, dtype=np.float64)
             previous_choice = 0.0
             for index in session_indices:
@@ -620,26 +625,6 @@ def _decode_parameters(vector: Sequence[float]) -> QLearningParameters:
         raise ValueError(
             "parameter vector must contain four finite optimizer coordinates"
         ) from error
-
-
-def _numerical_hessian(
-    objective: Callable[
-        [NDArray[np.float64]],
-        tuple[float, NDArray[np.float64]],
-    ],
-    estimates: NDArray[np.float64],
-) -> NDArray[np.float64]:
-    hessian = np.empty((len(estimates), len(estimates)), dtype=np.float64)
-    for column in range(len(estimates)):
-        step = 1e-5 * (1.0 + abs(float(estimates[column])))
-        positive = estimates.copy()
-        negative = estimates.copy()
-        positive[column] += step
-        negative[column] -= step
-        _, positive_gradient = objective(positive)
-        _, negative_gradient = objective(negative)
-        hessian[:, column] = (positive_gradient - negative_gradient) / (2.0 * step)
-    return 0.5 * (hessian + hessian.T)
 
 
 def _require_positive_integer(value: int, name: str) -> None:

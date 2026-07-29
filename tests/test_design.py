@@ -94,6 +94,33 @@ def test_interactions_cross_all_columns_of_two_terms() -> None:
     assert block.values[1].tolist() == [-2.0, 0.0]
 
 
+def test_an_interaction_keeps_the_sign_of_a_zero_the_way_multiplication_does() -> None:
+    """``-2.0 * 0.0`` is ``-0.0``, so an interaction column must carry ``-0.0``.
+
+    ``np.einsum("ij,ik->ijk", ...)`` returned ``+0.0`` here, because it reduces through a
+    sum. The two values are equal as numbers and identical through ``X @ beta``, so this
+    never changed a fit -- but Behavio hashes Study columns into ``FitArtifact``
+    provenance, and ``json.dumps`` writes ``-0.0`` and ``0.0`` differently. The same data
+    therefore produced two content addresses depending on whether an interaction column was
+    multiplied out by hand or built by this term. Elementwise multiplication is also simply
+    the correct answer: the hand-written version was right and einsum was the deviation.
+    """
+
+    study = make_study()
+    interaction = InteractionTerm(NumericTerm("stimulus"), NumericTerm("choice"))
+
+    block = interaction.build(study)
+    hand = np.asarray(study["stimulus"], dtype=np.float64) * np.asarray(
+        study["choice"], dtype=np.float64
+    )
+
+    assert block.names == ("stimulus:choice",)
+    assert block.values[:, 0].tobytes() == hand.tobytes()
+    # Row 1 is stimulus=-2.0 against choice=0; row 4 is stimulus=0.0 against choice=1.
+    assert np.signbit(block.values[1, 0])
+    assert not np.signbit(block.values[4, 0])
+
+
 def test_fixed_levels_and_effect_coding_fail_loudly() -> None:
     study = make_study()
     with pytest.raises(DesignValidationError, match="outside the fixed levels"):
@@ -105,8 +132,12 @@ def test_fixed_levels_and_effect_coding_fail_loudly() -> None:
             "choice": [0, 1, 2, 0, 1],
         }
     )
-    with pytest.raises(DesignValidationError, match="zero/one"):
+    with pytest.raises(DesignValidationError) as raised:
         HistoryTerm("choice", coding="effect").build(invalid)
+    # A user who wrote coding="effect" is told what is wrong and nothing else. The longer
+    # message that explains the default belongs to the formula path, which chose the
+    # coding on the user's behalf; see tests/test_formula.py.
+    assert str(raised.value) == "effect-coded history requires zero/one values"
 
 
 def test_design_rejects_feature_name_collisions() -> None:

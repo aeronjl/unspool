@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from types import MappingProxyType
 from typing import Any
@@ -14,6 +14,8 @@ from scipy.special import expit, logit
 
 from behavio._internal.arrays import protected_array
 from behavio.contracts import natural_quantities
+from behavio.models._kernels.bernoulli import fit_bernoulli, ordered_session_indices
+from behavio.models._kernels.curvature import finite_difference_hessian
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -22,7 +24,7 @@ from behavio.models.base import (
     PredictionMode,
     UnsupportedPredictionMode,
 )
-from behavio.models.glm import BernoulliHistoryGLM, _fit_bernoulli, _ordered_session_indices
+from behavio.models.glm import BernoulliHistoryGLM
 from behavio.study import REQUIRED_COLUMNS, Study
 
 
@@ -256,7 +258,7 @@ class WinStayLoseShift:
         generator = seed if isinstance(seed, np.random.Generator) else np.random.default_rng(seed)
         choices = np.zeros(len(design), dtype=np.int8)
         rewards = np.zeros(len(design), dtype=np.int8)
-        for indices in _ordered_session_indices(design):
+        for indices in ordered_session_indices(design):
             previous_choice: int | None = None
             previous_reward: int | None = None
             for index in indices:
@@ -285,7 +287,7 @@ class WinStayLoseShift:
         rewards = self._binary_column(study, self.reward, "reward")
         matrix = self._design_matrix(study, outcomes, rewards)
         penalty = np.diag(np.asarray((0.0, self.l2, self.l2)))
-        return _fit_bernoulli(
+        return fit_bernoulli(
             model_name=self.model_name,
             model_signature=self.signature,
             parameter_names=self.parameter_names,
@@ -332,7 +334,7 @@ class WinStayLoseShift:
     ) -> NDArray[np.float64]:
         matrix = np.zeros((len(study), 3), dtype=np.float64)
         matrix[:, 0] = 1.0
-        for indices in _ordered_session_indices(study):
+        for indices in ordered_session_indices(study):
             for position, index in enumerate(indices[1:], start=1):
                 previous = indices[position - 1]
                 effect_choice = 2.0 * outcomes[previous] - 1.0
@@ -667,7 +669,7 @@ class LapsePsychometric:
         result = results[selected]
         estimates = np.asarray(result.x, dtype=np.float64)
         _, gradient = self._objective(estimates, stimulus, outcomes)
-        hessian = _finite_hessian(
+        hessian = finite_difference_hessian(
             lambda values: self._objective(values, stimulus, outcomes)[1], estimates
         )
         condition = float(np.linalg.cond(hessian))
@@ -805,18 +807,3 @@ class LapsePsychometric:
                 f"not {prediction_mode.value!r}"
             )
         return prediction_mode
-
-
-def _finite_hessian(
-    gradient: Callable[[NDArray[np.float64]], NDArray[np.float64]],
-    values: NDArray[np.float64],
-) -> NDArray[np.float64]:
-    hessian = np.empty((len(values), len(values)), dtype=np.float64)
-    for column in range(len(values)):
-        step = 1e-4 * max(1.0, abs(float(values[column])))
-        left = values.copy()
-        right = values.copy()
-        left[column] -= step
-        right[column] += step
-        hessian[:, column] = (gradient(right) - gradient(left)) / (2.0 * step)
-    return 0.5 * (hessian + hessian.T)

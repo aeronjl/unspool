@@ -6,7 +6,6 @@ from pathlib import Path
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import numpy as np
 
 from behavio import (
     BiasOnly,
@@ -22,27 +21,13 @@ from behavio import (
 def make_example_study() -> Study:
     """Simulate a small multi-animal study with a real stimulus effect."""
 
-    rng = np.random.default_rng(2026)
-    subjects = tuple(f"mouse-{index + 1}" for index in range(6))
-    n_sessions = 5
-    trials_per_session = 40
-    n_rows = len(subjects) * n_sessions * trials_per_session
-    subject = np.repeat(subjects, n_sessions * trials_per_session)
-    session_order = np.tile(
-        np.repeat(np.arange(n_sessions), trials_per_session),
-        len(subjects),
-    )
-    design = Study.from_columns(
-        {
-            "subject": subject,
-            "session": [
-                f"{animal}-session-{order + 1}"
-                for animal, order in zip(subject, session_order, strict=True)
-            ],
-            "trial": list(range(trials_per_session)) * len(subjects) * n_sessions,
-            "session_order": session_order,
-            "stimulus": rng.normal(size=n_rows),
-        }
+    design = Study.factorial(
+        trials=40,
+        subjects=tuple(f"mouse-{index + 1}" for index in range(6)),
+        sessions=5,
+        session_label=lambda animal, order: f"{animal}-session-{order + 1}",
+        columns={"stimulus": lambda rng, n_rows: rng.normal(size=n_rows)},
+        seed=2026,
     )
     generator = Psychometric(stimulus="stimulus")
     return generator.simulate(

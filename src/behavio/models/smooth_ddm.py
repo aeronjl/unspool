@@ -12,6 +12,19 @@ from numpy.typing import NDArray
 from scipy.optimize import minimize
 
 from behavio._internal.arrays import protected_array
+from behavio.models._kernels.basis import (
+    format_time,
+    linear_time_basis,
+    roughness_matrix,
+    validated_knots,
+)
+from behavio.models._kernels.curvature import bounded_value_difference_hessian
+from behavio.models._kernels.wiener import (
+    LOG_DENSITY_FLOOR,
+    simulate_trialwise_wiener,
+    upper_boundary_probability,
+    wiener_log_density,
+)
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -21,18 +34,11 @@ from behavio.models.base import (
     UnsupportedPredictionMode,
 )
 from behavio.models.ddm import (
-    _LOG_DENSITY_FLOOR,
     DriftDiffusionFitResult,
     DriftDiffusionParameters,
     DriftDiffusionSimulation,
     WienerDriftDiffusion,
-    _bridge_crossings,
-    _crossing_fractions,
-    _numerical_hessian,
-    _upper_boundary_probability,
-    _wiener_log_density,
 )
-from behavio.models.glm import _format_time, _linear_time_basis
 from behavio.study import Study
 
 
@@ -117,14 +123,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
         WienerDriftDiffusion.__post_init__(self)
         if self.contaminant is not None:
             raise ValueError("SmoothWienerDriftDiffusion does not yet support contaminants")
-        try:
-            knots = tuple(float(knot) for knot in self.knots)
-        except (TypeError, ValueError):
-            raise ValueError("knots must contain finite numbers") from None
-        if len(knots) < 2 or not np.all(np.isfinite(knots)):
-            raise ValueError("knots must contain at least two finite values")
-        if any(right <= left for left, right in pairwise(knots)):
-            raise ValueError("knots must be strictly increasing")
+        knots = validated_knots(self.knots)
         if not isinstance(self.time, str) or not self.time:
             raise ValueError("time must be a non-empty Study column name")
         if self.time in self.scored_columns or self.time in self.covariates:
@@ -154,7 +153,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
     @property
     def signature(self) -> str:
         covariates = ",".join(self.covariates)
-        knots = ",".join(_format_time(knot) for knot in self.knots)
+        knots = ",".join(format_time(knot) for knot in self.knots)
         varying = ",".join(self.varying_parameters or ())
         nondecision = (
             "data-constrained"
@@ -167,7 +166,8 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
             f"covariates={covariates};diffusion_scale=1;density_terms={self.density_terms};"
             f"simulation_dt={self.simulation_time_step};time={self.time};knots={knots};"
             f"varying={varying};smoothness={self.smoothness};"
-            f"nondecision_bounds={nondecision};shared_trajectory={self.shared_trajectory}]"
+            f"nondecision_bounds={nondecision};"
+            f"shared_trajectory={self.shared_trajectory}{self._design_signature}]"
         )
 
     @property
@@ -185,9 +185,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
         varying = set(self.varying_parameters or ())
         for parameter in self.base_parameter_names:
             if parameter in varying:
-                names.extend(
-                    f"{parameter}[{self.time}={_format_time(knot)}]" for knot in self.knots
-                )
+                names.extend(f"{parameter}[{self.time}={format_time(knot)}]" for knot in self.knots)
             else:
                 names.append(parameter)
         return tuple(names)
@@ -278,7 +276,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
         self._validate_fit(fit)
         evaluation_times = self.knots if times is None else times
         time_array = np.asarray(evaluation_times, dtype=np.float64)
-        basis = _linear_time_basis(time_array, self.knots)
+        basis = linear_time_basis(time_array, self.knots)
         knot_values = self._unpack_knot_values(fit.estimates)
         return DriftDiffusionTrajectory(
             clock=self.time,
@@ -306,7 +304,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
         starting_bias = trial_values[:, n_coefficients + 1]
         nondecision_time = trial_values[:, n_coefficients + 2]
         generator = seed if isinstance(seed, np.random.Generator) else np.random.default_rng(seed)
-        choices, response_seconds = _simulate_trialwise_wiener(
+        choices, response_seconds = simulate_trialwise_wiener(
             drifts,
             boundary,
             starting_bias,
@@ -357,7 +355,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
             if np.any(decision_times <= 0):
                 return float(np.finfo(np.float64).max / 1e100)
             drifts = np.sum(features * trial_values[:, :n_coefficients], axis=1)
-            log_density = _wiener_log_density(
+            log_density = wiener_log_density(
                 decision_times,
                 outcomes,
                 drifts,
@@ -400,7 +398,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
         chosen = results[selected]
         estimates = np.asarray(chosen.x, dtype=np.float64)
         value = objective(estimates)
-        hessian = _numerical_hessian(objective, estimates, bounds)
+        hessian = bounded_value_difference_hessian(objective, estimates, bounds)
         condition = float(np.linalg.cond(hessian))
         covariance = np.linalg.pinv(hessian, hermitian=True)
         standard_errors = np.sqrt(np.maximum(np.diag(covariance), 0.0))
@@ -408,7 +406,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
         n_coefficients = len(self.coefficient_names)
         decision_times = response_times - trial_values[:, n_coefficients + 2]
         drifts = np.sum(features * trial_values[:, :n_coefficients], axis=1)
-        log_density = _wiener_log_density(
+        log_density = wiener_log_density(
             decision_times,
             outcomes,
             drifts,
@@ -416,7 +414,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
             starting_bias=trial_values[:, n_coefficients + 1],
             terms=self.density_terms,
         )
-        floor_count = int(np.sum(log_density <= _LOG_DENSITY_FLOOR))
+        floor_count = int(np.sum(log_density <= LOG_DENSITY_FLOOR))
         gradient = np.asarray(chosen.jac, dtype=np.float64)
         diagnostics = FitDiagnostics(
             converged=bool(chosen.success),
@@ -478,7 +476,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
             self._feature_matrix(study) * trial_values[:, :n_coefficients],
             axis=1,
         )
-        probability = _upper_boundary_probability(
+        probability = upper_boundary_probability(
             drifts,
             boundary=trial_values[:, n_coefficients],
             starting_bias=trial_values[:, n_coefficients + 1],
@@ -514,7 +512,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
             self._feature_matrix(study) * trial_values[:, :n_coefficients],
             axis=1,
         )
-        scores = _wiener_log_density(
+        scores = wiener_log_density(
             response_times - trial_values[:, n_coefficients + 2],
             outcomes,
             drifts,
@@ -597,7 +595,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
         if not np.all(np.isfinite(times)):
             raise ModelDataError(f"temporal column {self.time!r} must be finite")
         try:
-            return _linear_time_basis(times, self.knots)
+            return linear_time_basis(times, self.knots)
         except ValueError as error:
             raise ModelDataError(str(error)) from None
 
@@ -616,7 +614,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
     def _penalty_matrix(self) -> NDArray[np.float64]:
         penalty = np.zeros((len(self.parameter_names), len(self.parameter_names)))
         varying = set(self.varying_parameters or ())
-        roughness = self.smoothness * _roughness_matrix(self.knots)
+        roughness = self.smoothness * roughness_matrix(self.knots)
         offset = 0
         for parameter in self.base_parameter_names:
             if parameter in varying:
@@ -710,74 +708,3 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
                 "smooth DDM paths are subject-specific by default; fit one subject at a "
                 "time or set shared_trajectory=True to align subjects explicitly"
             )
-
-
-def _roughness_matrix(knots: tuple[float, ...]) -> NDArray[np.float64]:
-    differences = np.zeros((len(knots) - 1, len(knots)), dtype=np.float64)
-    for row, spacing in enumerate(np.diff(knots)):
-        scale = 1.0 / np.sqrt(spacing)
-        differences[row, row] = -scale
-        differences[row, row + 1] = scale
-    return differences.T @ differences
-
-
-def _simulate_trialwise_wiener(
-    drift: NDArray[np.float64],
-    boundary: NDArray[np.float64],
-    starting_bias: NDArray[np.float64],
-    nondecision_time: NDArray[np.float64],
-    *,
-    generator: np.random.Generator,
-    time_step: float,
-    maximum_time: float,
-) -> tuple[NDArray[np.int8], NDArray[np.float64]]:
-    n_rows = len(drift)
-    positions = boundary * starting_bias
-    decision_times = np.zeros(n_rows, dtype=np.float64)
-    choices = np.zeros(n_rows, dtype=np.int8)
-    active = np.ones(n_rows, dtype=np.bool_)
-    noise_scale = np.sqrt(time_step)
-    max_steps = int(np.ceil(maximum_time / time_step))
-    for step in range(max_steps):
-        active_indices = np.flatnonzero(active)
-        if not len(active_indices):
-            break
-        previous = positions[active_indices]
-        current = previous + drift[active_indices] * time_step
-        current += generator.normal(0.0, noise_scale, len(active_indices))
-        positions[active_indices] = current
-        active_boundary = boundary[active_indices]
-        upper = current >= active_boundary
-        lower = current <= 0.0
-        endpoint_crossed = upper | lower
-        interior = np.flatnonzero(~endpoint_crossed)
-        if len(interior):
-            bridge_upper, bridge_lower = _bridge_crossings(
-                previous[interior],
-                current[interior],
-                active_boundary[interior],
-                time_step=time_step,
-                generator=generator,
-            )
-            upper[interior] = bridge_upper
-            lower[interior] = bridge_lower
-        crossed = upper | lower
-        if not np.any(crossed):
-            continue
-        crossed_indices = active_indices[crossed]
-        upper_crossed = upper[crossed]
-        fraction = _crossing_fractions(
-            previous[crossed],
-            current[crossed],
-            np.where(upper_crossed, boundary[crossed_indices], 0.0),
-            endpoint_crossed=endpoint_crossed[crossed],
-        )
-        decision_times[crossed_indices] = (step + fraction) * time_step
-        choices[crossed_indices] = upper_crossed.astype(np.int8)
-        active[crossed_indices] = False
-    if np.any(active):
-        raise RuntimeError(
-            f"{int(np.sum(active))} simulated paths did not terminate within "
-            f"{maximum_time:g} seconds"
-        )
-    return choices, decision_times + nondecision_time

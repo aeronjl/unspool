@@ -14,7 +14,7 @@ from behavio import (
     Study,
     WienerDriftDiffusion,
 )
-from behavio.models.glm import _linear_time_basis
+from behavio.models._kernels.basis import linear_time_basis
 from benchmarks.provenance import render
 
 N_SUBJECTS = 5
@@ -343,7 +343,7 @@ def _evaluated_truth(
     subject_knot_values: np.ndarray[Any, np.dtype[np.float64]],
     times: np.ndarray[Any, np.dtype[np.float64]],
 ) -> np.ndarray[Any, np.dtype[np.float64]]:
-    basis = _linear_time_basis(times, KNOTS)
+    basis = linear_time_basis(times, KNOTS)
     selected = subject_knot_values[:, [1, 2], :]
     return np.einsum("tk,spk->stp", basis, selected)
 

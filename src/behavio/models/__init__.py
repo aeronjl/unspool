@@ -1,5 +1,11 @@
 """Reference behavioural models and shared modelling contracts."""
 
+from behavio.models._kernels.introspection import (
+    Describable,
+    ModelDescription,
+    ModelFinding,
+    describe_model,
+)
 from behavio.models.base import (
     BehaviourEstimator,
     BehaviourModel,
@@ -127,6 +133,7 @@ __all__ = [
     "ChoiceKernel",
     "CoefficientTrajectory",
     "CorrectedRates",
+    "Describable",
     "DetectionCounts",
     "DriftDiffusionFitResult",
     "DriftDiffusionParameters",
@@ -157,6 +164,8 @@ __all__ = [
     "MetaSDTFitResult",
     "ModelCapabilities",
     "ModelDataError",
+    "ModelDescription",
+    "ModelFinding",
     "ModelPrediction",
     "MultinomialLogit",
     "Perseveration",
@@ -192,6 +201,7 @@ __all__ = [
     "WienerDriftDiffusion",
     "WinStayLoseShift",
     "ZRocSummary",
+    "describe_model",
     "detection_rates",
     "equal_variance_summary",
     "erf_two_gamma_probability",

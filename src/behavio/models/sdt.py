@@ -106,7 +106,7 @@ from behavio.contracts import (
     UnsupportedPredictionMode,
     natural_quantities,
 )
-from behavio.models._numerics import (
+from behavio.models._kernels.curvature import (
     covariance_from_hessian,
     finite_difference_gradient,
     finite_difference_hessian,

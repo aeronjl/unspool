@@ -3,19 +3,31 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
-from itertools import pairwise
+from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.optimize import minimize
 from scipy.special import expit
 
 from behavio._internal.arrays import protected_array
+from behavio.design import DesignSpec
+from behavio.models._kernels.basis import (
+    format_time,
+    linear_time_basis,
+    roughness_matrix,
+    validated_knots,
+)
+from behavio.models._kernels.bernoulli import fit_bernoulli, ordered_session_indices
+from behavio.models._kernels.design import (
+    build_matrix,
+    extend,
+    outcome_history_term,
+    resolve_design,
+    validate_design_choice,
+)
+from behavio.models._kernels.introspection import Describable
 from behavio.models.base import (
-    FitDiagnostics,
     FitResult,
     ModelDataError,
     Prediction,
@@ -52,13 +64,23 @@ class CoefficientTrajectory:
 
 
 @dataclass(frozen=True, slots=True)
-class BernoulliHistoryGLM:
+class BernoulliHistoryGLM(Describable):
     """A static Bernoulli GLM with exogenous covariates and choice history.
 
     Previous choices are constructed within subject/session boundaries and effect-coded as
     -1 and +1. Missing history at the beginning of each session is encoded as zero. During
     simulation, history is updated recursively from generated choices; during prediction,
     observed past choices provide one-step-ahead filtered history.
+
+    The exogenous half of the linear predictor is a :class:`~behavio.design.DesignSpec`.
+    ``covariates=("a", "b")`` is shorthand for one identity numeric term per name plus an
+    intercept, and is exactly equal to writing that design out; pass ``design=`` instead to
+    say anything the shorthand cannot -- an interaction, a fixed-level contrast, a weighted
+    history kernel. The two are alternatives, not layers, and passing both is an error.
+
+    ``choice_lags`` stays a model-level declaration under either spelling, because lagged
+    outcomes are generated recursively during simulation and so cannot be an ordinary
+    exogenous column. It is appended to whichever design supplied the exogenous terms.
     """
 
     covariates: tuple[str, ...] = ()
@@ -68,9 +90,11 @@ class BernoulliHistoryGLM:
     max_iterations: int = 1_000
     tolerance: float = 1e-9
     coefficient_warning_threshold: float = 20.0
+    design: DesignSpec | None = field(default=None, kw_only=True)
 
     def __post_init__(self) -> None:
         covariates = tuple(self.covariates)
+        validate_design_choice(self.design, covariates)
         if len(set(covariates)) != len(covariates):
             raise ValueError("covariates must be unique")
         if any(not isinstance(name, str) or not name for name in covariates):
@@ -115,13 +139,41 @@ class BernoulliHistoryGLM:
         covariates = ",".join(self.covariates)
         return (
             f"{self.model_name}[outcome={self.outcome};covariates={covariates};"
-            f"choice_lags={self.choice_lags};l2={self.l2}]"
+            f"choice_lags={self.choice_lags};l2={self.l2}{self._design_signature}]"
+        )
+
+    @property
+    def _design_signature(self) -> str:
+        """The design's contribution to the signature, empty for a ``covariates`` model.
+
+        A signature is a scientific fingerprint, so a design has to change it. It must
+        equally not change for a model constructed the old way, because those signatures
+        are already written into fitted artefacts and committed benchmark results -- hence
+        an empty contribution rather than the equivalent design's own signature.
+        """
+
+        return "" if self.design is None else f";design={self.design.signature}"
+
+    @property
+    def exogenous_design(self) -> DesignSpec:
+        """The declared design, or the one a ``covariates`` tuple denotes."""
+
+        return resolve_design(self.design, self.covariates)
+
+    @property
+    def design_spec(self) -> DesignSpec:
+        """The complete design this model fits, exogenous terms plus lagged outcomes."""
+
+        if not self.choice_lags:
+            return self.exogenous_design
+        return extend(
+            self.exogenous_design,
+            outcome_history_term(self.outcome, self.choice_lags),
         )
 
     @property
     def coefficient_names(self) -> tuple[str, ...]:
-        history = tuple(f"choice_lag_{lag}" for lag in range(1, self.choice_lags + 1))
-        return ("intercept", *self.covariates, *history)
+        return self.design_spec.feature_names
 
     @property
     def parameter_names(self) -> tuple[str, ...]:
@@ -133,9 +185,24 @@ class BernoulliHistoryGLM:
 
     @property
     def required_task_columns(self) -> tuple[str, ...]:
-        """Covariates that must be declared as task predictors."""
+        """Design columns that must be declared as task predictors."""
 
-        return self.covariates
+        return tuple(
+            column
+            for column in self.exogenous_design.required_columns
+            if column != self.outcome and column not in REQUIRED_COLUMNS
+        )
+
+    @property
+    def declared_priors(self) -> tuple[str, ...]:
+        """Human-readable statements of the penalties in force, for :meth:`describe`."""
+
+        if not self.l2:
+            return ()
+        return (
+            f"ridge on every non-intercept coefficient: Normal(0, {1.0 / self.l2**0.5:.4g}) "
+            f"(l2={self.l2})",
+        )
 
     @property
     def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
@@ -155,8 +222,8 @@ class BernoulliHistoryGLM:
         generator = seed if isinstance(seed, np.random.Generator) else np.random.default_rng(seed)
         choices = np.zeros(len(design), dtype=np.int8)
 
-        history_start = 1 + len(self.covariates)
-        for session_indices in _ordered_session_indices(design):
+        history_start = len(self.exogenous_design.feature_names)
+        for session_indices in ordered_session_indices(design):
             generated_history: list[float] = []
             for index in session_indices:
                 linear_predictor = coefficients[0]
@@ -182,7 +249,7 @@ class BernoulliHistoryGLM:
         design_matrix = self._design_matrix(study, outcomes)
         penalty = np.zeros(len(self.parameter_names), dtype=np.float64)
         penalty[1:] = self.l2
-        return _fit_bernoulli(
+        return fit_bernoulli(
             model_name=self.model_name,
             model_signature=self.signature,
             parameter_names=self.parameter_names,
@@ -254,20 +321,15 @@ class BernoulliHistoryGLM:
         return outcomes
 
     def _covariate_matrix(self, study: Study) -> NDArray[np.float64]:
-        if not self.covariates:
+        """The exogenous block alone, without the intercept, as simulation consumes it."""
+
+        design = self.exogenous_design
+        if not design.terms:
             return np.empty((len(study), 0), dtype=np.float64)
-        missing = [name for name in self.covariates if name not in study.columns]
+        missing = [name for name in design.required_columns if name not in study.columns]
         if missing:
             raise ModelDataError(f"study is missing covariate columns: {missing}")
-        try:
-            matrix = np.column_stack(
-                [np.asarray(study[name], dtype=np.float64) for name in self.covariates]
-            )
-        except (TypeError, ValueError):
-            raise ModelDataError("covariate columns must be numeric") from None
-        if not np.all(np.isfinite(matrix)):
-            raise ModelDataError("covariate columns must be finite")
-        return matrix
+        return build_matrix(DesignSpec(terms=design.terms, intercept=False), study).values
 
     def _design_matrix(
         self, study: Study, outcomes: NDArray[np.float64] | None
@@ -277,20 +339,14 @@ class BernoulliHistoryGLM:
     def _base_feature_matrix(
         self, study: Study, outcomes: NDArray[np.float64] | None
     ) -> NDArray[np.float64]:
-        matrix = np.ones((len(study), len(self.coefficient_names)), dtype=np.float64)
-        covariate_end = 1 + len(self.covariates)
-        matrix[:, 1:covariate_end] = self._covariate_matrix(study)
-        if self.choice_lags:
-            if outcomes is None:
-                raise ModelDataError("observed choices are required to construct filtered history")
-            matrix[:, covariate_end:] = 0.0
-            for session_indices in _ordered_session_indices(study):
-                for position, index in enumerate(session_indices):
-                    for lag in range(1, self.choice_lags + 1):
-                        if position >= lag:
-                            previous_choice = outcomes[session_indices[position - lag]]
-                            matrix[index, covariate_end + lag - 1] = 2.0 * previous_choice - 1.0
-        return matrix
+        if self.choice_lags and outcomes is None:
+            raise ModelDataError("observed choices are required to construct filtered history")
+        missing = [
+            name for name in self.exogenous_design.required_columns if name not in study.columns
+        ]
+        if missing:
+            raise ModelDataError(f"study is missing covariate columns: {missing}")
+        return build_matrix(self.design_spec, study).values
 
     def _validate_fit(self, fit: FitResult) -> None:
         if fit.model_signature != self.signature or fit.parameter_names != self.parameter_names:
@@ -323,14 +379,7 @@ class SmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
 
     def __post_init__(self) -> None:
         BernoulliHistoryGLM.__post_init__(self)
-        try:
-            knots = tuple(float(knot) for knot in self.knots)
-        except (TypeError, ValueError):
-            raise ValueError("knots must contain finite numbers") from None
-        if len(knots) < 2 or not np.all(np.isfinite(knots)):
-            raise ValueError("knots must contain at least two finite values")
-        if any(right <= left for left, right in pairwise(knots)):
-            raise ValueError("knots must be strictly increasing")
+        knots = validated_knots(self.knots)
         if not isinstance(self.time, str) or not self.time:
             raise ValueError("time must be a non-empty Study column name")
         if self.time == self.outcome:
@@ -348,20 +397,28 @@ class SmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
     @property
     def signature(self) -> str:
         covariates = ",".join(self.covariates)
-        knots = ",".join(_format_time(knot) for knot in self.knots)
+        knots = ",".join(format_time(knot) for knot in self.knots)
         return (
             f"{self.model_name}[outcome={self.outcome};covariates={covariates};"
             f"choice_lags={self.choice_lags};time={self.time};knots={knots};"
             f"smoothness={self.smoothness};l2={self.l2};"
-            f"shared_trajectory={self.shared_trajectory}]"
+            f"shared_trajectory={self.shared_trajectory}{self._design_signature}]"
         )
 
     @property
     def parameter_names(self) -> tuple[str, ...]:
         return tuple(
-            f"{coefficient}[{self.time}={_format_time(knot)}]"
+            f"{coefficient}[{self.time}={format_time(knot)}]"
             for coefficient in self.coefficient_names
             for knot in self.knots
+        )
+
+    @property
+    def declared_priors(self) -> tuple[str, ...]:
+        return (
+            f"random walk over {self.time} knots {self.knots}: "
+            f"first-difference penalty scaled by smoothness={self.smoothness}",
+            *BernoulliHistoryGLM.declared_priors.fget(self),  # type: ignore[attr-defined]
         )
 
     def parameters_from_paths(self, paths: Mapping[str, Sequence[float]]) -> Mapping[str, float]:
@@ -395,7 +452,7 @@ class SmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
         self._validate_fit(fit)
         evaluation_times = self.knots if times is None else times
         time_array = np.asarray(evaluation_times, dtype=np.float64)
-        basis = _linear_time_basis(time_array, self.knots)
+        basis = linear_time_basis(time_array, self.knots)
         knot_values = fit.estimates.reshape(len(self.coefficient_names), len(self.knots))
         values = basis @ knot_values.T
         return CoefficientTrajectory(
@@ -424,12 +481,12 @@ class SmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
         generator = seed if isinstance(seed, np.random.Generator) else np.random.default_rng(seed)
         choices = np.zeros(len(design), dtype=np.int8)
 
-        for session_indices in _ordered_session_indices(design):
+        for session_indices in ordered_session_indices(design):
             generated_history: list[float] = []
             for index in session_indices:
                 features = np.empty(len(self.coefficient_names), dtype=np.float64)
                 features[0] = 1.0
-                covariate_end = 1 + len(self.covariates)
+                covariate_end = len(self.exogenous_design.feature_names)
                 features[1:covariate_end] = covariates[index]
                 for lag in range(1, self.choice_lags + 1):
                     features[covariate_end + lag - 1] = (
@@ -451,7 +508,7 @@ class SmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
         outcomes = self._outcomes(study)
         design_matrix = self._design_matrix(study, outcomes)
         penalty = self._penalty_matrix()
-        return _fit_bernoulli(
+        return fit_bernoulli(
             model_name=self.model_name,
             model_signature=self.signature,
             parameter_names=self.parameter_names,
@@ -490,18 +547,13 @@ class SmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
         if not np.all(np.isfinite(times)):
             raise ModelDataError(f"temporal column {self.time!r} must be finite")
         try:
-            return _linear_time_basis(times, self.knots)
+            return linear_time_basis(times, self.knots)
         except ValueError as error:
             raise ModelDataError(str(error)) from None
 
     def _penalty_matrix(self) -> NDArray[np.float64]:
         n_knots = len(self.knots)
-        differences = np.zeros((n_knots - 1, n_knots), dtype=np.float64)
-        for row, spacing in enumerate(np.diff(self.knots)):
-            scale = 1.0 / np.sqrt(spacing)
-            differences[row, row] = -scale
-            differences[row, row + 1] = scale
-        roughness = self.smoothness * (differences.T @ differences)
+        roughness = self.smoothness * roughness_matrix(self.knots)
         penalty = np.kron(np.eye(len(self.coefficient_names)), roughness)
         if self.l2:
             for coefficient in range(1, len(self.coefficient_names)):
@@ -517,105 +569,3 @@ class SmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
                 "smooth coefficient paths are subject-specific by default; fit one subject "
                 "at a time or set shared_trajectory=True to align subjects explicitly"
             )
-
-
-def _fit_bernoulli(
-    *,
-    model_name: str,
-    model_signature: str,
-    parameter_names: tuple[str, ...],
-    design_matrix: NDArray[np.float64],
-    outcomes: NDArray[np.float64],
-    penalty_matrix: NDArray[np.float64],
-    max_iterations: int,
-    tolerance: float,
-    coefficient_warning_threshold: float,
-) -> FitResult:
-    def objective(coefficients: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
-        linear_predictor = design_matrix @ coefficients
-        loss = np.logaddexp(0.0, linear_predictor).sum() - outcomes @ linear_predictor
-        loss += 0.5 * float(coefficients @ penalty_matrix @ coefficients)
-        gradient = design_matrix.T @ (expit(linear_predictor) - outcomes)
-        gradient += penalty_matrix @ coefficients
-        return float(loss), np.asarray(gradient, dtype=np.float64)
-
-    result = minimize(
-        objective,
-        np.zeros(len(parameter_names), dtype=np.float64),
-        method="L-BFGS-B",
-        jac=True,
-        options={"maxiter": max_iterations, "ftol": tolerance, "gtol": tolerance},
-    )
-    estimates = np.asarray(result.x, dtype=np.float64)
-    probabilities = expit(design_matrix @ estimates)
-    weights = probabilities * (1.0 - probabilities)
-    hessian = design_matrix.T @ (weights[:, None] * design_matrix) + penalty_matrix
-    condition = float(np.linalg.cond(hessian))
-    covariance = np.linalg.pinv(hessian, hermitian=True)
-    standard_errors = np.sqrt(np.maximum(np.diag(covariance), 0.0))
-    _, gradient = objective(estimates)
-    diagnostics = FitDiagnostics(
-        converged=bool(result.success),
-        optimizer="L-BFGS-B",
-        status=int(result.status),
-        message=str(result.message),
-        n_iterations=int(result.nit),
-        objective=float(result.fun),
-        gradient_norm=float(np.linalg.norm(gradient)),
-        hessian_condition=condition,
-        boundary_estimate=bool(np.any(np.abs(estimates) >= coefficient_warning_threshold)),
-    )
-    return FitResult(
-        model_name=model_name,
-        model_signature=model_signature,
-        parameter_names=parameter_names,
-        estimates=estimates,
-        standard_errors=standard_errors,
-        covariance=covariance,
-        n_observations=len(outcomes),
-        diagnostics=diagnostics,
-    )
-
-
-def _linear_time_basis(
-    times: Sequence[float] | NDArray[np.float64], knots: tuple[float, ...]
-) -> NDArray[np.float64]:
-    values = np.asarray(times, dtype=np.float64)
-    if values.ndim != 1 or not np.all(np.isfinite(values)):
-        raise ValueError("temporal values must be a finite one-dimensional array")
-    if np.any(values < knots[0]) or np.any(values > knots[-1]):
-        raise ValueError(
-            f"temporal values must lie within the fixed knot range [{knots[0]}, {knots[-1]}]"
-        )
-
-    basis = np.zeros((len(values), len(knots)), dtype=np.float64)
-    knot_array = np.asarray(knots, dtype=np.float64)
-    for row, value in enumerate(values):
-        if value == knots[-1]:
-            basis[row, -1] = 1.0
-            continue
-        right = int(np.searchsorted(knot_array, value, side="right"))
-        left = right - 1
-        span = knots[right] - knots[left]
-        right_weight = (value - knots[left]) / span
-        basis[row, left] = 1.0 - right_weight
-        basis[row, right] = right_weight
-    return basis
-
-
-def _format_time(value: float) -> str:
-    return np.format_float_positional(value, trim="-")
-
-
-def _ordered_session_indices(study: Study) -> tuple[tuple[int, ...], ...]:
-    sessions: dict[tuple[Any, Any], list[int]] = {}
-    for raw_index in study.chronological_indices():
-        index = int(raw_index)
-        subject = _scalar(study["subject"][index])
-        session = _scalar(study["session"][index])
-        sessions.setdefault((subject, session), []).append(index)
-    return tuple(tuple(indices) for indices in sessions.values())
-
-
-def _scalar(value: Any) -> Any:
-    return value.item() if isinstance(value, np.generic) else value

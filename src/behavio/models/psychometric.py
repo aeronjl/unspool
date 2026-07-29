@@ -72,7 +72,7 @@ from behavio.contracts import (
     PredictionMode,
     UnsupportedPredictionMode,
 )
-from behavio.models._numerics import covariance_from_hessian, finite_difference_hessian
+from behavio.models._kernels.curvature import covariance_from_hessian, finite_difference_hessian
 from behavio.study import REQUIRED_COLUMNS, Study
 
 #: Probability floor used when a curve is evaluated at a saturated guess or lapse rate.

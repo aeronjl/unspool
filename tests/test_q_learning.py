@@ -24,7 +24,7 @@ from behavio import (
     run_parameter_recovery,
     within_session_rolling_splits,
 )
-from behavio.models.glm import _ordered_session_indices
+from behavio.models._kernels.bernoulli import ordered_session_indices
 
 
 def volatile_design(*, n_sessions: int = 8, trials_per_session: int = 120) -> Study:
@@ -176,7 +176,7 @@ def test_pointwise_scores_match_recursive_likelihood() -> None:
         vector,
         choices,
         rewards,
-        _ordered_session_indices(study),
+        ordered_session_indices(study),
     )
     scores = model.pointwise_log_prob(study, fit)
 
@@ -199,7 +199,7 @@ def test_recursive_analytic_gradient_matches_finite_differences() -> None:
     vector = np.asarray([parameters[name] for name in model.parameter_names])
     choices = model._choices(study)
     rewards = model._rewards(study)
-    sessions = _ordered_session_indices(study)
+    sessions = ordered_session_indices(study)
 
     _, analytic = model._objective_gradient(vector, choices, rewards, sessions)
     numeric = np.empty_like(analytic)

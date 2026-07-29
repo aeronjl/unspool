@@ -8,34 +8,12 @@ from behavio import HierarchicalSmoothBernoulliHistoryGLM, Study
 
 
 def build_design() -> Study:
-    generator = np.random.default_rng(321)
-    subjects = tuple(f"mouse-{index}" for index in range(6))
-    n_sessions = 5
-    trials_per_session = 60
-    n_rows = len(subjects) * n_sessions * trials_per_session
-    return Study(
-        {
-            "subject": [
-                subject
-                for subject in subjects
-                for _session in range(n_sessions)
-                for _trial in range(trials_per_session)
-            ],
-            "session": [
-                f"session-{session}"
-                for _subject in subjects
-                for session in range(n_sessions)
-                for _trial in range(trials_per_session)
-            ],
-            "trial": list(range(trials_per_session)) * len(subjects) * n_sessions,
-            "session_order": [
-                session
-                for _subject in subjects
-                for session in range(n_sessions)
-                for _trial in range(trials_per_session)
-            ],
-            "stimulus": generator.normal(size=n_rows),
-        }
+    return Study.factorial(
+        trials=60,
+        subjects=tuple(f"mouse-{index}" for index in range(6)),
+        sessions=5,
+        columns={"stimulus": lambda rng, n_rows: rng.normal(size=n_rows)},
+        seed=321,
     )
 
 

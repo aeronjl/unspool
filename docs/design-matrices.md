@@ -34,6 +34,16 @@ print(matrix.names)
 print(matrix.values.shape)
 ```
 
+The same design can be written as a [formula](design-formulas.md), which desugars onto
+exactly these terms and nothing else:
+
+```python
+design = DesignSpec.from_formula(
+    "choice ~ numeric(stimulus, scale=100.0) * C(condition, ['training', 'probe'])"
+    " + lag(choice, 1, 2)"
+)
+```
+
 The output contains an immutable two-dimensional array, stable feature names, and the
 complete design signature. The same specification can therefore be built on training and
 test studies without discovering a different coordinate in each.
@@ -90,6 +100,12 @@ it is never inferred.
 `coding="identity"` retains a numeric source value. `coding="effect"` requires binary
 zero/one observations and maps them to minus/plus one. More elaborate kernels and learned
 history representations are not learned implicitly.
+
+`HistoryTerm` defaults to `coding="identity"`, because the term is written by someone who
+has already decided what the column means. The [formula](design-formulas.md) spellings
+`lag()` and `kernel()` default to `coding="effect"` instead, so that `lag(choice, 1)`
+builds the same `choice_lag_1` column as the `choice_lags=` shorthand rather than a
+differently scaled one under the same name.
 
 `HistoryKernelTerm` contracts several explicit lags into one feature with fixed weights:
 

@@ -13,6 +13,8 @@ from scipy.optimize import minimize
 from scipy.special import expit
 
 from behavio._internal.arrays import protected_array
+from behavio.models._kernels.bernoulli import fit_bernoulli, ordered_session_indices
+from behavio.models._kernels.curvature import relative_steps, value_difference_hessian
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -20,7 +22,7 @@ from behavio.models.base import (
     Prediction,
     PredictionMode,
 )
-from behavio.models.glm import BernoulliHistoryGLM, _fit_bernoulli, _ordered_session_indices
+from behavio.models.glm import BernoulliHistoryGLM
 from behavio.study import Study
 
 
@@ -196,7 +198,8 @@ class HierarchicalBernoulliHistoryGLM(BernoulliHistoryGLM):
             f"{self.model_name}[outcome={self.outcome};covariates={covariates};"
             f"choice_lags={self.choice_lags};l2={self.l2};subject_scale={self.subject_scale};"
             f"estimate_subject_scale={self.estimate_subject_scale};"
-            f"subject_scale_bounds={self.subject_scale_bounds[0]},{self.subject_scale_bounds[1]}]"
+            f"subject_scale_bounds={self.subject_scale_bounds[0]},"
+            f"{self.subject_scale_bounds[1]}{self._design_signature}]"
         )
 
     def simulate(
@@ -232,7 +235,7 @@ class HierarchicalBernoulliHistoryGLM(BernoulliHistoryGLM):
         choices = np.zeros(len(design), dtype=np.int8)
         history_start = 1 + len(self.covariates)
 
-        for session_indices in _ordered_session_indices(design):
+        for session_indices in ordered_session_indices(design):
             subject = _scalar(design["subject"][session_indices[0]])
             coefficients = population + deviations[subject_index[subject]]
             generated_history: list[float] = []
@@ -304,7 +307,7 @@ class HierarchicalBernoulliHistoryGLM(BernoulliHistoryGLM):
                 for name in self.coefficient_names
             ]
         )
-        joint_fit = _fit_bernoulli(
+        joint_fit = fit_bernoulli(
             model_name=self.model_name,
             model_signature=self.signature,
             parameter_names=joint_names,
@@ -352,7 +355,7 @@ class HierarchicalBernoulliHistoryGLM(BernoulliHistoryGLM):
         groups = _subject_groups(study, subjects, features, outcomes)
         population_penalty = np.zeros(n_coefficients, dtype=np.float64)
         population_penalty[1:] = self.l2
-        population_fit = _fit_bernoulli(
+        population_fit = fit_bernoulli(
             model_name=self.model_name,
             model_signature=self.signature,
             parameter_names=self.parameter_names,
@@ -417,7 +420,10 @@ class HierarchicalBernoulliHistoryGLM(BernoulliHistoryGLM):
             max_iterations=self.max_iterations,
             tolerance=self.tolerance,
         )
-        hessian = _numerical_hessian(profile_objective, np.asarray(outer_fit.x, dtype=np.float64))
+        outer_point = np.asarray(outer_fit.x, dtype=np.float64)
+        hessian = value_difference_hessian(
+            profile_objective, outer_point, steps=relative_steps(outer_point, scale=1e-3)
+        )
         gradient = _numerical_gradient(profile_objective, np.asarray(outer_fit.x, dtype=np.float64))
         covariance = np.linalg.pinv(hessian, hermitian=True)
         standard_errors = np.sqrt(np.maximum(np.diag(covariance), 0.0))
@@ -611,34 +617,6 @@ def _laplace_profile(
         conditional_covariances=conditional_covariances,
         all_subject_modes_converged=all_converged,
     )
-
-
-def _numerical_hessian(
-    objective: Callable[[NDArray[np.float64]], float],
-    optimum: NDArray[np.float64],
-) -> NDArray[np.float64]:
-    n_parameters = len(optimum)
-    steps = 1e-3 * np.maximum(1.0, np.abs(optimum))
-    hessian = np.zeros((n_parameters, n_parameters), dtype=np.float64)
-    center = objective(optimum)
-    for first in range(n_parameters):
-        first_step = np.zeros(n_parameters, dtype=np.float64)
-        first_step[first] = steps[first]
-        hessian[first, first] = (
-            objective(optimum + first_step) - 2.0 * center + objective(optimum - first_step)
-        ) / steps[first] ** 2
-        for second in range(first + 1, n_parameters):
-            second_step = np.zeros(n_parameters, dtype=np.float64)
-            second_step[second] = steps[second]
-            value = (
-                objective(optimum + first_step + second_step)
-                - objective(optimum + first_step - second_step)
-                - objective(optimum - first_step + second_step)
-                + objective(optimum - first_step - second_step)
-            ) / (4.0 * steps[first] * steps[second])
-            hessian[first, second] = value
-            hessian[second, first] = value
-    return hessian
 
 
 def _numerical_gradient(

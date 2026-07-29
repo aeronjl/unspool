@@ -16,15 +16,14 @@ from behavio import (
 
 
 def build_study() -> Study:
-    return Study(
-        {
-            "subject": ["mouse-1"] * 12,
-            "session": ["day-1"] * 4 + ["day-2"] * 4 + ["day-3"] * 4,
-            "trial": [0, 1, 2, 3] * 3,
-            "session_order": [0] * 4 + [1] * 4 + [2] * 4,
+    return Study.factorial(
+        trials=4,
+        subjects="mouse-1",
+        sessions=("day-1", "day-2", "day-3"),
+        columns={
             "timestamp_hours": [0, 1, 2, 3, 24, 25, 26, 27, 48, 49, 50, 51],
             "correct": [0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1],
-        }
+        },
     )
 
 

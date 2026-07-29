@@ -17,7 +17,7 @@ from behavio import (
     forward_session_splits,
     run_parameter_recovery,
 )
-from behavio.models.glm import _ordered_session_indices
+from behavio.models._kernels.bernoulli import ordered_session_indices
 
 
 def design(*, n_sessions: int = 4, trials_per_session: int = 100) -> Study:
@@ -142,7 +142,7 @@ def test_filtered_state_probabilities_reset_at_session_boundaries() -> None:
 
     assert probabilities.predictive.shape == (len(simulated), 2)
     np.testing.assert_allclose(probabilities.predictive.sum(axis=1), 1.0)
-    for session_rows in _ordered_session_indices(simulated):
+    for session_rows in ordered_session_indices(simulated):
         np.testing.assert_allclose(
             probabilities.predictive[session_rows[0]],
             components.initial_probabilities,
@@ -162,7 +162,7 @@ def test_pointwise_filtered_score_matches_forward_likelihood() -> None:
         vector,
         features,
         outcomes,
-        _ordered_session_indices(simulated),
+        ordered_session_indices(simulated),
     )
     scores = model.pointwise_log_prob(simulated, fit)
 
@@ -199,7 +199,7 @@ def test_analytic_likelihood_gradient_matches_finite_differences() -> None:
     vector = np.asarray([parameters[name] for name in model.parameter_names])
     outcomes = model._outcomes(study)
     features = model._base_feature_matrix(study, outcomes)
-    sessions = _ordered_session_indices(study)
+    sessions = ordered_session_indices(study)
 
     _, analytic = model._objective_gradient(vector, features, outcomes, sessions)
     numeric = np.empty_like(analytic)
@@ -235,7 +235,7 @@ def test_sticky_prior_adds_declared_self_transition_pseudocounts() -> None:
     sticky_vector = np.asarray([parameters[name] for name in sticky.parameter_names])
     outcomes = plain._outcomes(study)
     features = plain._base_feature_matrix(study, outcomes)
-    sessions = _ordered_session_indices(study)
+    sessions = ordered_session_indices(study)
 
     plain_loss, _ = plain._objective_gradient(plain_vector, features, outcomes, sessions)
     sticky_loss, _ = sticky._objective_gradient(sticky_vector, features, outcomes, sessions)

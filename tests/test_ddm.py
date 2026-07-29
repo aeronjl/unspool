@@ -17,11 +17,8 @@ from behavio import (
     model_capabilities,
     run_parameter_recovery,
 )
-from behavio.models.ddm import (
-    _numerical_hessian,
-    _upper_boundary_probability,
-    _wiener_log_density,
-)
+from behavio.models._kernels.curvature import bounded_value_difference_hessian
+from behavio.models._kernels.wiener import upper_boundary_probability, wiener_log_density
 
 
 def design(
@@ -82,7 +79,7 @@ def test_wiener_density_integrates_to_analytic_boundary_probabilities(
         def density(decision_time: float, observed_choice: float = choice) -> float:
             return float(
                 np.exp(
-                    _wiener_log_density(
+                    wiener_log_density(
                         np.asarray([decision_time]),
                         np.asarray([observed_choice]),
                         np.asarray([drift]),
@@ -97,7 +94,7 @@ def test_wiener_density_integrates_to_analytic_boundary_probabilities(
         masses.append(mass)
 
     upper = float(
-        _upper_boundary_probability(
+        upper_boundary_probability(
             np.asarray([drift]),
             boundary=boundary,
             starting_bias=starting_bias,
@@ -206,7 +203,7 @@ def test_response_times_at_or_below_nondecision_time_have_finite_floor_scores() 
 def test_numerical_hessian_respects_a_narrow_bounded_interval() -> None:
     point = np.asarray([2.5e-5])
 
-    hessian = _numerical_hessian(
+    hessian = bounded_value_difference_hessian(
         lambda values: float((values[0] - 2.0e-5) ** 2),
         point,
         [(0.0, 5.0e-5)],

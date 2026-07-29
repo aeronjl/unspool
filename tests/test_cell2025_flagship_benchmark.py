@@ -4,8 +4,10 @@ from pathlib import Path
 import numpy as np
 
 from behavio import Study
+from behavio.interchange import _study_record
 from benchmarks.cell2025_flagship.benchmark import (
     MODEL_ORDER,
+    PANEL_COLUMN_ORDER,
     _models,
     _published_artifact_summary,
     _recovery_scenarios,
@@ -179,3 +181,25 @@ def test_committed_flagship_evidence_matches_the_frozen_contract() -> None:
     }
     reward_counts = feature["summary"]["reward_history_without_stable_strategy"]["selection_counts"]
     assert sum(reward_counts.values()) == 12
+
+
+#: The panel digest produced by the hand-written interaction loop, before those columns
+#: became `InteractionTerm` products. `interchange` hashes values *and* column order, so
+#: this pins both halves: `einsum` once normalised `-0.0` to `+0.0`, and appending the
+#: interaction predictors once moved them out of their published positions. Neither moved
+#: a fitted number, and neither may move this digest either.
+PRISTINE_PANEL_DIGEST = "26fb0d2e8c418b6a6d3e75f1eaf83e727b1b55d90518eb3e42130417f1268d5f"
+
+
+def test_the_panel_digest_survives_the_interaction_term_migration() -> None:
+    panel = build_forecast_panel(synthetic_source_study())
+
+    assert tuple(panel.columns) == PANEL_COLUMN_ORDER
+    assert _study_record(panel)["sha256"] == PRISTINE_PANEL_DIGEST
+
+
+def test_the_panel_retains_the_signed_zeros_the_hand_written_products_produced() -> None:
+    panel = build_forecast_panel(synthetic_source_study())
+
+    signed = np.copysign(1.0, panel["forecast_phase_left_contrast"])
+    assert np.any((panel["forecast_phase_left_contrast"] == 0.0) & (signed < 0.0))

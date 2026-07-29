@@ -26,3 +26,11 @@ transforms inside training folds; fixed design declarations may be built directl
       members_order: source
       show_root_heading: false
       show_source: false
+
+## Design formulas
+
+::: behavio.formula
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false

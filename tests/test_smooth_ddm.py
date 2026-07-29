@@ -15,7 +15,7 @@ from behavio import (
     forward_session_splits,
     run_parameter_recovery,
 )
-from behavio.models.ddm import _wiener_log_density
+from behavio.models._kernels.wiener import wiener_log_density
 
 
 def make_design(
@@ -88,7 +88,7 @@ def test_wiener_density_accepts_aligned_trialwise_boundaries_and_biases() -> Non
     boundaries = np.asarray([0.8, 1.1, 1.4])
     biases = np.asarray([0.3, 0.5, 0.7])
 
-    vectorized = _wiener_log_density(
+    vectorized = wiener_log_density(
         times,
         choices,
         drifts,
@@ -98,7 +98,7 @@ def test_wiener_density_accepts_aligned_trialwise_boundaries_and_biases() -> Non
     )
     scalar = np.asarray(
         [
-            _wiener_log_density(
+            wiener_log_density(
                 times[index : index + 1],
                 choices[index : index + 1],
                 drifts[index : index + 1],

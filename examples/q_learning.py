@@ -18,22 +18,14 @@ def build_design(*, n_sessions: int = 8, trials_per_session: int = 120) -> Study
         for trial in range(trials_per_session):
             action_1_is_rich = ((trial // 30) + session) % 2
             probability_1.append(0.8 if action_1_is_rich else 0.2)
-    n_trials = n_sessions * trials_per_session
-    return Study(
-        {
-            "subject": ["synthetic-mouse"] * n_trials,
-            "session": [
-                f"session-{session}"
-                for session in range(n_sessions)
-                for _ in range(trials_per_session)
-            ],
-            "trial": list(range(trials_per_session)) * n_sessions,
-            "session_order": [
-                session for session in range(n_sessions) for _ in range(trials_per_session)
-            ],
+    return Study.factorial(
+        trials=trials_per_session,
+        subjects="synthetic-mouse",
+        sessions=n_sessions,
+        columns={
             "reward_probability_0": [1.0 - value for value in probability_1],
             "reward_probability_1": probability_1,
-        }
+        },
     )
 
 

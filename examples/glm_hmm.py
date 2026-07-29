@@ -15,20 +15,10 @@ from behavio import (
 
 
 def build_design(*, n_sessions: int = 6, trials_per_session: int = 100) -> Study:
-    n_trials = n_sessions * trials_per_session
-    return Study(
-        {
-            "subject": ["synthetic-mouse"] * n_trials,
-            "session": [
-                f"session-{session}"
-                for session in range(n_sessions)
-                for _ in range(trials_per_session)
-            ],
-            "trial": list(range(trials_per_session)) * n_sessions,
-            "session_order": [
-                session for session in range(n_sessions) for _ in range(trials_per_session)
-            ],
-        }
+    return Study.factorial(
+        trials=trials_per_session,
+        subjects="synthetic-mouse",
+        sessions=n_sessions,
     )
 
 

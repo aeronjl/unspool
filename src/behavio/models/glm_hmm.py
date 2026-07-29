@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from itertools import combinations
 from types import MappingProxyType
@@ -13,6 +13,8 @@ from scipy.optimize import minimize
 from scipy.special import expit, logsumexp
 
 from behavio._internal.arrays import protected_array
+from behavio.models._kernels.bernoulli import ordered_session_indices
+from behavio.models._kernels.curvature import finite_difference_hessian, offset_steps
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -20,7 +22,7 @@ from behavio.models.base import (
     Prediction,
     PredictionMode,
 )
-from behavio.models.glm import BernoulliHistoryGLM, _ordered_session_indices
+from behavio.models.glm import BernoulliHistoryGLM
 from behavio.state_alignment import LatentStateAlignment, align_latent_states
 from behavio.study import Study
 
@@ -227,7 +229,8 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         return (
             f"{self.model_name}[states={self.n_states};outcome={self.outcome};"
             f"covariates={covariates};choice_lags={self.choice_lags};"
-            f"label_by={self.label_by};l2={self.l2};stickiness={self.stickiness}]"
+            f"label_by={self.label_by};l2={self.l2};"
+            f"stickiness={self.stickiness}{self._design_signature}]"
         )
 
     @property
@@ -341,7 +344,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         states = np.zeros(len(design), dtype=np.int64)
         covariate_end = 1 + len(self.covariates)
 
-        for session_indices in _ordered_session_indices(design):
+        for session_indices in ordered_session_indices(design):
             generated_history: list[float] = []
             state = int(generator.choice(self.n_states, p=components.initial_probabilities))
             for position, index in enumerate(session_indices):
@@ -371,7 +374,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
 
         outcomes = self._outcomes(study)
         features = self._base_feature_matrix(study, outcomes)
-        sessions = _ordered_session_indices(study)
+        sessions = ordered_session_indices(study)
 
         def objective(vector: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
             return self._objective_gradient(vector, features, outcomes, sessions)
@@ -407,7 +410,11 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         canonical, permutation = self._canonicalize_components(self._unpack_components(raw))
         estimates = self._pack_components(canonical)
         value, gradient = objective(estimates)
-        hessian = _numerical_hessian(objective, estimates)
+        hessian = finite_difference_hessian(
+            lambda vector: objective(vector)[1],
+            estimates,
+            steps=offset_steps(estimates, scale=1e-5),
+        )
         condition = float(np.linalg.cond(hessian))
         covariance = np.linalg.pinv(hessian, hermitian=True)
         standard_errors = np.sqrt(np.maximum(np.diag(covariance), 0.0))
@@ -481,7 +488,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         state_probabilities = self._filtered_state_probabilities(
             features,
             outcomes,
-            _ordered_session_indices(study),
+            ordered_session_indices(study),
             components,
         )
         emission_probabilities = expit(features @ components.emission_coefficients.T)
@@ -521,7 +528,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         return self._filtered_state_probabilities(
             features,
             outcomes,
-            _ordered_session_indices(study),
+            ordered_session_indices(study),
             self.parameter_components(fit),
         )
 
@@ -804,23 +811,3 @@ def _forward_backward(
         initial_counts=initial_counts,
         transition_counts=transition_counts,
     )
-
-
-def _numerical_hessian(
-    objective: Callable[
-        [NDArray[np.float64]],
-        tuple[float, NDArray[np.float64]],
-    ],
-    estimates: NDArray[np.float64],
-) -> NDArray[np.float64]:
-    hessian = np.empty((len(estimates), len(estimates)), dtype=np.float64)
-    for column in range(len(estimates)):
-        step = 1e-5 * (1.0 + abs(float(estimates[column])))
-        positive = estimates.copy()
-        negative = estimates.copy()
-        positive[column] += step
-        negative[column] -= step
-        _, positive_gradient = objective(positive)
-        _, negative_gradient = objective(negative)
-        hessian[:, column] = (positive_gradient - negative_gradient) / (2.0 * step)
-    return 0.5 * (hessian + hessian.T)

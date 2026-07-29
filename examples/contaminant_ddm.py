@@ -4,16 +4,12 @@ import numpy as np
 
 from behavio import Study, UniformResponseTimeContaminant, WienerDriftDiffusion
 
-generator = np.random.default_rng(204)
-n_trials = 800
-design = Study(
-    {
-        "subject": ["synthetic-subject"] * n_trials,
-        "session": ["session-1"] * n_trials,
-        "trial": list(range(n_trials)),
-        "session_order": [0] * n_trials,
-        "stimulus": generator.normal(size=n_trials),
-    }
+design = Study.factorial(
+    trials=800,
+    subjects="synthetic-subject",
+    sessions="session-1",
+    columns={"stimulus": lambda rng, n_rows: rng.normal(size=n_rows)},
+    seed=204,
 )
 model = WienerDriftDiffusion(
     covariates=("stimulus",),

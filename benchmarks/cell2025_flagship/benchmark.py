@@ -16,11 +16,14 @@ from scipy.special import expit
 
 from behavio import (
     BernoulliHistoryGLM,
+    DesignSpec,
     HierarchicalBernoulliHistoryGLM,
     HierarchicalSmoothBernoulliHistoryGLM,
     HierarchicalSmoothGLMFitResult,
+    InteractionTerm,
     ModelRecoveryReport,
     ModelRecoveryScenario,
+    NumericTerm,
     SmoothBernoulliHistoryGLM,
     Study,
     compare_models,
@@ -64,6 +67,98 @@ MODEL_ORDER = (
     "shared_smooth_trajectory",
     "hierarchical_smooth_trajectory",
 )
+
+#: The published interaction predictors, as the products they have always been.
+#:
+#: These columns used to be multiplied out by hand inside the panel loop and then referred
+#: to by opaque name, which meant the panel builder and the candidate specifications each
+#: held half of the statement "this model has a phase-by-contrast interaction" and neither
+#: held it in a form anything could read. They are now written as
+#: :class:`~behavio.design.InteractionTerm` products of their factors. The published names
+#: are kept verbatim, because they appear in the frozen protocol's observation list, in
+#: every candidate's covariate tuple, and therefore in the committed model signatures.
+INTERACTION_COLUMNS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("early_bias_left_contrast", ("early_bias", "left_contrast")),
+    ("early_bias_right_contrast", ("early_bias", "right_contrast")),
+    ("forecast_phase_left_contrast", ("forecast_phase", "left_contrast")),
+    ("forecast_phase_right_contrast", ("forecast_phase", "right_contrast")),
+    ("early_bias_forecast_phase", ("early_bias", "forecast_phase")),
+    (
+        "early_bias_forecast_left_contrast",
+        ("early_bias", "forecast_phase", "left_contrast"),
+    ),
+    (
+        "early_bias_forecast_right_contrast",
+        ("early_bias", "forecast_phase", "right_contrast"),
+    ),
+)
+
+
+def _product_term(columns: tuple[str, ...]) -> Any:
+    term: Any = NumericTerm(column=columns[0])
+    for column in columns[1:]:
+        term = InteractionTerm(left=term, right=NumericTerm(column=column))
+    return term
+
+
+#: One left-associated product per published interaction, in publication order.
+INTERACTION_DESIGN = DesignSpec(
+    terms=tuple(_product_term(factors) for _, factors in INTERACTION_COLUMNS),
+    intercept=False,
+)
+
+
+#: The panel's published column order. `interchange` hashes `list(study.columns)`
+#: order-sensitively, so appending the interaction predictors instead of restoring
+#: their published positions would move the panel's study digest without moving a
+#: single value.
+PANEL_COLUMN_ORDER: tuple[str, ...] = (
+    "subject",
+    "session",
+    "trial",
+    "session_order",
+    "paper_session_order",
+    "source_session",
+    "source_session_order",
+    "source_trial",
+    "phase",
+    "choice",
+    "reward",
+    "stimulus_side",
+    "signed_contrast",
+    "left_contrast",
+    "right_contrast",
+    "response_time",
+    "early_bias",
+    "early_bias_left_contrast",
+    "early_bias_right_contrast",
+    "forecast_phase",
+    "forecast_phase_left_contrast",
+    "forecast_phase_right_contrast",
+    "early_bias_forecast_phase",
+    "early_bias_forecast_left_contrast",
+    "early_bias_forecast_right_contrast",
+)
+
+
+def materialize_interaction_columns(study: Study) -> Study:
+    """Attach the published interaction predictors, computed by their design terms.
+
+    The products are left-associated exactly as the hand-written expressions were
+    (``(early_bias * forecast_phase) * left_contrast``), so the materialized columns are
+    identical to the ones the panel used to build in its own loop -- not merely close.
+
+    Columns are emitted in `PANEL_COLUMN_ORDER` where it applies, so the digest is the
+    one the hand-written loop produced.
+    """
+
+    matrix = INTERACTION_DESIGN.build(study)
+    materialized: dict[str, Any] = {name: study[name] for name in study.columns}
+    for index, (published, _) in enumerate(INTERACTION_COLUMNS):
+        materialized[published] = np.ascontiguousarray(matrix.values[:, index])
+    ordered = [name for name in PANEL_COLUMN_ORDER if name in materialized]
+    ordered.extend(name for name in materialized if name not in PANEL_COLUMN_ORDER)
+    return Study({name: materialized[name] for name in ordered})
 
 
 def build_forecast_panel(study: Study) -> Study:
@@ -139,14 +234,7 @@ def build_forecast_panel(study: Study) -> Study:
         "right_contrast": [],
         "response_time": [],
         "early_bias": [],
-        "early_bias_left_contrast": [],
-        "early_bias_right_contrast": [],
         "forecast_phase": [],
-        "forecast_phase_left_contrast": [],
-        "forecast_phase_right_contrast": [],
-        "early_bias_forecast_phase": [],
-        "early_bias_forecast_left_contrast": [],
-        "early_bias_forecast_right_contrast": [],
     }
     next_trial: dict[tuple[Any, int], int] = defaultdict(int)
     for raw_row in study.chronological_indices():
@@ -179,17 +267,9 @@ def build_forecast_panel(study: Study) -> Study:
         columns["right_contrast"].append(right)
         columns["response_time"].append(float(study["response_time"][row]))
         columns["early_bias"].append(bias)
-        columns["early_bias_left_contrast"].append(bias * left)
-        columns["early_bias_right_contrast"].append(bias * right)
-        forecast_phase = int(rank >= len(CONTEXT_PAPER_DAYS))
-        columns["forecast_phase"].append(forecast_phase)
-        columns["forecast_phase_left_contrast"].append(forecast_phase * left)
-        columns["forecast_phase_right_contrast"].append(forecast_phase * right)
-        columns["early_bias_forecast_phase"].append(bias * forecast_phase)
-        columns["early_bias_forecast_left_contrast"].append(bias * forecast_phase * left)
-        columns["early_bias_forecast_right_contrast"].append(bias * forecast_phase * right)
+        columns["forecast_phase"].append(int(rank >= len(CONTEXT_PAPER_DAYS)))
 
-    panel = Study(columns)
+    panel = materialize_interaction_columns(Study(columns))
     expected_orders = set(range(len(CONTEXT_PAPER_DAYS) + FORECAST_HORIZON))
     for subject in panel.subjects:
         mask = panel["subject"] == subject
@@ -938,21 +1018,7 @@ def _recompute_early_bias_features(study: Study) -> Study:
     )
     columns = {name: study[name] for name in study.columns}
     columns["early_bias"] = early_bias
-    columns["early_bias_left_contrast"] = early_bias * np.asarray(
-        study["left_contrast"], dtype=np.float64
-    )
-    columns["early_bias_right_contrast"] = early_bias * np.asarray(
-        study["right_contrast"], dtype=np.float64
-    )
-    forecast_phase = np.asarray(study["forecast_phase"], dtype=np.float64)
-    columns["early_bias_forecast_phase"] = early_bias * forecast_phase
-    columns["early_bias_forecast_left_contrast"] = (
-        early_bias * forecast_phase * np.asarray(study["left_contrast"], dtype=np.float64)
-    )
-    columns["early_bias_forecast_right_contrast"] = (
-        early_bias * forecast_phase * np.asarray(study["right_contrast"], dtype=np.float64)
-    )
-    return Study(columns)
+    return materialize_interaction_columns(Study(columns))
 
 
 def _excluded_source_session(value: Any) -> bool:

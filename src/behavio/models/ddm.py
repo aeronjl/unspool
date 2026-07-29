@@ -5,14 +5,27 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import minimize
-from scipy.special import logsumexp
 
 from behavio._internal.arrays import protected_array
+from behavio.design import DesignSpec
+from behavio.models._kernels.curvature import bounded_value_difference_hessian
+from behavio.models._kernels.design import (
+    build_matrix,
+    resolve_design,
+    validate_design_choice,
+)
+from behavio.models._kernels.introspection import Describable
+from behavio.models._kernels.wiener import (
+    LOG_DENSITY_FLOOR,
+    bridge_crossings,
+    crossing_fractions,
+    upper_boundary_probability,
+    wiener_log_density,
+)
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -23,9 +36,6 @@ from behavio.models.base import (
 )
 from behavio.response_times import ResponseTimeSpec
 from behavio.study import REQUIRED_COLUMNS, Study
-
-_LOG_DENSITY_FLOOR = float(np.log(np.finfo(np.float64).tiny))
-_BRIDGE_EXPONENT_LIMIT = 30.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -194,7 +204,7 @@ class DriftDiffusionFitResult(FitResult):
 
 
 @dataclass(frozen=True, slots=True)
-class WienerDriftDiffusion:
+class WienerDriftDiffusion(Describable):
     """Fixed-parameter two-boundary Wiener diffusion with covariate-dependent drift.
 
     Diffusion variance is fixed to one. Boundary separation, relative starting bias, and
@@ -217,9 +227,11 @@ class WienerDriftDiffusion:
     nondecision_time_bounds: tuple[float, float] | None = None
     contaminant: UniformResponseTimeContaminant | None = None
     minimum_decision_time: float = 1e-4
+    design: DesignSpec | None = field(default=None, kw_only=True)
 
     def __post_init__(self) -> None:
         covariates = tuple(self.covariates)
+        validate_design_choice(self.design, covariates)
         if len(set(covariates)) != len(covariates):
             raise ValueError("covariates must be unique")
         if any(not isinstance(name, str) or not name for name in covariates):
@@ -285,6 +297,7 @@ class WienerDriftDiffusion:
             f"covariates={covariates};diffusion_scale=1;density_terms={self.density_terms};"
             f"simulation_dt={self.simulation_time_step}"
         )
+        signature += self._design_signature
         if self.nondecision_time_bounds is not None:
             signature += f";nondecision_bounds={self.nondecision_time_bounds}"
         if self.contaminant is not None:
@@ -296,8 +309,34 @@ class WienerDriftDiffusion:
         return signature + "]"
 
     @property
+    def _design_signature(self) -> str:
+        """The design's contribution to the signature, empty for a ``covariates`` model.
+
+        A signature is a scientific fingerprint, so a design has to change it. It must
+        equally not change for a model constructed the old way, because those signatures
+        are already written into fitted artefacts and committed benchmark results -- hence
+        an empty contribution rather than the equivalent design's own signature.
+        """
+
+        return "" if self.design is None else f";design={self.design.signature}"
+
+    @property
+    def design_spec(self) -> DesignSpec:
+        """The design generating the drift rate, declared or implied by ``covariates``."""
+
+        return resolve_design(self.design, self.covariates)
+
+    @property
     def coefficient_names(self) -> tuple[str, ...]:
-        return ("drift.intercept", *(f"drift.{name}" for name in self.covariates))
+        """Drift coefficients, one per design column, under the fixed ``drift.`` prefix.
+
+        The prefix is what keeps a drift coefficient distinguishable from ``boundary`` or
+        ``nondecision_time`` in a flat parameter vector, so it is applied to design feature
+        names exactly as it was applied to covariate names. ``covariates=("stimulus",)``
+        therefore still yields ``drift.intercept`` and ``drift.stimulus``.
+        """
+
+        return tuple(f"drift.{name}" for name in self.design_spec.feature_names)
 
     @property
     def parameter_names(self) -> tuple[str, ...]:
@@ -310,6 +349,36 @@ class WienerDriftDiffusion:
         if self.contaminant is not None:
             return (*names, "contaminant_probability")
         return names
+
+    @property
+    def required_task_columns(self) -> tuple[str, ...]:
+        """Design columns that must be declared as task predictors."""
+
+        return tuple(
+            column
+            for column in self.design_spec.required_columns
+            if column not in self.scored_columns and column not in REQUIRED_COLUMNS
+        )
+
+    @property
+    def parameter_bounds(self) -> dict[str, tuple[float, float]]:
+        """The optimizer box, as configured. Reported by :meth:`describe`.
+
+        ``nondecision_time`` is the one bound the study can tighten: without a configured
+        upper bound the fit derives one from the fastest observed response, so what is
+        reported here is what the model declares, not what a particular study will allow.
+        """
+
+        bounds: dict[str, tuple[float, float]] = {
+            name: (-self.drift_bound, self.drift_bound) for name in self.coefficient_names
+        }
+        bounds["boundary"] = self.boundary_bounds
+        bounds["starting_bias"] = self.starting_bias_bounds
+        if self.nondecision_time_bounds is not None:
+            bounds["nondecision_time"] = self.nondecision_time_bounds
+        if self.contaminant is not None:
+            bounds["contaminant_probability"] = self.contaminant.probability_bounds
+        return bounds
 
     @property
     def scored_columns(self) -> tuple[str, ...]:
@@ -450,7 +519,7 @@ class WienerDriftDiffusion:
             endpoint_crossed = upper | lower
             interior = np.flatnonzero(~endpoint_crossed)
             if len(interior):
-                bridge_upper, bridge_lower = _bridge_crossings(
+                bridge_upper, bridge_lower = bridge_crossings(
                     previous[interior],
                     current[interior],
                     components.boundary,
@@ -464,7 +533,7 @@ class WienerDriftDiffusion:
                 continue
             crossed_indices = active_indices[crossed]
             upper_crossed = upper[crossed]
-            fraction = _crossing_fractions(
+            fraction = crossing_fractions(
                 previous[crossed],
                 current[crossed],
                 np.where(upper_crossed, components.boundary, 0.0),
@@ -567,7 +636,7 @@ class WienerDriftDiffusion:
         chosen = results[selected]
         estimates = np.asarray(chosen.x, dtype=np.float64)
         value = objective(estimates)
-        hessian = _numerical_hessian(objective, estimates, bounds)
+        hessian = bounded_value_difference_hessian(objective, estimates, bounds)
         condition = float(np.linalg.cond(hessian))
         covariance = np.linalg.pinv(hessian, hermitian=True)
         standard_errors = np.sqrt(np.maximum(np.diag(covariance), 0.0))
@@ -585,7 +654,7 @@ class WienerDriftDiffusion:
             drifts,
             components,
         )
-        floor_count = int(np.sum(log_density <= _LOG_DENSITY_FLOOR))
+        floor_count = int(np.sum(log_density <= LOG_DENSITY_FLOOR))
         gradient = np.asarray(chosen.jac, dtype=np.float64)
         boundary_warning = self._boundary_warning(
             estimates,
@@ -638,7 +707,7 @@ class WienerDriftDiffusion:
             )
         components = self.parameter_components(fit)
         drifts = self._drifts(study, components.drift_coefficients)
-        probability = _upper_boundary_probability(
+        probability = upper_boundary_probability(
             drifts,
             boundary=components.boundary,
             starting_bias=components.starting_bias,
@@ -705,7 +774,7 @@ class WienerDriftDiffusion:
         drifts: NDArray[np.float64],
         components: DriftDiffusionParameters,
     ) -> NDArray[np.float64]:
-        wiener_log_density = _wiener_log_density(
+        regular_log_density = wiener_log_density(
             response_times - components.nondecision_time,
             outcomes,
             drifts,
@@ -714,9 +783,9 @@ class WienerDriftDiffusion:
             terms=self.density_terms,
         )
         if self.contaminant is None:
-            return wiener_log_density
+            return regular_log_density
         probability = components.contaminant_probability
-        regular_component = np.log1p(-probability) + wiener_log_density
+        regular_component = np.log1p(-probability) + regular_log_density
         if probability == 0:
             return regular_component
         contaminant_component = np.log(probability)
@@ -725,7 +794,7 @@ class WienerDriftDiffusion:
             outcomes,
         )
         mixture = np.logaddexp(regular_component, contaminant_component)
-        return np.maximum(mixture, _LOG_DENSITY_FLOOR)
+        return np.maximum(mixture, LOG_DENSITY_FLOOR)
 
     def _posterior_contaminant_probability(
         self,
@@ -751,18 +820,11 @@ class WienerDriftDiffusion:
         return np.clip(posterior, 0.0, 1.0)
 
     def _feature_matrix(self, study: Study) -> NDArray[np.float64]:
-        columns = [np.ones(len(study), dtype=np.float64)]
-        for name in self.covariates:
+        design = self.design_spec
+        for name in design.required_columns:
             if name not in study.columns:
                 raise ModelDataError(f"study is missing covariate {name!r}")
-            try:
-                values = np.asarray(study[name], dtype=np.float64)
-            except (TypeError, ValueError):
-                raise ModelDataError(f"covariate {name!r} must be numeric") from None
-            if not np.all(np.isfinite(values)):
-                raise ModelDataError(f"covariate {name!r} must be finite")
-            columns.append(values)
-        return np.column_stack(columns)
+        return build_matrix(design, study).values
 
     def _drifts(
         self,
@@ -911,228 +973,6 @@ class WienerDriftDiffusion:
     def _validate_fit(self, fit: FitResult) -> None:
         if fit.model_signature != self.signature or fit.parameter_names != self.parameter_names:
             raise ValueError("fit result belongs to a different model specification")
-
-
-def _wiener_log_density(
-    decision_time: NDArray[np.float64],
-    choice: NDArray[np.float64],
-    drift: NDArray[np.float64],
-    *,
-    boundary: float | NDArray[np.float64],
-    starting_bias: float | NDArray[np.float64],
-    terms: int,
-) -> NDArray[np.float64]:
-    """Joint two-boundary Wiener log density using paired convergent series."""
-
-    times, choices, drifts, boundaries, biases = np.broadcast_arrays(
-        np.asarray(decision_time, dtype=np.float64),
-        np.asarray(choice, dtype=np.float64),
-        np.asarray(drift, dtype=np.float64),
-        np.asarray(boundary, dtype=np.float64),
-        np.asarray(starting_bias, dtype=np.float64),
-    )
-    result = np.full(times.shape, _LOG_DENSITY_FLOOR, dtype=np.float64)
-    valid = (
-        np.isfinite(times)
-        & (times > 0)
-        & np.isfinite(drifts)
-        & np.isfinite(boundaries)
-        & (boundaries > 0)
-        & np.isfinite(biases)
-        & (biases > 0)
-        & (biases < 1)
-        & ((choices == 0) | (choices == 1))
-    )
-    if not np.any(valid):
-        return result
-    selected_times = times[valid]
-    selected_choices = choices[valid]
-    selected_drifts = drifts[valid]
-    selected_boundaries = boundaries[valid]
-    selected_biases = biases[valid]
-    effective_drift = np.where(selected_choices == 1, -selected_drifts, selected_drifts)
-    effective_bias = np.where(selected_choices == 1, 1.0 - selected_biases, selected_biases)
-    scaled_time = selected_times / selected_boundaries**2
-    standard = _standard_wiener_log_density(
-        scaled_time,
-        effective_bias,
-        terms=terms,
-    )
-    log_density = -2.0 * np.log(selected_boundaries)
-    log_density += -effective_drift * selected_boundaries * effective_bias
-    log_density += -0.5 * effective_drift**2 * selected_times
-    log_density += standard
-    result[valid] = np.maximum(log_density, _LOG_DENSITY_FLOOR)
-    return result
-
-
-def _standard_wiener_log_density(
-    scaled_time: NDArray[np.float64],
-    starting_bias: float | NDArray[np.float64],
-    *,
-    terms: int,
-) -> NDArray[np.float64]:
-    times, biases = np.broadcast_arrays(
-        np.asarray(scaled_time, dtype=np.float64),
-        np.asarray(starting_bias, dtype=np.float64),
-    )
-    result = np.empty_like(times)
-    small = times < 0.15
-    if np.any(small):
-        lower = -int(np.ceil((terms - 1) / 2))
-        upper = int(np.floor((terms - 1) / 2))
-        k = np.arange(lower, upper + 1, dtype=np.float64)
-        coefficients = biases[small, None] + 2.0 * k[None, :]
-        exponent = -(coefficients**2) / (2.0 * times[small, None])
-        log_sum, sign = logsumexp(
-            exponent,
-            b=coefficients,
-            axis=1,
-            return_sign=True,
-        )
-        values = log_sum - 0.5 * np.log(2.0 * np.pi) - 1.5 * np.log(times[small])
-        result[small] = np.where(sign > 0, values, _LOG_DENSITY_FLOOR)
-    if np.any(~small):
-        k = np.arange(1, terms + 1, dtype=np.float64)
-        coefficients = k[None, :] * np.sin(k[None, :] * np.pi * biases[~small, None])
-        exponent = -0.5 * (k[None, :] * np.pi) ** 2 * times[~small, None]
-        log_sum, sign = logsumexp(
-            exponent,
-            b=coefficients,
-            axis=1,
-            return_sign=True,
-        )
-        values = np.log(np.pi) + log_sum
-        result[~small] = np.where(sign > 0, values, _LOG_DENSITY_FLOOR)
-    return result
-
-
-def _bridge_crossings(
-    previous: NDArray[np.float64],
-    current: NDArray[np.float64],
-    boundary: float | NDArray[np.float64],
-    *,
-    time_step: float,
-    generator: np.random.Generator,
-) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
-    """Return Brownian-bridge absorptions hidden between two interior endpoints.
-
-    A discretised path that starts and ends inside the corridor may still have crossed a
-    boundary within the step. The bridge absorption probabilities are exact for a single
-    boundary and their overlap is negligible whenever the corridor spans many steps.
-    """
-
-    upper_exponent = 2.0 * (boundary - previous) * (boundary - current) / time_step
-    lower_exponent = 2.0 * previous * current / time_step
-    upper = np.zeros(len(previous), dtype=np.bool_)
-    lower = np.zeros(len(previous), dtype=np.bool_)
-    candidate = np.flatnonzero(
-        (upper_exponent < _BRIDGE_EXPONENT_LIMIT) | (lower_exponent < _BRIDGE_EXPONENT_LIMIT)
-    )
-    if not len(candidate):
-        return upper, lower
-    upper_probability = np.exp(-upper_exponent[candidate])
-    lower_probability = np.exp(-lower_exponent[candidate])
-    draws = generator.uniform(0.0, 1.0, len(candidate))
-    upper[candidate] = draws < upper_probability
-    lower[candidate] = (draws >= upper_probability) & (
-        draws < upper_probability + lower_probability
-    )
-    return upper, lower
-
-
-def _crossing_fractions(
-    previous: NDArray[np.float64],
-    current: NDArray[np.float64],
-    target: NDArray[np.float64],
-    *,
-    endpoint_crossed: NDArray[np.bool_],
-) -> NDArray[np.float64]:
-    """Return within-step crossing positions, midpoints for bridge absorptions."""
-
-    span = current - previous
-    interpolated = (target - previous) / np.where(span == 0.0, 1.0, span)
-    fraction = np.where(endpoint_crossed & (span != 0.0), interpolated, 0.5)
-    return np.clip(fraction, 0.0, 1.0)
-
-
-def _upper_boundary_probability(
-    drift: NDArray[np.float64],
-    *,
-    boundary: float | NDArray[np.float64],
-    starting_bias: float | NDArray[np.float64],
-) -> NDArray[np.float64]:
-    drifts, boundaries, biases = np.broadcast_arrays(
-        np.asarray(drift, dtype=np.float64),
-        np.asarray(boundary, dtype=np.float64),
-        np.asarray(starting_bias, dtype=np.float64),
-    )
-    scaled = 2.0 * drifts * boundaries
-    probability = np.empty_like(scaled)
-    near_zero = np.abs(scaled) < 1e-8
-    probability[near_zero] = biases[near_zero]
-    positive = (scaled > 0) & ~near_zero
-    probability[positive] = np.expm1(-scaled[positive] * biases[positive]) / np.expm1(
-        -scaled[positive]
-    )
-    negative = (scaled < 0) & ~near_zero
-    negative_scaled = scaled[negative]
-    probability[negative] = (
-        np.exp(negative_scaled * (1.0 - biases[negative])) - np.exp(negative_scaled)
-    ) / (1.0 - np.exp(negative_scaled))
-    return probability
-
-
-def _numerical_hessian(
-    objective: Any,
-    point: NDArray[np.float64],
-    bounds: Sequence[tuple[float, float]],
-) -> NDArray[np.float64]:
-    n_parameters = len(point)
-    hessian = np.empty((n_parameters, n_parameters), dtype=np.float64)
-    evaluation_point = np.array(point, copy=True)
-    base_steps = np.maximum(1e-5, 1e-4 * np.maximum(1.0, np.abs(point)))
-    steps = np.array(base_steps, copy=True)
-    for index, (lower, upper) in enumerate(bounds):
-        base_steps[index] = min(base_steps[index], (upper - lower) / 4.0)
-        evaluation_point[index] = np.clip(
-            evaluation_point[index],
-            lower + base_steps[index],
-            upper - base_steps[index],
-        )
-        steps[index] = min(
-            base_steps[index],
-            (evaluation_point[index] - lower) / 2.0,
-            (upper - evaluation_point[index]) / 2.0,
-        )
-    center = float(objective(evaluation_point))
-    for row in range(n_parameters):
-        row_step = steps[row]
-        plus = evaluation_point.copy()
-        minus = evaluation_point.copy()
-        plus[row] += row_step
-        minus[row] -= row_step
-        hessian[row, row] = (
-            float(objective(plus)) - 2.0 * center + float(objective(minus))
-        ) / row_step**2
-        for column in range(row):
-            column_step = steps[column]
-            plus_plus = evaluation_point.copy()
-            plus_minus = evaluation_point.copy()
-            minus_plus = evaluation_point.copy()
-            minus_minus = evaluation_point.copy()
-            plus_plus[[row, column]] += [row_step, column_step]
-            plus_minus[[row, column]] += [row_step, -column_step]
-            minus_plus[[row, column]] += [-row_step, column_step]
-            minus_minus[[row, column]] -= [row_step, column_step]
-            value = (
-                float(objective(plus_plus))
-                - float(objective(plus_minus))
-                - float(objective(minus_plus))
-                + float(objective(minus_minus))
-            ) / (4.0 * row_step * column_step)
-            hessian[row, column] = hessian[column, row] = value
-    return hessian
 
 
 def _ordered_bounds(values: Sequence[float], name: str) -> tuple[float, float]:

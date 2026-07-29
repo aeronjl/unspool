@@ -13,6 +13,11 @@ from scipy.optimize import minimize
 from scipy.special import expit, logit
 
 from behavio._internal.arrays import protected_array
+from behavio.models._kernels.curvature import (
+    finite_difference_gradient,
+    finite_difference_hessian,
+    offset_steps,
+)
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -606,7 +611,11 @@ class BinaryRLAgent:
         chosen = results[selected]
         estimates = np.asarray(chosen.x, dtype=np.float64)
         gradient = _finite_gradient(objective, estimates)
-        hessian = _finite_hessian(objective, estimates)
+        hessian = finite_difference_hessian(
+            lambda vector: _finite_gradient(objective, vector),
+            estimates,
+            steps=offset_steps(estimates, scale=1e-4),
+        )
         condition = float(np.linalg.cond(hessian))
         covariance = np.linalg.pinv(hessian, hermitian=True)
         standard_errors = np.sqrt(np.maximum(np.diag(covariance), 0.0))
@@ -862,29 +871,9 @@ class BinaryRLAgent:
 
 
 def _finite_gradient(function: Any, values: NDArray[np.float64]) -> NDArray[np.float64]:
-    gradient = np.empty(len(values), dtype=np.float64)
-    for index in range(len(values)):
-        step = 1e-5 * (1.0 + abs(float(values[index])))
-        positive = values.copy()
-        negative = values.copy()
-        positive[index] += step
-        negative[index] -= step
-        gradient[index] = (function(positive) - function(negative)) / (2.0 * step)
-    return gradient
+    """Differentiate the composable-RL objective on its pinned ``1 + |x|`` step rule."""
 
-
-def _finite_hessian(function: Any, values: NDArray[np.float64]) -> NDArray[np.float64]:
-    hessian = np.empty((len(values), len(values)), dtype=np.float64)
-    for column in range(len(values)):
-        step = 1e-4 * (1.0 + abs(float(values[column])))
-        positive = values.copy()
-        negative = values.copy()
-        positive[column] += step
-        negative[column] -= step
-        hessian[:, column] = (
-            _finite_gradient(function, positive) - _finite_gradient(function, negative)
-        ) / (2.0 * step)
-    return 0.5 * (hessian + hessian.T)
+    return finite_difference_gradient(function, values, steps=offset_steps(values, scale=1e-5))
 
 
 def _validate_component(component: Any, label: str, attributes: tuple[str, ...]) -> None:

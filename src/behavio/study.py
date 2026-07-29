@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from types import MappingProxyType
 from typing import Any, Final
 
@@ -119,6 +119,107 @@ class Study:
             )
         return cls({canonical_by_source.get(name, name): np.asarray(frame[name]) for name in names})
 
+    @classmethod
+    def factorial(
+        cls,
+        *,
+        trials: int,
+        subjects: int | str | Sequence[Any] = 1,
+        sessions: int | str | Sequence[Any] = 1,
+        session_label: Callable[[Any, int], Any] | None = None,
+        columns: Mapping[str, Any] | None = None,
+        seed: int | None = None,
+    ) -> Study:
+        """Construct the fully crossed subject x session x trial grid of a planned design.
+
+        This is the design a simulation, a recovery study, or a worked example starts from:
+        every subject runs every session, and every session runs the same number of trials.
+        Rows are emitted subject-major, then in session order, then in trial order, which
+        is the chronological order :meth:`chronological_indices` would return.
+
+        ``subjects`` and ``sessions`` are either a count, which labels them ``subject-0``
+        and ``session-0`` upwards, a single string, or an explicit sequence of labels.
+        ``session_label`` overrides session naming with ``label(subject, order)`` for
+        designs where each subject's sessions carry the subject's name; its results must
+        stay unique within a subject, because ``session_order`` must identify exactly one
+        session per subject.
+
+        ``session_order`` is the zero-based position of a session within its subject, so it
+        is constant inside a ``(subject, session)`` pair and injective within a subject --
+        the two invariants :class:`Study` enforces.
+
+        ``columns`` adds per-trial columns. A value is either a constant, broadcast to
+        every row; a sequence of exactly one value per row; or a *draw*, a callable
+        ``draw(generator, n_rows)`` that receives a seeded :class:`numpy.random.Generator`.
+        Draws require ``seed`` and consume that one generator in ``columns`` order, so a
+        grid is reproducible from its arguments alone and no unseeded global stream can
+        reach it.
+        """
+
+        _positive_integer(trials, "trials")
+        subject_labels = _grid_labels(subjects, "subjects", "subject")
+        session_defaults = _grid_labels(sessions, "sessions", "session")
+        n_rows = len(subject_labels) * len(session_defaults) * trials
+
+        subject_values: list[Any] = []
+        session_values: list[Any] = []
+        trial_values: list[int] = []
+        order_values: list[int] = []
+        for subject in subject_labels:
+            seen: set[Any] = set()
+            for order, default in enumerate(session_defaults):
+                label = default if session_label is None else session_label(subject, order)
+                if _is_missing(label):
+                    raise StudyValidationError("session labels must not be missing")
+                try:
+                    key = _key(label)
+                    duplicate = key in seen
+                except TypeError:
+                    raise StudyValidationError("session labels must be hashable") from None
+                if duplicate:
+                    raise StudyValidationError(
+                        "session labels must be unique within a subject; "
+                        f"subject {subject!r} repeats {label!r}"
+                    )
+                seen.add(key)
+                for trial in range(trials):
+                    subject_values.append(subject)
+                    session_values.append(label)
+                    trial_values.append(trial)
+                    order_values.append(order)
+
+        grid: dict[str, Any] = {
+            "subject": subject_values,
+            "session": session_values,
+            "trial": trial_values,
+            "session_order": order_values,
+        }
+        generator: np.random.Generator | None = None
+        for name, value in (columns or {}).items():
+            if not isinstance(name, str) or not name:
+                raise StudyValidationError("column names must be non-empty strings")
+            if name in REQUIRED_COLUMNS:
+                raise StudyValidationError(f"factorial builds {name!r}; it cannot be supplied")
+            if callable(value):
+                if seed is None:
+                    raise StudyValidationError(
+                        f"column {name!r} is a random draw, so factorial needs a seed"
+                    )
+                if generator is None:
+                    generator = np.random.default_rng(seed)
+                grid[name] = _drawn_column(value, generator, n_rows, name)
+            elif isinstance(value, (str, bytes)) or not isinstance(value, (Sequence, np.ndarray)):
+                grid[name] = [value] * n_rows
+            else:
+                if len(value) != n_rows:
+                    raise StudyValidationError(
+                        f"column {name!r} has {len(value)} values; the grid has {n_rows} rows"
+                    )
+                grid[name] = value
+        if seed is not None and generator is None:
+            raise StudyValidationError("seed was supplied but no column is a random draw")
+        return cls(grid)
+
     def __len__(self) -> int:
         return self._length
 
@@ -176,6 +277,48 @@ class Study:
         if positions.dtype.kind not in "iu":
             raise TypeError("indices must contain integers")
         return type(self)({name: values[positions] for name, values in self._columns.items()})
+
+
+def _positive_integer(value: Any, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, np.integer)) or value < 1:
+        raise StudyValidationError(f"{name} must be a positive integer; got {value!r}")
+    return int(value)
+
+
+def _grid_labels(value: int | str | Sequence[Any], name: str, prefix: str) -> tuple[Any, ...]:
+    if isinstance(value, str):
+        return (value,)
+    if isinstance(value, (int, np.integer)) and not isinstance(value, bool):
+        count = _positive_integer(value, name)
+        return tuple(f"{prefix}-{index}" for index in range(count))
+    if not isinstance(value, (Sequence, np.ndarray)):
+        raise StudyValidationError(f"{name} must be a count, a label, or a sequence of labels")
+    labels = tuple(_key(item) for item in value)
+    if not labels:
+        raise StudyValidationError(f"{name} must name at least one {prefix}")
+    if any(_is_missing(label) for label in labels):
+        raise StudyValidationError(f"{name} must not contain missing labels")
+    try:
+        unique = len(set(labels)) == len(labels)
+    except TypeError:
+        raise StudyValidationError(f"{name} labels must be hashable") from None
+    if not unique:
+        raise StudyValidationError(f"{name} labels must be unique")
+    return labels
+
+
+def _drawn_column(
+    draw: Callable[[np.random.Generator, int], Any],
+    generator: np.random.Generator,
+    n_rows: int,
+    name: str,
+) -> NDArray[Any]:
+    values = np.asarray(draw(generator, n_rows))
+    if values.ndim != 1 or len(values) != n_rows:
+        raise StudyValidationError(
+            f"the draw for column {name!r} must return {n_rows} one-dimensional values"
+        )
+    return values
 
 
 def _copy_columns(

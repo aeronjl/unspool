@@ -4,34 +4,12 @@ import numpy as np
 
 from behavio import HierarchicalSmoothWienerDriftDiffusion, Study
 
-generator = np.random.default_rng(811)
-n_subjects = 3
-n_sessions = 3
-trials_per_session = 50
-n_trials = n_subjects * n_sessions * trials_per_session
-design = Study(
-    {
-        "subject": [
-            f"mouse-{subject}"
-            for subject in range(n_subjects)
-            for _session in range(n_sessions)
-            for _trial in range(trials_per_session)
-        ],
-        "session": [
-            f"session-{session}"
-            for _subject in range(n_subjects)
-            for session in range(n_sessions)
-            for _trial in range(trials_per_session)
-        ],
-        "trial": list(range(trials_per_session)) * n_subjects * n_sessions,
-        "session_order": [
-            session
-            for _subject in range(n_subjects)
-            for session in range(n_sessions)
-            for _trial in range(trials_per_session)
-        ],
-        "stimulus": generator.normal(size=n_trials),
-    }
+design = Study.factorial(
+    trials=50,
+    subjects=tuple(f"mouse-{index}" for index in range(3)),
+    sessions=3,
+    columns={"stimulus": lambda rng, n_rows: rng.normal(size=n_rows)},
+    seed=811,
 )
 model = HierarchicalSmoothWienerDriftDiffusion(
     covariates=("stimulus",),

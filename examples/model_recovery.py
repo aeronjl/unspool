@@ -14,22 +14,12 @@ from behavio import (
 
 
 def build_design(*, n_sessions: int = 10, trials_per_session: int = 120) -> Study:
-    generator = np.random.default_rng(2027)
-    n_trials = n_sessions * trials_per_session
-    return Study(
-        {
-            "subject": ["synthetic-mouse"] * n_trials,
-            "session": [
-                f"session-{session}"
-                for session in range(n_sessions)
-                for _ in range(trials_per_session)
-            ],
-            "trial": list(range(trials_per_session)) * n_sessions,
-            "session_order": [
-                session for session in range(n_sessions) for _ in range(trials_per_session)
-            ],
-            "stimulus": generator.normal(size=n_trials),
-        }
+    return Study.factorial(
+        trials=trials_per_session,
+        subjects="synthetic-mouse",
+        sessions=n_sessions,
+        columns={"stimulus": lambda rng, n_rows: rng.normal(size=n_rows)},
+        seed=2027,
     )
 
 

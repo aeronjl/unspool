@@ -2,39 +2,16 @@
 
 from __future__ import annotations
 
-import numpy as np
-
 from behavio import HierarchicalBernoulliHistoryGLM, Study
 
 
 def build_design() -> Study:
-    generator = np.random.default_rng(2106)
-    subjects = ("mouse-a", "mouse-b", "mouse-c", "mouse-d")
-    n_sessions = 3
-    trials_per_session = 60
-    return Study(
-        {
-            "subject": [
-                subject
-                for subject in subjects
-                for _session in range(n_sessions)
-                for _trial in range(trials_per_session)
-            ],
-            "session": [
-                f"session-{session}"
-                for _subject in subjects
-                for session in range(n_sessions)
-                for _trial in range(trials_per_session)
-            ],
-            "trial": list(range(trials_per_session)) * n_sessions * len(subjects),
-            "session_order": [
-                session
-                for _subject in subjects
-                for session in range(n_sessions)
-                for _trial in range(trials_per_session)
-            ],
-            "stimulus": generator.normal(size=len(subjects) * n_sessions * trials_per_session),
-        }
+    return Study.factorial(
+        trials=60,
+        subjects=("mouse-a", "mouse-b", "mouse-c", "mouse-d"),
+        sessions=3,
+        columns={"stimulus": lambda rng, n_rows: rng.normal(size=n_rows)},
+        seed=2106,
     )
 
 

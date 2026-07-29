@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 import numpy as np
@@ -209,6 +209,19 @@ class HistoryTerm:
     coding: str = "identity"
     fill_value: float = 0.0
     name: str | None = None
+    coding_hint: str | None = field(default=None, compare=False, repr=False)
+    """How to ask for identity coding, when ``coding`` is a default the user did not write.
+
+    Only :mod:`behavio.formula` sets it, because only there is ``coding="effect"`` chosen
+    on the user's behalf: ``lag()`` and ``kernel()`` default to the -1/+1 coding that the
+    ``choice_lags=`` shorthand has always built. A default that fails has to explain
+    itself, and here the explanation is a formula, so the formula layer supplies its own
+    spelling of the escape hatch rather than this module guessing at one.
+
+    It is excluded from equality, from ``repr`` and from :attr:`signature`: it is
+    provenance for one error message, not part of what the term builds. A term carrying a
+    hint and the same term without one are the same term.
+    """
 
     def __post_init__(self) -> None:
         _name(self.column, "history column")
@@ -253,6 +266,25 @@ class HistoryTerm:
     def required_columns(self) -> tuple[str, ...]:
         return tuple(dict.fromkeys((self.column, *self.reset_by)))
 
+    def _effect_coding_failure(self) -> str:
+        """Explain a failed effect coding, and say who chose it.
+
+        A user who wrote ``coding="effect"`` has already been told what effect coding is
+        and only needs to know that this column is not binary. A user who wrote
+        ``lag(reward_magnitude, 1)`` chose nothing, so the message has to name the default
+        before it can be acted on, and then name the spelling that opts out of it.
+        """
+
+        requirement = "effect-coded history requires zero/one values"
+        if self.coding_hint is None:
+            return requirement
+        return (
+            f"{requirement}, and {self.column!r} has others. A formula's lag() and kernel() "
+            "default to coding='effect', the -1/+1 coding that the choice_lags= shorthand "
+            f"has always built for a binary history column. Write {self.coding_hint} to lag "
+            f"{self.column!r} literally instead."
+        )
+
     def build(self, study: Study) -> FeatureBlock:
         missing = [
             column for column in (self.column, *self.reset_by) if column not in study.columns
@@ -262,7 +294,7 @@ class HistoryTerm:
         source = _numeric_column(study, self.column)
         if self.coding == "effect":
             if np.any((source != 0.0) & (source != 1.0)):
-                raise DesignValidationError("effect-coded history requires zero/one values")
+                raise DesignValidationError(self._effect_coding_failure())
             source = 2.0 * source - 1.0
 
         values = np.full((len(study), len(self.lags)), self.fill_value, dtype=np.float64)
@@ -289,6 +321,8 @@ class HistoryKernelTerm:
     coding: str = "identity"
     fill_value: float = 0.0
     name: str | None = None
+    coding_hint: str | None = field(default=None, compare=False, repr=False)
+    """Passed straight through to the :class:`HistoryTerm` this term lags with."""
 
     def __post_init__(self) -> None:
         weights = tuple(float(weight) for weight in self.weights)
@@ -338,6 +372,7 @@ class HistoryKernelTerm:
             coding=self.coding,
             fill_value=self.fill_value,
             name=self.feature_name,
+            coding_hint=self.coding_hint,
         ).build(study)
         values = history.values @ np.asarray(self.weights, dtype=np.float64)
         return FeatureBlock(names=(self.feature_name,), values=values[:, None])
@@ -369,7 +404,19 @@ class InteractionTerm:
     def build(self, study: Study) -> FeatureBlock:
         left = self.left.build(study)
         right = self.right.build(study)
-        values = np.einsum("ij,ik->ijk", left.values, right.values).reshape(len(study), -1)
+        # Broadcast multiplication rather than np.einsum("ij,ik->ijk", ...): einsum reduces
+        # through a sum and so returns +0.0 where IEEE multiplication returns -0.0, which
+        # makes an interaction column built here differ from the same column multiplied out
+        # by hand. The values are equal as numbers, but Study columns are hashed into
+        # FitArtifact provenance, so the sign of a zero decides whether two identical
+        # studies share a fingerprint. The layout is the one einsum produced: feature j of
+        # the left block varies slowest, feature k of the right block fastest.
+        #
+        # Follow-up, deliberately not done here: canonicalising signed zeros at the Study
+        # boundary would fix the class rather than this instance, but it would move the
+        # hash of every existing study that already contains a -0.0. That is a breaking
+        # provenance change and needs an audit of the committed artefacts first.
+        values = (left.values[:, :, None] * right.values[:, None, :]).reshape(len(study), -1)
         return FeatureBlock(names=self.feature_names, values=values)
 
 
@@ -413,6 +460,46 @@ class DesignSpec:
                     "and required_columns"
                 )
         object.__setattr__(self, "terms", terms)
+
+    @classmethod
+    def from_formula(cls, formula: str, *, training_study: Study | None = None) -> DesignSpec:
+        """Build a fixed design from a formula string.
+
+        ``formula`` uses the notation documented in :mod:`behavio.formula`, for example
+        ``"choice ~ stimulus * phase + lag(choice, 1)"``. Everything it can say desugars
+        onto the terms in this module; the response, if present, is checked but does not
+        enter the matrix.
+
+        ``training_study`` is required, and required to be *training* rows, whenever the
+        formula contains a term that estimates its coordinate from data -- ``scale(x)``, or
+        ``C(x)`` without a declared level set. Without it those formulas raise rather than
+        quietly reading the whole study, so leakage stays harder to write than to avoid.
+        """
+
+        from behavio.formula import Formula
+
+        parsed = Formula.parse(formula)
+        if training_study is None:
+            return parsed.to_design()
+        return parsed.fit(training_study)
+
+    def describe(self) -> str:
+        """Return this design as a canonical formula string that parses back to it.
+
+        Raises :class:`~behavio.formula.FormulaError` if a third-party term has no formula
+        spelling. Use :attr:`signature` when an unparseable fingerprint is enough.
+        """
+
+        from behavio.formula import describe_design
+
+        return describe_design(self)
+
+    def __str__(self) -> str:
+        from behavio.formula import describe_term
+
+        parts = ["1" if self.intercept else "0"]
+        parts.extend(describe_term(term) or term.signature for term in self.terms)
+        return " + ".join(parts)
 
     @property
     def feature_names(self) -> tuple[str, ...]:

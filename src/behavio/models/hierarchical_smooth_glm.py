@@ -13,20 +13,20 @@ from numpy.typing import NDArray
 from scipy.special import expit
 
 from behavio._internal.arrays import protected_array
+from behavio.models._kernels.basis import (
+    format_time,
+    linear_time_basis,
+    roughness_matrix,
+    validated_knots,
+)
+from behavio.models._kernels.bernoulli import fit_bernoulli, ordered_session_indices
 from behavio.models.base import (
     FitResult,
     ModelDataError,
     Prediction,
     PredictionMode,
 )
-from behavio.models.glm import (
-    BernoulliHistoryGLM,
-    CoefficientTrajectory,
-    _fit_bernoulli,
-    _format_time,
-    _linear_time_basis,
-    _ordered_session_indices,
-)
+from behavio.models.glm import BernoulliHistoryGLM, CoefficientTrajectory
 from behavio.study import Study
 
 
@@ -154,14 +154,7 @@ class HierarchicalSmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
 
     def __post_init__(self) -> None:
         BernoulliHistoryGLM.__post_init__(self)
-        try:
-            knots = tuple(float(knot) for knot in self.knots)
-        except (TypeError, ValueError):
-            raise ValueError("knots must contain finite numbers") from None
-        if len(knots) < 2 or not np.all(np.isfinite(knots)):
-            raise ValueError("knots must contain at least two finite values")
-        if any(right <= left for left, right in pairwise(knots)):
-            raise ValueError("knots must be strictly increasing")
+        knots = validated_knots(self.knots)
         if not isinstance(self.time, str) or not self.time:
             raise ValueError("time must be a non-empty Study column name")
         if self.time == self.outcome:
@@ -181,18 +174,18 @@ class HierarchicalSmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
     @property
     def signature(self) -> str:
         covariates = ",".join(self.covariates)
-        knots = ",".join(_format_time(knot) for knot in self.knots)
+        knots = ",".join(format_time(knot) for knot in self.knots)
         return (
             f"{self.model_name}[outcome={self.outcome};covariates={covariates};"
             f"choice_lags={self.choice_lags};time={self.time};knots={knots};"
             f"smoothness={self.smoothness};l2={self.l2};subject_scale={self.subject_scale};"
-            f"subject_smoothness={self.subject_smoothness}]"
+            f"subject_smoothness={self.subject_smoothness}{self._design_signature}]"
         )
 
     @property
     def parameter_names(self) -> tuple[str, ...]:
         return tuple(
-            f"{coefficient}[{self.time}={_format_time(knot)}]"
+            f"{coefficient}[{self.time}={format_time(knot)}]"
             for coefficient in self.coefficient_names
             for knot in self.knots
         )
@@ -263,7 +256,7 @@ class HierarchicalSmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
         choices = np.zeros(len(design), dtype=np.int8)
         covariate_end = 1 + len(self.covariates)
 
-        for session_indices in _ordered_session_indices(design):
+        for session_indices in ordered_session_indices(design):
             generated_history: list[float] = []
             for index in session_indices:
                 features = np.empty(len(self.coefficient_names), dtype=np.float64)
@@ -329,7 +322,7 @@ class HierarchicalSmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
                 for name in self.parameter_names
             ]
         )
-        joint_fit = _fit_bernoulli(
+        joint_fit = fit_bernoulli(
             model_name=self.model_name,
             model_signature=self.signature,
             parameter_names=joint_names,
@@ -432,7 +425,7 @@ class HierarchicalSmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
         hierarchical_fit = self._validated_hierarchical_fit(fit)
         evaluation_times = self.knots if times is None else times
         time_array = np.asarray(evaluation_times, dtype=np.float64)
-        basis = _linear_time_basis(time_array, self.knots)
+        basis = linear_time_basis(time_array, self.knots)
         values = basis @ hierarchical_fit.population_knot_values.T
         return CoefficientTrajectory(
             clock=self.time,
@@ -460,7 +453,7 @@ class HierarchicalSmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
             knot_values = hierarchical_fit.subject_knot_values[subject_position]
         evaluation_times = self.knots if times is None else times
         time_array = np.asarray(evaluation_times, dtype=np.float64)
-        basis = _linear_time_basis(time_array, self.knots)
+        basis = linear_time_basis(time_array, self.knots)
         return CoefficientTrajectory(
             clock=self.time,
             times=time_array,
@@ -485,12 +478,12 @@ class HierarchicalSmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
         if not np.all(np.isfinite(times)):
             raise ModelDataError(f"temporal column {self.time!r} must be finite")
         try:
-            return _linear_time_basis(times, self.knots)
+            return linear_time_basis(times, self.knots)
         except ValueError as error:
             raise ModelDataError(str(error)) from None
 
     def _population_penalty(self) -> NDArray[np.float64]:
-        roughness = self.smoothness * _roughness_matrix(self.knots)
+        roughness = self.smoothness * roughness_matrix(self.knots)
         penalty = np.kron(np.eye(len(self.coefficient_names)), roughness)
         if self.l2:
             n_knots = len(self.knots)
@@ -503,7 +496,7 @@ class HierarchicalSmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
 
     def _subject_penalty(self) -> NDArray[np.float64]:
         knot_penalty = np.eye(len(self.knots)) / self.subject_scale**2
-        knot_penalty += self.subject_smoothness * _roughness_matrix(self.knots)
+        knot_penalty += self.subject_smoothness * roughness_matrix(self.knots)
         return np.kron(np.eye(len(self.coefficient_names)), knot_penalty)
 
     def _draw_subject_deviations(
@@ -513,7 +506,7 @@ class HierarchicalSmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
     ) -> NDArray[np.float64]:
         covariance = np.linalg.pinv(
             np.eye(len(self.knots)) / self.subject_scale**2
-            + self.subject_smoothness * _roughness_matrix(self.knots),
+            + self.subject_smoothness * roughness_matrix(self.knots),
             hermitian=True,
         )
         deviations = np.empty(
@@ -553,15 +546,6 @@ class HierarchicalSmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
             raise ValueError("fit result does not retain hierarchical smooth trajectories")
         self._validate_fit(fit)
         return fit
-
-
-def _roughness_matrix(knots: tuple[float, ...]) -> NDArray[np.float64]:
-    differences = np.zeros((len(knots) - 1, len(knots)), dtype=np.float64)
-    for row, spacing in enumerate(np.diff(knots)):
-        scale = 1.0 / np.sqrt(spacing)
-        differences[row, row] = -scale
-        differences[row, row + 1] = scale
-    return differences.T @ differences
 
 
 def _validate_path_coordinates(

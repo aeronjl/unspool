@@ -96,6 +96,7 @@ nav:
           - Behavioural task contract: task-contract.md
           - Clocks and transforms: clocks-and-transforms.md
           - Fixed design matrices: design-matrices.md
+          - Design formulas: design-formulas.md
       - Choose a model: model-choice-guide.md
       - Model cards: model-cards.md
       - Scientific scope: scientific-scope.md

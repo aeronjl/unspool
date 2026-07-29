@@ -1,19 +1,13 @@
 """Fit joint binary choices and response times with a simple Wiener model."""
 
-import numpy as np
-
 from behavio import Study, WienerDriftDiffusion
 
-generator = np.random.default_rng(104)
-n_trials = 600
-design = Study(
-    {
-        "subject": ["synthetic-subject"] * n_trials,
-        "session": ["session-1"] * n_trials,
-        "trial": list(range(n_trials)),
-        "session_order": [0] * n_trials,
-        "stimulus": generator.normal(size=n_trials),
-    }
+design = Study.factorial(
+    trials=600,
+    subjects="synthetic-subject",
+    sessions="session-1",
+    columns={"stimulus": lambda rng, n_rows: rng.normal(size=n_rows)},
+    seed=104,
 )
 model = WienerDriftDiffusion(
     covariates=("stimulus",),

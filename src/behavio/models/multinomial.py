@@ -18,6 +18,7 @@ from behavio.design import (
     HistoryTerm,
     InteractionTerm,
 )
+from behavio.models._kernels.introspection import Describable
 from behavio.models.base import (
     CategoricalPrediction,
     FitDiagnostics,
@@ -31,7 +32,7 @@ from behavio.task import ChoiceData, ChoiceSpec, TaskValidationError
 
 
 @dataclass(frozen=True, slots=True)
-class MultinomialLogit:
+class MultinomialLogit(Describable):
     """Treatment-coded softmax regression on a fixed task and design coordinate.
 
     ``include_omission=True`` pools every omission representation declared by
@@ -109,6 +110,21 @@ class MultinomialLogit:
         return (
             f"{self.model_name}[choice={self.choice.column!r};categories={self.categories!r};"
             f"reference={self.reference!r};design={self.design.signature};l2={self.l2}]"
+        )
+
+    @property
+    def design_spec(self) -> DesignSpec:
+        """The design this model fits, under the name every family now uses for it."""
+
+        return self.design
+
+    @property
+    def declared_priors(self) -> tuple[str, ...]:
+        if not self.l2:
+            return ()
+        return (
+            f"ridge on every non-intercept coefficient: Normal(0, "
+            f"{1.0 / self.l2**0.5:.4g}) (l2={self.l2})",
         )
 
     @property

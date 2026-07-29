@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import numpy as np
-
 from behavio import (
     BernoulliHistoryGLM,
     Study,
@@ -13,24 +11,12 @@ from behavio import (
 
 
 def build_design() -> Study:
-    generator = np.random.default_rng(2026)
-    n_sessions = 3
-    trials_per_session = 40
-    n_trials = n_sessions * trials_per_session
-    return Study(
-        {
-            "subject": ["synthetic-mouse"] * n_trials,
-            "session": [
-                f"session-{session}"
-                for session in range(n_sessions)
-                for _ in range(trials_per_session)
-            ],
-            "trial": list(range(trials_per_session)) * n_sessions,
-            "session_order": [
-                session for session in range(n_sessions) for _ in range(trials_per_session)
-            ],
-            "stimulus": generator.normal(size=n_trials),
-        }
+    return Study.factorial(
+        trials=40,
+        subjects="synthetic-mouse",
+        sessions=3,
+        columns={"stimulus": lambda rng, n_rows: rng.normal(size=n_rows)},
+        seed=2026,
     )
 
 

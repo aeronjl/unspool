@@ -14,6 +14,18 @@ from scipy.optimize import minimize, minimize_scalar
 from scipy.special import logsumexp
 
 from behavio._internal.arrays import protected_array
+from behavio.models._kernels.basis import (
+    format_time,
+    linear_time_basis,
+    roughness_matrix,
+)
+from behavio.models._kernels.curvature import bounded_value_difference_hessian
+from behavio.models._kernels.wiener import (
+    LOG_DENSITY_FLOOR,
+    simulate_trialwise_wiener,
+    upper_boundary_probability,
+    wiener_log_density,
+)
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -22,19 +34,10 @@ from behavio.models.base import (
     PredictionMode,
     UnsupportedPredictionMode,
 )
-from behavio.models.ddm import (
-    _LOG_DENSITY_FLOOR,
-    _numerical_hessian,
-    _upper_boundary_probability,
-    _wiener_log_density,
-)
-from behavio.models.glm import _format_time, _linear_time_basis
 from behavio.models.smooth_ddm import (
     DriftDiffusionTrajectory,
     SmoothDriftDiffusionFitResult,
     SmoothWienerDriftDiffusion,
-    _roughness_matrix,
-    _simulate_trialwise_wiener,
 )
 from behavio.study import Study
 
@@ -656,11 +659,11 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
     @property
     def signature(self) -> str:
         covariates = ",".join(self.covariates)
-        knots = ",".join(_format_time(knot) for knot in self.knots)
+        knots = ",".join(format_time(knot) for knot in self.knots)
         varying = ",".join(self.varying_parameters or ())
         subject_parameters = ",".join(self.subject_parameters or ())
         subject_scales = ",".join(
-            f"{parameter}:{_format_time(scale)}"
+            f"{parameter}:{format_time(scale)}"
             for parameter, scale in zip(
                 self.subject_parameters or (),
                 self._configured_subject_scales(),
@@ -686,7 +689,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
             f"scale_tolerance={self.scale_tolerance};"
             f"subject_scale_uncertainty={self.subject_scale_uncertainty};"
             f"subject_smoothness={self.subject_smoothness};"
-            f"nondecision_bounds={nondecision}]"
+            f"nondecision_bounds={nondecision}{self._design_signature}]"
         )
 
     def simulate(
@@ -734,7 +737,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
         features = self._feature_matrix(design)
         n_coefficients = len(self.coefficient_names)
         drifts = np.sum(features * trial_values[:, :n_coefficients], axis=1)
-        choices, response_seconds = _simulate_trialwise_wiener(
+        choices, response_seconds = simulate_trialwise_wiener(
             drifts,
             trial_values[:, n_coefficients],
             trial_values[:, n_coefficients + 1],
@@ -813,7 +816,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
                 if np.any(decision_times <= 0):
                     return _INVALID_OBJECTIVE
                 drifts = np.sum(features * trial_values[:, :n_coefficients], axis=1)
-                log_density = _wiener_log_density(
+                log_density = wiener_log_density(
                     decision_times,
                     outcomes,
                     drifts,
@@ -1077,7 +1080,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
         n_coefficients = len(self.coefficient_names)
         decision_times = response_times - trial_values[:, n_coefficients + 2]
         drifts = np.sum(features * trial_values[:, :n_coefficients], axis=1)
-        log_density = _wiener_log_density(
+        log_density = wiener_log_density(
             decision_times,
             outcomes,
             drifts,
@@ -1085,7 +1088,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
             starting_bias=trial_values[:, n_coefficients + 1],
             terms=self.density_terms,
         )
-        floor_count = int(np.sum(log_density <= _LOG_DENSITY_FLOOR))
+        floor_count = int(np.sum(log_density <= LOG_DENSITY_FLOOR))
         diagnostics = FitDiagnostics(
             converged=bool(chosen.success),
             optimizer=f"joint L-BFGS-B ({self.n_restarts} deterministic restarts)",
@@ -1203,12 +1206,12 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
                 row_subjects,
             )
             drifts = np.sum(features * trial_values[:, :n_coefficients], axis=1)
-            probabilities[draw] = _upper_boundary_probability(
+            probabilities[draw] = upper_boundary_probability(
                 drifts,
                 boundary=trial_values[:, n_coefficients],
                 starting_bias=trial_values[:, n_coefficients + 1],
             )
-            log_probabilities[draw] = _wiener_log_density(
+            log_probabilities[draw] = wiener_log_density(
                 response_times - trial_values[:, n_coefficients + 2],
                 outcomes,
                 drifts,
@@ -1275,7 +1278,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
             self._feature_matrix(study) * trial_values[:, :n_coefficients],
             axis=1,
         )
-        probability = _upper_boundary_probability(
+        probability = upper_boundary_probability(
             drifts,
             boundary=trial_values[:, n_coefficients],
             starting_bias=trial_values[:, n_coefficients + 1],
@@ -1310,7 +1313,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
             self._feature_matrix(study) * trial_values[:, :n_coefficients],
             axis=1,
         )
-        scores = _wiener_log_density(
+        scores = wiener_log_density(
             response_times - trial_values[:, n_coefficients + 2],
             outcomes,
             drifts,
@@ -1360,7 +1363,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
             knot_values = hierarchical_fit.subject_knot_values[subject_position]
         evaluation_times = self.knots if times is None else times
         time_array = np.asarray(evaluation_times, dtype=np.float64)
-        basis = _linear_time_basis(time_array, self.knots)
+        basis = linear_time_basis(time_array, self.knots)
         return DriftDiffusionTrajectory(
             clock=self.time,
             times=time_array,
@@ -1389,7 +1392,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
     ) -> NDArray[np.float64]:
         subject_scales = self._configured_subject_scales() if scales is None else scales
         identity = np.eye(len(self.knots), dtype=np.float64)
-        roughness = self.subject_smoothness * _roughness_matrix(self.knots)
+        roughness = self.subject_smoothness * roughness_matrix(self.knots)
         return np.stack([identity / scale**2 + roughness for scale in subject_scales])
 
     def _deviation_bounds(self) -> list[tuple[float, float]]:
@@ -1620,7 +1623,7 @@ def _arrowhead_covariance(
         candidate[:n_population] = values
         return float(objective(candidate))
 
-    population_hessian = _numerical_hessian(
+    population_hessian = bounded_value_difference_hessian(
         with_population,
         population_point,
         population_bounds,
@@ -1641,7 +1644,7 @@ def _arrowhead_covariance(
             candidate[block_start:block_stop] = values
             return float(objective(candidate))
 
-        deviation_hessian = _numerical_hessian(
+        deviation_hessian = bounded_value_difference_hessian(
             with_deviation,
             point[start:stop],
             deviation_bounds,
@@ -1712,7 +1715,7 @@ def _conditional_deviation_covariances(
             candidate[block_start:block_stop] = values
             return float(objective(candidate))
 
-        hessian = _numerical_hessian(
+        hessian = bounded_value_difference_hessian(
             with_deviation,
             point[start:stop],
             deviation_bounds,
@@ -1733,7 +1736,7 @@ def _expected_subject_prior_objective(
 
     scale = float(np.exp(log_scale))
     precision = np.eye(len(knots), dtype=np.float64) / scale**2
-    precision += subject_smoothness * _roughness_matrix(knots)
+    precision += subject_smoothness * roughness_matrix(knots)
     sign, log_determinant = np.linalg.slogdet(precision)
     if sign <= 0 or not np.isfinite(log_determinant):
         return _INVALID_OBJECTIVE
@@ -1763,7 +1766,7 @@ def _louis_scale_information(
     n_knots = len(knots)
     n_parameters = len(scales)
     n_subjects = len(covariances)
-    roughness = _roughness_matrix(knots)
+    roughness = roughness_matrix(knots)
     precisions = np.asarray(scales, dtype=np.float64) ** -2.0
     blocks = tuple(slice(index * n_knots, (index + 1) * n_knots) for index in range(n_parameters))
     complete = np.zeros((n_parameters, n_parameters), dtype=np.float64)

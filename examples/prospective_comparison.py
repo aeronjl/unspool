@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import numpy as np
-
 from behavio import (
     BernoulliHistoryGLM,
     SmoothBernoulliHistoryGLM,
@@ -17,34 +15,12 @@ KNOTS = (0.0, 2.0, 5.0)
 
 
 def make_study() -> Study:
-    generator = np.random.default_rng(51)
-    subjects = tuple(f"mouse-{index}" for index in range(4))
-    n_sessions = 6
-    trials_per_session = 30
-    n_rows = len(subjects) * n_sessions * trials_per_session
-    design = Study(
-        {
-            "subject": [
-                subject
-                for subject in subjects
-                for _session in range(n_sessions)
-                for _trial in range(trials_per_session)
-            ],
-            "session": [
-                f"session-{session}"
-                for _subject in subjects
-                for session in range(n_sessions)
-                for _trial in range(trials_per_session)
-            ],
-            "trial": list(range(trials_per_session)) * len(subjects) * n_sessions,
-            "session_order": [
-                session
-                for _subject in subjects
-                for session in range(n_sessions)
-                for _trial in range(trials_per_session)
-            ],
-            "stimulus": generator.normal(size=n_rows),
-        }
+    design = Study.factorial(
+        trials=30,
+        subjects=tuple(f"mouse-{index}" for index in range(4)),
+        sessions=6,
+        columns={"stimulus": lambda rng, n_rows: rng.normal(size=n_rows)},
+        seed=51,
     )
     generator_model = smooth_model()
     return generator_model.simulate(

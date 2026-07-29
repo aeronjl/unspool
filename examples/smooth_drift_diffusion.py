@@ -4,22 +4,13 @@ import numpy as np
 
 from behavio import SmoothWienerDriftDiffusion, Study, evaluate_splits, forward_session_splits
 
-generator = np.random.default_rng(301)
 n_sessions = 5
-trials_per_session = 80
-n_trials = n_sessions * trials_per_session
-design = Study(
-    {
-        "subject": ["synthetic-subject"] * n_trials,
-        "session": [
-            f"session-{session}" for session in range(n_sessions) for _ in range(trials_per_session)
-        ],
-        "trial": list(range(trials_per_session)) * n_sessions,
-        "session_order": [
-            session for session in range(n_sessions) for _ in range(trials_per_session)
-        ],
-        "stimulus": generator.normal(size=n_trials),
-    }
+design = Study.factorial(
+    trials=80,
+    subjects="synthetic-subject",
+    sessions=n_sessions,
+    columns={"stimulus": lambda rng, n_rows: rng.normal(size=n_rows)},
+    seed=301,
 )
 model = SmoothWienerDriftDiffusion(
     covariates=("stimulus",),
