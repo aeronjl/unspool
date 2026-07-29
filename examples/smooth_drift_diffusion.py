@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from unspool import SmoothWienerDriftDiffusion, Study, evaluate_splits, forward_session_splits
+from behavio import SmoothWienerDriftDiffusion, Study, evaluate_splits, forward_session_splits
 
 generator = np.random.default_rng(301)
 n_sessions = 5

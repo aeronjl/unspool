@@ -1,19 +1,19 @@
-# Unspool
+# Behavio
 
 **Prospective modelling and falsification of behavioural trajectories across learning.**
 
-> “One could picture it as a gradual unrolling, an unspooling of our duration.”
+> “One could picture it as a gradual unrolling, an behavioing of our duration.”
 >
 > — Henri Bergson, *An Introduction to Metaphysics*
 
-Unspool is a Python library for scientists who need to model behaviour as a process rather
+Behavio is a Python library for scientists who need to model behaviour as a process rather
 than a stationary endpoint. It preserves trials, sessions, animals, clocks, training
 boundaries, candidate models, numerical warnings, and recovery evidence through the full
 analysis.
 
 !!! warning "Development status"
 
-    Unspool is a pre-release research tool. The documentation distinguishes **supported**,
+    Behavio is a pre-release research tool. The documentation distinguishes **supported**,
     **experimental**, **planned**, and **out-of-scope** capabilities. A model being
     importable is not by itself evidence that a particular study can identify it.
 
@@ -39,7 +39,7 @@ analysis.
   <figcaption><strong>The evidence path.</strong> Every interpretive claim remains connected to its time coordinate, validation boundary, numerical audit, and recovery evidence.</figcaption>
 </figure>
 
-Unspool does not assume that smooth drift, latent states, reinforcement learning, or a
+Behavio does not assume that smooth drift, latent states, reinforcement learning, or a
 decision variable is the correct explanation. It makes those accounts compete on future
 observations, then asks through simulation whether the experimental design could have
 distinguished them at all.

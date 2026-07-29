@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     CategoricalTerm,
     DesignSpec,
     DesignValidationError,
@@ -122,7 +122,7 @@ def test_design_verifies_extension_term_names_before_model_fitting() -> None:
         required_columns = ("stimulus",)
 
         def build(self, study):
-            from unspool import FeatureBlock
+            from behavio import FeatureBlock
 
             return FeatureBlock(("observed",), np.ones((len(study), 1)))
 

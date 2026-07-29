@@ -14,7 +14,7 @@ animals within each laboratory in the International Brain Laboratory's public be
 release?
 
 The source study established a standardized decision-making task across laboratories
-([IBL, 2021](https://doi.org/10.7554/eLife.63711)). Unspool addresses exact trial-table
+([IBL, 2021](https://doi.org/10.7554/eLife.63711)). Behavio addresses exact trial-table
 UUIDs through ONE and retains the first and final three pre-transition sessions for every
 eligible animal.
 
@@ -56,6 +56,6 @@ uv run --group docs python -m scripts.plot_documentation_figures \
   --skip-cell
 ```
 
-The [replicated IBL benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021_replicated)
+The [replicated IBL benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/ibl2021_replicated)
 pins all source identities, hashes, cohort rules, lab summaries, trajectory geometry, and
 population-validation coverage.

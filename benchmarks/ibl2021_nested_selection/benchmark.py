@@ -12,14 +12,7 @@ from typing import Any
 
 import numpy as np
 
-from benchmarks.ibl2021_prospective.benchmark import (
-    TRAIN_SESSION_COUNT,
-    build_panel,
-)
-from benchmarks.ibl2021_replicated.benchmark import DEFAULT_CACHE, load_study
-from benchmarks.ibl2021_replicated.manifest import EXPECTED_MANIFEST_SHA256
-from benchmarks.provenance import render
-from unspool import (
+from behavio import (
     HierarchicalBernoulliHistoryGLM,
     HierarchicalSmoothBernoulliHistoryGLM,
     NestedProspectiveSelectionReport,
@@ -28,6 +21,13 @@ from unspool import (
     leave_one_lab_out_session_forecast_splits,
     nested_select_model,
 )
+from benchmarks.ibl2021_prospective.benchmark import (
+    TRAIN_SESSION_COUNT,
+    build_panel,
+)
+from benchmarks.ibl2021_replicated.benchmark import DEFAULT_CACHE, load_study
+from benchmarks.ibl2021_replicated.manifest import EXPECTED_MANIFEST_SHA256
+from benchmarks.provenance import render
 
 CANDIDATES = (
     "static",

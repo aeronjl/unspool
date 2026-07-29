@@ -13,7 +13,7 @@ It does not silently turn a sampler-specific summary table into a scientific ver
 ## The routine workflow
 
 ```python
-from unspool import PosteriorAuditPolicy, audit_posterior
+from behavio import PosteriorAuditPolicy, audit_posterior
 
 posterior = backend.sample(model, study, task=task)
 
@@ -40,7 +40,7 @@ plain name. The diagnostic arrays and their coordinates are also available throu
 Install the optional diagnostic dependency with:
 
 ```bash
-pip install "unspool[probabilistic]"
+pip install "behavio[probabilistic]"
 ```
 
 The same public API is tested against ArviZ's `InferenceData` representation on Python
@@ -66,7 +66,7 @@ specific criterion. Record any changed policy alongside the result.
 Maximum tree depth is kept distinct from divergences. The [Stan diagnostics
 guide](https://mc-stan.org/learn-stan/diagnostics-warnings.html) describes high $\widehat
 R$, low ESS, and divergences as validity concerns, while maximum-tree-depth saturation is
-primarily an efficiency warning. Unspool retains that distinction but reports both rather
+primarily an efficiency warning. Behavio retains that distinction but reports both rather
 than discarding backend evidence.
 
 ## Stable issue codes

@@ -10,10 +10,7 @@ from typing import Any
 
 import numpy as np
 
-from benchmarks.ibl2021_replicated.benchmark import DEFAULT_CACHE, load_study
-from benchmarks.ibl2021_replicated.manifest import EXPECTED_MANIFEST_SHA256
-from benchmarks.provenance import render
-from unspool import (
+from behavio import (
     HierarchicalBernoulliHistoryGLM,
     HierarchicalSmoothBernoulliHistoryGLM,
     ProspectiveComparisonReport,
@@ -22,6 +19,9 @@ from unspool import (
     compare_models,
     leave_one_lab_out_session_forecast_splits,
 )
+from benchmarks.ibl2021_replicated.benchmark import DEFAULT_CACHE, load_study
+from benchmarks.ibl2021_replicated.manifest import EXPECTED_MANIFEST_SHA256
+from benchmarks.provenance import render
 
 KNOTS = (0.0, 2.0, 5.0)
 TRIALS_PER_SESSION = 100

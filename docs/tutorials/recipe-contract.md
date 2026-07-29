@@ -4,7 +4,7 @@ A literature recipe is a small, executable scientific argument. It is not a note
 ends when an optimizer returns parameters, and it is not a claim of reproduction merely
 because it uses a published dataset.
 
-Every Unspool recipe should let a reader answer: What entered the analysis? What was
+Every Behavio recipe should let a reader answer: What entered the analysis? What was
 predicted? What was learned only from training data? Which alternatives could have won?
 What failed? Which claim remains justified?
 
@@ -100,7 +100,7 @@ calibration, fit diagnostics, and recovery rather than ornamental summaries.
 A recipe that claims published parity, independent analysis, or released replay includes
 a correspondence table:
 
-| Unspool display | Published target | Relationship | Preserved | Changed or unavailable |
+| Behavio display | Published target | Relationship | Preserved | Changed or unavailable |
 | --- | --- | --- | --- | --- |
 | `example.svg`, panel A | Paper Figure X, panel Y | Published parity | outcome, cohort rule, unit | visual geometry |
 
@@ -118,7 +118,7 @@ with population generality.
 ## Minimal executable skeleton
 
 ```python
-from unspool import (
+from behavio import (
     ChoiceSpec,
     TaskSpec,
     compare_models,
@@ -176,8 +176,8 @@ A proposed recipe is ready for review when:
 - every displayed number can be traced to a data or benchmark artifact;
 - every figure has a visible evidence classification and complete manifest record;
 - reproduction claims include checked source-panel correspondence and explicit changes;
-- code uses public Unspool interfaces rather than internal helpers; and
+- code uses public Behavio interfaces rather than internal helpers; and
 - the title and conclusion accurately identify reproduction, adaptation, or demonstration.
 
-For package integration, continue to [Extend Unspool](../extensions.md). For choosing a
+For package integration, continue to [Extend Behavio](../extensions.md). For choosing a
 family, use [Choose a model by the claim](../model-choice-guide.md).

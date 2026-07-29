@@ -6,17 +6,17 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from benchmarks.ibl2021_nested_selection.benchmark import (
-    CANDIDATES,
-    _candidates,
-    fit_nested_procedures,
-)
-from unspool import (
+from behavio import (
     HierarchicalSmoothBernoulliHistoryGLM,
     Study,
     cohort_forward_session_splits,
     leave_one_lab_out_session_forecast_splits,
     nested_select_model,
+)
+from benchmarks.ibl2021_nested_selection.benchmark import (
+    CANDIDATES,
+    _candidates,
+    fit_nested_procedures,
 )
 
 RESULT_PATH = Path("benchmarks/ibl2021_nested_selection/result.json")

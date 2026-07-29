@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from unspool import REQUIRED_COLUMNS, Study, StudyValidationError
+from behavio import REQUIRED_COLUMNS, Study, StudyValidationError
 
 
 def valid_columns() -> dict[str, list[object]]:

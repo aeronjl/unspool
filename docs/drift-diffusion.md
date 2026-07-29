@@ -1,6 +1,6 @@
 # Joint choice and response-time modelling
 
-`WienerDriftDiffusion` is Unspool's first model whose likelihood scores more than a
+`WienerDriftDiffusion` is Behavio's first model whose likelihood scores more than a
 binary choice. It fits the joint first-passage density of choice and response time while
 making the observation boundary, physical units, simulation approximation, and numerical
 diagnostics explicit.
@@ -42,7 +42,7 @@ family to partially pooled animal-specific paths.
 Response time is an explicit typed observation rather than an anonymous covariate:
 
 ```python
-from unspool import ResponseTimeSpec, ResponseTimeUnit, WienerDriftDiffusion
+from behavio import ResponseTimeSpec, ResponseTimeUnit, WienerDriftDiffusion
 
 model = WienerDriftDiffusion(
     covariates=("stimulus",),
@@ -64,7 +64,7 @@ The model declares
 scored_columns = ("choice", "response_time_ms")
 ```
 
-because each pointwise score is a joint choice/response-time density. Unspool therefore
+because each pointwise score is a joint choice/response-time density. Behavio therefore
 rejects direct likelihood ranking against a choice-only model. Such a ranking would compare
 different observed events, not competing explanations of the same event.
 
@@ -87,7 +87,7 @@ simulation fails visibly if a path exceeds `simulation_max_time`. The analytic l
 itself is not discretized.
 
 ```python
-from unspool import WienerDriftDiffusion
+from behavio import WienerDriftDiffusion
 
 model = WienerDriftDiffusion(covariates=("stimulus",), n_restarts=3)
 truth = model.parameters_from_components(
@@ -123,7 +123,7 @@ mixture-probability bounds are model configuration. They are not estimated from 
 session.
 
 ```python
-from unspool import UniformResponseTimeContaminant, WienerDriftDiffusion
+from behavio import UniformResponseTimeContaminant, WienerDriftDiffusion
 
 model = WienerDriftDiffusion(
     covariates=("stimulus",),
@@ -167,7 +167,7 @@ accuracy and response-time distributions, and the standard cognitive interpretat
 drift, boundaries, starting point, and non-decision time, are reviewed by
 [Ratcliff and McKoon (2008)](https://doi.org/10.1162/neco.2008.12-06-420).
 The decision to represent contaminants explicitly rather than rely on unreported trimming
-follows [Ratcliff and Tuerlinckx (2002)](https://doi.org/10.3758/BF03196302); Unspool's
+follows [Ratcliff and Tuerlinckx (2002)](https://doi.org/10.3758/BF03196302); Behavio's
 fixed-support independent mixture is a deliberately simpler first contract.
 
 ## Recovery evidence
@@ -177,12 +177,12 @@ fixed-support independent mixture is a deliberately simpler first contract.
   <figcaption><strong>Synthetic benchmark · design-specific DDM recovery.</strong> Increasing the simulated trial count reduces RMSE for every fitted parameter. Lines summarize committed repetitions; they are not universal sample-size recommendations.<span class="doc-figure__meta"><strong>Unit:</strong> simulation repeat · <strong>n:</strong> declared repeats at two trial counts · <strong>Estimand:</strong> parameter root-mean-square error · <a href="../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
-The [fixed-parameter recovery benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ddm_recovery) runs 20
+The [fixed-parameter recovery benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/ddm_recovery) runs 20
 repetitions at both 400 and 1,200 trials. All 40 fits pass audit, and RMSE decreases with
 the larger design for every fitted parameter. This validates the implementation in one
 specified regime; it does not establish universal identifiability or interval calibration.
 
-The [contaminant benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ddm_contaminants) compares robust and
+The [contaminant benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/ddm_contaminants) compares robust and
 naive Wiener fits on 20 matched designs with five-percent contamination. The robust model
 has lower RMSE for every shared parameter and lower future-session joint log loss in all 20
 repetitions. This supports the specified uniform mixture under matched simulation; it does

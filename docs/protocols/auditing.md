@@ -9,7 +9,7 @@ excluded?
 ## Materialize the declared cohort
 
 ```python
-from unspool import materialize_protocol
+from behavio import materialize_protocol
 
 materialized = materialize_protocol(frozen, source_study)
 manifest = materialized.manifest
@@ -32,7 +32,7 @@ materialization stops.
 ## Compile explicit row roles
 
 ```python
-from unspool import compile_execution_plan, model_capabilities
+from behavio import compile_execution_plan, model_capabilities
 
 compiled = compile_execution_plan(
     materialized,

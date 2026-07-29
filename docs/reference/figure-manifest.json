@@ -69,7 +69,7 @@
     "chen2021-bandit.svg": {
       "classification": "literature-shaped",
       "generator": "scripts/plot_documentation_figures.py",
-      "source": "Checksum-pinned Chen et al. restless-bandit trials and frozen Unspool benchmark",
+      "source": "Checksum-pinned Chen et al. restless-bandit trials and frozen Behavio benchmark",
       "unit": "mouse",
       "denominator": "32 mice, 25279 trials, one session-8 forecast fold",
       "estimand": "Animal-balanced held-out log loss and exact-design WSLS/Q-learning recovery",

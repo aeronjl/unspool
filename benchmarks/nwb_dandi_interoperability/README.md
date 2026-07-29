@@ -7,12 +7,12 @@ must be explicit, cross-session chronology must be supplied rather than guessed,
 trial must retain the exact DANDI version, asset path, asset ID, byte size, and SHA-256.
 
 The chosen 72.6 MB asset contains 200 trials from one human recognition-memory session.
-Unspool streams only the requested HDF5 datasets rather than downloading the full asset.
+Behavio streams only the requested HDF5 datasets rather than downloading the full asset.
 The resulting `Study` preserves 100 learning and 100 recognition trials, five balanced
 stimulus categories, valid intervals, and the original `response_value` name. It does not
 reinterpret that source field as a binary choice: its observed values range from 0 to 36.
 The source's absolute `response_time` event is explicitly renamed `response_timestamp` so
-it cannot be mistaken for the decision-duration column expected by Unspool's DDMs.
+it cannot be mistaken for the decision-duration column expected by Behavio's DDMs.
 
 Run the pinned public check with the optional DANDI dependencies:
 

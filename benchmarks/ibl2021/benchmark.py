@@ -12,6 +12,13 @@ from typing import Any
 
 import numpy as np
 
+from behavio import (
+    Study,
+    TrajectoryPanel,
+    audit_trajectory_replication,
+    leave_one_lab_out_splits,
+    leave_one_subject_out_splits,
+)
 from benchmarks.ibl2021.fetch_data import (
     DEFAULT_DESTINATION,
     EXPECTED_MANIFEST_SHA256,
@@ -19,13 +26,6 @@ from benchmarks.ibl2021.fetch_data import (
     verify_file,
 )
 from benchmarks.provenance import render
-from unspool import (
-    Study,
-    TrajectoryPanel,
-    audit_trajectory_replication,
-    leave_one_lab_out_splits,
-    leave_one_subject_out_splits,
-)
 
 EXPECTED: dict[str, int | float] = {
     "n_trials": 28_400,

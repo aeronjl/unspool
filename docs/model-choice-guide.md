@@ -17,7 +17,7 @@ mechanism informative. Model choice comes after those commitments.
 | Binary choice | Binary baselines or Bernoulli history GLM | Joint choice/RT likelihoods |
 | More than two actions or modeled omissions | `MultinomialLogit` | Binary models after silently dropping categories |
 | Binary choice and response time | `WienerDriftDiffusion` family | Choice-only log scores |
-| A neural measurement | A companion neural model outside Unspool | A behavioural likelihood relabelled as neural evidence |
+| A neural measurement | A companion neural model outside Behavio | A behavioural likelihood relabelled as neural evidence |
 
 The `scored_columns` contract enforces this boundary. A probability for choice and a joint
 density for choice and response time are not commensurable scores.

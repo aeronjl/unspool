@@ -1,6 +1,6 @@
 # The longitudinal study contract
 
-`Study` is Unspool's canonical, format-independent representation of observed trials. It
+`Study` is Behavio's canonical, format-independent representation of observed trials. It
 is intentionally smaller than a dataframe standard: source columns remain available, but
 the fields needed to reason safely about longitudinal order have precise meanings.
 
@@ -20,13 +20,13 @@ labels, or the accidental order of input rows.
 
 All additional one-dimensional columns are copied and retained. They may contain choices,
 rewards, reaction times, stimulus values, laboratory identifiers, calendar timestamps,
-task versions, or source-specific metadata. Unspool does not silently rename, aggregate,
+task versions, or source-specific metadata. Behavio does not silently rename, aggregate,
 impute, or sort them.
 
 ## Construction
 
 ```python
-from unspool import Study
+from behavio import Study
 
 study = Study.from_columns(
     {
@@ -86,5 +86,5 @@ used to transform a validation fold.
 
 Preserving source order makes transformations auditable and lets returned split indices
 address the original data directly. Requiring an explicit chronology prevents a shuffled
-table from changing the scientific question. This is one implementation of Unspool's
+table from changing the scientific question. This is one implementation of Behavio's
 broader commitment: useful common coordinates must not manufacture a homogeneous history.

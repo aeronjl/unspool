@@ -11,15 +11,7 @@ from typing import Any
 
 import numpy as np
 
-from benchmarks.chen2021_bandit.fetch_data import (
-    ARCHIVE_MD5,
-    ARCHIVE_SHA256,
-    DATASET_DOI,
-    DEFAULT_DESTINATION,
-    ZENODO_RECORD,
-)
-from benchmarks.provenance import render
-from unspool import (
+from behavio import (
     BiasOnly,
     BinaryQLearning,
     ChoiceSpec,
@@ -33,6 +25,14 @@ from unspool import (
     compare_models,
     run_model_recovery,
 )
+from benchmarks.chen2021_bandit.fetch_data import (
+    ARCHIVE_MD5,
+    ARCHIVE_SHA256,
+    DATASET_DOI,
+    DEFAULT_DESTINATION,
+    ZENODO_RECORD,
+)
+from benchmarks.provenance import render
 
 PAPER_DOI = "10.7554/eLife.69748"
 TRIALS_PER_SESSION = 100

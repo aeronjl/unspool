@@ -1,7 +1,7 @@
 """Reproduce the released Cell 2025 GP plus soft-DTW trajectory clustering.
 
 Run this module in the isolated versions recorded by the paper's ``environment.yml``;
-these optional packages are deliberately not Unspool runtime dependencies.
+these optional packages are deliberately not Behavio runtime dependencies.
 """
 
 from __future__ import annotations

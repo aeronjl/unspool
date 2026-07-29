@@ -1,10 +1,10 @@
 # Installation
 
-Unspool requires Python 3.11 or newer. It is currently a pre-release research package,
+Behavio requires Python 3.11 or newer. It is currently a pre-release research package,
 so install it from GitHub rather than PyPI. The core install contains only NumPy and
 SciPy; data adapters and probabilistic backends remain optional.
 
-## Use Unspool in an analysis
+## Use Behavio in an analysis
 
 Create an isolated environment, then install the current source snapshot and Matplotlib
 for the figures in the [first analysis](first-analysis.md):
@@ -16,7 +16,7 @@ for the figures in the [first analysis](first-analysis.md):
     source .venv/bin/activate
     python -m pip install --upgrade pip
     python -m pip install \
-      "unspool @ git+https://github.com/aeronjl/unspool.git@main" \
+      "behavio @ git+https://github.com/aeronjl/behavio.git@main" \
       "matplotlib>=3.9"
     ```
 
@@ -27,14 +27,14 @@ for the figures in the [first analysis](first-analysis.md):
     .venv\Scripts\Activate.ps1
     python -m pip install --upgrade pip
     python -m pip install `
-      "unspool @ git+https://github.com/aeronjl/unspool.git@main" `
+      "behavio @ git+https://github.com/aeronjl/behavio.git@main" `
       "matplotlib>=3.9"
     ```
 
 Verify the environment:
 
 ```bash
-python -c "import unspool; print(unspool.__version__)"
+python -c "import behavio; print(behavio.__version__)"
 ```
 
 !!! tip "Pin a scientific analysis"
@@ -42,14 +42,14 @@ python -c "import unspool; print(unspool.__version__)"
     `@main` follows active development. Replace it with a commit SHA when an analysis
     must be exactly reproducible, and record that SHA with the data and protocol.
 
-## Contribute to Unspool
+## Contribute to Behavio
 
 The repository uses [uv](https://docs.astral.sh/uv/) and a committed lockfile. GitHub
 access is public over HTTPS; use SSH if your GitHub key is already configured.
 
 ```bash
-git clone git@github.com:aeronjl/unspool.git
-cd unspool
+git clone git@github.com:aeronjl/behavio.git
+cd behavio
 uv sync --locked --all-groups
 uv run pytest
 ```
@@ -83,7 +83,7 @@ backend at the edge of the same workflow.
 
 ## Troubleshooting
 
-- `ModuleNotFoundError: unspool` usually means the environment was not activated or the
+- `ModuleNotFoundError: behavio` usually means the environment was not activated or the
   install command ran under a different Python. Compare `python -c "import sys;
   print(sys.executable)"` with the environment you created.
 - Adapter import errors should name the missing extra. Install that extra rather than

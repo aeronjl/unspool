@@ -1,6 +1,6 @@
 # Analysis workflows
 
-Unspool workflows are organized around the evidence a claim needs, not around a sequence
+Behavio workflows are organized around the evidence a claim needs, not around a sequence
 of model classes.
 
 | Scientific task | Primary workflow | Evidence object |

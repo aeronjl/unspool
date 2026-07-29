@@ -8,8 +8,8 @@ from typing import Any
 
 import numpy as np
 
+from behavio import BernoulliGLMHMM, Study, align_latent_states
 from benchmarks.provenance import render
-from unspool import BernoulliGLMHMM, Study, align_latent_states
 
 DEFAULT_REPETITIONS = 20
 ROOT_SEED = 9107

@@ -4,8 +4,8 @@ from typing import ClassVar
 import numpy as np
 import pytest
 
-import unspool.inference as inference
-from unspool import (
+import behavio.inference as inference
+from behavio import (
     InferenceError,
     OptimizationBackend,
     OptimizationProblem,
@@ -157,7 +157,7 @@ def test_pybads_missing_extra_has_actionable_error(monkeypatch) -> None:
 
     monkeypatch.setattr(inference.importlib, "import_module", missing)
 
-    with pytest.raises(PyBADSUnavailableError, match=r"unspool\[optimization\]"):
+    with pytest.raises(PyBADSUnavailableError, match=r"behavio\[optimization\]"):
         PyBADSMultistart().run(problem())
 
 

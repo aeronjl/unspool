@@ -5,7 +5,7 @@ state or parameter recovery, and explicit reset semantics.
 
 ## GLM-HMM
 
-::: unspool.models.glm_hmm
+::: behavio.models.glm_hmm
     options:
       members_order: source
       show_root_heading: false
@@ -13,7 +13,7 @@ state or parameter recovery, and explicit reset semantics.
 
 ## Q-learning
 
-::: unspool.models.q_learning
+::: behavio.models.q_learning
     options:
       members_order: source
       show_root_heading: false
@@ -21,7 +21,7 @@ state or parameter recovery, and explicit reset semantics.
 
 ## Composable RL agents
 
-::: unspool.models.rl
+::: behavio.models.rl
     options:
       members_order: source
       show_root_heading: false

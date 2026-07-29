@@ -7,7 +7,7 @@ import pytest
 from test_reporting import recovered, report_items
 from test_runner import candidate_models, compiled_nested
 
-from unspool.evidence import (
+from behavio.evidence import (
     BundleFigure,
     BundleFile,
     EvidenceBundle,
@@ -18,8 +18,8 @@ from unspool.evidence import (
     replay_evidence_bundle,
     write_evidence_bundle,
 )
-from unspool.reporting import generate_bounded_report
-from unspool.runner import run_nested_protocol
+from behavio.reporting import generate_bounded_report
+from behavio.runner import run_nested_protocol
 
 
 def reported():
@@ -38,7 +38,7 @@ def environment(*, marker="a"):
     return {
         "python": {"implementation": "CPython", "version": "3.12.0"},
         "platform": {"system": "test", "machine": "test"},
-        "packages": {"unspool": "0.20-test"},
+        "packages": {"behavio": "0.20-test"},
         "marker": marker,
     }
 

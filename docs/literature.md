@@ -1,6 +1,6 @@
 # Literature guide
 
-Unspool's worked examples are anchored in methodological and empirical literature, but the
+Behavio's worked examples are anchored in methodological and empirical literature, but the
 library does not present citations as validation by association. Each literature-shaped
 workflow must still define an estimand, pass a numerical contract, and state what was not
 reproduced.
@@ -8,10 +8,10 @@ reproduced.
 ## Longitudinal strategy formation
 
 Liebana, Laffere et al. (2025) followed individual learning trajectories and related early
-choice strategy to later psychometric structure. Unspool independently reproduces the
+choice strategy to later psychometric structure. Behavio independently reproduces the
 bounded behavioural result from Figure 1 using the public trial table, and checks the
 recomputed correlations against the values printed in the paper through
-[`published_claims.json`](https://github.com/aeronjl/unspool/blob/main/benchmarks/cell2025/published_claims.json).
+[`published_claims.json`](https://github.com/aeronjl/behavio/blob/main/benchmarks/cell2025/published_claims.json).
 It does not yet reproduce the complete behavioural clustering or any neural analysis.
 
 - [Worked study](tutorials/cell2025-learning-trajectories.md)
@@ -20,7 +20,7 @@ It does not yet reproduce the complete behavioural clustering or any neural anal
 ## Standardized learning across laboratories
 
 The International Brain Laboratory's standardized decision-making study supplies public
-trial tables across multiple institutions. Unspool uses an outcome-blind endpoint-window
+trial tables across multiple institutions. Behavio uses an outcome-blind endpoint-window
 cohort to test retrieval, chronology, cross-lab structure, future-session prediction, and
 training-only model selection. Conditioning on protocol transition and the finite set of
 labs remain explicit limitations.
@@ -32,7 +32,7 @@ labs remain explicit limitations.
 ## Latent states, reinforcement learning, and recovery
 
 GLM-HMMs and reinforcement-learning agents are common explanations of nonstationary choice.
-Unspool makes them compete with observable history and smooth-drift accounts, then tests
+Behavio makes them compete with observable history and smooth-drift accounts, then tests
 whether the study design recovers the generating family. The Ashwood et al. benchmark goes
 further than an analogue: it recomputes the paper's own published values from the paper's
 own public data, under tolerances frozen before any fit was run. The cohort reproduces
@@ -49,7 +49,7 @@ that a latent state or learning rate is mechanistically identified.
 
 ## Choice and response time
 
-Diffusion models turn accuracy and latency into one joint predictive claim. Unspool's
+Diffusion models turn accuracy and latency into one joint predictive claim. Behavio's
 public IBL example declares movement-onset response-time units and eligibility before
 fitting, compares naive and contaminant-aware accounts prospectively, and retains the
 negative result rather than treating robustification as automatically superior.
@@ -61,7 +61,7 @@ negative result rather than treating robustification as automatically superior.
 
 Simulation-based calibration tests a complete prior-simulation and posterior-inference
 pipeline by asking whether simulated truths have uniform randomized ranks among posterior
-draws. Unspool follows Talts et al.'s rank formulation, preserves the failed repetitions,
+draws. Behavio follows Talts et al.'s rank formulation, preserves the failed repetitions,
 and makes the tested quantities explicit because Modrák et al. show that diagnostic
 sensitivity depends on that choice. This checks computational faithfulness under the
 declared generative distribution; it is not an empirical model check.
@@ -71,7 +71,7 @@ declared generative distribution; it is not an empirical model check.
 - [Modrák et al. (2023)](https://arxiv.org/abs/2211.02383)
 
 Sensitivity to prior, likelihood, preprocessing, and model choices is a distinct workflow
-stage. Unspool's first contract uses explicit exact refits and common scalar summaries; it
+stage. Behavio's first contract uses explicit exact refits and common scalar summaries; it
 can represent a small targeted sensitivity analysis or a larger multiverse without
 pretending that every possible fork is equally defensible. Power-scaling methods are a
 complementary efficient diagnostic, not silently substituted for those refits.
@@ -84,7 +84,7 @@ complementary efficient diagnostic, not silently substituted for those refits.
 
 Stable group effects do not imply stable individual differences. Computational parameters
 can show high ordering consistency but poor absolute agreement, and plug-in estimates can
-confound trial-level estimation error with true between-occasion change. Unspool therefore
+confound trial-level estimation error with true between-occasion change. Behavio therefore
 reports several named consistency and agreement quantities, preserves the paired subjects,
 and keeps hierarchical joint reliability modelling as a distinct extension.
 
@@ -107,7 +107,7 @@ They do not justify adding a novel mechanism without a validated implementation.
 For evidence-accumulation models, the multi-author
 [expert task-design guide](https://doi.org/10.1177/25152459251336127) treats experimental
 design, model adequacy, and parameter recovery as part of the analysis rather than
-post-fit decoration. Unspool uses that as a documentation standard: response-time origin,
+post-fit decoration. Behavio uses that as a documentation standard: response-time origin,
 units, eligibility, candidate confusion, and recovery belong in each DDM recipe.
 
 The resulting orientation layer is deliberately practical:

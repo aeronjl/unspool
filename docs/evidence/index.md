@@ -1,6 +1,6 @@
 # Evidence index
 
-Unspool keeps scientist-facing interpretation separate from machine-readable evidence.
+Behavio keeps scientist-facing interpretation separate from machine-readable evidence.
 Worked studies explain the question and limitations; benchmark directories retain exact
 protocol code, source checksums, seeds, fold provenance, audits, and JSON results.
 
@@ -16,7 +16,7 @@ protocol code, source checksums, seeds, fold provenance, audits, and JSON result
 | DDM recovery suite | Controlled simulation | Joint choice/RT recovery and robustness |
 | NWB/DANDI interoperability | Versioned public Dandiset | Trial identity and provenance |
 
-Browse the complete [benchmark directory on GitHub](https://github.com/aeronjl/unspool/tree/main/benchmarks).
+Browse the complete [benchmark directory on GitHub](https://github.com/aeronjl/behavio/tree/main/benchmarks).
 Failed fits, warning audits, unresolved selections, and boundary estimates remain part of
 the record rather than being filtered out of summary pages.
 

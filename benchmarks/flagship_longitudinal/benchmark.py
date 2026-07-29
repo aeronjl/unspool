@@ -9,14 +9,7 @@ from typing import Any
 
 import numpy as np
 
-from benchmarks.cell2025.benchmark import load_study as load_cell_study
-from benchmarks.cell2025.fetch_data import DEFAULT_DESTINATION as DEFAULT_CELL_DATA
-from benchmarks.cell2025.fetch_data import FIGSHARE_ARTICLE_DOI, MEMBER_SHA256, sha256
-from benchmarks.ibl2021.benchmark import load_study as load_ibl_study
-from benchmarks.ibl2021.fetch_data import DEFAULT_DESTINATION as DEFAULT_IBL_DATA
-from benchmarks.ibl2021.fetch_data import EXPECTED_MANIFEST_SHA256
-from benchmarks.provenance import render
-from unspool import (
+from behavio import (
     BernoulliHistoryGLM,
     FitResult,
     HierarchicalBernoulliHistoryGLM,
@@ -28,6 +21,13 @@ from unspool import (
     cohort_forward_session_splits,
     compare_models,
 )
+from benchmarks.cell2025.benchmark import load_study as load_cell_study
+from benchmarks.cell2025.fetch_data import DEFAULT_DESTINATION as DEFAULT_CELL_DATA
+from benchmarks.cell2025.fetch_data import FIGSHARE_ARTICLE_DOI, MEMBER_SHA256, sha256
+from benchmarks.ibl2021.benchmark import load_study as load_ibl_study
+from benchmarks.ibl2021.fetch_data import DEFAULT_DESTINATION as DEFAULT_IBL_DATA
+from benchmarks.ibl2021.fetch_data import EXPECTED_MANIFEST_SHA256
+from benchmarks.provenance import render
 
 KNOTS = (0.0, 2.0, 5.0)
 METHODS = (

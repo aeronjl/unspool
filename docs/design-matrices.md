@@ -6,7 +6,7 @@ predictors use common effects such as stimulus strength, condition, trial histor
 interactions.
 
 ```python
-from unspool import (
+from behavio import (
     CategoricalTerm,
     DesignSpec,
     HistoryTerm,
@@ -54,7 +54,7 @@ When centring and scaling are not known in advance, fit them on training rows an
 the returned fixed term:
 
 ```python
-from unspool import DesignSpec, StandardizeTerm
+from behavio import DesignSpec, StandardizeTerm
 
 stimulus = StandardizeTerm("stimulus").fit(training_study)
 training_matrix = DesignSpec(terms=(stimulus,)).build(training_study)
@@ -68,7 +68,7 @@ columns fail rather than producing an unstable coordinate.
 These restrictions are deliberate. If a centre, scale, category vocabulary, spline basis,
 or other transformation must be learned from data, it is a training-only transform. Fit it
 inside each prospective training fold and freeze the resulting values before building the
-test matrix. Unspool does not inspect the full study and quietly call that preprocessing.
+test matrix. Behavio does not inspect the full study and quietly call that preprocessing.
 
 ## Histories and reset boundaries
 
@@ -94,7 +94,7 @@ history representations are not learned implicitly.
 `HistoryKernelTerm` contracts several explicit lags into one feature with fixed weights:
 
 ```python
-from unspool import HistoryKernelTerm
+from behavio import HistoryKernelTerm
 
 trace = HistoryKernelTerm(
     "choice",
@@ -120,7 +120,7 @@ division is:
 4. build aligned training and prediction-context matrices;
 5. fit and score the model on the rows declared by the split.
 
-This is the same information boundary enforced by Unspool's clocks, landmarks, comparison
+This is the same information boundary enforced by Behavio's clocks, landmarks, comparison
 procedures, and protocol compiler. Existing first-party models retain their current
 model-specific design arguments unless a migration onto these terms has explicit numerical
 parity tests.

@@ -8,14 +8,14 @@ from typing import Any
 
 import numpy as np
 
-from benchmarks.provenance import render
-from unspool import (
+from behavio import (
     Study,
     TrajectoryPanel,
     audit_trajectory_replication,
     compare_trajectory_shapes,
     leave_one_lab_out_splits,
 )
+from benchmarks.provenance import render
 
 GROUPS = ("reference", "level_shift", "amplitude_shift", "shape_change")
 SAME_SHAPE_PAIRS = (

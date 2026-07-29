@@ -1,14 +1,14 @@
 # Analysis sensitivity
 
 A scientific conclusion can move when an analyst changes a defensible prior, history
-window, omission rule, preprocessing choice, or inference backend. Unspool represents that
+window, omission rule, preprocessing choice, or inference backend. Behavio represents that
 question as an explicit set of refits with one declared reference—not as an unrecorded
 sequence of exploratory reruns.
 
 <figure class="doc-figure" data-figure-kind="Conceptual">
   <img src="assets/sensitivity-specification.svg" alt="A conceptual specification curve shows seven scenario estimates with intervals and a marked reference. A parallel workflow declares scenarios, refits each with a stable seed, extracts common metrics, and retains differences, intervals, and failures.">
   <figcaption>A sensitivity report keeps the full specification set. Its spread is
-  descriptive evidence; Unspool does not invent a universal robustness cutoff.</figcaption>
+  descriptive evidence; Behavio does not invent a universal robustness cutoff.</figcaption>
 </figure>
 
 This contract supports a targeted prior check and a larger multiverse with the same small
@@ -23,7 +23,7 @@ The `changes` mapping is provenance, not executable configuration: the callback 
 those choices to the real model or pipeline.
 
 ```python
-from unspool import (
+from behavio import (
     SensitivityScenario,
     audit_posterior,
     posterior_sensitivity_outcome,
@@ -70,7 +70,7 @@ report = run_sensitivity_analysis(
 )
 ```
 
-The callback boundary keeps Unspool composable with PyMC, Stan, NumPyro, or an external
+The callback boundary keeps Behavio composable with PyMC, Stan, NumPyro, or an external
 workflow. It does not require those backends in core. A scenario seed is derived from the
 root seed and scenario signature, so inserting or reordering another scenario does not
 change existing refits.
@@ -87,7 +87,7 @@ Sensitivity is not limited to posterior means. A callback can return an explicit
 `SensitivityOutcome` containing one or more `SensitivityMetric` records:
 
 ```python
-from unspool import SensitivityMetric, SensitivityOutcome
+from behavio import SensitivityMetric, SensitivityOutcome
 
 return SensitivityOutcome(
     artifact_signature=evidence_bundle.fingerprint,
@@ -108,7 +108,7 @@ return SensitivityOutcome(
 Every successful scenario must return the same ordered metric identities and units. This
 prevents a future-session score, training likelihood, pooled-trial estimate, and
 subject-balanced estimate from entering one attractive but incoherent curve. The metric
-signature should encode the interval and aggregation semantics; Unspool retains intervals
+signature should encode the interval and aggregation semantics; Behavio retains intervals
 but does not assume that every interval is a posterior credible interval.
 
 ## Inspect the complete report
@@ -140,14 +140,14 @@ diagnostics, failures, contrasts, and summaries.
 
 ## Exact refits and efficient diagnostics
 
-Unspool's first sensitivity path compares explicit refits. That is boring but general: it
+Behavio's first sensitivity path compares explicit refits. That is boring but general: it
 works for changed priors, likelihoods, preprocessing, task definitions, and backends, and
 it exposes failures caused by the changed specification.
 
 [Kallioinen et al. (2024)](https://doi.org/10.1007/s11222-023-10366-5) instead use
 importance sampling under power-scaled priors or likelihoods to diagnose sensitivity and
 prior–data conflict efficiently. Such estimates can be represented as common sensitivity
-metrics, but Unspool does not currently implement their weighting algorithm or relabel an
+metrics, but Behavio does not currently implement their weighting algorithm or relabel an
 approximation as an exact refit. [Schad, Betancourt, and Vasishth
 (2021)](https://doi.org/10.1037/met0000275) place model sensitivity alongside prior
 predictive checks, computational validation, and posterior-predictive checks in a Bayesian

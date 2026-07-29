@@ -16,7 +16,7 @@ The example deliberately follows the same order expected for a real study:
 
 Complete the [source installation](installation.md), save the following as
 `first_analysis.py`, and run `python first_analysis.py`. This is the same code exercised by
-the repository's tested [`examples/first_analysis.py`](https://github.com/aeronjl/unspool/blob/main/examples/first_analysis.py).
+the repository's tested [`examples/first_analysis.py`](https://github.com/aeronjl/behavio/blob/main/examples/first_analysis.py).
 
 ``` { .python }
 --8<-- "examples/first_analysis.py:analysis"

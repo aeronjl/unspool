@@ -8,9 +8,9 @@ from typing import Any
 
 import numpy as np
 
+from behavio import HierarchicalBernoulliHistoryGLM, Study
 from benchmarks.hierarchical_glm.benchmark import POPULATION_PARAMETERS, build_design
 from benchmarks.provenance import render
-from unspool import HierarchicalBernoulliHistoryGLM, Study
 
 SUBJECT_COUNTS = (8, 24)
 TRUE_SCALES = (0.1, 0.5, 1.0)

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from unspool import ResponseTimes, ResponseTimeSpec, ResponseTimeUnit, Study
+from behavio import ResponseTimes, ResponseTimeSpec, ResponseTimeUnit, Study
 
 
 def study_with_response_times(values: list[object]) -> Study:

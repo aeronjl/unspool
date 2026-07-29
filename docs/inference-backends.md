@@ -1,7 +1,7 @@
 # Deterministic inference backends
 
 An inference backend should change how an already-defined objective is searched, not what
-the model means. Unspool therefore separates `OptimizationProblem` from
+the model means. Behavio therefore separates `OptimizationProblem` from
 `OptimizationBackend`:
 
 - the problem owns the parameter-space fingerprint, ordered optimizer coordinates,
@@ -26,7 +26,7 @@ semantics.
 ```python
 import numpy as np
 
-from unspool import OptimizationProblem, ScipyMultistart
+from behavio import OptimizationProblem, ScipyMultistart
 
 
 def negative_log_likelihood(vector):
@@ -76,7 +76,7 @@ record. Both are immutable, JSON-safe, and carry the parameter-space fingerprint
 ## MAP is explicit about its measure
 
 ```python
-from unspool import ObjectiveTarget, PriorMeasure
+from behavio import ObjectiveTarget, PriorMeasure
 
 map_problem = OptimizationProblem(
     parameter_space=model.parameter_space,
@@ -117,11 +117,11 @@ Install the optional extra when BADS is appropriate for a moderately expensive,
 derivative-free likelihood:
 
 ```bash
-python -m pip install "unspool[optimization]"
+python -m pip install "behavio[optimization]"
 ```
 
 ```python
-from unspool import PyBADSMultistart
+from behavio import PyBADSMultistart
 
 run = PyBADSMultistart(
     random_seed=42,
@@ -140,14 +140,14 @@ run because PyBADS currently seeds it globally.
 
 The result maps PyBADS `x`, `fval`, iterations, function evaluations, success, and message
 onto `OptimizationAttempt`. PyBADS 1.0.6 currently reports `success=True` even for its
-documented limit terminations, so Unspool conservatively marks messages that reached the
+documented limit terminations, so Behavio conservatively marks messages that reached the
 maximum iteration or function-evaluation count as non-converged. They remain eligible as
 the best finite fallback only when no attempt converged.
 
 This initial adapter is for deterministic objectives. It records zero gradient evaluations
 and leaves gradient norm unavailable; PyBADS' stochastic-objective protocol will require a
 separate noise-aware problem contract rather than overloading the deterministic one.
-PyBADS remains optional, so its dependencies do not constrain Unspool core or the SciPy
+PyBADS remains optional, so its dependencies do not constrain Behavio core or the SciPy
 backend.
 
 - [PyBADS API](https://acerbilab.github.io/pybads/api/classes/bads.html)
@@ -155,7 +155,7 @@ backend.
 
 ## API
 
-::: unspool.inference
+::: behavio.inference
     options:
       members:
         - ObjectiveTarget

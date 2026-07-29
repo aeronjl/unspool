@@ -5,7 +5,7 @@ transforms inside training folds; fixed design declarations may be built directl
 
 ## Clocks
 
-::: unspool.clocks
+::: behavio.clocks
     options:
       members_order: source
       show_root_heading: false
@@ -13,7 +13,7 @@ transforms inside training folds; fixed design declarations may be built directl
 
 ## Fold-fitted transforms
 
-::: unspool.transforms
+::: behavio.transforms
     options:
       members_order: source
       show_root_heading: false
@@ -21,7 +21,7 @@ transforms inside training folds; fixed design declarations may be built directl
 
 ## Design matrices
 
-::: unspool.design
+::: behavio.design
     options:
       members_order: source
       show_root_heading: false

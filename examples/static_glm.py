@@ -1,10 +1,10 @@
-"""End-to-end synthetic analysis with the first Unspool reference model."""
+"""End-to-end synthetic analysis with the first Behavio reference model."""
 
 from __future__ import annotations
 
 import numpy as np
 
-from unspool import (
+from behavio import (
     BernoulliHistoryGLM,
     Study,
     evaluate_splits,

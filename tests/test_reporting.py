@@ -8,17 +8,17 @@ from test_protocol import example_protocol
 from test_protocol_recovery import evaluated, models, recovery_case, recovery_protocol
 from test_runner import candidate_models, compiled_nested
 
-from unspool.compiler import compile_execution_plan, materialize_protocol
-from unspool.protocol import ProtocolState, ScoreMetric
-from unspool.protocol_recovery import run_exact_recovery
-from unspool.reporting import (
+from behavio.compiler import compile_execution_plan, materialize_protocol
+from behavio.protocol import ProtocolState, ScoreMetric
+from behavio.protocol_recovery import run_exact_recovery
+from behavio.reporting import (
     ReportGenerationError,
     ReportItem,
     ReportItemKind,
     generate_bounded_report,
 )
-from unspool.runner import run_nested_protocol, run_protocol
-from unspool.validation import cohort_forward_session_splits
+from behavio.runner import run_nested_protocol, run_protocol
+from behavio.validation import cohort_forward_session_splits
 
 
 def report_items() -> tuple[ReportItem, ...]:

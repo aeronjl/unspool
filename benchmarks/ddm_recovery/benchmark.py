@@ -8,8 +8,8 @@ from typing import Any
 
 import numpy as np
 
+from behavio import Study, WienerDriftDiffusion, run_parameter_recovery
 from benchmarks.provenance import render
-from unspool import Study, WienerDriftDiffusion, run_parameter_recovery
 
 DESIGNS = {"400_trials": 400, "1200_trials": 1_200}
 

@@ -11,7 +11,7 @@ Licence
 -------
 Creative Commons Attribution 4.0 International (CC-BY-4.0), as published by the
 International Brain Laboratory for this release. Attribution is carried on every trial by
-``unspool.adapters.ibl_one``, which stamps the Alyx origin, release tag, session UUID,
+``behavio.adapters.ibl_one``, which stamps the Alyx origin, release tag, session UUID,
 dataset UUID, relative path, byte size and MD5 onto each row.
 
 Cohort
@@ -85,7 +85,7 @@ def open_one(cache_directory: Path = DEFAULT_CACHE) -> Any:
         from one.api import ONE
     except ImportError as error:
         raise RuntimeError(
-            "the IBL 2021 psychometrics benchmark requires `unspool[ibl]`"
+            "the IBL 2021 psychometrics benchmark requires `behavio[ibl]`"
         ) from error
     cache_directory.mkdir(parents=True, exist_ok=True)
     one = ONE(

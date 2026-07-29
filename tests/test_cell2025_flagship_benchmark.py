@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 
+from behavio import Study
 from benchmarks.cell2025_flagship.benchmark import (
     MODEL_ORDER,
     _models,
@@ -14,7 +15,6 @@ from benchmarks.cell2025_flagship.benchmark import (
     panel_manifest,
     summarize_response_times,
 )
-from unspool import Study
 
 ROOT = Path(__file__).parents[1]
 

@@ -1,6 +1,6 @@
 # Contributing
 
-Unspool is pre-alpha. Design discussion is welcome, but the public API should grow only
+Behavio is pre-alpha. Design discussion is welcome, but the public API should grow only
 around tested scientific use cases.
 
 ## Set up
@@ -87,6 +87,6 @@ when used for held-out evaluation.
 
 ## Scope
 
-Keep reusable package code in `src/unspool/`, tests in `tests/`, and scientific rationale
+Keep reusable package code in `src/behavio/`, tests in `tests/`, and scientific rationale
 in `docs/`. Dataset downloads, generated reports, notebooks, and paper-specific analyses
 should not enter the core package without a clear reusable contract.

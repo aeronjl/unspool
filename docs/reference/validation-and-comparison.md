@@ -5,7 +5,7 @@ comparison preserves matched scores and declared aggregation units.
 
 ## Splitters
 
-::: unspool.validation
+::: behavio.validation
     options:
       members_order: source
       show_root_heading: false
@@ -13,7 +13,7 @@ comparison preserves matched scores and declared aggregation units.
 
 ## Fold evaluation
 
-::: unspool.evaluation
+::: behavio.evaluation
     options:
       members_order: source
       show_root_heading: false
@@ -21,7 +21,7 @@ comparison preserves matched scores and declared aggregation units.
 
 ## Model comparison and nested selection
 
-::: unspool.comparison
+::: behavio.comparison
     options:
       members_order: source
       show_root_heading: false

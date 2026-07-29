@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from unspool import HierarchicalSmoothWienerDriftDiffusion, Study
+from behavio import HierarchicalSmoothWienerDriftDiffusion, Study
 
 generator = np.random.default_rng(811)
 n_subjects = 3

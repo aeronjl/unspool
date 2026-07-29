@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from behavio import ProtocolState, protocol_from_dict, protocol_from_json
 from benchmarks.ibl2021_nested_selection.benchmark import CANDIDATES
 from benchmarks.ibl2021_protocol.benchmark import (
     LEGACY_RESULT,
@@ -12,7 +13,6 @@ from benchmarks.ibl2021_protocol.benchmark import (
     build_protocol,
     recorded_parity,
 )
-from unspool import ProtocolState, protocol_from_dict, protocol_from_json
 
 
 @pytest.mark.parametrize("target", ("same-animal", "held-out-lab"))

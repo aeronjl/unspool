@@ -43,7 +43,7 @@ without loading a Python object graph.
 ```python
 from pathlib import Path
 
-from unspool import BundleFigure, build_evidence_bundle, write_evidence_bundle
+from behavio import BundleFigure, build_evidence_bundle, write_evidence_bundle
 
 figure = BundleFigure(
     name="forecast-comparison",
@@ -68,7 +68,7 @@ bundle identity; an existing archive is never overwritten silently.
 ## Replay without executing code
 
 ```python
-from unspool import read_evidence_bundle, replay_evidence_bundle
+from behavio import read_evidence_bundle, replay_evidence_bundle
 
 verified = read_evidence_bundle("study-evidence.zip")
 replay = replay_evidence_bundle(verified)
@@ -87,7 +87,7 @@ fit or execute source code.
 ## Compare two analyses
 
 ```python
-from unspool import compare_evidence_bundles
+from behavio import compare_evidence_bundles
 
 difference = compare_evidence_bundles("before.zip", "after.zip")
 print(difference.same_protocol)

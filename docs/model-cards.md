@@ -235,5 +235,5 @@ decisions across the study, not time within a decision.
 A new first-party family should not be added here until its card can name the observed
 event, required task fields, filtering semantics, parameters, numerical diagnostics,
 simulation contract, exact-design recovery evidence, important competitors, and unsupported
-claims. External models can satisfy the same standard without becoming Unspool internals;
-see [Extend Unspool](extensions.md).
+claims. External models can satisfy the same standard without becoming Behavio internals;
+see [Extend Behavio](extensions.md).

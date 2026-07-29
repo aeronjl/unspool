@@ -1,6 +1,6 @@
 # Estimators, generators, and scored observations
 
-Unspool separates three questions that are often collapsed into one model API:
+Behavio separates three questions that are often collapsed into one model API:
 
 1. Can this object be fitted and scored prospectively?
 2. Can it simulate a study from named parameters?
@@ -28,12 +28,12 @@ Models can additionally expose the structural `ParameterSpaceProvider` protocol.
 fixed values, and priors available to fitting adapters without adding an inheritance
 requirement or making parameter metadata a condition for basic prospective scoring.
 
-The protocols are structural: a plugin does not need to inherit an Unspool base class.
+The protocols are structural: a plugin does not need to inherit an Behavio base class.
 `model_capabilities()` performs semantic validation in addition to checking method
 presence:
 
 ```python
-from unspool import model_capabilities
+from behavio import model_capabilities
 
 capabilities = model_capabilities(plugin)
 print(capabilities.scored_columns)
@@ -59,7 +59,7 @@ scored_columns = ("choice",)
 scored_columns = ("choice", "response_time")
 ```
 
-Unspool will reject a direct likelihood ranking between those two models. A choice-only
+Behavio will reject a direct likelihood ranking between those two models. A choice-only
 probability and a joint choice/response-time density answer different predictive questions;
 their numerical log scores are not interchangeable. Joint models must compete with other
 models scoring the same joint observation, or expose a separately configured choice-only
@@ -75,7 +75,7 @@ preserving the distinction in serialized reports.
 
 ## Fit-result invariants
 
-At every fold, Unspool verifies that:
+At every fold, Behavio verifies that:
 
 - `fit()` returned a `FitResult`;
 - its model name and signature match the estimator that produced it;
@@ -115,4 +115,4 @@ be compared directly with the naive Wiener model. See the
 
 It intentionally stops short of across-trial Wiener-parameter variation, hierarchical
 pooling, or longitudinal parameter drift. Neither Wiener configuration can be meaningfully
-ranked by joint log score against Unspool's choice-only families.
+ranked by joint log score against Behavio's choice-only families.

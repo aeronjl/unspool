@@ -15,14 +15,14 @@
   <figcaption><strong>Published parity · Cell Figure 1G and 1I.</strong> The checksum-pinned trial table recovers the published early-to-late bias reversal and early-bias/later-asymmetry relationship. The regression band is a deterministic paired-animal bootstrap; colour preserves the released continuous trajectory-asymmetry variable rather than replacing it with three discrete classes.<span class="doc-figure__meta"><strong>Unit:</strong> animal · <strong>n:</strong> 30 animals, 192,238 retained trials · <strong>Estimands:</strong> Pearson early-bias/late-bias and early-bias/late-slope correlations · <a href="../../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
-| Panel | Published quantity | Paper | Unspool |
+| Panel | Published quantity | Paper | Behavio |
 | --- | --- | ---: | ---: |
 | 1G | Early bias versus late bias | <em>r</em> = -0.53, <em>p</em> < 0.01 | <em>r</em> = -0.52764, <em>p</em> = 0.00273 |
 | 1I | Early bias versus late R-L slope | <em>r</em> = 0.69, <em>p</em> < 0.0001 | <em>r</em> = 0.69479, <em>p</em> = 2.04 × 10<sup>-5</sup> |
 
-The paper reports rounded coefficients and thresholded p values in the display. Unspool
+The paper reports rounded coefficients and thresholded p values in the display. Behavio
 shows the independently recomputed values at greater precision. The machine-readable
-[`published_claims.json`](https://github.com/aeronjl/unspool/blob/main/benchmarks/cell2025/published_claims.json)
+[`published_claims.json`](https://github.com/aeronjl/behavio/blob/main/benchmarks/cell2025/published_claims.json)
 records each printed value, the recomputed value, and the rounding tolerance that separates
 them, so the comparison is a checked contract rather than a visual impression. Both
 correlations agree with the printed values inside the two-decimal rounding tolerance, and
@@ -68,7 +68,7 @@ The audit follows primary, versioned sources:
 | Released analysis | [Figshare software v1](https://doi.org/10.6084/m9.figshare.28877942.v1), MIT license |
 | Released code | [`behaviour.ipynb` at commit `2faa468`](https://github.com/SamuelLiebana/da_long_term_learning/blob/2faa4680d5e9c0d6a9df516e3dede8c641e39a72/scripts/behaviour.ipynb), headings “Figure 1G” and “Figure 1I” |
 | Colour artifact | `psych_metric_trajectory_fit_df.csv`, SHA-256 `e5cd06…664ee` |
-| Machine-readable audit | [`figure1gi_audit.json`](https://github.com/aeronjl/unspool/blob/main/benchmarks/cell2025/figure1gi_audit.json) |
+| Machine-readable audit | [`figure1gi_audit.json`](https://github.com/aeronjl/behavio/blob/main/benchmarks/cell2025/figure1gi_audit.json) |
 
 The public trial table is processed in the released order: remove no-go trials; compute
 within-mouse/day response-time z scores; retain rows below 2; retain first presentations;
@@ -90,7 +90,7 @@ These changes improve determinism, accessibility, and standalone interpretation.
 not alter the plotted observations or estimands. Because the correlations are recomputed
 from public trials rather than replayed from a released result file, and because the
 recomputed values are checked against the numbers printed in the paper by
-[`published_claims.json`](https://github.com/aeronjl/unspool/blob/main/benchmarks/cell2025/published_claims.json),
+[`published_claims.json`](https://github.com/aeronjl/behavio/blob/main/benchmarks/cell2025/published_claims.json),
 the evidence class is **published parity**, not “released replay.”
 
 ## Reproduce it

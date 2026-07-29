@@ -3,7 +3,7 @@ from dataclasses import FrozenInstanceError
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     BootstrapThresholdLandmarkClock,
     ClockKind,
     ClockSpec,

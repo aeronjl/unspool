@@ -6,7 +6,7 @@ generic pass/fail label.
 
 ## Fit audits
 
-::: unspool.diagnostics
+::: behavio.diagnostics
     options:
       members_order: source
       show_root_heading: false
@@ -14,13 +14,13 @@ generic pass/fail label.
 
 ## Posterior diagnostics and predictive checks
 
-::: unspool.posterior_diagnostics
+::: behavio.posterior_diagnostics
     options:
       members_order: source
       show_root_heading: false
       show_source: false
 
-::: unspool.posterior_predictive
+::: behavio.posterior_predictive
     options:
       members_order: source
       show_root_heading: false
@@ -28,7 +28,7 @@ generic pass/fail label.
 
 ## Simulation-based calibration
 
-::: unspool.sbc
+::: behavio.sbc
     options:
       members_order: source
       show_root_heading: false
@@ -36,13 +36,13 @@ generic pass/fail label.
 
 ## Sensitivity and reliability
 
-::: unspool.sensitivity
+::: behavio.sensitivity
     options:
       members_order: source
       show_root_heading: false
       show_source: false
 
-::: unspool.reliability
+::: behavio.reliability
     options:
       members_order: source
       show_root_heading: false
@@ -50,7 +50,7 @@ generic pass/fail label.
 
 ## PSIS-LOO
 
-::: unspool.posterior_loo
+::: behavio.posterior_loo
     options:
       members_order: source
       show_root_heading: false

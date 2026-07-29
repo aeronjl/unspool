@@ -23,7 +23,7 @@ unique subject, a target signature and unit, an occasion name, and the artifact 
 produced the values.
 
 ```python
-from unspool import (
+from behavio import (
     ReliabilityPolicy,
     ReliabilityStatistic,
     SubjectEstimates,
@@ -67,7 +67,7 @@ print(report.issue_codes)
 ```
 
 Subject order may differ because alignment uses explicit labels. The subject sets must be
-identical: Unspool rejects missing animals instead of silently performing complete-case
+identical: Behavio rejects missing animals instead of silently performing complete-case
 selection. If exclusions are scientifically justified, construct and report that cohort
 before this function, including fit failures in the denominator elsewhere.
 
@@ -88,7 +88,7 @@ differences remain available for tables and Bland-Altman figures.
 | MAE and RMSE | How large are absolute errors in the target's natural unit? |
 
 The ICCs use the two-way, single-measure ANOVA formulas commonly denoted ICC(C,1) and
-ICC(A,1). Unspool reports the formula names rather than ambiguous labels such as “the ICC.”
+ICC(A,1). Behavio reports the formula names rather than ambiguous labels such as “the ICC.”
 It does not assign universal poor/moderate/good categories.
 
 The default limits of agreement are mean difference $\pm 1.96$ difference SD. The
@@ -102,7 +102,7 @@ Percentile intervals therefore preserve pairing. The report retains every finite
 statistic and the number of invalid repetitions separately for each measure.
 
 Small samples or resamples containing only one unique value can make correlations or ICCs
-undefined. Unspool stores `None`, emits `reliability.undefined` or
+undefined. Behavio stores `None`, emits `reliability.undefined` or
 `reliability.bootstrap-effective`, and never coerces an undefined value to zero. The
 minimum effective-bootstrap fraction and a transparent small-sample warning threshold are
 policy, not claims that a particular sample size guarantees precision.
@@ -117,7 +117,7 @@ For a posterior variable with one `subject` dimension, extract per-subject poste
 without losing model and backend provenance:
 
 ```python
-from unspool import posterior_subject_estimates
+from behavio import posterior_subject_estimates
 
 week_1 = posterior_subject_estimates(
     posterior_week_1,
@@ -148,7 +148,7 @@ over coefficients, states, or conditions merely to obtain one convenient value p
 Comparable occasions are essential. Early and late learning sessions are expected to
 change; treating that trajectory as measurement error would answer the wrong question.
 Use this contract for repeated measurements intended to index the same relatively stable
-quantity under a comparable protocol, and use Unspool's trajectory and prospective tools
+quantity under a comparable protocol, and use Behavio's trajectory and prospective tools
 for learning-related change.
 
 The current estimator is a paired analysis of plug-in subject estimates. It does not

@@ -3,7 +3,7 @@ from collections.abc import Mapping
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     BehaviourModel,
     BernoulliHistoryGLM,
     BinaryQLearning,
@@ -24,7 +24,7 @@ from unspool import (
     run_parameter_recovery,
     within_session_rolling_splits,
 )
-from unspool.models.glm import _ordered_session_indices
+from behavio.models.glm import _ordered_session_indices
 
 
 def volatile_design(*, n_sessions: int = 8, trials_per_session: int = 120) -> Study:

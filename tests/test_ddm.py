@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from scipy.integrate import quad
 
-from unspool import (
+from behavio import (
     BehaviourModel,
     DriftDiffusionFitResult,
     PredictionMode,
@@ -17,7 +17,7 @@ from unspool import (
     model_capabilities,
     run_parameter_recovery,
 )
-from unspool.models.ddm import (
+from behavio.models.ddm import (
     _numerical_hessian,
     _upper_boundary_probability,
     _wiener_log_density,

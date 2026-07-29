@@ -1,7 +1,7 @@
 import pytest
 
-from unspool import DANDIAdapterError, DANDINWBSource, ResolvedDANDIAsset
-from unspool.adapters import dandi as dandi_adapter
+from behavio import DANDIAdapterError, DANDINWBSource, ResolvedDANDIAsset
+from behavio.adapters import dandi as dandi_adapter
 
 
 def source() -> DANDINWBSource:

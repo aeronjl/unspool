@@ -8,8 +8,8 @@ from typing import Any
 
 import numpy as np
 
+from behavio import HierarchicalSmoothWienerDriftDiffusion, Study
 from benchmarks.provenance import render
-from unspool import HierarchicalSmoothWienerDriftDiffusion, Study
 
 SUBJECT_COUNTS = (6, 12)
 TRUE_SCALES = {"drift.stimulus": 0.22, "boundary": 0.07}

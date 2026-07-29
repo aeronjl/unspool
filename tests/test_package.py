@@ -1,4 +1,4 @@
-from unspool import __version__
+from behavio import __version__
 
 
 def test_package_has_a_version() -> None:

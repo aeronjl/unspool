@@ -8,8 +8,8 @@ from typing import Any
 
 import numpy as np
 
+from behavio import ClockKind, ClockSpec, Study, ThresholdLandmarkClock
 from benchmarks.provenance import render
-from unspool import ClockKind, ClockSpec, Study, ThresholdLandmarkClock
 
 DEFAULT_REPETITIONS = 30
 DEFAULT_RESAMPLES = 200

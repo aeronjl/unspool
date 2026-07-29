@@ -5,9 +5,9 @@ perceptual decision-making," *Nature Neuroscience* 25:201-212 (2022),
 doi [`10.1038/s41593-021-01007-z`](https://doi.org/10.1038/s41593-021-01007-z).
 
 This is the canonical GLM-HMM paper for perceptual decision-making, it has public data and
-public reference code, and Unspool ships a GLM-HMM. That makes it the natural place to ask
-whether Unspool's implementation recovers numbers somebody else published, rather than only
-numbers Unspool generated.
+public reference code, and Behavio ships a GLM-HMM. That makes it the natural place to ask
+whether Behavio's implementation recovers numbers somebody else published, rather than only
+numbers Behavio generated.
 
 `PROTOCOL.md` was frozen before any of these numbers existed. It states what would be
 computed, with which hyperparameters, on which cohort, and inside which tolerances. Read it
@@ -26,12 +26,12 @@ masks. Nick Roy and Jonathan Pillow's
 *smoothly drifting* account of the same behaviour, which is the alternative hypothesis
 Ashwood's discrete-state model is argued against.
 
-Unspool's `BernoulliGLMHMM` is **narrower than both** and is not a replacement for either.
+Behavio's `BernoulliGLMHMM` is **narrower than both** and is not a replacement for either.
 It fits one emission family, has no hierarchy, no observation mask, no Dirichlet transition
 prior and no procedure for selecting the number of states. What it adds is a different thing:
 the surrounding contract — frozen protocols, checksum-pinned inputs, provenance-stamped
 results, retained failures. If you want to fit a GLM-HMM to your data, use `ssm`. This
-benchmark exists to measure how far Unspool's narrower implementation gets on somebody
+benchmark exists to measure how far Behavio's narrower implementation gets on somebody
 else's published numbers, and to say plainly where it stops.
 
 ## Data
@@ -105,7 +105,7 @@ lands within a thousandth of a bit.
 ### Why each failure fails
 
 - **Biased-state accuracies, 41% against a published 60% and 58%.** Both fall *below chance*,
-  which is the signature of the substitution rather than of the model. Unspool exposes no
+  which is the signature of the substitution rather than of the model. Behavio exposes no
   smoothed posterior, so trials are attributed to a state by *filtered* probability — and the
   filter is updated by the current trial's own outcome. Conditioning on filtered probability
   >= 0.9 therefore preferentially selects the trials that most strongly evidence a biased
@@ -114,7 +114,7 @@ lands within a thousandth of a bit.
   state, where choice and stimulus agree, is unaffected and passes at 93.9%.
 - **Dwell times, +28% and +27% on the two long-dwell states.** Dwell is `1/(1 - A_kk)`. The
   paper's Dirichlet(alpha = 2) prior adds pseudo-counts to *every* transition entry, pulling
-  self-transitions away from one; Unspool's `stickiness` can only add them to the diagonal, so
+  self-transitions away from one; Behavio's `stickiness` can only add them to the diagonal, so
   the transition matrix here is fitted with no prior at all and self-transitions sit higher.
   The short-dwell biased-right state, least affected, passes.
 - **Engaged occupancy, 58.2% against a published 69%.** The paper counts hard `argmax` state
@@ -142,7 +142,7 @@ written rationale, rather than omitted. A waiver means the claim is machine-read
 | --- | --- |
 | **the three-state selection itself** (Figs. 2b, 4a) | The paper never reports an arg-max. It says the improvement "approximately levels off at three latent states" and that three states are what "we used for all subsequent analyses"; K = 4 and K = 5 are never claimed to be worse. Encoding an arg-max would invent a published value. The state count and the whole bits-per-trial curve over K are computed and reported in `result.json` without being asserted. |
 | **K selection across all 37 animals** (Fig. 4a) | Only the example mouse is cross-validated. Five folds x five candidates x 37 animals is roughly forty hours of single-core time with this implementation. |
-| **the pooled global fit and cross-animal state alignment** (Methods, Algorithm 1) | Unspool cannot initialize a fit from externally supplied parameters, so the paper's seeding procedure is inexpressible; a 181,530-trial fit is also out of compute reach. |
+| **the pooled global fit and cross-animal state alignment** (Methods, Algorithm 1) | Behavio cannot initialize a fit from externally supplied parameters, so the paper's seeding procedure is inexpressible; a 181,530-trial fit is also out of compute reach. |
 | **population predictive-accuracy gains of 4.2% and 2.8%** (Results) | Both are averages over the 37-animal cross-validation waived above. |
 | **response-time signatures of state** (Fig. 6) | `BernoulliGLMHMM` has Bernoulli choice emissions only and cannot attach a latency distribution to a latent state. Structurally inexpressible, not merely expensive. |
 | **the Odoemene mice and human participants** (Figs. 5, 7) | Different datasets under different accessions. The declared data boundary is the single IBL archive. |
@@ -152,13 +152,13 @@ The first row is the important one. Ashwood's best-known result is usually parap
 and this benchmark declines to check a number the article does not print. `PROTOCOL.md`
 section 9a records that correction, which **removes** a claim and loosens no tolerance.
 
-## What Unspool could not express
+## What Behavio could not express
 
 This is the most useful output of the exercise. Each row is a place where the paper's
 procedure has no equivalent in this package. All are declared in `PROTOCOL.md` section 6,
 before the computation, because each one moves the numbers.
 
-| the paper does | Unspool can | what was done instead |
+| the paper does | Behavio can | what was done instead |
 | --- | --- | --- |
 | keeps violation trials in the sequence and replaces their emission likelihood with 1 | nothing — `BernoulliGLMHMM` has no observation mask | the violation rows are dropped |
 | places a Dirichlet(alpha = 2) prior on every transition row, with `kappa = 0` | only add pseudo-counts to the *diagonal*, through `stickiness` | `stickiness = 0`; the transition matrix is fitted with no prior |
@@ -172,7 +172,7 @@ before the computation, because each one moves the numbers.
 
 The last row is the structural one. `nested_select_model` selects among a supplied list of
 models under a *prospective* nested scheme; it is not a sweep over state count, and the
-paper's cross-validation is not prospective. There is no K-selection procedure in Unspool.
+paper's cross-validation is not prospective. There is no K-selection procedure in Behavio.
 
 Two further constraints are computational rather than structural. A pooled fit over 181,530
 trials, and a five-fold sweep over five candidates repeated for all 37 animals, are both out

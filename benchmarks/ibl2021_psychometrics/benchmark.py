@@ -19,6 +19,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from behavio import IBLONETrialSource, Study, read_ibl_one_sessions
 from benchmarks.ibl2021_psychometrics.fetch_data import (
     DEFAULT_CACHE,
     INSTITUTIONS,
@@ -37,7 +38,6 @@ from benchmarks.ibl2021_psychometrics.psychometric import (
     fit_psychometric,
 )
 from benchmarks.provenance import render
-from unspool import IBLONETrialSource, Study, read_ibl_one_sessions
 
 BENCHMARK = "International Brain Laboratory et al. (2021), eLife 10:e63711"
 

@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     NWBAdapterError,
     NWBSessionSource,
     Study,
@@ -44,7 +44,7 @@ def test_nwb_round_trip_preserves_trial_rows_identity_and_source_columns(tmp_pat
         original,
         path,
         session_description="A behavioral learning session.",
-        identifier="unspool-round-trip",
+        identifier="behavio-round-trip",
         session_start_time=datetime(2025, 1, 2, tzinfo=UTC),
     )
     restored = read_nwb(written)
@@ -52,7 +52,7 @@ def test_nwb_round_trip_preserves_trial_rows_identity_and_source_columns(tmp_pat
     assert validate(path=str(path)) == []
     for name in original.columns:
         np.testing.assert_array_equal(restored[name], original[name])
-    assert restored["source_nwb_identifier"].tolist() == ["unspool-round-trip"] * 3
+    assert restored["source_nwb_identifier"].tolist() == ["behavio-round-trip"] * 3
     assert restored["source_nwb_path"].tolist() == [str(path.resolve())] * 3
     assert restored.chronological_indices().tolist() == [1, 2, 0]
 

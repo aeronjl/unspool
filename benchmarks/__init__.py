@@ -1,1 +1,1 @@
-"""Reproducible study-specific benchmarks kept outside the Unspool package."""
+"""Reproducible study-specific benchmarks kept outside the Behavio package."""

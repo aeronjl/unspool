@@ -1,7 +1,7 @@
 # Posterior-predictive checks
 
 Posterior-predictive checks ask whether data replicated from a fitted model reproduce
-scientifically relevant features of the observations. Unspool supplies a small discrepancy
+scientifically relevant features of the observations. Behavio supplies a small discrepancy
 contract rather than a fixed dashboard: each check declares what feature it measures, the
 relevant reference tail, and a stable signature retained with the result.
 
@@ -13,7 +13,7 @@ model-criticism workflow described by [Gabry et al.
 ## A minimal behavioural check
 
 ```python
-from unspool import (
+from behavio import (
     CategoryRateDiscrepancy,
     MeanDiscrepancy,
     SwitchRateDiscrepancy,
@@ -78,7 +78,7 @@ chronology or bridge session boundaries on the user's behalf.
 ## Policies and warnings
 
 ```python
-from unspool import PosteriorPredictivePolicy
+from behavio import PosteriorPredictivePolicy
 
 policy = PosteriorPredictivePolicy(
     interval_probability=0.9,
@@ -103,6 +103,6 @@ also reuses the observations that informed the posterior. It therefore does not 
 - prediction of genuinely later sessions—use [prospective validation](validation.md).
 
 Use ArViZ's [generic PPC plots](https://python.arviz.org/en/stable/api/generated/arviz.plot_ppc.html)
-through `posterior.to_arviz()` when distributional visualization is useful. Unspool's layer
+through `posterior.to_arviz()` when distributional visualization is useful. Behavio's layer
 adds behavioural discrepancy identity, labelled grouping, immutable evidence, and explicit
 interpretation boundaries; it does not replace ArViZ's plotting ecosystem.

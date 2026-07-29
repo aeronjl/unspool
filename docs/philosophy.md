@@ -1,14 +1,28 @@
-# Philosophy of Unspool
+# Philosophy of Behavio
 
-Unspool's philosophical background is not ornamental. It supplies questions that become
+Behavio's philosophical background is not ornamental. It supplies questions that become
 software constraints: What is lost when a history is represented as a coordinate? When
 does alignment clarify a process, and when does it manufacture sameness? What distinguishes
 an individual trajectory from a noisy draw around a population parameter? What would make
 one explanation of change identifiable against another?
 
-These traditions are not interchangeable, and Unspool does not claim that a statistical
+These traditions are not interchangeable, and Behavio does not claim that a statistical
 model implements a phenomenology of time. They are used as disciplined provocations for
-the design of longitudinal behavioural methods.
+the design of behavioural methods.
+
+## A note on scope, and on a name that is gone
+
+This package was once called `unspool`, after the Bergsonian image of a tape unwinding
+from one spool onto another. That name argued for the package in longitudinal analyses
+and against it everywhere else, so it was retired. Nothing below was retired with it.
+
+The scope is now stated plainly instead of encoded in a metaphor: a single-session
+psychometric fit, a within-session model of choice and response time, an ethogram, a
+foraging bout, and a multi-month learning trajectory are all in scope. Some arguments
+here — duration, retention, protention — bite hardest when an analysis spans sessions.
+The rest — individuation under pooling, repetition under changed conditions,
+underdetermination by fit — apply to a single session just as forcefully, because a
+session is itself an ordered process and not a bag of exchangeable trials.
 
 ## Duration: Henri Bergson
 
@@ -18,11 +32,13 @@ rather than a row of mutually external points.
 
 In “An Introduction to Metaphysics,” Bergson imagines two spools connected by a tape. One
 unwinds toward the future while the other gathers the past. He calls this the “unrolling
-of our duration.” The image gives this project its name, but Bergson's criticism of the
-image matters just as much: a reusable tape suggests that moments can be superimposed,
-whereas a living process changes as it proceeds.
+of our duration.” What this project takes from the passage is not the image but Bergson's
+own objection to it: a reusable tape suggests that moments can be superimposed and
+replayed, whereas a living process is altered by proceeding. An analysis that aligns two
+learning histories onto a shared axis has borrowed the tape, and owes an argument that the
+superimposition it performs is warranted rather than assumed.
 
-For Unspool, this motivates multiple explicit clocks, preservation of ordering, and
+For Behavio, this motivates multiple explicit clocks, preservation of ordering, and
 sensitivity analyses for any alignment that makes different learning histories appear
 commensurable.
 
@@ -39,7 +55,7 @@ found at a series of self-contained instants. The restrained methodological anal
 useful: the current trial is intelligible through an accumulated learning history and the
 future-directed predictions or policies that history supports.
 
-Unspool does **not** treat animal behaviour as an application of Heidegger's analysis of
+Behavio does **not** treat animal behaviour as an application of Heidegger's analysis of
 Dasein. The relevant lesson is narrower: temporal context is constitutive of the object
 being modelled, not merely metadata attached to it.
 
@@ -57,7 +73,7 @@ This provides a useful vocabulary for two distinct requirements:
   the future outcomes they purport to predict.
 
 The second requirement is why prospective and rolling-origin validation are central to
-Unspool. Smoothed latent states may be useful descriptions, but they are not automatically
+Behavio. Smoothed latent states may be useful descriptions, but they are not automatically
 valid pre-choice predictors.
 
 ## Individuation and metastability: Gilbert Simondon
@@ -79,7 +95,7 @@ Across Heraclitus, Nietzsche, Bergson, and Deleuze runs a family of arguments th
 and becoming are prior to static identity. A repeated experimental trial is not necessarily
 the same event repeated: the organism's history, expectations, and capacities have changed.
 
-Unspool therefore treats stationarity as a model to test, not a default truth. Conversely,
+Behavio therefore treats stationarity as a model to test, not a default truth. Conversely,
 it does not assume that every change is scientifically meaningful. Smooth drift, discrete
 regimes, learning rules, fatigue, movement, and task belief must be made to compete.
 
@@ -97,7 +113,7 @@ of the result.
 
 ## From concepts to software commitments
 
-| Philosophical prompt | Unspool commitment |
+| Philosophical prompt | Behavio commitment |
 | --- | --- |
 | Duration is not homogeneous clock time | Preserve ordering and expose multiple clocks. |
 | Temporal context constitutes the present | Make history and state transitions explicit. |

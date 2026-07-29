@@ -9,7 +9,7 @@ Analysis release: [doi:10.6084/m9.figshare.28877942.v1](https://doi.org/10.6084/
 
 This document freezes the scientific contract before any flagship models are fitted. It
 separates reproduction of the published analysis from new estimands introduced by
-Unspool. A successful reproduction does not validate a new forecast, and a successful
+Behavio. A successful reproduction does not validate a new forecast, and a successful
 forecast does not make the paper's descriptive trajectory clusters prospective.
 
 ## Questions and claim boundaries
@@ -156,7 +156,7 @@ contrast terms, no choice-history lags, and identical folds:
 
 The frozen regularization values are `l2 = 0.02`, population-path `smoothness = 3.0`,
 `subject_scale = 0.4`, and subject-path `subject_smoothness = 3.0`. These values are shared
-with Unspool's preceding matched longitudinal benchmark and are not selected on the Cell
+with Behavio's preceding matched longitudinal benchmark and are not selected on the Cell
 forecast outcomes.
 
 ### Design amendment after simulation falsification
@@ -175,7 +175,7 @@ the published paper-day unit does not define a defensible cross-source-session t
 history. The benchmark may later add a source-session analysis as a separately named
 estimand; it cannot silently alter this contract.
 
-Unspool's current `BinaryQLearning` is not a reproduction of the paper's single-state
+Behavio's current `BinaryQLearning` is not a reproduction of the paper's single-state
 Q-value model: it resets values by session, uses one learning rate, and includes different
 choice-history terms. It is therefore excluded from the primary candidate set. The exact
 published first-five-day model comparison is reproduced separately in Layer A; any

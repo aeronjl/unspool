@@ -5,7 +5,7 @@ declares had been computed. The single, disclosed exception is recorded under
 [Prior exposure](#prior-exposure).
 
 This protocol governs an attempted **replication of numbers published by other people**.
-It is not an application of Unspool's pipeline to IBL data — six of those already exist in
+It is not an application of Behavio's pipeline to IBL data — six of those already exist in
 this repository and are graded gestural because they report their own numbers. The object
 here is narrower and harder: take a number the International Brain Laboratory printed,
 recompute it from the public data, and compare it under a tolerance fixed in advance.
@@ -22,7 +22,7 @@ Correction: eLife 2022;11:e84310 revises only the quiescent-period duration
 Data: the public ONE release tagged `2021_Q1_IBL_et_al_Behaviour` served by
 `https://openalyx.internationalbrainlab.org`, licensed CC-BY 4.0. Every trial table is
 addressed by its exact dataset UUID and verified against its released MD5 by
-`unspool.adapters.ibl_one`, which preserves IBL's native `-1/0/+1` choice coding.
+`behavio.adapters.ibl_one`, which preserves IBL's native `-1/0/+1` choice coding.
 
 ## What the paper actually says
 
@@ -69,7 +69,7 @@ counts per signed contrast level, using the IBL's published bounds:
 
 σ is reported **directly, in percent contrast**. It is not inverted, and no separate slope
 is fitted. This parameterisation is chosen because it is the one the paper used; a logistic
-with a single symmetric lapse (Unspool's `LapsePsychometric`) would not be comparable, and
+with a single symmetric lapse (Behavio's `LapsePsychometric`) would not be comparable, and
 is deliberately not used here.
 
 ## Cohort
@@ -337,7 +337,7 @@ is not itself a `trainingChoiceWorld` session.
 
 ### 5. Choice coding
 
-IBL's ALF `trials.choice` is `-1 / 0 / +1` and `unspool.adapters.ibl_one` preserves it. The
+IBL's ALF `trials.choice` is `-1 / 0 / +1` and `behavio.adapters.ibl_one` preserves it. The
 mapping from that coding to "rightward choice" is **not assumed**: the benchmark derives it
 from the data by checking, on unambiguous trials (non-zero contrast, `feedbackType == +1`),
 which sign of `choice` co-occurs with a right-side stimulus, and asserts the mapping is

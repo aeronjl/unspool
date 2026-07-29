@@ -4,7 +4,7 @@ from dataclasses import FrozenInstanceError, replace
 
 import pytest
 
-from unspool.protocol import (
+from behavio.protocol import (
     SCHEMA_VERSION,
     AggregationWeighting,
     CandidateSpec,
@@ -118,7 +118,7 @@ def example_protocol(*, with_recovery: bool = True) -> StudyProtocol:
         transforms=(
             TransformSpec(
                 name="stimulus-scale",
-                implementation="unspool.transforms.Standardize",
+                implementation="behavio.transforms.Standardize",
                 input_columns=("stimulus",),
                 output_columns=("stimulus_z",),
                 visibility=TransformVisibility.TRAINING_ONLY,
@@ -126,7 +126,7 @@ def example_protocol(*, with_recovery: bool = True) -> StudyProtocol:
         ),
         validation=ValidationSpec(
             geometry=ValidationGeometry.FUTURE_SESSION,
-            splitter="unspool.validation.cohort_forward_session_splits",
+            splitter="behavio.validation.cohort_forward_session_splits",
             prediction_information=PredictionInformation.FILTERED,
             origin=4,
             horizon=(5,),
@@ -134,13 +134,13 @@ def example_protocol(*, with_recovery: bool = True) -> StudyProtocol:
         candidates=(
             CandidateSpec(
                 name="static",
-                implementation="unspool.models.HierarchicalBernoulliHistoryGLM",
+                implementation="behavio.models.HierarchicalBernoulliHistoryGLM",
                 hyperparameters=(Setting("subject_scale", 0.5),),
                 scored_columns=("choice",),
             ),
             CandidateSpec(
                 name="smooth",
-                implementation="unspool.models.HierarchicalSmoothBernoulliHistoryGLM",
+                implementation="behavio.models.HierarchicalSmoothBernoulliHistoryGLM",
                 hyperparameters=(Setting("smoothness", 9.0),),
                 scored_columns=("choice",),
             ),
@@ -263,7 +263,7 @@ def test_outcome_derived_transform_must_be_training_only() -> None:
     with pytest.raises(ProtocolValidationError, match="training-only"):
         TransformSpec(
             name="learning-landmark",
-            implementation="unspool.transforms.ThresholdLandmarkClock",
+            implementation="behavio.transforms.ThresholdLandmarkClock",
             input_columns=("choice",),
             output_columns=("relative_trial",),
             visibility=TransformVisibility.FIXED_A_PRIORI,

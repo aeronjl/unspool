@@ -7,25 +7,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Literal
 
-from benchmarks.ibl2021_nested_selection.benchmark import (
-    BOOTSTRAP_RESAMPLES,
-    BOOTSTRAP_SEED,
-    CANDIDATES,
-    INNER_BOOTSTRAP_RESAMPLES,
-    KNOTS,
-    _candidates,
-)
-from benchmarks.ibl2021_prospective.benchmark import (
-    TRAIN_SESSION_COUNT,
-    build_panel,
-)
-from benchmarks.ibl2021_replicated.benchmark import DEFAULT_CACHE, load_study
-from benchmarks.ibl2021_replicated.manifest import (
-    EXPECTED_MANIFEST_SHA256,
-    load_manifest,
-)
-from benchmarks.provenance import render
-from unspool import (
+from behavio import (
     AggregationWeighting,
     CandidateSpec,
     CohortPredicate,
@@ -59,6 +41,24 @@ from unspool import (
     model_capabilities,
     run_nested_protocol,
 )
+from benchmarks.ibl2021_nested_selection.benchmark import (
+    BOOTSTRAP_RESAMPLES,
+    BOOTSTRAP_SEED,
+    CANDIDATES,
+    INNER_BOOTSTRAP_RESAMPLES,
+    KNOTS,
+    _candidates,
+)
+from benchmarks.ibl2021_prospective.benchmark import (
+    TRAIN_SESSION_COUNT,
+    build_panel,
+)
+from benchmarks.ibl2021_replicated.benchmark import DEFAULT_CACHE, load_study
+from benchmarks.ibl2021_replicated.manifest import (
+    EXPECTED_MANIFEST_SHA256,
+    load_manifest,
+)
+from benchmarks.provenance import render
 
 Target = Literal["same-animal", "held-out-lab"]
 LEGACY_RESULT = Path(__file__).parents[1] / "ibl2021_nested_selection" / "result.json"
@@ -102,9 +102,9 @@ def build_protocol(target: Target) -> StudyProtocol:
             else ValidationGeometry.FUTURE_SESSION
         ),
         (
-            "unspool.validation.leave_one_lab_out_session_forecast_splits"
+            "behavio.validation.leave_one_lab_out_session_forecast_splits"
             if held_out
-            else "unspool.validation.cohort_forward_session_splits"
+            else "behavio.validation.cohort_forward_session_splits"
         ),
         PredictionInformation.FILTERED,
         group_unit="lab" if held_out else None,
@@ -127,9 +127,9 @@ def build_protocol(target: Target) -> StudyProtocol:
             else ValidationGeometry.FUTURE_SESSION
         ),
         (
-            "unspool.validation.leave_one_lab_out_session_forecast_splits"
+            "behavio.validation.leave_one_lab_out_session_forecast_splits"
             if held_out
-            else "unspool.validation.cohort_forward_session_splits"
+            else "behavio.validation.cohort_forward_session_splits"
         ),
         PredictionInformation.FILTERED,
         group_unit="lab" if held_out else None,
@@ -408,7 +408,7 @@ def _candidate_specs(*, held_out: bool) -> tuple[CandidateSpec, ...]:
     candidates = [
         CandidateSpec(
             "static",
-            "unspool.models.HierarchicalBernoulliHistoryGLM",
+            "behavio.models.HierarchicalBernoulliHistoryGLM",
             (*common, Setting("subject_scale", 0.4)),
             ("choice",),
             supports_unseen_subjects=held_out,
@@ -419,7 +419,7 @@ def _candidate_specs(*, held_out: bool) -> tuple[CandidateSpec, ...]:
         candidates.append(
             CandidateSpec(
                 f"drift_smoothness_{int(smoothness)}",
-                "unspool.models.HierarchicalSmoothBernoulliHistoryGLM",
+                "behavio.models.HierarchicalSmoothBernoulliHistoryGLM",
                 (
                     *common,
                     Setting("knots", KNOTS),

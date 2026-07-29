@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unspool import Study, leave_one_lab_out_splits, leave_one_subject_out_splits
+from behavio import Study, leave_one_lab_out_splits, leave_one_subject_out_splits
 
 
 def make_study() -> Study:

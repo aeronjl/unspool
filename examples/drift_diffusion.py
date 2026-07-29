@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from unspool import Study, WienerDriftDiffusion
+from behavio import Study, WienerDriftDiffusion
 
 generator = np.random.default_rng(104)
 n_trials = 600

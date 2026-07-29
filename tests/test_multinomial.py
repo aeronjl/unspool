@@ -5,7 +5,7 @@ import pytest
 from test_compiler import capabilities, frozen_small_protocol, source_study
 from test_runner import compiled_small_protocol
 
-from unspool import (
+from behavio import (
     CategoricalPrediction,
     ChoiceSpec,
     DesignSpec,

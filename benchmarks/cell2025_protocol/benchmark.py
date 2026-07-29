@@ -7,32 +7,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from benchmarks.cell2025.benchmark import load_study
-from benchmarks.cell2025.fetch_data import (
-    DEFAULT_DESTINATION,
-    FIGSHARE_ARTICLE_DOI,
-    MEMBER_SHA256,
-    sha256,
-)
-from benchmarks.cell2025_flagship.benchmark import (
-    BOOTSTRAP_RESAMPLES,
-    BOOTSTRAP_SEED,
-    CONTEXT_PAPER_DAYS,
-    EARLY_BIAS_RECOVERY_REPEATS,
-    EARLY_BIAS_RECOVERY_SEED,
-    FORECAST_HORIZON,
-    KNOTS,
-    MODEL_ORDER,
-    MODEL_RECOVERY_REPEATS,
-    MODEL_RECOVERY_SEED,
-    N_FOLDS,
-    PARAMETER_RECOVERY_REPEATS,
-    PARAMETER_RECOVERY_SEED,
-    _models,
-    build_forecast_panel,
-)
-from benchmarks.provenance import render
-from unspool import (
+from behavio import (
     AggregationWeighting,
     CandidateSpec,
     CohortPredicate,
@@ -67,6 +42,31 @@ from unspool import (
     model_capabilities,
     run_protocol,
 )
+from benchmarks.cell2025.benchmark import load_study
+from benchmarks.cell2025.fetch_data import (
+    DEFAULT_DESTINATION,
+    FIGSHARE_ARTICLE_DOI,
+    MEMBER_SHA256,
+    sha256,
+)
+from benchmarks.cell2025_flagship.benchmark import (
+    BOOTSTRAP_RESAMPLES,
+    BOOTSTRAP_SEED,
+    CONTEXT_PAPER_DAYS,
+    EARLY_BIAS_RECOVERY_REPEATS,
+    EARLY_BIAS_RECOVERY_SEED,
+    FORECAST_HORIZON,
+    KNOTS,
+    MODEL_ORDER,
+    MODEL_RECOVERY_REPEATS,
+    MODEL_RECOVERY_SEED,
+    N_FOLDS,
+    PARAMETER_RECOVERY_REPEATS,
+    PARAMETER_RECOVERY_SEED,
+    _models,
+    build_forecast_panel,
+)
+from benchmarks.provenance import render
 
 LEGACY_RESULT = Path(__file__).parents[1] / "cell2025_flagship" / "result.json"
 PROTOCOL_RESULT = Path(__file__).with_name("result.json")
@@ -113,19 +113,19 @@ def build_protocol() -> StudyProtocol:
     candidates = (
         CandidateSpec(
             "pooled_psychometric",
-            "unspool.models.BernoulliHistoryGLM",
+            "behavio.models.BernoulliHistoryGLM",
             (Setting("covariates", psychometric), *common),
             ("choice",),
         ),
         CandidateSpec(
             "late_phase_psychometric",
-            "unspool.models.BernoulliHistoryGLM",
+            "behavio.models.BernoulliHistoryGLM",
             (Setting("covariates", late_phase), *common),
             ("choice",),
         ),
         CandidateSpec(
             "early_bias_forecast",
-            "unspool.models.BernoulliHistoryGLM",
+            "behavio.models.BernoulliHistoryGLM",
             (
                 Setting(
                     "covariates",
@@ -143,7 +143,7 @@ def build_protocol() -> StudyProtocol:
         ),
         CandidateSpec(
             "static_partial_pooling",
-            "unspool.models.HierarchicalBernoulliHistoryGLM",
+            "behavio.models.HierarchicalBernoulliHistoryGLM",
             (
                 Setting("covariates", psychometric),
                 Setting("subject_scale", 0.4),
@@ -153,7 +153,7 @@ def build_protocol() -> StudyProtocol:
         ),
         CandidateSpec(
             "shared_smooth_trajectory",
-            "unspool.models.SmoothBernoulliHistoryGLM",
+            "behavio.models.SmoothBernoulliHistoryGLM",
             (
                 Setting("covariates", psychometric),
                 Setting("knots", KNOTS),
@@ -165,7 +165,7 @@ def build_protocol() -> StudyProtocol:
         ),
         CandidateSpec(
             "hierarchical_smooth_trajectory",
-            "unspool.models.HierarchicalSmoothBernoulliHistoryGLM",
+            "behavio.models.HierarchicalSmoothBernoulliHistoryGLM",
             (
                 Setting("covariates", psychometric),
                 Setting("knots", KNOTS),
@@ -280,7 +280,7 @@ def build_protocol() -> StudyProtocol:
         ),
         validation=ValidationSpec(
             ValidationGeometry.HISTORICAL_COHORT_FUTURE_SESSION,
-            "unspool.validation.historical_cohort_forecast_splits",
+            "behavio.validation.historical_cohort_forecast_splits",
             PredictionInformation.FILTERED,
             settings=(
                 Setting("context_session_count", len(CONTEXT_PAPER_DAYS)),

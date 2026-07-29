@@ -1,7 +1,7 @@
 # Fixed-scale partial-pooling benchmark
 
 This synthetic benchmark asks one bounded question: when subjects differ by Gaussian
-deviations from a population Bernoulli history GLM, does the first Unspool hierarchical
+deviations from a population Bernoulli history GLM, does the first Behavio hierarchical
 fit improve recovery and future-session prediction relative to complete pooling or fitting
 every subject independently?
 

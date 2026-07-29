@@ -5,7 +5,7 @@ spaces, deterministic objectives, multistart backends, and external estimator re
 
 ## Parameter spaces
 
-::: unspool.parameters
+::: behavio.parameters
     options:
       members_order: source
       show_root_heading: false
@@ -13,7 +13,7 @@ spaces, deterministic objectives, multistart backends, and external estimator re
 
 ## Optimization backends
 
-::: unspool.inference
+::: behavio.inference
     options:
       members_order: source
       show_root_heading: false
@@ -21,7 +21,7 @@ spaces, deterministic objectives, multistart backends, and external estimator re
 
 ## Estimator registry
 
-::: unspool.registry
+::: behavio.registry
     options:
       members_order: source
       show_root_heading: false

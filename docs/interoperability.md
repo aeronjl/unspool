@@ -1,6 +1,6 @@
 # Tabular, IBL ONE, NWB, and DANDI interoperability
 
-Unspool keeps `Study` small and format-independent. Interoperability code converts source
+Behavio keeps `Study` small and format-independent. Interoperability code converts source
 tables into that contract; it does not let file names, dataframe indices, or archive order
 become hidden scientific assumptions.
 
@@ -16,7 +16,7 @@ deliberately ignoring the index. Subject identity, session identity, within-sess
 number, and session chronology must be ordinary explicit columns:
 
 ```python
-from unspool import Study
+from behavio import Study
 
 study = Study.from_dataframe(trials_dataframe)
 ```
@@ -34,7 +34,7 @@ uv sync --extra ibl
 ```
 
 ```python
-from unspool import IBLONETrialSource, study_from_ibl_one
+from behavio import IBLONETrialSource, study_from_ibl_one
 
 study = study_from_ibl_one(
     IBLONETrialSource(
@@ -58,10 +58,10 @@ release tag, path, size, checksum, and Alyx origin remain addressable on every t
 multi-session reader preserves declared input order while `Study.chronological_indices()`
 uses the explicit `session_order`.
 
-IBL's source `choice` coding is not Unspool's binary Bernoulli coding. The adapter therefore
+IBL's source `choice` coding is not Behavio's binary Bernoulli coding. The adapter therefore
 does not silently reinterpret `-1`, `0`, and `+1`; callers must give the source field an
 honest name such as `source_choice` and perform any model-specific recoding explicitly.
-The [replicated IBL benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021_replicated) exercises this
+The [replicated IBL benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/ibl2021_replicated) exercises this
 contract against 468 checksum-pinned public tables.
 
 ## Reading local NWB sessions
@@ -74,7 +74,7 @@ uv sync --extra nwb
 ```
 
 ```python
-from unspool import NWBSessionSource, read_nwb
+from behavio import NWBSessionSource, read_nwb
 
 study = read_nwb(
     NWBSessionSource(
@@ -88,8 +88,8 @@ study = read_nwb(
 
 Subject identity comes from `Subject.subject_id` and session identity from `session_id`
 unless supplied explicitly. `session_order` is different: generic NWB has no standard
-cross-session ordinal, so Unspool refuses to infer it from timestamps, paths, or the order
-of a list. An Unspool-authored NWB file embeds it losslessly; an external file requires the
+cross-session ordinal, so Behavio refuses to infer it from timestamps, paths, or the order
+of a list. An Behavio-authored NWB file embeds it losslessly; an external file requires the
 caller to supply it.
 
 By default, all scalar trial columns are copied. Ragged arrays and object-valued cells are
@@ -112,7 +112,7 @@ file model. It also requires explicit finite `start_time` and `stop_time` column
 
 ```python
 from datetime import UTC, datetime
-from unspool import write_nwb
+from behavio import write_nwb
 
 write_nwb(
     one_session,
@@ -125,7 +125,7 @@ write_nwb(
 
 The writer embeds native subject, session, trial, and session-order values in custom trial
 columns as well as populating standard NWB subject/session metadata. This makes an
-Unspool–NWB–Unspool round trip lossless even when canonical trial IDs are not the NWB row
+Behavio–NWB–Behavio round trip lossless even when canonical trial IDs are not the NWB row
 numbers. Existing files are never overwritten unless `overwrite=True` is explicit.
 
 PyNWB's structural validator is exercised by the adapter test suite. The NWB project
@@ -144,7 +144,7 @@ uv sync --extra dandi
 ```
 
 ```python
-from unspool import DANDINWBSource, study_from_dandi
+from behavio import DANDINWBSource, study_from_dandi
 
 study = study_from_dandi(
     DANDINWBSource(
@@ -173,6 +173,6 @@ follows the official [DANDI REST API](https://docs.dandiarchive.org/api/rest-api
 - The ONE adapter is a read-only exact-dataset importer; release discovery, remote mutation,
   and implicit selection by dataset name remain outside its contract.
 
-The [public interoperability benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/nwb_dandi_interoperability)
+The [public interoperability benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/nwb_dandi_interoperability)
 pins a real DANDI asset and verifies the complete identity, chronology, source-semantics,
 and provenance contract.

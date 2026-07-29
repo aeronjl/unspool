@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Unspool is a process-first Python library for fitting and falsifying behavioural models
+Behavio is a process-first Python library for fitting and falsifying behavioural models
 across learning. Scientific validity and a small stable API take priority over model count.
 
 ## Workflow
@@ -16,7 +16,7 @@ across learning. Scientific validity and a small stable API take priority over m
 
 ## Architecture
 
-- Keep reusable library code in `src/unspool/`.
+- Keep reusable library code in `src/behavio/`.
 - Keep data-source adapters optional; do not make NWB, ONE, or DANDI core dependencies.
 - Require models to expose compatible simulation, fitting, prediction, pointwise scoring,
   and diagnostics contracts before expanding the model catalogue.

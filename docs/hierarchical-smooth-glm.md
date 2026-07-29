@@ -1,6 +1,6 @@
 # Partially pooled trajectories
 
-`HierarchicalSmoothBernoulliHistoryGLM` is Unspool's first model of population and
+`HierarchicalSmoothBernoulliHistoryGLM` is Behavio's first model of population and
 individual change. For coefficient \(c\), subject \(i\), and fixed temporal basis
 \(B(t)\), it represents
 
@@ -12,7 +12,7 @@ where \(\theta_c\) is the population knot path and \(u_{ic}\) is a subject-devia
 path. Both remain directly inspectable.
 
 ```python
-from unspool import HierarchicalSmoothBernoulliHistoryGLM
+from behavio import HierarchicalSmoothBernoulliHistoryGLM
 
 model = HierarchicalSmoothBernoulliHistoryGLM(
     covariates=("stimulus",),
@@ -59,7 +59,7 @@ from the configured Gaussian penalty. Its optional `subject_deviation_paths` arg
 accepts exact realized paths for recovery experiments, without adding truth columns to the
 fitted data.
 
-The [factorial trajectory benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/trajectory_recovery) makes
+The [factorial trajectory benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/trajectory_recovery) makes
 five models compete under stationary identical animals, stable individual differences,
 shared drift, and individual drift. The hierarchical smooth model wins only the individual-
 drift regime; simpler accounts win the other three under both trajectory recovery and

@@ -16,7 +16,7 @@ criterion.
 ## Basic use
 
 ```python
-from unspool import psis_loo
+from behavio import psis_loo
 
 posterior = backend.sample(model, study, task=task)
 loo = psis_loo(posterior)
@@ -42,7 +42,7 @@ returned pointwise arrays preserve the remaining axes and coordinates, such as `
 ## Reading Pareto $k$
 
 PSIS approximates each leave-one-out posterior by reweighting draws from the full
-posterior. Pareto $k$ diagnoses the stability of those importance weights. Unspool retains
+posterior. Pareto $k$ diagnoses the stability of those importance weights. Behavio retains
 ArViZ's sample-size-dependent threshold
 
 \[
@@ -86,10 +86,10 @@ recovery, or model adequacy.
 Install the optional dependency with:
 
 ```bash
-pip install "unspool[probabilistic]"
+pip install "behavio[probabilistic]"
 ```
 
-Unspool tests the same `psis_loo` result against legacy ArviZ `InferenceData` on Python
+Behavio tests the same `psis_loo` result against legacy ArviZ `InferenceData` on Python
 3.11 and current `DataTree`/ArviZ Stats on Python 3.12 and later. `loo.to_dict()` produces a
 JSON-compatible record containing the summary, flattened pointwise values, dimension
 metadata, coordinates, warnings, and backend provenance.

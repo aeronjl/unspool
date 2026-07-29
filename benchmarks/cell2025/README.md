@@ -9,10 +9,10 @@ behavioural observation that an animal's early strategy predicts its later strat
 
 This is deliberately not a wholesale port of the paper analysis. The code is an independent,
 small reimplementation of the documented trial exclusions and Figure 1 behavioural metrics.
-It maps the retained trials into Unspool's canonical `Study`, preserves subject/session
+It maps the retained trials into Behavio's canonical `Study`, preserves subject/session
 boundaries, and then calculates session-level bias, psychometric slopes, and accuracy.
 The source contains two dated sessions for DAP021 both labelled `sessionNum == 1`.
-Unspool preserves these as distinct canonical sessions with chronological orders; only the
+Behavio preserves these as distinct canonical sessions with chronological orders; only the
 paper-specific summary deliberately groups them under the published session number.
 
 ## Reproduce
@@ -65,7 +65,7 @@ this benchmark itself recorded, but it cannot detect being wrong about the paper
 each value printed in Figure 1G and 1I, the recomputed value, and the rounding tolerance
 that separates them:
 
-| Claim | Paper | Unspool | Tolerance | Status |
+| Claim | Paper | Behavio | Tolerance | Status |
 | --- | ---: | ---: | --- | --- |
 | `early_late_bias_r` | -0.53 | -0.52764 | ±0.01 absolute | pass |
 | `early_late_bias_p` | p < 0.01 | 0.00273 | printed upper bound | pass |
@@ -86,7 +86,7 @@ p-values stay below the printed thresholds. A comparison that failed would be re
   [`10.6084/m9.figshare.28877942.v1`](https://doi.org/10.6084/m9.figshare.28877942.v1),
   MIT licensed; panel definitions were audited against `scripts/behaviour.ipynb` at
   commit `2faa4680d5e9c0d6a9df516e3dede8c641e39a72`.
-- Unspool code: independently reimplemented rather than copied from the released notebook.
+- Behavio code: independently reimplemented rather than copied from the released notebook.
 
 The input member is
 `data/long_term_learning_dataset_preprocessed_behaviour_all.csv`, with SHA-256

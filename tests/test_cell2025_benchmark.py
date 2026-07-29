@@ -119,8 +119,8 @@ def test_figure1gi_audit_freezes_the_panel_contract() -> None:
         rtol=1e-15,
     )
     assert "paper-day" in audit["panels"]["1G"]["y"]
-    assert audit["unspool_display"]["bootstrap_seed"] == 202501
-    assert audit["unspool_display"]["classification"] == "published-parity"
+    assert audit["behavio_display"]["bootstrap_seed"] == 202501
+    assert audit["behavio_display"]["classification"] == "published-parity"
 
 
 def test_committed_result_carries_the_audited_figure1gi_statistics() -> None:

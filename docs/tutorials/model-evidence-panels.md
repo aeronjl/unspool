@@ -1,6 +1,6 @@
 # How to read a model evidence panel
 
-A fitted curve is not a complete scientific result. Unspool's reporting target is a chain
+A fitted curve is not a complete scientific result. Behavio's reporting target is a chain
 of evidence that lets a reader move from observed behaviour to a bounded model claim
 without losing the validation boundary or the design's known ambiguities.
 

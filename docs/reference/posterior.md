@@ -5,7 +5,7 @@ requiring one probabilistic framework throughout the package.
 
 ## Posterior results
 
-::: unspool.posterior
+::: behavio.posterior
     options:
       members_order: source
       show_root_heading: false
@@ -13,7 +13,7 @@ requiring one probabilistic framework throughout the package.
 
 ## PyMC backend
 
-::: unspool.pymc_backend
+::: behavio.pymc_backend
     options:
       members_order: source
       show_root_heading: false
@@ -21,7 +21,7 @@ requiring one probabilistic framework throughout the package.
 
 ## Fit artifacts
 
-::: unspool.interchange
+::: behavio.interchange
     options:
       members_order: source
       show_root_heading: false

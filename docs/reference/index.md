@@ -38,5 +38,5 @@ use these pages when you need exact signatures, return types, and public attribu
 | [Reporting and evidence](evidence-bundles.md) | bounded reports and content-addressed evidence bundles | [Evidence bundles](../protocols/evidence-bundles.md) |
 | [Data adapters](data-adapters.md) | NWB, DANDI, IBL ONE, and fit-artifact interchange | [Interoperability](../interoperability.md) |
 
-The stable public import surface remains `unspool`. Optional data-source, optimization,
+The stable public import surface remains `behavio`. Optional data-source, optimization,
 and probabilistic dependencies are required only when their corresponding APIs are used.

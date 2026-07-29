@@ -36,7 +36,7 @@ By default all drift coefficients, boundary, and starting bias vary. A narrower 
 hypothesis should say so explicitly:
 
 ```python
-from unspool import SmoothWienerDriftDiffusion
+from behavio import SmoothWienerDriftDiffusion
 
 model = SmoothWienerDriftDiffusion(
     covariates=("stimulus",),
@@ -107,7 +107,7 @@ and the earlier learning-focused discussion by
 
 ## Recovery evidence
 
-The [session-varying Wiener benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/smooth_ddm) compares static
+The [session-varying Wiener benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/smooth_ddm) compares static
 and smooth fits under stationary and changing truth. In 20 matched repetitions per regime,
 the static model wins both training-path RMSE and final-session joint log loss under
 stationarity; the smooth model wins both under the specified change trajectory. This is a

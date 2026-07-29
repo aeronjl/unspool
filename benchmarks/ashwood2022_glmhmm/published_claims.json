@@ -163,7 +163,7 @@
         "kind": "absolute",
         "value": 0.05
       },
-      "tolerance_rationale": "The paper prints a whole percentage. Five percentage points is the band that absorbs the definitional substitution in PROTOCOL.md section 6: the paper counts hard arg-max state assignments while Unspool publishes the mean smoothed posterior probability per state.",
+      "tolerance_rationale": "The paper prints a whole percentage. Five percentage points is the band that absorbs the definitional substitution in PROTOCOL.md section 6: the paper counts hard arg-max state assignments while Behavio publishes the mean smoothed posterior probability per state.",
       "observed_value": 0.5816932590081362,
       "status": "fail"
     },
@@ -221,7 +221,7 @@
       "tolerance": null,
       "observed_value": null,
       "status": "waived",
-      "waiver_rationale": "Unspool offers no way to initialize a fit from externally supplied parameters, so the paper's multi-stage seeding procedure cannot be expressed at all; a pooled fit over 181,530 trials is also out of compute reach here. States are instead aligned by canonicalizing on the fitted stimulus weight."
+      "waiver_rationale": "Behavio offers no way to initialize a fit from externally supplied parameters, so the paper's multi-stage seeding procedure cannot be expressed at all; a pooled fit over 181,530 trials is also out of compute reach here. States are instead aligned by canonicalizing on the fitted stimulus weight."
     },
     {
       "id": "population_predictive_accuracy_gain",
@@ -241,7 +241,7 @@
       "tolerance": null,
       "observed_value": null,
       "status": "waived",
-      "waiver_rationale": "Unspool's GLM-HMM has Bernoulli choice emissions only and cannot attach a latency distribution to a latent state. The analysis is structurally inexpressible in this package rather than merely expensive, so it is waived rather than attempted."
+      "waiver_rationale": "Behavio's GLM-HMM has Bernoulli choice emissions only and cannot attach a latency distribution to a latent state. The analysis is structurally inexpressible in this package rather than merely expensive, so it is waived rather than attempted."
     },
     {
       "id": "other_species_and_cohorts",

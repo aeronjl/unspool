@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import unspool
+import behavio
 
 ROOT = Path(__file__).parents[1]
 
@@ -67,8 +67,8 @@ INTEROPERABILITY_AND_EVIDENCE = {
 def test_completed_release_surface_is_public_and_explicit() -> None:
     promised = GOLDEN_PATH | MODEL_CATALOGUE | INTEROPERABILITY_AND_EVIDENCE
 
-    assert promised <= set(unspool.__all__)
-    assert all(hasattr(unspool, name) for name in promised)
+    assert promised <= set(behavio.__all__)
+    assert all(hasattr(behavio, name) for name in promised)
 
 
 def test_release_orientation_documents_are_in_the_strict_site_navigation() -> None:

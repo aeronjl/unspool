@@ -14,6 +14,19 @@ import numpy as np
 from scipy import stats
 from scipy.special import expit
 
+from behavio import (
+    BernoulliHistoryGLM,
+    HierarchicalBernoulliHistoryGLM,
+    HierarchicalSmoothBernoulliHistoryGLM,
+    HierarchicalSmoothGLMFitResult,
+    ModelRecoveryReport,
+    ModelRecoveryScenario,
+    SmoothBernoulliHistoryGLM,
+    Study,
+    compare_models,
+    historical_cohort_forecast_splits,
+    run_model_recovery,
+)
 from benchmarks.cell2025.benchmark import (
     calculate_session_metrics,
     load_study,
@@ -28,19 +41,6 @@ from benchmarks.cell2025.fetch_data import (
     sha256,
 )
 from benchmarks.provenance import render
-from unspool import (
-    BernoulliHistoryGLM,
-    HierarchicalBernoulliHistoryGLM,
-    HierarchicalSmoothBernoulliHistoryGLM,
-    HierarchicalSmoothGLMFitResult,
-    ModelRecoveryReport,
-    ModelRecoveryScenario,
-    SmoothBernoulliHistoryGLM,
-    Study,
-    compare_models,
-    historical_cohort_forecast_splits,
-    run_model_recovery,
-)
 
 CONTEXT_PAPER_DAYS = tuple(range(1, 9))
 FORECAST_HORIZON = 5

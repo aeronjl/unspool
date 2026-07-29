@@ -5,14 +5,14 @@ nested candidate procedures. Recovery reuses the exact compiled design.
 
 ## Compiler
 
-::: unspool.compiler
+::: behavio.compiler
     options:
       members_order: source
       show_root_heading: false
       show_source: false
 ## Runner
 
-::: unspool.runner
+::: behavio.runner
     options:
       members_order: source
       show_root_heading: false
@@ -20,7 +20,7 @@ nested candidate procedures. Recovery reuses the exact compiled design.
 
 ## Exact-design recovery
 
-::: unspool.protocol_recovery
+::: behavio.protocol_recovery
     options:
       members_order: source
       show_root_heading: false

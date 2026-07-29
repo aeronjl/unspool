@@ -4,6 +4,12 @@ The stamp answers one question: which code and which library versions produced t
 numbers stored beside it. It deliberately carries no wall-clock timestamp, so a
 re-run on an unchanged tree at unchanged library versions produces a byte-identical
 payload and a genuine numerical drift is never hidden behind a changed date.
+
+Because the stamp is a record of what actually ran, a committed stamp is never rewritten.
+This package was distributed as ``unspool`` up to and including 0.1.0, so results committed
+before the rename name that distribution, and they are correct to do so. Readers therefore
+canonicalize library names through :data:`HISTORICAL_LIBRARY_NAMES` rather than editing the
+artifacts, which would claim a distribution that never produced those numbers.
 """
 
 from __future__ import annotations
@@ -19,9 +25,22 @@ from typing import Any
 ROOT = Path(__file__).parents[1]
 PROVENANCE_KEY = "provenance"
 SCHEMA_VERSION = 1
-BASE_LIBRARIES = ("numpy", "scipy", "unspool")
+BASE_LIBRARIES = ("numpy", "scipy", "behavio")
 UNKNOWN_REVISION = "unknown"
 MISSING_VERSION = "not installed"
+HISTORICAL_LIBRARY_NAMES = {"unspool": "behavio"}
+
+
+def canonical_libraries(libraries: Mapping[str, str]) -> dict[str, str]:
+    """Return ``libraries`` with superseded distribution names read as their current name.
+
+    Only the name is translated. The recorded version is left exactly as stamped, so a
+    pre-rename result still reports the version of the distribution that produced it.
+    """
+
+    return {
+        HISTORICAL_LIBRARY_NAMES.get(name, name): version for name, version in libraries.items()
+    }
 
 
 def git_revision(root: Path = ROOT) -> str:

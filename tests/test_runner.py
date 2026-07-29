@@ -10,17 +10,17 @@ from test_compiler import (
     source_study,
 )
 
-from unspool.compiler import compile_execution_plan, materialize_protocol
-from unspool.models import BernoulliHistoryGLM
-from unspool.protocol import ProtocolState, ScoreMetric, WinnerPolicy
-from unspool.runner import (
+from behavio.compiler import compile_execution_plan, materialize_protocol
+from behavio.models import BernoulliHistoryGLM
+from behavio.protocol import ProtocolState, ScoreMetric, WinnerPolicy
+from behavio.runner import (
     ProtocolRunError,
     RankingStatus,
     RunStage,
     run_nested_protocol,
     run_protocol,
 )
-from unspool.validation import cohort_forward_session_splits
+from behavio.validation import cohort_forward_session_splits
 
 
 def compiled_small_protocol():

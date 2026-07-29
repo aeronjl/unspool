@@ -7,8 +7,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from behavio import IBLONETrialSource
 from benchmarks.ibl2021.selection import manifest_digest
-from unspool import IBLONETrialSource
 
 MANIFEST_PATH = Path(__file__).with_name("manifest.json")
 EXPECTED_MANIFEST_SHA256 = "c0a45addbc14b936f6b3aaac0c06b6a4d7108725d82dcc3df8f1501f4b1aec0b"

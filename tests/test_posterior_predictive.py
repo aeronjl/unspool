@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     CategoryRateDiscrepancy,
     MeanDiscrepancy,
     PosteriorAuditStatus,
@@ -16,7 +16,7 @@ from unspool import (
     VarianceDiscrepancy,
     posterior_predictive_check,
 )
-from unspool.posterior import PosteriorError
+from behavio.posterior import PosteriorError
 
 
 def variable(name, values, dims, **coords):

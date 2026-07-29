@@ -8,8 +8,8 @@ from typing import Any
 
 import numpy as np
 
+from behavio import HierarchicalSmoothWienerDriftDiffusion, ModelDataError, Study
 from benchmarks.provenance import render
-from unspool import HierarchicalSmoothWienerDriftDiffusion, ModelDataError, Study
 
 TRAINING_SUBJECTS = 8
 UNSEEN_SUBJECTS = 4

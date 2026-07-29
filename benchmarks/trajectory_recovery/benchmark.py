@@ -8,14 +8,14 @@ from typing import Any
 
 import numpy as np
 
-from benchmarks.provenance import render
-from unspool import (
+from behavio import (
     BernoulliHistoryGLM,
     HierarchicalBernoulliHistoryGLM,
     HierarchicalSmoothBernoulliHistoryGLM,
     SmoothBernoulliHistoryGLM,
     Study,
 )
+from benchmarks.provenance import render
 
 KNOTS = (0.0, 2.0, 4.0)
 REGIMES = ("stationary_identical", "stable_individual", "shared_drift", "individual_drift")

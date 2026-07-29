@@ -73,7 +73,7 @@
       "y_ticks": [-1.0, -0.5, 0.0, 0.5, 1.0]
     }
   },
-  "unspool_display": {
+  "behavio_display": {
     "asset": "docs/assets/cell2025-strategy.svg",
     "classification": "published-parity",
     "preserved": [

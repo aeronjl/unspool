@@ -227,7 +227,7 @@ def _cache_is_populated() -> bool:
 
 @pytest.mark.slow
 def test_the_benchmark_reruns_and_reproduces_its_committed_gate(tmp_path: Path) -> None:
-    pytest.importorskip("one", reason="the IBL replication requires unspool[ibl]")
+    pytest.importorskip("one", reason="the IBL replication requires behavio[ibl]")
     if not _cache_is_populated():
         pytest.skip("run `python -m benchmarks.ibl2021_psychometrics.fetch_data` first")
 

@@ -1,7 +1,7 @@
 """Replay the released Cell 2025 Figure 1H/1J trajectory computations.
 
 Run this optional module in the exact numerical environment recorded by the released
-analysis. The pinned stack is deliberately kept outside Unspool's runtime dependencies.
+analysis. The pinned stack is deliberately kept outside Behavio's runtime dependencies.
 """
 
 from __future__ import annotations

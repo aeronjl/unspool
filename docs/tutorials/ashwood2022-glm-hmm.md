@@ -3,16 +3,16 @@
 [Ashwood et al. (2022)](https://doi.org/10.1038/s41593-021-01007-z) is the reference GLM-HMM
 analysis of perceptual decision-making: mice alternate between a small number of discrete
 strategies rather than drifting smoothly. It has public data, public reference code, and a
-model family Unspool ships. That combination makes it the right place to ask a question a
+model family Behavio ships. That combination makes it the right place to ask a question a
 package cannot answer about itself — does this implementation recover numbers somebody else
 published?
 
 This chapter reports the answer, including the parts that did not reproduce and the parts
-Unspool cannot express at all.
+Behavio cannot express at all.
 
 !!! info "Read the protocol first"
 
-    [`benchmarks/ashwood2022_glmhmm/PROTOCOL.md`](https://github.com/aeronjl/unspool/tree/main/benchmarks/ashwood2022_glmhmm/PROTOCOL.md)
+    [`benchmarks/ashwood2022_glmhmm/PROTOCOL.md`](https://github.com/aeronjl/behavio/tree/main/benchmarks/ashwood2022_glmhmm/PROTOCOL.md)
     was frozen before any of these numbers existed. It fixes the cohort, the covariates, the
     prior scale, every declared substitution, and every acceptance tolerance in advance.
     Nothing in it was changed after a number came out.
@@ -27,7 +27,7 @@ structure, variational and Laplace-EM inference, observation masks. The smooth-d
 alternative that Ashwood argues against is implemented in Roy and Pillow's
 [`psytrack`](https://github.com/nicholas-roy/psytrack).
 
-Unspool's `BernoulliGLMHMM` is **narrower than both, and is not a replacement for either.**
+Behavio's `BernoulliGLMHMM` is **narrower than both, and is not a replacement for either.**
 It has one emission family, no hierarchy, no observation mask, no Dirichlet transition prior,
 and no procedure anywhere in the package for choosing the number of states. If you want to
 fit a GLM-HMM to your data, use `ssm`. If you want the smooth-drift account, use `psytrack`.
@@ -108,13 +108,13 @@ been a mistake: the arg-max here is K = 5, by a margin of eighteen millionths of
 asserting an arg-max would have recorded a failure with no scientific content, against a claim
 the paper never made.
 
-## Where Unspool ran out of expressiveness
+## Where Behavio ran out of expressiveness
 
 The interesting output of this exercise is not the table above; it is the list of things the
 package could not say. Every item here changes a number, and every one is written into the
 protocol rather than discovered afterwards.
 
-| the paper does | Unspool can | consequence |
+| the paper does | Behavio can | consequence |
 | --- | --- | --- |
 | treats violation trials as missing choice data, replacing their emission term with 1 | nothing — there is no observation mask | violation rows are dropped instead (0.09% of these trials) |
 | places a Dirichlet(alpha = 2) prior on every transition row, with no stickiness | only add pseudo-counts to the *diagonal*, via `stickiness` | the transition matrix is fitted with no prior at all |
@@ -125,7 +125,7 @@ protocol rather than discovered afterwards.
 | cross-validates a sweep over the number of states | *nothing in the package does this* | the sweep is assembled inside the benchmark from `Study.take` and `pointwise_log_prob` |
 
 That last row is the one worth dwelling on. Ashwood's headline structure **is** a
-model-selection result, and Unspool ships no procedure for selecting a state count anywhere.
+model-selection result, and Behavio ships no procedure for selecting a state count anywhere.
 `nested_select_model` selects among a supplied list of models under a *prospective* nested
 scheme; it is not a K-sweep, and the paper's design is not prospective. The sweep in this
 benchmark is hand-assembled, which is a fair description of a gap, not of a feature.
@@ -157,7 +157,7 @@ that identification credible.
 ## The validation boundary this analysis does not respect
 
 Ashwood cross-validates by assigning whole sessions to five folds *at random*. A held-out
-session can precede a training session in time. Unspool's `evaluate_splits` refuses
+session can precede a training session in time. Behavio's `evaluate_splits` refuses
 non-prospective folds unless you say `require_prospective=False`, and the rest of this
 documentation argues at length for why.
 
@@ -174,10 +174,10 @@ uv run python -m benchmarks.ashwood2022_glmhmm.benchmark \
     --output benchmarks/ashwood2022_glmhmm/result.json
 ```
 
-The [committed benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ashwood2022_glmhmm)
+The [committed benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/ashwood2022_glmhmm)
 retains every fold score, every per-animal transition matrix and emission vector, the fit
 diagnostics behind them, and
-[`published_claims.json`](https://github.com/aeronjl/unspool/tree/main/benchmarks/ashwood2022_glmhmm/published_claims.json),
+[`published_claims.json`](https://github.com/aeronjl/behavio/tree/main/benchmarks/ashwood2022_glmhmm/published_claims.json),
 which `tests/test_published_parity.py` discovers automatically and checks offline.
 
 ## A separate, narrower study: does a latent state predict a future session?
@@ -190,7 +190,7 @@ GLM-HMM predict an untouched IBL session better than a stationary history GLM?
 !!! warning "Structural analogue, not reproduction"
 
     This worked study borrows its scientific question from Ashwood et al. (2022), but uses a
-    smaller covariate set, one animal, a different session boundary, and Unspool's own
+    smaller covariate set, one animal, a different session boundary, and Behavio's own
     prospective state-count procedure. It does not reproduce their paper.
 
 The public source and outcome-blind subject rule are identical to the
@@ -245,7 +245,7 @@ uv run --extra ibl python -m benchmarks.ibl2021_decision_models.benchmark
 uv run --group docs python -m scripts.plot_documentation_figures --skip-cell
 ```
 
-The [committed benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021_decision_models)
+The [committed benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/ibl2021_decision_models)
 retains all candidate scores, restart evidence, fit audits, transition and emission
 parameters, and trialwise predictive and filtered state probabilities. Read it alongside
 the [GLM-HMM method contract](../glm-hmm.md) and the

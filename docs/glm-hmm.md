@@ -1,6 +1,6 @@
 # Fixed-transition Bernoulli GLM-HMM
 
-`BernoulliGLMHMM` is Unspool's first discrete latent-state competitor. “Fixed transition”
+`BernoulliGLMHMM` is Behavio's first discrete latent-state competitor. “Fixed transition”
 means that one learned transition matrix is stationary across observed trials and sessions;
 it does not mean that transition probabilities are supplied as known constants. An initial
 state distribution is applied anew at every subject/session boundary.
@@ -26,7 +26,7 @@ $$
 Each state has its own intercept, task-covariate coefficients, and optional choice-history
 coefficients. Choice history is bounded by sessions and updated recursively during
 simulation. A transition occurs between consecutive *observed* trials. Gaps in trial
-identifiers do not cause Unspool to invent unobserved transitions.
+identifiers do not cause Behavio to invent unobserved transitions.
 
 This is the standard input-driven GLM-HMM convention used in behavioural work: observed
 task inputs enter the state-specific GLM emissions. They do not alter the transition
@@ -34,7 +34,7 @@ matrix. Covariate-dependent transitions are a different model and are not implie
 word “input-driven” here.
 
 ```python
-from unspool import BernoulliGLMHMM
+from behavio import BernoulliGLMHMM
 
 model = BernoulliGLMHMM(
     covariates=("stimulus",),
@@ -117,7 +117,7 @@ uncertainty. With nonzero `l2`, they are also penalized-likelihood approximation
 
 ## Labels are coordinates, not interpretations
 
-State labels are non-identifiable under permutation. Unspool orders fitted states by
+State labels are non-identifiable under permutation. Behavio orders fitted states by
 increasing values of `label_by` (the intercept by default), using the remaining emission
 coefficients only as deterministic tie-breakers. The same ordering is applied when packing
 generative components, which makes parameter recovery compare like with like.
@@ -170,7 +170,7 @@ state.predictive  # p(z_t | y_1, ..., y_{t-1})
 state.filtered  # p(z_t | y_1, ..., y_t)
 ```
 
-Unspool does not silently substitute a smoothed state decoding. `PredictionMode.SMOOTHED`
+Behavio does not silently substitute a smoothed state decoding. `PredictionMode.SMOOTHED`
 is rejected. When a within-session rolling split is evaluated, its pre-origin prefix is
 replayed as prediction context, so the latent filter and choice history both reach the
 holdout boundary without scoring context trials.
@@ -179,7 +179,7 @@ holdout boundary without scoring context trials.
 
 Ordinary `simulate()` returns only the observed study. `simulate_with_states()` returns a
 `GLMHMMSimulation` whose latent truth is stored separately, preventing a state column from
-accidentally entering downstream model features. The model satisfies Unspool's generic
+accidentally entering downstream model features. The model satisfies Behavio's generic
 parameter- and model-recovery contracts.
 
 Recovery remains design-specific. Transition probabilities near zero or one, rarely
@@ -187,7 +187,7 @@ occupied states, weakly separated emissions, short sessions, or insufficient sta
 can all make a nominally fitted model unrecoverable. The included tests use a deliberately
 clear switching regime and also require it to outperform static and smooth session-time
 GLMs on a future session. The repeated
-[state-alignment benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/state_alignment) additionally contrasts
+[state-alignment benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/state_alignment) additionally contrasts
 clear and overlapping emissions and verifies exact invariance to inferred-label reversal.
 
 ## Current boundary

@@ -1,7 +1,7 @@
-# Extend Unspool without forking it
+# Extend Behavio without forking it
 
 Downstream packages should own domain-specific readers, models, solvers, and diagnostics.
-Unspool owns the small contracts that let those components enter the same longitudinal
+Behavio owns the small contracts that let those components enter the same longitudinal
 validation and evidence workflow. Compatibility is structural; subclassing an internal
 base class is not required.
 
@@ -28,7 +28,7 @@ A task adapter should return ordinary public objects rather than a package-speci
 subclass:
 
 ```python
-from unspool import ChoiceSpec, RewardSpec, Study, TaskSpec
+from behavio import ChoiceSpec, RewardSpec, Study, TaskSpec
 
 
 def read_my_bandit(rows) -> tuple[Study, TaskSpec, dict[str, str]]:
@@ -68,7 +68,7 @@ An estimator supplies stable identity, the complete observed event, supported pr
 modes, and three methods:
 
 ```python
-from unspool import BehaviourEstimator, model_capabilities
+from behavio import BehaviourEstimator, model_capabilities
 
 assert isinstance(external_model, BehaviourEstimator)
 capabilities = model_capabilities(external_model)
@@ -78,7 +78,7 @@ prediction = external_model.predict(test_study, fit)
 scores = external_model.pointwise_log_prob(test_study, fit)
 ```
 
-`fit()` must return an Unspool `FitResult` whose model name, signature, and training-row
+`fit()` must return an Behavio `FitResult` whose model name, signature, and training-row
 count match the estimator. `predict()` returns `Prediction` or `CategoricalPrediction` in
 the requested study's source row order. `pointwise_log_prob()` returns one finite value per
 row for exactly `scored_columns`.
@@ -94,7 +94,7 @@ Use `EstimatorRegistry` when a protocol or command line needs to create models f
 explicit JSON-like configuration:
 
 ```python
-from unspool import EstimatorRegistry
+from behavio import EstimatorRegistry
 
 registry = EstimatorRegistry()
 registry.add(
@@ -174,6 +174,6 @@ At minimum, an extension package should test:
 8. simulation/parameter-name agreement when generative; and
 9. end-to-end prospective evaluation on a small fixture.
 
-Unspool should depend on the interface package only when a capability is broadly useful
+Behavio should depend on the interface package only when a capability is broadly useful
 and light enough for the core. Heavy solvers and domain-specific models should remain
 optional downstream dependencies with their own release cycle.

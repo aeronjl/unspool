@@ -1,6 +1,6 @@
 # Scientific figure and replication standard
 
-Unspool figures are evidence interfaces. A reader should be able to tell what kind of
+Behavio figures are evidence interfaces. A reader should be able to tell what kind of
 display they are seeing, what entered it, which quantity it estimates, and how far its
 claim reaches without searching the surrounding chapter.
 
@@ -24,7 +24,7 @@ families, decorative display faces, and mixed font families are not permitted.
   not silently change with the site theme.
 
 The shared generator contract lives in
-[`scripts/figure_style.py`](https://github.com/aeronjl/unspool/blob/main/scripts/figure_style.py).
+[`scripts/figure_style.py`](https://github.com/aeronjl/behavio/blob/main/scripts/figure_style.py).
 Standalone copy-and-run examples repeat the minimal font settings explicitly so they do
 not depend on an internal helper.
 
@@ -108,7 +108,7 @@ The [provenance register](figure-provenance.md) is the reader-facing index.
 Every literature recipe with a reproduction claim includes a correspondence table before
 its first result figure:
 
-| Unspool display | Published target | Relationship | Preserved | Changed or unavailable |
+| Behavio display | Published target | Relationship | Preserved | Changed or unavailable |
 | --- | --- | --- | --- | --- |
 | `example.svg`, panel A | Paper Figure X, panel Y | Published parity | cohort rule, outcome, unit | plotting geometry |
 
@@ -118,7 +118,7 @@ correspondence is unresolved. Never imply like-for-like replication from visual
 resemblance alone.
 
 The table should make changes to cohort, preprocessing, model specification, validation,
-or uncertainty impossible to miss. A composite Unspool figure may map different panels to
+or uncertainty impossible to miss. A composite Behavio figure may map different panels to
 different evidence classes; each panel receives its own row.
 
 ## Caption order

@@ -5,7 +5,7 @@ portable common view that binds that result to its task semantics, complete inpu
 package version, numerical diagnostics, and normalized audit.
 
 ```python
-from unspool import export_fit, fit_artifact_from_json
+from behavio import export_fit, fit_artifact_from_json
 
 fitted = fit_model(model, study, task=task)
 artifact = export_fit(fitted, study)
@@ -15,7 +15,7 @@ restored = fit_artifact_from_json(text)
 assert restored.fingerprint == artifact.fingerprint
 ```
 
-The `unspool.fit-artifact/1` schema contains:
+The `behavio.fit-artifact/1` schema contains:
 
 - model name, configuration signature, and concrete result type;
 - the choice, omission, availability, reward, response-time, predictor, block, and episode
@@ -25,7 +25,7 @@ The `unspool.fit-artifact/1` schema contains:
 - labelled estimates, standard errors, and covariance, using JSON `null` rather than
   non-standard `NaN` or infinity;
 - raw common optimizer diagnostics and the normalized fit audit;
-- the Unspool package version that produced the record.
+- the Behavio package version that produced the record.
 
 Models implementing `ParameterSpaceProvider` additionally retain the complete
 content-addressed [parameter-space declaration](parameter-spaces.md). Their parameter
@@ -48,10 +48,10 @@ Labelled posterior and predictive groups use the separate
 
 ## External estimator packages
 
-An extension can expose models without modifying Unspool core:
+An extension can expose models without modifying Behavio core:
 
 ```python
-from unspool import EstimatorRegistry
+from behavio import EstimatorRegistry
 from my_package import make_model
 
 registry = EstimatorRegistry()

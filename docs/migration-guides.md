@@ -1,6 +1,6 @@
 # Migration guides
 
-Unspool is not a drop-in replacement for every behavioural-model package. Migration means
+Behavio is not a drop-in replacement for every behavioural-model package. Migration means
 preserving a scientific analysis while making its data semantics, prediction boundary,
 diagnostics, and recovery evidence explicit. Start by reproducing the old result under an
 equivalent specification; introduce new longitudinal claims only in a second step.
@@ -24,7 +24,7 @@ a tolerance to wave away.
 
 ## Hand-written SciPy likelihoods
 
-| Existing element | Unspool destination |
+| Existing element | Behavio destination |
 | --- | --- |
 | Flat arrays or DataFrame | `Study` plus `TaskSpec` |
 | Ad hoc design-matrix construction | fixed `DesignSpec` terms and fold-fitted transforms |
@@ -43,11 +43,11 @@ different resets, trial ordering, or outcome coding.
 
 The [Linderman lab `ssm` repository](https://github.com/lindermanlab/ssm) is a general state-
 space toolkit supporting HMMs, input-output HMMs, and several observation families.
-Unspool's `BernoulliGLMHMM` is narrower: it is a behavioural binary-choice model with
+Behavio's `BernoulliGLMHMM` is narrower: it is a behavioural binary-choice model with
 explicit session resets, state-specific input-driven emissions, stationary transitions,
-filtered prospective scoring, and Unspool recovery evidence.
+filtered prospective scoring, and Behavio recovery evidence.
 
-| `ssm` concept | Unspool concept | Migration check |
+| `ssm` concept | Behavio concept | Migration check |
 | --- | --- | --- |
 | One observation/input array per sequence | one `Study` with subject/session boundaries | sequence starts equal session resets |
 | `K` hidden states | `n_states` | state count selected only in training data |
@@ -57,7 +57,7 @@ filtered prospective scoring, and Unspool recovery evidence.
 | raw EM traces or chosen restart | retained deterministic restarts and fit audit | every attempted optimum remains visible |
 
 Do not compare raw state labels. Align states by their emissions or a declared assignment
-rule, and rerun label-aware recovery. Unspool does not currently cover the full `ssm`
+rule, and rerun label-aware recovery. Behavio does not currently cover the full `ssm`
 catalogue—ARHMM, HSMM, LDS, SLDS, recurrent transitions, or general observation families
 should remain in `ssm` or enter through an external estimator adapter.
 
@@ -66,9 +66,9 @@ should remain in `ssm` or enter through an external estimator adapter.
 [hBayesDM](https://doi.org/10.1162/CPSY_a_00002) provides task-specific hierarchical
 Bayesian decision models through a compact R interface. Its convenience depends on each
 named task fixing choices about columns, equations, priors, hierarchy, and generated
-quantities. Preserve those choices explicitly when moving to Unspool.
+quantities. Preserve those choices explicitly when moving to Behavio.
 
-| hBayesDM artifact | Unspool destination | Important boundary |
+| hBayesDM artifact | Behavio destination | Important boundary |
 | --- | --- | --- |
 | Task-specific input table | `Study` plus task adapter and `TaskSpec` | preserve action/reward coding and missing trials |
 | Named task/model function | explicit `BinaryRLAgent` component assembly or external estimator | there may be no first-party equation match |
@@ -76,19 +76,19 @@ quantities. Preserve those choices explicitly when moving to Unspool.
 | Model output summaries | posterior diagnostics, PPC, PSIS-LOO, and evidence bundle | do not reduce the posterior to a point estimate |
 | Subject parameters | labelled posterior quantities and reliability workflow | transformations and shrinkage must remain explicit |
 
-Unspool's current first-party RL models are binary and non-hierarchical. If the hBayesDM
+Behavio's current first-party RL models are binary and non-hierarchical. If the hBayesDM
 model contains task-specific state variables, counterfactual updates, model-based planning,
-or hierarchical priors, adapt the established backend to Unspool's contracts instead of
+or hierarchical priors, adapt the established backend to Behavio's contracts instead of
 approximating it with a superficially similar agent.
 
 ## HDDM workflows
 
 [HDDM](https://hddm.readthedocs.io/en/stable/) specializes in hierarchical Bayesian drift-
-diffusion inference and related extensions. Unspool's Wiener family emphasizes explicit
+diffusion inference and related extensions. Behavio's Wiener family emphasizes explicit
 longitudinal task semantics, prospective scoring, deterministic reference fits, and
 design-specific recovery. These strengths are complementary.
 
-| HDDM concept | Unspool destination | Migration check |
+| HDDM concept | Behavio destination | Migration check |
 | --- | --- | --- |
 | `subj_idx`, response, RT table | `Study` identity plus `TaskSpec.response_time` | response coding, RT origin, and time unit |
 | `depends_on` or regression formula | explicit DDM covariates or fixed-knot paths | condition contrasts and link functions |
@@ -96,7 +96,7 @@ design-specific recovery. These strengths are complementary.
 | outlier mixture | explicit contaminant support and probability | support and scored event must match |
 | posterior predictive data | common posterior-predictive discrepancy contract | group by subject/session where relevant |
 
-Do not convert an HDDM posterior into a deterministic Unspool fit and call the analyses
+Do not convert an HDDM posterior into a deterministic Behavio fit and call the analyses
 equivalent. If the inferential target is hierarchical Bayesian DDM, retain HDDM as the
 backend and adapt its predictions, pointwise likelihood, diagnostics, and posterior groups.
 The first-party `HierarchicalSmoothWienerDriftDiffusion` is not a drop-in HDDM replacement.
@@ -104,10 +104,10 @@ The first-party `HierarchicalSmoothWienerDriftDiffusion` is not a drop-in HDDM r
 ## PyDDM workflows
 
 [PyDDM](https://pyddm.readthedocs.io/) supports generalized DDM components, including
-time- or position-dependent drift, noise, and bounds. Unspool's first-party Wiener solver
+time- or position-dependent drift, noise, and bounds. Behavio's first-party Wiener solver
 is deliberately more constrained.
 
-| PyDDM concept | Unspool destination | Migration check |
+| PyDDM concept | Behavio destination | Migration check |
 | --- | --- | --- |
 | `Sample` conditions and responses | `Study` plus choice/RT `TaskSpec` | correct/error versus upper/lower coding |
 | `gddm()` components | matching first-party Wiener specification or external estimator | noise scale, bound convention, starting point |
@@ -115,7 +115,7 @@ is deliberately more constrained.
 | solution PDFs | pointwise joint log probabilities and predictions | tail treatment and RT discretization |
 | time-dependent bound/drift | external PyDDM adapter unless exactly represented | across-trial smoothness is not within-trial time dependence |
 
-The last distinction is crucial: Unspool's smooth DDM changes parameters across decisions
+The last distinction is crucial: Behavio's smooth DDM changes parameters across decisions
 on a longitudinal clock. A PyDDM component depending on within-decision time `t` changes the
 accumulation process inside one decision. They are different models.
 
@@ -134,5 +134,5 @@ Every migration should leave a short machine-readable or tabular parity report c
 
 After parity, use the [literature-recipe standard](tutorials/recipe-contract.md) to turn the
 migrated analysis into public documentation. If the established implementation should
-remain authoritative, expose it through [Unspool's extension contracts](extensions.md)
+remain authoritative, expose it through [Behavio's extension contracts](extensions.md)
 rather than copying its numerical core.

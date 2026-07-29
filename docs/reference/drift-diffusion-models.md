@@ -5,7 +5,7 @@ assumptions, and the prediction mode remain part of the fitted contract.
 
 ## Static DDM
 
-::: unspool.models.ddm
+::: behavio.models.ddm
     options:
       members_order: source
       show_root_heading: false
@@ -13,7 +13,7 @@ assumptions, and the prediction mode remain part of the fitted contract.
 
 ## Smooth DDM
 
-::: unspool.models.smooth_ddm
+::: behavio.models.smooth_ddm
     options:
       members_order: source
       show_root_heading: false
@@ -21,7 +21,7 @@ assumptions, and the prediction mode remain part of the fitted contract.
 
 ## Hierarchical smooth DDM
 
-::: unspool.models.hierarchical_smooth_ddm
+::: behavio.models.hierarchical_smooth_ddm
     options:
       members_order: source
       show_root_heading: false

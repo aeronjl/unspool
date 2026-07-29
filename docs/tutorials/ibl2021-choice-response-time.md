@@ -13,7 +13,7 @@ explicit response-contaminant component improve that forecast?
 
 The source is the International Brain Laboratory's standardized visual two-choice task.
 The experimental unit is a trial from subject `CSHL045`, the lexicographically first
-eligible animal in Unspool's frozen 78-animal manifest. Subject selection reads no choices
+eligible animal in Behavio's frozen 78-animal manifest. Subject selection reads no choices
 or response times. Each of the six checksum-pinned sessions contributes at most its first
 150 source rows before any outcome filter is applied.
 
@@ -53,7 +53,7 @@ coefficient boundary and therefore carries a warning-level audit.
 
 ## What this does—and does not—support
 
-The example shows that Unspool can preserve response-time units, declare an eligibility
+The example shows that Behavio can preserve response-time units, declare an eligibility
 window before fitting, score the complete joint observation, generate a predictive draw,
 retain trialwise responsibilities, and compare models prospectively.
 
@@ -70,7 +70,7 @@ uv run --extra ibl python -m benchmarks.ibl2021_decision_models.benchmark
 uv run --group docs python -m scripts.plot_documentation_figures --skip-cell
 ```
 
-The [benchmark directory](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021_decision_models)
+The [benchmark directory](https://github.com/aeronjl/behavio/tree/main/benchmarks/ibl2021_decision_models)
 versions the dataset UUIDs, checksum manifest, eligibility counts, fit audits, pointwise
 held-out arrays, parameters, and random seed. See the
 [IBL source study](https://doi.org/10.7554/eLife.63711) and the

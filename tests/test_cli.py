@@ -7,9 +7,9 @@ from test_compiler import source_study
 from test_evidence import bundle
 from test_protocol import example_protocol
 
-from unspool.cli import main
-from unspool.evidence import write_evidence_bundle
-from unspool.protocol import CandidateSpec, Setting
+from behavio.cli import main
+from behavio.evidence import write_evidence_bundle
+from behavio.protocol import CandidateSpec, Setting
 
 
 def executable_protocol():
@@ -17,7 +17,7 @@ def executable_protocol():
     candidates = (
         CandidateSpec(
             name="static",
-            implementation="unspool.models.BernoulliHistoryGLM",
+            implementation="behavio.models.BernoulliHistoryGLM",
             hyperparameters=(
                 Setting("covariates", ("stimulus",)),
                 Setting("choice_lags", 0),
@@ -27,7 +27,7 @@ def executable_protocol():
         ),
         CandidateSpec(
             name="smooth",
-            implementation="unspool.models.BernoulliHistoryGLM",
+            implementation="behavio.models.BernoulliHistoryGLM",
             hyperparameters=(
                 Setting("covariates", ("stimulus",)),
                 Setting("choice_lags", 0),
@@ -98,7 +98,7 @@ def test_execute_writes_reviewable_non_executable_snapshot(tmp_path, capsys) -> 
         "snapshot.json",
     }
     snapshot = json.loads((output / "snapshot.json").read_text())
-    assert snapshot["schema_version"] == "unspool.evaluation-snapshot/1"
+    assert snapshot["schema_version"] == "behavio.evaluation-snapshot/1"
     assert snapshot["state"] == "evaluated"
     assert all(not path.name.endswith((".pkl", ".pickle")) for path in output.iterdir())
 

@@ -1053,8 +1053,8 @@ def _plot_cell_strategy(data_path: Path, colour_path: Path, path: Path) -> None:
             early_bias,
             outcome,
             line_x,
-            seed=int(audit["unspool_display"]["bootstrap_seed"]),
-            repeats=int(audit["unspool_display"]["bootstrap_repeats"]),
+            seed=int(audit["behavio_display"]["bootstrap_seed"]),
+            repeats=int(audit["behavio_display"]["bootstrap_repeats"]),
         )
         correlation = stats.pearsonr(early_bias, outcome)
         axis.fill_between(line_x, lower, upper, color=INK, alpha=0.13, linewidth=0)
@@ -1731,7 +1731,7 @@ def _plot_recovery_matrix(path: Path) -> None:
         counts = np.asarray(design["confusion"]["counts"], dtype=float)
         axis.imshow(
             counts,
-            cmap=mpl.colors.LinearSegmentedColormap.from_list("unspool", ["#f5f6f9", INDIGO]),
+            cmap=mpl.colors.LinearSegmentedColormap.from_list("behavio", ["#f5f6f9", INDIGO]),
             vmin=0,
             vmax=1,
         )

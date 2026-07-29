@@ -5,7 +5,7 @@ contract. Their third-party dependencies are optional.
 
 ## NWB
 
-::: unspool.adapters.nwb
+::: behavio.adapters.nwb
     options:
       members_order: source
       show_root_heading: false
@@ -13,7 +13,7 @@ contract. Their third-party dependencies are optional.
 
 ## DANDI
 
-::: unspool.adapters.dandi
+::: behavio.adapters.dandi
     options:
       members_order: source
       show_root_heading: false
@@ -21,7 +21,7 @@ contract. Their third-party dependencies are optional.
 
 ## IBL ONE
 
-::: unspool.adapters.ibl_one
+::: behavio.adapters.ibl_one
     options:
       members_order: source
       show_root_heading: false

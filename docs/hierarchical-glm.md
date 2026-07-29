@@ -5,7 +5,7 @@
   <figcaption><strong>Synthetic benchmark · pooling under heterogeneity.</strong> Across the committed fixed-scale simulation, partial pooling has the lowest mean subject-coefficient RMSE and prospective log loss in all three heterogeneity regimes. This validates the declared design, not every population.<span class="doc-figure__meta"><strong>Unit:</strong> simulated subject · <strong>n:</strong> declared subjects across three heterogeneity regimes · <strong>Estimands:</strong> coefficient RMSE and prospective log loss · <a href="../reference/figure-provenance/">provenance</a></span></figcaption>
 </figure>
 
-`HierarchicalBernoulliHistoryGLM` is Unspool's first population model. It extends the
+`HierarchicalBernoulliHistoryGLM` is Behavio's first population model. It extends the
 static Bernoulli history GLM with an inspectable coefficient vector for every training
 subject while retaining a population-level vector:
 
@@ -20,7 +20,7 @@ Gaussian penalty, and the optional `l2` penalty applies only to the non-intercep
 population coefficients.
 
 ```python
-from unspool import HierarchicalBernoulliHistoryGLM
+from behavio import HierarchicalBernoulliHistoryGLM
 
 model = HierarchicalBernoulliHistoryGLM(
     covariates=("stimulus",),
@@ -92,12 +92,12 @@ returns a `HierarchicalGLMSimulation`, keeping the realized population and subje
 separate from the observed columns. This prevents recovery metadata from leaking into
 fitting code while making subject-level recovery testable.
 
-The [fixed-scale benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/hierarchical_glm) compares complete
+The [fixed-scale benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/hierarchical_glm) compares complete
 pooling, independent fits, and partial pooling on the same generated animals and future
 sessions. Its scale is fixed to the known generative value, so the benchmark validates the
 shrinkage mechanism rather than hyperparameter selection.
 
-The [subject-scale recovery benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/subject_scale_recovery)
+The [subject-scale recovery benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/subject_scale_recovery)
 crosses two population sizes with three true scales, checks approximate interval coverage,
 and compares future-session predictions with an oracle given the true scale.
 

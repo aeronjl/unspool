@@ -9,8 +9,8 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from behavio import Study, UniformResponseTimeContaminant, WienerDriftDiffusion
 from benchmarks.provenance import render
-from unspool import Study, UniformResponseTimeContaminant, WienerDriftDiffusion
 
 N_SESSIONS = 5
 TRIALS_PER_SESSION = 200

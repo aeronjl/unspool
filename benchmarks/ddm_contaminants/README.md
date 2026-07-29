@@ -60,7 +60,7 @@ ground truth in real data.
 
 Ratcliff and Tuerlinckx showed that unmodelled contaminants can substantially distort
 diffusion fits and advocated explicit contaminant modeling
-([2002](https://doi.org/10.3758/BF03196302)). Unspool follows that methodological principle
+([2002](https://doi.org/10.3758/BF03196302)). Behavio follows that methodological principle
 but uses a deliberately compact, prospectively fixed joint mixture as its first executable
 contract.
 

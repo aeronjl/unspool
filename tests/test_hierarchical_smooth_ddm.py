@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from scipy.special import logsumexp
 
-from unspool import (
+from behavio import (
     BehaviourModel,
     HierarchicalSmoothDriftDiffusionFitResult,
     HierarchicalSmoothWienerDriftDiffusion,
@@ -16,7 +16,7 @@ from unspool import (
     leave_one_subject_out_splits,
     run_parameter_recovery,
 )
-from unspool.models.hierarchical_smooth_ddm import (
+from behavio.models.hierarchical_smooth_ddm import (
     _arrowhead_covariance,
     _louis_scale_information,
     _scale_standard_error,

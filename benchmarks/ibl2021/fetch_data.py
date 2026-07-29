@@ -85,7 +85,7 @@ def _download(url: str, destination: Path) -> None:
             delete=False,
         ) as target:
             temporary_path = Path(target.name)
-            request = urllib.request.Request(url, headers={"User-Agent": "unspool-benchmark/0.1"})
+            request = urllib.request.Request(url, headers={"User-Agent": "behavio-benchmark/0.1"})
             with urllib.request.urlopen(request, timeout=90) as response:
                 while chunk := response.read(1024 * 1024):
                     target.write(chunk)

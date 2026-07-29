@@ -5,7 +5,7 @@ from types import MappingProxyType
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     ModelDataError,
     SmoothDriftDiffusionFitResult,
     SmoothWienerDriftDiffusion,
@@ -15,7 +15,7 @@ from unspool import (
     forward_session_splits,
     run_parameter_recovery,
 )
-from unspool.models.ddm import _wiener_log_density
+from behavio.models.ddm import _wiener_log_density
 
 
 def make_design(

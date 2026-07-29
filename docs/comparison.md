@@ -6,7 +6,7 @@ aggregated under a declared unit, and the same bootstrap draws are reused for al
 and pairwise differences.
 
 ```python
-from unspool import compare_models, cohort_forward_session_splits
+from behavio import compare_models, cohort_forward_session_splits
 
 splits = cohort_forward_session_splits(
     study,
@@ -93,7 +93,7 @@ claim. `nested_select_model` gives the splitter only the outer training study:
 </figure>
 
 ```python
-from unspool import nested_select_model
+from behavio import nested_select_model
 
 
 def inner_splitter(outer_training_study):
@@ -125,7 +125,7 @@ reported as the performance of one fixed model when different candidates were se
 across folds. Likewise, inspecting outer results and then changing the candidate grid
 invalidates the nesting and requires a new untouched evaluation layer or a new study.
 
-The [replicated IBL nested-selection benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021_nested_selection)
+The [replicated IBL nested-selection benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/ibl2021_nested_selection)
 applies this contract to 78 animals across nine labs. It nests both same-animal session
 forecasting and unseen-lab future-session forecasting, and retains the exact inner targets,
 selected candidate, outer fit audit, and subject-level scores for every outer fold.
@@ -133,7 +133,7 @@ selected candidate, outer fit audit, and subject-level scores for every outer fo
 ## Recovery requirement
 
 Nesting prevents direct test leakage; it does not guarantee reliable selection. The
-[nested selection recovery benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/nested_selection) tests the
+[nested selection recovery benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/nested_selection) tests the
 whole procedure under stationary and shared-drift generators. It recovers strong drift in
 40/40 outer folds and selects the static model in 37/40 stationary folds, retaining the
 remaining resolution errors rather than treating nesting as a certificate.

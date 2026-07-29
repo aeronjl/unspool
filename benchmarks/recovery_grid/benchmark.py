@@ -8,8 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from benchmarks.provenance import render
-from unspool import (
+from behavio import (
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
     BinaryQLearning,
@@ -18,6 +17,7 @@ from unspool import (
     Study,
     run_model_recovery_grid,
 )
+from benchmarks.provenance import render
 
 N_SESSIONS = 5
 MAX_TRIALS_PER_SESSION = 60

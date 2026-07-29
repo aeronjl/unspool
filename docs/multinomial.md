@@ -1,6 +1,6 @@
 # Multinomial and omission-aware choice
 
-`MultinomialLogit` is Unspool's reference likelihood for tasks with more than two valid
+`MultinomialLogit` is Behavio's reference likelihood for tasks with more than two valid
 actions. It also supplies the package's first explicit no-response likelihood: omissions
 can be retained as an additional modeled category instead of being discarded, imputed, or
 folded into an arbitrary action.
@@ -8,7 +8,7 @@ folded into an arbitrary action.
 ## Fit three actions on a fixed design
 
 ```python
-from unspool import ChoiceSpec, DesignSpec, MultinomialLogit, NumericTerm
+from behavio import ChoiceSpec, DesignSpec, MultinomialLogit, NumericTerm
 
 choice = ChoiceSpec(
     column="action",
@@ -94,14 +94,14 @@ audited protocol runner, parameter recovery, and model recovery. Fold artifacts 
 full category coordinate, probability vector, and observed category index for every
 scored row.
 
-Unspool reports a multicategory Brier score as
+Behavio reports a multicategory Brier score as
 
 \[
 \frac{1}{2}\sum_k(p_{tk}-\mathbb{1}[y_t=k])^2.
 \]
 
 The factor of one half keeps the score in ([0,1]) and makes a two-category probability
-vector exactly match Unspool's existing scalar binary Brier score. Log loss uses the
+vector exactly match Behavio's existing scalar binary Brier score. Log loss uses the
 ordinary selected-category log probability.
 
 ## Interpretation and current boundary

@@ -7,7 +7,7 @@ different models without hiding task semantics inside model-specific preprocessi
 ## A first fit
 
 ```python
-from unspool import (
+from behavio import (
     BernoulliHistoryGLM,
     ChoiceSpec,
     Study,
@@ -55,7 +55,7 @@ non-executable record with task, data, version, parameter, and diagnostic proven
 ## Choices are a coordinate, not an incidental encoding
 
 ```python
-from unspool import ChoiceSpec
+from behavio import ChoiceSpec
 
 choice = ChoiceSpec(
     column="action",
@@ -86,7 +86,7 @@ category; see [multinomial and omission-aware choice](multinomial.md).
 ## Rewards and response times
 
 ```python
-from unspool import ResponseTimeSpec, RewardSpec, TaskSpec
+from behavio import ResponseTimeSpec, RewardSpec, TaskSpec
 
 task = TaskSpec(
     choice=choice,
@@ -107,7 +107,7 @@ task = TaskSpec(
 validation = task.validate(study)
 ```
 
-Rewards have explicit numerical support and missingness. Response times reuse Unspool's
+Rewards have explicit numerical support and missingness. Response times reuse Behavio's
 physical-unit contract and are converted to canonical seconds without changing the source
 column. Block and episode identifiers remain ordinary source values: the task contract
 declares their role but does not infer resets or reorder trials.

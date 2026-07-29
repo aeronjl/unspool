@@ -20,7 +20,7 @@ MINIMUM_TEXT_SIZE = 7.0
 
 
 def configure_figure_style() -> None:
-    """Apply Unspool's deterministic, sans-serif scientific figure style."""
+    """Apply Behavio's deterministic, sans-serif scientific figure style."""
 
     mpl.rcParams.update(
         {
@@ -37,6 +37,9 @@ def configure_figure_style() -> None:
             "mathtext.fontset": "dejavusans",
             "savefig.facecolor": "white",
             "svg.fonttype": "none",
+            # Frozen at the pre-rename value on purpose: the salt seeds every generated
+            # SVG element id, so changing it would rewrite all committed figures without
+            # changing a single plotted value.
             "svg.hashsalt": "unspool-documentation-v1",
             "text.color": INK,
             "xtick.color": MUTED,
@@ -55,7 +58,7 @@ def save_svg(figure: plt.Figure, path: Path, *, tight: bool = True) -> None:
         format="svg",
         bbox_inches="tight",
         metadata={
-            "Creator": "Unspool documentation figure generator",
+            "Creator": "Behavio documentation figure generator",
             "Date": None,
             "Format": "image/svg+xml",
         },

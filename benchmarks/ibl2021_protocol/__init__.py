@@ -1,1 +1,1 @@
-"""Replicated IBL study expressed as Unspool 0.20 protocols."""
+"""Replicated IBL study expressed as Behavio 0.20 protocols."""

@@ -52,9 +52,9 @@ Ashwood's M = 4 inputs, reproduced exactly:
 
 | input | construction |
 | --- | --- |
-| bias | Unspool's `intercept` |
+| bias | Behavio's `intercept` |
 | stimulus | `contrastRight - contrastLeft` with `NaN` read as 0, then z-scored using the mean and standard deviation of the pooled 37-animal cohort |
-| previous choice | Unspool's `choice_lag_1`, effect-coded to `{-1, +1}` |
+| previous choice | Behavio's `choice_lag_1`, effect-coded to `{-1, +1}` |
 | win-stay/lose-switch | `reward[t-1] * (2 * choice[t-1] - 1)` with `reward` in `{-1, +1}` |
 
 Choice is IBL's `_ibl_trials.choice` remapped as Ashwood remaps it: clockwise `+1` becomes
@@ -65,13 +65,13 @@ The modelled Bernoulli outcome is therefore "chose right".
 
 ## 5. Model and hyperparameters
 
-`unspool.BernoulliGLMHMM` with:
+`behavio.BernoulliGLMHMM` with:
 
 | setting | value | source |
 | --- | --- | --- |
 | `covariates` | `("stimulus", "wsls")` | paper, M = 4 with intercept and `choice_lags=1` |
 | `choice_lags` | `1` | paper |
-| `l2` | `0.25` | paper's Gaussian prior with sigma = 2; Unspool's penalty is `0.5 * l2 * ||w||^2`, so `l2 = 1 / sigma^2` |
+| `l2` | `0.25` | paper's Gaussian prior with sigma = 2; Behavio's penalty is `0.5 * l2 * ||w||^2`, so `l2 = 1 / sigma^2` |
 | `label_by` | `"stimulus"` | the paper's engaged state is the one with the largest stimulus weight |
 | `n_restarts` | `2` | the reference implementation uses `N_initializations = 2` for per-animal fits |
 | `n_states` | `3` for the population analysis; `{1, 2, 3, 4, 5}` for the selection sweep | paper |
@@ -82,28 +82,28 @@ Comparison models: `BernoulliHistoryGLM` with the same covariates for K = 1, and
 
 ## 6. Declared substitutions
 
-Each item is a place where Unspool cannot express what the paper did. Every one of these
+Each item is a place where Behavio cannot express what the paper did. Every one of these
 moves the numbers, and none of them is silent.
 
 1. **No observation mask.** The paper keeps violation trials in the sequence and replaces
-   their emission likelihood with 1. Unspool's GLM-HMM has no mask, so violation rows are
+   their emission likelihood with 1. Behavio's GLM-HMM has no mask, so violation rows are
    removed. The IBL violation rate is under 0.1% of these trials. Because both history
    regressors are built from the *retained* choices, removal reproduces Ashwood's own rule of
    carrying the last non-violation choice forward. The residual difference is the first trial
-   of each session, where Ashwood seeds the history from that trial's own choice and Unspool
+   of each session, where Ashwood seeds the history from that trial's own choice and Behavio
    uses zero.
 2. **No Dirichlet transition prior.** The paper places a Dirichlet(alpha = 2) prior on each
    row of the transition matrix, with no stickiness (`kappa = 0` in the reference code).
-   Unspool's `stickiness` adds pseudo-counts to the *diagonal* only, which is a different
+   Behavio's `stickiness` adds pseudo-counts to the *diagonal* only, which is a different
    prior, so it is left at `0.0` and the transition matrix is fitted without a prior.
 3. **Intercept is unpenalized.** The paper's Gaussian prior covers all four weights including
-   the bias. Unspool's `l2` deliberately excludes the intercept.
+   the bias. Behavio's `l2` deliberately excludes the intercept.
 4. **No pooled global fit.** The paper fits a single GLM-HMM to all 37 animals pooled and
    seeds each per-animal fit from it, purely so that state labels align across animals.
-   Unspool offers no way to initialize a fit from external parameters; it aligns labels by
+   Behavio offers no way to initialize a fit from external parameters; it aligns labels by
    canonicalizing on `label_by`. The pooled fit is also out of compute reach here — see §8.
 5. **Filtered, not smoothed, state probabilities.** The paper conditions per-state accuracy
-   on the smoothed marginal posterior. Unspool publishes filtered and one-step-ahead
+   on the smoothed marginal posterior. Behavio publishes filtered and one-step-ahead
    predictive state probabilities but no smoothed posterior, so the filtered distribution is
    substituted. `GLMHMMFitResult.state_occupancy` *is* a smoothed quantity (the mean posterior
    probability per state) and is used for fractional occupancy; the paper's occupancy is a
@@ -111,7 +111,7 @@ moves the numbers, and none of them is silent.
 6. **Symmetric lapse model.** The paper's classic lapse model has two asymmetric lapse rates.
    `LapsePsychometric` has one symmetric rate capped at 0.2.
 7. **Direct optimization, not EM.** The paper maximizes the MAP objective by EM with 300
-   iterations. Unspool maximizes the same penalized marginal likelihood directly by L-BFGS-B
+   iterations. Behavio maximizes the same penalized marginal likelihood directly by L-BFGS-B
    over a multi-start set. The objective is the same up to the prior differences above; the
    optimizer is not.
 
@@ -135,7 +135,7 @@ asserted. The animal is the one the reference implementation plots as its exampl
 names no identifier.
 
 This design is an *interpolation* design, not a prospective one: a held-out session may
-precede a training session in time. Unspool's `evaluate_splits` requires prospective folds by
+precede a training session in time. Behavio's `evaluate_splits` requires prospective folds by
 default for good reason. It is used here only because the published number being checked was
 produced under it, and it is not offered as an example of the package's recommended practice.
 
@@ -156,9 +156,9 @@ median across animals of the engaged state's fractional occupancy.
 | --- | --- |
 | the three-state selection itself | the paper selects three states on plateau and parsimony grounds rather than by an arg-max, so there is no published number to check; see section 9a |
 | K selection across all 37 animals (Fig. 4a) | 5 folds x 5 candidates x 37 animals is roughly 40 hours of single-core time with this implementation |
-| pooled global fit and cross-animal state alignment (Methods, Algorithm 1) | Unspool cannot initialize a fit from external parameters, and a 181,530-trial fit is out of compute reach |
+| pooled global fit and cross-animal state alignment (Methods, Algorithm 1) | Behavio cannot initialize a fit from external parameters, and a 181,530-trial fit is out of compute reach |
 | population predictive-accuracy gains of 4.2% and 2.8% (Results) | requires the full 37-animal cross-validation above |
-| response-time signatures of state (Fig. 6) | Unspool's GLM-HMM has Bernoulli emissions only |
+| response-time signatures of state (Fig. 6) | Behavio's GLM-HMM has Bernoulli emissions only |
 | Odoemene et al. mice and human participants (Figs. 5, 7) | different datasets, not fetched |
 
 ## 9. Acceptance tolerances

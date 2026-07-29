@@ -27,8 +27,8 @@ def test_figure1hj_audit_freezes_distinct_panel_contracts() -> None:
     assert audit["panels"]["1H"]["x"] == "Released interpolated session coordinate"
     assert audit["panels"]["1J"]["x"] == ("Released Gaussian-process right psychometric slope")
     assert audit["panels"]["1J"]["x_limits"] == [-0.35, 1.02]
-    assert "not independently refit" in audit["unspool_display"]["claim_boundary"]
-    assert audit["unspool_display"]["classification"] == "released-replay"
+    assert "not independently refit" in audit["behavio_display"]["claim_boundary"]
+    assert audit["behavio_display"]["classification"] == "released-replay"
 
 
 def test_exact_stack_replay_matches_all_released_memberships() -> None:

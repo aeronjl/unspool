@@ -8,8 +8,8 @@ from typing import Any
 
 import numpy as np
 
+from behavio import BernoulliHistoryGLM, HierarchicalBernoulliHistoryGLM, Study
 from benchmarks.provenance import render
-from unspool import BernoulliHistoryGLM, HierarchicalBernoulliHistoryGLM, Study
 
 POPULATION_PARAMETERS = {
     "intercept": -0.2,

@@ -7,7 +7,7 @@ analysis ran.
 
 It is worth being precise about why this is different from the other IBL studies here. The
 [trajectory study](ibl2021-learning-trajectories.md) and the
-[prospective study](ibl2021-prospective-selection.md) run Unspool's pipeline on IBL data and
+[prospective study](ibl2021-prospective-selection.md) run Behavio's pipeline on IBL data and
 report *their own* numbers. Nothing in them can disagree with the IBL. This chapter can, and
 partly does.
 
@@ -97,7 +97,7 @@ sessions = summarize_sessions(study, rightward_sign=sign)
 subjects = summarize_subjects(sessions)  # applies trained_1a / trained_1b
 ```
 
-`load_study` goes through `unspool.adapters.ibl_one`, which asks ONE for each pinned dataset
+`load_study` goes through `behavio.adapters.ibl_one`, which asks ONE for each pinned dataset
 UUID with hash checking and stamps the Alyx origin, release tag, session UUID, dataset UUID,
 path, size and MD5 onto every trial.
 

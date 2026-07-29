@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     Study,
     cohort_forward_session_splits,
     forward_session_splits,
@@ -11,7 +11,7 @@ from unspool import (
     leave_one_subject_out_splits,
     within_session_rolling_splits,
 )
-from unspool.validation import ValidationSplit
+from behavio.validation import ValidationSplit
 
 
 def longitudinal_study() -> Study:

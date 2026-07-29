@@ -3,7 +3,7 @@ from types import MappingProxyType
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     BernoulliHistoryGLM,
     ModelDataError,
     SmoothBernoulliHistoryGLM,

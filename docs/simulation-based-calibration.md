@@ -13,7 +13,7 @@ rank each simulated truth among the retained posterior draws.
 
 This implements the rank formulation introduced by
 [Talts et al.](https://arxiv.org/abs/1804.06788). The runner is backend-neutral: simulation
-returns Unspool's canonical `Study`, inference returns its labelled `PosteriorResult`, and
+returns Behavio's canonical `Study`, inference returns its labelled `PosteriorResult`, and
 declared test quantities connect latent truth to posterior variables.
 
 ## The workflow
@@ -30,7 +30,7 @@ For a conjugate beta–binomial check, the complete pattern is:
 ```python
 import numpy as np
 
-from unspool import (
+from behavio import (
     PosteriorGroup,
     PosteriorParameterQuantity,
     PosteriorResult,
@@ -113,7 +113,7 @@ draws. Exact ties are broken uniformly at random across all admissible ranks; th
 systematic distortion for discrete or numerically rounded quantities. `normalized_rank`
 places that discrete result at the midpoint of its unit-interval cell.
 
-The summaries are deliberately descriptive. Unspool does not turn a finite histogram or
+The summaries are deliberately descriptive. Behavio does not turn a finite histogram or
 coverage proportion into a universal pass/fail threshold. Autocorrelated posterior draws
 can themselves create non-uniform rank histograms; the
 [Stan SBC guide](https://mc-stan.org/docs/stan-users-guide/simulation-based-calibration.html)
@@ -152,11 +152,11 @@ quantities that exercise the inferential claims the model will support.
 Good prior SBC validates the joint implementation under its own prior predictive
 distribution. It does not show that the prior is scientifically plausible, the model fits
 real animals, parameters are recoverable in the intended design, or conclusions transport
-to future sessions. Those are separate Unspool evidence objects rather than conclusions
+to future sessions. Those are separate Behavio evidence objects rather than conclusions
 inferred from a single diagnostic.
 
 The current PyMC hierarchical history-GLM adapter intentionally cannot be presented as an
 end-to-end prior-SBC example: its intercept has flat prior semantics, so it does not define
-a proper joint distribution from which SBC repetitions can be drawn. Unspool will not
+a proper joint distribution from which SBC repetitions can be drawn. Behavio will not
 invent a simulation prior merely to produce a reassuring histogram. A future explicitly
 proper-prior model can plug into this runner without changing the SBC result contract.

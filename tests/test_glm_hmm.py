@@ -3,7 +3,7 @@ from collections.abc import Mapping
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     BehaviourModel,
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
@@ -17,7 +17,7 @@ from unspool import (
     forward_session_splits,
     run_parameter_recovery,
 )
-from unspool.models.glm import _ordered_session_indices
+from behavio.models.glm import _ordered_session_indices
 
 
 def design(*, n_sessions: int = 4, trials_per_session: int = 100) -> Study:

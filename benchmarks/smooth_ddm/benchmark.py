@@ -8,8 +8,8 @@ from typing import Any
 
 import numpy as np
 
+from behavio import SmoothWienerDriftDiffusion, Study, WienerDriftDiffusion
 from benchmarks.provenance import render
-from unspool import SmoothWienerDriftDiffusion, Study, WienerDriftDiffusion
 
 N_SESSIONS = 6
 TRAINING_SESSIONS = 5

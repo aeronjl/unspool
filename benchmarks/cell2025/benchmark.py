@@ -13,6 +13,7 @@ from typing import Any
 import numpy as np
 from scipy import stats
 
+from behavio import Study
 from benchmarks.cell2025.fetch_data import (
     ARCHIVE_MEMBER,
     FIGSHARE_ARTICLE_DOI,
@@ -21,7 +22,6 @@ from benchmarks.cell2025.fetch_data import (
     sha256,
 )
 from benchmarks.provenance import render
-from unspool import Study
 
 EXPECTED = {
     "n_trials": 192_238,

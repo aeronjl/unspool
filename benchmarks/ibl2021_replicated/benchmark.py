@@ -10,6 +10,13 @@ from typing import Any
 
 import numpy as np
 
+from behavio import (
+    Study,
+    TrajectoryPanel,
+    compare_trajectory_shapes,
+    leave_one_lab_out_splits,
+    read_ibl_one_sessions,
+)
 from benchmarks.ibl2021.refresh_manifest import PUBLIC_PASSWORD
 from benchmarks.ibl2021_replicated.manifest import (
     EXPECTED_MANIFEST_SHA256,
@@ -17,13 +24,6 @@ from benchmarks.ibl2021_replicated.manifest import (
     sources_from_manifest,
 )
 from benchmarks.provenance import render
-from unspool import (
-    Study,
-    TrajectoryPanel,
-    compare_trajectory_shapes,
-    leave_one_lab_out_splits,
-    read_ibl_one_sessions,
-)
 
 DEFAULT_CACHE = Path(__file__).with_name("data")
 
@@ -48,7 +48,7 @@ def load_study(cache_directory: Path = DEFAULT_CACHE) -> Study:
     try:
         from one.api import ONE
     except ImportError as error:
-        raise RuntimeError("the replicated IBL benchmark requires `unspool[ibl]`") from error
+        raise RuntimeError("the replicated IBL benchmark requires `behavio[ibl]`") from error
     manifest = load_manifest()
     cache_directory.mkdir(parents=True, exist_ok=True)
     one = ONE(

@@ -1,6 +1,6 @@
 # PyMC hierarchical GLM backend
 
-Unspool's first full-posterior adapter samples the existing
+Behavio's first full-posterior adapter samples the existing
 `HierarchicalBernoulliHistoryGLM` with PyMC's established NUTS implementation. It is a
 narrow interoperability reference, not a new sampler or a second behavioural model.
 
@@ -9,7 +9,7 @@ matrix. It also requires the same `TaskSpec` used by the deterministic golden pa
 undeclared covariate or mismatched scored observation fails before PyMC is imported.
 
 ```python
-from unspool import (
+from behavio import (
     ChoiceSpec,
     HierarchicalBernoulliHistoryGLM,
     PyMCHierarchicalGLMBackend,
@@ -49,7 +49,7 @@ if audit.issues:
 Install the backend only when needed:
 
 ```bash
-pip install "unspool[bayesian]"
+pip install "behavio[bayesian]"
 ```
 
 PyMC 5.28 is used on Python 3.11 and current PyMC 6 on Python 3.12 and later. Both are
@@ -114,7 +114,7 @@ print(diverging.values.sum())
 PyMC computes the pointwise likelihood from the graph after sampling, and
 `sample_posterior_predictive` generates observations conditional on the retained draws.
 The latter also supports out-of-sample prediction when model data and coordinates are
-changed; Unspool will expose that through its prospective split contract in a later slice.
+changed; Behavio will expose that through its prospective split contract in a later slice.
 See the [PyMC posterior-predictive reference](https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.sample_posterior_predictive.html).
 
 Use `posterior.to_arviz()` for the installed ArviZ representation. The standard groups and

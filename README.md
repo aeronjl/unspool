@@ -1,23 +1,26 @@
-# Unspool
+# Behavio
 
-[![CI](https://github.com/aeronjl/unspool/actions/workflows/ci.yml/badge.svg)](https://github.com/aeronjl/unspool/actions/workflows/ci.yml)
-[![Documentation](https://github.com/aeronjl/unspool/actions/workflows/docs.yml/badge.svg)](https://github.com/aeronjl/unspool/actions/workflows/docs.yml)
+[![CI](https://github.com/aeronjl/behavio/actions/workflows/ci.yml/badge.svg)](https://github.com/aeronjl/behavio/actions/workflows/ci.yml)
+[![Documentation](https://github.com/aeronjl/behavio/actions/workflows/docs.yml/badge.svg)](https://github.com/aeronjl/behavio/actions/workflows/docs.yml)
 
-**[Read the documentation](https://aeronjl.github.io/unspool/)** to choose a
+**[Read the documentation](https://aeronjl.github.io/behavio/)** to choose a
 longitudinal workflow, browse supported and experimental methods, and run worked
 Cell, Chen restless-bandit, and IBL studies.
 
-New analyses should start with **[Choose a model by the claim](https://aeronjl.github.io/unspool/model-choice-guide/)**
-and the common-format **[model cards](https://aeronjl.github.io/unspool/model-cards/)**,
-then follow the **[literature-recipe standard](https://aeronjl.github.io/unspool/tutorials/recipe-contract/)**.
+New analyses should start with **[Choose a model by the claim](https://aeronjl.github.io/behavio/model-choice-guide/)**
+and the common-format **[model cards](https://aeronjl.github.io/behavio/model-cards/)**,
+then follow the **[literature-recipe standard](https://aeronjl.github.io/behavio/tutorials/recipe-contract/)**.
 
 > “No two moments are identical in a conscious being.”
 > — Henri Bergson, *The Creative Mind*
 
-**A process-first framework for fitting and falsifying behavioural models across learning.**
+**Fit and falsify trial-level models of behaviour — psychometric curves, GLM-HMMs,
+drift-diffusion models of choice and response time, reinforcement-learning agents, and
+hierarchical learning trajectories — with simulation, parameter and model recovery, and
+time-aware validation built into the fitting interface.**
 
-Unspool is an emerging Python library for trial-level behavioural modelling across
-subjects and sessions. It will make simulation, parameter recovery, model recovery,
+Behavio is an emerging Python library for trial-level behavioural modelling within and
+across sessions and subjects. It will make simulation, parameter recovery, model recovery,
 and time-aware validation part of the modelling interface rather than analyses added
 after a model has been selected.
 
@@ -27,7 +30,7 @@ and sits within several non-equivalent clocks—trials, sessions, calendar time,
 stages, and inferred learning landmarks.
 
 > [!IMPORTANT]
-> Unspool is pre-alpha. Its longitudinal data, clock, fold-fitted transform, validation,
+> Behavio is pre-alpha. Its longitudinal data, clock, fold-fitted transform, validation,
 > first modelling, and parameter- and model-recovery contracts are executable, but the API
 > is not yet stable. The model catalogue currently contains static and smoothly time-
 > varying Bernoulli GLMs, static and smooth hierarchical Bernoulli GLMs, a fixed-transition
@@ -37,22 +40,28 @@ stages, and inferred learning landmarks.
 > animal-specific trajectories and an optional explicit contaminant mixture for the
 > stationary model.
 
-## Why “Unspool”?
+## Why “Behavio”?
 
-Henri Bergson used two spools joined by a tape as an image of duration: one unwinds as
-the future contracts, while the other gathers an accumulating past. He also warned that
-the image can make time appear falsely homogeneous and reversible. That tension is
-methodologically productive for longitudinal behavioural science. We need common
-coordinates without pretending that learning histories are interchangeable.
+`behavio` is the exact stem that “behaviour” and “behavior” share, so the name takes no
+side on spelling. It also yields the alias most people will actually type:
 
-The philosophical background is developed in [Philosophy of Unspool](docs/philosophy.md),
-where Bergsonian duration, Heideggerian temporality, Husserlian retention and protention,
-Simondonian individuation, and scientific underdetermination are connected to concrete
-software commitments.
+```python
+import behavio as behav
+```
+
+The name is deliberately unmetaphorical. The package was previously called `unspool`,
+after a Bergsonian image of duration, which argued for the package in longitudinal
+analyses and against it in every other one — single-session psychometrics, within-session
+choice and response time, ethograms, foraging. The commitments that name stood for are
+unchanged: several non-equivalent clocks, ordering that is never shuffled away, and
+learning histories that are not silently made interchangeable by alignment. They are
+developed in [Philosophy of Behavio](docs/philosophy.md), alongside Heideggerian
+temporality, Husserlian retention and protention, Simondonian individuation, and
+scientific underdetermination.
 
 ## Intended guarantees
 
-Unspool is being designed so that:
+Behavio is being designed so that:
 
 - sequential data are not shuffled into invalid trial-wise folds by default;
 - subject- and lab-held-out folds exclude complete population units;
@@ -75,12 +84,12 @@ the proposed first release.
 
 ## A task before a model
 
-Unspool separates longitudinal identity from task semantics. `Study` records which trial
+Behavio separates longitudinal identity from task semantics. `Study` records which trial
 occurred when; `TaskSpec` declares choices, omissions, available actions, rewards, response
 times, predictors, blocks, and episodes before any model is fitted.
 
 ```python
-from unspool import BernoulliHistoryGLM, ChoiceSpec, TaskSpec, fit_model
+from behavio import BernoulliHistoryGLM, ChoiceSpec, TaskSpec, fit_model
 
 task = TaskSpec(
     choice=ChoiceSpec(options=(0, 1)),
@@ -130,13 +139,13 @@ bounded report—without pickled model objects or redistributed raw trials.
 Read the [study-protocol workflow](docs/protocols/index.md), or inspect the command line:
 
 ```bash
-uv run unspool --help
+uv run behavio --help
 ```
 
 ## First executable contract
 
 ```python
-from unspool import Study, forward_session_splits
+from behavio import Study, forward_session_splits
 
 study = Study(
     {
@@ -415,7 +424,7 @@ unresolved.
 
 ## Development
 
-Unspool requires Python 3.11 or newer. The development interpreter is pinned to Python
+Behavio requires Python 3.11 or newer. The development interpreter is pinned to Python
 3.12 and dependencies are managed with [uv](https://docs.astral.sh/uv/).
 
 ```bash
@@ -495,11 +504,11 @@ The same non-mutating checks run in continuous integration. See
 
 ## Intellectual and software provenance
 
-Unspool grows from analyses associated with Liebana, Laffere et al. (2025), subsequent
+Behavio grows from analyses associated with Liebana, Laffere et al. (2025), subsequent
 IBL modelling work, and earlier exploratory repositories. Reusable ideas will be
 reimplemented behind a coherent public API with tests, attribution, and explicit
 scientific boundaries. See [provenance](docs/provenance.md).
 
 ## License
 
-Unspool is licensed under the [MIT License](LICENSE).
+Behavio is licensed under the [MIT License](LICENSE).

@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from behavio import ProtocolState, RecoveryKind, protocol_from_dict
 from benchmarks.cell2025_flagship.benchmark import MODEL_ORDER
 from benchmarks.cell2025_protocol.benchmark import (
     DEFAULT_DESTINATION,
@@ -13,7 +14,6 @@ from benchmarks.cell2025_protocol.benchmark import (
     build_protocol,
     compile_protocol,
 )
-from unspool import ProtocolState, RecoveryKind, protocol_from_dict
 
 
 def test_cell_protocol_declares_the_complete_scientific_design() -> None:

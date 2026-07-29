@@ -1,6 +1,6 @@
 # The first modelling contract
 
-Unspool's first model is intentionally ordinary: a static Bernoulli GLM. Its purpose is
+Behavio's first model is intentionally ordinary: a static Bernoulli GLM. Its purpose is
 to establish what every more elaborate model must expose before smooth drift, latent
 states, reinforcement learning, or population structure are added.
 
@@ -128,7 +128,7 @@ than exact frequentist intervals.
 ## Prospective evaluation
 
 ```python
-from unspool import evaluate_splits, forward_session_splits
+from behavio import evaluate_splits, forward_session_splits
 
 splits = forward_session_splits(study, min_train_sessions=2)
 evaluations = evaluate_splits(model, study, splits)
@@ -162,7 +162,7 @@ study to its inner splitter. See the [prospective comparison guide](comparison.m
 ## Design-specific parameter recovery
 
 ```python
-from unspool import run_parameter_recovery
+from behavio import run_parameter_recovery
 
 report = run_parameter_recovery(
     model,

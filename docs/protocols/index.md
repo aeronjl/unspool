@@ -37,7 +37,7 @@ declaration before a fit can begin.
 ## The shortest useful workflow
 
 ```python
-from unspool import (
+from behavio import (
     compile_execution_plan,
     materialize_protocol,
     model_capabilities,
@@ -81,10 +81,10 @@ performance uses `comparison`.
 ## Start from a complete study
 
 The complete Cell declaration lives in
-[`benchmarks/cell2025_protocol/benchmark.py`](https://github.com/aeronjl/unspool/blob/main/benchmarks/cell2025_protocol/benchmark.py).
+[`benchmarks/cell2025_protocol/benchmark.py`](https://github.com/aeronjl/behavio/blob/main/benchmarks/cell2025_protocol/benchmark.py).
 It freezes a 30-animal, 73,042-trial historical-cohort forecast with six candidates and
 three exact-design recovery gates. The IBL declaration in
-[`benchmarks/ibl2021_protocol/benchmark.py`](https://github.com/aeronjl/unspool/blob/main/benchmarks/ibl2021_protocol/benchmark.py)
+[`benchmarks/ibl2021_protocol/benchmark.py`](https://github.com/aeronjl/behavio/blob/main/benchmarks/ibl2021_protocol/benchmark.py)
 uses the same core types for a checksum-pinned 78-animal public cohort, ordinal session
 alignment, and nested same-animal or held-out-laboratory selection.
 

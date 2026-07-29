@@ -1,7 +1,7 @@
 # Chen 2021 restless-bandit literature recipe
 
 This benchmark turns the open data from Chen et al., “Sex differences in learning from
-exploration,” *eLife* 10:e69748 (2021), into a bounded Unspool worked study. It is a
+exploration,” *eLife* 10:e69748 (2021), into a bounded Behavio worked study. It is a
 **literature-shaped prospective analysis**, not a reproduction of the paper's sex-effect
 claim. The source paper and its HMM motivate the task; the recipe asks a narrower package
 question: how do common behavioural accounts forecast each animal's next session?

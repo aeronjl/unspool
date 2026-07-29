@@ -2,7 +2,7 @@
 
 ## Objective
 
-Unspool will provide a common, tested contract for fitting and comparing generative
+Behavio will provide a common, tested contract for fitting and comparing generative
 models of trial-level behaviour across subjects and sessions. Its differentiator is the
 evaluation layer around the models: temporal validation, recovery, diagnostics, and
 explicit comparisons among alternative accounts of nonstationarity.
@@ -72,5 +72,5 @@ have survived real benchmarks.
 Recovery is conditional on the simulated design, parameter distribution, missingness,
 and sample size. Passing one recovery experiment does not establish global identifiability.
 Likewise, held-out predictive performance does not by itself identify a cognitive
-mechanism. Unspool should report those distinctions rather than collapse them into a
+mechanism. Behavio should report those distinctions rather than collapse them into a
 single model ranking.

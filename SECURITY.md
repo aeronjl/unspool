@@ -1,6 +1,6 @@
 # Security policy
 
-Unspool is pre-alpha and does not yet have supported release branches.
+Behavio is pre-alpha and does not yet have supported release branches.
 
 Please report suspected vulnerabilities privately to Aeron Laffere rather than opening a
 public issue. Include the affected version or commit, reproduction steps, and likely

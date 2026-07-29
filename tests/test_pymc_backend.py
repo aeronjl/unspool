@@ -3,7 +3,7 @@ import importlib
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     CategoryRateDiscrepancy,
     ChoiceSpec,
     HierarchicalBernoulliHistoryGLM,
@@ -188,7 +188,7 @@ def test_real_pymc_fit_preserves_model_task_likelihood_and_predictive_evidence()
 
 
 def test_pymc_remains_an_optional_dependency(monkeypatch) -> None:
-    backend_module = importlib.import_module("unspool.pymc_backend")
+    backend_module = importlib.import_module("behavio.pymc_backend")
     real_import = backend_module.importlib.import_module
     model, study, task = hierarchical_study()
 
@@ -199,5 +199,5 @@ def test_pymc_remains_an_optional_dependency(monkeypatch) -> None:
 
     monkeypatch.setattr(backend_module.importlib, "import_module", unavailable)
 
-    with pytest.raises(PyMCUnavailableError, match=r"unspool\[bayesian\]"):
+    with pytest.raises(PyMCUnavailableError, match=r"behavio\[bayesian\]"):
         PyMCHierarchicalGLMBackend(draws=10, tune=10, chains=2).sample(model, study, task=task)

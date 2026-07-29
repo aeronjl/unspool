@@ -1,4 +1,4 @@
-"""A complete first Unspool analysis: future-session model comparison."""
+"""A complete first Behavio analysis: future-session model comparison."""
 
 # --8<-- [start:analysis]
 import sys
@@ -8,7 +8,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
-from unspool import (
+from behavio import (
     BiasOnly,
     ChoiceSpec,
     Psychometric,
@@ -61,7 +61,7 @@ def run_analysis(output: Path = Path("first-analysis.svg")):
             "font.sans-serif": ["DejaVu Sans"],
             "mathtext.fontset": "dejavusans",
             "svg.fonttype": "none",
-            "svg.hashsalt": "unspool-first-analysis-v1",
+            "svg.hashsalt": "behavio-first-analysis-v1",
         }
     )
     study = make_example_study()

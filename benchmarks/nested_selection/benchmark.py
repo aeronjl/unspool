@@ -8,8 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from benchmarks.provenance import render
-from unspool import (
+from behavio import (
     BernoulliHistoryGLM,
     SmoothBernoulliHistoryGLM,
     Study,
@@ -17,6 +16,7 @@ from unspool import (
     compare_models,
     nested_select_model,
 )
+from benchmarks.provenance import render
 
 KNOTS = (0.0, 3.0, 6.0)
 REGIMES = ("stationary", "shared_drift")

@@ -1,8 +1,8 @@
-site_name: Unspool
+site_name: Behavio
 site_description: Prospective modelling and falsification of behavioural trajectories across learning
-site_url: https://aeronjl.github.io/unspool/
-repo_url: https://github.com/aeronjl/unspool
-repo_name: aeronjl/unspool
+site_url: https://aeronjl.github.io/behavio/
+repo_url: https://github.com/aeronjl/behavio
+repo_name: aeronjl/behavio
 edit_uri: edit/main/docs/
 strict: true
 exclude_docs: |
@@ -143,7 +143,7 @@ nav:
       - Fit artifacts and extensions: fit-artifacts.md
       - Provenance: provenance.md
       - Migration guides: migration-guides.md
-      - Extend Unspool: extensions.md
+      - Extend Behavio: extensions.md
   - Reference:
       - Python API map: reference/index.md
       - Studies and tasks: reference/study-and-task.md
@@ -165,5 +165,5 @@ nav:
   - About:
       - Evidence index: evidence/index.md
       - Literature guide: literature.md
-      - Philosophy of Unspool: philosophy.md
+      - Philosophy of Behavio: philosophy.md
       - Roadmap: roadmap.md

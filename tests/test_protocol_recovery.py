@@ -6,17 +6,17 @@ import pytest
 from test_compiler import capabilities, source_study
 from test_protocol import example_protocol
 
-from unspool.compiler import compile_execution_plan, materialize_protocol
-from unspool.models import BernoulliHistoryGLM
-from unspool.protocol import ProtocolState, RecoveryKind, Setting, WinnerPolicy
-from unspool.protocol_recovery import (
+from behavio.compiler import compile_execution_plan, materialize_protocol
+from behavio.models import BernoulliHistoryGLM
+from behavio.protocol import ProtocolState, RecoveryKind, Setting, WinnerPolicy
+from behavio.protocol_recovery import (
     ExactRecoveryError,
     GateStatus,
     RecoveryCase,
     run_exact_recovery,
 )
-from unspool.runner import run_protocol
-from unspool.validation import cohort_forward_session_splits
+from behavio.runner import run_protocol
+from behavio.validation import cohort_forward_session_splits
 
 
 def recovery_protocol(*, kind=RecoveryKind.MODEL, metric="selection-rate", threshold=0.0):

@@ -7,21 +7,21 @@ import numpy as np
 import pytest
 from test_protocol import example_protocol
 
-from unspool.compiler import (
+from behavio.compiler import (
     AuditLevel,
     ProtocolCompilationError,
     compile_execution_plan,
     materialize_protocol,
 )
-from unspool.models import ModelCapabilities, PredictionMode
-from unspool.protocol import (
+from behavio.models import ModelCapabilities, PredictionMode
+from behavio.protocol import (
     NestedSelectionSpec,
     ProtocolState,
     ScoreMetric,
     SelectionTieBreak,
 )
-from unspool.study import Study
-from unspool.validation import cohort_forward_session_splits
+from behavio.study import Study
+from behavio.validation import cohort_forward_session_splits
 
 
 def source_study() -> Study:

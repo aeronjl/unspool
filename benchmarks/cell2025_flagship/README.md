@@ -1,6 +1,6 @@
 # Cell 2025 flagship behavioural study
 
-This benchmark is the full behavioural flagship for Unspool. Its
+This benchmark is the full behavioural flagship for Behavio. Its
 [`DESIGN.md`](DESIGN.md) freezes the questions, exclusions, clocks, candidates, validation
 geometry, recovery requirements, and claim boundaries before fitting.
 
@@ -39,7 +39,7 @@ for repeated model and parameter recovery.
 ## Released-analysis compatibility
 
 The published Gaussian-process/soft-DTW visualization is reproduced in a small isolated
-compatibility environment rather than adding old numerical packages to Unspool's runtime:
+compatibility environment rather than adding old numerical packages to Behavio's runtime:
 
 ```bash
 uv venv --python 3.12 .venv-cell2025-release
@@ -52,7 +52,7 @@ uv pip install --python .venv-cell2025-release/bin/python \
 
 The resulting semantic memberships are checked animal by animal against the released
 CSV. The released Q-value pickle is decoded into safe, reviewable JSON and summarized as
-a retrospective result; Unspool does not claim to have independently reoptimized that
+a retrospective result; Behavio does not claim to have independently reoptimized that
 115-minute fit.
 
 The same isolated stack produces the audited Figure 1H/1J centroid artifact directly

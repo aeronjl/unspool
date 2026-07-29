@@ -5,7 +5,7 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     IBLONEAdapterError,
     IBLONETrialSource,
     read_ibl_one_sessions,

@@ -1,8 +1,8 @@
 """Bounded replication of Ashwood et al. (2022), Nature Neuroscience 25:201-212.
 
-The paper is the canonical GLM-HMM analysis of mouse perceptual decision-making. Unspool
+The paper is the canonical GLM-HMM analysis of mouse perceptual decision-making. Behavio
 ships a Bernoulli GLM-HMM, so the replication asks a direct question: on the exact public
-data, with the paper's declared covariates and prior scale, does Unspool's implementation
+data, with the paper's declared covariates and prior scale, does Behavio's implementation
 recover the numbers the paper printed?
 
 What is reproduced and what is not is fixed in ``PROTOCOL.md``, written before any of these
@@ -31,6 +31,13 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from behavio import (
+    BernoulliGLMHMM,
+    BernoulliHistoryGLM,
+    LapsePsychometric,
+    PredictionMode,
+    Study,
+)
 from benchmarks.ashwood2022_glmhmm.fetch_data import (
     ARCHIVE_LICENCE,
     ARCHIVE_SHA256,
@@ -39,13 +46,6 @@ from benchmarks.ashwood2022_glmhmm.fetch_data import (
     digest,
 )
 from benchmarks.provenance import render
-from unspool import (
-    BernoulliGLMHMM,
-    BernoulliHistoryGLM,
-    LapsePsychometric,
-    PredictionMode,
-    Study,
-)
 
 # ---------------------------------------------------------------------------
 # Frozen analysis constants. Every value here is justified in PROTOCOL.md.
@@ -67,11 +67,11 @@ EXAMPLE_ANIMAL = "CSHL_008"
 #: Ashwood's M = 4 inputs are bias, stimulus, previous choice and win-stay/lose-switch.
 COVARIATES = ("stimulus", "wsls")
 CHOICE_LAGS = 1
-#: The paper's Gaussian prior on GLM weights has standard deviation sigma = 2. Unspool's
+#: The paper's Gaussian prior on GLM weights has standard deviation sigma = 2. Behavio's
 #: ``l2`` enters the objective as 0.5 * l2 * ||w||^2, so l2 = 1 / sigma^2.
 PRIOR_SIGMA = 2.0
 L2 = 1.0 / PRIOR_SIGMA**2
-#: Unspool canonicalizes latent labels by a named coefficient; the paper's "engaged" state
+#: Behavio canonicalizes latent labels by a named coefficient; the paper's "engaged" state
 #: is the one with the largest stimulus weight, so ordering by stimulus is the right axis.
 LABEL_BY = "stimulus"
 N_RESTARTS = 2
@@ -242,11 +242,11 @@ def animal_study(cohort: Cohort, animal: str) -> Study:
     """Build one animal's ``Study``, dropping no-response trials.
 
     Ashwood keeps violation trials in the sequence and replaces their emission likelihood
-    with one. Unspool's GLM-HMM has no observation mask, so the violation rows are removed
+    with one. Behavio's GLM-HMM has no observation mask, so the violation rows are removed
     instead. Because the two history regressors are constructed from the *retained* choices,
     dropping a violation reproduces Ashwood's own rule of carrying the previous non-violation
     choice forward. The residual difference is the first trial of each session, where Ashwood
-    seeds the history from the trial's own choice and Unspool uses zero.
+    seeds the history from the trial's own choice and Behavio uses zero.
     """
 
     columns: dict[str, list[Any]] = {
@@ -311,7 +311,7 @@ def single_state_glm() -> BernoulliHistoryGLM:
 
 
 def lapse_model() -> LapsePsychometric:
-    """Unspool's nearest available stand-in for the paper's classic lapse model."""
+    """Behavio's nearest available stand-in for the paper's classic lapse model."""
 
     return LapsePsychometric(stimulus="stimulus", l2=L2)
 
@@ -562,7 +562,7 @@ def state_conditioned_accuracy(
 ) -> tuple[tuple[float | None, int], ...]:
     """Accuracy on non-zero-contrast trials that a state explains with probability >= 0.9.
 
-    Ashwood conditions on the smoothed marginal posterior. Unspool publishes filtered and
+    Ashwood conditions on the smoothed marginal posterior. Behavio publishes filtered and
     one-step-ahead predictive state probabilities but not smoothed ones, so the filtered
     distribution is used and the substitution is declared in ``PROTOCOL.md``. A state that
     never reaches the threshold reports ``None`` and a count of zero rather than a number

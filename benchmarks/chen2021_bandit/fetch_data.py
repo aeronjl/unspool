@@ -59,7 +59,7 @@ def fetch(destination: Path = DEFAULT_DESTINATION, *, force: bool = False) -> Pa
             archive_path = Path(target.name)
             request = urllib.request.Request(
                 ARCHIVE_URL,
-                headers={"User-Agent": "unspool-public-recipe/0.1"},
+                headers={"User-Agent": "behavio-public-recipe/0.1"},
             )
             with urllib.request.urlopen(request, timeout=90) as source:
                 shutil.copyfileobj(source, target)

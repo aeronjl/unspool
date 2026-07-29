@@ -67,7 +67,7 @@
       "end_marker": "navy"
     }
   },
-  "unspool_display": {
+  "behavio_display": {
     "asset": "docs/assets/cell2025-trajectories.svg",
     "classification": "released-replay",
     "preserved": [

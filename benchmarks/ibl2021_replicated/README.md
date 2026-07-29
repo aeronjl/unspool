@@ -2,7 +2,7 @@
 
 This benchmark turns a fixed International Brain Laboratory behavioural release into a
 reusable, checksum-pinned longitudinal `Study`. It is the first public-data application of
-Unspool's general ONE adapter and the first IBL panel here in which every lab contains
+Behavio's general ONE adapter and the first IBL panel here in which every lab contains
 multiple animals.
 
 ## Selection contract

@@ -6,14 +6,14 @@ content-addressed archive.
 
 ## Bounded reporting
 
-::: unspool.reporting
+::: behavio.reporting
     options:
       members_order: source
       show_root_heading: false
       show_source: false
 ## Evidence bundles
 
-::: unspool.evidence
+::: behavio.evidence
     options:
       members_order: source
       show_root_heading: false

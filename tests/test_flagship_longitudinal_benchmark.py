@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from behavio import Study
 from benchmarks.flagship_longitudinal.benchmark import (
     KNOTS,
     METHODS,
@@ -12,7 +13,6 @@ from benchmarks.flagship_longitudinal.benchmark import (
     build_cell_panel,
     build_ibl_panel,
 )
-from unspool import Study
 
 RESULT_PATH = Path("benchmarks/flagship_longitudinal/result.json")
 

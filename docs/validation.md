@@ -1,6 +1,6 @@
 # Longitudinal validation
 
-Unspool's splitters operate both within subjects over time and across complete population
+Behavio's splitters operate both within subjects over time and across complete population
 units. They answer different questions and retain the held-out unit in every split.
 
 | Splitter | Training data | Test data | Prospective? | Primary use |
@@ -33,7 +33,7 @@ same-cohort split.
 ## Forward-session prediction
 
 ```python
-from unspool import forward_session_splits
+from behavio import forward_session_splits
 
 for split in forward_session_splits(
     study,
@@ -54,7 +54,7 @@ enough sessions simply produce no eligible fold.
 ## Cohort forward-session prediction
 
 ```python
-from unspool import cohort_forward_session_splits, evaluate_splits
+from behavio import cohort_forward_session_splits, evaluate_splits
 
 splits = cohort_forward_session_splits(
     study,
@@ -74,7 +74,7 @@ when a transparently shrinking, follow-up-dependent cohort is intended.
 Both forward-session splitters guarantee temporal ordering at session resolution. That
 does not make a fitted pipeline prospective by itself. Any learned scaling, feature
 selection, state alignment,
-or behavioural landmark must also be fitted on `train_indices` only. Unspool's first
+or behavioural landmark must also be fitted on `train_indices` only. Behavio's first
 training-only landmark helper is described in the
 [clock and transform guide](clocks-and-transforms.md).
 Its uncertainty wrapper uses the same fold helper, so both point landmarks and bootstrap
@@ -84,7 +84,7 @@ test side without reading held-out outcomes.
 ## Historical-cohort forecasting
 
 ```python
-from unspool import historical_cohort_forecast_splits
+from behavio import historical_cohort_forecast_splits
 
 splits = historical_cohort_forecast_splits(
     aligned_study,
@@ -117,7 +117,7 @@ paper days.
 ## Within-session rolling origins
 
 ```python
-from unspool import within_session_rolling_splits
+from behavio import within_session_rolling_splits
 
 splits = within_session_rolling_splits(
     study,
@@ -149,7 +149,7 @@ require model-specific integration over unobserved intermediate choices.
 ## Whole-session holdout
 
 ```python
-from unspool import leave_one_session_out_splits
+from behavio import leave_one_session_out_splits
 
 for split in leave_one_session_out_splits(study):
     assert not split.prospective
@@ -163,7 +163,7 @@ perturbations, or the influence of individual sessions.
 ## Population holdout
 
 ```python
-from unspool import leave_one_lab_out_splits, leave_one_subject_out_splits
+from behavio import leave_one_lab_out_splits, leave_one_subject_out_splits
 
 for split in leave_one_subject_out_splits(study):
     assert set(split.train_subjects).isdisjoint(split.test_subjects)
@@ -189,7 +189,7 @@ trajectory to a held-out subject.
 ## Held-out-lab future-session prediction
 
 ```python
-from unspool import leave_one_lab_out_session_forecast_splits
+from behavio import leave_one_lab_out_session_forecast_splits
 
 splits = leave_one_lab_out_session_forecast_splits(
     aligned_study,
@@ -211,17 +211,17 @@ Subjects that do not reach the horizon cause an error rather than silently chang
 membership. Sessions before the horizon from test animals are withheld rather than used as
 prediction context, so hierarchical models must apply their declared unseen-subject policy.
 
-The [replicated IBL prospective benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021_prospective)
+The [replicated IBL prospective benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/ibl2021_prospective)
 uses this splitter to distinguish future prediction for represented animals from future
 prediction in an entirely unseen lab.
 
-Its [nested-selection successor](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021_nested_selection) performs
+Its [nested-selection successor](https://github.com/aeronjl/behavio/tree/main/benchmarks/ibl2021_nested_selection) performs
 candidate and smoothness selection on earlier inner forecasts within each outer training
 study. The outer held-out lab and future session are absent during selection, so the final
 score evaluates the complete training-only procedure.
 
 Fold-fitted, subject-specific landmarks present a stricter boundary. A landmark learned
-only for training subjects cannot be applied to a new test subject, and Unspool raises
+only for training subjects cannot be applied to a new test subject, and Behavio raises
 rather than silently estimating it from held-out data. Population-transferable transforms
 must define how new-subject values are obtained using training-fold information alone.
 

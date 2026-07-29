@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from unspool import Study, UniformResponseTimeContaminant, WienerDriftDiffusion
+from behavio import Study, UniformResponseTimeContaminant, WienerDriftDiffusion
 
 generator = np.random.default_rng(204)
 n_trials = 800

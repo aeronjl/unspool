@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from scipy.special import expit
 
-from unspool import (
+from behavio import (
     BehaviourModel,
     FitDiagnostics,
     HierarchicalSmoothBernoulliHistoryGLM,

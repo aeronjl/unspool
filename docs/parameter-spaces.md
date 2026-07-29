@@ -7,14 +7,14 @@ fitting algorithm, such as the logit of that learning rate. Treating those names
 interchangeable makes recovery plots, priors, and backend comparisons surprisingly easy
 to misread.
 
-`ParameterSpace` is Unspool's backend-neutral declaration of that boundary. It fixes the
+`ParameterSpace` is Behavio's backend-neutral declaration of that boundary. It fixes the
 meaning of a model before SciPy, PyBADS, PyDDM, or a probabilistic-programming backend is
 chosen.
 
 ## Declare one semantic object
 
 ```python
-from unspool import (
+from behavio import (
     ParameterRole,
     ParameterSpace,
     ParameterSpec,
@@ -128,7 +128,7 @@ first [PyMC backend](pymc-backend.md) preserves the older hierarchical GLM's exp
 fixed-scale prior semantics, but that model does not yet expose `ParameterSpaceProvider`,
 so its posterior result correctly leaves the parameter-space fingerprint unset rather than
 manufacturing one. PyDDM and HSSM adapters remain deferred ecosystem work. Optional
-dependencies do not become part of Unspool core.
+dependencies do not become part of Behavio core.
 
 - [PyBADS API](https://acerbilab.github.io/pybads/api/classes/bads.html)
 - [PyDDM documentation](https://pyddm.readthedocs.io/)
@@ -137,7 +137,7 @@ dependencies do not become part of Unspool core.
 
 ## API
 
-::: unspool.parameters
+::: behavio.parameters
     options:
       members:
         - ParameterRole

@@ -1,7 +1,7 @@
 [project]
-name = "unspool"
+name = "behavio"
 version = "0.1.0"
-description = "A process-first framework for fitting and falsifying behavioural models across learning."
+description = "Fit and falsify trial-level models of behaviour - psychometric curves, GLM-HMMs, drift-diffusion models of choice and response time, reinforcement-learning agents, and hierarchical learning trajectories - with simulation, parameter and model recovery, and time-aware validation built into the fitting interface."
 readme = "README.md"
 authors = [
     { name = "Aeron Laffere" },
@@ -11,8 +11,13 @@ license = "MIT"
 keywords = [
     "behavioral-neuroscience",
     "cognitive-modeling",
+    "drift-diffusion",
+    "glm-hmm",
     "longitudinal-data",
     "model-recovery",
+    "psychometric-function",
+    "reinforcement-learning",
+    "response-time",
 ]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
@@ -29,12 +34,12 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/aeronjl/unspool"
-Issues = "https://github.com/aeronjl/unspool/issues"
-Repository = "https://github.com/aeronjl/unspool"
+Homepage = "https://github.com/aeronjl/behavio"
+Issues = "https://github.com/aeronjl/behavio/issues"
+Repository = "https://github.com/aeronjl/behavio"
 
 [project.scripts]
-unspool = "unspool.cli:main"
+behavio = "behavio.cli:main"
 
 [project.optional-dependencies]
 nwb = [

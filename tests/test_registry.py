@@ -1,6 +1,6 @@
 import pytest
 
-from unspool import (
+from behavio import (
     BernoulliHistoryGLM,
     EstimatorRegistration,
     EstimatorRegistry,

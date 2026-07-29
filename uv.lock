@@ -143,6 +143,81 @@ wheels = [
 ]
 
 [[package]]
+name = "behavio"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+
+[package.optional-dependencies]
+bayesian = [
+    { name = "pymc", version = "5.28.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "pymc", version = "6.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+dandi = [
+    { name = "h5py" },
+    { name = "pynwb" },
+    { name = "remfile" },
+]
+ibl = [
+    { name = "one-api" },
+]
+nwb = [
+    { name = "h5py" },
+    { name = "pynwb" },
+]
+optimization = [
+    { name = "pybads" },
+]
+probabilistic = [
+    { name = "arviz", version = "0.23.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "arviz", version = "1.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "ruff" },
+]
+docs = [
+    { name = "matplotlib" },
+    { name = "mkdocs-material" },
+    { name = "mkdocstrings", extra = ["python"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "arviz", marker = "python_full_version >= '3.12' and extra == 'probabilistic'", specifier = ">=1.2,<2" },
+    { name = "arviz", marker = "python_full_version < '3.12' and extra == 'probabilistic'", specifier = ">=0.22,<1.2" },
+    { name = "h5py", marker = "extra == 'dandi'", specifier = ">=3.11" },
+    { name = "h5py", marker = "extra == 'nwb'", specifier = ">=3.11" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "one-api", marker = "extra == 'ibl'", specifier = ">=3.5,<4" },
+    { name = "pybads", marker = "extra == 'optimization'", specifier = ">=1.0.6,<2" },
+    { name = "pymc", marker = "python_full_version >= '3.12' and extra == 'bayesian'", specifier = ">=6.1,<7" },
+    { name = "pymc", marker = "python_full_version < '3.12' and extra == 'bayesian'", specifier = ">=5.28,<6" },
+    { name = "pynwb", marker = "extra == 'dandi'", specifier = ">=3.1" },
+    { name = "pynwb", marker = "extra == 'nwb'", specifier = ">=3.1" },
+    { name = "remfile", marker = "extra == 'dandi'", specifier = ">=0.1" },
+    { name = "scipy", specifier = ">=1.15" },
+]
+provides-extras = ["nwb", "dandi", "ibl", "optimization", "probabilistic", "bayesian"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8.4.0" },
+    { name = "ruff", specifier = ">=0.12.0" },
+]
+docs = [
+    { name = "matplotlib", specifier = ">=3.9" },
+    { name = "mkdocs-material", specifier = ">=9.6" },
+    { name = "mkdocstrings", extras = ["python"], specifier = ">=0.29" },
+]
+
+[[package]]
 name = "boto3"
 version = "1.43.56"
 source = { registry = "https://pypi.org/simple" }
@@ -2281,81 +2356,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/92/ff/5a28bdfd8c3ebec42564ac7d0e54ca3db65044a9314a97f9564fa7a1e926/tzdata-2026.3.tar.gz", hash = "sha256:4a1518b8993086a7982523e071643f3c0e5f213e75b21318e78bcabfff9d1415", size = 198674, upload-time = "2026-07-10T08:50:37.887Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e5/6d/b53b99a9f2766d095985947a5782f1702cabb129a34f7a802d7197af832f/tzdata-2026.3-py2.py3-none-any.whl", hash = "sha256:dc096730c87af6cab1b171c9d532be840741ff5d459015e7f6947bd7d7e54931", size = 348168, upload-time = "2026-07-10T08:50:36.46Z" },
-]
-
-[[package]]
-name = "unspool"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "numpy" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-]
-
-[package.optional-dependencies]
-bayesian = [
-    { name = "pymc", version = "5.28.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "pymc", version = "6.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-]
-dandi = [
-    { name = "h5py" },
-    { name = "pynwb" },
-    { name = "remfile" },
-]
-ibl = [
-    { name = "one-api" },
-]
-nwb = [
-    { name = "h5py" },
-    { name = "pynwb" },
-]
-optimization = [
-    { name = "pybads" },
-]
-probabilistic = [
-    { name = "arviz", version = "0.23.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "arviz", version = "1.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "ruff" },
-]
-docs = [
-    { name = "matplotlib" },
-    { name = "mkdocs-material" },
-    { name = "mkdocstrings", extra = ["python"] },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "arviz", marker = "python_full_version >= '3.12' and extra == 'probabilistic'", specifier = ">=1.2,<2" },
-    { name = "arviz", marker = "python_full_version < '3.12' and extra == 'probabilistic'", specifier = ">=0.22,<1.2" },
-    { name = "h5py", marker = "extra == 'dandi'", specifier = ">=3.11" },
-    { name = "h5py", marker = "extra == 'nwb'", specifier = ">=3.11" },
-    { name = "numpy", specifier = ">=2.0" },
-    { name = "one-api", marker = "extra == 'ibl'", specifier = ">=3.5,<4" },
-    { name = "pybads", marker = "extra == 'optimization'", specifier = ">=1.0.6,<2" },
-    { name = "pymc", marker = "python_full_version >= '3.12' and extra == 'bayesian'", specifier = ">=6.1,<7" },
-    { name = "pymc", marker = "python_full_version < '3.12' and extra == 'bayesian'", specifier = ">=5.28,<6" },
-    { name = "pynwb", marker = "extra == 'dandi'", specifier = ">=3.1" },
-    { name = "pynwb", marker = "extra == 'nwb'", specifier = ">=3.1" },
-    { name = "remfile", marker = "extra == 'dandi'", specifier = ">=0.1" },
-    { name = "scipy", specifier = ">=1.15" },
-]
-provides-extras = ["nwb", "dandi", "ibl", "optimization", "probabilistic", "bayesian"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=8.4.0" },
-    { name = "ruff", specifier = ">=0.12.0" },
-]
-docs = [
-    { name = "matplotlib", specifier = ">=3.9" },
-    { name = "mkdocs-material", specifier = ">=9.6" },
-    { name = "mkdocstrings", extras = ["python"], specifier = ">=0.29" },
 ]
 
 [[package]]

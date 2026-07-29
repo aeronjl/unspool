@@ -1,6 +1,6 @@
 # Fit audits
 
-Every fitted Unspool model retains its raw optimizer evidence in `FitDiagnostics`.
+Every fitted Behavio model retains its raw optimizer evidence in `FitDiagnostics`.
 Multi-restart and latent-state models also retain their model-specific evidence on their
 fit-result subclasses. `FitAudit` adds a normalized view across those objects; it does not
 replace, edit, or conditionally discard them.
@@ -35,7 +35,7 @@ A pass is not evidence that the model is the right explanation, globally identif
 prospectively useful. A warning does not always invalidate prediction: label ambiguity,
 for example, blocks stable naming of latent states but does not automatically make the
 model's marginal predictions meaningless. Consumers decide which issue codes block their
-particular claim; Unspool keeps the decision visible.
+particular claim; Behavio keeps the decision visible.
 
 ## Stable issue codes
 
@@ -68,7 +68,7 @@ Two continuous rules have shared defaults and can be changed without changing th
 model:
 
 ```python
-from unspool import FitAuditPolicy
+from behavio import FitAuditPolicy
 
 audit = fit.audit(
     policy=FitAuditPolicy(

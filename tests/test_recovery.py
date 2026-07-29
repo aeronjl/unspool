@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pytest
 
-from unspool import BernoulliHistoryGLM, Study, run_parameter_recovery
+from behavio import BernoulliHistoryGLM, Study, run_parameter_recovery
 
 
 def recovery_design() -> Study:

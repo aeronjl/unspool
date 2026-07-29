@@ -1,6 +1,6 @@
 # Threshold-landmark uncertainty and resolution
 
-This benchmark tests whether Unspool's uncertainty-aware threshold landmark distinguishes a
+This benchmark tests whether Behavio's uncertainty-aware threshold landmark distinguishes a
 decisive learning transition from a marginal regime that only sometimes satisfies the same
 operational criterion.
 

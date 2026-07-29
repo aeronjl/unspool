@@ -3,7 +3,7 @@
 “The labs differ” can refer to several distinct objects. One lab may have a higher average
 parameter throughout learning, change by a larger amount, follow a genuinely different
 path, or merely appear different because its animals were observed on a different clock.
-Unspool makes those possibilities separate before attaching an inferential claim to any of
+Behavio makes those possibilities separate before attaching an inferential claim to any of
 them.
 
 ## The panel contract
@@ -15,7 +15,7 @@ alignment was learned. This is intentionally stricter than silently applying dyn
 warping: a shift in *when* an animal learns can itself be the scientific result.
 
 ```python
-from unspool import TrajectoryPanel, compare_trajectory_shapes
+from behavio import TrajectoryPanel, compare_trajectory_shapes
 
 panel = TrajectoryPanel(
     grid=aligned_sessions,
@@ -54,7 +54,7 @@ to two. A flat group mean has zero amplitude, so its scale-free shape is undefin
 reported as unresolved rather than manufactured by division through a tolerance.
 
 This decomposition is deliberately modest. Functional-data methods often separate
-amplitude and phase variation through curve registration; Unspool does not estimate phase
+amplitude and phase variation through curve registration; Behavio does not estimate phase
 warps here because doing so would change the scientific clock. Registration can be added
 later as an explicit, validated transform rather than an invisible property of a metric.
 
@@ -77,14 +77,14 @@ model fitting.
 This distinction follows the nested-data warning emphasized by Saravanan, Berman, and
 Sober: repeated trials or sessions do not replace independent animals. It also matters for
 the IBL learning data. The full IBL study included many mice per institution and found
-variation in learning speed across mice and laboratories, but Unspool's compact engineering
+variation in learning speed across mice and laboratories, but Behavio's compact engineering
 panel deliberately selects one animal from each of nine labs. Its audit therefore fails
 cross-lab trajectory readiness even though its provenance and leave-one-lab-out coverage
 remain useful.
 
 ## Validation evidence
 
-The matched [`trajectory_shapes` benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/trajectory_shapes)
+The matched [`trajectory_shapes` benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/trajectory_shapes)
 simulates replicated labs whose generating differences are level-only, amplitude-only, or
 shape-changing. Across 20 pinned repetitions, the decomposition recovers all three
 components and rejects a separate singleton-lab design. This is design-specific recovery

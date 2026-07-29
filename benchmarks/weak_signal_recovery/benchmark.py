@@ -9,9 +9,9 @@ from typing import Any
 
 import numpy as np
 
+from behavio import ModelRecoveryReport, ModelRecoveryScenario, run_model_recovery
 from benchmarks.provenance import render
 from benchmarks.recovery_grid.benchmark import N_SESSIONS, build_design, experiment
-from unspool import ModelRecoveryReport, ModelRecoveryScenario, run_model_recovery
 
 DEFAULT_REPEATS = 10
 ROOT_SEED = 7701

@@ -30,7 +30,7 @@ Only parameters already listed in `varying_parameters` may receive subject paths
 hypothesis keeps the optimization and interpretation tractable:
 
 ```python
-from unspool import HierarchicalSmoothWienerDriftDiffusion
+from behavio import HierarchicalSmoothWienerDriftDiffusion
 
 model = HierarchicalSmoothWienerDriftDiffusion(
     covariates=("stimulus",),
@@ -103,14 +103,14 @@ The opt-in `"supplemented"` mode instead differentiates one forced EM update aro
 fitted log scales and uses its rate matrix to correct the complete-data information for
 missing information. This follows the supplemented EM construction of
 [Meng and Rubin (1991)](https://doi.org/10.1080/01621459.1991.10475130), applied to
-Unspool's approximate Laplace-EM map. The fit retains both
+Behavio's approximate Laplace-EM map. The fit retains both
 `subject_scale_local_standard_errors` and the selected
 `subject_scale_standard_errors`, plus `subject_scale_covariance`,
 `subject_scale_em_rate_matrix`, and `subject_scale_em_spectral_radius`. Reported 95%
 intervals are transformed on the log scale and clipped only to the declared scale bounds.
 
 Supplementation requires a converged scale procedure, an EM spectral radius below one,
-and positive observed information. A failed condition raises `ModelDataError`; Unspool
+and positive observed information. A failed condition raises `ModelDataError`; Behavio
 does not manufacture a covariance by clipping eigenvalues. The pinned benchmark now
 resolves 20/20 panels, with a maximum spectral radius of `0.89677`; the refusal path is
 retained and still fires on an unstable map, but this pinned design no longer exercises
@@ -145,7 +145,7 @@ likelihood at the nearest admissible path. A fitted optimum outside tolerance is
 rather than silently clipped.
 
 The local Hessian has an arrowhead structure: all animals couple to the population block,
-but one animal's deviation block does not couple directly to another's. Unspool evaluates
+but one animal's deviation block does not couple directly to another's. Behavio evaluates
 the population, subject, and population–subject curvature blocks numerically and inverts
 them with the Schur complement. This retains population–subject uncertainty coupling while
 avoiding evaluations of known zero cross-animal blocks. It remains a local Gaussian
@@ -195,7 +195,7 @@ questions and should not be pooled under one generic cross-validation score.
 Hierarchical DDMs are valuable because they estimate group and individual parameters
 simultaneously rather than imposing either complete pooling or fully independent fits.
 The original HDDM recovery experiments found the greatest benefit when individual trial
-counts were small. Unspool adopts that partial-pooling motivation, not HDDM's MCMC engine;
+counts were small. Behavio adopts that partial-pooling motivation, not HDDM's MCMC engine;
 see [Wiecki, Sofer, and Frank (2013)](https://pmc.ncbi.nlm.nih.gov/articles/PMC3731670/).
 
 Current limitations are explicit:
@@ -214,14 +214,14 @@ Current limitations are explicit:
 
 ## Recovery evidence
 
-The [hierarchical Wiener benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/hierarchical_smooth_ddm) makes
+The [hierarchical Wiener benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/hierarchical_smooth_ddm) makes
 complete pooling, shared smooth, independent smooth, and hierarchical smooth fits compete
 across three regimes. Across 20 repetitions per regime, the scientifically matched model
 wins both subject-path RMSE and fifth-session joint log loss: complete pooling for
 stationary identical animals, shared smooth for shared change, and hierarchical smooth for
 individual change. All 480 fits converge.
 
-The [parameter-specific scale benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ddm_subject_scale_recovery)
+The [parameter-specific scale benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/ddm_subject_scale_recovery)
 starts drift and boundary components at the same value, estimates them from three training
 sessions, and scores a held-out fourth session against an oracle given the true scales.
 Doubling the cohort from 6 to 12 animals reduces joint scale RMSE from `0.06144` to
@@ -238,7 +238,7 @@ animals and `0.17412` at twelve, against a truth of `0.22`, or 21–28% low in b
 That is EM/Laplace shrinkage in the point estimate, not a simulation artefact, and the
 wide interval partly absorbs it. It is an open gap, not a resolved one.
 
-The [predictive-uncertainty benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ddm_predictive_uncertainty)
+The [predictive-uncertainty benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/ddm_predictive_uncertainty)
 then compares local and supplemented scale intervals over 20 eight-animal panels. Local
 coverage is 50% for drift scale and 85% for boundary scale. Supplementation is stable in
 all 20 panels and reaches conditional coverage of 100% for both. Across 80 entirely new

@@ -8,14 +8,14 @@ from typing import Any
 
 import numpy as np
 
-from benchmarks.provenance import render
-from unspool import (
+from behavio import (
     HierarchicalSmoothWienerDriftDiffusion,
     SmoothWienerDriftDiffusion,
     Study,
     WienerDriftDiffusion,
 )
-from unspool.models.glm import _linear_time_basis
+from behavio.models.glm import _linear_time_basis
+from benchmarks.provenance import render
 
 N_SUBJECTS = 5
 N_SESSIONS = 5

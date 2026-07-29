@@ -3,7 +3,7 @@ import importlib
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     ArviZUnavailableError,
     PosteriorError,
     PosteriorGroup,
@@ -241,7 +241,7 @@ def test_arviz_roundtrip_preserves_groups_dimensions_coordinates_and_provenance(
 
 
 def test_arviz_remains_an_optional_dependency(monkeypatch) -> None:
-    posterior_module = importlib.import_module("unspool.posterior")
+    posterior_module = importlib.import_module("behavio.posterior")
     real_import = posterior_module.importlib.import_module
 
     def unavailable(name):
@@ -251,5 +251,5 @@ def test_arviz_remains_an_optional_dependency(monkeypatch) -> None:
 
     monkeypatch.setattr(posterior_module.importlib, "import_module", unavailable)
 
-    with pytest.raises(ArviZUnavailableError, match=r"unspool\[probabilistic\]"):
+    with pytest.raises(ArviZUnavailableError, match=r"behavio\[probabilistic\]"):
         complete_result().to_arviz()

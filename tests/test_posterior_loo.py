@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     PosteriorAuditStatus,
     PosteriorGroup,
     PosteriorResult,
@@ -11,7 +11,7 @@ from unspool import (
     PSISLOOResult,
     psis_loo,
 )
-from unspool.posterior import PosteriorError
+from behavio.posterior import PosteriorError
 
 
 def posterior_result(*, pathological: bool = False) -> PosteriorResult:

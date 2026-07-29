@@ -1,6 +1,6 @@
 # Cross-lab trajectory component recovery
 
-This benchmark asks whether Unspool keeps four scientifically different statements about
+This benchmark asks whether Behavio keeps four scientifically different statements about
 aligned group trajectories separate:
 
 - a constant difference in overall level;

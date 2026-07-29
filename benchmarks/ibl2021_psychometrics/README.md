@@ -6,7 +6,7 @@ from the public behaviour release, and compares them against tolerances fixed in
 [`PROTOCOL.md`](PROTOCOL.md) **before** the analysis was run.
 
 That is the distinction from this repository's other six `ibl2021*` benchmarks, which run
-Unspool's pipeline on IBL data and report their own numbers. Those are engineering
+Behavio's pipeline on IBL data and report their own numbers. Those are engineering
 benchmarks. This one can be wrong in a way the IBL would recognise.
 
 > International Brain Laboratory, Aguillon-Rodriguez V., Angelaki D., Bayer H., Bonacchi N.,
@@ -68,7 +68,7 @@ threshold, and `γ`, `λ` the left and right lapse rates. This is `erf_psycho_2g
 objective, its box constraints as a `1e7` penalty, and unconstrained Nelder–Mead with five
 restarts. σ is reported directly, never inverted.
 
-Unspool's own `LapsePsychometric` is deliberately **not** used: it is a logistic with a
+Behavio's own `LapsePsychometric` is deliberately **not** used: it is a logistic with a
 single symmetric lapse and would not be comparable to the published parameters.
 
 **The IBL uses two different fits, and this benchmark uses both.** They are not
@@ -148,7 +148,7 @@ uv run --extra ibl python -m benchmarks.ibl2021_psychometrics.benchmark \
 
 The fetch verifies 3,058 checksum-pinned trial tables (~143 MB, about two minutes) into the
 Git-ignored cache. The benchmark then loads those exact dataset UUIDs through
-`unspool.adapters.ibl_one`, which re-checks provenance per session and preserves IBL's
+`behavio.adapters.ibl_one`, which re-checks provenance per session and preserves IBL's
 native `-1/0/+1` choice coding. The rightward-choice code is **derived from the data**, not
 assumed, and recorded in `result.json` as `rightward_choice_code`.
 

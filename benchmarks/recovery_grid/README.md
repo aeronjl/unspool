@@ -1,7 +1,7 @@
 # Matched four-family recovery grid
 
 This synthetic benchmark asks whether the same prospective evaluation can distinguish
-four explanations represented by Unspool's current reference models:
+four explanations represented by Behavio's current reference models:
 
 - stationary stimulus and choice-history effects;
 - smoothly drifting coefficients;

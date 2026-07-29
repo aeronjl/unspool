@@ -361,7 +361,7 @@ The roadmap is organized by scientific contracts rather than by model count.
   transform that freezes into the same design-term contract without seeing prediction rows.
 - **Implemented:** stabilize a context-bound common fit-artifact schema and an instance-
   scoped public estimator registry through which external models can be added without
-  editing Unspool core or serializing executable objects.
+  editing Behavio core or serializing executable objects.
 - **Release boundary:** load, specify, fit, diagnose, compare, simulate/recover, and report
   must form one coherent public workflow, with every result retaining model, task, data,
   version, and numerical provenance.
@@ -457,7 +457,7 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** add a decision-first task/model guide, common-format model cards, and
   migration guides from hand-written SciPy, `ssm`, hBayesDM, HDDM, and PyDDM workflows.
 - **Implemented:** document how downstream libraries contribute task adapters, estimators,
-  inference backends, diagnostics, and recipes without adopting Unspool internals or using
+  inference backends, diagnostics, and recipes without adopting Behavio internals or using
   a global plugin registry.
 - **Release boundary:** a new user can reproduce a canonical analysis from the literature,
   understand why each step is present, replace one component, and obtain the same standard

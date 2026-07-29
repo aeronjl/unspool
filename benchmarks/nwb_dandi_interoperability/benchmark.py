@@ -9,8 +9,8 @@ from typing import Any
 
 import numpy as np
 
+from behavio import DANDINWBSource, resolve_dandi_nwb_asset, study_from_dandi
 from benchmarks.provenance import render
-from unspool import DANDINWBSource, resolve_dandi_nwb_asset, study_from_dandi
 
 DANDISET_ID = "000004"
 VERSION = "0.220126.1852"

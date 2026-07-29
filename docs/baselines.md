@@ -1,7 +1,7 @@
 # Canonical binary-choice baselines
 
 Specialized longitudinal models should compete against simple explanations with names,
-assumptions, and complete generative contracts. Unspool therefore exposes the common
+assumptions, and complete generative contracts. Behavio therefore exposes the common
 binary-choice baselines directly instead of requiring every lab to rediscover constructor
 settings for a generic GLM.
 
@@ -19,7 +19,7 @@ and enter parameter or model recovery through the same public contract.
 ## Fit the nested baselines first
 
 ```python
-from unspool import BiasOnly, Perseveration, Psychometric, compare_models
+from behavio import BiasOnly, Perseveration, Psychometric, compare_models
 
 models = {
     "bias": BiasOnly(),
@@ -41,7 +41,7 @@ distinct in fits, audits, comparisons, recovery reports, and exported fit artifa
 ## Lapse mixtures
 
 ```python
-from unspool import LapsePsychometric
+from behavio import LapsePsychometric
 
 model = LapsePsychometric(
     stimulus="signed_contrast",

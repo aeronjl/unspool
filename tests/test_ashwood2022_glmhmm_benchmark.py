@@ -17,6 +17,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from behavio import Study
 from benchmarks.ashwood2022_glmhmm.benchmark import (
     CLAIM_CHECKS,
     COVARIATES,
@@ -36,7 +37,6 @@ from benchmarks.ashwood2022_glmhmm.benchmark import (
 )
 from benchmarks.ashwood2022_glmhmm.fetch_data import ARCHIVE_SHA256, DEFAULT_DESTINATION
 from benchmarks.provenance import PROVENANCE_KEY
-from unspool import Study
 
 ROOT = Path(__file__).parents[1]
 BENCHMARK = ROOT / "benchmarks" / "ashwood2022_glmhmm"

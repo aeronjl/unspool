@@ -2,7 +2,7 @@
 
 A longitudinal study rarely has one privileged time axis. Session number, cumulative
 exposure, elapsed calendar time, protocol phase, and distance from a learning event answer
-different scientific questions. Unspool records that meaning in a `ClockSpec` instead of
+different scientific questions. Behavio records that meaning in a `ClockSpec` instead of
 silently treating every numeric column as interchangeable.
 
 ## Clock metadata
@@ -19,7 +19,7 @@ Every clock declares:
 are `with_cumulative_trial_clock()` and `with_elapsed_time_clock()`:
 
 ```python
-from unspool import with_cumulative_trial_clock, with_elapsed_time_clock
+from behavio import with_cumulative_trial_clock, with_elapsed_time_clock
 
 study = with_cumulative_trial_clock(study).study
 study = with_elapsed_time_clock(
@@ -42,7 +42,7 @@ reset its origin and change its meaning.
 Categorical protocol stages can be described explicitly rather than coerced to numbers:
 
 ```python
-from unspool import ClockKind, ClockScope, ClockSpec
+from behavio import ClockKind, ClockScope, ClockSpec
 
 phase = ClockSpec(
     "task_phase",
@@ -55,7 +55,7 @@ phase.validate(study)
 ```
 
 Declaring global scope is a scientific assertion that a phase label is comparable across
-subjects. Unspool validates the declaration but cannot establish that assertion from the
+subjects. Behavio validates the declaration but cannot establish that assertion from the
 table alone.
 
 <figure class="doc-figure" data-figure-kind="Conceptual">
@@ -71,7 +71,7 @@ the training pipeline. `ThresholdLandmarkClock` therefore has separate `fit()` a
 `transform()` operations:
 
 ```python
-from unspool import (
+from behavio import (
     ClockKind,
     ClockSpec,
     ThresholdLandmarkClock,
@@ -134,7 +134,7 @@ For a binary metric, `BootstrapThresholdLandmarkClock` makes uncertainty estimat
 of the same generic fold-transform path:
 
 ```python
-from unspool import BootstrapThresholdLandmarkClock
+from behavio import BootstrapThresholdLandmarkClock
 
 uncertain_landmark = BootstrapThresholdLandmarkClock(
     landmark,

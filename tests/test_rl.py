@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from unspool import (
+from behavio import (
     AsymmetricLearning,
     BehaviourModel,
     BinaryRLAgent,

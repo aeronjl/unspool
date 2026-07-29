@@ -4,7 +4,7 @@ Parameter recovery asks whether a model can estimate known quantities when its o
 generated the data. Model recovery asks a different question: under a specified design,
 can an evaluation procedure distinguish competing generative families?
 
-Unspool answers that question by simulation and forward-session prediction. It does not
+Behavio answers that question by simulation and forward-session prediction. It does not
 select the model that best redescribes the complete simulated record.
 
 ## Experiment contract
@@ -37,7 +37,7 @@ statuses, and stable issue codes remain in the report.
 ## Static versus smooth example
 
 ```python
-from unspool import ModelRecoveryScenario, run_model_recovery
+from behavio import ModelRecoveryScenario, run_model_recovery
 
 scenarios = [
     ModelRecoveryScenario(
@@ -92,7 +92,7 @@ one summary row per cell with trial/subject counts, resolution and accuracy, plu
 warning and failure rates.
 
 ```python
-from unspool import run_model_recovery_grid
+from behavio import run_model_recovery_grid
 
 grid = run_model_recovery_grid(
     {"sparse": sparse_design, "dense": dense_design},
@@ -107,13 +107,13 @@ for row in grid.summary():
     print(row.design_name, row.overall_accuracy, row.audit_warning_rate)
 ```
 
-The first bounded [four-family recovery benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/recovery_grid)
+The first bounded [four-family recovery benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/recovery_grid)
 uses static, smooth, GLM-HMM, and Q-learning candidates on nested 150- and 300-trial
 designs. The smaller cell recovers two of four generating families; the larger recovers
 all four for the exact single-run parameter regimes. The contrast is evidence that the
 answer changes with the design—not an estimate of a general sample-size threshold.
 
-The follow-up [weak-signal benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/weak_signal_recovery) fixes
+The follow-up [weak-signal benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/weak_signal_recovery) fixes
 the 300-trial design and repeats each stronger and boundary-near regime ten times. Recovery
 falls from 70.0% to 32.5%; the scenario matrix shows subtle drift collapsing toward static
 fits and overlapping HMM emissions collapsing toward static or smooth fits. Wilson

@@ -1,18 +1,18 @@
 # Reinforcement-learning agents
 
-`BinaryQLearning` is Unspool's first reinforcement-learning reference agent. It is a compact
+`BinaryQLearning` is Behavio's first reinforcement-learning reference agent. It is a compact
 two-action Q-learning model intended to compete with history, smooth-drift, and latent-state
 accounts—not a claim that all behavioural learning is model-free value learning.
 
 `BinaryRLAgent` is the composable 0.22 successor. The original model remains available
-unchanged for numerical parity with published Unspool analyses; new work can assemble a
+unchanged for numerical parity with published Behavio analyses; new work can assemble a
 learning rule, optional forgetting, optional choice kernel, policy, and reset boundary as
 separate immutable components.
 
 ## Compose an agent
 
 ```python
-from unspool import (
+from behavio import (
     AsymmetricLearning,
     BinaryRLAgent,
     ChoiceKernel,
@@ -89,7 +89,7 @@ with $0<\alpha<1$. The unchosen value is unchanged. Rewards may be binary or con
 $[0,1]$ during fitting.
 
 Values initialize to the fixed `initial_value` at every subject/session boundary, and
-perseveration history also resets. This is a deliberate first-model restriction. Unspool's
+perseveration history also resets. This is a deliberate first-model restriction. Behavio's
 current fold contract does not yet carry an inferred terminal value state across a session
 boundary; allowing cross-session persistence without extending that contract would make
 future-session evaluation incorrect.
@@ -100,7 +100,7 @@ Simulation requires one reward-probability column per action. Defaults are
 `reward_probability_0` and `reward_probability_1`:
 
 ```python
-from unspool import BinaryQLearning
+from behavio import BinaryQLearning
 
 model = BinaryQLearning(n_restarts=5, random_seed=4)
 parameters = model.parameters_from_components(
@@ -190,7 +190,7 @@ hidden requirement of the stable fitting contract.
 
 ## Recovery and competing explanations
 
-The model satisfies Unspool's generic parameter- and model-recovery contracts. Its tests
+The model satisfies Behavio's generic parameter- and model-recovery contracts. Its tests
 use an explicitly volatile two-armed environment, check the recursive analytic gradient
 against finite differences, recover the generating agent, and require Q-learning to beat
 both a static history GLM and a smooth session-time GLM on a future session.

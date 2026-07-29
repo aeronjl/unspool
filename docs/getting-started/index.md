@@ -6,7 +6,7 @@ If this is your first visit, use the [installation guide](installation.md) and r
 [first prospective analysis](first-analysis.md). It produces a protected future-session
 score, an animal-level figure, and fit audits from one complete script.
 
-[Install Unspool](installation.md){ .md-button }
+[Install Behavio](installation.md){ .md-button }
 [Run the first analysis](first-analysis.md){ .md-button .md-button--primary }
 
 <figure class="doc-figure" data-figure-kind="Conceptual">
@@ -18,14 +18,14 @@ score, an animal-level figure, and fit audits from one complete script.
 
 | I need to… | Begin here | You should leave with… |
 | --- | --- | --- |
-| Bring a trial table into Unspool | [Longitudinal study contract](../data-contract.md) | explicit subject, session, trial, and chronology columns |
+| Bring a trial table into Behavio | [Longitudinal study contract](../data-contract.md) | explicit subject, session, trial, and chronology columns |
 | Forecast genuinely later behaviour | [Prospective validation](../validation.md) | a leakage-safe split and held-out score |
 | Compare scientific explanations | [Model-choice guide](../model-choice-guide.md) | a matched candidate set and declared alternatives |
 | Tune or select models | [Nested comparison](../comparison.md) | selection contained inside each training boundary |
 | Test whether the design can identify a claim | [Recovery design](../tutorials/model-recovery-design.md) | parameter and model-recovery evidence |
 | Freeze an analysis before fitting | [Study protocols](../protocols/index.md) | a validated, auditable scientific declaration |
 | Read IBL, NWB, or DANDI data | [Data interoperability](../interoperability.md) | canonical trials plus source provenance |
-| Rework an existing analysis | [Migration guides](../migration-guides.md) | an explicit map from familiar tooling to Unspool |
+| Rework an existing analysis | [Migration guides](../migration-guides.md) | an explicit map from familiar tooling to Behavio |
 | Extend the model catalogue | [Extension guide](../extensions.md) | a tested estimator or adapter boundary |
 
 ## The minimum analysis path
@@ -33,7 +33,7 @@ score, an animal-level figure, and fit audits from one complete script.
 ### 1. Preserve identity and chronology
 
 Map the four required columns into a [`Study`](../data-contract.md). Source order and
-additional columns are retained; Unspool does not infer chronology from filenames or row
+additional columns are retained; Behavio does not infer chronology from filenames or row
 position.
 
 ### 2. Declare observations independently of a model

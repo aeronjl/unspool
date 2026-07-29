@@ -48,6 +48,6 @@ uv run python -m benchmarks.weak_signal_recovery.benchmark
 uv run --group docs python -m scripts.plot_documentation_figures --skip-cell
 ```
 
-The [four-family result](https://github.com/aeronjl/unspool/tree/main/benchmarks/recovery_grid)
-and [weak-signal result](https://github.com/aeronjl/unspool/tree/main/benchmarks/weak_signal_recovery)
+The [four-family result](https://github.com/aeronjl/behavio/tree/main/benchmarks/recovery_grid)
+and [weak-signal result](https://github.com/aeronjl/behavio/tree/main/benchmarks/weak_signal_recovery)
 pin seeds, selection matrices, pointwise scores, audits, and uncertainty denominators.

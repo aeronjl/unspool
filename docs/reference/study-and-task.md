@@ -5,7 +5,7 @@ trial columns before choosing a model.
 
 ## Longitudinal studies
 
-::: unspool.study
+::: behavio.study
     options:
       members_order: source
       show_root_heading: false
@@ -13,7 +13,7 @@ trial columns before choosing a model.
 
 ## Task observations
 
-::: unspool.task
+::: behavio.task
     options:
       members_order: source
       show_root_heading: false
@@ -21,7 +21,7 @@ trial columns before choosing a model.
 
 ## Response times
 
-::: unspool.response_times
+::: behavio.response_times
     options:
       members_order: source
       show_root_heading: false

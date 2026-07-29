@@ -18,7 +18,7 @@ exactly the setting in which longitudinal software has to distinguish three thin
 2. forecasting observations that did not participate in fitting; and
 3. identifying which latent explanation generated a trajectory.
 
-Those claims do not follow from one another. Unspool keeps them as separate evidence
+Those claims do not follow from one another. Behavio keeps them as separate evidence
 layers and retains negative or unresolved comparisons.
 
 The primary sources are the [versioned public data release](https://doi.org/10.6084/m9.figshare.28877912.v1)
@@ -42,12 +42,12 @@ the Figure 1 reproduction retains:
 | Canonical source sessions | 950 |
 | Published paper-day summaries | 949 |
 
-Two source sessions for DAP021 share paper day 1. Unspool preserves both source identities
+Two source sessions for DAP021 share paper day 1. Behavio preserves both source identities
 and combines them only when applying the paper's paper-day summary rule.
 
 ### Source-to-display correspondence
 
-This table fixes the relationship between each Unspool display and the published or
+This table fixes the relationship between each Behavio display and the published or
 released target. Panel identifiers were checked against the paper PDF, the released
 `behaviour.ipynb`, and the checksum-pinned source artifacts. The dedicated
 [Figure 1G/I reproduction audit](cell2025-figure1gi-reproduction.md) records the source
@@ -55,7 +55,7 @@ revision, panel geometry, colour variable, preserved choices, and intentional ch
 The companion [Figure 1H/J trajectory audit](cell2025-figure1hj-reproduction.md) separately
 records the released GP paths, both soft-DTW computations, and their claim boundary.
 
-| Unspool display | Published or released target | Relationship | Preserved | Changed or unavailable |
+| Behavio display | Published or released target | Relationship | Preserved | Changed or unavailable |
 | --- | --- | --- | --- | --- |
 | `cell2025-strategy.svg`, G | Cell Figure 1G: early bias versus late bias | Published parity | public trials, exclusions, animal unit, days 4-8 and final-five-paper-day windows, axes, continuous colour variable | paired into one SVG; DejaVu Sans; seeded confidence band |
 | `cell2025-strategy.svg`, I | Cell Figure 1I: early bias versus late R-L slope | Published parity | public trials, exclusions, animal unit, windows, axes, continuous colour variable | paired into one SVG; DejaVu Sans; seeded confidence band |
@@ -132,7 +132,7 @@ context; only their final five sessions are scored. Pairwise intervals resample 
 not trials. This is prospective only under the declared deployment order: the reference
 cohort must have completed training before a new animal is forecast.
 
-The [frozen design](https://github.com/aeronjl/unspool/blob/main/benchmarks/cell2025_flagship/DESIGN.md)
+The [frozen design](https://github.com/aeronjl/behavio/blob/main/benchmarks/cell2025_flagship/DESIGN.md)
 declares exclusions, clocks, features, candidates, regularization, fold assignment,
 recovery, and interpretation before final fitting. A smoke simulation falsified the first
 static early-bias candidate; the design history records the amendment that restricted the
@@ -205,7 +205,7 @@ uv run --group docs python -m scripts.plot_documentation_figures
 
 The full study is intentionally compute-heavy. The exact released trajectory visualization
 uses a small pinned compatibility environment documented in the
-[benchmark README](https://github.com/aeronjl/unspool/tree/main/benchmarks/cell2025_flagship).
+[benchmark README](https://github.com/aeronjl/behavio/tree/main/benchmarks/cell2025_flagship).
 Raw data stay outside Git; committed JSON retains source checksums, denominators, folds,
 seeds, fit audits, subject-balanced scores, recovery runs, and limitations.
 
@@ -218,7 +218,7 @@ seeds, fit audits, subject-balanced scores, recovery runs, and limitations.
 - Forecastability does not establish that early bias causes late strategy.
 - Behaviour-only evidence cannot identify dopamine as necessary, sufficient, or the
   carrier of a teaching signal.
-- The released Q-value summary has not yet been reimplemented as a general Unspool agent;
+- The released Q-value summary has not yet been reimplemented as a general Behavio agent;
   the current `BinaryQLearning` has a different scientific contract.
 - The public table cannot reproduce the paper's video, neural, photometry, causal, or
   deep-network analyses.

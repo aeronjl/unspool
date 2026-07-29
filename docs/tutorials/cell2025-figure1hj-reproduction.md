@@ -40,7 +40,7 @@ keeps the published geometries separate:
 
 This distinction matters. The thick Figure 1H curves are **not** Figure 1J centroids
 projected onto a different axis. The released notebook refits one soft-DTW centroid
-inside each already assigned group using session and slope difference together. Unspool
+inside each already assigned group using session and slope difference together. Behavio
 does the same.
 
 ## What each encoding means
@@ -65,8 +65,8 @@ use their groups' mean continuous colour without a gradient.
 | Released code | [`behaviour.ipynb` at commit `2faa468`](https://github.com/SamuelLiebana/da_long_term_learning/blob/2faa4680d5e9c0d6a9df516e3dede8c641e39a72/scripts/behaviour.ipynb), cells 8 and 25 |
 | GP trajectory table | `psych_metric_trajectory_fit_df.csv`, SHA-256 `e5cd06…664ee` |
 | Released memberships | `left_right_balanced_cluster_df.csv`, SHA-256 `6cd23…49dc` |
-| Machine-readable panel audit | [`figure1hj_audit.json`](https://github.com/aeronjl/unspool/blob/main/benchmarks/cell2025_flagship/figure1hj_audit.json) |
-| Checked-in numerical replay | [`figure1hj_trajectories.json`](https://github.com/aeronjl/unspool/blob/main/benchmarks/cell2025_flagship/figure1hj_trajectories.json) |
+| Machine-readable panel audit | [`figure1hj_audit.json`](https://github.com/aeronjl/behavio/blob/main/benchmarks/cell2025_flagship/figure1hj_audit.json) |
+| Checked-in numerical replay | [`figure1hj_trajectories.json`](https://github.com/aeronjl/behavio/blob/main/benchmarks/cell2025_flagship/figure1hj_trajectories.json) |
 
 The replay uses NumPy 1.26.4, pandas 2.2.2, SciPy 1.13.1, scikit-learn 1.5.1,
 and tslearn 0.6.3, matching the released environment. The numerical artifact is generated
@@ -97,7 +97,7 @@ uv run python -m benchmarks.cell2025_flagship.fetch_released_artifacts
 ```
 
 Replay the old numerical stack in an isolated environment rather than constraining
-Unspool's supported runtime:
+Behavio's supported runtime:
 
 ```bash
 uv venv --python 3.12 .venv-cell2025-release

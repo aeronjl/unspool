@@ -1,6 +1,6 @@
 # Methods catalog
 
-Unspool groups methods by the explanation they offer for change. Availability is not the
+Behavio groups methods by the explanation they offer for change. Availability is not the
 same as validation: consult the [capability matrix](capability-matrix.md) and each model's
 recovery evidence.
 

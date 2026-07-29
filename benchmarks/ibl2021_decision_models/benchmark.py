@@ -9,14 +9,7 @@ from typing import Any
 
 import numpy as np
 
-from benchmarks.ibl2021.refresh_manifest import PUBLIC_PASSWORD
-from benchmarks.ibl2021_replicated.benchmark import DEFAULT_CACHE
-from benchmarks.ibl2021_replicated.manifest import (
-    EXPECTED_MANIFEST_SHA256,
-    load_manifest,
-)
-from benchmarks.provenance import render
-from unspool import (
+from behavio import (
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
     IBLONETrialSource,
@@ -27,6 +20,13 @@ from unspool import (
     WienerDriftDiffusion,
     read_ibl_one_sessions,
 )
+from benchmarks.ibl2021.refresh_manifest import PUBLIC_PASSWORD
+from benchmarks.ibl2021_replicated.benchmark import DEFAULT_CACHE
+from benchmarks.ibl2021_replicated.manifest import (
+    EXPECTED_MANIFEST_SHA256,
+    load_manifest,
+)
+from benchmarks.provenance import render
 
 TRIALS_PER_SESSION = 150
 RT_MIN_SECONDS = 0.05
@@ -61,7 +61,7 @@ def load_source_study(cache_directory: Path = DEFAULT_CACHE) -> Study:
     try:
         from one.api import ONE
     except ImportError as error:
-        raise RuntimeError("the public IBL worked study requires `unspool[ibl]`") from error
+        raise RuntimeError("the public IBL worked study requires `behavio[ibl]`") from error
 
     manifest = load_manifest()
     _subject, rows = selected_manifest_rows()

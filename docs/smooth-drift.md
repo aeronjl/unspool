@@ -1,6 +1,6 @@
 # Smooth change as a competing explanation
 
-`SmoothBernoulliHistoryGLM` is Unspool's first nonstationary reference model. It asks
+`SmoothBernoulliHistoryGLM` is Behavio's first nonstationary reference model. It asks
 whether continuously changing coefficients predict later sessions better than one static
 coefficient vector. It is a deliberately restrained competitor, not a general claim that
 learning is smooth.
@@ -28,7 +28,7 @@ uncertainty. Those distinctions should remain visible when reporting results.
 ## The clock is part of the model
 
 ```python
-from unspool import SmoothBernoulliHistoryGLM
+from behavio import SmoothBernoulliHistoryGLM
 
 model = SmoothBernoulliHistoryGLM(
     covariates=("stimulus",),
@@ -41,7 +41,7 @@ model = SmoothBernoulliHistoryGLM(
 
 Knots are declared in the units of one explicit `Study` column. They must cover every time
 at which the model is simulated, fitted, or evaluated. `session_order`, elapsed days,
-cumulative trials, and landmark-relative time would define different models; Unspool does
+cumulative trials, and landmark-relative time would define different models; Behavio does
 not silently substitute or align them.
 
 The basis and smoothing strength must be specified without looking at held-out outcomes.

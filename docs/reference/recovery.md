@@ -5,7 +5,7 @@ property of a model class.
 
 ## Parameter recovery
 
-::: unspool.recovery
+::: behavio.recovery
     options:
       members_order: source
       show_root_heading: false
@@ -13,7 +13,7 @@ property of a model class.
 
 ## Model recovery
 
-::: unspool.model_recovery
+::: behavio.model_recovery
     options:
       members_order: source
       show_root_heading: false
@@ -21,7 +21,7 @@ property of a model class.
 
 ## Exact protocol recovery
 
-::: unspool.protocol_recovery
+::: behavio.protocol_recovery
     options:
       members_order: source
       show_root_heading: false
@@ -29,7 +29,7 @@ property of a model class.
 
 ## Latent-state alignment
 
-::: unspool.state_alignment
+::: behavio.state_alignment
     options:
       members_order: source
       show_root_heading: false
@@ -37,7 +37,7 @@ property of a model class.
 
 ## Trajectory shapes
 
-::: unspool.trajectory_shapes
+::: behavio.trajectory_shapes
     options:
       members_order: source
       show_root_heading: false

@@ -68,6 +68,6 @@ uv run --extra ibl python -m benchmarks.ibl2021_nested_selection.benchmark
 uv run --group docs python -m scripts.plot_documentation_figures --skip-cell
 ```
 
-The fixed [prospective comparison](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021_prospective)
-and [nested-selection benchmark](https://github.com/aeronjl/unspool/tree/main/benchmarks/ibl2021_nested_selection)
+The fixed [prospective comparison](https://github.com/aeronjl/behavio/tree/main/benchmarks/ibl2021_prospective)
+and [nested-selection benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/ibl2021_nested_selection)
 retain every fold, audit, subject score, candidate score, interval, and seed.

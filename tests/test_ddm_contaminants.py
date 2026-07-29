@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from scipy.integrate import quad
 
-from unspool import (
+from behavio import (
     BehaviourModel,
     DriftDiffusionFitResult,
     ResponseTimeSpec,

@@ -6,12 +6,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from behavio import Study
 from benchmarks.ibl2021_prospective.benchmark import (
     METHODS,
     analyze_panel,
     build_panel,
 )
-from unspool import Study
 
 RESULT_PATH = Path("benchmarks/ibl2021_prospective/result.json")
 

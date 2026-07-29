@@ -1,10 +1,10 @@
 cff-version: 1.2.0
-message: "If you use Unspool, please cite the software and the associated methods paper when available."
-title: "Unspool: a process-first framework for fitting and falsifying behavioural models across learning"
+message: "If you use Behavio, please cite the software and the associated methods paper when available."
+title: "Behavio: a process-first framework for fitting and falsifying behavioural models across learning"
 type: software
 authors:
   - family-names: Laffere
     given-names: Aeron
 version: 0.1.0
 license: MIT
-repository-code: "https://github.com/aeronjl/unspool"
+repository-code: "https://github.com/aeronjl/behavio"

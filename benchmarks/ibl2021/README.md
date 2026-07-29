@@ -1,6 +1,6 @@
 # IBL 2021 public learning benchmark
 
-This benchmark exercises Unspool's longitudinal data contract on the International Brain
+This benchmark exercises Behavio's longitudinal data contract on the International Brain
 Laboratory's fixed `2021_Q1_IBL_et_al_Behaviour` release. It makes one deliberately
 bounded claim: in a metadata-selected panel spanning all nine contributing labs, accuracy
 on easy trials is higher in the final three training sessions before the first biased-task
@@ -22,7 +22,7 @@ uv run --with pyarrow python -m benchmarks.ibl2021.benchmark
 ```
 
 The downloader uses only the standard library. PyArrow is an on-demand benchmark
-dependency and is intentionally not part of Unspool's NumPy/SciPy core.
+dependency and is intentionally not part of Behavio's NumPy/SciPy core.
 
 Maintainers can regenerate the committed manifest from the fixed release tag with:
 
@@ -80,7 +80,7 @@ limit: this panel cannot distinguish generalization to a new animal from general
 a new lab. A cross-lab model benchmark requires multiple held-out animals per lab rather
 than reinterpreting these nine paired partitions.
 
-The committed result now makes that limit machine-readable through Unspool's trajectory
+The committed result now makes that limit machine-readable through Behavio's trajectory
 replication audit. All nine labs are flagged as singletons and the panel is explicitly
 `inferentially_ready: false` for cross-lab trajectory-shape comparison. No pairwise lab
 distance or bootstrap interval is produced from this confounded design.
@@ -105,4 +105,4 @@ cognitive model. Those claims require broader inclusion and held-out subject/lab
   <https://docs.internationalbrainlab.org/notebooks_external/one_quickstart.html>.
 
 The IBL data are distributed under CC BY 4.0 and are fetched on demand rather than
-redistributed by Unspool. Benchmark code is covered by Unspool's MIT license.
+redistributed by Behavio. Benchmark code is covered by Behavio's MIT license.

@@ -43,7 +43,7 @@ columns are preserved so generative models can sample the consequence of the act
 actually choose.
 
 ```python
-from unspool import ChoiceSpec, RewardSpec, TaskSpec
+from behavio import ChoiceSpec, RewardSpec, TaskSpec
 
 task = TaskSpec(
     choice=ChoiceSpec(options=(0, 1)),
@@ -67,7 +67,7 @@ choice or reward affects fitting. Filtered forecasts may update within session 8
 observed event, matching online use, but never inspect a later trial.
 
 ```python
-from unspool import cohort_forward_session_splits
+from behavio import cohort_forward_session_splits
 
 splits = cohort_forward_session_splits(study, min_train_sessions=7)
 assert len(splits) == 1
@@ -81,7 +81,7 @@ the last observed reward. Q-learning maintains session-reset action values and u
 chosen value with its reward prediction error.
 
 ```python
-from unspool import (
+from behavio import (
     BiasOnly,
     BinaryQLearning,
     Perseveration,
@@ -132,4 +132,4 @@ It does not show that Q-learning generated the real animals, validate the source
 states, test the paper's sex-effect claim, or establish generality beyond this cohort.
 
 The complete executable source and frozen evidence are in
-[`benchmarks/chen2021_bandit`](https://github.com/aeronjl/unspool/tree/main/benchmarks/chen2021_bandit).
+[`benchmarks/chen2021_bandit`](https://github.com/aeronjl/behavio/tree/main/benchmarks/chen2021_bandit).
