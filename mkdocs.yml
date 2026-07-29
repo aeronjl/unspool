@@ -122,7 +122,7 @@ nav:
           - Simulation-based calibration: simulation-based-calibration.md
           - Analysis sensitivity: sensitivity-analysis.md
           - Test-retest reliability: test-retest-reliability.md
-          - PSIS-LOO predictive evaluation: psis-loo.md
+          - PSIS-LOO and posterior model comparison: psis-loo.md
           - PyMC hierarchical GLM backend: pymc-backend.md
           - Estimator contract: estimator-contract.md
           - Trajectory shapes: trajectory-shapes.md
@@ -146,6 +146,8 @@ nav:
       - Capability matrix: methods/capability-matrix.md
       - Modelling contract: modelling.md
       - Canonical binary baselines: baselines.md
+      - Psychometric functions: psychometric-functions.md
+      - Signal detection theory: signal-detection.md
       - Multinomial and omissions: multinomial.md
       - Static and smooth drift: smooth-drift.md
       - Hierarchical GLM: hierarchical-glm.md
@@ -169,6 +171,7 @@ nav:
       - Extend Behavio: extensions.md
   - Reference:
       - Python API map: reference/index.md
+      - Extension contracts: reference/contracts.md
       - Studies and tasks: reference/study-and-task.md
       - Clocks, transforms, and design: reference/time-and-design.md
       - Validation and comparison: reference/validation-and-comparison.md
@@ -179,6 +182,7 @@ nav:
       - Diagnostics and sensitivity: reference/diagnostics.md
       - Inference and parameters: reference/inference.md
       - Posterior results: reference/posterior.md
+      - Plotting: reference/plots.md
       - Data adapters: reference/data-adapters.md
       - Observed behaviour API: reference/observed-behaviour.md
       - Protocol schema API: reference/protocol.md

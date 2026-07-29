@@ -19,6 +19,22 @@ first matched alternatives for more elaborate latent or mechanistic accounts.
       show_root_heading: false
       show_source: false
 
+## Psychometric functions
+
+::: behavio.models.psychometric
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+## Signal detection theory
+
+::: behavio.models.sdt
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
 ## Static and smooth GLMs
 
 ::: behavio.models.glm

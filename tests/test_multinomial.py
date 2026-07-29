@@ -6,6 +6,7 @@ from test_compiler import capabilities, frozen_small_protocol, source_study
 from test_runner import compiled_small_protocol
 
 from behavio import (
+    CandidateSpec,
     CategoricalPrediction,
     ChoiceSpec,
     DesignSpec,
@@ -14,6 +15,7 @@ from behavio import (
     NumericTerm,
     ProtocolState,
     ScoreMetric,
+    Setting,
     Study,
     cohort_forward_session_splits,
     compare_models,
@@ -149,8 +151,22 @@ def test_categorical_predictions_participate_in_evaluation_comparison_and_recove
     assert recovery.n_runs == 2
 
 
+def multinomial_candidates() -> tuple[CandidateSpec, ...]:
+    """Declare the categorical candidates the protocol runner is actually handed."""
+
+    return tuple(
+        CandidateSpec(
+            name=name,
+            implementation="behavio.models.MultinomialLogit",
+            hyperparameters=(Setting("l2", l2),),
+            scored_columns=("choice",),
+        )
+        for name, l2 in (("static", 0.1), ("smooth", 1.0))
+    )
+
+
 def test_protocol_runner_serializes_categorical_rows_and_scores_brier() -> None:
-    compiled = compiled_small_protocol()
+    compiled = compiled_small_protocol(multinomial_candidates())
     model = MultinomialLogit(
         choice=ChoiceSpec(options=(0, 1)),
         design=DesignSpec((NumericTerm("stimulus"),)),
@@ -170,7 +186,7 @@ def test_protocol_runner_serializes_categorical_rows_and_scores_brier() -> None:
     assert "categorical" in run.report.candidates[0].calibration.reason
     assert "category_probabilities" in run.report.canonical_json()
 
-    protocol = frozen_small_protocol()
+    protocol = frozen_small_protocol(multinomial_candidates())
     protocol = replace(
         protocol,
         comparison=replace(protocol.comparison, metric=ScoreMetric.BRIER),

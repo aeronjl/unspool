@@ -11,22 +11,43 @@ from test_compiler import (
 )
 
 from behavio.compiler import compile_execution_plan, materialize_protocol
-from behavio.models import BernoulliHistoryGLM
-from behavio.protocol import ProtocolState, ScoreMetric, WinnerPolicy
+from behavio.models import BernoulliHistoryGLM, SmoothBernoulliHistoryGLM
+from behavio.protocol import (
+    CandidateSpec,
+    ProtocolState,
+    ScoreMetric,
+    Setting,
+    WinnerPolicy,
+)
 from behavio.runner import (
+    DeclarationCheck,
     ProtocolRunError,
     RankingStatus,
     RunStage,
     run_nested_protocol,
     run_protocol,
+    verify_candidate_declarations,
 )
 from behavio.validation import cohort_forward_session_splits
 
 
-def compiled_small_protocol():
-    materialized = materialize_protocol(frozen_small_protocol(), source_study())
+def compiled_small_protocol(candidates: tuple[CandidateSpec, ...] = ()):
+    materialized = materialize_protocol(frozen_small_protocol(candidates), source_study())
     splits = cohort_forward_session_splits(materialized.study, min_train_sessions=2)
     return compile_execution_plan(materialized, splits, capabilities=capabilities())
+
+
+def declared_glm(name: str, **hyperparameters) -> CandidateSpec:
+    """Declare a ``BernoulliHistoryGLM`` candidate exactly as it will be supplied."""
+
+    return CandidateSpec(
+        name=name,
+        implementation="behavio.models.BernoulliHistoryGLM",
+        hyperparameters=tuple(
+            Setting(key, value) for key, value in sorted(hyperparameters.items())
+        ),
+        scored_columns=("choice",),
+    )
 
 
 def candidate_models():
@@ -105,9 +126,12 @@ def test_declared_brier_score_controls_summaries_comparisons_and_ranking() -> No
 
 
 def test_identical_candidates_retain_an_unresolved_ranking() -> None:
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.5)
+    settings = {"covariates": ("stimulus",), "choice_lags": 0, "l2": 0.5}
+    model = BernoulliHistoryGLM(**settings)
     run = run_protocol(
-        compiled_small_protocol(),
+        compiled_small_protocol(
+            (declared_glm("static", **settings), declared_glm("smooth", **settings))
+        ),
         {"static": model, "smooth": model},
     )
 
@@ -129,7 +153,17 @@ class FailingFitModel:
 
 def test_candidate_failure_is_retained_while_other_candidate_completes() -> None:
     run = run_protocol(
-        compiled_small_protocol(),
+        compiled_small_protocol(
+            (
+                CandidateSpec(
+                    name="static",
+                    implementation=f"{FailingFitModel.__module__}.FailingFitModel",
+                    hyperparameters=(),
+                    scored_columns=("choice",),
+                ),
+                declared_glm("smooth", covariates=("stimulus",), choice_lags=0, l2=1.0),
+            )
+        ),
         {
             "static": FailingFitModel(),
             "smooth": candidate_models()["smooth"],
@@ -285,3 +319,118 @@ def test_outer_outcomes_cannot_change_inner_selection() -> None:
 def test_flat_runner_refuses_nested_selection_protocol() -> None:
     with pytest.raises(ProtocolRunError, match="must use run_nested_protocol"):
         run_protocol(compiled_nested(), candidate_models())
+
+
+class LookalikeGLM:
+    """A non-dataclass estimator whose class name collides with a declared one."""
+
+    model_name = "lookalike"
+    signature = "lookalike[v1]"
+
+
+def test_declared_model_is_verified_and_leaves_the_evaluation_untouched() -> None:
+    compiled = compiled_small_protocol()
+    baseline = run_protocol(compiled, candidate_models())
+
+    verified = run_protocol(compiled, candidate_models())
+
+    assert baseline.report.fingerprint == verified.report.fingerprint
+    assert [item.candidate for item in verified.verification] == ["static", "smooth"]
+    assert all(item.verified for item in verified.verification)
+    assert all(not item.unverifiable and not item.contradictions for item in verified.verification)
+    static = verified.verification[0]
+    assert static.declared_implementation == "behavio.models.BernoulliHistoryGLM"
+    assert static.observed_implementation == "behavio.models.glm.BernoulliHistoryGLM"
+    assert static.model_name == "bernoulli-history-glm"
+    assert {finding.subject for finding in static.findings} == {
+        "implementation",
+        "hyperparameter:covariates",
+        "hyperparameter:choice_lags",
+        "hyperparameter:l2",
+    }
+
+
+def test_a_contradicting_implementation_refuses_to_produce_evidence() -> None:
+    models = candidate_models()
+    models["smooth"] = SmoothBernoulliHistoryGLM(
+        covariates=("stimulus",),
+        choice_lags=0,
+        l2=1.0,
+    )
+
+    with pytest.raises(ProtocolRunError, match="contradict the frozen candidate declaration"):
+        run_protocol(compiled_small_protocol(), models)
+
+
+def test_a_contradicting_hyperparameter_refuses_to_produce_evidence() -> None:
+    models = candidate_models()
+    models["static"] = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.5)
+
+    with pytest.raises(ProtocolRunError) as error:
+        run_protocol(compiled_small_protocol(), models)
+
+    message = str(error.value)
+    assert "static.hyperparameter:l2" in message
+    assert "declared=0.1" in message and "supplied=0.5" in message
+
+
+def test_verification_separates_contradiction_from_unverifiability() -> None:
+    protocol = frozen_small_protocol(
+        (
+            CandidateSpec(
+                name="static",
+                implementation="unimported.package.LookalikeGLM",
+                hyperparameters=(Setting("l2", 0.1), Setting("tolerance", 1e-9)),
+                scored_columns=("choice",),
+            ),
+            declared_glm("smooth", covariates=("stimulus",), choice_lags=0, l2=2.0),
+        )
+    )
+
+    verification = verify_candidate_declarations(
+        protocol, {"static": LookalikeGLM(), "smooth": candidate_models()["smooth"]}
+    )
+
+    static, smooth = verification
+    assert [finding.status for finding in static.findings] == [DeclarationCheck.UNVERIFIABLE] * 3
+    assert "not imported" in static.findings[0].detail
+    assert "not a dataclass" in static.findings[1].detail
+    assert [finding.status for finding in smooth.findings] == [
+        DeclarationCheck.VERIFIED,
+        DeclarationCheck.VERIFIED,
+        DeclarationCheck.VERIFIED,
+        DeclarationCheck.CONTRADICTED,
+    ]
+
+
+def test_a_setting_with_no_matching_field_is_recorded_rather_than_failed() -> None:
+    protocol = frozen_small_protocol(
+        (
+            declared_glm("static", covariates=("stimulus",), choice_lags=0, l2=0.1),
+            CandidateSpec(
+                name="smooth",
+                implementation="behavio.models.BernoulliHistoryGLM",
+                hyperparameters=(Setting("l2", 1.0), Setting("optimizer", "irls")),
+                scored_columns=("choice",),
+            ),
+        )
+    )
+    materialized = materialize_protocol(protocol, source_study())
+    splits = cohort_forward_session_splits(materialized.study, min_train_sessions=2)
+    compiled = compile_execution_plan(materialized, splits, capabilities=capabilities())
+
+    run = run_protocol(compiled, candidate_models())
+
+    unverifiable = run.verification[1].unverifiable
+    assert [finding.subject for finding in unverifiable] == ["hyperparameter:optimizer"]
+    assert "no field of that name" in unverifiable[0].detail
+    assert run.verification[1].contradictions == ()
+    assert not run.verification[1].verified
+
+
+def test_nested_selection_verifies_the_same_frozen_declaration() -> None:
+    models = candidate_models()
+    models["static"] = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.1)
+
+    with pytest.raises(ProtocolRunError, match="hyperparameter:choice_lags"):
+        run_nested_protocol(compiled_nested(), models)

@@ -12,6 +12,13 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
+from behavio.adapters.table import (
+    TableFormat,
+    TableSource,
+    read_table,
+    session_order_from_appearance,
+    session_order_from_column,
+)
 from behavio.compiler import compile_execution_plan, materialize_protocol
 from behavio.evidence import (
     compare_evidence_bundles,
@@ -93,8 +100,16 @@ def _parser() -> argparse.ArgumentParser:
 
     execute = subparsers.add_parser("execute", help="execute built-in candidates under a protocol")
     execute.add_argument("protocol", type=Path)
-    execute.add_argument("study", type=Path, help="JSON object containing a columns mapping")
+    execute.add_argument(
+        "study",
+        type=Path,
+        help=(
+            "trial table to analyse: .csv, .tsv, or .parquet, or a .json object containing "
+            "a columns mapping"
+        ),
+    )
     execute.add_argument("output", type=Path, help="new directory for the evaluation snapshot")
+    _add_study_arguments(execute)
     execute.set_defaults(handler=_execute)
 
     inspect = subparsers.add_parser("inspect", help="verify and summarize an evidence bundle")
@@ -143,7 +158,7 @@ def _execute(arguments: argparse.Namespace) -> int:
         raise CLIError("execute requires a draft or frozen pre-evidence protocol")
     if arguments.output.exists():
         raise CLIError(f"output path already exists: {arguments.output}")
-    study = _read_study(arguments.study)
+    study = _read_study(arguments.study, arguments)
     models = _instantiate_models(protocol)
     materialized = materialize_protocol(protocol, study)
     splitter = _SPLITTERS.get(protocol.validation.splitter)
@@ -260,7 +275,98 @@ def _read_protocol(path: Path) -> StudyProtocol:
         raise CLIError(f"invalid protocol {path}: {error}") from error
 
 
-def _read_study(path: Path) -> Study:
+def _add_study_arguments(parser: argparse.ArgumentParser) -> None:
+    """Declare how a trial table is read, without ever letting the CLI guess chronology."""
+
+    parser.add_argument(
+        "--study-format",
+        choices=("auto", "json", *sorted(member.value for member in TableFormat)),
+        default="auto",
+        help="override the format implied by the study file suffix (default: auto)",
+    )
+    parser.add_argument(
+        "--subject-column", default="subject", help="source column holding subject identity"
+    )
+    parser.add_argument(
+        "--session-column", default="session", help="source column holding session identity"
+    )
+    parser.add_argument(
+        "--trial-column", default="trial", help="source column holding the within-session trial"
+    )
+    parser.add_argument(
+        "--session-order-column",
+        default="session_order",
+        help="source column holding session chronology",
+    )
+    parser.add_argument(
+        "--number-trials-by-row-order",
+        action="store_true",
+        help="number trials within each session from source row order, and record that choice",
+    )
+    parser.add_argument(
+        "--omit-source-path",
+        action="store_true",
+        help=(
+            "do not record each trial's absolute source path, so the protocol fingerprint "
+            "does not depend on where the file lives"
+        ),
+    )
+    chronology = parser.add_mutually_exclusive_group()
+    chronology.add_argument(
+        "--session-order-from-column",
+        metavar="COLUMN",
+        help="derive session chronology by ranking each subject's sessions by this column",
+    )
+    chronology.add_argument(
+        "--session-order-from-appearance",
+        action="store_true",
+        help="derive session chronology from first appearance in source row order",
+    )
+
+
+def _read_study(path: Path, arguments: argparse.Namespace) -> Study:
+    """Read a trial table, dispatching on the file suffix unless a format is declared."""
+
+    declared = arguments.study_format
+    if declared == "json" or (declared == "auto" and path.suffix.lower() == ".json"):
+        return _read_study_json(path)
+    try:
+        source = TableSource(
+            path,
+            format=None if declared == "auto" else TableFormat(declared),
+            subject_column=arguments.subject_column,
+            session_column=arguments.session_column,
+            trial_column=arguments.trial_column,
+            session_order_column=arguments.session_order_column,
+            session_order=_session_order_derivation(arguments),
+            number_trials_by_row_order=arguments.number_trials_by_row_order,
+            record_source_path=not arguments.omit_source_path,
+        )
+        return read_table(source)
+    except (ValueError, TypeError, RuntimeError) as error:
+        raise CLIError(f"cannot read study {path}: {error} {_STUDY_READING_FLAGS}") from error
+
+
+#: Appended to every table-reading failure so the fix is always one flag away. The reader's
+#: own messages name the Python API; a command-line user needs the flag that carries it.
+_STUDY_READING_FLAGS = (
+    "Reading flags: --study-format, --subject-column, --session-column, --trial-column, "
+    "--session-order-column, --session-order-from-column, --session-order-from-appearance, "
+    "--number-trials-by-row-order, --omit-source-path."
+)
+
+
+def _session_order_derivation(arguments: argparse.Namespace) -> Any:
+    """Translate the two chronology flags into the reader's recorded derivation."""
+
+    if arguments.session_order_from_column:
+        return session_order_from_column(arguments.session_order_from_column)
+    if arguments.session_order_from_appearance:
+        return session_order_from_appearance()
+    return None
+
+
+def _read_study_json(path: Path) -> Study:
     try:
         value = json.loads(path.read_text(encoding="utf-8"), parse_constant=_reject_constant)
     except json.JSONDecodeError as error:

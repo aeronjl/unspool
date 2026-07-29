@@ -8,14 +8,17 @@ from collections.abc import Mapping
 from contextlib import closing
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from behavio.adapters.nwb import study_from_nwbfile
+from behavio.contracts.adapter import SessionOrderPolicy, SourceType
 from behavio.study import Study
 
 DEFAULT_DANDI_API = "https://api.dandiarchive.org/api"
+ADAPTER_NAME = "behavio.dandi"
+ADAPTER_VERSION = "1"
 
 
 class DANDIAdapterError(ValueError):
@@ -34,6 +37,16 @@ class DANDINWBSource:
     session: Any | None = None
     columns: tuple[str, ...] | None = None
     column_map: Mapping[str, str] | None = None
+
+    adapter_name: ClassVar[str] = ADAPTER_NAME
+    adapter_version: ClassVar[str] = ADAPTER_VERSION
+    source_type: ClassVar[SourceType] = SourceType.REMOTE_ARCHIVE
+    session_order_policy: ClassVar[SessionOrderPolicy] = SessionOrderPolicy.RECORDED
+
+    def read(self) -> Study:
+        """Stream this pinned DANDI asset into a canonical study."""
+
+        return study_from_dandi(self)
 
     def __post_init__(self) -> None:
         if (

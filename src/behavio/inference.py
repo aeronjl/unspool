@@ -1,4 +1,12 @@
-"""Backend-neutral deterministic optimization contracts."""
+"""Backend-neutral deterministic optimization.
+
+``ObjectiveTarget``, ``PriorMeasure`` and the ``OptimizationBackend`` protocol now live in
+:mod:`behavio.contracts.backend` and are re-exported here, so
+``from behavio.inference import OptimizationBackend`` keeps working. ``OptimizationProblem``,
+``OptimizationAttempt`` and ``OptimizationRun`` stay here: they carry substantial validation
+logic and need a concrete :class:`~behavio.parameters.ParameterSpace`, which
+``behavio.contracts`` must not import at runtime.
+"""
 
 from __future__ import annotations
 
@@ -6,14 +14,18 @@ import importlib
 import importlib.metadata
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from enum import StrEnum
 from types import MappingProxyType
-from typing import Any, Protocol, runtime_checkable
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import minimize
 
+from behavio.contracts.backend import (  # noqa: F401  (OptimizationBackend is re-exported)
+    ObjectiveTarget,
+    OptimizationBackend,
+    PriorMeasure,
+)
 from behavio.parameters import ParameterSpace, ParameterSpaceError
 
 ObjectiveOutput = float | tuple[float, Sequence[float] | NDArray[np.floating[Any]]]
@@ -26,20 +38,6 @@ class InferenceError(ValueError):
 
 class PyBADSUnavailableError(ImportError):
     """Raised when the optional PyBADS backend is requested but not installed."""
-
-
-class ObjectiveTarget(StrEnum):
-    """The statistical quantity minimized by an optimization problem."""
-
-    MAXIMUM_LIKELIHOOD = "maximum-likelihood"
-    MAXIMUM_A_POSTERIORI = "maximum-a-posteriori"
-
-
-class PriorMeasure(StrEnum):
-    """Coordinate measure used when a MAP objective includes transform Jacobians."""
-
-    NATURAL = "natural"
-    OPTIMIZER = "optimizer"
 
 
 @dataclass(frozen=True, slots=True)
@@ -295,16 +293,6 @@ class OptimizationRun:
         }
 
 
-@runtime_checkable
-class OptimizationBackend(Protocol):
-    """Structural backend contract for an identical optimization problem."""
-
-    @property
-    def backend_name(self) -> str: ...
-
-    def run(self, problem: OptimizationProblem) -> OptimizationRun: ...
-
-
 @dataclass(frozen=True, slots=True)
 class ScipyMultistart:
     """Deterministic SciPy minimize backend retaining every attempted optimum."""
@@ -394,7 +382,14 @@ class ScipyMultistart:
 
 @dataclass(frozen=True, slots=True)
 class PyBADSMultistart:
-    """Optional deterministic-seed PyBADS backend using the common run contract."""
+    """Optional deterministic-seed PyBADS backend using the common run contract.
+
+    ``random_seed`` is entropy for :class:`numpy.random.SeedSequence`, not the 32-bit word
+    BADS itself consumes: it is any non-negative integer, and each attempt receives its own
+    derived unsigned 32-bit seed. That is what lets a seed emitted by :mod:`behavio.sbc`,
+    :mod:`behavio.recovery`, or :mod:`behavio.model_recovery` be handed straight to this
+    backend, and it removes the former ``random_seed + attempt`` overflow ceiling.
+    """
 
     random_seed: int = 0
     max_iterations: int | None = None
@@ -405,9 +400,9 @@ class PyBADSMultistart:
         if (
             isinstance(self.random_seed, bool)
             or not isinstance(self.random_seed, int)
-            or not 0 <= self.random_seed <= np.iinfo(np.uint32).max
+            or self.random_seed < 0
         ):
-            raise InferenceError("random_seed must be an unsigned 32-bit integer")
+            raise InferenceError("random_seed must be a non-negative integer")
         for value, label in (
             (self.max_iterations, "max_iterations"),
             (self.max_function_evaluations, "max_function_evaluations"),
@@ -432,14 +427,14 @@ class PyBADSMultistart:
 
         if not isinstance(problem, OptimizationProblem):
             raise TypeError("problem must be an OptimizationProblem")
-        last_seed = self.random_seed + len(problem.starts) - 1
-        if last_seed > np.iinfo(np.uint32).max:
-            raise InferenceError("random_seed plus attempt count exceeds uint32 range")
+        attempt_seeds = np.random.SeedSequence(self.random_seed).generate_state(
+            len(problem.starts), dtype=np.uint32
+        )
         bads_class, version = _load_pybads()
         lower, upper, plausible_lower, plausible_upper = _pybads_bounds(problem)
         attempts: list[OptimizationAttempt] = []
         for index, start in enumerate(problem.starts):
-            seed = self.random_seed + index
+            seed = int(attempt_seeds[index])
             options: dict[str, Any] = {
                 "display": "off",
                 "random_seed": seed,

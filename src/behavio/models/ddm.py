@@ -12,6 +12,7 @@ from numpy.typing import NDArray
 from scipy.optimize import minimize
 from scipy.special import logsumexp
 
+from behavio._internal.arrays import protected_array
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -19,7 +20,6 @@ from behavio.models.base import (
     Prediction,
     PredictionMode,
     UnsupportedPredictionMode,
-    _protected_array,
 )
 from behavio.response_times import ResponseTimeSpec
 from behavio.study import REQUIRED_COLUMNS, Study
@@ -95,7 +95,7 @@ class DriftDiffusionParameters:
     contaminant_probability: float = 0.0
 
     def __post_init__(self) -> None:
-        coefficients = _protected_array(self.drift_coefficients, dtype=np.float64)
+        coefficients = protected_array(self.drift_coefficients, dtype=np.float64)
         names = tuple(self.coefficient_names)
         if not names or len(set(names)) != len(names):
             raise ValueError("coefficient_names must be non-empty and unique")
@@ -132,7 +132,7 @@ class DriftDiffusionSimulation:
     def __post_init__(self) -> None:
         if not isinstance(self.study, Study):
             raise TypeError("study must be a Study")
-        contaminants = _protected_array(self.contaminants, dtype=np.bool_)
+        contaminants = protected_array(self.contaminants, dtype=np.bool_)
         if contaminants.shape != (len(self.study),):
             raise ValueError("contaminants must contain one indicator per study row")
         object.__setattr__(self, "contaminants", contaminants)
@@ -152,9 +152,9 @@ class DriftDiffusionFitResult(FitResult):
 
     def __post_init__(self) -> None:
         FitResult.__post_init__(self)
-        objectives = _protected_array(self.restart_objectives, dtype=np.float64)
-        converged = _protected_array(self.restart_converged, dtype=np.bool_)
-        posterior = _protected_array(
+        objectives = protected_array(self.restart_objectives, dtype=np.float64)
+        converged = protected_array(self.restart_converged, dtype=np.bool_)
+        posterior = protected_array(
             self.posterior_contaminant_probability,
             dtype=np.float64,
         )
@@ -677,7 +677,7 @@ class WienerDriftDiffusion:
             drifts,
             components,
         )
-        return _protected_array(scores, dtype=np.float64)
+        return protected_array(scores, dtype=np.float64)
 
     def contaminant_responsibility(
         self,
@@ -696,7 +696,7 @@ class WienerDriftDiffusion:
             drifts,
             components,
         )
-        return _protected_array(posterior, dtype=np.float64)
+        return protected_array(posterior, dtype=np.float64)
 
     def _joint_log_density(
         self,

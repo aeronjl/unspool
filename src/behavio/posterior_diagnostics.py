@@ -1,4 +1,33 @@
-"""Common convergence diagnostics for backend-neutral posterior results."""
+"""Common convergence diagnostics for backend-neutral posterior results.
+
+Severity policy
+---------------
+The maximum-likelihood side has a three-valued verdict
+(:class:`~behavio.contracts.audit.FitAuditStatus`) driven by a two-valued severity
+(:class:`~behavio.contracts.audit.AuditSeverity`), so a non-convergent optimizer produces
+``FAIL`` rather than a warning. This module now mirrors it: ``PosteriorAuditStatus`` gains
+``FAIL`` and every :class:`PosteriorAuditIssue` carries an ``AuditSeverity``.
+
+The default classification is a property of :class:`PosteriorAuditPolicy`, because it is a
+threshold decision like ``max_rhat``, not a fact about the sampler:
+
+- **divergences** are ``ERROR``. A divergent transition means the sampler failed to
+  explore the target geometry; the draws are biased in an unknown direction, so the
+  posterior is not usable evidence.
+- **R-hat exceedance** is ``ERROR``. Chains that have not mixed are not draws from one
+  distribution at all, so every downstream summary is meaningless.
+- **non-finite diagnostics** are ``ERROR``: the audit itself could not be computed.
+- **low bulk or tail ESS** is a ``WARNING``. Low ESS means the Monte Carlo error on a
+  summary is larger than the policy wants, which is a precision problem, not a validity
+  problem; it is fixed by drawing more samples and does not by itself invalidate the fit.
+- **maximum tree-depth saturation** is a ``WARNING``: it costs efficiency, and it is
+  routinely benign when R-hat and ESS are otherwise healthy.
+
+Callers that disagree can pass their own severities on the policy.
+``behavio.posterior_loo`` and ``behavio.posterior_predictive`` reuse
+``PosteriorAuditStatus`` for their own status properties and deliberately keep their
+existing ``PASS``/``WARNING`` semantics; adding ``FAIL`` does not change them.
+"""
 
 from __future__ import annotations
 
@@ -12,14 +41,20 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from behavio.contracts.audit import AuditSeverity
 from behavio.posterior import PosteriorError, PosteriorResult
 
 
 class PosteriorAuditStatus(StrEnum):
-    """Overall status of a posterior convergence audit."""
+    """Overall status of a posterior convergence audit.
+
+    ``FAIL`` mirrors :class:`~behavio.contracts.audit.FitAuditStatus`: at least one issue
+    is severe enough that the posterior should not be used as evidence.
+    """
 
     PASS = "pass"
     WARNING = "warning"
+    FAIL = "fail"
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +66,11 @@ class PosteriorAuditPolicy:
     min_ess_tail: float = 400.0
     max_divergences: int = 0
     max_treedepth_hits: int = 0
+    divergence_severity: AuditSeverity = AuditSeverity.ERROR
+    rhat_severity: AuditSeverity = AuditSeverity.ERROR
+    nonfinite_severity: AuditSeverity = AuditSeverity.ERROR
+    ess_severity: AuditSeverity = AuditSeverity.WARNING
+    treedepth_severity: AuditSeverity = AuditSeverity.WARNING
 
     def __post_init__(self) -> None:
         if not np.isfinite(self.max_rhat) or self.max_rhat <= 1.0:
@@ -47,14 +87,27 @@ class PosteriorAuditPolicy:
         ):
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
                 raise ValueError(f"{label} must be a non-negative integer")
+        for label in (
+            "divergence_severity",
+            "rhat_severity",
+            "nonfinite_severity",
+            "ess_severity",
+            "treedepth_severity",
+        ):
+            object.__setattr__(self, label, AuditSeverity(getattr(self, label)))
 
-    def to_dict(self) -> dict[str, float | int]:
+    def to_dict(self) -> dict[str, float | int | str]:
         return {
             "max_rhat": self.max_rhat,
             "min_ess_bulk": self.min_ess_bulk,
             "min_ess_tail": self.min_ess_tail,
             "max_divergences": self.max_divergences,
             "max_treedepth_hits": self.max_treedepth_hits,
+            "divergence_severity": self.divergence_severity.value,
+            "rhat_severity": self.rhat_severity.value,
+            "nonfinite_severity": self.nonfinite_severity.value,
+            "ess_severity": self.ess_severity.value,
+            "treedepth_severity": self.treedepth_severity.value,
         }
 
 
@@ -99,6 +152,7 @@ class PosteriorAuditIssue:
     code: str
     message: str
     targets: tuple[str, ...] = ()
+    severity: AuditSeverity = AuditSeverity.WARNING
 
     def __post_init__(self) -> None:
         if not isinstance(self.code, str) or not self.code:
@@ -109,6 +163,7 @@ class PosteriorAuditIssue:
         if any(not isinstance(target, str) or not target for target in targets):
             raise ValueError("issue targets must be non-empty strings")
         object.__setattr__(self, "targets", targets)
+        object.__setattr__(self, "severity", AuditSeverity(self.severity))
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,7 +184,13 @@ class PosteriorAudit:
 
     @property
     def status(self) -> PosteriorAuditStatus:
-        return PosteriorAuditStatus.PASS if not self.issues else PosteriorAuditStatus.WARNING
+        """Return fail, warning, or pass without collapsing the underlying issues."""
+
+        if any(issue.severity is AuditSeverity.ERROR for issue in self.issues):
+            return PosteriorAuditStatus.FAIL
+        if self.issues:
+            return PosteriorAuditStatus.WARNING
+        return PosteriorAuditStatus.PASS
 
     @property
     def n_samples(self) -> int:
@@ -153,7 +214,12 @@ class PosteriorAudit:
             "status": self.status.value,
             "policy": self.policy.to_dict(),
             "issues": [
-                {"code": issue.code, "message": issue.message, "targets": list(issue.targets)}
+                {
+                    "code": issue.code,
+                    "message": issue.message,
+                    "targets": list(issue.targets),
+                    "severity": issue.severity.value,
+                }
                 for issue in self.issues
             ],
         }
@@ -184,6 +250,7 @@ def audit_posterior(
             PosteriorAuditIssue(
                 "posterior.divergences",
                 f"observed {divergences} divergent transitions",
+                severity=active_policy.divergence_severity,
             )
         )
     if treedepth is not None and treedepth > active_policy.max_treedepth_hits:
@@ -191,6 +258,7 @@ def audit_posterior(
             PosteriorAuditIssue(
                 "posterior.max-treedepth",
                 f"observed {treedepth} transitions at maximum tree depth",
+                severity=active_policy.treedepth_severity,
             )
         )
     nonfinite = _targets(diagnostics, lambda item: ~np.isfinite(item.rhat))
@@ -202,6 +270,7 @@ def audit_posterior(
                 "posterior.nonfinite-diagnostic",
                 "one or more sampling diagnostics are non-finite",
                 tuple(dict.fromkeys(nonfinite)),
+                severity=active_policy.nonfinite_severity,
             )
         )
     rhat = _targets(diagnostics, lambda item: item.rhat > active_policy.max_rhat)
@@ -211,6 +280,7 @@ def audit_posterior(
                 "posterior.rhat",
                 f"rank-normalized R-hat exceeds {active_policy.max_rhat}",
                 rhat,
+                severity=active_policy.rhat_severity,
             )
         )
     bulk = _targets(diagnostics, lambda item: item.ess_bulk < active_policy.min_ess_bulk)
@@ -220,6 +290,7 @@ def audit_posterior(
                 "posterior.ess-bulk",
                 f"bulk ESS is below {active_policy.min_ess_bulk}",
                 bulk,
+                severity=active_policy.ess_severity,
             )
         )
     tail = _targets(diagnostics, lambda item: item.ess_tail < active_policy.min_ess_tail)
@@ -229,6 +300,7 @@ def audit_posterior(
                 "posterior.ess-tail",
                 f"tail ESS is below {active_policy.min_ess_tail}",
                 tail,
+                severity=active_policy.ess_severity,
             )
         )
     return PosteriorAudit(

@@ -38,6 +38,11 @@ class PyMCHierarchicalGLMBackend:
     and uses the priors implied by the existing MAP objective: a flat intercept, flat or
     L2-equivalent Gaussian population slopes, and Gaussian subject deviations with the
     model's fixed ``subject_scale``.
+
+    ``seed`` is entropy for :class:`numpy.random.SeedSequence`, not a 32-bit sampler seed:
+    it is any non-negative integer, and the adapter derives the 32-bit words PyMC needs.
+    That is what lets a seed emitted by :mod:`behavio.sbc`, :mod:`behavio.recovery`, or
+    :mod:`behavio.model_recovery` be handed straight to this backend.
     """
 
     draws: int = 1_000
@@ -62,12 +67,8 @@ class PyMCHierarchicalGLMBackend:
             raise PyMCBackendError("cores cannot exceed chains")
         if not np.isfinite(self.target_accept) or not 0.5 <= self.target_accept < 1.0:
             raise PyMCBackendError("target_accept must be finite and in [0.5, 1)")
-        if (
-            isinstance(self.seed, bool)
-            or not isinstance(self.seed, int)
-            or not 0 <= self.seed < 2**32 - 1
-        ):
-            raise PyMCBackendError("seed must be an integer in [0, 2**32 - 1)")
+        if isinstance(self.seed, bool) or not isinstance(self.seed, int) or self.seed < 0:
+            raise PyMCBackendError("seed must be a non-negative integer")
 
     @property
     def backend_name(self) -> str:

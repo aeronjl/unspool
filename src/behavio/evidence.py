@@ -8,17 +8,54 @@ import io
 import json
 import platform
 import re
+import subprocess
 import zipfile
 from collections.abc import Mapping
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from enum import StrEnum
 from pathlib import Path, PurePosixPath
+from types import MappingProxyType
 from typing import Any
 
+from behavio.posterior_diagnostics import PosteriorAudit
+from behavio.posterior_loo import PSISLOOResult
+from behavio.posterior_predictive import PosteriorPredictiveAudit
 from behavio.protocol import ProtocolState, protocol_from_json
+from behavio.reliability import TestRetestReliabilityReport
 from behavio.reporting import ReportedProtocol
+from behavio.sbc import SBCReport
+from behavio.sensitivity import SensitivityReport
 
-BUNDLE_SCHEMA_VERSION = "behavio.evidence-bundle/1"
+BUNDLE_SCHEMA_VERSION = "behavio.evidence-bundle/2"
+#: Bundle schema names this format has been published under. Version 1 declared the
+#: frequentist evidence alone; version 2 adds the optional ``posterior/`` slots and changes
+#: nothing else. A version-1 bundle is therefore a valid version-2 bundle that happens to
+#: carry no posterior evidence, so superseded names are read as-is rather than restamped --
+#: restamping a content-addressed archive would invalidate its own bundle identity.
+SUPERSEDED_BUNDLE_SCHEMA_VERSIONS = ("behavio.evidence-bundle/1",)
+ACCEPTED_BUNDLE_SCHEMA_VERSIONS = (BUNDLE_SCHEMA_VERSION, *SUPERSEDED_BUNDLE_SCHEMA_VERSIONS)
+#: Distributions every run depends on. An absent one means the package is running from a
+#: source tree rather than an installed distribution.
+REQUIRED_PACKAGES = ("behavio", "numpy", "scipy")
+#: Optional distributions whose presence and version can change a recorded number: the
+#: posterior stack, its numerical backends, and the data-source adapters. Each is recorded
+#: whether or not it was installed.
+OPTIONAL_PACKAGES = (
+    "arviz",
+    "arviz-stats",
+    "h5py",
+    "one-api",
+    "pandas",
+    "pybads",
+    "pymc",
+    "pynwb",
+    "pytensor",
+    "remfile",
+    "tables",
+    "xarray",
+)
+#: Recorded in place of a version when an optional distribution was not installed.
+MISSING_PACKAGE_VERSION = "not installed"
 #: Nested-report schema names this format has been published under. Reports written before
 #: the ``unspool`` to ``behavio`` rename are byte-identical apart from this name, and are
 #: content-addressed, so they are recognised rather than restamped.
@@ -60,6 +97,23 @@ _REQUIRED_PATHS = {
     "report/items.json",
     "reproduction/replay.json",
 }
+#: Optional posterior slots. Each is written only when the study actually produced that
+#: evidence, so a purely frequentist bundle carries none of them and is byte-identical to
+#: the bundle the same study produced under schema version 1.
+POSTERIOR_CONVERGENCE_PATH = "posterior/convergence.json"
+POSTERIOR_LOO_PATH = "posterior/loo.json"
+POSTERIOR_PREDICTIVE_PATH = "posterior/predictive.json"
+POSTERIOR_CALIBRATION_PATH = "posterior/calibration.json"
+POSTERIOR_RELIABILITY_PATH = "posterior/reliability.json"
+POSTERIOR_SENSITIVITY_PATH = "posterior/sensitivity.json"
+POSTERIOR_PATHS = (
+    POSTERIOR_CALIBRATION_PATH,
+    POSTERIOR_CONVERGENCE_PATH,
+    POSTERIOR_LOO_PATH,
+    POSTERIOR_PREDICTIVE_PATH,
+    POSTERIOR_RELIABILITY_PATH,
+    POSTERIOR_SENSITIVITY_PATH,
+)
 
 
 class EvidenceBundleError(ValueError):
@@ -83,6 +137,77 @@ class BundleFigure:
             raise ValueError("bundle figure must use a supported static image format")
         if not isinstance(self.content, bytes) or not self.content:
             raise ValueError("bundle figure content must be non-empty bytes")
+
+
+@dataclass(frozen=True, slots=True)
+class PosteriorEvidence:
+    """Optional posterior artefacts archived beside the frequentist evidence.
+
+    Each slot maps a caller-chosen label to one report and is serialized through that
+    report's own ``to_dict``. Every slot is optional and an empty slot writes no file, so a
+    study that ran no Bayesian inference produces exactly the bundle it produced before
+    these slots existed.
+
+    ``loo`` is grouped by estimand on the way into the archive. Leave-one-observation-out
+    and leave-one-*block*-out ELPD answer different questions and are never comparable, so
+    the archive keeps them in separate, explicitly named groups rather than in one list that
+    a later reader could difference by accident.
+    """
+
+    convergence: Mapping[str, PosteriorAudit] = field(default_factory=dict)
+    loo: Mapping[str, PSISLOOResult] = field(default_factory=dict)
+    predictive: Mapping[str, PosteriorPredictiveAudit] = field(default_factory=dict)
+    calibration: Mapping[str, SBCReport] = field(default_factory=dict)
+    reliability: Mapping[str, TestRetestReliabilityReport] = field(default_factory=dict)
+    sensitivity: Mapping[str, SensitivityReport] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for slot, expected in (
+            ("convergence", PosteriorAudit),
+            ("loo", PSISLOOResult),
+            ("predictive", PosteriorPredictiveAudit),
+            ("calibration", SBCReport),
+            ("reliability", TestRetestReliabilityReport),
+            ("sensitivity", SensitivityReport),
+        ):
+            entries = dict(getattr(self, slot))
+            for label, value in entries.items():
+                if not isinstance(label, str) or not label:
+                    raise EvidenceBundleError(f"posterior {slot} labels must be non-empty strings")
+                if not isinstance(value, expected):
+                    raise EvidenceBundleError(
+                        f"posterior {slot}[{label!r}] must be a {expected.__name__}"
+                    )
+            object.__setattr__(
+                self, slot, MappingProxyType({key: entries[key] for key in sorted(entries)})
+            )
+        estimands = [(item.model_name, item.block) for item in self.loo.values()]
+        if len(set(estimands)) != len(estimands):
+            raise EvidenceBundleError(
+                "two PSIS-LOO results share one model and one blocking and cannot be told apart"
+            )
+
+    @property
+    def is_empty(self) -> bool:
+        """Whether no posterior artefact was supplied at all."""
+
+        return not (
+            self.convergence
+            or self.loo
+            or self.predictive
+            or self.calibration
+            or self.reliability
+            or self.sensitivity
+        )
+
+    def loo_by_estimand(self) -> dict[str, dict[str, Any]]:
+        """Group archived PSIS-LOO results by the cross-validation estimand they computed."""
+
+        grouped: dict[str, dict[str, Any]] = {}
+        for label, result in self.loo.items():
+            group = grouped.setdefault(result.estimand, {"block": result.block, "results": {}})
+            group["results"][label] = result.to_dict()
+        return grouped
 
 
 @dataclass(frozen=True, slots=True)
@@ -134,6 +259,26 @@ class EvidenceBundle:
         object.__setattr__(self, "files", files)
 
     @property
+    def schema_version(self) -> str:
+        """Oldest published schema name that can express this bundle's content.
+
+        Posterior slots were introduced by :data:`BUNDLE_SCHEMA_VERSION`; everything else
+        was already expressible under version 1. Stamping the minimum rather than the
+        current version keeps a purely frequentist bundle byte-identical across the bump,
+        which matters because the archive is content-addressed by its own manifest.
+        """
+
+        if any(item.path in POSTERIOR_PATHS for item in self.files):
+            return BUNDLE_SCHEMA_VERSION
+        return SUPERSEDED_BUNDLE_SCHEMA_VERSIONS[-1]
+
+    @property
+    def posterior_paths(self) -> tuple[str, ...]:
+        """Posterior slots this bundle carries, sorted."""
+
+        return tuple(sorted(item.path for item in self.files if item.path in POSTERIOR_PATHS))
+
+    @property
     def bundle_id(self) -> str:
         """Content address over every logical path, media type, size, and file digest."""
 
@@ -144,7 +289,7 @@ class EvidenceBundle:
         """Portable integrity manifest written as ``bundle.json``."""
 
         return {
-            "schema_version": BUNDLE_SCHEMA_VERSION,
+            "schema_version": self.schema_version,
             "bundle_id": self.bundle_id,
             "files": self._file_entries(),
         }
@@ -174,7 +319,7 @@ class EvidenceBundle:
         ]
 
     def _identity_manifest(self) -> dict[str, Any]:
-        return {"schema_version": BUNDLE_SCHEMA_VERSION, "files": self._file_entries()}
+        return {"schema_version": self.schema_version, "files": self._file_entries()}
 
 
 @dataclass(frozen=True, slots=True)
@@ -190,6 +335,9 @@ class BundleReplay:
     ranking_status: str
     winner: str | None
     blocked_claims: tuple[str, ...]
+    schema_version: str = SUPERSEDED_BUNDLE_SCHEMA_VERSIONS[-1]
+    posterior_paths: tuple[str, ...] = ()
+    loo_estimands: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -208,6 +356,10 @@ class BundleComparison:
     right_winner: str | None
     left_blocked_claims: tuple[str, ...]
     right_blocked_claims: tuple[str, ...]
+    left_posterior_paths: tuple[str, ...] = ()
+    right_posterior_paths: tuple[str, ...] = ()
+    left_loo_estimands: tuple[str, ...] = ()
+    right_loo_estimands: tuple[str, ...] = ()
 
     @property
     def identical(self) -> bool:
@@ -215,16 +367,57 @@ class BundleComparison:
 
         return self.left_bundle_id == self.right_bundle_id
 
+    @property
+    def same_posterior_evidence(self) -> bool:
+        """Whether both bundles archive the same posterior slots and LOO estimands.
 
-def capture_environment() -> dict[str, Any]:
-    """Capture a path-free deterministic runtime description for reproduction."""
+        A bundle that carries posterior evidence and one that does not are not
+        interchangeable claims, so the difference is reported rather than absorbed into the
+        generic added/removed path lists.
+        """
+
+        return (
+            self.left_posterior_paths == self.right_posterior_paths
+            and self.left_loo_estimands == self.right_loo_estimands
+        )
+
+    @property
+    def added_posterior_paths(self) -> tuple[str, ...]:
+        """Posterior slots the right bundle carries and the left one does not."""
+
+        return tuple(sorted(set(self.right_posterior_paths) - set(self.left_posterior_paths)))
+
+    @property
+    def removed_posterior_paths(self) -> tuple[str, ...]:
+        """Posterior slots the left bundle carries and the right one does not."""
+
+        return tuple(sorted(set(self.left_posterior_paths) - set(self.right_posterior_paths)))
+
+
+def capture_environment(*, root: str | Path | None = None) -> dict[str, Any]:
+    """Capture a path-free deterministic runtime description for reproduction.
+
+    Every required and optional distribution that can change a number is recorded, and one
+    that was not installed is recorded as :data:`MISSING_PACKAGE_VERSION` rather than
+    omitted: "arviz was not installed" is itself provenance, and a silently absent key
+    cannot be told apart from a reader that forgot to look.
+
+    ``root`` selects the working tree whose revision is recorded, defaulting to the current
+    directory. The record carries no wall-clock timestamp and no filesystem path, so a
+    re-run on an unchanged tree at unchanged versions produces byte-identical output.
+    """
 
     packages: dict[str, str] = {}
-    for package in ("behavio", "numpy", "scipy"):
+    for package in REQUIRED_PACKAGES:
         try:
             packages[package] = importlib.metadata.version(package)
         except importlib.metadata.PackageNotFoundError:
             packages[package] = "source-tree"
+    for package in OPTIONAL_PACKAGES:
+        try:
+            packages[package] = importlib.metadata.version(package)
+        except importlib.metadata.PackageNotFoundError:
+            packages[package] = MISSING_PACKAGE_VERSION
     return {
         "python": {
             "implementation": platform.python_implementation(),
@@ -235,7 +428,51 @@ def capture_environment() -> dict[str, Any]:
             "machine": platform.machine(),
         },
         "packages": packages,
+        "source_control": capture_source_control(root),
     }
+
+
+def capture_source_control(root: str | Path | None = None) -> dict[str, Any]:
+    """Describe the working tree's git revision, or say plainly that there is none.
+
+    A tree with uncommitted changes reports ``dirty`` as ``True``. A directory that is not a
+    repository, or a machine with no usable ``git``, reports ``available`` as ``False`` with
+    a machine-readable ``reason``; it never reports a commit it could not read.
+    """
+
+    directory = Path.cwd() if root is None else Path(root)
+    if not directory.is_dir():
+        return {"system": "git", "available": False, "reason": "not-a-git-repository"}
+    inside, missing_git = _git(directory, "rev-parse", "--is-inside-work-tree")
+    if missing_git:
+        return {"system": "git", "available": False, "reason": "git-not-available"}
+    if inside != "true":
+        return {"system": "git", "available": False, "reason": "not-a-git-repository"}
+    commit, _ = _git(directory, "rev-parse", "HEAD")
+    if not commit:
+        return {"system": "git", "available": False, "reason": "no-commit"}
+    status, _ = _git(directory, "status", "--porcelain")
+    if status is None:
+        return {"system": "git", "available": False, "reason": "unreadable-working-tree"}
+    return {"system": "git", "available": True, "commit": commit, "dirty": bool(status)}
+
+
+def _git(directory: Path, *arguments: str) -> tuple[str | None, bool]:
+    """Run one read-only git command, returning its stripped output and whether git is absent."""
+
+    try:
+        completed = subprocess.run(
+            ["git", *arguments],
+            cwd=directory,
+            capture_output=True,
+            check=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        return None, True
+    except (OSError, subprocess.SubprocessError):
+        return None, False
+    return completed.stdout.strip(), False
 
 
 def build_evidence_bundle(
@@ -243,8 +480,14 @@ def build_evidence_bundle(
     *,
     figures: tuple[BundleFigure, ...],
     environment: Mapping[str, Any] | None = None,
+    posterior: PosteriorEvidence | None = None,
 ) -> EvidenceBundle:
-    """Assemble the canonical final evidence bundle without source trial values."""
+    """Assemble the canonical final evidence bundle without source trial values.
+
+    ``posterior`` archives the Bayesian half of the study. Omitting it, or passing an empty
+    :class:`PosteriorEvidence`, writes no ``posterior/`` slot at all and reproduces the
+    schema-version-1 bundle byte for byte.
+    """
 
     if reported.protocol.state != ProtocolState.REPORTED:
         raise EvidenceBundleError("only a reported protocol can produce a final evidence bundle")
@@ -308,6 +551,8 @@ def build_evidence_bundle(
     ]
     if reported.recovery:
         files.append(_json_file("recovery/recovery.json", reported.recovery.report.to_dict()))
+    if posterior is not None:
+        files.extend(_posterior_files(posterior))
     for figure in figures:
         slug = _slug(figure.name)
         suffix = Path(figure.filename).suffix.lower()
@@ -351,6 +596,9 @@ def read_evidence_bundle(path: str | Path) -> EvidenceBundle:
             for name in names:
                 _validate_path(name)
             manifest = _load_json(archive.read("bundle.json"), "bundle.json")
+            declared = manifest.get("schema_version") if isinstance(manifest, dict) else None
+            if declared not in ACCEPTED_BUNDLE_SCHEMA_VERSIONS:
+                raise EvidenceBundleError(f"unsupported bundle schema version: {declared!r}")
             files: list[BundleFile] = []
             entries = manifest.get("files") if isinstance(manifest, dict) else None
             if not isinstance(entries, list):
@@ -455,6 +703,9 @@ def replay_evidence_bundle(bundle_or_path: EvidenceBundle | str | Path) -> Bundl
         ranking_status=ranking_status,
         winner=winner,
         blocked_claims=tuple(report.get("blocked_claims", ())),
+        schema_version=bundle.schema_version,
+        posterior_paths=bundle.posterior_paths,
+        loo_estimands=_bundle_loo_estimands(bundle),
     )
 
 
@@ -486,7 +737,62 @@ def compare_evidence_bundles(
         right_winner=right_replay.winner,
         left_blocked_claims=left_replay.blocked_claims,
         right_blocked_claims=right_replay.blocked_claims,
+        left_posterior_paths=left_replay.posterior_paths,
+        right_posterior_paths=right_replay.posterior_paths,
+        left_loo_estimands=left_replay.loo_estimands,
+        right_loo_estimands=right_replay.loo_estimands,
     )
+
+
+def _posterior_files(posterior: PosteriorEvidence) -> list[BundleFile]:
+    files: list[BundleFile] = []
+    if posterior.convergence:
+        files.append(
+            _json_file(
+                POSTERIOR_CONVERGENCE_PATH,
+                {label: audit.to_dict() for label, audit in posterior.convergence.items()},
+            )
+        )
+    if posterior.loo:
+        files.append(_json_file(POSTERIOR_LOO_PATH, posterior.loo_by_estimand()))
+    if posterior.predictive:
+        files.append(
+            _json_file(
+                POSTERIOR_PREDICTIVE_PATH,
+                {label: audit.to_dict() for label, audit in posterior.predictive.items()},
+            )
+        )
+    if posterior.calibration:
+        files.append(
+            _json_file(
+                POSTERIOR_CALIBRATION_PATH,
+                {label: report.to_dict() for label, report in posterior.calibration.items()},
+            )
+        )
+    if posterior.reliability:
+        files.append(
+            _json_file(
+                POSTERIOR_RELIABILITY_PATH,
+                {label: report.to_dict() for label, report in posterior.reliability.items()},
+            )
+        )
+    if posterior.sensitivity:
+        files.append(
+            _json_file(
+                POSTERIOR_SENSITIVITY_PATH,
+                {label: report.to_dict() for label, report in posterior.sensitivity.items()},
+            )
+        )
+    return files
+
+
+def _bundle_loo_estimands(bundle: EvidenceBundle) -> tuple[str, ...]:
+    if all(item.path != POSTERIOR_LOO_PATH for item in bundle.files):
+        return ()
+    grouped = _bundle_json(bundle, POSTERIOR_LOO_PATH)
+    if not isinstance(grouped, dict):
+        raise EvidenceBundleError("archived PSIS-LOO evidence must be grouped by estimand")
+    return tuple(sorted(str(estimand) for estimand in grouped))
 
 
 def _evaluation_predictions(report: Any) -> dict[str, Any]:

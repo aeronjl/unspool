@@ -66,10 +66,16 @@ uv run --group docs mkdocs build --strict
 
 ## Optional integrations
 
+Reading a CSV or TSV trial table with
+[`read_table()`](../interoperability.md#csv-tsv-and-parquet-files) needs none of the
+following: delimited ingest is part of the base install, because a trial table is how most
+behavioural data reaches Python rather than an optional data source.
+
 Install only the interface used by the analysis:
 
 | Need | uv | pip from a checkout |
 | --- | --- | --- |
+| Parquet trial tables | `uv sync --extra parquet` | `python -m pip install -e ".[parquet]"` |
 | Pose and ethogram readers | `uv sync --extra readers` | `python -m pip install -e ".[readers]"` |
 | NWB read/write | `uv sync --extra nwb` | `python -m pip install -e ".[nwb]"` |
 | DANDI-backed NWB | `uv sync --extra dandi` | `python -m pip install -e ".[dandi]"` |
@@ -77,10 +83,15 @@ Install only the interface used by the analysis:
 | PyBADS optimization | `uv sync --extra optimization` | `python -m pip install -e ".[optimization]"` |
 | ArviZ interchange | `uv sync --extra probabilistic` | `python -m pip install -e ".[probabilistic]"` |
 | PyMC backend | `uv sync --extra bayesian` | `python -m pip install -e ".[bayesian]"` |
+| Diagnostic figures | `uv sync --extra plots` | `python -m pip install -e ".[plots]"` |
+
+The `plots` extra is exactly the `matplotlib>=3.9` pin used above. `import behavio` and
+`import behavio.plot` both work without it; only calling a
+[plotting function](../reference/plots.md) raises, and the error names the extra.
 
 These extras do not alter the canonical [`Study`](../data-contract.md) or
-[`TaskSpec`](../task-contract.md) contracts. They add a source, optimizer, or result
-backend at the edge of the same workflow.
+[`TaskSpec`](../task-contract.md) contracts. They add a source, optimizer, result backend,
+or figure renderer at the edge of the same workflow.
 
 ## Troubleshooting
 

@@ -23,8 +23,11 @@ families, decorative display faces, and mixed font families are not permitted.
 - White figure grounds are retained in dark mode so scientific colours and contrasts do
   not silently change with the site theme.
 
-The shared generator contract lives in
-[`scripts/figure_style.py`](https://github.com/aeronjl/behavio/blob/main/scripts/figure_style.py).
+The shared generator contract lives in the package itself, in
+[`behavio.plot.style`](https://github.com/aeronjl/behavio/blob/main/src/behavio/plot/style.py),
+and is documented on the [plotting reference page](plots.md). The documentation figure
+generator is a caller of that module rather than the owner of the style, so a figure drawn
+by `behavio.plot` and a figure drawn for these pages obey the same contract.
 Standalone copy-and-run examples repeat the minimal font settings explicitly so they do
 not depend on an internal helper.
 

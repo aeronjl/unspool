@@ -13,6 +13,8 @@ performance rankings. “Supported” refers to the evidence boundary in the
 | Smooth history GLM | Binary choice | Smooth coefficient paths | Complete or partial pooling | GLM-HMM, RL, clock choice |
 | GLM-HMM | Binary choice | Discrete recurrent states | Complete pooling | smooth drift, history, state count |
 | Binary RL | Binary choice | Recursive values and policy traces | Complete pooling | history, bias, lapse, reward schedule |
+| Psychometric family | Binary choice | None; a fixed threshold, width, guess and lapse | Complete pooling | link choice, threshold convention, lapse versus slope |
+| Signal detection | Yes/no, rating, or response + confidence | None; fixed sensitivity and criteria | Complete pooling | extreme-rate corrections, equal versus unequal variance, meta-d' constraints |
 | Multinomial logit | Categorical choice | Static coefficients | Complete pooling | availability, omissions, coding |
 | Wiener DDM | Choice + response time | Within-decision accumulation; optionally smooth across-trial parameters | Single subject or partial pooling | contaminants, RT origin, scale trade-offs |
 
@@ -159,6 +161,70 @@ recovery, and prospective competition with static and smooth choice models.
 reset boundary, or parameter identifiability under an uninformative reward schedule.
 
 [Detailed assumptions](q-learning.md)
+
+## Parametric psychometric functions
+
+**Class:** `PsychometricFunction`
+
+**Use when:** the reportable quantity is a threshold and a width in stimulus units, and the
+asymptotes on the two sides of the curve are not assumed equal.
+
+**Requires:** a binary outcome, one declared numeric stimulus column, and declared bounds
+for whichever of the guess and lapse rates is estimated rather than fixed by the task. The
+Weibull link additionally requires strictly positive stimulus levels.
+
+**Predicts:** a filtered binary choice probability at each stimulus level.
+
+**Parameters:** threshold (or its logarithm for the Weibull), log width, and a bounded
+logit for each estimated rate. `summarize()` returns the natural threshold, width, guess
+rate, and lapse rate with intervals formed on their own scales.
+
+**Evidence:** closed-form link identities checked against independently written
+expressions, an analytic gradient checked against central differences, deterministic
+multistart with every restart retained, design-specific recovery, and bit-for-bit parity
+between `erf_two_gamma_probability` and the independent implementation committed beside the
+IBL 2021 benchmark.
+
+**Does not establish:** a sensory limit. A threshold is a property of a fitted curve on a
+declared stimulus coordinate under a declared threshold convention; the Weibull's 50 % and
+63 % conventions give different numbers for the same data. A lapse rate absorbs
+stimulus-independent errors of every origin and is not evidence for any one of them.
+
+[Detailed assumptions](psychometric-functions.md)
+
+## Signal detection theory
+
+**Classes:** `EqualVarianceSDT`, `UnequalVarianceSDT`, `MetaSDT`
+
+**Use when:** the trial event is a detection or discrimination judgement and sensitivity
+must be separated from response bias, or when confidence ratings are available and the
+question is about the ROC or about metacognitive efficiency.
+
+**Requires:** a binary `signal` indicator with a binary yes/no `response`;
+`UnequalVarianceSDT` requires an ordered confidence rating with at least three declared
+levels; `MetaSDT` requires response and confidence together with at least two declared
+levels and a positive, finite type-1 d'. A table with an extreme hit or false-alarm rate
+requires an explicitly declared `RateCorrection`.
+
+**Predicts:** filtered yes/no probability (`EqualVarianceSDT`), a filtered probability over
+rating categories (`UnequalVarianceSDT`), or a filtered probability over the joint
+response-and-confidence cells (`MetaSDT`).
+
+**Parameters:** d' and criterion; signal mean, log signal standard deviation, and ordered
+rating criteria; type-1 d' and criterion with meta-d' and ordered type-2 criteria.
+
+**Evidence:** reproduction of the Macmillan and Creelman worked example and of the
+published m-alternative forced-choice table, an ideal-observer check in which meta-d'
+recovers type-1 d' from evidence simulated outside the estimator, and design-specific
+recovery for all three estimators.
+
+**Does not establish:** a bias-free sensitivity measure when the equal-variance assumption
+fails -- that is what the ROC is for -- nor "metacognitive ability" independent of the
+task, criterion placement, and number of confidence levels offered. `MetaSDT` reports a
+block-diagonal covariance because its two stages share no information; that is a property
+of the published estimator, not an approximation.
+
+[Detailed assumptions](signal-detection.md)
 
 ## Multinomial and omission-aware choice
 

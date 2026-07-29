@@ -12,12 +12,12 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.special import expit
 
+from behavio._internal.arrays import protected_array
 from behavio.models.base import (
     FitResult,
     ModelDataError,
     Prediction,
     PredictionMode,
-    _protected_array,
 )
 from behavio.models.glm import (
     BernoulliHistoryGLM,
@@ -46,8 +46,8 @@ class HierarchicalSmoothGLMSimulation:
         subjects = tuple(_scalar(subject) for subject in self.subjects)
         knots = tuple(float(knot) for knot in self.knots)
         names = tuple(self.coefficient_names)
-        population = _protected_array(self.population_knot_values, dtype=np.float64)
-        deviations = _protected_array(self.subject_deviation_knot_values, dtype=np.float64)
+        population = protected_array(self.population_knot_values, dtype=np.float64)
+        deviations = protected_array(self.subject_deviation_knot_values, dtype=np.float64)
         if subjects != tuple(_scalar(subject) for subject in self.study.subjects):
             raise ValueError("simulation subjects must match the study's subject order")
         _validate_path_coordinates(self.clock, knots, names)
@@ -67,7 +67,7 @@ class HierarchicalSmoothGLMSimulation:
     def subject_knot_values(self) -> NDArray[np.float64]:
         """Return realized population-plus-deviation paths by subject."""
 
-        return _protected_array(
+        return protected_array(
             self.population_knot_values[None, :, :] + self.subject_deviation_knot_values,
             dtype=np.float64,
         )
@@ -92,8 +92,8 @@ class HierarchicalSmoothGLMFitResult(FitResult):
         subjects = tuple(_scalar(subject) for subject in self.subjects)
         knots = tuple(float(knot) for knot in self.knots)
         names = tuple(self.coefficient_names)
-        deviations = _protected_array(self.subject_deviations, dtype=np.float64)
-        standard_errors = _protected_array(self.subject_standard_errors, dtype=np.float64)
+        deviations = protected_array(self.subject_deviations, dtype=np.float64)
+        standard_errors = protected_array(self.subject_standard_errors, dtype=np.float64)
         expected = (len(subjects), len(names), len(knots))
         if not subjects or len(set(subjects)) != len(subjects):
             raise ValueError("fit subjects must be non-empty and unique")
@@ -122,7 +122,7 @@ class HierarchicalSmoothGLMFitResult(FitResult):
     def population_knot_values(self) -> NDArray[np.float64]:
         """Return fitted population paths in coefficient-by-knot order."""
 
-        return _protected_array(
+        return protected_array(
             self.estimates.reshape(len(self.coefficient_names), len(self.knots)),
             dtype=np.float64,
         )
@@ -131,7 +131,7 @@ class HierarchicalSmoothGLMFitResult(FitResult):
     def subject_knot_values(self) -> NDArray[np.float64]:
         """Return population-plus-deviation paths for fitted subjects."""
 
-        return _protected_array(
+        return protected_array(
             self.population_knot_values[None, :, :] + self.subject_deviations,
             dtype=np.float64,
         )
@@ -419,7 +419,7 @@ class HierarchicalSmoothBernoulliHistoryGLM(BernoulliHistoryGLM):
         prediction = self.predict(study, fit, mode=mode)
         scores = outcomes * -np.logaddexp(0.0, -prediction.linear_predictor)
         scores += (1.0 - outcomes) * -np.logaddexp(0.0, prediction.linear_predictor)
-        return _protected_array(scores, dtype=np.float64)
+        return protected_array(scores, dtype=np.float64)
 
     def population_trajectory(
         self,

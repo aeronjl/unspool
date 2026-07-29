@@ -1,4 +1,11 @@
-"""Prospective recovery experiments across competing model families."""
+"""Prospective recovery experiments across competing model families.
+
+Generators and candidates may be frequentist or sampled. A sampled candidate is driven
+through :meth:`~behavio.contracts.posterior.PosteriorBehaviourEstimator.sample` and its
+posterior convergence audit becomes the fold's ``converged`` flag, so a candidate whose
+posterior failed cannot win a recovery run: ``_aggregate_audits`` already reports ``FAIL``
+for it and ``_select_candidate`` only considers numerically usable columns.
+"""
 
 from __future__ import annotations
 
@@ -9,13 +16,19 @@ from types import MappingProxyType
 import numpy as np
 from numpy.typing import NDArray
 
+from behavio._internal.arrays import protected_array
+from behavio.contracts.posterior import (
+    AnyBehaviourEstimator,
+    AnyGenerativeBehaviourModel,
+    GenerativePosteriorBehaviourModel,
+    any_model_capabilities,
+    is_posterior_estimator,
+)
 from behavio.diagnostics import FitAuditStatus
-from behavio.evaluation import FoldEvaluation, evaluate_splits
+from behavio.evaluation import FoldEvaluation, PosteriorFoldPolicy, evaluate_splits
 from behavio.models.base import (
     BehaviourEstimator,
     GenerativeBehaviourModel,
-    _protected_array,
-    model_capabilities,
 )
 from behavio.study import Study
 from behavio.validation import ValidationFold, forward_session_splits
@@ -29,7 +42,7 @@ class ModelRecoveryScenario:
 
     name: str
     truth_label: str
-    generator: GenerativeBehaviourModel
+    generator: AnyGenerativeBehaviourModel
     parameters: Mapping[str, float]
 
     def __post_init__(self) -> None:
@@ -37,9 +50,14 @@ class ModelRecoveryScenario:
             raise ValueError("scenario name must be a non-empty string")
         if not isinstance(self.truth_label, str) or not self.truth_label:
             raise ValueError("truth_label must be a non-empty string")
-        if not isinstance(self.generator, GenerativeBehaviourModel):
-            raise TypeError("generator must satisfy the GenerativeBehaviourModel contract")
-        model_capabilities(self.generator)
+        if not isinstance(
+            self.generator, (GenerativeBehaviourModel, GenerativePosteriorBehaviourModel)
+        ):
+            raise TypeError(
+                "generator must satisfy the GenerativeBehaviourModel or "
+                "GenerativePosteriorBehaviourModel contract"
+            )
+        any_model_capabilities(self.generator)
         expected = set(self.generator.parameter_names)
         observed = set(self.parameters)
         if observed != expected:
@@ -65,8 +83,8 @@ class ModelRecoveryMatrix:
     def __post_init__(self) -> None:
         truth_labels = tuple(self.truth_labels)
         selected_labels = tuple(self.selected_labels)
-        counts = _protected_array(self.counts, dtype=np.int64)
-        rates = _protected_array(self.rates, dtype=np.float64)
+        counts = protected_array(self.counts, dtype=np.int64)
+        rates = protected_array(self.rates, dtype=np.float64)
         expected_shape = (len(truth_labels), len(selected_labels))
         if counts.shape != expected_shape or rates.shape != expected_shape:
             raise ValueError("recovery matrix dimensions must match its labels")
@@ -92,8 +110,8 @@ class ModelRecoveryScenarioMatrix:
         scenario_names = tuple(self.scenario_names)
         truth_labels = tuple(self.truth_labels)
         selected_labels = tuple(self.selected_labels)
-        counts = _protected_array(self.counts, dtype=np.int64)
-        rates = _protected_array(self.rates, dtype=np.float64)
+        counts = protected_array(self.counts, dtype=np.int64)
+        rates = protected_array(self.rates, dtype=np.float64)
         expected_shape = (len(scenario_names), len(selected_labels))
         if not scenario_names or len(set(scenario_names)) != len(scenario_names):
             raise ValueError("scenario names must be non-empty and unique")
@@ -139,9 +157,11 @@ class ModelRecoveryReport:
     tie_tolerance: float
     validation_scheme: str
     aggregation_column: str | None
+    sampled_candidate_labels: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         candidates = tuple(self.candidate_labels)
+        sampled = tuple(self.sampled_candidate_labels)
         candidate_signatures = tuple(self.candidate_signatures)
         scored_columns = tuple(self.scored_columns)
         scenario_names = tuple(self.scenario_names)
@@ -159,10 +179,10 @@ class ModelRecoveryReport:
         audit_issue_codes = tuple(
             tuple(tuple(codes) for codes in row) for row in self.audit_issue_codes
         )
-        scores = _protected_array(self.mean_log_probabilities, dtype=np.float64)
-        converged = _protected_array(self.converged, dtype=np.bool_)
-        seeds = _protected_array(self.seeds, dtype=np.uint64)
-        n_folds = _protected_array(self.n_folds, dtype=np.int64)
+        scores = protected_array(self.mean_log_probabilities, dtype=np.float64)
+        converged = protected_array(self.converged, dtype=np.bool_)
+        seeds = protected_array(self.seeds, dtype=np.uint64)
+        n_folds = protected_array(self.n_folds, dtype=np.int64)
         n_runs = len(scenario_names)
         expected_shape = (n_runs, len(candidates))
 
@@ -170,6 +190,8 @@ class ModelRecoveryReport:
             raise ValueError("candidate labels must be non-empty and unique")
         if len(candidate_signatures) != len(candidates):
             raise ValueError("every candidate must retain its model signature")
+        if len(set(sampled)) != len(sampled) or any(label not in candidates for label in sampled):
+            raise ValueError("sampled_candidate_labels must name distinct declared candidates")
         if not scored_columns or len(set(scored_columns)) != len(scored_columns):
             raise ValueError("scored_columns must be non-empty and unique")
         if not (
@@ -219,6 +241,7 @@ class ModelRecoveryReport:
 
         object.__setattr__(self, "candidate_labels", candidates)
         object.__setattr__(self, "candidate_signatures", candidate_signatures)
+        object.__setattr__(self, "sampled_candidate_labels", sampled)
         object.__setattr__(self, "scored_columns", scored_columns)
         object.__setattr__(self, "scenario_names", scenario_names)
         object.__setattr__(self, "generator_signatures", generator_signatures)
@@ -351,7 +374,7 @@ class ModelRecoveryGridReport:
     def __post_init__(self) -> None:
         names = tuple(self.design_names)
         reports = tuple(self.reports)
-        seeds = _protected_array(self.seeds, dtype=np.uint64)
+        seeds = protected_array(self.seeds, dtype=np.uint64)
         if not names or len(set(names)) != len(names):
             raise ValueError("design names must be non-empty and unique")
         if len(reports) != len(names) or seeds.shape != (len(names),):
@@ -373,6 +396,7 @@ class ModelRecoveryGridReport:
                 or report.repeats != reference.repeats
                 or report.validation_scheme != reference.validation_scheme
                 or report.aggregation_column != reference.aggregation_column
+                or report.sampled_candidate_labels != reference.sampled_candidate_labels
             ):
                 raise ValueError(
                     "every design cell must use the same candidate and scenario contract"
@@ -412,7 +436,7 @@ class ModelRecoveryGridReport:
 def run_model_recovery(
     design: Study,
     scenarios: Sequence[ModelRecoveryScenario],
-    candidates: Mapping[str, BehaviourEstimator],
+    candidates: Mapping[str, AnyBehaviourEstimator],
     *,
     repeats: int = 1,
     seed: int,
@@ -423,12 +447,15 @@ def run_model_recovery(
     splitter: Callable[[Study], Iterable[ValidationFold]] | None = None,
     splitter_name: str | None = None,
     aggregation_column: str | None = None,
+    posterior_policy: PosteriorFoldPolicy | None = None,
 ) -> ModelRecoveryReport:
     """Simulate scenarios and select candidates by prospective mean log probability.
 
     By default recovery uses expanding within-subject forward-session folds. ``splitter``
     permits an exact experimental validation geometry to be reapplied after each
     simulation; ``splitter_name`` then provides stable provenance in the report.
+    ``posterior_policy`` declares the projection and convergence gate applied to sampled
+    candidates, which the report names in ``sampled_candidate_labels``.
     """
 
     scenarios = tuple(scenarios)
@@ -438,7 +465,10 @@ def run_model_recovery(
         raise ValueError("scenario names must be unique")
     candidate_models = _validated_candidates(candidates)
     candidate_labels = tuple(candidate_models)
-    scored_columns = model_capabilities(next(iter(candidate_models.values()))).scored_columns
+    sampled_labels = tuple(
+        label for label, model in candidate_models.items() if is_posterior_estimator(model)
+    )
+    scored_columns = any_model_capabilities(next(iter(candidate_models.values()))).scored_columns
     if any(scenario.truth_label not in candidate_models for scenario in scenarios):
         raise ValueError("every scenario truth_label must name a candidate")
     if isinstance(repeats, bool) or not isinstance(repeats, int) or repeats < 1:
@@ -506,7 +536,12 @@ def run_model_recovery(
             run_audit_statuses: list[FitAuditStatus] = []
             run_issue_codes: list[tuple[str, ...]] = []
             for column, model in enumerate(candidate_models.values()):
-                evaluations = evaluate_splits(model, simulated, splits)
+                evaluations = evaluate_splits(
+                    model,
+                    simulated,
+                    splits,
+                    posterior_policy=(posterior_policy if is_posterior_estimator(model) else None),
+                )
                 scores[run, column] = _mean_log_probability(
                     simulated,
                     evaluations,
@@ -564,13 +599,14 @@ def run_model_recovery(
         tie_tolerance=tie_tolerance,
         validation_scheme=validation_scheme,
         aggregation_column=aggregation_column,
+        sampled_candidate_labels=sampled_labels,
     )
 
 
 def run_model_recovery_grid(
     designs: Mapping[str, Study],
     scenarios: Sequence[ModelRecoveryScenario],
-    candidates: Mapping[str, BehaviourEstimator],
+    candidates: Mapping[str, AnyBehaviourEstimator],
     *,
     repeats: int = 1,
     seed: int,
@@ -581,6 +617,7 @@ def run_model_recovery_grid(
     splitter: Callable[[Study], Iterable[ValidationFold]] | None = None,
     splitter_name: str | None = None,
     aggregation_column: str | None = None,
+    posterior_policy: PosteriorFoldPolicy | None = None,
 ) -> ModelRecoveryGridReport:
     """Run one fixed recovery contract across named study-design cells."""
 
@@ -615,6 +652,7 @@ def run_model_recovery_grid(
             splitter=splitter,
             splitter_name=splitter_name,
             aggregation_column=aggregation_column,
+            posterior_policy=posterior_policy,
         )
         for design, child_seed in zip(validated_designs.values(), seeds, strict=True)
     )
@@ -627,21 +665,24 @@ def run_model_recovery_grid(
 
 
 def _validated_candidates(
-    candidates: Mapping[str, BehaviourEstimator],
-) -> Mapping[str, BehaviourEstimator]:
+    candidates: Mapping[str, AnyBehaviourEstimator],
+) -> Mapping[str, AnyBehaviourEstimator]:
     if not isinstance(candidates, Mapping) or not candidates:
         raise ValueError("candidates must be a non-empty mapping")
-    validated: dict[str, BehaviourEstimator] = {}
+    validated: dict[str, AnyBehaviourEstimator] = {}
     for label, model in candidates.items():
         if not isinstance(label, str) or not label or label == UNRESOLVED_LABEL:
             raise ValueError(
                 f"candidate labels must be non-empty and cannot be {UNRESOLVED_LABEL!r}"
             )
-        if not isinstance(model, BehaviourEstimator):
-            raise TypeError(f"candidate {label!r} does not satisfy the BehaviourEstimator contract")
-        model_capabilities(model)
+        if not isinstance(model, BehaviourEstimator) and not is_posterior_estimator(model):
+            raise TypeError(
+                f"candidate {label!r} satisfies neither the BehaviourEstimator nor the "
+                "PosteriorBehaviourEstimator contract"
+            )
+        any_model_capabilities(model)
         validated[label] = model
-    scored_columns = {model_capabilities(model).scored_columns for model in validated.values()}
+    scored_columns = {any_model_capabilities(model).scored_columns for model in validated.values()}
     if len(scored_columns) != 1:
         raise ValueError("all model-recovery candidates must score identical observed columns")
     return MappingProxyType(validated)

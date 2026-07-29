@@ -11,8 +11,8 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from behavio._internal.arrays import protected_array
 from behavio.comparison import BootstrapInterval
-from behavio.models.base import _protected_array
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,8 +33,8 @@ class TrajectoryPanel:
     group_name: str = "lab"
 
     def __post_init__(self) -> None:
-        grid = _protected_array(self.grid, dtype=np.float64)
-        values = _protected_array(self.values, dtype=np.float64)
+        grid = protected_array(self.grid, dtype=np.float64)
+        values = protected_array(self.values, dtype=np.float64)
         subjects = tuple(
             _validated_identifier(value, f"subjects[{index}]")
             for index, value in enumerate(self.subjects)
@@ -153,7 +153,7 @@ class GroupTrajectorySummary:
             _validated_identifier(value, f"subjects[{index}]")
             for index, value in enumerate(self.subjects)
         )
-        values = _protected_array(self.mean_values, dtype=np.float64)
+        values = protected_array(self.mean_values, dtype=np.float64)
         if not subjects or len(set(subjects)) != len(subjects):
             raise ValueError("summary subjects must be non-empty and unique")
         if values.ndim != 1 or values.size < 2 or not np.all(np.isfinite(values)):
@@ -246,7 +246,7 @@ class TrajectoryShapeComparisonReport:
     confidence_level: float
 
     def __post_init__(self) -> None:
-        grid = _protected_array(self.grid, dtype=np.float64)
+        grid = protected_array(self.grid, dtype=np.float64)
         summaries = tuple(self.group_summaries)
         comparisons = tuple(self.pairwise_comparisons)
         _require_positive_integer(self.bootstrap_resamples, "bootstrap_resamples")

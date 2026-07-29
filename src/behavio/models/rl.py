@@ -12,6 +12,7 @@ from numpy.typing import NDArray
 from scipy.optimize import minimize
 from scipy.special import expit, logit
 
+from behavio._internal.arrays import protected_array
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -19,7 +20,6 @@ from behavio.models.base import (
     Prediction,
     PredictionMode,
     UnsupportedPredictionMode,
-    _protected_array,
 )
 from behavio.study import REQUIRED_COLUMNS, Study
 
@@ -296,11 +296,11 @@ class RLFitResult(FitResult):
 
     def __post_init__(self) -> None:
         FitResult.__post_init__(self)
-        objectives = _protected_array(self.restart_objectives, dtype=np.float64)
-        converged = _protected_array(self.restart_converged, dtype=np.bool_)
+        objectives = protected_array(self.restart_objectives, dtype=np.float64)
+        converged = protected_array(self.restart_converged, dtype=np.bool_)
         messages = tuple(self.restart_messages)
         names = tuple(self.natural_parameter_names)
-        values = _protected_array(self.natural_parameter_values, dtype=np.float64)
+        values = protected_array(self.natural_parameter_values, dtype=np.float64)
         if objectives.ndim != 1 or converged.shape != objectives.shape:
             raise ValueError("restart diagnostics must have one value per restart")
         if len(messages) != len(objectives) or np.any(np.isnan(objectives)):
@@ -344,7 +344,7 @@ class RLTrajectory:
 
     def __post_init__(self) -> None:
         arrays = tuple(
-            _protected_array(values, dtype=np.float64)
+            protected_array(values, dtype=np.float64)
             for values in (
                 self.pre_choice_values,
                 self.post_update_values,
@@ -666,7 +666,7 @@ class BinaryRLAgent:
         choices = self._choices(study)
         probability = self.predict(study, fit, mode=mode).probability
         scores = choices * np.log(probability) + (1.0 - choices) * np.log1p(-probability)
-        return _protected_array(scores, dtype=np.float64)
+        return protected_array(scores, dtype=np.float64)
 
     def trajectory(self, study: Study, fit: FitResult) -> RLTrajectory:
         """Replay the declared components using earlier choices and rewards only."""

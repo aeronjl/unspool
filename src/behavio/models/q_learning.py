@@ -9,6 +9,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.special import expit
 
+from behavio._internal.arrays import protected_array
 from behavio.inference import OptimizationProblem, OptimizationRun, ScipyMultistart
 from behavio.models.base import (
     FitDiagnostics,
@@ -17,7 +18,6 @@ from behavio.models.base import (
     Prediction,
     PredictionMode,
     UnsupportedPredictionMode,
-    _protected_array,
 )
 from behavio.models.glm import _ordered_session_indices
 from behavio.parameters import ParameterSpace, ParameterSpec, ParameterTransform
@@ -93,8 +93,8 @@ class QLearningFitResult(FitResult):
 
     def __post_init__(self) -> None:
         FitResult.__post_init__(self)
-        objectives = _protected_array(self.restart_objectives, dtype=np.float64)
-        converged = _protected_array(self.restart_converged, dtype=np.bool_)
+        objectives = protected_array(self.restart_objectives, dtype=np.float64)
+        converged = protected_array(self.restart_converged, dtype=np.bool_)
         messages = tuple(self.restart_messages)
         if objectives.ndim != 1 or converged.shape != objectives.shape:
             raise ValueError("restart diagnostics must have one value per restart")
@@ -135,10 +135,10 @@ class ValueTrajectory:
     linear_predictor: NDArray[np.float64]
 
     def __post_init__(self) -> None:
-        pre_choice = _protected_array(self.pre_choice, dtype=np.float64)
-        post_update = _protected_array(self.post_update, dtype=np.float64)
-        prediction_error = _protected_array(self.prediction_error, dtype=np.float64)
-        linear_predictor = _protected_array(self.linear_predictor, dtype=np.float64)
+        pre_choice = protected_array(self.pre_choice, dtype=np.float64)
+        post_update = protected_array(self.post_update, dtype=np.float64)
+        prediction_error = protected_array(self.prediction_error, dtype=np.float64)
+        linear_predictor = protected_array(self.linear_predictor, dtype=np.float64)
         if pre_choice.ndim != 2 or pre_choice.shape[1] != 2:
             raise ValueError("pre_choice must have one row and two action values per trial")
         if post_update.shape != pre_choice.shape:
@@ -452,7 +452,7 @@ class BinaryQLearning:
         prediction = self.predict(study, fit, mode=mode)
         scores = choices * -np.logaddexp(0.0, -prediction.linear_predictor)
         scores += (1.0 - choices) * -np.logaddexp(0.0, prediction.linear_predictor)
-        return _protected_array(scores, dtype=np.float64)
+        return protected_array(scores, dtype=np.float64)
 
     def value_trajectory(self, study: Study, fit: FitResult) -> ValueTrajectory:
         """Reconstruct pre-choice values, updates, and reward-prediction errors."""

@@ -21,13 +21,30 @@ print(manifest.fingerprint)
 ```
 
 Materialization applies the closed cohort predicates, validates the expected denominator
-and panel requirements, resolves source-to-derived row identities, and fingerprints the
-resulting canonical `Study`. It retains identities and hashes in the manifest, not raw
-trial values.
+and panel requirements, checks every declared observation column against its data
+contract, resolves source-to-derived row identities, and fingerprints the resulting
+canonical `Study`. It retains identities and hashes in the manifest, not raw trial values.
 
 An expected denominator is a guardrail, not decorative metadata. If a release, adapter,
 or eligibility rule produces a different number of animals, sessions, or observations,
 materialization stops.
+
+The declared `data_type` and `allowed_values` of each observation are guardrails in the
+same sense. A protocol that declares `allowed_values=(0, 1)` cannot materialize a column
+containing `7`; a column declared `continuous` cannot hold a label. The failure names the
+column, the number of offending rows, and examples:
+
+```python
+from behavio import validate_observation_contract
+
+for violation in validate_observation_contract(frozen, candidate_study):
+    print(violation.rule.value, violation.n_violating_rows, violation.message)
+```
+
+Missing observations are not violations by default — behavioural data legitimately
+contains omissions and aborted trials. They become violations only for a column whose
+declared `allowed_values` set does not name `None`, mirroring how `ChoiceSpec` retains
+omissions only when they were declared.
 
 ## Compile explicit row roles
 
@@ -85,6 +102,11 @@ The audit checks:
 
 Errors prevent the protocol from reaching `audited`. Warnings remain in the plan and
 subsequent evidence bundle; they cannot be discarded just because a fit converged.
+
+The audit checks that the runtime *capabilities* match the declaration. It does not see
+the estimator objects themselves, so the identity and hyperparameters of each supplied
+model are verified one step later, when `run_protocol` is handed the model registry. See
+[The model that ran is the model that was declared](index.md#the-model-that-ran-is-the-model-that-was-declared).
 
 ## Nested selection
 

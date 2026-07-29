@@ -7,15 +7,23 @@ base class is not required.
 
 ## Choose the smallest extension surface
 
+Every protocol below lives in one place, `behavio.contracts`, alongside the dataclasses
+those protocols declare structurally. Import them from there
+([API reference](reference/contracts.md)); the modules they used to live in still
+re-export them, so older imports keep working.
+
 | You already have | Implement | What becomes available |
 | --- | --- | --- |
 | A task-specific table or API | a function returning `Study`, `TaskSpec`, and source provenance | common validation, clocks, splitters, and models |
+| A file format, archive, or data service | `StudyAdapter` | declared identity and chronology policy, plus a runnable conformance harness |
 | A fitted predictive model | `BehaviourEstimator` | prospective evaluation and matched comparison |
 | A model that can also simulate | `GenerativeBehaviourModel` | parameter and model recovery |
 | A natural/optimizer parameter description | `ParameterSpaceProvider` | portable transforms, bounds, priors, and backend adapters |
 | An optimizer | `OptimizationBackend` | identical deterministic problems with complete attempt records |
 | Posterior samples | `PosteriorResult` or ArviZ adapter | convergence audit, PPC, PSIS-LOO, SBC, and sensitivity |
+| A sampler-backed model | `PosteriorBehaviourEstimator` | the sampled counterpart of the estimator contract, plus a declared point-summary projection |
 | A behavioural summary | `PredictiveDiscrepancy` | grouped posterior-predictive checks |
+| A training/test partition | `ValidationFold` | fold-fitted transforms, evaluation, comparison, and recovery |
 | A complete public analysis | literature-recipe contract | documentation and evidence-bundle integration |
 
 Do not implement simulation merely to satisfy a protocol. A prediction-only external
@@ -61,6 +69,70 @@ The adapter must not sort away source order silently. Map identity and chronolog
 explicitly, retain source identifiers where licensing permits, validate units and choice
 coding, and test duplicated, missing, or contradictory rows. Network retrieval and local
 normalization should be separate functions so a checksum-pinned fixture can test parsing.
+
+## Data-source adapters
+
+When a reader is more than one function -- a format with options, an archive with pinned
+identity, a service with credentials -- declare it as a `StudyAdapter`. The adapter *is*
+the immutable declaration of what to read; `read()` turns it into a `Study`:
+
+```python
+from dataclasses import dataclass
+from pathlib import Path
+
+from behavio.contracts.adapter import SessionOrderPolicy, SourceType
+from behavio.study import Study
+
+
+@dataclass(frozen=True, slots=True)
+class MyBpodSource:
+    path: Path
+    session_order: int
+
+    adapter_name = "mylab.bpod"
+    adapter_version = "1"
+    source_type = SourceType.LOCAL_FILE
+    session_order_policy = SessionOrderPolicy.RECORDED
+
+    def read(self) -> Study: ...
+```
+
+`session_order_policy` is the load-bearing declaration. `RECORDED` means chronology came
+from the caller or from an explicit record in the source. `DERIVED` means the caller named
+a rule -- a date column, an explicit ordering, file order -- and the adapter applied and
+recorded it. There is no third option: an adapter with neither a record nor a named rule
+must fail rather than number sessions by arrival. Behavio's own adapters follow this, which
+is why generic NWB requires an explicit `session_order` and why the table reader requires
+`session_order_from_column(...)`, `session_order_from_explicit(...)`, or
+`session_order_from_appearance()` before it will read a table that lacks the column.
+
+### Adapter conformance tests
+
+`behavio.adapters.conformance` runs the adapter half of the compatibility list below
+against your implementation:
+
+```python
+from behavio.adapters.conformance import assert_study_adapter_conforms
+
+assert_study_adapter_conforms(
+    MyBpodSource(fixture_path, session_order=0),
+    expected_rows=[
+        {"subject": "m1", "session": "day-1", "trial": 0, "choice": 1},
+        {"subject": "m1", "session": "day-1", "trial": 1, "choice": 0},
+    ],
+    chronology_withheld=lambda: MyBpodSource(fixture_without_chronology),
+    require_complete=True,
+)
+```
+
+It checks that the adapter declares valid identity, returns a valid `Study`, preserves
+source trial order and subject/session run boundaries against your fixture, refuses to
+fabricate `session_order` when chronology is withheld, produces a chronology that actually
+orders the study, and reads the same source twice identically. `check_study_adapter()`
+returns the same run as data when you would rather inspect it than assert on it;
+`require_complete=True` additionally rejects a run in which you did not supply
+`expected_rows` or `chronology_withheld`, which is the mode an adapter's own suite should
+use.
 
 ## Estimator adapters
 
@@ -142,6 +214,62 @@ empirical-Bayes fixed quantity as a posterior variable. A sampler becomes eligib
 simulation-based calibration only when a prior simulator and labelled test quantities are
 also supplied.
 
+A model that samples rather than optimizes can additionally implement
+`PosteriorBehaviourEstimator`. It mirrors `BehaviourEstimator` exactly, with `fit`
+replaced by `sample(study) -> PosteriorResult`, and adds one required method:
+
+```python
+from behavio.contracts import PosteriorBehaviourEstimator, posterior_point_summary
+
+assert isinstance(external_model, PosteriorBehaviourEstimator)
+posterior = external_model.sample(train_study)
+fit = external_model.point_summary(posterior, converged=True)
+```
+
+`point_summary` is the explicit, lossy reduction that lets a sampled model enter the
+frequentist machinery. `posterior_point_summary` is the reference implementation: it
+returns the posterior mean (or median), the posterior standard deviation, and the full
+posterior sample covariance, and it records nothing it did not measure. Optimizer-shaped
+diagnostics -- iteration count, objective, gradient norm, Hessian condition, boundary
+contact -- are set to `None`, meaning *inapplicable*. `FitResult.audit()` skips absent
+diagnostics rather than warning about them; do not substitute zeros or NaNs, which would
+be recorded as findings against your model.
+
+`evaluate_splits`, `compare_models`, `nested_select_model`, `run_parameter_recovery` and
+`run_model_recovery` accept a sampled estimator wherever they accept a frequentist one:
+
+```python
+from behavio import compare_models
+from behavio.evaluation import PosteriorFoldPolicy
+
+report = compare_models(
+    {"sampled": external_model, "baseline": BiasOnly()},
+    study,
+    splits,
+    posterior_policy=PosteriorFoldPolicy(),
+)
+```
+
+Three rules follow from that:
+
+- **Each fold is audited before it is projected.** Behavio calls `audit_posterior` on the
+  fold's posterior and passes the verdict into `point_summary(..., converged=...)`. A
+  failed audit therefore produces a failed `FitAudit`, which makes the candidate
+  ineligible for `winner` and for model-recovery selection, exactly as a non-converged
+  optimizer fit does. The fold's score is still reported so every candidate keeps
+  identical aggregation units.
+- **`predict` and `pointwise_log_prob` receive the posterior, not the projection.** Return
+  the draw-averaged predictive probability and the log pointwise predictive density
+  `log((1/S) sum_s p(y_i | theta_s))`; `posterior_log_predictive_density` computes the
+  latter from a `(draw, observation)` matrix. Scoring at the posterior mean is a different
+  quantity and must not be pooled with honest predictive densities.
+- **Declare `posterior_parameter_labels` if you want parameter recovery.**
+  `posterior_point_summary` names coordinates (`beta[coefficient='stimulus']`), while
+  `simulate` takes scalar parameter names, so the two do not round-trip. The mapping is
+  required, validated by `posterior_parameter_columns`, and never guessed. Recovery then
+  reports coverage from the posterior quantile interval and labels it
+  `posterior-quantile`, so it is never averaged with Wald coverage.
+
 ## Predictive discrepancies and diagnostics
 
 A `PredictiveDiscrepancy` has a stable `name`, configuration-specific `signature`, declared
@@ -173,6 +301,18 @@ At minimum, an extension package should test:
 7. serialization of portable manifests or results;
 8. simulation/parameter-name agreement when generative; and
 9. end-to-end prospective evaluation on a small fixture.
+
+A data-source adapter has its own list, and
+`behavio.adapters.conformance.assert_study_adapter_conforms` executes all six against a
+small committed fixture:
+
+1. stable adapter name, version, declared source type, and chronology policy;
+2. `read()` returns a valid `Study`;
+3. source trial order is preserved exactly;
+4. subject and session run boundaries are preserved, not regrouped or merged;
+5. `session_order` is refused rather than fabricated when no record and no named derivation
+   are available; and
+6. reading an unchanged source twice gives the same study.
 
 Behavio should depend on the interface package only when a capability is broadly useful
 and light enough for the core. Heavy solvers and domain-specific models should remain

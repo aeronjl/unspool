@@ -1,4 +1,39 @@
-"""Test-retest consistency and absolute agreement for labelled subject estimates."""
+"""Test-retest consistency and absolute agreement for labelled subject estimates.
+
+Two sources of uncertainty
+--------------------------
+A subject's estimate on one occasion is not a measurement, it is an inference. Collapsing
+a posterior to one number per subject and then bootstrapping only over subjects propagates
+sampling uncertainty and throws posterior uncertainty away, which makes every reported
+interval too narrow. When both occasions carry posterior draws
+(:attr:`SubjectEstimates.draws`, attached automatically by
+:func:`posterior_subject_estimates`), each repetition now resamples subjects *and* draws a
+fresh posterior draw for each occasion, so the retained interval covers both.
+
+**Draw pairing.** The two occasions are separate fits. Draw ``d`` of the test posterior and
+draw ``d`` of the retest posterior are not one joint sample of anything: there is no
+coupling between them to preserve, and inventing one -- pairing by index, or ordering draws
+to match -- would fabricate a correlation. Each repetition therefore samples a draw index
+independently and uniformly from each occasion, which treats the draw index as an
+independent resample of that occasion's own uncertainty. The reported statistic is the
+posterior mean of the per-draw statistic, not the statistic of the posterior means.
+
+Shrinkage
+---------
+Posterior means from a partial-pooling model are shrunk toward a common mean, and
+correlating two sets of shrunken estimates inflates Pearson, Spearman, and both ICCs: the
+shared prior pulls both occasions toward the same point, which reads as agreement. This
+module *warns* about that with ``reliability.shrunken-estimates``; it does not correct it.
+There is no correction available here, because undoing shrinkage requires the hierarchical
+model's variance components, which a :class:`SubjectEstimates` record does not carry.
+Treat a flagged reliability estimate as an upper bound.
+
+Whether the source model pools is a fact about the model, not about the numbers, so it is
+declared rather than guessed: see :class:`SubjectPooling`. Estimates built by hand default
+to :attr:`SubjectPooling.NONE` (independently fitted subjects, the maximum-likelihood
+path), and :func:`posterior_subject_estimates` defaults to
+:attr:`SubjectPooling.PARTIAL`, the conservative side.
+"""
 
 from __future__ import annotations
 
@@ -11,11 +46,37 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from behavio.posterior import PosteriorResult
+from behavio.posterior import ArviZUnavailableError, PosteriorResult
+from behavio.posterior_diagnostics import (
+    PosteriorAudit,
+    PosteriorAuditPolicy,
+    PosteriorAuditStatus,
+    audit_posterior,
+)
+
+_SHRINKABLE: tuple[str, ...] = (
+    "pearson-r",
+    "spearman-rho",
+    "icc-c-1",
+    "icc-a-1",
+)
 
 
 class ReliabilityError(ValueError):
     """Raised when a reliability analysis violates its pairing contract."""
+
+
+class SubjectPooling(StrEnum):
+    """Whether the model behind one occasion's estimates pooled across subjects.
+
+    ``NONE`` declares that each subject was estimated independently, so the estimates
+    carry no shrinkage. ``PARTIAL`` declares a hierarchical or partial-pooling model,
+    whose per-subject estimates are shrunk toward a common mean and therefore inflate
+    every consistency and agreement statistic computed from them.
+    """
+
+    NONE = "none"
+    PARTIAL = "partial"
 
 
 class ReliabilityStatistic(StrEnum):
@@ -66,7 +127,16 @@ class ReliabilityPolicy:
 
 @dataclass(frozen=True, slots=True)
 class SubjectEstimates:
-    """One labelled scalar estimate per subject on one occasion."""
+    """One labelled scalar estimate per subject on one occasion.
+
+    ``values`` is the point estimate per subject and is what every non-posterior caller
+    supplies. ``draws`` optionally retains the full ``(sample, subject)`` posterior behind
+    those points so that :func:`assess_test_retest_reliability` can propagate posterior
+    uncertainty instead of discarding it; ``values`` remains the posterior mean, so the
+    reported point summary of the estimates themselves does not change. ``pooling``
+    declares whether those estimates are shrunk, and ``posterior_audit`` retains the
+    convergence evidence for the fit they came from.
+    """
 
     occasion: str
     target: str
@@ -76,6 +146,9 @@ class SubjectEstimates:
     values: NDArray[np.float64] | Sequence[float]
     artifact_signature: str
     provenance: Mapping[str, Any] = field(default_factory=dict)
+    draws: NDArray[np.float64] | Sequence[Sequence[float]] | None = None
+    pooling: SubjectPooling = SubjectPooling.NONE
+    posterior_audit: PosteriorAudit | None = None
 
     def __post_init__(self) -> None:
         for value, label in (
@@ -104,9 +177,26 @@ class SubjectEstimates:
             if not isinstance(key, str) or not key:
                 raise ValueError("reliability provenance names must be non-empty strings")
             provenance[key] = _json_scalar(value, label=f"reliability provenance {key!r}")
+        if self.draws is not None:
+            draws = _protected(np.asarray(self.draws, dtype=np.float64))
+            if draws.ndim != 2 or draws.shape[1] != len(subjects) or draws.shape[0] < 1:
+                raise ValueError("reliability draws must be a sample-by-subject matrix")
+            if not np.all(np.isfinite(draws)):
+                raise ValueError("reliability draws must be finite")
+            object.__setattr__(self, "draws", draws)
+        audit = self.posterior_audit
+        if audit is not None and not isinstance(audit, PosteriorAudit):
+            raise TypeError("reliability posterior_audit must be a PosteriorAudit")
         object.__setattr__(self, "subjects", subjects)
         object.__setattr__(self, "values", values)
+        object.__setattr__(self, "pooling", SubjectPooling(self.pooling))
         object.__setattr__(self, "provenance", MappingProxyType(provenance))
+
+    @property
+    def n_draws(self) -> int:
+        """Number of retained posterior samples, or zero when only points are available."""
+
+        return 0 if self.draws is None else int(np.asarray(self.draws).shape[0])
 
 
 @dataclass(frozen=True, slots=True)
@@ -240,6 +330,16 @@ class TestRetestReliabilityReport:
     def issue_codes(self) -> tuple[str, ...]:
         return tuple(issue.code for issue in self.issues)
 
+    @property
+    def posterior_uncertainty_propagated(self) -> bool:
+        """Whether each repetition also resampled a posterior draw per occasion."""
+
+        return (
+            self.first.draws is not None
+            and self.second.draws is not None
+            and self.policy.bootstrap_repeats > 0
+        )
+
     def __getitem__(self, statistic: ReliabilityStatistic | str) -> ReliabilityEstimate:
         selected = ReliabilityStatistic(statistic)
         return next(item for item in self.estimates if item.statistic is selected)
@@ -252,6 +352,12 @@ class TestRetestReliabilityReport:
             "target_signature": self.first.target_signature,
             "unit": self.first.unit,
             "n_subjects": self.n_subjects,
+            "posterior_uncertainty_propagated": self.posterior_uncertainty_propagated,
+            "uncertainty_sources": (
+                ["subject-resampling", "posterior-draws"]
+                if self.posterior_uncertainty_propagated
+                else ["subject-resampling"]
+            ),
             "first": _subject_estimates_dict(self.first),
             "second": _subject_estimates_dict(self.second),
             "paired": [
@@ -313,7 +419,20 @@ def assess_test_retest_reliability(
     analysis_signature: str,
     policy: ReliabilityPolicy | None = None,
 ) -> TestRetestReliabilityReport:
-    """Estimate paired consistency and agreement without silent complete-case filtering."""
+    """Estimate paired consistency and agreement without silent complete-case filtering.
+
+    When both occasions carry posterior draws and ``bootstrap_repeats`` is positive, each
+    repetition resamples subjects with replacement *and* takes one independently sampled
+    posterior draw from each occasion, so the retained interval covers sampling and
+    posterior uncertainty together and each reported statistic is a posterior mean rather
+    than a statistic of posterior means. Draw indices are sampled independently for the two
+    occasions because they come from separate fits whose draws are not jointly distributed;
+    no coupling between them is assumed or manufactured.
+
+    When either occasion carries only point estimates the original paired subject bootstrap
+    runs unchanged, so maximum-likelihood inputs produce exactly the numbers they did
+    before.
+    """
 
     if not isinstance(first, SubjectEstimates) or not isinstance(second, SubjectEstimates):
         raise TypeError("first and second must be SubjectEstimates")
@@ -326,25 +445,39 @@ def assess_test_retest_reliability(
     if not isinstance(selected_policy, ReliabilityPolicy):
         raise TypeError("policy must be ReliabilityPolicy")
 
-    lookup = dict(zip(second.subjects, second.values, strict=True))
+    order = [second.subjects.index(subject) for subject in first.subjects]
     first_values = np.asarray(first.values)
-    second_values = np.asarray([lookup[subject] for subject in first.subjects])
-    point = _statistics(first_values, second_values, selected_policy.agreement_multiplier)
+    second_values = np.asarray(second.values)[order]
+    paired_draws = _paired_draws(first, second, order, selected_policy.bootstrap_repeats)
+    propagate = paired_draws is not None
+    n_subjects = len(first_values)
+    multiplier = selected_policy.agreement_multiplier
     bootstraps = {statistic: [] for statistic in ReliabilityStatistic}
     invalid = {statistic: 0 for statistic in ReliabilityStatistic}
+    posterior_draws = {statistic: [] for statistic in ReliabilityStatistic}
     generator = np.random.default_rng(seed)
     for _ in range(selected_policy.bootstrap_repeats):
-        index = generator.integers(0, len(first_values), size=len(first_values))
-        values = _statistics(
-            first_values[index],
-            second_values[index],
-            selected_policy.agreement_multiplier,
-        )
-        for statistic, value in values.items():
+        left, right = first_values, second_values
+        if paired_draws is not None:
+            first_draws, second_draws = paired_draws
+            left = first_draws[generator.integers(0, len(first_draws))]
+            right = second_draws[generator.integers(0, len(second_draws))]
+            for statistic, value in _statistics(left, right, multiplier).items():
+                if value is not None:
+                    posterior_draws[statistic].append(value)
+        index = generator.integers(0, n_subjects, size=n_subjects)
+        for statistic, value in _statistics(left[index], right[index], multiplier).items():
             if value is None:
                 invalid[statistic] += 1
             else:
                 bootstraps[statistic].append(value)
+    if propagate:
+        point = {
+            statistic: (float(np.mean(values)) if values else None)
+            for statistic, values in posterior_draws.items()
+        }
+    else:
+        point = _statistics(first_values, second_values, multiplier)
 
     alpha = (1.0 - selected_policy.interval_probability) / 2.0
     required = max(
@@ -403,6 +536,7 @@ def assess_test_retest_reliability(
                 ),
             )
         )
+    issues.extend(_source_issues(first, second, propagate))
     return TestRetestReliabilityReport(
         first=first,
         second=second,
@@ -423,11 +557,35 @@ def posterior_subject_estimates(
     coordinate: Mapping[str, Any] | None = None,
     unit: str = "natural parameter",
     artifact_signature: str | None = None,
+    pooling: SubjectPooling | str = SubjectPooling.PARTIAL,
+    audit_policy: PosteriorAuditPolicy | None = None,
 ) -> SubjectEstimates:
-    """Extract labelled per-subject posterior means for one scalar parameter target."""
+    """Extract one scalar parameter target per subject, with its draws and its audit.
+
+    ``values`` remains the per-subject posterior mean and is numerically unchanged. The
+    full ``(sample, subject)`` draw matrix is retained alongside it so that
+    :func:`assess_test_retest_reliability` can propagate posterior uncertainty rather than
+    treating posterior means as observed data.
+
+    ``pooling`` declares whether the source model pooled across subjects. A
+    :class:`PosteriorResult` records model identity but nothing about its pooling
+    structure, and sniffing the model name would be a guess, so the caller declares it.
+    The default is :attr:`SubjectPooling.PARTIAL` -- the conservative side, because most
+    posteriors that produce per-subject parameters come from hierarchical models and the
+    cost of a false warning is far below the cost of an unflagged inflated reliability.
+    Pass :attr:`SubjectPooling.NONE` for independently fitted subjects.
+
+    The posterior's convergence is audited under ``audit_policy`` and the audit is retained
+    on the returned record. A failing audit does not raise here: the estimates are still
+    evidence, and :func:`assess_test_retest_reliability` gates on them with
+    ``reliability.unconverged-posterior``.
+    """
 
     if not isinstance(result, PosteriorResult):
         raise TypeError("result must be PosteriorResult")
+    if audit_policy is not None and not isinstance(audit_policy, PosteriorAuditPolicy):
+        raise TypeError("audit_policy must be a PosteriorAuditPolicy")
+    selected_pooling = SubjectPooling(pooling)
     for value, label in (
         (variable_name, "variable_name"),
         (occasion, "occasion"),
@@ -478,6 +636,13 @@ def posterior_subject_estimates(
         f"parameter-space={result.parameter_space_fingerprint or 'none'}]"
     )
     coordinate_signature = ",".join(f"{dim}={value!r}" for dim, value in target_coordinate)
+    try:
+        audit: PosteriorAudit | None = audit_posterior(result, policy=audit_policy)
+    except ArviZUnavailableError:
+        audit = None
+        audit_status = "unavailable"
+    else:
+        audit_status = audit.status.value
     return SubjectEstimates(
         occasion=occasion,
         target=_target(variable_name, tuple(target_coordinate)),
@@ -495,8 +660,101 @@ def posterior_subject_estimates(
             "inference_library": result.inference_library,
             "inference_library_version": result.inference_library_version,
             "parameter_space_fingerprint": result.parameter_space_fingerprint,
+            "pooling": selected_pooling.value,
+            "posterior_audit_status": audit_status,
         },
+        draws=values.reshape(-1, len(subjects)),
+        pooling=selected_pooling,
+        posterior_audit=audit,
     )
+
+
+def _paired_draws(
+    first: SubjectEstimates,
+    second: SubjectEstimates,
+    order: Sequence[int],
+    bootstrap_repeats: int,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]] | None:
+    """Return both occasions' draws in first-occasion subject order, or nothing."""
+
+    if first.draws is None or second.draws is None or bootstrap_repeats < 1:
+        return None
+    return np.asarray(first.draws), np.asarray(second.draws)[:, list(order)]
+
+
+def _source_issues(
+    first: SubjectEstimates,
+    second: SubjectEstimates,
+    propagated: bool,
+) -> tuple[ReliabilityIssue, ...]:
+    """Warn about shrinkage, refused convergence, and uncorrected posterior width."""
+
+    issues: list[ReliabilityIssue] = []
+    shrunken = tuple(
+        estimates.occasion
+        for estimates in (first, second)
+        if estimates.pooling is SubjectPooling.PARTIAL
+    )
+    if shrunken:
+        issues.append(
+            ReliabilityIssue(
+                code="reliability.shrunken-estimates",
+                message=(
+                    "per-subject estimates from a partial-pooling model are shrunk toward a "
+                    f"common mean on occasion(s) {', '.join(shrunken)}; correlating shrunken "
+                    "estimates inflates consistency and agreement, so treat these as upper "
+                    "bounds. This is a warning, not a correction: undoing shrinkage needs the "
+                    "hierarchical variance components, which subject estimates do not carry"
+                ),
+                statistics=tuple(ReliabilityStatistic(value) for value in _SHRINKABLE),
+            )
+        )
+    failed = tuple(
+        estimates.occasion
+        for estimates in (first, second)
+        if estimates.posterior_audit is not None
+        and estimates.posterior_audit.status is PosteriorAuditStatus.FAIL
+    )
+    if failed:
+        issues.append(
+            ReliabilityIssue(
+                code="reliability.unconverged-posterior",
+                message=(
+                    "the posterior behind occasion(s) "
+                    f"{', '.join(failed)} failed its convergence audit, so the paired "
+                    "estimates are not draws from the model being reported"
+                ),
+            )
+        )
+    unaudited = tuple(
+        estimates.occasion
+        for estimates in (first, second)
+        if estimates.provenance.get("posterior_audit_status") == "unavailable"
+    )
+    if unaudited:
+        issues.append(
+            ReliabilityIssue(
+                code="reliability.posterior-audit-unavailable",
+                message=(
+                    "convergence could not be audited for occasion(s) "
+                    f"{', '.join(unaudited)} because the ArviZ diagnostics backend is "
+                    "unavailable; install `behavio[probabilistic]`"
+                ),
+            )
+        )
+    carriers = tuple(item for item in (first, second) if item.draws is not None)
+    if carriers and not propagated:
+        issues.append(
+            ReliabilityIssue(
+                code="reliability.draws-not-propagated",
+                message=(
+                    "posterior draws were available but not propagated, so the reported "
+                    "intervals cover subject sampling only and are narrower than the "
+                    "evidence supports"
+                ),
+            )
+        )
+    return tuple(issues)
 
 
 def _statistics(
@@ -618,6 +876,11 @@ def _subject_estimates_dict(estimates: SubjectEstimates) -> dict[str, Any]:
         "occasion": estimates.occasion,
         "artifact_signature": estimates.artifact_signature,
         "provenance": dict(estimates.provenance),
+        "pooling": estimates.pooling.value,
+        "n_draws": estimates.n_draws,
+        "posterior_audit": (
+            None if estimates.posterior_audit is None else estimates.posterior_audit.to_dict()
+        ),
     }
 
 

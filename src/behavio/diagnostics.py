@@ -1,14 +1,59 @@
-"""Model-agnostic auditing of numerical and model-specific fit evidence."""
+"""Model-agnostic auditing of numerical and model-specific fit evidence.
+
+The audit *vocabulary* -- :class:`~behavio.contracts.audit.AuditSeverity`,
+:class:`~behavio.contracts.audit.FitAuditStatus`,
+:class:`~behavio.contracts.audit.FitAuditPolicy`,
+:class:`~behavio.contracts.audit.FitIssue`,
+:class:`~behavio.contracts.audit.RestartAudit`,
+:class:`~behavio.contracts.audit.LatentStateAudit` and
+:class:`~behavio.contracts.audit.FitAudit` -- now lives in :mod:`behavio.contracts.audit`
+and is re-exported here, so every existing ``from behavio.diagnostics import ...`` keeps
+working. This module owns the *derivation*: :func:`audit_fit`.
+
+Breaking the cycle
+------------------
+``behavio.diagnostics`` used to import ``FitResult``/``FitDiagnostics`` from
+``behavio.models.base``, while ``behavio.models.base`` type-imported ``FitAudit`` and
+``FitAuditPolicy`` back from here and ran a function-local ``from behavio.diagnostics
+import audit_fit`` inside ``FitResult.audit()``. That was the package's only import cycle.
+
+The dependency is now inverted rather than deferred. ``behavio.contracts`` is a leaf and
+declares both the audit vocabulary and a :class:`~behavio.contracts.estimator.FitAuditor`
+protocol. This module depends on ``behavio.contracts`` in one direction only and registers
+:func:`audit_fit` as the implementation at import time, so ``FitResult.audit()`` dispatches
+through the registry instead of importing anything at call time. There is no module-level
+cycle and no function-local import left.
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import StrEnum
 from typing import Any, Protocol, cast
 
 import numpy as np
 
-from behavio.models.base import FitDiagnostics, FitResult
+from behavio.contracts.audit import (
+    AuditSeverity,
+    FitAudit,
+    FitAuditPolicy,
+    FitAuditStatus,
+    FitDiagnostics,
+    FitIssue,
+    LatentStateAudit,
+    RestartAudit,
+)
+from behavio.contracts.estimator import FitResult, register_fit_auditor
+
+__all__ = [
+    "AuditSeverity",
+    "FitAudit",
+    "FitAuditPolicy",
+    "FitAuditStatus",
+    "FitDiagnostics",
+    "FitIssue",
+    "LatentStateAudit",
+    "RestartAudit",
+    "audit_fit",
+]
 
 
 class _RestartFit(Protocol):
@@ -24,190 +69,6 @@ class _LatentStateFit(Protocol):
     label_order_gap: float
     label_ambiguous: bool
     low_occupancy: bool
-
-
-class AuditSeverity(StrEnum):
-    """Consequence of one fit-audit issue."""
-
-    WARNING = "warning"
-    ERROR = "error"
-
-
-class FitAuditStatus(StrEnum):
-    """Overall numerical status derived from all retained fit evidence."""
-
-    PASS = "pass"
-    WARNING = "warning"
-    FAIL = "fail"
-
-
-@dataclass(frozen=True, slots=True)
-class FitAuditPolicy:
-    """Explicit thresholds used to turn continuous diagnostics into warnings."""
-
-    hessian_condition_warning: float = 1e12
-    restart_relative_objective_warning: float = 1e-3
-
-    def __post_init__(self) -> None:
-        if not np.isfinite(self.hessian_condition_warning) or self.hessian_condition_warning <= 0:
-            raise ValueError("hessian_condition_warning must be finite and positive")
-        if (
-            not np.isfinite(self.restart_relative_objective_warning)
-            or self.restart_relative_objective_warning < 0
-        ):
-            raise ValueError("restart_relative_objective_warning must be finite and non-negative")
-
-
-@dataclass(frozen=True, slots=True)
-class FitIssue:
-    """One stable, machine-readable reason that a fit needs attention."""
-
-    code: str
-    severity: AuditSeverity
-    message: str
-
-    def __post_init__(self) -> None:
-        if not self.code or not self.message:
-            raise ValueError("fit issues require a non-empty code and message")
-        object.__setattr__(self, "severity", AuditSeverity(self.severity))
-
-
-@dataclass(frozen=True, slots=True)
-class RestartAudit:
-    """Comparable summary of a multi-restart optimizer's retained outcomes."""
-
-    n_restarts: int
-    n_converged: int
-    selected_restart: int
-    selected_converged: bool
-    selected_objective: float
-    objective_range: float
-    relative_objective_range: float
-    failed_messages: tuple[str, ...]
-
-    def __post_init__(self) -> None:
-        if self.n_restarts < 1:
-            raise ValueError("n_restarts must be positive")
-        if not 0 <= self.n_converged <= self.n_restarts:
-            raise ValueError("n_converged must lie between zero and n_restarts")
-        if not 0 <= self.selected_restart < self.n_restarts:
-            raise ValueError("selected_restart must identify one restart")
-        if self.objective_range < 0 or self.relative_objective_range < 0:
-            raise ValueError("restart objective ranges must be non-negative")
-        object.__setattr__(self, "failed_messages", tuple(self.failed_messages))
-
-
-@dataclass(frozen=True, slots=True)
-class LatentStateAudit:
-    """Comparable summary of evidence specific to a latent-state fit."""
-
-    n_states: int
-    minimum_occupancy: float
-    state_separation: float
-    label_order_gap: float
-    label_ambiguous: bool
-    low_occupancy: bool
-
-    def __post_init__(self) -> None:
-        if self.n_states < 2:
-            raise ValueError("latent-state audits require at least two states")
-        if not 0 <= self.minimum_occupancy <= 1:
-            raise ValueError("minimum_occupancy must lie between zero and one")
-        if self.state_separation < 0 or self.label_order_gap < 0:
-            raise ValueError("latent-state separation diagnostics must be non-negative")
-
-
-@dataclass(frozen=True, slots=True)
-class FitAudit:
-    """One normalized audit of common, restart, and latent-state fit evidence."""
-
-    model_name: str
-    model_signature: str
-    n_observations: int
-    numerical: FitDiagnostics
-    issues: tuple[FitIssue, ...]
-    restarts: RestartAudit | None = None
-    latent_states: LatentStateAudit | None = None
-
-    def __post_init__(self) -> None:
-        issues = tuple(self.issues)
-        if not self.model_name or not self.model_signature:
-            raise ValueError("fit audits require model name and signature")
-        if self.n_observations < 1:
-            raise ValueError("n_observations must be positive")
-        codes = [issue.code for issue in issues]
-        if len(set(codes)) != len(codes):
-            raise ValueError("fit issue codes must be unique within one audit")
-        object.__setattr__(self, "issues", issues)
-
-    @property
-    def status(self) -> FitAuditStatus:
-        """Return fail, warning, or pass without collapsing the underlying issues."""
-
-        if any(issue.severity is AuditSeverity.ERROR for issue in self.issues):
-            return FitAuditStatus.FAIL
-        if self.issues:
-            return FitAuditStatus.WARNING
-        return FitAuditStatus.PASS
-
-    @property
-    def issue_codes(self) -> tuple[str, ...]:
-        """Stable issue codes suitable for filtering reports and recovery grids."""
-
-        return tuple(issue.code for issue in self.issues)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Return a new JSON-serializable representation of the complete audit."""
-
-        diagnostics = self.numerical
-        payload: dict[str, Any] = {
-            "model_name": self.model_name,
-            "model_signature": self.model_signature,
-            "n_observations": self.n_observations,
-            "status": self.status.value,
-            "numerical": {
-                "converged": diagnostics.converged,
-                "optimizer": diagnostics.optimizer,
-                "status": diagnostics.status,
-                "message": diagnostics.message,
-                "n_iterations": diagnostics.n_iterations,
-                "objective": diagnostics.objective,
-                "gradient_norm": diagnostics.gradient_norm,
-                "hessian_condition": diagnostics.hessian_condition,
-                "boundary_estimate": diagnostics.boundary_estimate,
-            },
-            "issues": [
-                {
-                    "code": issue.code,
-                    "severity": issue.severity.value,
-                    "message": issue.message,
-                }
-                for issue in self.issues
-            ],
-            "restarts": None,
-            "latent_states": None,
-        }
-        if self.restarts is not None:
-            payload["restarts"] = {
-                "n_restarts": self.restarts.n_restarts,
-                "n_converged": self.restarts.n_converged,
-                "selected_restart": self.restarts.selected_restart,
-                "selected_converged": self.restarts.selected_converged,
-                "selected_objective": self.restarts.selected_objective,
-                "objective_range": self.restarts.objective_range,
-                "relative_objective_range": self.restarts.relative_objective_range,
-                "failed_messages": list(self.restarts.failed_messages),
-            }
-        if self.latent_states is not None:
-            payload["latent_states"] = {
-                "n_states": self.latent_states.n_states,
-                "minimum_occupancy": self.latent_states.minimum_occupancy,
-                "state_separation": self.latent_states.state_separation,
-                "label_order_gap": self.latent_states.label_order_gap,
-                "label_ambiguous": self.latent_states.label_ambiguous,
-                "low_occupancy": self.latent_states.low_occupancy,
-            }
-        return payload
 
 
 def audit_fit(fit: FitResult, *, policy: FitAuditPolicy | None = None) -> FitAudit:
@@ -283,6 +144,15 @@ def audit_fit(fit: FitResult, *, policy: FitAuditPolicy | None = None) -> FitAud
 
 
 def _common_issues(fit: FitResult, policy: FitAuditPolicy) -> list[FitIssue]:
+    """Derive the issues common to every fit.
+
+    Optimizer-shaped diagnostics are optional: ``None`` means the procedure that
+    produced the fit has no such quantity -- a sampler projected by
+    :func:`behavio.contracts.posterior.posterior_point_summary`, for example. Absent
+    diagnostics are skipped rather than reported, while non-finite ones are still
+    reported exactly as before, so maximum-likelihood audits are unchanged.
+    """
+
     diagnostics = fit.diagnostics
     issues: list[FitIssue] = []
     if not diagnostics.converged:
@@ -301,7 +171,7 @@ def _common_issues(fit: FitResult, policy: FitAuditPolicy) -> list[FitIssue]:
                 message="one or more parameter estimates are non-finite",
             )
         )
-    if not np.isfinite(diagnostics.objective):
+    if diagnostics.objective is not None and not np.isfinite(diagnostics.objective):
         issues.append(
             FitIssue(
                 code="nonfinite_objective",
@@ -309,7 +179,7 @@ def _common_issues(fit: FitResult, policy: FitAuditPolicy) -> list[FitIssue]:
                 message="the selected objective value is non-finite",
             )
         )
-    if not np.isfinite(diagnostics.gradient_norm):
+    if diagnostics.gradient_norm is not None and not np.isfinite(diagnostics.gradient_norm):
         issues.append(
             FitIssue(
                 code="nonfinite_gradient",
@@ -333,7 +203,8 @@ def _common_issues(fit: FitResult, policy: FitAuditPolicy) -> list[FitIssue]:
                 message="one or more approximate standard errors are negative",
             )
         )
-    if not np.isfinite(diagnostics.hessian_condition):
+    condition = diagnostics.hessian_condition
+    if condition is not None and not np.isfinite(condition):
         issues.append(
             FitIssue(
                 code="nonfinite_hessian_condition",
@@ -341,17 +212,15 @@ def _common_issues(fit: FitResult, policy: FitAuditPolicy) -> list[FitIssue]:
                 message="the local Hessian condition number is non-finite",
             )
         )
-    elif diagnostics.hessian_condition >= policy.hessian_condition_warning:
+    elif condition is not None and condition >= policy.hessian_condition_warning:
         issues.append(
             FitIssue(
                 code="ill_conditioned_hessian",
                 severity=AuditSeverity.WARNING,
-                message=(
-                    f"the local Hessian is ill-conditioned ({diagnostics.hessian_condition:.3g})"
-                ),
+                message=f"the local Hessian is ill-conditioned ({condition:.3g})",
             )
         )
-    if diagnostics.boundary_estimate:
+    if diagnostics.boundary_estimate is True:
         issues.append(
             FitIssue(
                 code="boundary_estimate",
@@ -419,3 +288,6 @@ def _latent_state_audit(fit: FitResult) -> LatentStateAudit | None:
         label_ambiguous=bool(latent_fit.label_ambiguous),
         low_occupancy=bool(latent_fit.low_occupancy),
     )
+
+
+register_fit_auditor(audit_fit)

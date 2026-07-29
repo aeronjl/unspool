@@ -1,4 +1,10 @@
-"""Longitudinal validation schemes with explicit leakage semantics."""
+"""Longitudinal validation schemes with explicit leakage semantics.
+
+``ValidationFold`` was a bare union alias here; it is now a declared protocol in
+:mod:`behavio.contracts.fold` and is re-exported from this module, so
+``from behavio.validation import ValidationFold`` keeps working. Every split type defined
+below satisfies it.
+"""
 
 from __future__ import annotations
 
@@ -10,6 +16,7 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
+from behavio.contracts.fold import ValidationFold  # noqa: F401  (re-exported contract)
 from behavio.study import Study
 
 SplitScheme = Literal[
@@ -496,15 +503,6 @@ class HistoricalCohortForecastSplit:
         """Whether the historical-cohort deployment order protects the forecast horizon."""
 
         return True
-
-
-ValidationFold = (
-    ValidationSplit
-    | PopulationValidationSplit
-    | PopulationForecastSplit
-    | CohortValidationSplit
-    | HistoricalCohortForecastSplit
-)
 
 
 def forward_session_splits(

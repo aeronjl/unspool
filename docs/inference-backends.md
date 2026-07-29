@@ -134,9 +134,12 @@ run = PyBADSMultistart(
 `PyBADSMultistart` maps optimizer hard and plausible bounds from the identical
 `ParameterSpace`. Every free parameter must declare two finite plausible bounds and every
 start must lie inside that plausible box; the adapter will not invent or silently expand
-scientific search assumptions. Each start receives the deterministic seed
-`random_seed + attempt_index`, and the legacy NumPy random state is restored after each
-run because PyBADS currently seeds it globally.
+scientific search assumptions. `random_seed` is entropy for a `numpy.random.SeedSequence`,
+so it may be any non-negative integer — including the 64-bit child seeds emitted by
+`run_parameter_recovery`, `run_model_recovery` and `run_simulation_based_calibration`. Each
+start receives its own deterministic unsigned 32-bit seed derived from that sequence, and
+the legacy NumPy random state is restored after each run because PyBADS currently seeds it
+globally.
 
 The result maps PyBADS `x`, `fval`, iterations, function evaluations, success, and message
 onto `OptimizationAttempt`. PyBADS 1.0.6 currently reports `success=True` even for its

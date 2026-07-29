@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import linear_sum_assignment
 
-from behavio.models.base import _protected_array
+from behavio._internal.arrays import protected_array
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,10 +36,10 @@ class LatentStateAlignment:
 
     def __post_init__(self) -> None:
         permutation = tuple(self.reference_to_inferred)
-        counts = _protected_array(self.reference_counts, dtype=np.int64)
-        confusion = _protected_array(self.confusion_matrix, dtype=np.float64)
-        probabilities = _protected_array(self.aligned_probabilities, dtype=np.float64)
-        labels = _protected_array(self.aligned_labels, dtype=np.int64)
+        counts = protected_array(self.reference_counts, dtype=np.int64)
+        confusion = protected_array(self.confusion_matrix, dtype=np.float64)
+        probabilities = protected_array(self.aligned_probabilities, dtype=np.float64)
+        labels = protected_array(self.aligned_labels, dtype=np.int64)
         n_states = len(permutation)
         if n_states < 2 or sorted(permutation) != list(range(n_states)):
             raise ValueError("reference_to_inferred must permute at least two states")

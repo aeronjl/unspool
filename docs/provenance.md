@@ -3,6 +3,88 @@
 Behavio is a new library, but its scientific questions and some future reference
 implementations have a traceable history.
 
+## The library's own provenance: `environment/environment.json`
+
+Every [evidence bundle](protocols/evidence-bundles.md) carries an environment record
+written by `behavio.evidence.capture_environment` at the moment the bundle is built:
+
+```json
+{
+  "python": {"implementation": "CPython", "version": "3.12.13"},
+  "platform": {"system": "Linux", "machine": "x86_64"},
+  "packages": {
+    "behavio": "0.1.0", "numpy": "2.3.5", "scipy": "1.18.0",
+    "arviz": "1.2.0", "arviz-stats": "1.2.0", "pymc": "6.1.0",
+    "pytensor": "3.2.3", "pybads": "not installed",
+    "h5py": "3.16.0", "one-api": "not installed", "pandas": "3.0.5",
+    "pynwb": "not installed", "remfile": "not installed",
+    "tables": "not installed", "xarray": "2026.7.0"
+  },
+  "source_control": {
+    "system": "git",
+    "available": true,
+    "commit": "41b8cd3fbb2a0e5e0d1c8f9a6e4b2c7d3a5f1e09",
+    "dirty": false
+  }
+}
+```
+
+Three properties are deliberate.
+
+**Absence is recorded, not omitted.** Every optional distribution the package can use —
+the posterior stack (`arviz`, `arviz-stats`, `pymc`, `pytensor`), the optimization backend
+(`pybads`), and the data adapters (`h5py`, `one-api`, `pandas`, `pynwb`, `remfile`,
+`tables`, `xarray`) — appears in `packages` whether or not it was installed. A missing key
+cannot be told apart from a reader that forgot to look, whereas `"arviz": "not installed"`
+is a positive claim about the run that produced the numbers. These are exactly the
+libraries whose versions change results, so a bundle that named only `numpy` and `scipy`
+would omit the parts most likely to explain a numerical difference.
+
+**A dirty tree says so.** `source_control` records the exact `HEAD` commit of the working
+tree the bundle was built from, and whether that tree had uncommitted changes. A directory
+that is not a repository, or a machine with no usable `git`, reports `available: false`
+with a machine-readable `reason`; it never reports a commit it could not read. This is the
+library-side counterpart of the `git_describe` field that `benchmarks/provenance.py` has
+always recorded, and it closes the gap where the benchmarks had stronger provenance than
+the library they exercise.
+
+**There is no timestamp.** Like the benchmark stamp, the environment record carries no
+wall-clock time and no filesystem path, so a re-run on an unchanged tree at unchanged
+versions produces byte-identical bytes. The record is one of the archived files, so it
+contributes to the bundle identity: a bundle built on a different interpreter, at different
+library versions, or from a different commit has a different `bundle_id`. Nothing else does
+— no protocol, cohort, plan, evaluation, recovery, or report fingerprint is computed from
+the environment, so changing the environment record never disturbs the scientific identity
+cross-checks that `replay_evidence_bundle` performs.
+
+Pass `environment=` to `build_evidence_bundle` to record a description you captured
+yourself; the default calls `capture_environment()` against the current directory.
+
+## The declaration is checked against what ran
+
+A content address is only provenance if the thing addressed is the thing that happened. A
+protocol fingerprint covers a frozen `CandidateSpec` — an `implementation` path and a set
+of `hyperparameters` — so an evaluation executed with a different estimator, or the same
+estimator at a different regularization strength, would content-address a claim rather
+than a result.
+
+`run_protocol` and `run_nested_protocol` therefore verify every supplied estimator against
+its frozen declaration before the first fit and refuse the run on a contradiction. The
+check uses only the object it was handed: the import path of its type, including public
+paths that already re-export it, and — because every model in the package is a frozen
+dataclass — its own field values. The declared string is never imported, so a frozen
+protocol stays data rather than becoming a code-execution surface.
+
+Declarations that cannot be checked are recorded rather than assumed. A setting with no
+matching field, a value that is not a comparable JSON scalar, an estimator that is not a
+dataclass, or a declared module the process never imported all produce an *unverifiable*
+finding, which a bounded report discloses in its own table. A fully verified study emits
+no such table and keeps a byte-identical report.
+
+The same principle covers the data: an `ObservationSpec` declares a measurement type and a
+permitted value set, and `materialize_protocol` refuses a cohort that does not satisfy
+them. A bundle therefore cannot assert a data contract that was never tested.
+
 ## Two machine-readable contracts
 
 Every committed `benchmarks/*/result.json` carries a `provenance` block written by

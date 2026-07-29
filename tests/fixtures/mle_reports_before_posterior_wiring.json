@@ -1,0 +1,1289 @@
+{
+  "comparison": {
+    "aggregation_column": "subject",
+    "bootstrap": {
+      "confidence_level": 0.95,
+      "interval": "percentile",
+      "resamples": 64,
+      "seed": 7,
+      "unit": "subject"
+    },
+    "eligible_model_order": [
+      "glm",
+      "bias"
+    ],
+    "folds": [
+      {
+        "n_prediction_context_rows": 0,
+        "n_test_rows": 25,
+        "n_train_rows": 50,
+        "origin_session": null,
+        "origin_session_order": null,
+        "origin_trial": null,
+        "prospective": true,
+        "scheme": "forward-session",
+        "subject": "m0",
+        "test_session_orders": [
+          2
+        ],
+        "test_sessions": [
+          "m0-s2"
+        ],
+        "test_trials": [],
+        "train_session_orders": [
+          0,
+          1
+        ],
+        "train_sessions": [
+          "m0-s0",
+          "m0-s1"
+        ]
+      },
+      {
+        "n_prediction_context_rows": 0,
+        "n_test_rows": 25,
+        "n_train_rows": 75,
+        "origin_session": null,
+        "origin_session_order": null,
+        "origin_trial": null,
+        "prospective": true,
+        "scheme": "forward-session",
+        "subject": "m0",
+        "test_session_orders": [
+          3
+        ],
+        "test_sessions": [
+          "m0-s3"
+        ],
+        "test_trials": [],
+        "train_session_orders": [
+          0,
+          1,
+          2
+        ],
+        "train_sessions": [
+          "m0-s0",
+          "m0-s1",
+          "m0-s2"
+        ]
+      },
+      {
+        "n_prediction_context_rows": 0,
+        "n_test_rows": 25,
+        "n_train_rows": 50,
+        "origin_session": null,
+        "origin_session_order": null,
+        "origin_trial": null,
+        "prospective": true,
+        "scheme": "forward-session",
+        "subject": "m1",
+        "test_session_orders": [
+          2
+        ],
+        "test_sessions": [
+          "m1-s2"
+        ],
+        "test_trials": [],
+        "train_session_orders": [
+          0,
+          1
+        ],
+        "train_sessions": [
+          "m1-s0",
+          "m1-s1"
+        ]
+      },
+      {
+        "n_prediction_context_rows": 0,
+        "n_test_rows": 25,
+        "n_train_rows": 75,
+        "origin_session": null,
+        "origin_session_order": null,
+        "origin_trial": null,
+        "prospective": true,
+        "scheme": "forward-session",
+        "subject": "m1",
+        "test_session_orders": [
+          3
+        ],
+        "test_sessions": [
+          "m1-s3"
+        ],
+        "test_trials": [],
+        "train_session_orders": [
+          0,
+          1,
+          2
+        ],
+        "train_sessions": [
+          "m1-s0",
+          "m1-s1",
+          "m1-s2"
+        ]
+      }
+    ],
+    "model_order": [
+      "glm",
+      "bias"
+    ],
+    "models": {
+      "bias": {
+        "aggregation_units": [
+          "m0",
+          "m1"
+        ],
+        "audit_status": "pass",
+        "fit_audits": [
+          {
+            "issues": [],
+            "latent_states": null,
+            "model_name": "bias-only",
+            "model_signature": "bias-only[outcome=choice;l2=0.0]",
+            "n_observations": 50,
+            "numerical": {
+              "boundary_estimate": false,
+              "converged": true,
+              "gradient_norm": 6.704504640353548e-08,
+              "hessian_condition": 1.0,
+              "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+              "n_iterations": 3,
+              "objective": 34.29649001261865,
+              "optimizer": "L-BFGS-B",
+              "status": 0
+            },
+            "restarts": null,
+            "status": "pass"
+          },
+          {
+            "issues": [],
+            "latent_states": null,
+            "model_name": "bias-only",
+            "model_signature": "bias-only[outcome=choice;l2=0.0]",
+            "n_observations": 75,
+            "numerical": {
+              "boundary_estimate": false,
+              "converged": true,
+              "gradient_norm": 4.862657165816131e-08,
+              "hessian_condition": 1.0,
+              "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+              "n_iterations": 3,
+              "objective": 51.65889594339717,
+              "optimizer": "L-BFGS-B",
+              "status": 0
+            },
+            "restarts": null,
+            "status": "pass"
+          },
+          {
+            "issues": [],
+            "latent_states": null,
+            "model_name": "bias-only",
+            "model_signature": "bias-only[outcome=choice;l2=0.0]",
+            "n_observations": 50,
+            "numerical": {
+              "boundary_estimate": false,
+              "converged": true,
+              "gradient_norm": 1.007551893028591e-07,
+              "hessian_condition": 1.0,
+              "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+              "n_iterations": 3,
+              "objective": 34.014600009607676,
+              "optimizer": "L-BFGS-B",
+              "status": 0
+            },
+            "restarts": null,
+            "status": "pass"
+          },
+          {
+            "issues": [],
+            "latent_states": null,
+            "model_name": "bias-only",
+            "model_signature": "bias-only[outcome=choice;l2=0.0]",
+            "n_observations": 75,
+            "numerical": {
+              "boundary_estimate": false,
+              "converged": true,
+              "gradient_norm": 1.6383152612320373e-09,
+              "hessian_condition": 1.0,
+              "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+              "n_iterations": 3,
+              "objective": 51.9260225317471,
+              "optimizer": "L-BFGS-B",
+              "status": 0
+            },
+            "restarts": null,
+            "status": "pass"
+          }
+        ],
+        "model_signature": "bias-only[outcome=choice;l2=0.0]",
+        "n_folds": 4,
+        "n_scored_observations": 100,
+        "name": "bias",
+        "pooled_brier_score": 0.2598777774409233,
+        "pooled_log_loss": 0.7131053587861027,
+        "unit_balanced_brier_score": 0.2598777774409233,
+        "unit_balanced_log_loss": 0.7131053587861027,
+        "unit_balanced_log_loss_interval": {
+          "confidence_level": 0.95,
+          "estimate": 0.7131053587861027,
+          "lower": 0.6946769346359585,
+          "upper": 0.7315337829362468
+        },
+        "unit_scores": [
+          {
+            "brier_score": 0.2507555554846301,
+            "log_loss": 0.6946769346359585,
+            "unit": "m0"
+          },
+          {
+            "brier_score": 0.26899999939721647,
+            "log_loss": 0.7315337829362468,
+            "unit": "m1"
+          }
+        ]
+      },
+      "glm": {
+        "aggregation_units": [
+          "m0",
+          "m1"
+        ],
+        "audit_status": "pass",
+        "fit_audits": [
+          {
+            "issues": [],
+            "latent_states": null,
+            "model_name": "bernoulli-history-glm",
+            "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+            "n_observations": 50,
+            "numerical": {
+              "boundary_estimate": false,
+              "converged": true,
+              "gradient_norm": 1.8910197380250562e-05,
+              "hessian_condition": 1.9937416421934213,
+              "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+              "n_iterations": 7,
+              "objective": 25.463846976267085,
+              "optimizer": "L-BFGS-B",
+              "status": 0
+            },
+            "restarts": null,
+            "status": "pass"
+          },
+          {
+            "issues": [],
+            "latent_states": null,
+            "model_name": "bernoulli-history-glm",
+            "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+            "n_observations": 75,
+            "numerical": {
+              "boundary_estimate": false,
+              "converged": true,
+              "gradient_norm": 5.126797762633576e-07,
+              "hessian_condition": 2.439185961252484,
+              "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+              "n_iterations": 8,
+              "objective": 37.80899910498894,
+              "optimizer": "L-BFGS-B",
+              "status": 0
+            },
+            "restarts": null,
+            "status": "pass"
+          },
+          {
+            "issues": [],
+            "latent_states": null,
+            "model_name": "bernoulli-history-glm",
+            "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+            "n_observations": 50,
+            "numerical": {
+              "boundary_estimate": false,
+              "converged": true,
+              "gradient_norm": 1.5028884493178309e-06,
+              "hessian_condition": 1.4871092097511214,
+              "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+              "n_iterations": 7,
+              "objective": 31.994873995473057,
+              "optimizer": "L-BFGS-B",
+              "status": 0
+            },
+            "restarts": null,
+            "status": "pass"
+          },
+          {
+            "issues": [],
+            "latent_states": null,
+            "model_name": "bernoulli-history-glm",
+            "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+            "n_observations": 75,
+            "numerical": {
+              "boundary_estimate": false,
+              "converged": true,
+              "gradient_norm": 4.973523888166375e-06,
+              "hessian_condition": 1.5916346419818657,
+              "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+              "n_iterations": 6,
+              "objective": 47.607142761550556,
+              "optimizer": "L-BFGS-B",
+              "status": 0
+            },
+            "restarts": null,
+            "status": "pass"
+          }
+        ],
+        "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+        "n_folds": 4,
+        "n_scored_observations": 100,
+        "name": "glm",
+        "pooled_brier_score": 0.2058873590586318,
+        "pooled_log_loss": 0.600072112520342,
+        "unit_balanced_brier_score": 0.20588735905863187,
+        "unit_balanced_log_loss": 0.600072112520342,
+        "unit_balanced_log_loss_interval": {
+          "confidence_level": 0.95,
+          "estimate": 0.600072112520342,
+          "lower": 0.583493866421892,
+          "upper": 0.6166503586187919
+        },
+        "unit_scores": [
+          {
+            "brier_score": 0.19723648104176683,
+            "log_loss": 0.583493866421892,
+            "unit": "m0"
+          },
+          {
+            "brier_score": 0.2145382370754969,
+            "log_loss": 0.6166503586187919,
+            "unit": "m1"
+          }
+        ]
+      }
+    },
+    "outcome_column": "choice",
+    "pairwise_log_loss_differences": {
+      "glm_minus_bias": {
+        "bootstrap_probability_positive": 0.0,
+        "direction": "left log loss minus right log loss; positive favors right",
+        "left_minus_right": {
+          "confidence_level": 0.95,
+          "estimate": -0.11303324626576067,
+          "lower": -0.11488342431745491,
+          "upper": -0.11118306821406643
+        },
+        "left_model": "glm",
+        "right_model": "bias"
+      }
+    },
+    "scored_columns": [
+      "choice"
+    ],
+    "winner_by_unit_balanced_log_loss": "glm",
+    "winner_policy": "lowest unit-balanced log loss among non-failed audits"
+  },
+  "model_recovery": {
+    "audit_issue_codes": [
+      [
+        [],
+        []
+      ],
+      [
+        [],
+        []
+      ]
+    ],
+    "audit_statuses": [
+      [
+        "pass",
+        "pass"
+      ],
+      [
+        "pass",
+        "pass"
+      ]
+    ],
+    "candidate_labels": [
+      "glm",
+      "bias"
+    ],
+    "converged": [
+      [
+        true,
+        true
+      ],
+      [
+        true,
+        true
+      ]
+    ],
+    "failure_messages": [
+      [
+        "",
+        ""
+      ],
+      [
+        "",
+        ""
+      ]
+    ],
+    "mean_log_probabilities": [
+      [
+        -0.6112123133542677,
+        -0.7101389446826549
+      ],
+      [
+        -0.6836089136638069,
+        -0.6721505470915844
+      ]
+    ],
+    "n_folds": [
+      2,
+      2
+    ],
+    "overall_accuracy": 1.0,
+    "scenario_names": [
+      "glm-truth",
+      "bias-truth"
+    ],
+    "seeds": [
+      15658875773272509128,
+      6924645418555453511
+    ],
+    "selected_labels": [
+      "glm",
+      "bias"
+    ],
+    "truth_labels": [
+      "glm",
+      "bias"
+    ]
+  },
+  "nested_selection": {
+    "aggregation_column": "subject",
+    "aggregation_units": [
+      "m0",
+      "m1"
+    ],
+    "audit_status": "pass",
+    "bootstrap": {
+      "confidence_level": 0.95,
+      "interval": "percentile",
+      "resamples": 32,
+      "seed": 3,
+      "unit": "subject"
+    },
+    "candidate_names": [
+      "glm",
+      "bias"
+    ],
+    "folds": [
+      {
+        "inner_comparison": {
+          "aggregation_column": "subject",
+          "bootstrap": {
+            "confidence_level": 0.95,
+            "interval": "percentile",
+            "resamples": 16,
+            "seed": 4,
+            "unit": "subject"
+          },
+          "eligible_model_order": [
+            "glm",
+            "bias"
+          ],
+          "folds": [
+            {
+              "n_prediction_context_rows": 0,
+              "n_test_rows": 25,
+              "n_train_rows": 25,
+              "origin_session": null,
+              "origin_session_order": null,
+              "origin_trial": null,
+              "prospective": true,
+              "scheme": "forward-session",
+              "subject": "m0",
+              "test_session_orders": [
+                1
+              ],
+              "test_sessions": [
+                "m0-s1"
+              ],
+              "test_trials": [],
+              "train_session_orders": [
+                0
+              ],
+              "train_sessions": [
+                "m0-s0"
+              ]
+            },
+            {
+              "n_prediction_context_rows": 0,
+              "n_test_rows": 25,
+              "n_train_rows": 50,
+              "origin_session": null,
+              "origin_session_order": null,
+              "origin_trial": null,
+              "prospective": true,
+              "scheme": "forward-session",
+              "subject": "m0",
+              "test_session_orders": [
+                2
+              ],
+              "test_sessions": [
+                "m0-s2"
+              ],
+              "test_trials": [],
+              "train_session_orders": [
+                0,
+                1
+              ],
+              "train_sessions": [
+                "m0-s0",
+                "m0-s1"
+              ]
+            }
+          ],
+          "model_order": [
+            "glm",
+            "bias"
+          ],
+          "models": {
+            "bias": {
+              "aggregation_units": [
+                "m0"
+              ],
+              "audit_status": "pass",
+              "fit_audits": [
+                {
+                  "issues": [],
+                  "latent_states": null,
+                  "model_name": "bias-only",
+                  "model_signature": "bias-only[outcome=choice;l2=0.0]",
+                  "n_observations": 25,
+                  "numerical": {
+                    "boundary_estimate": false,
+                    "converged": true,
+                    "gradient_norm": 8.817749419520737e-09,
+                    "hessian_condition": 1.0,
+                    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                    "n_iterations": 5,
+                    "objective": 13.776998202174319,
+                    "optimizer": "L-BFGS-B",
+                    "status": 0
+                  },
+                  "restarts": null,
+                  "status": "pass"
+                },
+                {
+                  "issues": [],
+                  "latent_states": null,
+                  "model_name": "bias-only",
+                  "model_signature": "bias-only[outcome=choice;l2=0.0]",
+                  "n_observations": 50,
+                  "numerical": {
+                    "boundary_estimate": false,
+                    "converged": true,
+                    "gradient_norm": 6.704504640353548e-08,
+                    "hessian_condition": 1.0,
+                    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                    "n_iterations": 3,
+                    "objective": 34.29649001261865,
+                    "optimizer": "L-BFGS-B",
+                    "status": 0
+                  },
+                  "restarts": null,
+                  "status": "pass"
+                }
+              ],
+              "model_signature": "bias-only[outcome=choice;l2=0.0]",
+              "n_folds": 2,
+              "n_scored_observations": 50,
+              "name": "bias",
+              "pooled_brier_score": 0.32079999980528,
+              "pooled_log_loss": 0.853864006798105,
+              "unit_balanced_brier_score": 0.32079999980528,
+              "unit_balanced_log_loss": 0.853864006798105,
+              "unit_balanced_log_loss_interval": {
+                "confidence_level": 0.95,
+                "estimate": 0.853864006798105,
+                "lower": 0.853864006798105,
+                "upper": 0.853864006798105
+              },
+              "unit_scores": [
+                {
+                  "brier_score": 0.32079999980528,
+                  "log_loss": 0.853864006798105,
+                  "unit": "m0"
+                }
+              ]
+            },
+            "glm": {
+              "aggregation_units": [
+                "m0"
+              ],
+              "audit_status": "pass",
+              "fit_audits": [
+                {
+                  "issues": [],
+                  "latent_states": null,
+                  "model_name": "bernoulli-history-glm",
+                  "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+                  "n_observations": 25,
+                  "numerical": {
+                    "boundary_estimate": false,
+                    "converged": true,
+                    "gradient_norm": 2.7825618726755647e-06,
+                    "hessian_condition": 3.5095236710093265,
+                    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                    "n_iterations": 9,
+                    "objective": 11.216787971599905,
+                    "optimizer": "L-BFGS-B",
+                    "status": 0
+                  },
+                  "restarts": null,
+                  "status": "pass"
+                },
+                {
+                  "issues": [],
+                  "latent_states": null,
+                  "model_name": "bernoulli-history-glm",
+                  "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+                  "n_observations": 50,
+                  "numerical": {
+                    "boundary_estimate": false,
+                    "converged": true,
+                    "gradient_norm": 1.8910197380250562e-05,
+                    "hessian_condition": 1.9937416421934213,
+                    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                    "n_iterations": 7,
+                    "objective": 25.463846976267085,
+                    "optimizer": "L-BFGS-B",
+                    "status": 0
+                  },
+                  "restarts": null,
+                  "status": "pass"
+                }
+              ],
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+              "n_folds": 2,
+              "n_scored_observations": 50,
+              "name": "glm",
+              "pooled_brier_score": 0.19836483538849495,
+              "pooled_log_loss": 0.6075858710353911,
+              "unit_balanced_brier_score": 0.19836483538849495,
+              "unit_balanced_log_loss": 0.6075858710353911,
+              "unit_balanced_log_loss_interval": {
+                "confidence_level": 0.95,
+                "estimate": 0.6075858710353911,
+                "lower": 0.6075858710353911,
+                "upper": 0.6075858710353911
+              },
+              "unit_scores": [
+                {
+                  "brier_score": 0.19836483538849495,
+                  "log_loss": 0.6075858710353911,
+                  "unit": "m0"
+                }
+              ]
+            }
+          },
+          "outcome_column": "choice",
+          "pairwise_log_loss_differences": {
+            "glm_minus_bias": {
+              "bootstrap_probability_positive": 0.0,
+              "direction": "left log loss minus right log loss; positive favors right",
+              "left_minus_right": {
+                "confidence_level": 0.95,
+                "estimate": -0.24627813576271396,
+                "lower": -0.24627813576271396,
+                "upper": -0.24627813576271396
+              },
+              "left_model": "glm",
+              "right_model": "bias"
+            }
+          },
+          "scored_columns": [
+            "choice"
+          ],
+          "winner_by_unit_balanced_log_loss": "glm",
+          "winner_policy": "lowest unit-balanced log loss among non-failed audits"
+        },
+        "outer_fold": {
+          "n_prediction_context_rows": 0,
+          "n_test_rows": 25,
+          "n_train_rows": 75,
+          "origin_session": null,
+          "origin_session_order": null,
+          "origin_trial": null,
+          "prospective": true,
+          "scheme": "forward-session",
+          "subject": "m0",
+          "test_session_orders": [
+            3
+          ],
+          "test_sessions": [
+            "m0-s3"
+          ],
+          "test_trials": [],
+          "train_session_orders": [
+            0,
+            1,
+            2
+          ],
+          "train_sessions": [
+            "m0-s0",
+            "m0-s1",
+            "m0-s2"
+          ]
+        },
+        "outer_mean_log_loss": 0.6664741854841122,
+        "selected_fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "bernoulli-history-glm",
+          "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+          "n_observations": 75,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 5.126797762633576e-07,
+            "hessian_condition": 2.439185961252484,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 8,
+            "objective": 37.80899910498894,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        },
+        "selected_model": "glm"
+      },
+      {
+        "inner_comparison": {
+          "aggregation_column": "subject",
+          "bootstrap": {
+            "confidence_level": 0.95,
+            "interval": "percentile",
+            "resamples": 16,
+            "seed": 5,
+            "unit": "subject"
+          },
+          "eligible_model_order": [
+            "glm",
+            "bias"
+          ],
+          "folds": [
+            {
+              "n_prediction_context_rows": 0,
+              "n_test_rows": 25,
+              "n_train_rows": 25,
+              "origin_session": null,
+              "origin_session_order": null,
+              "origin_trial": null,
+              "prospective": true,
+              "scheme": "forward-session",
+              "subject": "m1",
+              "test_session_orders": [
+                1
+              ],
+              "test_sessions": [
+                "m1-s1"
+              ],
+              "test_trials": [],
+              "train_session_orders": [
+                0
+              ],
+              "train_sessions": [
+                "m1-s0"
+              ]
+            },
+            {
+              "n_prediction_context_rows": 0,
+              "n_test_rows": 25,
+              "n_train_rows": 50,
+              "origin_session": null,
+              "origin_session_order": null,
+              "origin_trial": null,
+              "prospective": true,
+              "scheme": "forward-session",
+              "subject": "m1",
+              "test_session_orders": [
+                2
+              ],
+              "test_sessions": [
+                "m1-s2"
+              ],
+              "test_trials": [],
+              "train_session_orders": [
+                0,
+                1
+              ],
+              "train_sessions": [
+                "m1-s0",
+                "m1-s1"
+              ]
+            }
+          ],
+          "model_order": [
+            "glm",
+            "bias"
+          ],
+          "models": {
+            "bias": {
+              "aggregation_units": [
+                "m1"
+              ],
+              "audit_status": "pass",
+              "fit_audits": [
+                {
+                  "issues": [],
+                  "latent_states": null,
+                  "model_name": "bias-only",
+                  "model_signature": "bias-only[outcome=choice;l2=0.0]",
+                  "n_observations": 25,
+                  "numerical": {
+                    "boundary_estimate": false,
+                    "converged": true,
+                    "gradient_norm": 2.9159725523086877e-08,
+                    "hessian_condition": 1.0,
+                    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                    "n_iterations": 3,
+                    "objective": 16.825291675231412,
+                    "optimizer": "L-BFGS-B",
+                    "status": 0
+                  },
+                  "restarts": null,
+                  "status": "pass"
+                },
+                {
+                  "issues": [],
+                  "latent_states": null,
+                  "model_name": "bias-only",
+                  "model_signature": "bias-only[outcome=choice;l2=0.0]",
+                  "n_observations": 50,
+                  "numerical": {
+                    "boundary_estimate": false,
+                    "converged": true,
+                    "gradient_norm": 1.007551893028591e-07,
+                    "hessian_condition": 1.0,
+                    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                    "n_iterations": 3,
+                    "objective": 34.014600009607676,
+                    "optimizer": "L-BFGS-B",
+                    "status": 0
+                  },
+                  "restarts": null,
+                  "status": "pass"
+                }
+              ],
+              "model_signature": "bias-only[outcome=choice;l2=0.0]",
+              "n_folds": 2,
+              "n_scored_observations": 50,
+              "name": "bias",
+              "pooled_brier_score": 0.2697999993488133,
+              "pooled_log_loss": 0.7331771432642994,
+              "unit_balanced_brier_score": 0.2697999993488133,
+              "unit_balanced_log_loss": 0.7331771432642994,
+              "unit_balanced_log_loss_interval": {
+                "confidence_level": 0.95,
+                "estimate": 0.7331771432642994,
+                "lower": 0.7331771432642994,
+                "upper": 0.7331771432642994
+              },
+              "unit_scores": [
+                {
+                  "brier_score": 0.2697999993488133,
+                  "log_loss": 0.7331771432642994,
+                  "unit": "m1"
+                }
+              ]
+            },
+            "glm": {
+              "aggregation_units": [
+                "m1"
+              ],
+              "audit_status": "pass",
+              "fit_audits": [
+                {
+                  "issues": [],
+                  "latent_states": null,
+                  "model_name": "bernoulli-history-glm",
+                  "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+                  "n_observations": 25,
+                  "numerical": {
+                    "boundary_estimate": false,
+                    "converged": true,
+                    "gradient_norm": 5.7368837942798685e-06,
+                    "hessian_condition": 1.687163929614701,
+                    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                    "n_iterations": 7,
+                    "objective": 16.306896795864446,
+                    "optimizer": "L-BFGS-B",
+                    "status": 0
+                  },
+                  "restarts": null,
+                  "status": "pass"
+                },
+                {
+                  "issues": [],
+                  "latent_states": null,
+                  "model_name": "bernoulli-history-glm",
+                  "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+                  "n_observations": 50,
+                  "numerical": {
+                    "boundary_estimate": false,
+                    "converged": true,
+                    "gradient_norm": 1.5028884493178309e-06,
+                    "hessian_condition": 1.4871092097511214,
+                    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+                    "n_iterations": 7,
+                    "objective": 31.994873995473057,
+                    "optimizer": "L-BFGS-B",
+                    "status": 0
+                  },
+                  "restarts": null,
+                  "status": "pass"
+                }
+              ],
+              "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+              "n_folds": 2,
+              "n_scored_observations": 50,
+              "name": "glm",
+              "pooled_brier_score": 0.2383834615390656,
+              "pooled_log_loss": 0.6683372862451978,
+              "unit_balanced_brier_score": 0.2383834615390656,
+              "unit_balanced_log_loss": 0.6683372862451978,
+              "unit_balanced_log_loss_interval": {
+                "confidence_level": 0.95,
+                "estimate": 0.6683372862451978,
+                "lower": 0.6683372862451978,
+                "upper": 0.6683372862451978
+              },
+              "unit_scores": [
+                {
+                  "brier_score": 0.2383834615390656,
+                  "log_loss": 0.6683372862451978,
+                  "unit": "m1"
+                }
+              ]
+            }
+          },
+          "outcome_column": "choice",
+          "pairwise_log_loss_differences": {
+            "glm_minus_bias": {
+              "bootstrap_probability_positive": 0.0,
+              "direction": "left log loss minus right log loss; positive favors right",
+              "left_minus_right": {
+                "confidence_level": 0.95,
+                "estimate": -0.06483985701910155,
+                "lower": -0.06483985701910155,
+                "upper": -0.06483985701910155
+              },
+              "left_model": "glm",
+              "right_model": "bias"
+            }
+          },
+          "scored_columns": [
+            "choice"
+          ],
+          "winner_by_unit_balanced_log_loss": "glm",
+          "winner_policy": "lowest unit-balanced log loss among non-failed audits"
+        },
+        "outer_fold": {
+          "n_prediction_context_rows": 0,
+          "n_test_rows": 25,
+          "n_train_rows": 75,
+          "origin_session": null,
+          "origin_session_order": null,
+          "origin_trial": null,
+          "prospective": true,
+          "scheme": "forward-session",
+          "subject": "m1",
+          "test_session_orders": [
+            3
+          ],
+          "test_sessions": [
+            "m1-s3"
+          ],
+          "test_trials": [],
+          "train_session_orders": [
+            0,
+            1,
+            2
+          ],
+          "train_sessions": [
+            "m1-s0",
+            "m1-s1",
+            "m1-s2"
+          ]
+        },
+        "outer_mean_log_loss": 0.543021647916869,
+        "selected_fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "bernoulli-history-glm",
+          "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+          "n_observations": 75,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 4.973523888166375e-06,
+            "hessian_condition": 1.5916346419818657,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 6,
+            "objective": 47.607142761550556,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        },
+        "selected_model": "glm"
+      }
+    ],
+    "n_outer_folds": 2,
+    "n_scored_observations": 50,
+    "outcome_column": "choice",
+    "pooled_brier_score": 0.20489882790350852,
+    "pooled_log_loss": 0.6047479167004907,
+    "scored_columns": [
+      "choice"
+    ],
+    "selection_counts": {
+      "bias": 0,
+      "glm": 2
+    },
+    "unit_balanced_brier_score": 0.2048988279035085,
+    "unit_balanced_log_loss": 0.6047479167004906,
+    "unit_balanced_log_loss_interval": {
+      "confidence_level": 0.95,
+      "estimate": 0.6047479167004906,
+      "lower": 0.543021647916869,
+      "upper": 0.6664741854841122
+    },
+    "unit_scores": [
+      {
+        "brier_score": 0.23008029676924974,
+        "log_loss": 0.6664741854841122,
+        "unit": "m0"
+      },
+      {
+        "brier_score": 0.17971735903776725,
+        "log_loss": 0.543021647916869,
+        "unit": "m1"
+      }
+    ]
+  },
+  "parameter_recovery": {
+    "audit_rates": {
+      "fail": 0.0,
+      "pass": 1.0,
+      "warning": 0.0
+    },
+    "convergence_rate": 1.0,
+    "design": {
+      "n_subjects": 2,
+      "n_trials": 160
+    },
+    "model_name": "bernoulli-history-glm",
+    "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+    "n_runs": 4,
+    "parameter_names": [
+      "intercept",
+      "stimulus",
+      "choice_lag_1"
+    ],
+    "repeats": 2,
+    "root_seed": 123,
+    "runs": [
+      {
+        "converged": true,
+        "estimate": {
+          "choice_lag_1": 0.5283630918840378,
+          "intercept": -0.15678091618641984,
+          "stimulus": 0.7435658897368453
+        },
+        "fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "bernoulli-history-glm",
+          "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+          "n_observations": 160,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 1.0996903365511684e-05,
+            "hessian_condition": 1.3764435159512947,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 6,
+            "objective": 95.6468930533891,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        },
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "seed": 8824921114796074700,
+        "standard_error": {
+          "choice_lag_1": 0.17840498933648835,
+          "intercept": 0.17442986631269727,
+          "stimulus": 0.18051060737279667
+        },
+        "truth": {
+          "choice_lag_1": 0.2,
+          "intercept": -0.2,
+          "stimulus": 0.6
+        }
+      },
+      {
+        "converged": true,
+        "estimate": {
+          "choice_lag_1": 0.4026964703355846,
+          "intercept": -0.4652155270694918,
+          "stimulus": 0.4963439389290957
+        },
+        "fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "bernoulli-history-glm",
+          "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+          "n_observations": 160,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.00020235262789641573,
+            "hessian_condition": 1.4720160670813769,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 6,
+            "objective": 97.48578048741732,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        },
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "seed": 14673009024601869667,
+        "standard_error": {
+          "choice_lag_1": 0.17671073869921497,
+          "intercept": 0.17534400897071964,
+          "stimulus": 0.1689407384321236
+        },
+        "truth": {
+          "choice_lag_1": 0.2,
+          "intercept": -0.2,
+          "stimulus": 0.6
+        }
+      },
+      {
+        "converged": true,
+        "estimate": {
+          "choice_lag_1": 0.523366672699678,
+          "intercept": 0.18395052014386187,
+          "stimulus": 1.464479809739834
+        },
+        "fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "bernoulli-history-glm",
+          "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+          "n_observations": 160,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 4.17035703492398e-05,
+            "hessian_condition": 1.9356962800962205,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 7,
+            "objective": 79.31757705848288,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        },
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "seed": 6815112609857061210,
+        "standard_error": {
+          "choice_lag_1": 0.20286964297944762,
+          "intercept": 0.19606022070537193,
+          "stimulus": 0.2449069898733019
+        },
+        "truth": {
+          "choice_lag_1": 0.5,
+          "intercept": 0.1,
+          "stimulus": 1.2
+        }
+      },
+      {
+        "converged": true,
+        "estimate": {
+          "choice_lag_1": 0.23600382495498914,
+          "intercept": 0.33023747570388295,
+          "stimulus": 1.297264409763259
+        },
+        "fit_audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "bernoulli-history-glm",
+          "model_signature": "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]",
+          "n_observations": 160,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 8.476008178134285e-06,
+            "hessian_condition": 1.6260955261527656,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 7,
+            "objective": 83.49282654454521,
+            "optimizer": "L-BFGS-B",
+            "status": 0
+          },
+          "restarts": null,
+          "status": "pass"
+        },
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "seed": 15673771762283591188,
+        "standard_error": {
+          "choice_lag_1": 0.19191036098053318,
+          "intercept": 0.19215198977524975,
+          "stimulus": 0.22675285868229036
+        },
+        "truth": {
+          "choice_lag_1": 0.5,
+          "intercept": 0.1,
+          "stimulus": 1.2
+        }
+      }
+    ],
+    "summary": [
+      {
+        "bias": 0.023047888147958294,
+        "correlation": 0.9203635197769793,
+        "coverage_95": 1.0,
+        "n_successful": 4,
+        "n_with_uncertainty": 4,
+        "parameter": "intercept",
+        "rmse": 0.18184069267861544
+      },
+      {
+        "bias": 0.10041351204225854,
+        "correlation": 0.9636227468792297,
+        "coverage_95": 1.0,
+        "n_successful": 4,
+        "n_with_uncertainty": 4,
+        "parameter": "stimulus",
+        "rmse": 0.16640739080587816
+      },
+      {
+        "bias": 0.07260751496857237,
+        "correlation": -0.3609780827266516,
+        "coverage_95": 1.0,
+        "n_successful": 4,
+        "n_with_uncertainty": 4,
+        "parameter": "choice_lag_1",
+        "rmse": 0.23406631593930785
+      }
+    ]
+  }
+}

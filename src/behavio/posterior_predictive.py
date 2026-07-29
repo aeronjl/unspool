@@ -1,41 +1,65 @@
-"""Composable posterior-predictive checks over labelled replicated observations."""
+"""Composable posterior-predictive checks over labelled replicated observations.
+
+``PredictiveDiscrepancy`` and ``PredictiveTail`` now live in
+:mod:`behavio.contracts.discrepancy` and are re-exported here, so
+``from behavio.posterior_predictive import PredictiveDiscrepancy`` keeps working.
+
+Convergence gating
+------------------
+A posterior-predictive check summarises draws. If those draws are not draws from the
+posterior at all -- chains that never mixed, or a sampler that diverged -- every tail
+probability below is meaningless. :func:`posterior_predictive_check` therefore runs
+:func:`behavio.posterior_diagnostics.audit_posterior` on the same result and retains the
+audit. It follows the package idiom of *retaining the evidence and marking the status*
+rather than raising: the returned :class:`PosteriorPredictiveAudit` still holds every
+reference distribution, and its ``status`` becomes ``FAIL`` so the layer above can refuse
+to publish it. A caller who disagrees with the default gate injects a
+:class:`~behavio.posterior_diagnostics.PosteriorAuditPolicy` whose per-check severities
+name exactly which failures they are willing to tolerate; the downgraded policy is
+recorded verbatim in ``to_dict()``, so the decision stays in the artifact.
+
+Simultaneous inference
+----------------------
+One call evaluates ``len(groupby groups) x len(discrepancies)`` checks against the same
+tail-probability threshold. Thirty subjects and four discrepancies is one hundred and
+twenty simultaneous tests, so roughly six of them fall below ``0.05`` *by construction*
+even when the model is perfect. Emitting one warning per extreme check therefore trains
+readers to ignore the warning.
+
+The family is now explicit. :class:`PredictiveFamily` records its size, the number of
+checks below the per-check threshold, and how many were expected there by chance, and it
+is always present in the output whether or not anything is flagged. Per-check issues are
+emitted only for checks that survive a declared multiplicity adjustment
+(:class:`PredictiveMultiplicity`, Benjamini-Hochberg by default) at the declared
+``family_discovery_rate``. Nothing about ``tail_probability_warning`` changed: it still
+defines ``n_extreme`` exactly as before, and every per-check ``tail_probability`` is
+unadjusted and fully retained. A single check is never adjusted, so an ungrouped
+one-discrepancy audit behaves exactly as it did.
+"""
 
 from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Protocol, runtime_checkable
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.stats import binom
 
-from behavio.posterior import PosteriorError, PosteriorResult
-from behavio.posterior_diagnostics import PosteriorAuditStatus
-
-
-class PredictiveTail(StrEnum):
-    """Reference tail used to summarize a replicated discrepancy."""
-
-    LOWER = "lower"
-    UPPER = "upper"
-    TWO_SIDED = "two-sided"
-
-
-@runtime_checkable
-class PredictiveDiscrepancy(Protocol):
-    """A named, provenance-bearing scalar summary of one observation vector."""
-
-    @property
-    def name(self) -> str: ...
-
-    @property
-    def signature(self) -> str: ...
-
-    @property
-    def tail(self) -> PredictiveTail: ...
-
-    def evaluate(self, values: NDArray[Any]) -> float: ...
+from behavio.contracts.audit import AuditSeverity
+from behavio.contracts.discrepancy import (
+    PredictiveDiscrepancy,
+    PredictiveTail,
+)
+from behavio.posterior import ArviZUnavailableError, PosteriorError, PosteriorResult
+from behavio.posterior_diagnostics import (
+    PosteriorAudit,
+    PosteriorAuditPolicy,
+    PosteriorAuditStatus,
+    audit_posterior,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -130,12 +154,35 @@ class SwitchRateDiscrepancy:
         return float(np.mean(array[1:] != array[:-1]))
 
 
+class PredictiveMultiplicity(StrEnum):
+    """How one audit converts many simultaneous tail probabilities into warnings.
+
+    ``NONE`` restores the per-comparison behaviour: every check below
+    ``tail_probability_warning`` raises its own issue, and the expected number of
+    spurious issues grows linearly with the family size. ``BENJAMINI_HOCHBERG`` controls
+    the false-discovery rate across the family at ``family_discovery_rate``.
+    ``BONFERRONI`` controls the family-wise error rate at the same level.
+    """
+
+    NONE = "none"
+    BENJAMINI_HOCHBERG = "benjamini-hochberg"
+    BONFERRONI = "bonferroni"
+
+
 @dataclass(frozen=True, slots=True)
 class PosteriorPredictivePolicy:
-    """Explicit interval and tail-probability thresholds for predictive checks."""
+    """Explicit interval, tail-probability, and simultaneous-inference thresholds.
+
+    ``tail_probability_warning`` keeps its original per-check meaning and still defines
+    which checks count as extreme. ``multiplicity`` and ``family_discovery_rate`` govern
+    only which of those extreme checks become issues once more than one check is
+    evaluated in the same call.
+    """
 
     interval_probability: float = 0.9
     tail_probability_warning: float = 0.05
+    multiplicity: PredictiveMultiplicity = PredictiveMultiplicity.BENJAMINI_HOCHBERG
+    family_discovery_rate: float = 0.05
 
     def __post_init__(self) -> None:
         if not np.isfinite(self.interval_probability) or not 0 < self.interval_probability < 1:
@@ -145,6 +192,17 @@ class PosteriorPredictivePolicy:
             or not 0 < self.tail_probability_warning < 0.5
         ):
             raise ValueError("tail_probability_warning must be finite and lie between zero and 0.5")
+        if not np.isfinite(self.family_discovery_rate) or not 0 < self.family_discovery_rate < 0.5:
+            raise ValueError("family_discovery_rate must be finite and lie between zero and 0.5")
+        object.__setattr__(self, "multiplicity", PredictiveMultiplicity(self.multiplicity))
+
+    def to_dict(self) -> dict[str, float | str]:
+        return {
+            "interval_probability": self.interval_probability,
+            "tail_probability_warning": self.tail_probability_warning,
+            "multiplicity": self.multiplicity.value,
+            "family_discovery_rate": self.family_discovery_rate,
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -196,17 +254,80 @@ class PosteriorPredictiveCheck:
 
 @dataclass(frozen=True, slots=True)
 class PosteriorPredictiveIssue:
-    """One stable warning for an extreme observed discrepancy."""
+    """One stable warning about a predictive audit.
+
+    ``discrepancy_signature`` is ``None`` for issues that are properties of the whole
+    audit -- the convergence gate and the family-level discrepancy rate -- rather than of
+    one check. ``severity`` follows :class:`~behavio.contracts.audit.AuditSeverity`, so an
+    unusable posterior is an ``ERROR`` while an extreme discrepancy is a ``WARNING``.
+    """
 
     code: str
     message: str
-    discrepancy_signature: str
-    group: tuple[tuple[str, Any], ...]
+    discrepancy_signature: str | None = None
+    group: tuple[tuple[str, Any], ...] = ()
+    severity: AuditSeverity = AuditSeverity.WARNING
 
     def __post_init__(self) -> None:
-        if not self.code or not self.message or not self.discrepancy_signature:
+        if not self.code or not self.message:
+            raise ValueError("predictive-check issues require identity and a message")
+        if self.discrepancy_signature is not None and not self.discrepancy_signature:
             raise ValueError("predictive-check issues require identity and a message")
         object.__setattr__(self, "group", tuple(self.group))
+        object.__setattr__(self, "severity", AuditSeverity(self.severity))
+
+
+@dataclass(frozen=True, slots=True)
+class PredictiveFamily:
+    """The simultaneous family of discrepancy checks evaluated in one audit.
+
+    Retained whether or not anything is flagged, so a reader can always compare the
+    observed number of extreme checks with the number expected at the declared per-check
+    threshold by chance alone.
+    """
+
+    n_checks: int
+    n_groups: int
+    n_discrepancies: int
+    tail_probability_warning: float
+    multiplicity: PredictiveMultiplicity
+    family_discovery_rate: float
+    n_extreme: int
+    expected_extreme: float
+    excess_probability: float
+    adjusted_threshold: float
+    n_flagged: int
+
+    def __post_init__(self) -> None:
+        if self.n_checks < 1 or self.n_groups < 1 or self.n_discrepancies < 1:
+            raise ValueError("a predictive family must contain at least one check")
+        if self.n_checks != self.n_groups * self.n_discrepancies:
+            raise ValueError("predictive family size must be groups times discrepancies")
+        if not 0 <= self.n_extreme <= self.n_checks or not 0 <= self.n_flagged <= self.n_checks:
+            raise ValueError("predictive family counts must lie inside the family")
+        for value in (
+            self.expected_extreme,
+            self.excess_probability,
+            self.adjusted_threshold,
+        ):
+            if not np.isfinite(value) or value < 0:
+                raise ValueError("predictive family rates must be finite and non-negative")
+        object.__setattr__(self, "multiplicity", PredictiveMultiplicity(self.multiplicity))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "n_checks": self.n_checks,
+            "n_groups": self.n_groups,
+            "n_discrepancies": self.n_discrepancies,
+            "tail_probability_warning": self.tail_probability_warning,
+            "multiplicity": self.multiplicity.value,
+            "family_discovery_rate": self.family_discovery_rate,
+            "n_extreme": self.n_extreme,
+            "expected_extreme": self.expected_extreme,
+            "excess_probability": self.excess_probability,
+            "adjusted_threshold": self.adjusted_threshold,
+            "n_flagged": self.n_flagged,
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -219,6 +340,8 @@ class PosteriorPredictiveAudit:
     policy: PosteriorPredictivePolicy
     checks: tuple[PosteriorPredictiveCheck, ...]
     issues: tuple[PosteriorPredictiveIssue, ...]
+    family: PredictiveFamily
+    convergence: PosteriorAudit | None = None
 
     def __post_init__(self) -> None:
         if not self.model_name or not self.model_signature or not self.variable_name:
@@ -229,12 +352,29 @@ class PosteriorPredictiveAudit:
             raise ValueError("predictive audits require PosteriorPredictiveCheck records")
         if any(not isinstance(item, PosteriorPredictiveIssue) for item in issues):
             raise ValueError("predictive audit issues must be PosteriorPredictiveIssue records")
+        if not isinstance(self.family, PredictiveFamily):
+            raise TypeError("predictive audits require a PredictiveFamily record")
+        if self.family.n_checks != len(checks):
+            raise ValueError("predictive family size must match the retained checks")
+        if self.convergence is not None and not isinstance(self.convergence, PosteriorAudit):
+            raise TypeError("predictive audit convergence must be a PosteriorAudit")
         object.__setattr__(self, "checks", checks)
         object.__setattr__(self, "issues", issues)
 
     @property
     def status(self) -> PosteriorAuditStatus:
-        return PosteriorAuditStatus.PASS if not self.issues else PosteriorAuditStatus.WARNING
+        """Return fail, warning, or pass without collapsing the underlying issues.
+
+        ``FAIL`` means at least one issue is an ``ERROR`` -- in practice a posterior that
+        failed its convergence audit, whose replicated draws are therefore not draws from
+        the posterior and whose tail probabilities cannot be interpreted.
+        """
+
+        if any(issue.severity is AuditSeverity.ERROR for issue in self.issues):
+            return PosteriorAuditStatus.FAIL
+        if self.issues:
+            return PosteriorAuditStatus.WARNING
+        return PosteriorAuditStatus.PASS
 
     @property
     def issue_codes(self) -> tuple[str, ...]:
@@ -248,10 +388,9 @@ class PosteriorPredictiveAudit:
             "model_signature": self.model_signature,
             "variable_name": self.variable_name,
             "status": self.status.value,
-            "policy": {
-                "interval_probability": self.policy.interval_probability,
-                "tail_probability_warning": self.policy.tail_probability_warning,
-            },
+            "policy": self.policy.to_dict(),
+            "family": self.family.to_dict(),
+            "convergence": None if self.convergence is None else self.convergence.to_dict(),
             "checks": [
                 {
                     "discrepancy_name": check.discrepancy_name,
@@ -274,6 +413,7 @@ class PosteriorPredictiveAudit:
                     "message": issue.message,
                     "discrepancy_signature": issue.discrepancy_signature,
                     "group": dict(issue.group),
+                    "severity": issue.severity.value,
                 }
                 for issue in self.issues
             ],
@@ -287,14 +427,30 @@ def posterior_predictive_check(
     variable_name: str | None = None,
     groupby: Sequence[str] = (),
     policy: PosteriorPredictivePolicy | None = None,
+    audit_policy: PosteriorAuditPolicy | None = None,
 ) -> PosteriorPredictiveAudit:
-    """Evaluate declared discrepancies against labelled posterior-predictive draws."""
+    """Evaluate declared discrepancies against labelled posterior-predictive draws.
+
+    The result's convergence is audited first with ``audit_policy`` and the audit is
+    retained on :attr:`PosteriorPredictiveAudit.convergence`. A failing audit does not
+    raise: it marks the returned audit ``FAIL`` so a caller cannot publish tail
+    probabilities computed from chains that never mixed without stepping over an explicit
+    status. To accept such a posterior deliberately, pass a
+    :class:`~behavio.posterior_diagnostics.PosteriorAuditPolicy` that names the severities
+    you are downgrading; the policy is recorded in ``to_dict()``.
+
+    Issues are emitted for the subset of extreme checks that survive the declared
+    multiplicity adjustment over the whole ``groups x discrepancies`` family, whose size
+    and expected chance yield are always reported on :attr:`PosteriorPredictiveAudit.family`.
+    """
 
     if not isinstance(result, PosteriorResult):
         raise TypeError("result must be a PosteriorResult")
     selected_policy = PosteriorPredictivePolicy() if policy is None else policy
     if not isinstance(selected_policy, PosteriorPredictivePolicy):
         raise TypeError("policy must be a PosteriorPredictivePolicy")
+    if audit_policy is not None and not isinstance(audit_policy, PosteriorAuditPolicy):
+        raise TypeError("audit_policy must be a PosteriorAuditPolicy")
     declared = tuple(discrepancies)
     if not declared or any(not isinstance(item, PredictiveDiscrepancy) for item in declared):
         raise TypeError("discrepancies must contain PredictiveDiscrepancy objects")
@@ -315,27 +471,146 @@ def posterior_predictive_check(
         for labels, mask in groups
         for discrepancy in declared
     )
-    issues = tuple(
-        PosteriorPredictiveIssue(
-            code="ppc.extreme-discrepancy",
-            message=(
-                f"observed {check.discrepancy_name} has tail probability "
-                f"{check.tail_probability:.3g}"
-            ),
-            discrepancy_signature=check.discrepancy_signature,
-            group=check.group,
+    convergence, unavailable = _convergence(result, audit_policy)
+    family, flagged = _family(checks, len(groups), len(declared), selected_policy)
+    issues = [
+        *_convergence_issues(convergence, unavailable),
+        *(
+            PosteriorPredictiveIssue(
+                code="ppc.extreme-discrepancy",
+                message=(
+                    f"observed {check.discrepancy_name} has tail probability "
+                    f"{check.tail_probability:.3g} and survives "
+                    f"{family.multiplicity.value} adjustment over "
+                    f"{family.n_checks} simultaneous checks"
+                ),
+                discrepancy_signature=check.discrepancy_signature,
+                group=check.group,
+            )
+            for check, is_flagged in zip(checks, flagged, strict=True)
+            if is_flagged
+        ),
+    ]
+    if (
+        family.n_flagged == 0
+        and family.n_checks > 1
+        and family.excess_probability < selected_policy.family_discovery_rate
+    ):
+        issues.append(
+            PosteriorPredictiveIssue(
+                code="ppc.extreme-discrepancy-rate",
+                message=(
+                    f"{family.n_extreme} of {family.n_checks} simultaneous checks fall below "
+                    f"{selected_policy.tail_probability_warning:.3g} where "
+                    f"{family.expected_extreme:.3g} are expected by chance "
+                    f"(p={family.excess_probability:.3g}), but no single check survives "
+                    f"{family.multiplicity.value} adjustment"
+                ),
+            )
         )
-        for check in checks
-        if check.tail_probability < selected_policy.tail_probability_warning
-    )
     return PosteriorPredictiveAudit(
         model_name=result.model_name,
         model_signature=result.model_signature,
         variable_name=observed.name,
         policy=selected_policy,
         checks=checks,
-        issues=issues,
+        issues=tuple(issues),
+        family=family,
+        convergence=convergence,
     )
+
+
+def _convergence(
+    result: PosteriorResult,
+    policy: PosteriorAuditPolicy | None,
+) -> tuple[PosteriorAudit | None, bool]:
+    """Audit convergence, reporting rather than hiding a missing diagnostics backend."""
+
+    try:
+        return audit_posterior(result, policy=policy), False
+    except ArviZUnavailableError:
+        return None, True
+
+
+def _convergence_issues(
+    convergence: PosteriorAudit | None,
+    unavailable: bool,
+) -> tuple[PosteriorPredictiveIssue, ...]:
+    if unavailable:
+        return (
+            PosteriorPredictiveIssue(
+                code="ppc.posterior-audit-unavailable",
+                message=(
+                    "convergence could not be audited because the ArviZ diagnostics "
+                    "backend is unavailable; install `behavio[probabilistic]`"
+                ),
+            ),
+        )
+    if convergence is None or convergence.status is PosteriorAuditStatus.PASS:
+        return ()
+    codes = ", ".join(convergence.issue_codes)
+    if convergence.status is PosteriorAuditStatus.FAIL:
+        return (
+            PosteriorPredictiveIssue(
+                code="ppc.unconverged-posterior",
+                message=(
+                    "the replicated draws come from a posterior that failed its "
+                    f"convergence audit ({codes}); the tail probabilities below are not "
+                    "interpretable"
+                ),
+                severity=AuditSeverity.ERROR,
+            ),
+        )
+    return (
+        PosteriorPredictiveIssue(
+            code="ppc.posterior-diagnostic-warning",
+            message=f"the source posterior carries convergence warnings ({codes})",
+        ),
+    )
+
+
+def _family(
+    checks: tuple[PosteriorPredictiveCheck, ...],
+    n_groups: int,
+    n_discrepancies: int,
+    policy: PosteriorPredictivePolicy,
+) -> tuple[PredictiveFamily, tuple[bool, ...]]:
+    """Size the simultaneous family and decide which checks survive adjustment."""
+
+    probabilities = np.asarray([check.tail_probability for check in checks], dtype=np.float64)
+    n_checks = len(probabilities)
+    alpha = policy.tail_probability_warning
+    rate = policy.family_discovery_rate
+    extreme = probabilities < alpha
+    n_extreme = int(np.count_nonzero(extreme))
+    expected = float(n_checks * alpha)
+    excess = 1.0 if n_extreme == 0 else float(binom.sf(n_extreme - 1, n_checks, alpha))
+    if n_checks == 1 or policy.multiplicity is PredictiveMultiplicity.NONE:
+        threshold = alpha
+        flagged = extreme
+    elif policy.multiplicity is PredictiveMultiplicity.BONFERRONI:
+        threshold = rate / n_checks
+        flagged = probabilities < threshold
+    else:
+        ordered = np.sort(probabilities)
+        ranks = np.arange(1, n_checks + 1)
+        surviving = ordered <= rate * ranks / n_checks
+        threshold = float(ordered[surviving][-1]) if bool(np.any(surviving)) else 0.0
+        flagged = probabilities <= threshold if bool(np.any(surviving)) else np.zeros_like(extreme)
+    family = PredictiveFamily(
+        n_checks=n_checks,
+        n_groups=n_groups,
+        n_discrepancies=n_discrepancies,
+        tail_probability_warning=alpha,
+        multiplicity=policy.multiplicity,
+        family_discovery_rate=rate,
+        n_extreme=n_extreme,
+        expected_extreme=expected,
+        excess_probability=excess,
+        adjusted_threshold=float(threshold),
+        n_flagged=int(np.count_nonzero(flagged)),
+    )
+    return family, tuple(bool(value) for value in flagged)
 
 
 def _paired_variables(result: PosteriorResult, name: str | None) -> tuple[Any, Any]:

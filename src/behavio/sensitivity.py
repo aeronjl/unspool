@@ -1,4 +1,23 @@
-"""Declared refit sensitivity analyses over scalar scientific summaries."""
+"""Declared refit sensitivity analyses over scalar scientific summaries.
+
+Convergence gating
+------------------
+:func:`posterior_sensitivity_outcome` audits the posterior it summarises and *raises*
+:class:`SensitivityError` when the audit fails, which is the only place in this module
+where refusing beats marking. A :class:`SensitivityOutcome` has no failure channel of its
+own: every metric it returns is fed straight into :attr:`SensitivityReport.contrasts` and
+:meth:`SensitivityReport.summary`, so a posterior mean taken from chains that never mixed
+would silently become a published contrast against the reference scenario. Raising is not
+lossy here, because :func:`run_sensitivity_analysis` converts the exception into a
+retained :class:`SensitivityFailure` on that scenario's run. The scenario therefore shows
+up in the report as a scenario whose refit could not be interpreted -- exactly the
+evidence a reader needs -- rather than as a number.
+
+A caller who wants the summary anyway injects a
+:class:`~behavio.posterior_diagnostics.PosteriorAuditPolicy` naming which severities they
+are downgrading. The audit's issue codes are then appended to the outcome's
+``diagnostic_codes``, so the concession travels with the artifact.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +29,12 @@ from typing import Any
 
 import numpy as np
 
-from behavio.posterior import PosteriorResult
+from behavio.posterior import ArviZUnavailableError, PosteriorResult
+from behavio.posterior_diagnostics import (
+    PosteriorAuditPolicy,
+    PosteriorAuditStatus,
+    audit_posterior,
+)
 
 
 class SensitivityError(ValueError):
@@ -468,11 +492,22 @@ def posterior_sensitivity_outcome(
     interval_probability: float = 0.9,
     artifact_signature: str | None = None,
     diagnostic_codes: Sequence[str] = (),
+    audit_policy: PosteriorAuditPolicy | None = None,
 ) -> SensitivityOutcome:
-    """Summarize labelled natural posterior parameters for exact-refit sensitivity."""
+    """Summarize labelled natural posterior parameters for exact-refit sensitivity.
+
+    Raises :class:`SensitivityError` when the posterior fails its convergence audit under
+    ``audit_policy``, because a :class:`SensitivityOutcome` carries only numbers and would
+    otherwise publish a mean over unmixed chains as a scenario contrast.
+    :func:`run_sensitivity_analysis` retains the exception as a
+    :class:`SensitivityFailure`, so no evidence is lost. Every audit issue code, failing or
+    not, is appended to ``diagnostic_codes``.
+    """
 
     if not isinstance(result, PosteriorResult):
         raise TypeError("result must be PosteriorResult")
+    if audit_policy is not None and not isinstance(audit_policy, PosteriorAuditPolicy):
+        raise TypeError("audit_policy must be a PosteriorAuditPolicy")
     if not np.isfinite(interval_probability) or not 0 < interval_probability < 1:
         raise ValueError("interval_probability must be finite and lie between zero and one")
     names = result.parameter_names if variable_names is None else tuple(variable_names)
@@ -484,6 +519,7 @@ def posterior_sensitivity_outcome(
     missing = tuple(name for name in names if name not in posterior.variable_names)
     if missing:
         raise SensitivityError(f"posterior has no requested variables: {missing!r}")
+    audit_codes = _convergence_codes(result, audit_policy)
     alpha = (1.0 - interval_probability) / 2.0
     metrics: list[SensitivityMetric] = []
     for name in names:
@@ -531,7 +567,7 @@ def posterior_sensitivity_outcome(
     return SensitivityOutcome(
         artifact_signature=signature,
         metrics=tuple(metrics),
-        diagnostic_codes=tuple(diagnostic_codes),
+        diagnostic_codes=tuple(dict.fromkeys((*diagnostic_codes, *audit_codes))),
         provenance={
             "model_name": result.model_name,
             "model_signature": result.model_signature,
@@ -540,6 +576,25 @@ def posterior_sensitivity_outcome(
             "parameter_space_fingerprint": result.parameter_space_fingerprint,
         },
     )
+
+
+def _convergence_codes(
+    result: PosteriorResult,
+    policy: PosteriorAuditPolicy | None,
+) -> tuple[str, ...]:
+    """Refuse a failed posterior and otherwise carry its diagnostic codes forward."""
+
+    try:
+        audit = audit_posterior(result, policy=policy)
+    except ArviZUnavailableError:
+        return ("posterior.audit-unavailable",)
+    if audit.status is PosteriorAuditStatus.FAIL:
+        raise SensitivityError(
+            "posterior failed its convergence audit "
+            f"({', '.join(audit.issue_codes)}); its parameter summaries are not "
+            "comparable across sensitivity scenarios"
+        )
+    return audit.issue_codes
 
 
 def _metric_descriptors(

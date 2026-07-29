@@ -53,6 +53,7 @@ class FakeBADS:
         self.x0 = np.asarray(x0)
         self.options = options
         self.function_logger = type("Logger", (), {"func_count": 3})()
+        self.attempt_index = len(type(self).calls)
         type(self).calls.append(
             {
                 "x0": self.x0.copy(),
@@ -65,15 +66,15 @@ class FakeBADS:
         )
 
     def optimize(self):
-        seed = self.options["random_seed"]
-        estimate = np.asarray([0.0 if seed % 2 else 1.0])
+        finishes = self.attempt_index % 2 == 0
+        estimate = np.asarray([0.0 if finishes else 1.0])
         return {
             "x": estimate,
             "fval": self.fun(estimate),
             "success": True,
             "message": (
                 "Optimization terminated: change in function value"
-                if seed % 2
+                if finishes
                 else "Optimization terminated: reached maximum number of function evaluations"
             ),
             "iterations": 3,
@@ -104,7 +105,12 @@ def test_pybads_maps_bounds_seeds_and_attempts_into_common_run(monkeypatch) -> N
         "function_tolerance": 1e-5,
         "uncertainty_handling": False,
     }
-    assert [call["options"]["random_seed"] for call in FakeBADS.calls] == [11, 12]
+    expected_seeds = [
+        int(value) for value in np.random.SeedSequence(11).generate_state(2, dtype=np.uint32)
+    ]
+    assert [call["options"]["random_seed"] for call in FakeBADS.calls] == expected_seeds
+    assert len(set(expected_seeds)) == 2
+    assert all(0 <= value <= np.iinfo(np.uint32).max for value in expected_seeds)
     assert all(call["options"]["display"] == "off" for call in FakeBADS.calls)
     np.testing.assert_array_equal(FakeBADS.calls[0]["lower"], [-10.0])
     np.testing.assert_array_equal(FakeBADS.calls[0]["upper"], [10.0])
@@ -125,7 +131,7 @@ def test_pybads_maps_bounds_seeds_and_attempts_into_common_run(monkeypatch) -> N
 def test_pybads_retains_backend_exceptions_as_failed_attempts(monkeypatch) -> None:
     class FailingBADS(FakeBADS):
         def optimize(self):
-            if self.options["random_seed"] == 3:
+            if self.attempt_index == 0:
                 raise FloatingPointError("surrogate failed")
             return super().optimize()
 

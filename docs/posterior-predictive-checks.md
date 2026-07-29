@@ -79,25 +79,65 @@ chronology or bridge session boundaries on the user's behalf.
 
 ```python
 from behavio import PosteriorPredictivePolicy
+from behavio.posterior_predictive import PredictiveMultiplicity
 
 policy = PosteriorPredictivePolicy(
     interval_probability=0.9,
     tail_probability_warning=0.05,
+    multiplicity=PredictiveMultiplicity.BENJAMINI_HOCHBERG,
+    family_discovery_rate=0.05,
 )
 ```
 
 The policy is recorded, and an extreme check emits `ppc.extreme-discrepancy` with its
 discrepancy signature and group labels. The tail probability is a posterior-predictive
 reference summary, not a classical uniformly distributed p-value. The threshold is a
-screening convention—not an automatic accept/reject rule—and checking many discrepancies
-after seeing the data creates multiplicity and researcher-degree-of-freedom concerns.
+screening convention—not an automatic accept/reject rule.
+
+## Many checks at once
+
+One call evaluates `groups × discrepancies` checks against the same threshold. Thirty
+subjects and four discrepancies is one hundred and twenty simultaneous checks, so about six
+of them fall below `0.05` *by construction* even when the model is perfect. One warning per
+extreme check therefore teaches readers to ignore the warning.
+
+`audit.family` makes the family explicit and is always present, flagged or not:
+
+```python
+family = audit.family
+print(family.n_checks, family.n_extreme, family.expected_extreme)
+print(family.excess_probability, family.adjusted_threshold, family.n_flagged)
+```
+
+`n_extreme` still counts checks below `tail_probability_warning` exactly as before, and
+every per-check `tail_probability` remains unadjusted and fully retained. What changed is
+which extreme checks become issues: only those surviving the declared `multiplicity`
+adjustment at `family_discovery_rate`. A family of one check is never adjusted, so an
+ungrouped single-discrepancy audit behaves exactly as it always did. When the observed rate
+of extreme checks exceeds chance but no single check survives adjustment, the audit emits
+one `ppc.extreme-discrepancy-rate` summary issue rather than a scatter of per-group
+warnings. Set `multiplicity=PredictiveMultiplicity.NONE` to restore per-comparison
+behaviour explicitly.
+
+## Convergence gating
+
+`posterior_predictive_check` audits the posterior's convergence and retains the audit on
+`audit.convergence`. If the audit fails, the predictive audit's `status` is `FAIL` and it
+carries `ppc.unconverged-posterior` at `ERROR` severity: replicated draws from chains that
+never mixed are not draws from the posterior, so no tail probability below them is
+interpretable. Nothing is discarded—every reference distribution is still there—so the
+layer above decides. Pass `audit_policy=` a `PosteriorAuditPolicy` naming the severities
+you are downgrading if you want the numbers anyway; the downgrade is recorded in
+`to_dict()`.
 
 ## What a pass does not establish
 
 A model can reproduce a few selected summaries and still be scientifically wrong. A PPC
 also reuses the observations that informed the posterior. It therefore does not establish:
 
-- convergence of the sampler—use [posterior convergence diagnostics](posterior-diagnostics.md);
+- more than the gate above about the sampler—the audit is retained, but a passing
+  convergence audit is a precondition, not evidence of fit; see
+  [posterior convergence diagnostics](posterior-diagnostics.md);
 - calibration of the inference implementation—use simulation-based calibration;
 - discriminability of candidate mechanisms—use [recovery](model-recovery.md); or
 - prediction of genuinely later sessions—use [prospective validation](validation.md).

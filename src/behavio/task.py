@@ -10,12 +10,12 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from behavio._internal.arrays import protected_array
 from behavio.models.base import (
     BehaviourEstimator,
     FitResult,
     ModelPrediction,
     PredictionMode,
-    _protected_array,
     model_capabilities,
 )
 from behavio.response_times import ResponseTimeSpec
@@ -114,7 +114,7 @@ class ChoiceSpec:
             raise TypeError("study must be a Study")
         codes = np.full(len(study), -1, dtype=np.int64)
         omitted = np.ones(len(study), dtype=np.bool_)
-        return _protected_array(
+        return protected_array(
             self._read_available_options(study, codes, omitted),
             dtype=np.bool_,
         )
@@ -174,9 +174,9 @@ class ChoiceData:
     available: NDArray[np.bool_]
 
     def __post_init__(self) -> None:
-        codes = _protected_array(self.codes, dtype=np.int64)
-        omitted = _protected_array(self.omitted, dtype=np.bool_)
-        available = _protected_array(self.available, dtype=np.bool_)
+        codes = protected_array(self.codes, dtype=np.int64)
+        omitted = protected_array(self.omitted, dtype=np.bool_)
+        available = protected_array(self.available, dtype=np.bool_)
         if codes.ndim != 1 or omitted.shape != codes.shape:
             raise TaskValidationError("choice codes and omission mask must be aligned vectors")
         if available.shape != (len(codes), len(self.options)):
@@ -238,7 +238,7 @@ class RewardSpec:
             raise TaskValidationError(f"rewards must be at least {self.minimum}")
         if self.maximum is not None and np.any(finite > self.maximum):
             raise TaskValidationError(f"rewards must be at most {self.maximum}")
-        return _protected_array(values, dtype=np.float64)
+        return protected_array(values, dtype=np.float64)
 
 
 @dataclass(frozen=True, slots=True)
@@ -407,7 +407,7 @@ class FittedModel:
         )
         if values.shape != (len(study),) or not np.all(np.isfinite(values)):
             raise ValueError("pointwise_log_prob must return one finite value per trial")
-        return _protected_array(values, dtype=np.float64)
+        return protected_array(values, dtype=np.float64)
 
     def audit(self):
         """Return the common numerical audit while retaining the raw fit result."""

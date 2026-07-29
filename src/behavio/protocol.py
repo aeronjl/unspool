@@ -68,6 +68,25 @@ class ObservationRole(StrEnum):
     AUXILIARY = "auxiliary"
 
 
+class ObservationDataType(StrEnum):
+    """Closed measurement vocabulary for one declared observation column.
+
+    ``data_type`` was a free string until it acquired an enforced meaning. The member
+    values *are* the wire format, so every protocol Behavio has ever serialized keeps
+    round-tripping byte-identically and keeps its fingerprint: ``"binary"`` and
+    ``"continuous"`` are the only strings any released declaration recorded, and both are
+    members here. Widening this vocabulary later stays backward compatible; narrowing it
+    would not, and would need the :data:`SUPERSEDED_SCHEMA_VERSIONS` treatment that the
+    package rename used.
+    """
+
+    BINARY = "binary"
+    CATEGORICAL = "categorical"
+    CONTINUOUS = "continuous"
+    COUNT = "count"
+    ORDINAL = "ordinal"
+
+
 class UnitRole(StrEnum):
     """Inferential role of a unit identifier."""
 
@@ -244,18 +263,29 @@ class UnitSpec:
 
 @dataclass(frozen=True, slots=True)
 class ObservationSpec:
-    """One observed variable and its scientific use."""
+    """One observed variable, its scientific use, and its enforced data contract.
+
+    ``data_type`` and ``allowed_values`` are checked against the materialized column by
+    :func:`behavio.compiler.materialize_protocol`; they are declarations the cohort must
+    satisfy, not annotations.
+
+    Missing data is legitimate in behavioural work, so a declared ``allowed_values`` set
+    licenses missing observations only when it contains ``None``. This mirrors
+    :class:`behavio.task.ChoiceSpec`, which refuses undeclared choice values but retains
+    omissions that the specification names. An empty ``allowed_values`` declares no value
+    contract at all and therefore never rejects a missing observation.
+    """
 
     column: str
     role: ObservationRole
-    data_type: str
+    data_type: ObservationDataType
     unit: str | None = None
     allowed_values: tuple[JSONScalar, ...] = ()
 
     def __post_init__(self) -> None:
         _name(self.column, "observation column")
         object.__setattr__(self, "role", ObservationRole(self.role))
-        _name(self.data_type, "observation data type")
+        object.__setattr__(self, "data_type", _observation_data_type(self.data_type))
         if self.unit is not None:
             _name(self.unit, "observation unit")
         values = tuple(
@@ -1063,6 +1093,16 @@ def _json_value(value: Any, label: str) -> JSONValue:
 
 def _canonical_scalar(value: JSONScalar) -> str:
     return _canonical_json(value)
+
+
+def _observation_data_type(value: Any) -> ObservationDataType:
+    try:
+        return ObservationDataType(value)
+    except ValueError:
+        accepted = tuple(item.value for item in ObservationDataType)
+        raise ProtocolValidationError(
+            f"observation data type {value!r} is not one of {accepted!r}"
+        ) from None
 
 
 def _name(value: str, label: str) -> None:

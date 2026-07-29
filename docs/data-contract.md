@@ -23,6 +23,15 @@ rewards, reaction times, stimulus values, laboratory identifiers, calendar times
 task versions, or source-specific metadata. Behavio does not silently rename, aggregate,
 impute, or sort them.
 
+`Study` itself declares nothing about what those columns may contain. Two contracts do,
+and both are enforced rather than described: the
+[behavioural task contract](task-contract.md) validates observed choices, omissions, and
+availability, and a [study protocol](protocols/index.md) validates each declared
+`ObservationSpec` — its measurement type and its permitted values — against the
+materialized cohort. Missing values remain representable under both: `ChoiceSpec` retains
+them as omissions when `missing_is_omission` is set, and `ObservationSpec` permits them
+unless a declared `allowed_values` set omits `None`.
+
 ## Construction
 
 ```python
@@ -48,6 +57,21 @@ assert study.chronological_indices().tolist() == [2, 1, 0]
 
 Inputs are copied and exposed as read-only NumPy arrays. Subsets created with
 `study.take(indices)` pass through the same validation contract.
+
+A trial table on disk is read with `read_table()`, which needs no optional dependencies for
+CSV or TSV:
+
+```python
+from behavio.adapters.table import read_table
+
+study = read_table("trials.csv")
+```
+
+It is a reader rather than a `Study` constructor on purpose: `behavio.study` is the leaf
+module every other module imports, and file formats, optional readers, and chronology
+derivations do not belong inside the contract they produce. What the reader will and will
+not infer -- above all that it never invents `session_order` -- is documented in
+[Tabular, NWB, and DANDI interoperability](interoperability.md).
 
 Pandas-like objects can use `Study.from_dataframe()`. Its index is deliberately ignored;
 the required identity and chronology must remain explicit columns. Source column names

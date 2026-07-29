@@ -1,0 +1,6 @@
+subject,session,session_date,stimulus,choice
+p01,visit-b,2025-03-14,0.25,1
+p01,visit-b,2025-03-14,-0.5,0
+p01,visit-a,2025-03-07,0.75,1
+p02,visit-a,2025-03-08,0.5,0
+p02,visit-c,2025-03-22,-0.25,1

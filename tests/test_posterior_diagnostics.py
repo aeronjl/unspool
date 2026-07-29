@@ -11,6 +11,8 @@ from behavio import (
     PosteriorVariable,
     audit_posterior,
 )
+from behavio.contracts import AuditSeverity
+from behavio.posterior_diagnostics import PosteriorAuditIssue
 
 
 def posterior_result(*, shifted: bool = False) -> PosteriorResult:
@@ -98,7 +100,7 @@ def test_audit_retains_mixing_and_hmc_warnings_with_labelled_targets() -> None:
 
     audit = audit_posterior(result)
 
-    assert audit.status == PosteriorAuditStatus.WARNING
+    assert audit.status == PosteriorAuditStatus.FAIL
     assert audit.divergences == 3
     assert audit.max_treedepth_hits == 2
     assert set(audit.issue_codes) >= {
@@ -131,3 +133,68 @@ def test_policy_validation_and_thresholds_are_explicit() -> None:
         ),
     )
     assert set(audit.issue_codes) == {"posterior.ess-bulk", "posterior.ess-tail"}
+
+
+def test_divergences_and_rhat_are_errors_while_low_ess_is_only_a_warning() -> None:
+    pytest.importorskip("arviz")
+
+    failing = audit_posterior(posterior_result(shifted=True))
+    severities = {issue.code: issue.severity for issue in failing.issues}
+    assert severities["posterior.divergences"] is AuditSeverity.ERROR
+    assert severities["posterior.rhat"] is AuditSeverity.ERROR
+    assert severities["posterior.ess-bulk"] is AuditSeverity.WARNING
+    assert severities["posterior.max-treedepth"] is AuditSeverity.WARNING
+    assert failing.status is PosteriorAuditStatus.FAIL
+
+    warning_only = audit_posterior(
+        posterior_result(),
+        policy=PosteriorAuditPolicy(min_ess_bulk=10_000, min_ess_tail=10_000),
+    )
+    assert set(warning_only.issue_codes) == {"posterior.ess-bulk", "posterior.ess-tail"}
+    assert all(issue.severity is AuditSeverity.WARNING for issue in warning_only.issues)
+    assert warning_only.status is PosteriorAuditStatus.WARNING
+
+
+def test_severity_classification_is_an_overridable_policy_decision() -> None:
+    pytest.importorskip("arviz")
+
+    audit = audit_posterior(
+        posterior_result(shifted=True),
+        policy=PosteriorAuditPolicy(
+            divergence_severity=AuditSeverity.WARNING,
+            rhat_severity=AuditSeverity.WARNING,
+            nonfinite_severity=AuditSeverity.WARNING,
+        ),
+    )
+
+    assert audit.issue_codes  # the same issues are still detected
+    assert audit.status is PosteriorAuditStatus.WARNING
+    assert audit.policy.to_dict()["divergence_severity"] == "warning"
+    assert audit.policy.to_dict()["ess_severity"] == "warning"
+    assert audit.policy.to_dict()["rhat_severity"] == "warning"
+    json.dumps(audit.to_dict(), allow_nan=False)
+
+
+def test_strict_ess_policy_can_be_promoted_to_a_failure() -> None:
+    pytest.importorskip("arviz")
+
+    audit = audit_posterior(
+        posterior_result(),
+        policy=PosteriorAuditPolicy(
+            min_ess_bulk=10_000,
+            min_ess_tail=10_000,
+            ess_severity=AuditSeverity.ERROR,
+        ),
+    )
+
+    assert audit.status is PosteriorAuditStatus.FAIL
+
+
+def test_issue_severity_defaults_to_warning_and_is_serialised() -> None:
+    issue = PosteriorAuditIssue("posterior.custom", "something to look at")
+
+    assert issue.severity is AuditSeverity.WARNING
+    assert (
+        PosteriorAuditIssue("posterior.custom", "worse", severity="error").severity
+        is AuditSeverity.ERROR
+    )

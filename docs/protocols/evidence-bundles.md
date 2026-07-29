@@ -25,6 +25,13 @@ study-evidence.zip
 ├── comparison/evaluation.json
 ├── predictions/pointwise.json
 ├── recovery/recovery.json        # when recovery was run
+├── posterior/                    # when the study ran Bayesian inference
+│   ├── convergence.json
+│   ├── loo.json
+│   ├── predictive.json
+│   ├── calibration.json
+│   ├── reliability.json
+│   └── sensitivity.json
 ├── figures/
 ├── report/
 │   ├── report.json
@@ -37,6 +44,61 @@ The protocol, source identity, cohort and execution fingerprints, predictions, n
 audits, comparisons, recovery assessment, rendered figures, and bounded report remain
 separate artifacts. This makes it possible to identify what changed between two analyses
 without loading a Python object graph.
+
+## Archive the Bayesian half
+
+`PosteriorEvidence` carries the posterior artefacts. Every slot is optional and an empty
+slot writes no file, so a study that ran no Bayesian inference produces exactly the archive
+it produced before these slots existed.
+
+```python
+from behavio import PosteriorEvidence, build_evidence_bundle
+
+posterior = PosteriorEvidence(
+    convergence={"hierarchical-glm": audit},
+    loo={
+        "hierarchical-glm/observation": observation_loo,
+        "hierarchical-glm/subject": subject_loo,
+    },
+    predictive={"hierarchical-glm": predictive_audit},
+    calibration={"hierarchical-glm": sbc_report},
+    reliability={"learning-rate": reliability_report},
+    sensitivity={"prior-width": sensitivity_report},
+)
+
+bundle = build_evidence_bundle(reported, figures=(figure,), posterior=posterior)
+```
+
+Each slot maps a label you choose to one report, serialized through that report's own
+`to_dict`. `posterior/loo.json` is grouped by estimand rather than stored as one flat list:
+leave-one-observation-out and leave-one-*block*-out ELPD answer different questions and are
+never comparable, so the archive keeps them under separate, explicitly named groups that a
+later reader cannot difference by accident. Two results that share a model and a blocking
+are indistinguishable evidence and are refused outright.
+
+```text
+posterior/loo.json
+{
+  "leave-one-observation-out": {"block": null,      "results": {...}},
+  "leave-one-subject-out":     {"block": "subject", "results": {...}}
+}
+```
+
+## Schema versions
+
+`bundle.json` declares the oldest published schema name that can express the bundle's
+content, not the newest name the library knows:
+
+| Name | Adds |
+| --- | --- |
+| `behavio.evidence-bundle/1` | the frequentist evidence |
+| `behavio.evidence-bundle/2` | the optional `posterior/` slots |
+
+A version-1 bundle is a valid version-2 bundle that happens to carry no posterior evidence,
+so both names are accepted on read and neither is ever restamped — restamping a
+content-addressed archive would invalidate its own identity. Stamping the minimum is what
+keeps a frequentist bundle byte-identical across the version bump; a bundle carrying any
+`posterior/` slot declares version 2. An unrecognised name is refused rather than guessed at.
 
 ## Build the final archive
 
@@ -93,11 +155,20 @@ difference = compare_evidence_bundles("before.zip", "after.zip")
 print(difference.same_protocol)
 print(difference.changed_paths)
 print(difference.left_winner, difference.right_winner)
+print(difference.same_posterior_evidence)
+print(difference.added_posterior_paths, difference.removed_posterior_paths)
+print(difference.left_loo_estimands, difference.right_loo_estimands)
 ```
 
 A comparison distinguishes a new scientific protocol from new evidence under the same
 protocol. It also exposes changes to rankings and blocked claims, rather than reducing the
 comparison to a checksum mismatch.
+
+Comparing a bundle that carries posterior evidence against one that does not is allowed and
+is reported explicitly: `same_posterior_evidence` is false, and the appearing or vanishing
+slots and cross-validation estimands are named. A study that gained a Bayesian half is a
+different claim, not a formatting change, so the difference is surfaced rather than absorbed
+into the generic path lists.
 
 ## What is deliberately absent
 

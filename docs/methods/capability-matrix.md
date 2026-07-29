@@ -12,6 +12,8 @@ its inferential or design coverage remains deliberately narrow.
 | Forward-session, within-session, and historical-cohort prospective validation | **Supported** | Learned preprocessing must still be fitted within folds; historical-cohort claims require the declared deployment order. |
 | Complete-subject and complete-lab holdout | **Supported** | Does not by itself create population-of-labs inference. |
 | Bias-only, psychometric, perseveration, lapse, and win-stay/lose-shift baselines | **Experimental** | Complete binary generative contracts; lapse support is fixed, and outcome-conditioned histories reset explicitly. |
+| Parametric psychometric functions | **Experimental** | Five declared links with separate guess and lapse rates; thresholds are readable only against the declared link, stimulus scale, and threshold convention, and there is no hierarchical or smooth variant. |
+| Signal detection theory: yes/no, forced choice, unequal-variance ROC, and meta-d' | **Experimental** | Clean-room from the published equations; extreme-rate corrections must be declared rather than inferred, tables are pooled across subjects, and there is no hierarchical or smooth variant. |
 | Static Bernoulli history GLM | **Supported** | Choice-only likelihood with declared covariates and lags. |
 | Smooth longitudinal Bernoulli GLM | **Supported** | Fixed clock and knots; future knots are not learned from test data. |
 | Hierarchical static and smooth GLMs | **Supported** | Gaussian partial pooling with population plug-in for unseen subjects. |

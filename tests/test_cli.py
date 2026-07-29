@@ -1,5 +1,6 @@
 """Tests for the intentionally narrow protocol and evidence command line."""
 
+import csv
 import json
 from dataclasses import replace
 
@@ -64,6 +65,24 @@ def write_protocol_and_study(tmp_path):
         encoding="utf-8",
     )
     return protocol_path, study_path
+
+
+def write_study_table(path, *, drop=(), extra=None, delimiter=","):
+    """Write the shared fixture study as a delimited trial table."""
+
+    study = source_study()
+    names = [name for name in study.columns if name not in drop]
+    rows = []
+    for row in range(len(study)):
+        record = {name: study[name][row] for name in names}
+        if extra is not None:
+            record.update({name: values[row] for name, values in extra.items()})
+        rows.append(record)
+    with path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]), delimiter=delimiter)
+        writer.writeheader()
+        writer.writerows(rows)
+    return path
 
 
 def test_protocol_validate_can_emit_frozen_canonical_json(tmp_path, capsys) -> None:
@@ -133,6 +152,170 @@ def test_inspect_compare_and_report_verify_bundles(tmp_path, capsys) -> None:
     response = json.loads(capsys.readouterr().out)
     assert response["report"] == str(report_path)
     assert report_path.read_text().startswith("# Learning trajectory forecast")
+
+
+def test_execute_reads_a_csv_study_and_matches_the_json_path(tmp_path, capsys) -> None:
+    """The adoption case: a plain CSV reaches the same evaluation as a JSON columns blob."""
+
+    protocol_path, study_path = write_protocol_and_study(tmp_path)
+    csv_path = write_study_table(tmp_path / "trials.csv")
+
+    assert main(["execute", str(protocol_path), str(study_path), str(tmp_path / "json")]) == 0
+    from_json = json.loads(capsys.readouterr().out)
+    assert main(["execute", str(protocol_path), str(csv_path), str(tmp_path / "csv")]) == 0
+    from_csv = json.loads(capsys.readouterr().out)
+
+    assert from_csv["state"] == "evaluated"
+    assert from_csv["winner"] == from_json["winner"]
+    assert from_csv["ranking_status"] == from_json["ranking_status"]
+    from_csv_report = json.loads((tmp_path / "csv" / "evaluation.json").read_text())
+    from_json_report = json.loads((tmp_path / "json" / "evaluation.json").read_text())
+    # The CSV read records provenance the JSON blob does not carry, so the plan fingerprint
+    # legitimately differs; every scientific result must not.
+    assert (
+        from_csv_report["execution_plan_fingerprint"]
+        != from_json_report["execution_plan_fingerprint"]
+    )
+    del from_csv_report["execution_plan_fingerprint"]
+    del from_json_report["execution_plan_fingerprint"]
+    assert from_csv_report == from_json_report
+
+
+def test_omitting_the_source_path_reproduces_the_json_fingerprint(tmp_path, capsys) -> None:
+    """A machine-independent fingerprint is available when provenance is not wanted."""
+
+    protocol_path, study_path = write_protocol_and_study(tmp_path)
+    csv_path = write_study_table(tmp_path / "trials.csv")
+
+    assert main(["execute", str(protocol_path), str(study_path), str(tmp_path / "json")]) == 0
+    capsys.readouterr()
+    status = main(
+        [
+            "execute",
+            str(protocol_path),
+            str(csv_path),
+            str(tmp_path / "csv"),
+            "--omit-source-path",
+        ]
+    )
+    capsys.readouterr()
+
+    assert status == 0
+    assert json.loads((tmp_path / "csv" / "evaluation.json").read_text()) == json.loads(
+        (tmp_path / "json" / "evaluation.json").read_text()
+    )
+
+
+def test_execute_reads_a_tsv_study(tmp_path, capsys) -> None:
+    protocol_path, _ = write_protocol_and_study(tmp_path)
+    tsv_path = write_study_table(tmp_path / "trials.tsv", delimiter="\t")
+
+    status = main(["execute", str(protocol_path), str(tsv_path), str(tmp_path / "run")])
+
+    assert status == 0
+    assert json.loads(capsys.readouterr().out)["state"] == "evaluated"
+
+
+def test_execute_refuses_a_csv_that_carries_no_chronology(tmp_path, capsys) -> None:
+    protocol_path, _ = write_protocol_and_study(tmp_path)
+    csv_path = write_study_table(tmp_path / "trials.csv", drop=("session_order",))
+
+    status = main(["execute", str(protocol_path), str(csv_path), str(tmp_path / "run")])
+
+    error = capsys.readouterr().err
+    assert status == 2
+    assert "never infers session chronology" in error
+    assert "--session-order-from-column" in error
+    assert "--session-order-from-appearance" in error
+
+
+def test_execute_derives_chronology_only_when_the_caller_names_a_rule(tmp_path, capsys) -> None:
+    protocol_path, _ = write_protocol_and_study(tmp_path)
+    study = source_study()
+    dates = [f"2025-01-{int(order) + 1:02d}" for order in study["session_order"]]
+    csv_path = write_study_table(
+        tmp_path / "trials.csv",
+        drop=("session_order",),
+        extra={"session_date": dates},
+    )
+
+    status = main(
+        [
+            "execute",
+            str(protocol_path),
+            str(csv_path),
+            str(tmp_path / "run"),
+            "--session-order-from-column",
+            "session_date",
+        ]
+    )
+
+    assert status == 0
+    assert json.loads(capsys.readouterr().out)["state"] == "evaluated"
+
+
+def test_execute_honours_an_explicit_study_format_override(tmp_path, capsys) -> None:
+    protocol_path, _ = write_protocol_and_study(tmp_path)
+    odd_suffix = write_study_table(tmp_path / "trials.data")
+
+    assert main(["execute", str(protocol_path), str(odd_suffix), str(tmp_path / "guess")]) == 2
+    assert "cannot tell the table format" in capsys.readouterr().err
+
+    status = main(
+        [
+            "execute",
+            str(protocol_path),
+            str(odd_suffix),
+            str(tmp_path / "declared"),
+            "--study-format",
+            "csv",
+        ]
+    )
+
+    assert status == 0
+    assert json.loads(capsys.readouterr().out)["state"] == "evaluated"
+
+
+def test_execute_maps_source_identity_column_names(tmp_path, capsys) -> None:
+    protocol_path, _ = write_protocol_and_study(tmp_path)
+    study = source_study()
+    rows = [
+        {
+            "participant": study["subject"][row],
+            "visit": study["session"][row],
+            "trial": int(study["trial"][row]),
+            "visit_order": int(study["session_order"][row]),
+            "choice": int(study["choice"][row]),
+            "stimulus": float(study["stimulus"][row]),
+            "species": study["species"][row],
+            "source_asset": study["source_asset"][row],
+            "source_row": int(study["source_row"][row]),
+        }
+        for row in range(len(study))
+    ]
+    csv_path = tmp_path / "renamed.csv"
+    with csv_path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+    status = main(
+        [
+            "execute",
+            str(protocol_path),
+            str(csv_path),
+            str(tmp_path / "run"),
+            "--subject-column",
+            "participant",
+            "--session-column",
+            "visit",
+            "--session-order-column",
+            "visit_order",
+        ]
+    )
+
+    assert status == 0
+    assert json.loads(capsys.readouterr().out)["state"] == "evaluated"
 
 
 def test_invalid_protocol_returns_clean_error(tmp_path, capsys) -> None:

@@ -208,6 +208,7 @@ def _render_markdown(
             f"- **{estimand.name}:** {estimand.contrast}; population: {estimand.population}; "
             f"aggregation: `{estimand.weighting.value}` over `{estimand.aggregation_unit}`."
         )
+    _render_unverified_declarations(lines, evaluation)
     if isinstance(evaluation, NestedProtocolRun):
         _render_nested_performance(lines, evaluation)
     else:
@@ -274,6 +275,42 @@ def _render_markdown(
     if recovery:
         lines.append(f"- Recovery: `{recovery.report.fingerprint}`")
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _render_unverified_declarations(
+    lines: list[str], evaluation: ProtocolRun | NestedProtocolRun
+) -> None:
+    """Disclose declarations that could not be checked against the object that ran.
+
+    A contradicted declaration never reaches a report -- the runner refuses the plan -- so
+    this section exists only for declarations that were retained without being proved. It
+    is emitted only when such a finding exists, so a fully verified study keeps a
+    byte-identical report and an unchanged report fingerprint.
+    """
+
+    findings = tuple(
+        finding for verification in evaluation.verification for finding in verification.unverifiable
+    )
+    if not findings:
+        return
+    lines.extend(
+        [
+            "",
+            "### Unverified declarations",
+            "",
+            "These frozen declarations were retained but could not be checked against the "
+            "estimator that ran. They are recorded rather than treated as satisfied.",
+            "",
+            "| Candidate | Declaration | Declared | Supplied | Why unverified |",
+            "|---|---|---|---|---|",
+        ]
+    )
+    for finding in findings:
+        lines.append(
+            f"| {_cell(finding.candidate)} | {_cell(finding.subject)} | "
+            f"{_cell(finding.declared)} | {_cell(finding.observed) or '—'} | "
+            f"{_cell(finding.detail)} |"
+        )
 
 
 def _render_flat_performance(lines: list[str], evaluation: ProtocolRun, comparison: Any) -> None:

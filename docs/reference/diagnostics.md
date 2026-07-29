@@ -48,9 +48,15 @@ generic pass/fail label.
       show_root_heading: false
       show_source: false
 
-## PSIS-LOO
+## PSIS-LOO and posterior model comparison
 
 ::: behavio.posterior_loo
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+::: behavio.posterior_comparison
     options:
       members_order: source
       show_root_heading: false

@@ -278,13 +278,14 @@ def run_exact_recovery(
             )
         _assessment_for(requirement, assessments)
 
+    seed_plan = _replicate_seed_plan(cases, requirement_by_name)
     replicates: list[RecoveryReplicate] = []
     failures: list[RecoveryFailure] = []
     for case_index, case in enumerate(cases):
         requirement = requirement_by_name[case.requirement]
         assessment = _assessment_for(requirement, assessments)
         for repetition in range(requirement.repetitions):
-            seed = requirement.seed + case_index * requirement.repetitions + repetition
+            seed = seed_plan[case_index][repetition]
             try:
                 generator_key = case.generator_key or case.generating_candidate
                 simulated = generators[generator_key].simulate(
@@ -361,6 +362,59 @@ def run_exact_recovery(
         artifact_fingerprint=report.fingerprint,
     )
     return ExactRecoveryRun(recovered, evaluation, report)
+
+
+def _replicate_seed_plan(
+    cases: tuple[RecoveryCase, ...],
+    requirement_by_name: Mapping[str, RecoverySpec],
+) -> tuple[tuple[int, ...], ...]:
+    """Spawn one disjoint replicate seed stream per case, indexed by case position.
+
+    Arithmetic seeds (``requirement.seed + case_index * repetitions + repetition``) let two
+    requirements with different declared seeds overlap: ``seed=0, repetitions=10`` and
+    ``seed=5`` share the replicates 5-9. Those replicates are then perfectly correlated
+    while feeding two separate recovery gates as if they were independent evidence.
+
+    Seeds are therefore spawned from a :class:`numpy.random.SeedSequence` tree, as in
+    :func:`behavio.recovery.run_parameter_recovery` and
+    :func:`behavio.model_recovery.run_model_recovery`. Each requirement gets its own root,
+    whose entropy mixes the declared seed with a domain-separation tag derived from the
+    requirement name, so two requirements cannot address the same stream even when they
+    declare the same seed, and one requirement's replicates never depend on another's
+    declared seed. Cases and repetitions within a requirement are disjoint by construction
+    because they are distinct children of that root. The emitted seeds are then checked for
+    global uniqueness, so a collision refuses the run instead of silently reporting
+    correlated replicates as independent.
+    """
+
+    positions: dict[str, list[int]] = {}
+    for index, case in enumerate(cases):
+        positions.setdefault(case.requirement, []).append(index)
+    plan: dict[int, tuple[int, ...]] = {}
+    for name, indices in positions.items():
+        requirement = requirement_by_name[name]
+        root = np.random.SeedSequence(entropy=(requirement.seed, *_requirement_domain(name)))
+        sequences = root.spawn(len(indices) * requirement.repetitions)
+        for offset, index in enumerate(indices):
+            start = offset * requirement.repetitions
+            plan[index] = tuple(
+                int(sequence.generate_state(1, dtype=np.uint64)[0])
+                for sequence in sequences[start : start + requirement.repetitions]
+            )
+    emitted = [seed for seeds in plan.values() for seed in seeds]
+    if len(set(emitted)) != len(emitted):
+        raise ExactRecoveryError(
+            "recovery replicate seeds are not disjoint; distinct requirements must not "
+            "share a replicate stream"
+        )
+    return tuple(plan[index] for index in range(len(cases)))
+
+
+def _requirement_domain(name: str) -> tuple[int, int]:
+    """Return a stable 128-bit domain-separation tag for one requirement name."""
+
+    digest = hashlib.sha256(f"behavio.exact-recovery/requirement/{name}".encode()).digest()
+    return int.from_bytes(digest[:8], "big"), int.from_bytes(digest[8:16], "big")
 
 
 def _assessment_for(

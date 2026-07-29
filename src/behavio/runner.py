@@ -5,9 +5,11 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import sys
 from collections.abc import Mapping, Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields, is_dataclass
 from enum import StrEnum
+from functools import partial
 from typing import Any
 
 import numpy as np
@@ -49,6 +51,79 @@ class RankingStatus(StrEnum):
     RESOLVED = "resolved"
     UNRESOLVED = "unresolved"
     NO_ELIGIBLE_CANDIDATE = "no-eligible-candidate"
+
+
+class DeclarationCheck(StrEnum):
+    """Outcome of comparing one frozen declaration against the object supplied."""
+
+    VERIFIED = "verified"
+    UNVERIFIABLE = "unverifiable"
+    CONTRADICTED = "contradicted"
+
+
+@dataclass(frozen=True, slots=True)
+class DeclarationFinding:
+    """One declared-versus-supplied comparison for a frozen candidate."""
+
+    candidate: str
+    subject: str
+    status: DeclarationCheck
+    declared: str
+    observed: str
+    detail: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "status", DeclarationCheck(self.status))
+        if not self.candidate or not self.subject:
+            raise ValueError("a declaration finding must name its candidate and subject")
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a portable finding without executable objects."""
+
+        return _json_safe(asdict(self))
+
+
+@dataclass(frozen=True, slots=True)
+class CandidateVerification:
+    """Whether the estimator supplied for one candidate is what the protocol froze."""
+
+    candidate: str
+    declared_implementation: str
+    observed_implementation: str
+    model_name: str
+    model_signature: str
+    findings: tuple[DeclarationFinding, ...]
+
+    @property
+    def contradictions(self) -> tuple[DeclarationFinding, ...]:
+        """Findings where the supplied object refutes the frozen declaration."""
+
+        return tuple(item for item in self.findings if item.status == DeclarationCheck.CONTRADICTED)
+
+    @property
+    def unverifiable(self) -> tuple[DeclarationFinding, ...]:
+        """Declarations that could not be checked against the supplied object."""
+
+        return tuple(item for item in self.findings if item.status == DeclarationCheck.UNVERIFIABLE)
+
+    @property
+    def verified(self) -> bool:
+        """Whether every declaration for this candidate was checked and held."""
+
+        return all(item.status == DeclarationCheck.VERIFIED for item in self.findings)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return portable verification evidence for one candidate."""
+
+        return {
+            "candidate": self.candidate,
+            "declared_implementation": self.declared_implementation,
+            "observed_implementation": self.observed_implementation,
+            "model_name": self.model_name,
+            "model_signature": self.model_signature,
+            "verified": self.verified,
+            "findings": [item.to_dict() for item in self.findings],
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -486,11 +561,18 @@ class EvaluationReport:
 
 @dataclass(frozen=True, slots=True)
 class ProtocolRun:
-    """Evaluated lifecycle state paired with its immutable report."""
+    """Evaluated lifecycle state paired with its immutable report.
+
+    ``verification`` records how each supplied estimator was checked against its frozen
+    declaration. It is deliberately not part of :class:`EvaluationReport`: a contradiction
+    refuses the run outright, so anything retained here is a declaration that held or one
+    that could not be checked, and a fully verified run keeps a byte-identical report.
+    """
 
     protocol: Any
     compiled: CompiledProtocol
     report: EvaluationReport
+    verification: tuple[CandidateVerification, ...] = ()
 
     def __post_init__(self) -> None:
         if self.protocol.state != ProtocolState.EVALUATED:
@@ -675,12 +757,217 @@ class NestedProtocolRun:
     protocol: Any
     compiled: CompiledProtocol
     report: NestedEvaluationReport
+    verification: tuple[CandidateVerification, ...] = ()
 
     def __post_init__(self) -> None:
         if self.protocol.state != ProtocolState.EVALUATED:
             raise ProtocolValidationError("a nested run requires evaluated lifecycle state")
         if self.protocol.fingerprint != self.report.protocol_fingerprint:
             raise ProtocolValidationError("nested report and protocol fingerprints differ")
+
+
+def verify_candidate_declarations(
+    protocol: Any,
+    models: Mapping[str, BehaviourEstimator],
+) -> tuple[CandidateVerification, ...]:
+    """Compare each supplied estimator against the candidate declaration frozen for it.
+
+    A frozen protocol is only worth its fingerprint if the object that ran is the object
+    it declared. This checks the two things a :class:`~behavio.protocol.CandidateSpec`
+    fixes -- ``implementation`` and ``hyperparameters`` -- against the estimator handed to
+    the runner, using only that object: the import path of its type, and, because every
+    model in the package is a frozen dataclass, its own field values.
+
+    Identity is resolved without importing the declared string. A frozen protocol is data,
+    and importing a module path out of it would turn a declaration into code execution --
+    which is exactly why :mod:`behavio.cli` resolves implementations through a fixed
+    allowlist. Only modules the process has already imported are consulted, so the check
+    can prove a contradiction but never manufacture one out of an unread module.
+
+    Findings are returned rather than raised, so the complete comparison is available to a
+    caller that wants to record it; :func:`run_protocol` refuses to execute a plan when any
+    finding is :attr:`DeclarationCheck.CONTRADICTED`.
+    """
+
+    verifications: list[CandidateVerification] = []
+    for candidate in protocol.candidates:
+        model = models[candidate.name]
+        findings = [_verify_implementation(candidate, model)]
+        findings.extend(_verify_hyperparameters(candidate, model))
+        verifications.append(
+            CandidateVerification(
+                candidate=candidate.name,
+                declared_implementation=candidate.implementation,
+                observed_implementation=_implementation_path(type(model)),
+                model_name=str(getattr(model, "model_name", "")),
+                model_signature=str(getattr(model, "signature", "")),
+                findings=tuple(findings),
+            )
+        )
+    return tuple(verifications)
+
+
+def _verify_implementation(candidate: Any, model: Any) -> DeclarationFinding:
+    declared = candidate.implementation
+    model_type = type(model)
+    observed = _implementation_path(model_type)
+    finding = partial(
+        DeclarationFinding,
+        candidate=candidate.name,
+        subject="implementation",
+        declared=declared,
+        observed=observed,
+    )
+    if declared in _implementation_aliases(model_type):
+        return finding(
+            status=DeclarationCheck.VERIFIED,
+            detail="the supplied object is an instance of the declared implementation",
+        )
+    module_path, _, declared_leaf = declared.rpartition(".")
+    imported = sys.modules.get(module_path)
+    if imported is not None and hasattr(imported, declared_leaf):
+        return finding(
+            status=DeclarationCheck.CONTRADICTED,
+            detail="the declared import path resolves to a different object",
+        )
+    if declared_leaf != model_type.__qualname__.rpartition(".")[2]:
+        return finding(
+            status=DeclarationCheck.CONTRADICTED,
+            detail="the supplied object is not of the declared class",
+        )
+    return finding(
+        status=DeclarationCheck.UNVERIFIABLE,
+        detail=(
+            "the class name agrees but the declared module is not imported, and a frozen "
+            "declaration is never imported to resolve it"
+        ),
+    )
+
+
+def _verify_hyperparameters(candidate: Any, model: Any) -> tuple[DeclarationFinding, ...]:
+    declarable = is_dataclass(model) and not isinstance(model, type)
+    observed_fields = (
+        {field.name: getattr(model, field.name) for field in fields(model)} if declarable else {}
+    )
+    findings: list[DeclarationFinding] = []
+    for setting in candidate.hyperparameters:
+        finding = partial(
+            DeclarationFinding,
+            candidate=candidate.name,
+            subject=f"hyperparameter:{setting.name}",
+            declared=repr(setting.value),
+        )
+        if not declarable:
+            findings.append(
+                finding(
+                    status=DeclarationCheck.UNVERIFIABLE,
+                    observed="",
+                    detail="the supplied object is not a dataclass with declared fields",
+                )
+            )
+            continue
+        if setting.name not in observed_fields:
+            findings.append(
+                finding(
+                    status=DeclarationCheck.UNVERIFIABLE,
+                    observed="",
+                    detail="the supplied object has no field of that name",
+                )
+            )
+            continue
+        observed = observed_fields[setting.name]
+        comparable, normalized = _comparable_value(observed)
+        if not comparable:
+            findings.append(
+                finding(
+                    status=DeclarationCheck.UNVERIFIABLE,
+                    observed=repr(observed),
+                    detail="the observed field value is not a comparable JSON scalar or tuple",
+                )
+            )
+            continue
+        agrees = _values_agree(setting.value, normalized)
+        findings.append(
+            finding(
+                status=DeclarationCheck.VERIFIED if agrees else DeclarationCheck.CONTRADICTED,
+                observed=repr(normalized),
+                detail=(
+                    "the field value matches the frozen declaration"
+                    if agrees
+                    else "the field value differs from the frozen declaration"
+                ),
+            )
+        )
+    return tuple(findings)
+
+
+def _implementation_path(model_type: type[Any]) -> str:
+    return f"{model_type.__module__}.{model_type.__qualname__}"
+
+
+def _implementation_aliases(model_type: type[Any]) -> tuple[str, ...]:
+    """Return import paths that already resolve to this exact class.
+
+    A declaration names the public path (``behavio.models.BernoulliHistoryGLM``) while the
+    class is defined in a private submodule, so the defining path alone is not enough. Only
+    ancestor packages of the defining module are consulted, and only if already imported.
+    """
+
+    aliases = [_implementation_path(model_type)]
+    if "." in model_type.__qualname__:
+        return tuple(aliases)
+    parts = model_type.__module__.split(".")
+    for depth in range(len(parts) - 1, 0, -1):
+        prefix = ".".join(parts[:depth])
+        package = sys.modules.get(prefix)
+        if package is not None and getattr(package, model_type.__qualname__, None) is model_type:
+            aliases.append(f"{prefix}.{model_type.__qualname__}")
+    return tuple(aliases)
+
+
+def _comparable_value(value: Any) -> tuple[bool, Any]:
+    if isinstance(value, np.generic):
+        value = value.item()
+    if value is None or isinstance(value, (str, bool, int)):
+        return True, value
+    if isinstance(value, float):
+        return math.isfinite(value), value
+    if isinstance(value, (tuple, list)):
+        items = [_comparable_value(item) for item in value]
+        if all(comparable for comparable, _ in items):
+            return True, tuple(item for _, item in items)
+    return False, None
+
+
+def _values_agree(declared: Any, observed: Any) -> bool:
+    if isinstance(declared, tuple) or isinstance(observed, tuple):
+        if not isinstance(declared, tuple) or not isinstance(observed, tuple):
+            return False
+        return len(declared) == len(observed) and all(
+            _values_agree(left, right) for left, right in zip(declared, observed, strict=True)
+        )
+    if isinstance(declared, bool) or isinstance(observed, bool):
+        return declared is observed
+    if isinstance(declared, (int, float)) and isinstance(observed, (int, float)):
+        return math.isclose(float(declared), float(observed), rel_tol=1e-9, abs_tol=1e-12)
+    return type(declared) is type(observed) and declared == observed
+
+
+def _refuse_contradictions(verifications: tuple[CandidateVerification, ...]) -> None:
+    contradictions = tuple(
+        finding for verification in verifications for finding in verification.contradictions
+    )
+    if not contradictions:
+        return
+    details = "; ".join(
+        f"{finding.candidate}.{finding.subject}: {finding.detail} "
+        f"(declared={finding.declared}, supplied={finding.observed})"
+        for finding in contradictions
+    )
+    raise ProtocolRunError(
+        "supplied models contradict the frozen candidate declaration, so the evaluation "
+        f"would not be evidence about the declared protocol: {details}"
+    )
 
 
 def run_protocol(
@@ -690,7 +977,9 @@ def run_protocol(
     """Fit, predict, score, audit, compare, and rank every declared candidate.
 
     Candidate-fold failures are retained and execution continues.  Only an audited plan
-    may run, and the exact candidate registry must match the frozen declaration.
+    may run, and the exact candidate registry must match the frozen declaration -- by name,
+    by declared implementation, and by declared hyperparameter, as
+    :func:`verify_candidate_declarations` checks before any fit begins.
     """
 
     if not compiled.plan.audit.passed or compiled.protocol.state != ProtocolState.AUDITED:
@@ -704,6 +993,8 @@ def run_protocol(
             "model registry must exactly match declared candidates; "
             f"declared={declared_names!r}, supplied={tuple(models)!r}"
         )
+    verification = verify_candidate_declarations(protocol, models)
+    _refuse_contradictions(verification)
     aggregation_column = next(
         unit.column for unit in protocol.units if unit.name == protocol.comparison.aggregation_unit
     )
@@ -739,7 +1030,7 @@ def run_protocol(
         artifact_fingerprint=report.fingerprint,
     )
     del study
-    return ProtocolRun(evaluated, compiled, report)
+    return ProtocolRun(evaluated, compiled, report, verification)
 
 
 def run_nested_protocol(
@@ -757,6 +1048,8 @@ def run_nested_protocol(
     declared_names = tuple(candidate.name for candidate in protocol.candidates)
     if set(models) != set(declared_names):
         raise ProtocolRunError("model registry must exactly match declared candidates")
+    verification = verify_candidate_declarations(protocol, models)
+    _refuse_contradictions(verification)
     selection_aggregation_column = next(
         unit.column for unit in protocol.units if unit.name == selection.aggregation_unit
     )
@@ -847,7 +1140,7 @@ def run_nested_protocol(
         ProtocolState.EVALUATED,
         artifact_fingerprint=report.fingerprint,
     )
-    return NestedProtocolRun(evaluated, compiled, report)
+    return NestedProtocolRun(evaluated, compiled, report, verification)
 
 
 def _run_candidate(

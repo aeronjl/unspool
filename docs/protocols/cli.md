@@ -18,13 +18,40 @@ freeze output must be a new path; existing files are never overwritten.
 ## Execute a registered protocol
 
 ```bash
+behavio execute frozen.json trials.csv evaluation/
+behavio execute frozen.json trials.parquet evaluation/
 behavio execute frozen.json study.json evaluation/
 ```
 
-`study.json` is a JSON object with a `columns` mapping accepted by `Study`. The command
-materializes the cohort, invokes the declared registered splitter, compiles and checks the
-plan, instantiates the exact registered candidate set, and runs flat or nested evaluation.
-The new output directory contains:
+The study argument is a real trial table: `.csv`, `.tsv`, or `.parquet`, or the original
+`.json` object with a `columns` mapping accepted by `Study`. The format follows the suffix;
+`--study-format {auto,json,csv,tsv,parquet}` declares it when a file is named something
+else. CSV and TSV need no optional dependencies; Parquet needs `behavio[parquet]`.
+
+Source columns rarely use Behavio's canonical names, and chronology is often absent:
+
+```bash
+behavio execute frozen.json trials.csv evaluation/ \
+  --subject-column participant \
+  --session-column visit \
+  --session-order-from-column visit_date \
+  --number-trials-by-row-order
+```
+
+`--session-order-from-column COLUMN` ranks each subject's sessions by a column that carries
+time. `--session-order-from-appearance` claims instead that the rows were written in
+chronological order. One or the other is *required* when the table has no `session_order`
+column: the command never infers chronology, and the failure message lists every flag that
+can supply it. Both choices are recorded on every trial, as is
+`--number-trials-by-row-order`.
+
+By default each trial also records its absolute source path, which makes the protocol
+fingerprint machine-specific; `--omit-source-path` drops that column when a fingerprint
+that is reproducible across machines matters more.
+
+The command materializes the cohort, invokes the declared registered splitter, compiles and
+checks the plan, instantiates the exact registered candidate set, and runs flat or nested
+evaluation. The new output directory contains:
 
 ```text
 evaluation/

@@ -2,6 +2,7 @@
 
 from dataclasses import replace
 
+import numpy as np
 import pytest
 from test_compiler import capabilities, source_study
 from test_protocol import example_protocol
@@ -13,6 +14,7 @@ from behavio.protocol_recovery import (
     ExactRecoveryError,
     GateStatus,
     RecoveryCase,
+    _replicate_seed_plan,
     run_exact_recovery,
 )
 from behavio.runner import run_protocol
@@ -153,3 +155,131 @@ def test_recovery_cases_must_cover_every_frozen_requirement() -> None:
             candidates=models(),
             cases=(replace(recovery_case(), requirement="unknown"),),
         )
+
+
+def colliding_protocol():
+    """Two requirements whose old arithmetic seed ranges overlapped on seeds 5-9."""
+
+    protocol = example_protocol()
+    first = replace(
+        protocol.recovery[0],
+        name="first-recovery",
+        success_metric="custom-rate",
+        threshold=0.0,
+        repetitions=10,
+        seed=0,
+    )
+    second = replace(first, name="second-recovery", seed=5)
+    return replace(
+        protocol,
+        cohort=replace(
+            protocol.cohort,
+            expected_subjects=2,
+            expected_sessions=6,
+            expected_observations=12,
+        ),
+        panel=replace(protocol.panel, minimum_sessions=3),
+        comparison=replace(
+            protocol.comparison,
+            winner_policy=WinnerPolicy.LOWEST_POINT_ESTIMATE,
+            bootstrap_repetitions=50,
+        ),
+        recovery=(first, second),
+    ).freeze()
+
+
+def test_requirements_with_overlapping_declared_seed_ranges_stay_independent() -> None:
+    """Two gates that shared replicate seeds now draw genuinely different simulated data."""
+
+    protocol = colliding_protocol()
+    # The second requirement's case comes first, which is what made the old arithmetic
+    # `requirement.seed + case_index * requirement.repetitions + repetition` overlap.
+    cases = (
+        replace(recovery_case(), name="second-case", requirement="second-recovery"),
+        replace(recovery_case(), name="first-case", requirement="first-recovery"),
+    )
+    arithmetic = {
+        "second-recovery": [5 + 0 * 10 + repetition for repetition in range(10)],
+        "first-recovery": [0 + 1 * 10 + repetition for repetition in range(10)],
+    }
+    assert set(arithmetic["second-recovery"]) & set(arithmetic["first-recovery"]) == {
+        10,
+        11,
+        12,
+        13,
+        14,
+    }
+
+    observed = evaluated(protocol)
+    result = run_exact_recovery(
+        observed,
+        generators={"static": models()["static"]},
+        candidates=models(),
+        cases=cases,
+        assessments={
+            "first-recovery": lambda _study, _run, _case: 1.0,
+            "second-recovery": lambda _study, _run, _case: 1.0,
+        },
+    )
+
+    replicates = result.report.replicates
+    seeds = {
+        name: [item.seed for item in replicates if item.requirement == name]
+        for name in ("first-recovery", "second-recovery")
+    }
+
+    assert len(replicates) == 20
+    assert all(len(values) == 10 for values in seeds.values())
+    assert not set(seeds["first-recovery"]) & set(seeds["second-recovery"])
+    assert len(set(seeds["first-recovery"] + seeds["second-recovery"])) == 20
+    assert len({gate.requirement for gate in result.report.gates}) == 2
+
+    # The recovery report deliberately withholds simulated observations, so re-simulate
+    # with the recorded seeds: paired replicates must now differ trial by trial instead of
+    # repeating five perfectly correlated draws under two separate gates.
+    generator = models()["static"]
+    design = observed.compiled.materialized.study
+    parameters = recovery_case().parameter_map
+    outcomes = {
+        name: [generator.simulate(design, parameters, seed=seed)["choice"] for seed in values]
+        for name, values in seeds.items()
+    }
+    assert all(
+        not np.array_equal(left, right)
+        for left, right in zip(outcomes["first-recovery"], outcomes["second-recovery"], strict=True)
+    )
+    assert all(
+        not np.array_equal(left, right)
+        for left, right in zip(
+            outcomes["first-recovery"], outcomes["first-recovery"][1:], strict=False
+        )
+    )
+
+
+def test_replicate_seeds_are_disjoint_even_for_identically_declared_requirements() -> None:
+    """Two requirements that declare the same seed still get separate streams."""
+
+    protocol = colliding_protocol()
+    first, second = protocol.recovery
+    shared = replace(second, seed=first.seed)
+    cases = (
+        RecoveryCase(
+            name="first-case",
+            requirement=first.name,
+            generating_candidate="static",
+            parameters=(Setting("intercept", -0.2),),
+        ),
+        RecoveryCase(
+            name="second-case",
+            requirement=shared.name,
+            generating_candidate="static",
+            parameters=(Setting("intercept", -0.2),),
+        ),
+    )
+
+    plan = _replicate_seed_plan(cases, {first.name: first, shared.name: shared})
+
+    assert len(plan) == 2
+    assert all(len(seeds) == first.repetitions for seeds in plan)
+    assert not set(plan[0]) & set(plan[1])
+    assert _replicate_seed_plan(cases, {first.name: first, shared.name: shared}) == plan

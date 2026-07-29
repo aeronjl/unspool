@@ -1,4 +1,9 @@
-"""Backend-neutral parameter coordinates, bounds, and priors."""
+"""Backend-neutral parameter coordinates, bounds, and priors.
+
+``ParameterSpaceProvider`` now lives in :mod:`behavio.contracts.parameters` and is
+re-exported here, so ``from behavio.parameters import ParameterSpaceProvider`` keeps
+working.
+"""
 
 from __future__ import annotations
 
@@ -9,11 +14,15 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Any, Final, Protocol, runtime_checkable
+from typing import Any, Final
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.special import expit
+
+from behavio.contracts.parameters import (  # noqa: F401  (re-exported contract)
+    ParameterSpaceProvider,
+)
 
 PARAMETER_SPACE_SCHEMA: Final = "behavio.parameter-space/1"
 
@@ -654,14 +663,6 @@ class ParameterSpace:
                 f"optimizer vector must contain {len(self.optimizer_names)} finite values"
             )
         return vector
-
-
-@runtime_checkable
-class ParameterSpaceProvider(Protocol):
-    """Object exposing stable parameter semantics to inference and interchange code."""
-
-    @property
-    def parameter_space(self) -> ParameterSpace: ...
 
 
 def parameter_space_from_dict(payload: Mapping[str, Any]) -> ParameterSpace:

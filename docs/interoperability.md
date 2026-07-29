@@ -15,6 +15,111 @@ become hidden scientific assumptions.
   <figcaption><strong>One scientific boundary across formats.</strong> Adapters preserve source identity and translate structure into the Study contract; they never invent chronology, units, or behavioural semantics.</figcaption>
 </figure>
 
+## CSV, TSV, and Parquet files
+
+`read_table()` is the shortest supported path from a file on disk to a validated study:
+
+```python
+from behavio.adapters.table import read_table
+
+study = read_table("trials.csv")
+```
+
+CSV and TSV need **no optional dependencies at all**. A trial table is the baseline way
+data enters Behavio rather than an optional data source, so the delimited reader uses only
+the standard library and NumPy. Parquet is the one tabular format behind an extra, because
+a binary container genuinely needs a reader:
+
+```bash
+uv sync --extra parquet
+```
+
+The format follows the suffix (`.csv`, `.tsv`, `.tab`, `.parquet`, `.pqt`) and can be
+declared with `format=` when a file is named something else. A UTF-8 byte-order mark, as
+written by spreadsheet exports, is handled by default.
+
+### What the reader will not guess
+
+Three source facts are never inferred, because each is a scientific claim rather than a
+parsing detail.
+
+**Session chronology.** A table that carries no `session_order` column cannot be read until
+the caller names a derivation. The refusal is the same one the NWB adapter makes, and it
+says how to proceed:
+
+```text
+trials.csv has no column 'session_order'. Behavio never infers session chronology from row,
+file, or filename order. Either add the column, name it with session_order_column=..., or
+record an explicit derivation with session_order=session_order_from_column('date'),
+session_order_from_explicit([...]), or session_order_from_appearance().
+Available columns: ['subject', 'session', 'session_date', 'stimulus', 'choice'].
+```
+
+Each derivation is a *recorded* choice, written to a `source_session_order_rule` column on
+every trial, so a derived chronology can never be mistaken for one the source declared:
+
+```python
+from behavio.adapters.table import (
+    read_table,
+    session_order_from_appearance,
+    session_order_from_column,
+    session_order_from_explicit,
+)
+
+# Rank each subject's sessions by a column that carries time.
+study = read_table("trials.csv", session_order=session_order_from_column("session_date"))
+
+# Or state the ordering of session labels yourself.
+study = read_table(
+    "trials.csv", session_order=session_order_from_explicit(["baseline", "week-1", "week-4"])
+)
+
+# Or claim, explicitly, that the rows were written in chronological order.
+study = read_table("trials.csv", session_order=session_order_from_appearance())
+```
+
+`read_tables([...])` reads several identically declared files in the given order, so one
+file per session plus `session_order_from_appearance()` derives chronology from file order.
+
+**Trial numbering.** A table with no `trial` column is not silently numbered by row
+position; `number_trials_by_row_order=True` makes that choice explicit and records it in a
+`source_trial_rule` column.
+
+**Column types.** Types are inferred by a published ladder: a column whose non-missing
+cells all parse as integers becomes `int64`, then floats become `float64`, and anything
+else stays text. Zero-padded digits such as `007` are treated as identifiers and stay text,
+so a participant code is never flattened into a number. Any column can be declared instead:
+
+```python
+study = read_table("trials.csv", dtypes={"rt": "float", "participant_code": "str"})
+```
+
+A declared type that a cell cannot satisfy names the column, the row, the file, the
+offending value, and both ways out:
+
+```text
+could not convert column 'rt' to float: data row 412 (line 413) of trials.csv contains 'n.a.'.
+Add it to missing_values if it means 'missing', or read the column as text with
+dtypes={'rt': 'str'}.
+```
+
+### Missing data
+
+Empty cells and the sentinels `NA`, `N/A`, `na`, `n/a`, `NaN`, `NAN`, `nan`, `NULL`,
+`null`, and `None` are treated as missing after surrounding whitespace is stripped; pass
+`missing_values=(...)` to replace that list exactly. A missing cell becomes `NaN` in a
+numeric column and `None` in a text column, so an absent label stays distinguishable from
+an empty one. Missing `subject` or `session` identity is an error naming the row rather
+than a blank identifier, and missing `trial` or `session_order` is an error too, since
+neither may be imputed.
+
+### Provenance and reproducibility
+
+Every trial records its absolute source file in `source_table_path`, matching the NWB
+adapter. That path is machine-specific and therefore enters the protocol fingerprint; pass
+`record_source_path=False` (or `--omit-source-path` on the command line) when a
+fingerprint that is identical across machines matters more.
+
 ## Dataframes
 
 `Study.from_dataframe(frame)` preserves dataframe column order and row order while
@@ -28,7 +133,9 @@ study = Study.from_dataframe(trials_dataframe)
 ```
 
 The method is dataframe-like rather than pandas-specific and does not add a core pandas
-dependency.
+dependency. It stays the right entry point for a frame you already have in memory;
+`read_table()` is the entry point for a file, and unlike `from_dataframe` it can type
+columns, name a chronology derivation, and report failures against source line numbers.
 
 ## Reading exact IBL ONE trial tables
 
@@ -170,8 +277,32 @@ identifier, so provenance survives subsetting and validation folds. The implemen
 follows the official [DANDI REST API](https://docs.dandiarchive.org/api/rest-api/) and
 [PyNWB streaming guidance](https://pynwb.readthedocs.io/en/stable/tutorials/advanced_io/streaming.html).
 
+## The adapter contract
+
+Every source above is also a `StudyAdapter`: it declares a stable `adapter_name` and
+`adapter_version`, the `source_type` it reads from, the `session_order_policy` it follows,
+and a `read()` method returning a `Study`.
+
+```python
+from behavio.adapters.table import TableSource
+from behavio.contracts.adapter import adapter_capabilities
+
+source = TableSource("trials.csv")
+adapter_capabilities(source).to_dict()
+# {'adapter_name': 'behavio.table', 'adapter_version': '1',
+#  'source_type': 'local-file', 'session_order_policy': 'recorded'}
+```
+
+`session_order_policy` is the honest half of the declaration: `recorded` means the
+chronology came from the caller or from an explicit record in the source, and `derived`
+means a named rule produced it. Writing your own adapter is documented in
+[Extend Behavio](extensions.md), including the runnable conformance harness.
+
 ## Current boundary
 
+- BIDS `_beh.tsv`/`_events.tsv`, PsychoPy, jsPsych, Bpod, and pyControl have no dedicated
+  readers yet; their tables can be read today with `read_table()` plus explicit column
+  names and a named chronology derivation.
 - HDF5 blob-backed NWB assets are supported; NWB-Zarr is not yet supported.
 - The adapter imports trial tables, not arbitrary neural time series or processing modules.
 - Ragged trial fields require source-specific preprocessing outside the generic adapter.

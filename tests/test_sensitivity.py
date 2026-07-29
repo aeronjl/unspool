@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from behavio import (
+    PosteriorAuditPolicy,
     PosteriorGroup,
     PosteriorResult,
     PosteriorVariable,
@@ -13,6 +14,57 @@ from behavio import (
     posterior_sensitivity_outcome,
     run_sensitivity_analysis,
 )
+from behavio.contracts import AuditSeverity
+from behavio.sensitivity import SensitivityError
+
+
+def unaudited_policy() -> PosteriorAuditPolicy:
+    """Declare, check by check, that unusable draws are being accepted anyway."""
+
+    return PosteriorAuditPolicy(
+        divergence_severity=AuditSeverity.WARNING,
+        rhat_severity=AuditSeverity.WARNING,
+        nonfinite_severity=AuditSeverity.WARNING,
+    )
+
+
+def sampled_result(*, unconverged: bool = False) -> PosteriorResult:
+    generator = np.random.default_rng(404)
+    chains, draws = 4, 500
+    values = generator.normal(size=(chains, draws, 2)) + np.asarray([0.5, 1.5])
+    diverging = np.zeros((chains, draws), dtype=bool)
+    if unconverged:
+        values[0, :, 0] += 9.0
+        diverging[0, :23] = True
+    coords = {
+        "chain": np.arange(chains),
+        "draw": np.arange(draws),
+        "subject": np.asarray(["a", "b"]),
+    }
+    posterior = PosteriorGroup(
+        "posterior",
+        (PosteriorVariable("bias", values, ("chain", "draw", "subject"), coords),),
+    )
+    sample_stats = PosteriorGroup(
+        "sample_stats",
+        (
+            PosteriorVariable(
+                "diverging",
+                diverging,
+                ("chain", "draw"),
+                {"chain": coords["chain"], "draw": coords["draw"]},
+            ),
+        ),
+    )
+    return PosteriorResult(
+        model_name="hierarchical-bias",
+        model_signature="hierarchical-bias[v1]",
+        inference_library="test",
+        inference_library_version="1",
+        parameter_names=("bias",),
+        groups=(posterior, sample_stats),
+        parameter_space_fingerprint="sha256:test",
+    )
 
 
 def scenarios() -> tuple[SensitivityScenario, ...]:
@@ -156,42 +208,70 @@ def test_failed_reference_is_retained_without_fabricating_contrasts() -> None:
 
 
 def test_posterior_sensitivity_outcome_preserves_labelled_parameters() -> None:
-    values = np.asarray(
-        [
-            [[0.0, 1.0], [0.2, 1.2], [0.4, 1.4]],
-            [[0.6, 1.6], [0.8, 1.8], [1.0, 2.0]],
-        ]
-    )
-    variable = PosteriorVariable(
-        "bias",
-        values,
-        ("chain", "draw", "subject"),
-        {"chain": [0, 1], "draw": [0, 1, 2], "subject": ["a", "b"]},
-    )
-    result = PosteriorResult(
-        model_name="hierarchical-bias",
-        model_signature="hierarchical-bias[v1]",
-        inference_library="test",
-        inference_library_version="1",
-        parameter_names=("bias",),
-        groups=(PosteriorGroup("posterior", (variable,)),),
-        parameter_space_fingerprint="sha256:test",
-    )
-
+    pytest.importorskip("arviz")
     outcome = posterior_sensitivity_outcome(
-        result,
+        sampled_result(),
         interval_probability=0.8,
-        diagnostic_codes=("posterior.rhat",),
+        diagnostic_codes=("prior-sensitivity-checked",),
     )
 
     assert [metric.target for metric in outcome.metrics] == [
         "bias[subject='a']",
         "bias[subject='b']",
     ]
-    assert [metric.estimate for metric in outcome.metrics] == pytest.approx([0.5, 1.5])
+    assert [metric.estimate for metric in outcome.metrics] == pytest.approx([0.5, 1.5], abs=0.05)
     assert all(metric.interval is not None for metric in outcome.metrics)
-    assert outcome.diagnostic_codes == ("posterior.rhat",)
+    assert outcome.diagnostic_codes == ("prior-sensitivity-checked",)
     assert outcome.provenance["parameter_space_fingerprint"] == "sha256:test"
+
+
+def test_unconverged_posterior_refuses_to_become_a_sensitivity_metric() -> None:
+    pytest.importorskip("arviz")
+    with pytest.raises(SensitivityError, match="failed its convergence audit"):
+        posterior_sensitivity_outcome(sampled_result(unconverged=True))
+
+
+def test_a_refused_posterior_is_retained_as_a_scenario_failure() -> None:
+    pytest.importorskip("arviz")
+
+    def analysis(scenario: SensitivityScenario, seed: int) -> SensitivityOutcome:
+        return posterior_sensitivity_outcome(
+            sampled_result(unconverged=not scenario.is_reference),
+            artifact_signature=f"fit[{scenario.signature}]",
+        )
+
+    report = run_sensitivity_analysis(
+        scenarios(),
+        analysis,
+        seed=12,
+        analysis_signature="posterior-convergence-gate[v1]",
+    )
+
+    assert report.is_interpretable
+    assert report.n_successful == 1
+    assert report.n_failed == 2
+    failed = next(run for run in report.runs if run.failure is not None)
+    assert failed.failure is not None
+    assert failed.failure.stage == "analysis"
+    assert failed.failure.error_type == "SensitivityError"
+    assert "posterior.rhat" in failed.failure.message
+    assert report.contrasts == ()
+    json.dumps(report.to_dict(), allow_nan=False)
+
+
+def test_the_convergence_gate_is_injectable_and_its_concession_is_recorded() -> None:
+    pytest.importorskip("arviz")
+    outcome = posterior_sensitivity_outcome(
+        sampled_result(unconverged=True),
+        audit_policy=unaudited_policy(),
+    )
+
+    assert "posterior.rhat" in outcome.diagnostic_codes
+    assert "posterior.divergences" in outcome.diagnostic_codes
+    assert len(set(outcome.diagnostic_codes)) == len(outcome.diagnostic_codes)
+
+    with pytest.raises(TypeError, match="audit_policy"):
+        posterior_sensitivity_outcome(sampled_result(), audit_policy="skip")  # type: ignore[arg-type]
 
 
 def test_sensitivity_contracts_reject_ambiguous_declarations() -> None:

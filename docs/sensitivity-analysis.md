@@ -25,7 +25,6 @@ those choices to the real model or pipeline.
 ```python
 from behavio import (
     SensitivityScenario,
-    audit_posterior,
     posterior_sensitivity_outcome,
     run_sensitivity_analysis,
 )
@@ -54,11 +53,9 @@ def analyse(scenario, seed):
     settings = {"prior_scale": 1.0, "history_lags": 5}
     settings.update(scenario.changes)
     posterior = fit_declared_history_model(settings, seed=seed)  # your backend
-    audit = audit_posterior(posterior)
     return posterior_sensitivity_outcome(
         posterior,
         variable_names=("population_coefficient",),
-        diagnostic_codes=audit.issue_codes,
     )
 
 
@@ -80,6 +77,18 @@ labelled scalar means and central intervals. Subject, coefficient, state, or oth
 coordinates remain in targets such as
 `population_coefficient[coefficient='choice_lag_1']`. The outcome also retains model,
 backend, parameter-space, artifact, and diagnostic provenance.
+
+It audits the posterior's convergence for you and appends every audit issue code to
+`diagnostic_codes`, so `audit_posterior()` no longer has to be called by hand in the
+callback. If the audit *fails*, it raises `SensitivityError`. This is the one place in the
+package that refuses rather than marks: a `SensitivityOutcome` carries only numbers, and
+each of its metrics is fed straight into `report.contrasts` and `report.summary()`, so a
+posterior mean over unmixed chains would silently become a published contrast. Raising is
+not lossy, because `run_sensitivity_analysis()` catches it and retains it as a
+`SensitivityFailure` on that scenario's run—the scenario appears in the report as one whose
+refit could not be interpreted, which is what a reader needs. Pass `audit_policy=` a
+`PosteriorAuditPolicy` naming the severities you are downgrading to accept it anyway; the
+audit's codes then travel with the outcome.
 
 ## Compare any common scientific metric
 

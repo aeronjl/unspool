@@ -12,13 +12,13 @@ from numpy.typing import NDArray
 from scipy.optimize import minimize
 from scipy.special import expit, logsumexp
 
+from behavio._internal.arrays import protected_array
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
     ModelDataError,
     Prediction,
     PredictionMode,
-    _protected_array,
 )
 from behavio.models.glm import BernoulliHistoryGLM, _ordered_session_indices
 from behavio.state_alignment import LatentStateAlignment, align_latent_states
@@ -35,9 +35,9 @@ class GLMHMMParameters:
     coefficient_names: tuple[str, ...]
 
     def __post_init__(self) -> None:
-        initial = _protected_array(self.initial_probabilities, dtype=np.float64)
-        transition = _protected_array(self.transition_matrix, dtype=np.float64)
-        emissions = _protected_array(self.emission_coefficients, dtype=np.float64)
+        initial = protected_array(self.initial_probabilities, dtype=np.float64)
+        transition = protected_array(self.transition_matrix, dtype=np.float64)
+        emissions = protected_array(self.emission_coefficients, dtype=np.float64)
         names = tuple(self.coefficient_names)
         if initial.ndim != 1 or len(initial) < 2:
             raise ValueError("initial_probabilities must contain at least two states")
@@ -77,7 +77,7 @@ class GLMHMMSimulation:
     n_states: int
 
     def __post_init__(self) -> None:
-        states = _protected_array(self.states, dtype=np.int64)
+        states = protected_array(self.states, dtype=np.int64)
         if (
             isinstance(self.n_states, bool)
             or not isinstance(self.n_states, int)
@@ -97,8 +97,8 @@ class FilteredStateProbabilities:
     filtered: NDArray[np.float64]
 
     def __post_init__(self) -> None:
-        predictive = _protected_array(self.predictive, dtype=np.float64)
-        filtered = _protected_array(self.filtered, dtype=np.float64)
+        predictive = protected_array(self.predictive, dtype=np.float64)
+        filtered = protected_array(self.filtered, dtype=np.float64)
         if predictive.ndim != 2 or filtered.shape != predictive.shape:
             raise ValueError("state-probability arrays must be equally sized matrices")
         if predictive.shape[1] < 2:
@@ -137,11 +137,11 @@ class GLMHMMFitResult(FitResult):
 
     def __post_init__(self) -> None:
         FitResult.__post_init__(self)
-        objectives = _protected_array(self.restart_objectives, dtype=np.float64)
-        converged = _protected_array(self.restart_converged, dtype=np.bool_)
+        objectives = protected_array(self.restart_objectives, dtype=np.float64)
+        converged = protected_array(self.restart_converged, dtype=np.bool_)
         messages = tuple(self.restart_messages)
         permutation = tuple(self.canonical_permutation)
-        occupancy = _protected_array(self.state_occupancy, dtype=np.float64)
+        occupancy = protected_array(self.state_occupancy, dtype=np.float64)
         if objectives.ndim != 1 or converged.shape != objectives.shape:
             raise ValueError("restart diagnostics must have one value per restart")
         if len(messages) != len(objectives) or np.any(np.isnan(objectives)):
@@ -506,7 +506,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         prediction = self.predict(study, fit, mode=mode)
         scores = outcomes * np.log(prediction.probability)
         scores += (1.0 - outcomes) * np.log1p(-prediction.probability)
-        return _protected_array(scores, dtype=np.float64)
+        return protected_array(scores, dtype=np.float64)
 
     def state_probabilities(
         self,

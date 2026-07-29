@@ -14,6 +14,71 @@ from behavio import (
     assess_test_retest_reliability,
     posterior_subject_estimates,
 )
+from behavio.reliability import SubjectPooling
+
+SUBJECTS = tuple(f"s{index:02d}" for index in range(12))
+CHAINS = 2
+DRAWS = 400
+
+
+def occasion_result(
+    *,
+    seed: int,
+    posterior_sd: float = 0.6,
+    unconverged: bool = False,
+) -> PosteriorResult:
+    """One occasion's hierarchical fit: per-subject means plus real posterior width."""
+
+    generator = np.random.default_rng(seed)
+    truth = np.linspace(-1.0, 1.0, len(SUBJECTS))
+    centre = truth + generator.normal(0.0, 0.3, size=len(SUBJECTS))
+    values = centre + generator.normal(0.0, posterior_sd, size=(CHAINS, DRAWS, len(SUBJECTS)))
+    diverging = np.zeros((CHAINS, DRAWS), dtype=bool)
+    if unconverged:
+        values[0] += 12.0
+        diverging[0, :19] = True
+    coords = {
+        "chain": np.arange(CHAINS),
+        "draw": np.arange(DRAWS),
+        "subject": np.asarray(SUBJECTS),
+    }
+    posterior = PosteriorGroup(
+        "posterior",
+        (PosteriorVariable("beta", values, ("chain", "draw", "subject"), coords),),
+    )
+    sample_stats = PosteriorGroup(
+        "sample_stats",
+        (
+            PosteriorVariable(
+                "diverging",
+                diverging,
+                ("chain", "draw"),
+                {"chain": coords["chain"], "draw": coords["draw"]},
+            ),
+        ),
+    )
+    return PosteriorResult(
+        model_name="hierarchical-beta",
+        model_signature="hierarchical-beta[v1]",
+        inference_library="test",
+        inference_library_version="1",
+        parameter_names=("beta",),
+        groups=(posterior, sample_stats),
+    )
+
+
+def without_draws(estimates: SubjectEstimates) -> SubjectEstimates:
+    """The same point estimates with their posterior thrown away, as before the fix."""
+
+    return SubjectEstimates(
+        occasion=estimates.occasion,
+        target=estimates.target,
+        target_signature=estimates.target_signature,
+        unit=estimates.unit,
+        subjects=estimates.subjects,
+        values=estimates.values,
+        artifact_signature=estimates.artifact_signature,
+    )
 
 
 def shifted_estimates() -> tuple[SubjectEstimates, SubjectEstimates]:
@@ -230,4 +295,202 @@ def test_reliability_requires_exact_subject_and_target_pairing() -> None:
             incompatible,
             seed=1,
             analysis_signature="invalid-target[v1]",
+        )
+
+
+def test_propagating_posterior_draws_widens_every_reported_interval() -> None:
+    pytest.importorskip("arviz")
+    first = posterior_subject_estimates(occasion_result(seed=101), "beta", occasion="week-1")
+    second = posterior_subject_estimates(occasion_result(seed=202), "beta", occasion="week-3")
+    policy = ReliabilityPolicy(bootstrap_repeats=600, minimum_subjects_warning=3)
+    kwargs = {"seed": 7, "analysis_signature": "posterior-reliability[v1]", "policy": policy}
+
+    propagated = assess_test_retest_reliability(first, second, **kwargs)
+    collapsed = assess_test_retest_reliability(
+        without_draws(first), without_draws(second), **kwargs
+    )
+
+    assert propagated.posterior_uncertainty_propagated
+    assert not collapsed.posterior_uncertainty_propagated
+    for statistic in (
+        ReliabilityStatistic.PEARSON,
+        ReliabilityStatistic.SPEARMAN,
+        ReliabilityStatistic.ICC_CONSISTENCY,
+        ReliabilityStatistic.ICC_ABSOLUTE_AGREEMENT,
+    ):
+        wide = propagated[statistic].interval
+        narrow = collapsed[statistic].interval
+        assert wide is not None and narrow is not None
+        assert wide[1] - wide[0] > narrow[1] - narrow[0]
+    json.dumps(propagated.to_dict(), allow_nan=False)
+
+
+def test_posterior_reliability_reports_the_posterior_mean_of_the_statistic() -> None:
+    pytest.importorskip("arviz")
+    first = posterior_subject_estimates(occasion_result(seed=101), "beta", occasion="week-1")
+    second = posterior_subject_estimates(occasion_result(seed=202), "beta", occasion="week-3")
+    policy = ReliabilityPolicy(bootstrap_repeats=600, minimum_subjects_warning=3)
+    kwargs = {"seed": 7, "analysis_signature": "posterior-reliability[v1]", "policy": policy}
+
+    propagated = assess_test_retest_reliability(first, second, **kwargs)
+    collapsed = assess_test_retest_reliability(
+        without_draws(first), without_draws(second), **kwargs
+    )
+
+    on_means = collapsed[ReliabilityStatistic.PEARSON].estimate
+    posterior_mean = propagated[ReliabilityStatistic.PEARSON].estimate
+    assert on_means is not None and posterior_mean is not None
+    assert posterior_mean < on_means
+    assert propagated.to_dict()["uncertainty_sources"] == [
+        "subject-resampling",
+        "posterior-draws",
+    ]
+
+
+def test_point_estimate_inputs_keep_the_original_subject_bootstrap_exactly() -> None:
+    first, second = shifted_estimates()
+    policy = ReliabilityPolicy(bootstrap_repeats=300, minimum_subjects_warning=3)
+
+    report = assess_test_retest_reliability(
+        first,
+        second,
+        seed=81,
+        analysis_signature="constant-shift-reliability[v1]",
+        policy=policy,
+    )
+
+    assert not report.posterior_uncertainty_propagated
+    assert report.to_dict()["uncertainty_sources"] == ["subject-resampling"]
+    assert report[ReliabilityStatistic.PEARSON].estimate == pytest.approx(1.0)
+    assert report[ReliabilityStatistic.ICC_ABSOLUTE_AGREEMENT].estimate == pytest.approx(5 / 105)
+    assert report[ReliabilityStatistic.MEAN_DIFFERENCE].estimate == pytest.approx(10.0)
+    assert "reliability.shrunken-estimates" not in report.issue_codes
+    assert "reliability.draws-not-propagated" not in report.issue_codes
+
+
+def test_partial_pooling_is_declared_and_warns_that_reliability_is_inflated() -> None:
+    pytest.importorskip("arviz")
+    policy = ReliabilityPolicy(bootstrap_repeats=100, minimum_subjects_warning=3)
+    pooled = assess_test_retest_reliability(
+        posterior_subject_estimates(occasion_result(seed=101), "beta", occasion="week-1"),
+        posterior_subject_estimates(occasion_result(seed=202), "beta", occasion="week-3"),
+        seed=3,
+        analysis_signature="pooled[v1]",
+        policy=policy,
+    )
+    independent = assess_test_retest_reliability(
+        posterior_subject_estimates(
+            occasion_result(seed=101),
+            "beta",
+            occasion="week-1",
+            pooling=SubjectPooling.NONE,
+        ),
+        posterior_subject_estimates(
+            occasion_result(seed=202),
+            "beta",
+            occasion="week-3",
+            pooling=SubjectPooling.NONE,
+        ),
+        seed=3,
+        analysis_signature="independent[v1]",
+        policy=policy,
+    )
+
+    assert "reliability.shrunken-estimates" in pooled.issue_codes
+    shrinkage = next(
+        item for item in pooled.issues if item.code == "reliability.shrunken-estimates"
+    )
+    assert shrinkage.statistics == (
+        ReliabilityStatistic.PEARSON,
+        ReliabilityStatistic.SPEARMAN,
+        ReliabilityStatistic.ICC_CONSISTENCY,
+        ReliabilityStatistic.ICC_ABSOLUTE_AGREEMENT,
+    )
+    assert "upper bounds" in shrinkage.message
+    assert "reliability.shrunken-estimates" not in independent.issue_codes
+    assert pooled.to_dict()["first"]["pooling"] == "partial"
+    assert independent.to_dict()["first"]["pooling"] == "none"
+
+
+def test_partial_pooling_is_the_default_for_posterior_subject_estimates() -> None:
+    pytest.importorskip("arviz")
+    estimates = posterior_subject_estimates(occasion_result(seed=101), "beta", occasion="week-1")
+
+    assert estimates.pooling is SubjectPooling.PARTIAL
+    assert estimates.n_draws == CHAINS * DRAWS
+    assert estimates.draws is not None
+    assert estimates.draws.shape == (CHAINS * DRAWS, len(SUBJECTS))
+    assert estimates.draws.flags.writeable is False
+    np.testing.assert_allclose(estimates.values, np.mean(estimates.draws, axis=0))
+
+
+def test_a_failed_convergence_audit_is_carried_into_the_reliability_report() -> None:
+    pytest.importorskip("arviz")
+    first = posterior_subject_estimates(
+        occasion_result(seed=101, unconverged=True), "beta", occasion="week-1"
+    )
+    second = posterior_subject_estimates(occasion_result(seed=202), "beta", occasion="week-3")
+
+    assert first.posterior_audit is not None
+    assert first.posterior_audit.status.value == "fail"
+    assert first.provenance["posterior_audit_status"] == "fail"
+
+    report = assess_test_retest_reliability(
+        first,
+        second,
+        seed=5,
+        analysis_signature="unconverged[v1]",
+        policy=ReliabilityPolicy(bootstrap_repeats=50, minimum_subjects_warning=3),
+    )
+
+    assert "reliability.unconverged-posterior" in report.issue_codes
+    failing = next(
+        item for item in report.issues if item.code == "reliability.unconverged-posterior"
+    )
+    assert "week-1" in failing.message
+    assert report.to_dict()["first"]["posterior_audit"]["status"] == "fail"
+    json.dumps(report.to_dict(), allow_nan=False)
+
+
+def test_available_draws_that_cannot_be_propagated_are_reported() -> None:
+    pytest.importorskip("arviz")
+    first = posterior_subject_estimates(occasion_result(seed=101), "beta", occasion="week-1")
+    second = without_draws(
+        posterior_subject_estimates(occasion_result(seed=202), "beta", occasion="week-3")
+    )
+
+    report = assess_test_retest_reliability(
+        first,
+        second,
+        seed=5,
+        analysis_signature="half-propagated[v1]",
+        policy=ReliabilityPolicy(bootstrap_repeats=50, minimum_subjects_warning=3),
+    )
+
+    assert not report.posterior_uncertainty_propagated
+    assert "reliability.draws-not-propagated" in report.issue_codes
+
+
+def test_subject_estimate_draws_must_align_with_their_subjects() -> None:
+    with pytest.raises(ValueError, match="sample-by-subject"):
+        SubjectEstimates(
+            occasion="test",
+            target="beta",
+            target_signature="beta[v1]",
+            unit="log-odds",
+            subjects=("a", "b", "c"),
+            values=[1.0, 2.0, 3.0],
+            artifact_signature="fit[v1]",
+            draws=np.zeros((10, 2)),
+        )
+    with pytest.raises(ValueError, match="draws must be finite"):
+        SubjectEstimates(
+            occasion="test",
+            target="beta",
+            target_signature="beta[v1]",
+            unit="log-odds",
+            subjects=("a", "b", "c"),
+            values=[1.0, 2.0, 3.0],
+            artifact_signature="fit[v1]",
+            draws=np.full((10, 3), np.nan),
         )

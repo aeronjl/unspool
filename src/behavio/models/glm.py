@@ -13,6 +13,7 @@ from numpy.typing import NDArray
 from scipy.optimize import minimize
 from scipy.special import expit
 
+from behavio._internal.arrays import protected_array
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -20,7 +21,6 @@ from behavio.models.base import (
     Prediction,
     PredictionMode,
     UnsupportedPredictionMode,
-    _protected_array,
 )
 from behavio.study import REQUIRED_COLUMNS, Study
 
@@ -35,8 +35,8 @@ class CoefficientTrajectory:
     values: NDArray[np.float64]
 
     def __post_init__(self) -> None:
-        times = _protected_array(self.times, dtype=np.float64)
-        values = _protected_array(self.values, dtype=np.float64)
+        times = protected_array(self.times, dtype=np.float64)
+        values = protected_array(self.values, dtype=np.float64)
         names = tuple(self.coefficient_names)
         if times.ndim != 1 or not np.all(np.isfinite(times)):
             raise ValueError("trajectory times must be a finite one-dimensional array")
@@ -227,7 +227,7 @@ class BernoulliHistoryGLM:
         prediction = self.predict(study, fit, mode=mode)
         scores = outcomes * -np.logaddexp(0.0, -prediction.linear_predictor)
         scores += (1.0 - outcomes) * -np.logaddexp(0.0, prediction.linear_predictor)
-        return _protected_array(scores, dtype=np.float64)
+        return protected_array(scores, dtype=np.float64)
 
     def _parameter_vector(self, parameters: Mapping[str, float]) -> NDArray[np.float64]:
         expected = set(self.parameter_names)

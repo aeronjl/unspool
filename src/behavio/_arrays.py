@@ -4,6 +4,11 @@
 ``behavio.sync`` all coerce caller-supplied sequences into read-only float
 arrays and enforce the same strictly increasing, finite time contract. These
 helpers are private and exist only so those four modules agree on it.
+
+Future work: ``behavio._internal.arrays.protected_array`` is the package-wide
+array-immutability helper. It coerces to a caller-supplied dtype and enforces no time
+contract, so it is not a drop-in replacement for either helper here. Consolidating the two
+modules is a deliberate follow-up, not part of the contracts re-homing.
 """
 
 from __future__ import annotations

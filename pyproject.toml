@@ -70,14 +70,40 @@ bayesian = [
     "pymc>=5.28,<6 ; python_full_version < '3.12'",
     "pymc>=6.1,<7 ; python_full_version >= '3.12'",
 ]
+# CSV and TSV ingest is deliberately NOT an extra: `behavio.adapters.table` reads delimited
+# files with the standard library and NumPy alone, because a trial table is the baseline way
+# data enters the library rather than an optional data source. Parquet is a binary container
+# that genuinely needs a reader, so it is the one tabular format behind an extra.
+parquet = [
+    "pyarrow>=17",
+]
+# `behavio.plot` renders the reports the rest of the package produces. matplotlib is an
+# extra rather than a core dependency because fitting, auditing, and scoring never need it;
+# only calling a plotting function does, and that call raises `MatplotlibUnavailableError`
+# naming this extra when it is absent.
+plots = [
+    "matplotlib>=3.9",
+]
 
 [dependency-groups]
 dev = [
+    # arviz and pymc mirror the `probabilistic` and `bayesian` extras exactly, including
+    # their 3.11/3.12 split, so the default test run executes the posterior stack instead
+    # of skipping past it. `arviz-stats` is deliberately absent: ArviZ 1.x requires it
+    # transitively, and ArviZ 0.22 on 3.11 still carries `rhat`, `ess` and `loo` itself, so
+    # declaring it would force a 1.x statistics API onto 0.x inference data.
+    "arviz>=0.22,<1.2 ; python_full_version < '3.12'",
+    "arviz>=1.2,<2 ; python_full_version >= '3.12'",
     # h5py, pandas, tables and xarray back the reader fixtures: the
     # pinned DeepLabCut, SLEAP, Keypoint-MoSeq and BORIS writer contracts, and
     # the duck-typed `movement` poses dataset.
     "h5py>=3.11",
+    # matplotlib mirrors the `plots` extra so the plotting tests execute in the default run
+    # instead of skipping past the only rendering of SBC bands, Pareto-k, and recovery.
+    "matplotlib>=3.9",
     "pandas>=2.2",
+    "pymc>=5.28,<6 ; python_full_version < '3.12'",
+    "pymc>=6.1,<7 ; python_full_version >= '3.12'",
     "pytest>=8.4.0",
     "ruff>=0.12.0",
     "tables>=3.10",

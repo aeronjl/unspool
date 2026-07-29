@@ -25,9 +25,10 @@ use these pages when you need exact signatures, return types, and public attribu
 | API area | Contains | Guide |
 | --- | --- | --- |
 | [Recovery](recovery.md) | parameter, model, exact-protocol, and trajectory-shape recovery | [Recovery design](../model-recovery.md) |
-| [Diagnostics and sensitivity](diagnostics.md) | fit audits, posterior checks, SBC, sensitivity, reliability, PSIS-LOO | [Fit diagnostics](../diagnostics.md) |
+| [Diagnostics and sensitivity](diagnostics.md) | fit audits, posterior checks, SBC, sensitivity, reliability, blocked PSIS-LOO, paired ELPD comparison | [Fit diagnostics](../diagnostics.md) |
 | [Inference and parameters](inference.md) | parameter spaces, deterministic optimizers, estimator registration | [Inference backends](../inference-backends.md) |
 | [Posterior results](posterior.md) | labelled draws, PyMC backend, posterior interchange | [Posterior results](../posterior-results.md) |
+| [Plotting](plots.md) | SBC bands, Pareto-`k`, ELPD differences, predictive checks, recovery, calibration, convergence | [Scientific figure standard](figure-standard.md) |
 
 ## Protocols and interoperability
 
@@ -36,7 +37,8 @@ use these pages when you need exact signatures, return types, and public attribu
 | [Protocol schema](protocol.md) | immutable scientific declarations and lifecycle | [Protocol authoring](../protocols/index.md) |
 | [Protocol execution](execution.md) | compilation, materialization, running, exact-design recovery | [Compile and audit](../protocols/auditing.md) |
 | [Reporting and evidence](evidence-bundles.md) | bounded reports and content-addressed evidence bundles | [Evidence bundles](../protocols/evidence-bundles.md) |
-| [Data adapters](data-adapters.md) | NWB, DANDI, IBL ONE, and fit-artifact interchange | [Interoperability](../interoperability.md) |
+| [Extension contracts](contracts.md) | every protocol a downstream package implements, at one address | [Extend Behavio](../extensions.md) |
+| [Data adapters](data-adapters.md) | CSV/TSV/Parquet tables, NWB, DANDI, IBL ONE, adapter conformance, and fit-artifact interchange | [Interoperability](../interoperability.md) |
 | [Observed behaviour](observed-behaviour.md) | pose, covariates, ethograms, DeepLabCut/SLEAP/MoSeq/BORIS readers, clock synchronisation, interval policies | [Observed behaviour](../observed-behaviour.md) |
 
 The stable public import surface remains `behavio`. Optional data-source, optimization,

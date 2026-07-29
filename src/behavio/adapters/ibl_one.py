@@ -5,16 +5,19 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import urlparse
 from uuid import UUID
 
 import numpy as np
 
+from behavio.contracts.adapter import SessionOrderPolicy, SourceType
 from behavio.study import REQUIRED_COLUMNS, Study
 
 DEFAULT_IBL_ALYX_URL = "https://openalyx.internationalbrainlab.org"
 DEFAULT_PUBLIC_PASSWORD = "international"
+ADAPTER_NAME = "behavio.ibl_one"
+ADAPTER_VERSION = "1"
 
 
 class IBLONEAdapterError(ValueError):
@@ -39,6 +42,16 @@ class IBLONETrialSource:
     column_map: Mapping[str, str] | None = None
     source_columns: Mapping[str, Any] | None = None
     alyx_url: str = DEFAULT_IBL_ALYX_URL
+
+    adapter_name: ClassVar[str] = ADAPTER_NAME
+    adapter_version: ClassVar[str] = ADAPTER_VERSION
+    source_type: ClassVar[SourceType] = SourceType.REMOTE_ARCHIVE
+    session_order_policy: ClassVar[SessionOrderPolicy] = SessionOrderPolicy.RECORDED
+
+    def read(self) -> Study:
+        """Load this checksum-pinned ONE trial table into a canonical study."""
+
+        return study_from_ibl_one(self)
 
     def __post_init__(self) -> None:
         session_id = _validated_uuid(self.session_id, "session_id")

@@ -13,6 +13,7 @@ from numpy.typing import NDArray
 from scipy.optimize import minimize, minimize_scalar
 from scipy.special import logsumexp
 
+from behavio._internal.arrays import protected_array
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -20,7 +21,6 @@ from behavio.models.base import (
     Prediction,
     PredictionMode,
     UnsupportedPredictionMode,
-    _protected_array,
 )
 from behavio.models.ddm import (
     _LOG_DENSITY_FLOOR,
@@ -67,8 +67,8 @@ class HierarchicalSmoothDriftDiffusionSimulation:
         knots = tuple(float(knot) for knot in self.knots)
         names = tuple(self.parameter_names)
         subject_parameters = tuple(self.subject_parameters)
-        population = _protected_array(self.population_knot_values, dtype=np.float64)
-        deviations = _protected_array(self.subject_deviation_knot_values, dtype=np.float64)
+        population = protected_array(self.population_knot_values, dtype=np.float64)
+        deviations = protected_array(self.subject_deviation_knot_values, dtype=np.float64)
         if subjects != tuple(_scalar(subject) for subject in self.study.subjects):
             raise ValueError("simulation subjects must match the study's subject order")
         _validate_coordinates(self.clock, knots, names, subject_parameters)
@@ -98,7 +98,7 @@ class HierarchicalSmoothDriftDiffusionSimulation:
             values[:, parameter_index, :] += self.subject_deviation_knot_values[
                 :, deviation_index, :
             ]
-        return _protected_array(values, dtype=np.float64)
+        return protected_array(values, dtype=np.float64)
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,29 +122,29 @@ class UnseenSubjectPosteriorPrediction:
 
     def __post_init__(self) -> None:
         subjects = tuple(_scalar(subject) for subject in self.subjects)
-        row_subjects = _protected_array(self.row_subject_indices, dtype=np.intp)
-        probability = _protected_array(self.probability, dtype=np.float64)
-        draw_probabilities = _protected_array(self.draw_probabilities, dtype=np.float64)
-        draw_pointwise = _protected_array(
+        row_subjects = protected_array(self.row_subject_indices, dtype=np.intp)
+        probability = protected_array(self.probability, dtype=np.float64)
+        draw_probabilities = protected_array(self.draw_probabilities, dtype=np.float64)
+        draw_pointwise = protected_array(
             self.draw_pointwise_log_probability,
             dtype=np.float64,
         )
-        pointwise = _protected_array(
+        pointwise = protected_array(
             self.pointwise_marginal_log_probability,
             dtype=np.float64,
         )
-        subject_joint = _protected_array(
+        subject_joint = protected_array(
             self.subject_joint_log_probability,
             dtype=np.float64,
         )
-        effective_draws = _protected_array(self.subject_effective_draws, dtype=np.float64)
-        monte_carlo_error = _protected_array(
+        effective_draws = protected_array(self.subject_effective_draws, dtype=np.float64)
+        monte_carlo_error = protected_array(
             self.subject_log_probability_mcse,
             dtype=np.float64,
         )
-        draws = _protected_array(self.random_effect_draws, dtype=np.float64)
+        draws = protected_array(self.random_effect_draws, dtype=np.float64)
         parameters = tuple(self.subject_parameters)
-        scales = _protected_array(self.subject_parameter_scales, dtype=np.float64)
+        scales = protected_array(self.subject_parameter_scales, dtype=np.float64)
         if not subjects or len(set(subjects)) != len(subjects):
             raise ValueError("predictive subjects must be non-empty and unique")
         if row_subjects.ndim != 1 or np.any((row_subjects < 0) | (row_subjects >= len(subjects))):
@@ -265,8 +265,8 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
         subjects = tuple(_scalar(subject) for subject in self.subjects)
         names = tuple(self.base_parameter_names)
         subject_parameters = tuple(self.subject_parameters)
-        deviations = _protected_array(self.subject_deviations, dtype=np.float64)
-        standard_errors = _protected_array(self.subject_standard_errors, dtype=np.float64)
+        deviations = protected_array(self.subject_deviations, dtype=np.float64)
+        standard_errors = protected_array(self.subject_standard_errors, dtype=np.float64)
         if not subjects or len(set(subjects)) != len(subjects):
             raise ValueError("fit subjects must be non-empty and unique")
         _validate_coordinates(self.clock, self.knots, names, subject_parameters)
@@ -286,7 +286,7 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
         scales = (
             np.full(len(subject_parameters), self.subject_scale, dtype=np.float64)
             if self.subject_parameter_scales is None
-            else _protected_array(self.subject_parameter_scales, dtype=np.float64)
+            else protected_array(self.subject_parameter_scales, dtype=np.float64)
         )
         if scales.shape != (len(subject_parameters),) or not np.all(np.isfinite(scales)):
             raise ValueError("subject parameter scales must align with subject_parameters")
@@ -295,12 +295,12 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
         scale_standard_errors = (
             None
             if self.subject_scale_standard_errors is None
-            else _protected_array(self.subject_scale_standard_errors, dtype=np.float64)
+            else protected_array(self.subject_scale_standard_errors, dtype=np.float64)
         )
         local_standard_errors = (
             None
             if self.subject_scale_local_standard_errors is None
-            else _protected_array(
+            else protected_array(
                 self.subject_scale_local_standard_errors,
                 dtype=np.float64,
             )
@@ -308,17 +308,17 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
         scale_covariance = (
             None
             if self.subject_scale_covariance is None
-            else _protected_array(self.subject_scale_covariance, dtype=np.float64)
+            else protected_array(self.subject_scale_covariance, dtype=np.float64)
         )
         rate_matrix = (
             None
             if self.subject_scale_em_rate_matrix is None
-            else _protected_array(self.subject_scale_em_rate_matrix, dtype=np.float64)
+            else protected_array(self.subject_scale_em_rate_matrix, dtype=np.float64)
         )
         at_boundary = (
             None
             if self.subject_scales_at_boundary is None
-            else _protected_array(self.subject_scales_at_boundary, dtype=np.bool_)
+            else protected_array(self.subject_scales_at_boundary, dtype=np.bool_)
         )
         if not isinstance(self.subject_scales_estimated, bool):
             raise ValueError("subject_scales_estimated must be boolean")
@@ -406,7 +406,7 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
         object.__setattr__(
             self,
             "subject_parameter_scales",
-            _protected_array(scales, dtype=np.float64),
+            protected_array(scales, dtype=np.float64),
         )
         object.__setattr__(self, "subject_scale_standard_errors", scale_standard_errors)
         object.__setattr__(
@@ -428,7 +428,7 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
             varying_parameters=self.varying_parameters,
             n_knots=len(self.knots),
         )
-        return _protected_array(values, dtype=np.float64)
+        return protected_array(values, dtype=np.float64)
 
     @property
     def subject_knot_values(self) -> NDArray[np.float64]:
@@ -441,7 +441,7 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
         for deviation_index, parameter in enumerate(self.subject_parameters):
             parameter_index = self.base_parameter_names.index(parameter)
             values[:, parameter_index, :] += self.subject_deviations[:, deviation_index, :]
-        return _protected_array(values, dtype=np.float64)
+        return protected_array(values, dtype=np.float64)
 
     def subject_was_fitted(self, subject: Any) -> bool:
         """Report whether prediction can use an estimated subject path."""
@@ -1318,7 +1318,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
             starting_bias=trial_values[:, n_coefficients + 1],
             terms=self.density_terms,
         )
-        return _protected_array(scores, dtype=np.float64)
+        return protected_array(scores, dtype=np.float64)
 
     def parameter_trajectory(
         self,
@@ -1839,7 +1839,7 @@ def _scales_at_bounds(
 
     lower, upper = _validate_scale_bounds(bounds)
     log_scales = np.log(scales)
-    return _protected_array(
+    return protected_array(
         (np.abs(log_scales - np.log(lower)) <= tolerance)
         | (np.abs(log_scales - np.log(upper)) <= tolerance),
         dtype=np.bool_,

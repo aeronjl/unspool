@@ -1,0 +1,4 @@
+subject	session	trial	session_order	rt	label	score
+m1	day-1	0	0	0.412	left	3
+m1	day-1	1	0	NA	right	
+m1	day-1	2	0	0.5	N/A	5

@@ -8,7 +8,7 @@ from enum import StrEnum
 import numpy as np
 from numpy.typing import NDArray
 
-from behavio.models.base import _protected_array
+from behavio._internal.arrays import protected_array
 from behavio.study import REQUIRED_COLUMNS, Study
 
 
@@ -70,8 +70,8 @@ class ResponseTimes:
 
     def __post_init__(self) -> None:
         unit = ResponseTimeUnit(self.unit)
-        raw = _protected_array(self.raw, dtype=np.float64)
-        seconds = _protected_array(self.seconds, dtype=np.float64)
+        raw = protected_array(self.raw, dtype=np.float64)
+        seconds = protected_array(self.seconds, dtype=np.float64)
         if not isinstance(self.column, str) or not self.column:
             raise ValueError("response-time column must be a non-empty string")
         if raw.ndim != 1 or seconds.shape != raw.shape:
@@ -90,4 +90,4 @@ class ResponseTimes:
         """Convert canonical seconds back to the declared source unit."""
 
         values = np.asarray(seconds, dtype=np.float64) / self.unit.seconds_per_unit
-        return _protected_array(values, dtype=np.float64)
+        return protected_array(values, dtype=np.float64)

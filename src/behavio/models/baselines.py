@@ -11,6 +11,7 @@ from numpy.typing import NDArray
 from scipy.optimize import minimize
 from scipy.special import expit, logit
 
+from behavio._internal.arrays import protected_array
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -18,7 +19,6 @@ from behavio.models.base import (
     Prediction,
     PredictionMode,
     UnsupportedPredictionMode,
-    _protected_array,
 )
 from behavio.models.glm import BernoulliHistoryGLM, _fit_bernoulli, _ordered_session_indices
 from behavio.study import REQUIRED_COLUMNS, Study
@@ -320,7 +320,7 @@ class WinStayLoseShift:
         linear = self.predict(study, fit, mode=mode).linear_predictor
         scores = outcomes * -np.logaddexp(0.0, -linear)
         scores += (1.0 - outcomes) * -np.logaddexp(0.0, linear)
-        return _protected_array(scores, dtype=np.float64)
+        return protected_array(scores, dtype=np.float64)
 
     def _design_matrix(
         self,
@@ -424,8 +424,8 @@ class LapsePsychometricFitResult(FitResult):
 
     def __post_init__(self) -> None:
         FitResult.__post_init__(self)
-        objectives = _protected_array(self.restart_objectives, dtype=np.float64)
-        converged = _protected_array(self.restart_converged, dtype=np.bool_)
+        objectives = protected_array(self.restart_objectives, dtype=np.float64)
+        converged = protected_array(self.restart_converged, dtype=np.bool_)
         messages = tuple(self.restart_messages)
         if objectives.ndim != 1 or converged.shape != objectives.shape:
             raise ValueError("restart diagnostics must have one value per restart")
@@ -656,7 +656,7 @@ class LapsePsychometric:
         outcomes = self._outcomes(study)
         probability = self.predict(study, fit, mode=mode).probability
         scores = outcomes * np.log(probability) + (1.0 - outcomes) * np.log1p(-probability)
-        return _protected_array(scores, dtype=np.float64)
+        return protected_array(scores, dtype=np.float64)
 
     def _objective(
         self,

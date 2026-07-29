@@ -6,10 +6,10 @@ import pytest
 from test_compiler import capabilities, source_study
 from test_protocol import example_protocol
 from test_protocol_recovery import evaluated, models, recovery_case, recovery_protocol
-from test_runner import candidate_models, compiled_nested
+from test_runner import candidate_models, compiled_nested, declared_glm
 
 from behavio.compiler import compile_execution_plan, materialize_protocol
-from behavio.protocol import ProtocolState, ScoreMetric
+from behavio.protocol import CandidateSpec, ProtocolState, ScoreMetric, Setting
 from behavio.protocol_recovery import run_exact_recovery
 from behavio.reporting import (
     ReportGenerationError,
@@ -162,3 +162,50 @@ def test_report_labels_the_declared_brier_score() -> None:
 
     assert "Unit-balanced brier" in result.report.markdown
     assert "Unit-balanced log loss" not in result.report.markdown
+
+
+def evaluated_with_an_unverifiable_declaration():
+    protocol = example_protocol(
+        with_recovery=False,
+        candidates=(
+            declared_glm("static", covariates=("stimulus",), choice_lags=0, l2=0.1),
+            CandidateSpec(
+                name="smooth",
+                implementation="behavio.models.BernoulliHistoryGLM",
+                hyperparameters=(Setting("l2", 1.0), Setting("optimizer", "irls")),
+                scored_columns=("choice",),
+            ),
+        ),
+    )
+    protocol = replace(
+        protocol,
+        cohort=replace(
+            protocol.cohort,
+            expected_subjects=2,
+            expected_sessions=6,
+            expected_observations=12,
+        ),
+        panel=replace(protocol.panel, minimum_sessions=3),
+        comparison=replace(protocol.comparison, bootstrap_repetitions=50),
+    ).freeze()
+    materialized = materialize_protocol(protocol, source_study())
+    splits = cohort_forward_session_splits(materialized.study, min_train_sessions=2)
+    compiled = compile_execution_plan(materialized, splits, capabilities=capabilities())
+    return run_protocol(compiled, candidate_models())
+
+
+def test_a_fully_verified_study_reports_no_declaration_section() -> None:
+    result = generate_bounded_report(evaluated_without_recovery(), items=report_items())
+
+    assert "Unverified declarations" not in result.report.markdown
+
+
+def test_a_declaration_that_could_not_be_checked_is_disclosed_in_the_report() -> None:
+    result = generate_bounded_report(
+        evaluated_with_an_unverifiable_declaration(), items=report_items()
+    )
+
+    assert "### Unverified declarations" in result.report.markdown
+    assert "| smooth | hyperparameter:optimizer |" in result.report.markdown
+    assert "no field of that name" in result.report.markdown
+    assert "recorded rather than treated as satisfied" in result.report.markdown

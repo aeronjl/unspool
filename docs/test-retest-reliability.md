@@ -143,6 +143,37 @@ report = assess_test_retest_reliability(
 Every non-subject posterior dimension must be selected explicitly. This prevents averaging
 over coefficients, states, or conditions merely to obtain one convenient value per animal.
 
+`posterior_subject_estimates` also retains the full `(sample, subject)` draw matrix and the
+result's convergence audit. `values` is still the per-subject posterior mean, unchanged, but
+because the draws travel with it `assess_test_retest_reliability` no longer treats those
+means as observed data. Each repetition resamples subjects *and* takes one independently
+sampled posterior draw from each occasion, so the interval covers sampling and posterior
+uncertainty together and the reported statistic is the posterior mean of the per-draw
+statistic. Draw indices are sampled independently for the two occasions: they come from
+separate fits, their draws are not jointly distributed, and pairing them by index would
+fabricate a coupling. `report.to_dict()["uncertainty_sources"]` records which sources were
+propagated.
+
+A failing convergence audit does not raise. It is retained on the estimates and surfaces as
+`reliability.unconverged-posterior` in the report, so the layer above decides whether to
+publish. Inject a `PosteriorAuditPolicy` through `audit_policy=` to declare, check by
+check, which severities you are downgrading.
+
+### Shrinkage
+
+Per-subject estimates from a partial-pooling model are shrunk toward a common mean.
+Correlating two sets of shrunken estimates inflates Pearson, Spearman, and both ICCs,
+because the shared prior pulls both occasions toward the same point and that reads as
+agreement. Pooling is a fact about the model rather than about the numbers, so it is
+declared: `posterior_subject_estimates` defaults to `SubjectPooling.PARTIAL`, the
+conservative side, and hand-built `SubjectEstimates` default to `SubjectPooling.NONE`.
+Pass `pooling=SubjectPooling.NONE` for independently fitted subjects.
+
+When either occasion is pooled the report carries `reliability.shrunken-estimates`. That is
+a warning, not a correction: undoing shrinkage needs the hierarchical variance components,
+which a `SubjectEstimates` record does not carry. Treat a flagged consistency or agreement
+estimate as an upper bound.
+
 ## Interpretation boundary
 
 Comparable occasions are essential. Early and late learning sessions are expected to
@@ -151,9 +182,10 @@ Use this contract for repeated measurements intended to index the same relativel
 quantity under a comparable protocol, and use Behavio's trajectory and prospective tools
 for learning-related change.
 
-The current estimator is a paired analysis of plug-in subject estimates. It does not
-propagate each subject's parameter-estimation uncertainty into the reliability coefficient.
-[Chen et al. (2021)](https://doi.org/10.1016/j.neuroimage.2021.118647) show why trial-level
+The estimator propagates posterior uncertainty when draws are available and falls back to a
+paired subject bootstrap of plug-in estimates when they are not. It still does not model
+shrinkage, and it does not estimate the reliability of a latent quantity jointly across
+occasions. [Chen et al. (2021)](https://doi.org/10.1016/j.neuroimage.2021.118647) show why trial-level
 hierarchical reliability models can separate trial noise from cross-occasion stability;
 [Schaaf et al. (2024)](https://doi.org/10.3758/s13428-023-02203-4) discuss the consequences
 for reinforcement-learning parameters. A future joint model should be a separate backend

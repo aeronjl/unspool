@@ -1,11 +1,16 @@
-"""Fold-fitted temporal transforms with inspectable learned state."""
+"""Fold-fitted temporal transforms with inspectable learned state.
+
+``StudyTransform``, ``FittedStudyTransform`` and ``TransformProvenance`` now live in
+:mod:`behavio.contracts.transform` and are re-exported here, so every existing
+``from behavio.transforms import StudyTransform`` keeps working.
+"""
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, replace
 from types import MappingProxyType
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import Any, Literal
 
 import numpy as np
 
@@ -18,8 +23,13 @@ from behavio.clocks import (
     _validate_output_column,
     _with_column,
 )
+from behavio.contracts.fold import ValidationFold
+from behavio.contracts.transform import (
+    FittedStudyTransform,
+    StudyTransform,
+    TransformProvenance,
+)
 from behavio.study import Study
-from behavio.validation import ValidationFold
 
 
 class LandmarkNotFoundError(ValueError):
@@ -144,48 +154,6 @@ class LandmarkClockSamples:
     @property
     def n_trials(self) -> int:
         return self.values.shape[1]
-
-
-@dataclass(frozen=True, slots=True)
-class TransformProvenance:
-    """Training-only state retained by a fitted temporal transform."""
-
-    transform_signature: str
-    n_fit_trials: int
-    fit_subjects: tuple[Any, ...]
-    learned_values: Mapping[Any, float | None]
-
-    def __post_init__(self) -> None:
-        if self.n_fit_trials < 1:
-            raise ValueError("n_fit_trials must be positive")
-        object.__setattr__(self, "fit_subjects", tuple(self.fit_subjects))
-        object.__setattr__(self, "learned_values", MappingProxyType(dict(self.learned_values)))
-
-
-@runtime_checkable
-class FittedStudyTransform(Protocol):
-    """A transform whose learned state is fixed and inspectable."""
-
-    @property
-    def signature(self) -> str: ...
-
-    @property
-    def output_clock(self) -> ClockSpec: ...
-
-    @property
-    def provenance(self) -> TransformProvenance: ...
-
-    def transform(self, study: Study) -> ClockedStudy: ...
-
-
-@runtime_checkable
-class StudyTransform(Protocol):
-    """A transform that learns state from one training Study."""
-
-    @property
-    def signature(self) -> str: ...
-
-    def fit(self, study: Study) -> FittedStudyTransform: ...
 
 
 @dataclass(frozen=True, slots=True)

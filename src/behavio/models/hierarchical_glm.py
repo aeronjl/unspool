@@ -12,13 +12,13 @@ from numpy.typing import NDArray
 from scipy.optimize import minimize
 from scipy.special import expit
 
+from behavio._internal.arrays import protected_array
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
     ModelDataError,
     Prediction,
     PredictionMode,
-    _protected_array,
 )
 from behavio.models.glm import BernoulliHistoryGLM, _fit_bernoulli, _ordered_session_indices
 from behavio.study import Study
@@ -37,8 +37,8 @@ class HierarchicalGLMSimulation:
     def __post_init__(self) -> None:
         subjects = tuple(_scalar(subject) for subject in self.subjects)
         names = tuple(self.coefficient_names)
-        population = _protected_array(self.population_coefficients, dtype=np.float64)
-        deviations = _protected_array(self.subject_deviations, dtype=np.float64)
+        population = protected_array(self.population_coefficients, dtype=np.float64)
+        deviations = protected_array(self.subject_deviations, dtype=np.float64)
         if subjects != tuple(_scalar(subject) for subject in self.study.subjects):
             raise ValueError("simulation subjects must match the study's subject order")
         if not names or len(set(names)) != len(names):
@@ -58,7 +58,7 @@ class HierarchicalGLMSimulation:
     def subject_coefficients(self) -> NDArray[np.float64]:
         """Return realized population-plus-deviation coefficients by subject."""
 
-        return _protected_array(
+        return protected_array(
             self.population_coefficients[None, :] + self.subject_deviations,
             dtype=np.float64,
         )
@@ -81,8 +81,8 @@ class HierarchicalGLMFitResult(FitResult):
     def __post_init__(self) -> None:
         FitResult.__post_init__(self)
         subjects = tuple(_scalar(subject) for subject in self.subjects)
-        deviations = _protected_array(self.subject_deviations, dtype=np.float64)
-        standard_errors = _protected_array(self.subject_standard_errors, dtype=np.float64)
+        deviations = protected_array(self.subject_deviations, dtype=np.float64)
+        standard_errors = protected_array(self.subject_standard_errors, dtype=np.float64)
         expected_shape = (len(subjects), len(self.parameter_names))
         if not subjects or len(set(subjects)) != len(subjects):
             raise ValueError("fit subjects must be non-empty and unique")
@@ -127,7 +127,7 @@ class HierarchicalGLMFitResult(FitResult):
     def subject_coefficients(self) -> NDArray[np.float64]:
         """Return population-plus-deviation coefficient estimates by fitted subject."""
 
-        return _protected_array(self.estimates[None, :] + self.subject_deviations, dtype=np.float64)
+        return protected_array(self.estimates[None, :] + self.subject_deviations, dtype=np.float64)
 
     def coefficients_for(self, subject: Any) -> Mapping[str, float]:
         """Return fitted-subject coefficients or the declared unseen-subject plug-in."""
@@ -519,7 +519,7 @@ class HierarchicalBernoulliHistoryGLM(BernoulliHistoryGLM):
         prediction = self.predict(study, fit, mode=mode)
         scores = outcomes * -np.logaddexp(0.0, -prediction.linear_predictor)
         scores += (1.0 - outcomes) * -np.logaddexp(0.0, prediction.linear_predictor)
-        return _protected_array(scores, dtype=np.float64)
+        return protected_array(scores, dtype=np.float64)
 
 
 @dataclass(frozen=True, slots=True)

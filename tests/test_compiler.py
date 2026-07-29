@@ -9,13 +9,18 @@ from test_protocol import example_protocol
 
 from behavio.compiler import (
     AuditLevel,
+    ObservationContractRule,
     ProtocolCompilationError,
     compile_execution_plan,
     materialize_protocol,
+    validate_observation_contract,
 )
 from behavio.models import ModelCapabilities, PredictionMode
 from behavio.protocol import (
     NestedSelectionSpec,
+    ObservationDataType,
+    ObservationRole,
+    ObservationSpec,
     ProtocolState,
     ScoreMetric,
     SelectionTieBreak,
@@ -60,8 +65,8 @@ def source_study() -> Study:
     return Study.from_records(rows)
 
 
-def frozen_small_protocol():
-    protocol = example_protocol()
+def frozen_small_protocol(candidates=()):
+    protocol = example_protocol(candidates=candidates)
     cohort = replace(
         protocol.cohort,
         expected_subjects=2,
@@ -266,9 +271,15 @@ def test_nested_protocol_without_inner_splitter_fails_pre_fit_audit() -> None:
 
 def test_brier_scoring_rejects_non_binary_outcomes_before_fit() -> None:
     protocol = frozen_small_protocol()
+    # The outcome is declared categorical here so that materialization's observation
+    # contract admits the value and the compiler's Brier audit is what refuses the plan.
     protocol = replace(
         protocol,
         comparison=replace(protocol.comparison, metric=ScoreMetric.BRIER),
+        observations=(
+            ObservationSpec("choice", ObservationRole.OUTCOME, ObservationDataType.CATEGORICAL),
+            *protocol.observations[1:],
+        ),
         state=ProtocolState.DRAFT,
         lifecycle=(),
     ).freeze()
@@ -282,3 +293,108 @@ def test_brier_scoring_rejects_non_binary_outcomes_before_fit() -> None:
 
     assert not compiled.plan.audit.passed
     assert "brier-outcome-invalid" in {issue.code for issue in compiled.plan.audit.errors}
+
+
+def protocol_with_observations(*observations: ObservationSpec):
+    """Freeze the small protocol with a replaced observation contract."""
+
+    protocol = frozen_small_protocol()
+    return replace(
+        protocol,
+        observations=observations,
+        state=ProtocolState.DRAFT,
+        lifecycle=(),
+    ).freeze()
+
+
+def study_with(**overrides) -> Study:
+    study = source_study()
+    columns: dict[str, object] = {
+        column: study[column].astype(object).copy() for column in study.columns
+    }
+    for column, values in overrides.items():
+        if column in columns:
+            for row, value in values.items():
+                columns[column][row] = value
+        else:
+            columns[column] = list(values)
+    return Study.from_columns(columns)
+
+
+def test_declared_allowed_values_are_checked_against_the_materialized_column() -> None:
+    protocol = protocol_with_observations(
+        ObservationSpec(
+            "choice",
+            ObservationRole.OUTCOME,
+            ObservationDataType.BINARY,
+            allowed_values=(0, 1),
+        ),
+        ObservationSpec("stimulus", ObservationRole.PREDICTOR, ObservationDataType.CONTINUOUS),
+    )
+
+    with pytest.raises(ProtocolCompilationError) as error:
+        materialize_protocol(protocol, study_with(choice={0: 7, 5: 7}))
+
+    message = str(error.value)
+    assert "'choice'" in message
+    assert "2 of 12 rows" in message
+    assert "row 0=7" in message and "row 5=7" in message
+
+
+def test_declared_data_type_is_checked_independently_of_allowed_values() -> None:
+    protocol = protocol_with_observations(
+        ObservationSpec("choice", ObservationRole.OUTCOME, ObservationDataType.BINARY),
+        ObservationSpec("stimulus", ObservationRole.PREDICTOR, ObservationDataType.COUNT),
+    )
+
+    violations = validate_observation_contract(protocol, study_with().take(tuple(range(12))))
+
+    assert [violation.column for violation in violations] == ["stimulus"]
+    violation = violations[0]
+    assert violation.rule == ObservationContractRule.DATA_TYPE
+    assert violation.data_type == "count"
+    assert violation.n_violating_rows == 6
+    assert "non-negative whole numbers" in violation.message
+
+
+def test_missing_observations_are_legitimate_unless_values_are_declared() -> None:
+    undeclared_values = protocol_with_observations(
+        ObservationSpec("choice", ObservationRole.OUTCOME, ObservationDataType.BINARY),
+        ObservationSpec("stimulus", ObservationRole.PREDICTOR, ObservationDataType.CONTINUOUS),
+        ObservationSpec("response_time", ObservationRole.AUXILIARY, ObservationDataType.CONTINUOUS),
+    )
+    declared_missing = protocol_with_observations(
+        ObservationSpec("choice", ObservationRole.OUTCOME, ObservationDataType.BINARY),
+        ObservationSpec("stimulus", ObservationRole.PREDICTOR, ObservationDataType.CONTINUOUS),
+        ObservationSpec(
+            "response_time",
+            ObservationRole.AUXILIARY,
+            ObservationDataType.CONTINUOUS,
+            allowed_values=(0.25, None),
+        ),
+    )
+    aborted = study_with(response_time=[0.25] * 12 + [float("nan")])
+
+    assert validate_observation_contract(undeclared_values, aborted) == ()
+    assert validate_observation_contract(declared_missing, aborted) == ()
+    assert materialize_protocol(undeclared_values, aborted).manifest.selected_observations == 12
+
+
+def test_an_undeclared_missing_observation_is_reported_as_a_missing_value_violation() -> None:
+    protocol = protocol_with_observations(
+        ObservationSpec(
+            "choice",
+            ObservationRole.OUTCOME,
+            ObservationDataType.BINARY,
+            allowed_values=(0, 1),
+        ),
+        ObservationSpec("stimulus", ObservationRole.PREDICTOR, ObservationDataType.CONTINUOUS),
+    )
+
+    violations = validate_observation_contract(protocol, study_with(choice={3: float("nan")}))
+
+    assert len(violations) == 1
+    assert violations[0].rule == ObservationContractRule.MISSING_VALUE
+    assert violations[0].example_rows == (3,)
+    assert "do not include null" in violations[0].message
+    assert violations[0].to_dict()["rule"] == "missing-value"

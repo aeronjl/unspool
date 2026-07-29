@@ -19,7 +19,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Rectangle
 from scipy import stats
 
-from scripts.figure_style import (
+from behavio.plot import (
     AMBER,
     BLUE,
     INDIGO,
@@ -69,7 +69,7 @@ def main() -> None:
     )
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    _configure_style()
+    configure_figure_style()
     _plot_validation_geometry(args.output_dir / "validation-geometry.svg")
     _plot_workflow_map(args.output_dir / "workflow-map.svg")
     _plot_clock_boundary(args.output_dir / "clock-boundary.svg")
@@ -117,10 +117,6 @@ def main() -> None:
     _plot_ibl_selection(args.output_dir / "ibl-prospective-selection.svg")
     _plot_recovery_matrix(args.output_dir / "model-recovery-matrix.svg")
     print(args.output_dir)
-
-
-def _configure_style() -> None:
-    configure_figure_style()
 
 
 def _box(

@@ -1,4 +1,18 @@
-"""Prospective model comparison with declared aggregation and uncertainty units."""
+"""Prospective model comparison with declared aggregation and uncertainty units.
+
+Candidates may be frequentist :class:`~behavio.contracts.estimator.BehaviourEstimator`
+implementations, sampled
+:class:`~behavio.contracts.posterior.PosteriorBehaviourEstimator` implementations, or a
+mixture of the two: every candidate is scored on the same folds, over the same aggregation
+units, with the same bootstrap draws. A sampled candidate whose posterior fails its
+convergence audit on any fold reports ``FAIL`` from
+:attr:`ProspectiveModelResult.audit_status` and is therefore excluded from
+:attr:`ProspectiveComparisonReport.winner` and
+:attr:`ProspectiveComparisonReport.eligible_model_order`, exactly as a non-converged
+optimizer fit already is. ``ProspectiveModelResult.to_dict`` gains a ``posterior_folds``
+entry only when a candidate actually was sampled, so a maximum-likelihood report is
+byte-identical to what it was before sampled candidates existed.
+"""
 
 from __future__ import annotations
 
@@ -10,14 +24,18 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from behavio._internal.arrays import protected_array
+from behavio.contracts.posterior import (
+    AnyBehaviourEstimator,
+    any_model_capabilities,
+    is_posterior_estimator,
+)
 from behavio.diagnostics import FitAudit, FitAuditStatus, audit_fit
-from behavio.evaluation import FoldEvaluation, evaluate_splits
+from behavio.evaluation import FoldEvaluation, PosteriorFoldPolicy, evaluate_splits
 from behavio.models.base import (
     BehaviourEstimator,
     CategoricalPrediction,
     PredictionMode,
-    _protected_array,
-    model_capabilities,
 )
 from behavio.study import Study
 from behavio.validation import (
@@ -81,8 +99,8 @@ class ProspectiveModelResult:
             raise ValueError("model signature must be a non-empty string")
         evaluations = tuple(self.evaluations)
         units = _validated_identifiers(self.aggregation_units, "aggregation_units")
-        losses = _protected_array(self.unit_log_losses, dtype=np.float64)
-        brier = _protected_array(self.unit_brier_scores, dtype=np.float64)
+        losses = protected_array(self.unit_log_losses, dtype=np.float64)
+        brier = protected_array(self.unit_brier_scores, dtype=np.float64)
         audits = tuple(self.audits)
         if not evaluations:
             raise ValueError("model results must contain at least one fold evaluation")
@@ -140,10 +158,24 @@ class ProspectiveModelResult:
 
         return sum(len(evaluation.pointwise_log_probability) for evaluation in self.evaluations)
 
-    def to_dict(self) -> dict[str, Any]:
-        """Return scores and audits without expanding fitted covariance arrays."""
+    @property
+    def posterior_folds(self) -> tuple[tuple[int, FoldEvaluation], ...]:
+        """Folds scored from a posterior, paired with their position in ``evaluations``."""
 
-        return {
+        return tuple(
+            (index, evaluation)
+            for index, evaluation in enumerate(self.evaluations)
+            if evaluation.posterior is not None
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return scores and audits without expanding fitted covariance arrays.
+
+        ``posterior_folds`` appears only when at least one fold was projected from
+        posterior draws; an optimizer-only candidate keeps its original record exactly.
+        """
+
+        payload: dict[str, Any] = {
             "name": self.name,
             "model_signature": self.model_signature,
             "n_folds": len(self.evaluations),
@@ -170,6 +202,14 @@ class ProspectiveModelResult:
             "unit_balanced_log_loss_interval": self.unit_balanced_log_loss_interval.to_dict(),
             "fit_audits": [audit.to_dict() for audit in self.audits],
         }
+        posterior_folds = self.posterior_folds
+        if posterior_folds:
+            payload["posterior_folds"] = [
+                {"fold": index, **evaluation.posterior.to_dict()}
+                for index, evaluation in posterior_folds
+                if evaluation.posterior is not None
+            ]
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -373,15 +413,21 @@ class NestedSelectionFold:
             raise ValueError("outer evaluation must retain the declared outer split")
 
     def to_dict(self) -> dict[str, Any]:
-        """Return nested selection evidence without expanding fitted arrays."""
+        """Return nested selection evidence without expanding fitted arrays.
 
-        return {
+        ``selected_posterior`` appears only when the selected candidate was sampled.
+        """
+
+        payload: dict[str, Any] = {
             "outer_fold": _split_provenance(self.outer_split),
             "selected_model": self.selected_model,
             "selected_fit_audit": audit_fit(self.outer_evaluation.fit).to_dict(),
             "outer_mean_log_loss": self.outer_evaluation.mean_log_loss,
             "inner_comparison": self.inner_report.to_dict(),
         }
+        if self.outer_evaluation.posterior is not None:
+            payload["selected_posterior"] = self.outer_evaluation.posterior.to_dict()
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -412,8 +458,8 @@ class NestedProspectiveSelectionReport:
             raise ValueError("outcome_column must be included in scored_columns")
         folds = tuple(self.folds)
         units = _validated_identifiers(self.aggregation_units, "aggregation_units")
-        losses = _protected_array(self.unit_log_losses, dtype=np.float64)
-        brier = _protected_array(self.unit_brier_scores, dtype=np.float64)
+        losses = protected_array(self.unit_log_losses, dtype=np.float64)
+        brier = protected_array(self.unit_brier_scores, dtype=np.float64)
         if not candidates or len(set(candidates)) != len(candidates):
             raise ValueError("candidate_names must be non-empty and unique")
         if not folds:
@@ -534,7 +580,7 @@ class NestedProspectiveSelectionReport:
 
 
 def compare_models(
-    models: Mapping[str, BehaviourEstimator],
+    models: Mapping[str, AnyBehaviourEstimator],
     study: Study,
     splits: Iterable[ValidationFold],
     *,
@@ -544,15 +590,18 @@ def compare_models(
     bootstrap_resamples: int = 5_000,
     bootstrap_seed: int = 0,
     confidence_level: float = 0.95,
+    posterior_policy: PosteriorFoldPolicy | None = None,
 ) -> ProspectiveComparisonReport:
-    """Compare candidates on common folds using equal aggregation-unit weights.
+    """Compare frequentist and sampled candidates on common folds with equal unit weights.
 
     The same bootstrap draws are reused for every candidate and pairwise difference.
     Point-estimate ties are resolved by the insertion order of ``models``.
+    ``posterior_policy`` declares the projection centre and convergence thresholds applied
+    to every sampled candidate; it is ignored by candidates fitted by optimization.
     """
 
     candidates = _validated_models(models)
-    capabilities = {name: model_capabilities(model) for name, model in candidates.items()}
+    capabilities = {name: any_model_capabilities(model) for name, model in candidates.items()}
     scored_columns = next(iter(capabilities.values())).scored_columns
     for name, candidate_capabilities in capabilities.items():
         if candidate_capabilities.scored_columns != scored_columns:
@@ -573,7 +622,14 @@ def compare_models(
         confidence_level=confidence_level,
     )
     evaluations = {
-        name: evaluate_splits(model, study, folds, mode=mode) for name, model in candidates.items()
+        name: evaluate_splits(
+            model,
+            study,
+            folds,
+            mode=mode,
+            posterior_policy=_policy_for(model, posterior_policy),
+        )
+        for name, model in candidates.items()
     }
     aggregates = {
         name: _aggregate_evaluations(
@@ -649,7 +705,7 @@ def compare_models(
 
 
 def nested_select_model(
-    candidates: Mapping[str, BehaviourEstimator],
+    candidates: Mapping[str, AnyBehaviourEstimator],
     study: Study,
     outer_splits: Iterable[ValidationFold],
     inner_splitter: Callable[[Study], Iterable[ValidationFold]],
@@ -661,16 +717,19 @@ def nested_select_model(
     bootstrap_seed: int = 0,
     inner_bootstrap_resamples: int = 1_000,
     confidence_level: float = 0.95,
+    posterior_policy: PosteriorFoldPolicy | None = None,
 ) -> NestedProspectiveSelectionReport:
     """Select a candidate inside each outer training fold, then score untouched test data.
 
     ``inner_splitter`` receives only ``study.take(outer_split.train_indices)``. Inner split
     positions are therefore relative to that outer-training study and cannot address an
-    outer test row. Candidate insertion order breaks exact inner-score ties.
+    outer test row. Candidate insertion order breaks exact inner-score ties. A sampled
+    candidate whose posterior fails its convergence audit inside an inner fold cannot be
+    selected there, because inner selection reuses :attr:`ProspectiveComparisonReport.winner`.
     """
 
     models = _validated_models(candidates)
-    capabilities = {name: model_capabilities(model) for name, model in models.items()}
+    capabilities = {name: any_model_capabilities(model) for name, model in models.items()}
     scored_columns = next(iter(capabilities.values())).scored_columns
     for name, candidate_capabilities in capabilities.items():
         if candidate_capabilities.scored_columns != scored_columns:
@@ -711,6 +770,7 @@ def nested_select_model(
             bootstrap_resamples=inner_bootstrap_resamples,
             bootstrap_seed=bootstrap_seed + fold_index + 1,
             confidence_level=confidence_level,
+            posterior_policy=posterior_policy,
         )
         selected = inner_report.winner
         if selected is None:
@@ -720,6 +780,7 @@ def nested_select_model(
             study,
             (outer_split,),
             mode=mode,
+            posterior_policy=_policy_for(models[selected], posterior_policy),
         )[0]
         selections.append(
             NestedSelectionFold(
@@ -839,18 +900,30 @@ def _aggregate_evaluations(
     )
 
 
+def _policy_for(
+    model: AnyBehaviourEstimator,
+    policy: PosteriorFoldPolicy | None,
+) -> PosteriorFoldPolicy | None:
+    """Forward a posterior policy only to the candidates it can describe."""
+
+    return policy if is_posterior_estimator(model) else None
+
+
 def _validated_models(
-    models: Mapping[str, BehaviourEstimator],
-) -> Mapping[str, BehaviourEstimator]:
+    models: Mapping[str, AnyBehaviourEstimator],
+) -> Mapping[str, AnyBehaviourEstimator]:
     if not isinstance(models, Mapping) or not models:
         raise ValueError("models must be a non-empty mapping")
-    validated: dict[str, BehaviourEstimator] = {}
+    validated: dict[str, AnyBehaviourEstimator] = {}
     for name, model in models.items():
         if not isinstance(name, str) or not name:
             raise ValueError("model names must be non-empty strings")
-        if not isinstance(model, BehaviourEstimator):
-            raise TypeError(f"candidate {name!r} does not satisfy BehaviourEstimator")
-        model_capabilities(model)
+        if not isinstance(model, BehaviourEstimator) and not is_posterior_estimator(model):
+            raise TypeError(
+                f"candidate {name!r} satisfies neither BehaviourEstimator nor "
+                "PosteriorBehaviourEstimator"
+            )
+        any_model_capabilities(model)
         validated[name] = model
     return MappingProxyType(validated)
 

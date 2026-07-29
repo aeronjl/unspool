@@ -1,7 +1,27 @@
 # Data-adapter API
 
 Adapters retain source identities while converting trials into the same canonical study
-contract. Their third-party dependencies are optional.
+contract. Every source dataclass here satisfies the
+[`StudyAdapter` contract](contracts.md#data-source-adapters).
+
+Third-party dependencies are optional everywhere except delimited tables: CSV and TSV are
+read with the standard library and NumPy alone, and only Parquet requires an extra.
+
+## Tables: CSV, TSV, and Parquet
+
+::: behavio.adapters.table
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+## Adapter conformance
+
+::: behavio.adapters.conformance
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
 
 ## NWB
 

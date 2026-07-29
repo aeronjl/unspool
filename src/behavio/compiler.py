@@ -14,6 +14,8 @@ import numpy as np
 
 from behavio.models import ModelCapabilities
 from behavio.protocol import (
+    ObservationDataType,
+    ObservationSpec,
     PredicateOperator,
     ProtocolState,
     ProtocolValidationError,
@@ -26,6 +28,13 @@ from behavio.study import Study
 
 class ProtocolCompilationError(ValueError):
     """Raised when source data cannot be materialized under a frozen protocol."""
+
+
+#: Sentinel for an observation that is absent rather than merely unusual.
+_MISSING = object()
+
+#: How many offending rows one observation-contract violation names explicitly.
+_VIOLATION_EXAMPLES = 5
 
 
 class AuditLevel(StrEnum):
@@ -44,6 +53,59 @@ class IdentityRecord:
     derived_row: int
     source_identity_fingerprint: str
     derived_identity_fingerprint: str
+
+
+class ObservationContractRule(StrEnum):
+    """Which part of a declared observation contract a column failed."""
+
+    DATA_TYPE = "data-type"
+    ALLOWED_VALUES = "allowed-values"
+    MISSING_VALUE = "missing-value"
+
+
+@dataclass(frozen=True, slots=True)
+class ObservationContractViolation:
+    """One declared observation contract the materialized column does not satisfy.
+
+    The record names the column, the rule, how many rows offend, and a bounded sample of
+    offending ``(row, value)`` pairs, so the failure can be acted on rather than merely
+    noticed. Values are rendered as ``repr`` text so the record stays JSON-safe and
+    non-disclosive of the full column.
+    """
+
+    column: str
+    role: str
+    data_type: str
+    rule: ObservationContractRule
+    n_rows: int
+    n_violating_rows: int
+    example_rows: tuple[int, ...]
+    example_values: tuple[str, ...]
+    expectation: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "rule", ObservationContractRule(self.rule))
+        if len(self.example_rows) != len(self.example_values):
+            raise ValueError("violation examples must pair rows with values")
+
+    @property
+    def message(self) -> str:
+        """One reviewable sentence naming the column, the count, and the examples."""
+
+        examples = ", ".join(
+            f"row {row}={value}"
+            for row, value in zip(self.example_rows, self.example_values, strict=True)
+        )
+        return (
+            f"observation {self.column!r} declares {self.data_type!r} but "
+            f"{self.n_violating_rows} of {self.n_rows} rows {self.expectation}"
+            + (f"; examples: {examples}" if examples else "")
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a deterministic JSON-safe representation."""
+
+        return _to_json({**asdict(self), "message": self.message})
 
 
 @dataclass(frozen=True, slots=True)
@@ -250,6 +312,12 @@ def materialize_protocol(protocol: StudyProtocol, source_study: Study) -> Materi
     selected_study = source_study.take(selected)
     _validate_expected_denominators(protocol, selected_study)
     _validate_panel(protocol, selected_study)
+    violations = validate_observation_contract(protocol, selected_study)
+    if violations:
+        raise ProtocolCompilationError(
+            "materialized cohort violates the declared observation contract: "
+            + "; ".join(violation.message for violation in violations)
+        )
     identities = _identity_records(protocol, source_study, selected)
     study_fingerprint = _study_fingerprint(selected_study)
     manifest = CohortManifest(
@@ -849,6 +917,139 @@ def _predicate_mask(
         raise ProtocolCompilationError(
             f"cohort predicate values are not comparable under {operator.value!r}"
         ) from error
+
+
+def validate_observation_contract(
+    protocol: StudyProtocol, study: Study
+) -> tuple[ObservationContractViolation, ...]:
+    """Check every materialized observation column against its frozen declaration.
+
+    ``data_type`` and ``allowed_values`` are scientific claims about the data a protocol
+    was frozen against, so they are tested rather than merely serialized. Missing
+    observations are never a type violation -- omissions, aborted trials, and unrecorded
+    response times are ordinary behavioural data -- but a column that declares an
+    ``allowed_values`` set must name ``None`` in it before missing rows are permitted,
+    exactly as :class:`behavio.task.ChoiceSpec` requires omissions to be declared.
+
+    Findings are returned rather than raised so a caller can review the complete set;
+    :func:`materialize_protocol` refuses the cohort when any finding survives.
+    """
+
+    violations: list[ObservationContractViolation] = []
+    for observation in protocol.observations:
+        if observation.column not in study.columns:
+            continue
+        violations.extend(_observation_violations(observation, study))
+    return tuple(violations)
+
+
+def _observation_violations(
+    observation: ObservationSpec, study: Study
+) -> tuple[ObservationContractViolation, ...]:
+    values = [_portable_scalar_or_none(value) for value in study[observation.column]]
+    allowed = observation.allowed_values
+    missing_declared = not allowed or any(value is None for value in allowed)
+    allowed_keys = {_observation_key(value) for value in allowed if value is not None}
+
+    missing_rows: list[int] = []
+    type_rows: list[int] = []
+    value_rows: list[int] = []
+    for row, value in enumerate(values):
+        if value is _MISSING:
+            if not missing_declared:
+                missing_rows.append(row)
+            continue
+        if not _satisfies_data_type(observation.data_type, value):
+            type_rows.append(row)
+            continue
+        if allowed_keys and _observation_key(value) not in allowed_keys:
+            value_rows.append(row)
+
+    findings = (
+        (
+            ObservationContractRule.DATA_TYPE,
+            type_rows,
+            f"are not {_data_type_expectation(observation.data_type)}",
+        ),
+        (
+            ObservationContractRule.ALLOWED_VALUES,
+            value_rows,
+            f"are outside the declared allowed values {list(allowed)!r}",
+        ),
+        (
+            ObservationContractRule.MISSING_VALUE,
+            missing_rows,
+            "are missing while the declared allowed values do not include null",
+        ),
+    )
+    return tuple(
+        ObservationContractViolation(
+            column=observation.column,
+            role=observation.role.value,
+            data_type=observation.data_type.value,
+            rule=rule,
+            n_rows=len(values),
+            n_violating_rows=len(rows),
+            example_rows=tuple(rows[:_VIOLATION_EXAMPLES]),
+            example_values=tuple(
+                repr(_example_value(values[row])) for row in rows[:_VIOLATION_EXAMPLES]
+            ),
+            expectation=expectation,
+        )
+        for rule, rows, expectation in findings
+        if rows
+    )
+
+
+def _satisfies_data_type(data_type: ObservationDataType, value: Any) -> bool:
+    if data_type == ObservationDataType.BINARY:
+        return _is_binary_value(value)
+    if data_type == ObservationDataType.CONTINUOUS:
+        return _is_finite_number(value)
+    if data_type == ObservationDataType.COUNT:
+        return _is_finite_number(value) and float(value).is_integer() and value >= 0
+    return isinstance(value, (str, int, float, bool))
+
+
+def _data_type_expectation(data_type: ObservationDataType) -> str:
+    return {
+        ObservationDataType.BINARY: "binary 0/1 observations",
+        ObservationDataType.CONTINUOUS: "finite real numbers",
+        ObservationDataType.COUNT: "non-negative whole numbers",
+        ObservationDataType.CATEGORICAL: "JSON scalar labels",
+        ObservationDataType.ORDINAL: "JSON scalar levels",
+    }[data_type]
+
+
+def _is_finite_number(value: Any) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+    )
+
+
+def _observation_key(value: Any) -> tuple[Any, Any]:
+    """Key declared and observed values alike, following ``ChoiceSpec`` label matching."""
+
+    if isinstance(value, bool):
+        return bool, value
+    if isinstance(value, (int, float)):
+        return "number", float(value)
+    return type(value), value
+
+
+def _portable_scalar_or_none(value: Any) -> Any:
+    value = value.item() if isinstance(value, np.generic) else value
+    if _is_missing(value):
+        return _MISSING
+    if isinstance(value, float) and not math.isfinite(value):
+        return value
+    return value
+
+
+def _example_value(value: Any) -> Any:
+    return None if value is _MISSING else value
 
 
 def _validate_expected_denominators(protocol: StudyProtocol, study: Study) -> None:

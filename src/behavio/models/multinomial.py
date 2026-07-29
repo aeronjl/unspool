@@ -11,6 +11,7 @@ from numpy.typing import NDArray
 from scipy.optimize import minimize
 from scipy.special import logsumexp
 
+from behavio._internal.arrays import protected_array
 from behavio.design import (
     DesignSpec,
     HistoryKernelTerm,
@@ -24,7 +25,6 @@ from behavio.models.base import (
     ModelDataError,
     PredictionMode,
     UnsupportedPredictionMode,
-    _protected_array,
 )
 from behavio.study import REQUIRED_COLUMNS, Study
 from behavio.task import ChoiceData, ChoiceSpec, TaskValidationError
@@ -160,7 +160,7 @@ class MultinomialLogit:
                     "observed omissions require include_omission=True or explicit exclusion"
                 )
             codes[data.omitted] = len(self.categories) - 1
-        return _protected_array(codes, dtype=np.int64)
+        return protected_array(codes, dtype=np.int64)
 
     def fit(self, study: Study) -> FitResult:
         matrix = self.design.build(study)
@@ -259,7 +259,7 @@ class MultinomialLogit:
         outcomes = self.outcome_codes(study)
         scores = prediction.linear_predictor[np.arange(len(study)), outcomes]
         scores -= logsumexp(prediction.linear_predictor, axis=1)
-        return _protected_array(scores, dtype=np.float64)
+        return protected_array(scores, dtype=np.float64)
 
     def simulate(
         self,

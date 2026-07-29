@@ -11,6 +11,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import minimize
 
+from behavio._internal.arrays import protected_array
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -18,7 +19,6 @@ from behavio.models.base import (
     Prediction,
     PredictionMode,
     UnsupportedPredictionMode,
-    _protected_array,
 )
 from behavio.models.ddm import (
     _LOG_DENSITY_FLOOR,
@@ -46,9 +46,9 @@ class DriftDiffusionTrajectory:
     values: NDArray[np.float64]
 
     def __post_init__(self) -> None:
-        times = _protected_array(self.times, dtype=np.float64)
+        times = protected_array(self.times, dtype=np.float64)
         names = tuple(self.parameter_names)
-        values = _protected_array(self.values, dtype=np.float64)
+        values = protected_array(self.values, dtype=np.float64)
         if not isinstance(self.clock, str) or not self.clock:
             raise ValueError("trajectory clock must be a non-empty string")
         if times.ndim != 1 or not np.all(np.isfinite(times)):
@@ -68,7 +68,7 @@ class DriftDiffusionTrajectory:
             column = self.parameter_names.index(parameter)
         except ValueError:
             raise KeyError(parameter) from None
-        return _protected_array(self.values[:, column], dtype=np.float64)
+        return protected_array(self.values[:, column], dtype=np.float64)
 
 
 @dataclass(frozen=True, slots=True)
@@ -522,7 +522,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
             starting_bias=trial_values[:, n_coefficients + 1],
             terms=self.density_terms,
         )
-        return _protected_array(scores, dtype=np.float64)
+        return protected_array(scores, dtype=np.float64)
 
     def contaminant_responsibility(
         self,
@@ -533,7 +533,7 @@ class SmoothWienerDriftDiffusion(WienerDriftDiffusion):
 
         self._validate_study_scope(study)
         self._validate_fit(fit)
-        return _protected_array(np.zeros(len(study)), dtype=np.float64)
+        return protected_array(np.zeros(len(study)), dtype=np.float64)
 
     def _parameter_vector(self, parameters: Mapping[str, float]) -> NDArray[np.float64]:
         expected = set(self.parameter_names)

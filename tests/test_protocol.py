@@ -13,6 +13,7 @@ from behavio.protocol import (
     ComparisonSpec,
     EstimandSpec,
     LifecycleEvent,
+    ObservationDataType,
     ObservationRole,
     ObservationSpec,
     PanelSpec,
@@ -40,7 +41,37 @@ from behavio.protocol import (
 )
 
 
-def example_protocol(*, with_recovery: bool = True) -> StudyProtocol:
+def default_candidates() -> tuple[CandidateSpec, ...]:
+    """Declare exactly the estimators the runner fixtures actually supply.
+
+    The declaration is the object under test everywhere downstream: ``run_protocol``
+    verifies each supplied estimator against its frozen ``implementation`` and
+    ``hyperparameters``, so a fixture that declares one model and runs another would be
+    the very defect these tests exist to catch.
+    """
+
+    common = (Setting("covariates", ("stimulus",)), Setting("choice_lags", 0))
+    return (
+        CandidateSpec(
+            name="static",
+            implementation="behavio.models.BernoulliHistoryGLM",
+            hyperparameters=(*common, Setting("l2", 0.1)),
+            scored_columns=("choice",),
+        ),
+        CandidateSpec(
+            name="smooth",
+            implementation="behavio.models.BernoulliHistoryGLM",
+            hyperparameters=(*common, Setting("l2", 1.0)),
+            scored_columns=("choice",),
+        ),
+    )
+
+
+def example_protocol(
+    *,
+    with_recovery: bool = True,
+    candidates: tuple[CandidateSpec, ...] = (),
+) -> StudyProtocol:
     recovery = (
         RecoverySpec(
             name="candidate-recovery",
@@ -131,20 +162,7 @@ def example_protocol(*, with_recovery: bool = True) -> StudyProtocol:
             origin=4,
             horizon=(5,),
         ),
-        candidates=(
-            CandidateSpec(
-                name="static",
-                implementation="behavio.models.HierarchicalBernoulliHistoryGLM",
-                hyperparameters=(Setting("subject_scale", 0.5),),
-                scored_columns=("choice",),
-            ),
-            CandidateSpec(
-                name="smooth",
-                implementation="behavio.models.HierarchicalSmoothBernoulliHistoryGLM",
-                hyperparameters=(Setting("smoothness", 9.0),),
-                scored_columns=("choice",),
-            ),
-        ),
+        candidates=candidates or default_candidates(),
         comparison=ComparisonSpec(
             metric=ScoreMetric.LOG_LOSS,
             aggregation_unit="animal",
@@ -334,4 +352,36 @@ def test_tampered_lifecycle_is_rejected_on_construction() -> None:
             protocol,
             state=ProtocolState.FROZEN,
             lifecycle=(LifecycleEvent(ProtocolState.DRAFT, ProtocolState.FROZEN, "b" * 64),),
+        )
+
+
+def test_observation_data_type_is_a_closed_vocabulary_that_round_trips() -> None:
+    protocol = example_protocol().freeze()
+    payload = protocol.to_dict()
+
+    assert [item["data_type"] for item in payload["observations"]] == ["binary", "continuous"]
+    restored = protocol_from_json(protocol.canonical_json())
+    assert restored.observations[0].data_type is ObservationDataType.BINARY
+    assert restored.fingerprint == protocol.fingerprint
+    assert restored.canonical_json() == protocol.canonical_json()
+
+    with pytest.raises(ProtocolValidationError, match="is not one of"):
+        ObservationSpec("choice", ObservationRole.OUTCOME, "spike-count")
+
+
+def test_allowed_values_may_declare_missing_observations_explicitly() -> None:
+    spec = ObservationSpec(
+        "response_time",
+        ObservationRole.AUXILIARY,
+        ObservationDataType.CONTINUOUS,
+        allowed_values=(0.25, None),
+    )
+
+    assert spec.allowed_values == (0.25, None)
+    with pytest.raises(ProtocolValidationError, match="must be unique"):
+        ObservationSpec(
+            "response_time",
+            ObservationRole.AUXILIARY,
+            ObservationDataType.CONTINUOUS,
+            allowed_values=(None, None),
         )

@@ -7,11 +7,15 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy as np
 
+from behavio.contracts.adapter import SessionOrderPolicy, SourceType
 from behavio.study import REQUIRED_COLUMNS, Study
+
+ADAPTER_NAME = "behavio.nwb"
+ADAPTER_VERSION = "1"
 
 _EMBEDDED_SUBJECT = "behavio_subject"
 _EMBEDDED_SESSION = "behavio_session"
@@ -32,7 +36,12 @@ class NWBAdapterError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class NWBSessionSource:
-    """One local NWB session plus the chronology needed to import it safely."""
+    """One local NWB session plus the chronology needed to import it safely.
+
+    The source doubles as a :class:`behavio.contracts.adapter.StudyAdapter`: its
+    chronology policy is ``RECORDED`` because ``session_order`` is either embedded
+    losslessly by :func:`add_study_trials` or supplied by the caller, never inferred.
+    """
 
     path: Path
     session_order: int | None = None
@@ -40,6 +49,11 @@ class NWBSessionSource:
     session: Any | None = None
     columns: tuple[str, ...] | None = None
     column_map: Mapping[str, str] | None = None
+
+    adapter_name: ClassVar[str] = ADAPTER_NAME
+    adapter_version: ClassVar[str] = ADAPTER_VERSION
+    source_type: ClassVar[SourceType] = SourceType.LOCAL_FILE
+    session_order_policy: ClassVar[SessionOrderPolicy] = SessionOrderPolicy.RECORDED
 
     def __post_init__(self) -> None:
         path = Path(self.path)
@@ -49,6 +63,11 @@ class NWBSessionSource:
         object.__setattr__(self, "path", path)
         object.__setattr__(self, "columns", columns)
         object.__setattr__(self, "column_map", column_map)
+
+    def read(self) -> Study:
+        """Read this declared NWB session into a canonical study."""
+
+        return read_nwb(self)
 
 
 def study_from_nwbfile(

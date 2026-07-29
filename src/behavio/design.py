@@ -8,7 +8,7 @@ from typing import Any, Protocol
 import numpy as np
 from numpy.typing import NDArray
 
-from behavio.models.base import _protected_array
+from behavio._internal.arrays import protected_array
 from behavio.study import Study
 
 
@@ -25,7 +25,7 @@ class FeatureBlock:
 
     def __post_init__(self) -> None:
         names = tuple(self.names)
-        values = _protected_array(self.values, dtype=np.float64)
+        values = protected_array(self.values, dtype=np.float64)
         if not names or len(set(names)) != len(names):
             raise DesignValidationError("feature names must be non-empty and unique")
         if any(not isinstance(name, str) or not name for name in names):

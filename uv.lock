@@ -194,6 +194,12 @@ nwb = [
 optimization = [
     { name = "pybads" },
 ]
+parquet = [
+    { name = "pyarrow" },
+]
+plots = [
+    { name = "matplotlib" },
+]
 probabilistic = [
     { name = "arviz", version = "0.23.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "arviz", version = "1.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -206,8 +212,13 @@ readers = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "arviz", version = "0.23.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "arviz", version = "1.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "h5py" },
+    { name = "matplotlib" },
     { name = "pandas" },
+    { name = "pymc", version = "5.28.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "pymc", version = "6.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "pytest" },
     { name = "ruff" },
     { name = "tables" },
@@ -226,9 +237,11 @@ requires-dist = [
     { name = "h5py", marker = "extra == 'dandi'", specifier = ">=3.11" },
     { name = "h5py", marker = "extra == 'nwb'", specifier = ">=3.11" },
     { name = "h5py", marker = "extra == 'readers'", specifier = ">=3.11" },
+    { name = "matplotlib", marker = "extra == 'plots'", specifier = ">=3.9" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "one-api", marker = "extra == 'ibl'", specifier = ">=3.5,<4" },
     { name = "pandas", marker = "extra == 'readers'", specifier = ">=2.2" },
+    { name = "pyarrow", marker = "extra == 'parquet'", specifier = ">=17" },
     { name = "pybads", marker = "extra == 'optimization'", specifier = ">=1.0.6,<2" },
     { name = "pymc", marker = "python_full_version >= '3.12' and extra == 'bayesian'", specifier = ">=6.1,<7" },
     { name = "pymc", marker = "python_full_version < '3.12' and extra == 'bayesian'", specifier = ">=5.28,<6" },
@@ -238,12 +251,17 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.15" },
     { name = "tables", marker = "extra == 'readers'", specifier = ">=3.10" },
 ]
-provides-extras = ["readers", "nwb", "dandi", "ibl", "optimization", "probabilistic", "bayesian"]
+provides-extras = ["readers", "nwb", "dandi", "ibl", "optimization", "probabilistic", "bayesian", "parquet", "plots"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "arviz", marker = "python_full_version < '3.12'", specifier = ">=0.22,<1.2" },
+    { name = "arviz", marker = "python_full_version >= '3.12'", specifier = ">=1.2,<2" },
     { name = "h5py", specifier = ">=3.11" },
+    { name = "matplotlib", specifier = ">=3.9" },
     { name = "pandas", specifier = ">=2.2" },
+    { name = "pymc", marker = "python_full_version < '3.12'", specifier = ">=5.28,<6" },
+    { name = "pymc", marker = "python_full_version >= '3.12'", specifier = ">=6.1,<7" },
     { name = "pytest", specifier = ">=8.4.0" },
     { name = "ruff", specifier = ">=0.12.0" },
     { name = "tables", specifier = ">=3.10" },

@@ -14,6 +14,21 @@ unsupported uses in a common format.
   <figcaption><strong>Model-family atlas.</strong> Each family encodes a different explanation of behavioural change. The curves are conceptual signatures, not fitted data or evidence that any family is correct.</figcaption>
 </figure>
 
+## Fixed threshold, sensitivity, and bias
+
+`PsychometricFunction` estimates a threshold and a width in stimulus units under a declared
+link, with a guess and a lapse rate as separate bounded parameters. See
+[psychometric functions](../psychometric-functions.md).
+
+The signal detection family separates sensitivity from response bias for yes/no,
+forced-choice, rating, and response-with-confidence data, and states every convention it
+uses rather than leaving it to the reader. See
+[signal detection theory](../signal-detection.md).
+
+Neither family represents change. Both describe a fixed observer over the trials they are
+given, which is what makes them the comparators a longitudinal claim has to beat; neither
+has a hierarchical or smooth variant, so a multi-animal fit pools completely.
+
 ## Stable choice structure
 
 The Bernoulli history GLM estimates stimulus and choice-history effects that remain fixed

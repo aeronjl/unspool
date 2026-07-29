@@ -8,8 +8,10 @@ claims the resulting evidence may and may not support.
 The protocol is deliberately narrower than a workflow language. It contains JSON-safe
 declarations, not arbitrary Python callbacks, search spaces, credentials, or executable
 serialization. Python code supplies a source adapter, registered estimators, and a
-registered splitter; the compiler checks those implementations against the frozen
-declaration before a fit can begin.
+registered splitter; those implementations are checked against the frozen declaration
+before a fit can begin — the [data contract](#declarations-are-tested-not-annotated) when
+the cohort is materialized, and the [candidate declaration](#the-model-that-ran-is-the-model-that-was-declared)
+when the runner is handed its models.
 
 <figure class="doc-figure" data-figure-kind="Conceptual">
   <img src="../assets/workflow-map.svg" alt="A scientific question passes through a frozen study contract, materialized cohort, audited execution plan, evaluation, recovery, and bounded report.">
@@ -23,7 +25,7 @@ declaration before a fit can begin.
 | `source` | Adapter, release, locator, checksum, and trial-addressable identity |
 | `cohort` | Outcome-blind predicates, selection columns, and expected denominators |
 | `units` | Experimental, repeated-measures, and aggregation units |
-| `observations` | Outcome, predictor, and auxiliary columns with data semantics |
+| `observations` | Outcome, predictor, and auxiliary columns, their measurement type, and their permitted values |
 | `clocks` and `panel` | Longitudinal coordinate, scope, alignment, and completeness |
 | `estimands` | Population, outcome, contrast, weighting, and unit of inference |
 | `transforms` | Inputs, outputs, parameters, and training-only visibility |
@@ -62,6 +64,74 @@ evaluation = run_protocol(compiled, models)
 This sequence is intentionally explicit. Materialization proves the cohort denominator;
 compilation proves the row and information boundaries; only then does the runner fit and
 score candidates.
+
+## Declarations are tested, not annotated
+
+`ObservationSpec` fixes a column's measurement type and, optionally, the exact values it
+may take. Both are checked against the materialized cohort, so a protocol cannot assert a
+data contract it was never held to:
+
+```python
+ObservationSpec(
+    "choice", ObservationRole.OUTCOME, ObservationDataType.BINARY, allowed_values=(0, 1)
+)
+ObservationSpec(
+    "response_time",
+    ObservationRole.AUXILIARY,
+    ObservationDataType.CONTINUOUS,
+    allowed_values=(None,),
+)
+```
+
+`data_type` is a closed vocabulary — `binary`, `categorical`, `continuous`, `count`,
+`ordinal` — so it means something a materializer can test. The values are the wire format,
+so every protocol serialized before the vocabulary was closed round-trips unchanged and
+keeps its fingerprint.
+
+Missing observations are ordinary behavioural data: omissions, aborted trials, and
+unrecorded response times are not contract violations. An empty `allowed_values` declares
+no value contract and never rejects a missing observation. A non-empty `allowed_values`
+does constrain the column, and must name `None` before missing rows are permitted — the
+same treatment `ChoiceSpec` gives omissions, which it retains only when they are declared.
+
+`materialize_protocol` refuses a cohort that violates the contract and names the column,
+the rule, the number of offending rows, and a sample of the offending values.
+`validate_observation_contract(protocol, study)` returns the same findings without raising
+when you want to review the complete set first.
+
+## The model that ran is the model that was declared
+
+A `CandidateSpec` fixes an `implementation` and its `hyperparameters` before any data is
+seen. `run_protocol` and `run_nested_protocol` verify the estimator you supply against that
+declaration before the first fit, so an evidence bundle records what happened rather than
+what was claimed:
+
+```python
+from behavio import verify_candidate_declarations
+
+for verification in verify_candidate_declarations(frozen, models):
+    print(verification.candidate, verification.verified)
+```
+
+Identity is resolved from the supplied object — its type's import path, including the
+public paths that already re-export it — and never by importing the declared string. A
+frozen protocol is data; importing a module path out of it would turn a declaration into
+code execution.
+
+Because every model in the package is a frozen dataclass, each declared `Setting` is
+compared against the corresponding field value, with floating-point tolerance and with
+booleans kept distinct from `0` and `1`.
+
+The two outcomes are kept apart deliberately:
+
+- **Contradicted.** The supplied object is a different class, or a field's value differs
+  from the frozen one. The run is refused. There is nothing to salvage: every prediction,
+  score, and comparison would be content-addressed under a protocol that declares a
+  different model.
+- **Unverifiable.** A declared setting has no matching field, an observed value is not a
+  comparable JSON scalar, the object is not a dataclass, or the declared module is not
+  imported. These are retained rather than treated as satisfied, and a bounded report
+  discloses them in an *Unverified declarations* table.
 
 ## The declared score is executable, not descriptive
 
