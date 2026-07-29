@@ -27,6 +27,7 @@ from benchmarks.cell2025.fetch_data import (
     MEMBER_SHA256,
     sha256,
 )
+from benchmarks.provenance import render
 from unspool import (
     BernoulliHistoryGLM,
     HierarchicalBernoulliHistoryGLM,
@@ -1003,7 +1004,7 @@ def main() -> None:
         parameter_recovery_repeats=arguments.parameter_recovery_repeats,
         early_bias_recovery_repeats=arguments.early_bias_recovery_repeats,
     )
-    rendered = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    rendered = render(result)
     arguments.output.write_text(rendered, encoding="utf-8")
     print(rendered, end="")
 

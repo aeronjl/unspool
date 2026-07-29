@@ -6,7 +6,7 @@ geometry, recovery requirements, and claim boundaries before fitting.
 
 There are two deliberately separate result layers:
 
-- an independent reproduction of behavioural results from Liebana, Laffere et al.
+- a published-parity reproduction of behavioural results from Liebana, Laffere et al.
   (*Cell*, 2025); and
 - a new historical-cohort-calibrated forecast of an animal's final five sessions from
   its first eight days.

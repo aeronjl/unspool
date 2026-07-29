@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import json
 import math
 from collections.abc import Mapping
 from pathlib import Path
@@ -19,6 +18,7 @@ from benchmarks.chen2021_bandit.fetch_data import (
     DEFAULT_DESTINATION,
     ZENODO_RECORD,
 )
+from benchmarks.provenance import render
 from unspool import (
     BiasOnly,
     BinaryQLearning,
@@ -300,7 +300,7 @@ def contract_matches(payload: Mapping[str, Any]) -> bool:
 
 
 def write_result(payload: Mapping[str, Any], destination: Path) -> None:
-    destination.write_text(json.dumps(payload, indent=2, sort_keys=True, allow_nan=False) + "\n")
+    destination.write_text(render(payload), encoding="utf-8")
 
 
 def _models() -> dict[str, Any]:

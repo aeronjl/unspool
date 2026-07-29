@@ -25,6 +25,7 @@ from unspool.response_times import ResponseTimeSpec
 from unspool.study import REQUIRED_COLUMNS, Study
 
 _LOG_DENSITY_FLOOR = float(np.log(np.finfo(np.float64).tiny))
+_BRIDGE_EXPONENT_LIMIT = 30.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -446,16 +447,29 @@ class WienerDriftDiffusion:
             positions[active_indices] = current
             upper = current >= components.boundary
             lower = current <= 0.0
+            endpoint_crossed = upper | lower
+            interior = np.flatnonzero(~endpoint_crossed)
+            if len(interior):
+                bridge_upper, bridge_lower = _bridge_crossings(
+                    previous[interior],
+                    current[interior],
+                    components.boundary,
+                    time_step=time_step,
+                    generator=generator,
+                )
+                upper[interior] = bridge_upper
+                lower[interior] = bridge_lower
             crossed = upper | lower
             if not np.any(crossed):
                 continue
             crossed_indices = active_indices[crossed]
-            previous_crossed = previous[crossed]
-            current_crossed = current[crossed]
             upper_crossed = upper[crossed]
-            target = np.where(upper_crossed, components.boundary, 0.0)
-            fraction = (target - previous_crossed) / (current_crossed - previous_crossed)
-            fraction = np.clip(fraction, 0.0, 1.0)
+            fraction = _crossing_fractions(
+                previous[crossed],
+                current[crossed],
+                np.where(upper_crossed, components.boundary, 0.0),
+                endpoint_crossed=endpoint_crossed[crossed],
+            )
             decision_times[crossed_indices] = (step + fraction) * time_step
             choices[crossed_indices] = upper_crossed.astype(np.int8)
             active[crossed_indices] = False
@@ -991,6 +1005,55 @@ def _standard_wiener_log_density(
         values = np.log(np.pi) + log_sum
         result[~small] = np.where(sign > 0, values, _LOG_DENSITY_FLOOR)
     return result
+
+
+def _bridge_crossings(
+    previous: NDArray[np.float64],
+    current: NDArray[np.float64],
+    boundary: float | NDArray[np.float64],
+    *,
+    time_step: float,
+    generator: np.random.Generator,
+) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
+    """Return Brownian-bridge absorptions hidden between two interior endpoints.
+
+    A discretised path that starts and ends inside the corridor may still have crossed a
+    boundary within the step. The bridge absorption probabilities are exact for a single
+    boundary and their overlap is negligible whenever the corridor spans many steps.
+    """
+
+    upper_exponent = 2.0 * (boundary - previous) * (boundary - current) / time_step
+    lower_exponent = 2.0 * previous * current / time_step
+    upper = np.zeros(len(previous), dtype=np.bool_)
+    lower = np.zeros(len(previous), dtype=np.bool_)
+    candidate = np.flatnonzero(
+        (upper_exponent < _BRIDGE_EXPONENT_LIMIT) | (lower_exponent < _BRIDGE_EXPONENT_LIMIT)
+    )
+    if not len(candidate):
+        return upper, lower
+    upper_probability = np.exp(-upper_exponent[candidate])
+    lower_probability = np.exp(-lower_exponent[candidate])
+    draws = generator.uniform(0.0, 1.0, len(candidate))
+    upper[candidate] = draws < upper_probability
+    lower[candidate] = (draws >= upper_probability) & (
+        draws < upper_probability + lower_probability
+    )
+    return upper, lower
+
+
+def _crossing_fractions(
+    previous: NDArray[np.float64],
+    current: NDArray[np.float64],
+    target: NDArray[np.float64],
+    *,
+    endpoint_crossed: NDArray[np.bool_],
+) -> NDArray[np.float64]:
+    """Return within-step crossing positions, midpoints for bridge absorptions."""
+
+    span = current - previous
+    interpolated = (target - previous) / np.where(span == 0.0, 1.0, span)
+    fraction = np.where(endpoint_crossed & (span != 0.0), interpolated, 0.5)
+    return np.clip(fraction, 0.0, 1.0)
 
 
 def _upper_boundary_probability(

@@ -57,6 +57,27 @@ must match exactly. These are regression tolerances, not uncertainty intervals. 
 uncertainty remains the one reported by the analysis, and the benchmark does not establish
 causality, recover the trajectory clusters, or validate the paper's neural claims.
 
+## Published parity
+
+The numerical contract above is a self-pin: it detects library drift away from the values
+this benchmark itself recorded, but it cannot detect being wrong about the paper.
+[`published_claims.json`](published_claims.json) answers the second question. It records
+each value printed in Figure 1G and 1I, the recomputed value, and the rounding tolerance
+that separates them:
+
+| Claim | Paper | Unspool | Tolerance | Status |
+| --- | ---: | ---: | --- | --- |
+| `early_late_bias_r` | -0.53 | -0.52764 | ±0.01 absolute | pass |
+| `early_late_bias_p` | p < 0.01 | 0.00273 | printed upper bound | pass |
+| `early_bias_late_slope_r` | 0.69 | 0.69479 | ±0.01 absolute | pass |
+| `early_bias_late_slope_p` | p < 0.0001 | 2.0429e-05 | printed upper bound | pass |
+| `n_subjects` | 30 | 30 | exact | pass |
+
+`tests/test_published_parity.py` revalidates every row offline against the committed
+`result.json`. Both correlations agree with the printed two-decimal values, and both
+p-values stay below the printed thresholds. A comparison that failed would be recorded as
+`fail` and retained rather than dissolved into a wider tolerance.
+
 ## Provenance and licensing
 
 - Data: Figshare article `10.6084/m9.figshare.28877912.v1`, file `54186326`, licensed

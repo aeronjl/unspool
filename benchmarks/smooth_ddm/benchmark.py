@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
+from benchmarks.provenance import render
 from unspool import SmoothWienerDriftDiffusion, Study, WienerDriftDiffusion
 
 N_SESSIONS = 6
@@ -259,7 +259,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=Path(__file__).with_name("result.json"))
     arguments = parser.parse_args()
     result = run(repetitions=arguments.repetitions, seed=arguments.seed)
-    rendered = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    rendered = render(result)
     arguments.output.write_text(rendered, encoding="utf-8")
     print(rendered, end="")
 

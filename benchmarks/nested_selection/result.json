@@ -16,6 +16,16 @@
     "subjects": 10,
     "trials_per_session": 40
   },
+  "provenance": {
+    "git_describe": "41b8cd3-dirty",
+    "libraries": {
+      "numpy": "2.3.5",
+      "scipy": "1.18.0",
+      "unspool": "0.1.0"
+    },
+    "python": "3.12.13",
+    "schema_version": 1
+  },
   "regimes": {
     "shared_drift": {
       "all_selected_fits_passed_audit": true,

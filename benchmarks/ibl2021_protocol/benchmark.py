@@ -24,6 +24,7 @@ from benchmarks.ibl2021_replicated.manifest import (
     EXPECTED_MANIFEST_SHA256,
     load_manifest,
 )
+from benchmarks.provenance import render
 from unspool import (
     AggregationWeighting,
     CandidateSpec,
@@ -516,10 +517,7 @@ def _main() -> None:
             **compact_result(run),
             "parity": {**asdict(parity), "passed": parity.passed},
         }
-    PROTOCOL_RESULT.write_text(
-        json.dumps(result, allow_nan=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    PROTOCOL_RESULT.write_text(render(result), encoding="utf-8")
 
 
 if __name__ == "__main__":

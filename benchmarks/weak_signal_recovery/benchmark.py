@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import argparse
-import json
 from collections import Counter
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
+from benchmarks.provenance import render
 from benchmarks.recovery_grid.benchmark import N_SESSIONS, build_design, experiment
 from unspool import ModelRecoveryReport, ModelRecoveryScenario, run_model_recovery
 
@@ -221,7 +221,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, help="also write the JSON result to this path")
     args = parser.parse_args()
     result = run(repeats=args.repeats, check=not args.no_check)
-    rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
+    rendered = render(result, allow_nan=True)
     if args.output is not None:
         args.output.write_text(rendered, encoding="utf-8")
     print(rendered, end="")

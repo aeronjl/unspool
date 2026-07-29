@@ -8,6 +8,7 @@ docs/**/* 2.md
 docs/assets/* 2.svg
 examples/* 2.py
 
+.venv
 .venv/
 __pycache__/
 *.py[cod]

@@ -16,7 +16,7 @@
   "candidate_signatures": [
     "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.01]",
     "smooth-bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;time=session_order;knots=0,1,2,3,4;smoothness=5.0;l2=0.01;shared_trajectory=False]",
-    "bernoulli-glm-hmm[states=2;outcome=choice;covariates=stimulus;choice_lags=1;label_by=intercept;l2=0.01]",
+    "bernoulli-glm-hmm[states=2;outcome=choice;covariates=stimulus;choice_lags=1;label_by=intercept;l2=0.01;stickiness=0.0]",
     "binary-q-learning[outcome=choice;reward=reward;environment=reward_probability_0,reward_probability_1;initial_value=0.5;session_reset=True]"
   ],
   "contract_passed": true,
@@ -179,6 +179,16 @@
   ],
   "n_subjects": 1,
   "n_trials": 300,
+  "provenance": {
+    "git_describe": "41b8cd3-dirty",
+    "libraries": {
+      "numpy": "2.3.5",
+      "scipy": "1.18.0",
+      "unspool": "0.1.0"
+    },
+    "python": "3.12.13",
+    "schema_version": 1
+  },
   "repeats": 10,
   "root_seed": 7701,
   "run_seeds": [
@@ -570,7 +580,7 @@
       }
     },
     {
-      "generator_signature": "bernoulli-glm-hmm[states=2;outcome=choice;covariates=stimulus;choice_lags=1;label_by=intercept;l2=0.01]",
+      "generator_signature": "bernoulli-glm-hmm[states=2;outcome=choice;covariates=stimulus;choice_lags=1;label_by=intercept;l2=0.01;stickiness=0.0]",
       "name": "strong-switching",
       "parameters": {
         "initial_logit[state=0|reference=1]": 0.0,
@@ -590,7 +600,7 @@
       "parameters": {
         "choice_bias": 0.0,
         "inverse_temperature_log": 1.6094379124341003,
-        "learning_rate_logit": -0.8472978603872038,
+        "learning_rate_logit": -0.8472978603872037,
         "perseveration": 0.2
       }
     },
@@ -625,7 +635,7 @@
       }
     },
     {
-      "generator_signature": "bernoulli-glm-hmm[states=2;outcome=choice;covariates=stimulus;choice_lags=1;label_by=intercept;l2=0.01]",
+      "generator_signature": "bernoulli-glm-hmm[states=2;outcome=choice;covariates=stimulus;choice_lags=1;label_by=intercept;l2=0.01;stickiness=0.0]",
       "name": "weak-overlapping-states",
       "parameters": {
         "initial_logit[state=0|reference=1]": 0.0,

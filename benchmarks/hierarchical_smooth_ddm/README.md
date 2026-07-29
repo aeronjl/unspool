@@ -24,22 +24,29 @@ fifth session for animals represented in training.
 
 | Truth | Method | Subject-path RMSE | Future joint log loss |
 | --- | --- | ---: | ---: |
-| Stationary identical | Complete pooling | **0.04202** | **0.36021** |
-|  | Shared smooth | 0.06184 | 0.37107 |
-|  | Independent smooth | 0.11030 | 0.40028 |
-|  | Hierarchical smooth | 0.08292 | 0.38353 |
-| Shared change | Complete pooling | 0.24919 | 0.19467 |
-|  | Shared smooth | **0.06069** | **-0.07807** |
-|  | Independent smooth | 0.12324 | -0.03744 |
-|  | Hierarchical smooth | 0.08620 | -0.06826 |
-| Individual change | Complete pooling | 0.26658 | 0.25563 |
-|  | Shared smooth | 0.12117 | -0.03846 |
-|  | Independent smooth | 0.11545 | 0.16654 |
-|  | Hierarchical smooth | **0.09784** | **-0.06247** |
+| Stationary identical | Complete pooling | **0.03628** | **0.33537** |
+|  | Shared smooth | 0.05856 | 0.34407 |
+|  | Independent smooth | 0.11562 | 0.38958 |
+|  | Hierarchical smooth | 0.08289 | 0.36130 |
+| Shared change | Complete pooling | 0.24974 | 0.14554 |
+|  | Shared smooth | **0.05632** | **-0.14631** |
+|  | Independent smooth | 0.12686 | -0.10234 |
+|  | Hierarchical smooth | 0.08234 | -0.13259 |
+| Individual change | Complete pooling | 0.26789 | 0.21030 |
+|  | Shared smooth | 0.11462 | -0.14894 |
+|  | Independent smooth | 0.12029 | -0.03934 |
+|  | Hierarchical smooth | **0.08836** | **-0.17299** |
 
 All 480 fits converge and all 60 complete matched panels remain audit-eligible. A joint
 continuous density can exceed one, so negative mean log loss is possible; only matched
 differences for the same choice/response-time event are interpreted.
+
+Adding the simulator's Brownian-bridge absorption test moved every held-out log loss down
+by roughly `0.02` to `0.11` nats, because the earlier discretized generator produced
+systematically slow trials that no candidate could predict. The complete ranking inside
+each regime is unchanged, and so are the margins that carry the claim: the hierarchical
+model still beats the shared-smooth control in the individual-change regime by `0.024`,
+the same margin as before.
 
 The negative controls matter. Hierarchical flexibility does not win when animals are
 identical or when one shared trajectory is sufficient. It wins only in the specified

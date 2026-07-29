@@ -3,13 +3,23 @@
   "seed": 2741,
   "repetitions": 20,
   "design": {
-    "subject_counts": [8, 24],
-    "true_scales": [0.1, 0.5, 1.0],
+    "subject_counts": [
+      8,
+      24
+    ],
+    "true_scales": [
+      0.1,
+      0.5,
+      1.0
+    ],
     "training_sessions": 3,
     "test_sessions": 1,
     "trials_per_session": 35,
     "initial_scale": 0.4,
-    "scale_bounds": [0.05, 1.5]
+    "scale_bounds": [
+      0.05,
+      1.5
+    ]
   },
   "scope": {
     "estimator": "bounded Laplace marginal likelihood with one shared scale",
@@ -125,5 +135,15 @@
     "0.1": true,
     "0.5": true,
     "1.0": true
+  },
+  "provenance": {
+    "schema_version": 1,
+    "git_describe": "41b8cd3-dirty",
+    "python": "3.12.13",
+    "libraries": {
+      "numpy": "2.3.5",
+      "scipy": "1.18.0",
+      "unspool": "0.1.0"
+    }
   }
 }

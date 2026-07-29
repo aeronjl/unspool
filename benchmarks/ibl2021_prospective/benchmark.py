@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 from collections import Counter
 from collections.abc import Mapping
 from pathlib import Path
@@ -13,6 +12,7 @@ import numpy as np
 
 from benchmarks.ibl2021_replicated.benchmark import DEFAULT_CACHE, load_study
 from benchmarks.ibl2021_replicated.manifest import EXPECTED_MANIFEST_SHA256
+from benchmarks.provenance import render
 from unspool import (
     HierarchicalBernoulliHistoryGLM,
     HierarchicalSmoothBernoulliHistoryGLM,
@@ -353,7 +353,7 @@ def main() -> None:
         bootstrap_resamples=args.bootstrap_resamples,
         bootstrap_seed=args.bootstrap_seed,
     )
-    rendered = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    rendered = render(result)
     args.output.write_text(rendered, encoding="utf-8")
     print(rendered, end="")
 

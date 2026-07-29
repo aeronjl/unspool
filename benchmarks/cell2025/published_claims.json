@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "paper": {
+    "doi": "10.1016/j.cell.2025.05.025",
+    "figure": "Figure 1G and Figure 1I",
+    "citation": "Liebana Garcia S., Laffere A., et al. (2025). Dopamine encodes deep network teaching signals for individual learning trajectories. Cell 188, 3789-3805.e33."
+  },
+  "data": {
+    "accession": "10.6084/m9.figshare.28877912.v1",
+    "member_sha256": "94a6d541bfde731f769e02a68dbc652ab5b73dbc1ec13b8b7c8100d181b8048a"
+  },
+  "result": "result.json",
+  "claims": [
+    {
+      "id": "early_late_bias_r",
+      "description": "Figure 1G Pearson correlation between mean zero-contrast bias over paper days 4-8 and mean zero-contrast bias over the final five paper-day indices.",
+      "result_path": "early_late_bias_r",
+      "published_value": -0.53,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0.01
+      },
+      "tolerance_rationale": "The paper prints the correlation to two decimal places; +/-0.01 covers rounding of the printed value and nothing more.",
+      "observed_value": -0.5276390751832067,
+      "status": "pass"
+    },
+    {
+      "id": "early_late_bias_p",
+      "description": "Figure 1G significance statement, reported in the paper as an inequality rather than a point value.",
+      "result_path": "early_late_bias_p",
+      "published_value": 0.01,
+      "tolerance": {
+        "kind": "upper_bound",
+        "value": 0.0
+      },
+      "tolerance_rationale": "The paper reports p < 0.01, so the only checkable content is that the reproduced p-value stays below the printed bound.",
+      "observed_value": 0.0027312381517590164,
+      "status": "pass"
+    },
+    {
+      "id": "early_bias_late_slope_r",
+      "description": "Figure 1I Pearson correlation between mean zero-contrast bias over paper days 4-8 and mean right-minus-left psychometric slope over the final five paper-day indices.",
+      "result_path": "early_bias_late_slope_r",
+      "published_value": 0.69,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0.01
+      },
+      "tolerance_rationale": "The paper prints the correlation to two decimal places; +/-0.01 covers rounding of the printed value and nothing more.",
+      "observed_value": 0.6947896564480975,
+      "status": "pass"
+    },
+    {
+      "id": "early_bias_late_slope_p",
+      "description": "Figure 1I significance statement, reported in the paper as an inequality rather than a point value.",
+      "result_path": "early_bias_late_slope_p",
+      "published_value": 0.0001,
+      "tolerance": {
+        "kind": "upper_bound",
+        "value": 0.0
+      },
+      "tolerance_rationale": "The paper reports p < 0.0001, so the only checkable content is that the reproduced p-value stays below the printed bound.",
+      "observed_value": 2.0429013100548865e-05,
+      "status": "pass"
+    },
+    {
+      "id": "n_subjects",
+      "description": "Number of animals contributing to the Figure 1G and 1I animal-level correlations.",
+      "result_path": "n_subjects",
+      "published_value": 30,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0
+      },
+      "tolerance_rationale": "A cohort size is an exact integer; any difference means the trial exclusions were reimplemented incorrectly.",
+      "observed_value": 30,
+      "status": "pass"
+    }
+  ]
+}

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import math
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
@@ -19,6 +18,7 @@ from benchmarks.ibl2021.fetch_data import (
     load_manifest,
     verify_file,
 )
+from benchmarks.provenance import render
 from unspool import (
     Study,
     TrajectoryPanel,
@@ -300,7 +300,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, help="also write the JSON result to this path")
     args = parser.parse_args()
     result = run(args.data.resolve(), check=not args.no_check)
-    rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
+    rendered = render(result, allow_nan=True)
     if args.output is not None:
         args.output.write_text(rendered, encoding="utf-8")
     print(rendered, end="")

@@ -181,10 +181,10 @@ def test_fit_recovers_contaminant_weight_and_retains_trial_responsibilities() ->
     assert isinstance(fit, DriftDiffusionFitResult)
     assert fit.audit().status.value in {"pass", "warning"}
     assert fit.likelihood_floor_count == 0
-    assert recovered.contaminant_probability == pytest.approx(0.06, abs=0.025)
-    assert recovered.drift_map["drift.stimulus"] == pytest.approx(1.2, abs=0.25)
-    assert recovered.boundary == pytest.approx(1.2, abs=0.15)
-    assert recovered.nondecision_time == pytest.approx(0.25, abs=0.025)
+    assert recovered.contaminant_probability == pytest.approx(0.06, abs=0.0197)
+    assert recovered.drift_map["drift.stimulus"] == pytest.approx(1.2, abs=0.129)
+    assert recovered.boundary == pytest.approx(1.2, abs=0.042)
+    assert recovered.nondecision_time == pytest.approx(0.25, abs=0.0058)
     np.testing.assert_allclose(fit.posterior_contaminant_probability, posterior)
     assert fit.expected_contaminant_count == pytest.approx(float(np.sum(posterior)))
     assert np.mean(posterior[simulation.contaminants]) > 0.5

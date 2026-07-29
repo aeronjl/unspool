@@ -7,7 +7,11 @@
     "training_sessions": 4,
     "test_sessions": 1,
     "trials_per_session": 50,
-    "knots": [0.0, 2.0, 4.0]
+    "knots": [
+      0.0,
+      2.0,
+      4.0
+    ]
   },
   "scope": {
     "hyperparameters": "fixed equally across matched repetitions",
@@ -144,5 +148,15 @@
       }
     }
   },
-  "all_expected_winners_recovered": true
+  "all_expected_winners_recovered": true,
+  "provenance": {
+    "schema_version": 1,
+    "git_describe": "41b8cd3-dirty",
+    "python": "3.12.13",
+    "libraries": {
+      "numpy": "2.3.5",
+      "scipy": "1.18.0",
+      "unspool": "0.1.0"
+    }
+  }
 }

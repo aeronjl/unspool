@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
+from benchmarks.provenance import render
 from unspool import HierarchicalSmoothWienerDriftDiffusion, Study
 
 SUBJECT_COUNTS = (6, 12)
@@ -169,7 +169,7 @@ def run(*, repetitions: int = 8, seed: int = 91_337) -> dict[str, Any]:
         },
         "scope": {
             "estimator": "bounded parameter-specific Laplace-EM",
-            "interval": "local expected-prior curvature on log scale",
+            "interval": "Louis observed information on log scale",
             "oracle": "fixed to each true generating scale",
             "prediction": "fourth session for subjects represented in training",
         },
@@ -234,8 +234,9 @@ def main() -> None:
     )
     arguments = parser.parse_args()
     result = run(repetitions=arguments.repetitions, seed=arguments.seed)
-    arguments.output.write_text(json.dumps(result, indent=2) + "\n")
-    print(json.dumps(result, indent=2))
+    rendered = render(result, allow_nan=True, sort_keys=False)
+    arguments.output.write_text(rendered, encoding="utf-8")
+    print(rendered, end="")
 
 
 if __name__ == "__main__":

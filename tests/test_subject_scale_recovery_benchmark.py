@@ -6,6 +6,15 @@ import pytest
 from benchmarks.subject_scale_recovery.benchmark import experiment
 
 RESULT_PATH = Path("benchmarks/subject_scale_recovery/result.json")
+NOMINAL_COVERAGE = 0.95
+MEASURED_COVERAGE = {
+    "subjects=8,scale=0.1": 0.95,
+    "subjects=8,scale=0.5": 0.95,
+    "subjects=8,scale=1.0": 0.95,
+    "subjects=24,scale=0.1": 1.0,
+    "subjects=24,scale=0.5": 1.0,
+    "subjects=24,scale=1.0": 0.95,
+}
 
 
 def test_subject_scale_experiment_is_reproducible() -> None:
@@ -29,7 +38,9 @@ def test_committed_scale_recovery_result_retains_calibration_evidence() -> None:
         for scale in (0.1, 0.5, 1.0)
     }
     assert all(result["more_subjects_reduce_rmse"].values())
-    for regime in result["regimes"].values():
+    assert set(result["regimes"]) == set(MEASURED_COVERAGE)
+    for name, regime in result["regimes"].items():
         assert regime["convergence_rate"] == 1.0
-        assert 0.0 <= regime["coverage_95"] <= 1.0
+        assert regime["coverage_95"] == pytest.approx(MEASURED_COVERAGE[name], abs=1e-9)
+        assert regime["coverage_95"] >= NOMINAL_COVERAGE
         assert 0.0 <= regime["boundary_rate"] <= 1.0

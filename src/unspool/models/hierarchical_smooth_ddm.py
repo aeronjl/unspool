@@ -40,6 +40,13 @@ from unspool.study import Study
 
 _INVALID_OBJECTIVE = float(np.finfo(np.float64).max / 1e100)
 _CONSTRAINT_PENALTY = 1e6
+_SCALE_UNCERTAINTY_POLICIES = MappingProxyType(
+    {
+        "local": "local-expected-prior-curvature",
+        "observed": "louis-observed-information",
+        "supplemented": "supplemented-laplace-em",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -356,9 +363,14 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
                 raise ValueError("estimated subject scales require boundary indicators")
             if self.scale_estimation_policy != "laplace-em":
                 raise ValueError("estimated subject scale policy must be 'laplace-em'")
-            if self.subject_scale_uncertainty_policy == "local-expected-prior-curvature":
+            if self.subject_scale_uncertainty_policy in {
+                "local-expected-prior-curvature",
+                "louis-observed-information",
+            }:
                 if rate_matrix is not None:
-                    raise ValueError("local scale uncertainty cannot retain an EM rate matrix")
+                    raise ValueError(
+                        "closed-form scale uncertainty cannot retain an EM rate matrix"
+                    )
             elif self.subject_scale_uncertainty_policy == "supplemented-laplace-em":
                 if (
                     rate_matrix is None
@@ -496,7 +508,13 @@ class HierarchicalSmoothDriftDiffusionFitResult(SmoothDriftDiffusionFitResult):
     def subject_scale_local_confidence_intervals_95(
         self,
     ) -> Mapping[str, tuple[float, float]] | None:
-        """Return uncorrected expected-prior curvature intervals for comparison."""
+        """Return uncorrected complete-data curvature ranges, which are not calibrated.
+
+        These ranges use expected-prior curvature alone and are systematically narrower
+        than the observed information allows, so they undercover their nominal rate. They
+        are retained as an optimization diagnostic and as the comparison baseline for the
+        corrections reported by ``subject_scale_confidence_intervals_95``.
+        """
 
         if self.subject_scale_local_standard_errors is None:
             return None
@@ -564,7 +582,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
     subject_scale_bounds: tuple[float, float] = (0.05, 2.0)
     scale_max_iterations: int = 12
     scale_tolerance: float = 0.01
-    subject_scale_uncertainty: str = "local"
+    subject_scale_uncertainty: str = "observed"
     subject_smoothness: float = 10.0
 
     def __post_init__(self) -> None:
@@ -584,8 +602,10 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
             raise ValueError("scale_max_iterations must be a positive integer")
         if not np.isfinite(self.scale_tolerance) or self.scale_tolerance <= 0:
             raise ValueError("scale_tolerance must be finite and positive")
-        if self.subject_scale_uncertainty not in {"local", "supplemented"}:
-            raise ValueError("subject_scale_uncertainty must be 'local' or 'supplemented'")
+        if self.subject_scale_uncertainty not in {"local", "observed", "supplemented"}:
+            raise ValueError(
+                "subject_scale_uncertainty must be 'local', 'observed', or 'supplemented'"
+            )
         if self.subject_scale_uncertainty == "supplemented" and not self.estimate_subject_scales:
             raise ValueError(
                 "supplemented subject-scale uncertainty requires estimate_subject_scales=True"
@@ -1026,6 +1046,17 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
                     observed_information,
                     hermitian=True,
                 )
+            elif self.subject_scale_uncertainty == "observed":
+                observed_information = _louis_scale_information(
+                    subject_scales,
+                    deviations,
+                    final_conditional_covariances,
+                    subject_smoothness=self.subject_smoothness,
+                    knots=self.knots,
+                )
+                if np.min(np.linalg.eigvalsh(observed_information)) <= 0:
+                    raise ModelDataError("observed scale information is not positive definite")
+                log_covariance = np.linalg.pinv(observed_information, hermitian=True)
             else:
                 log_covariance = local_log_covariance
             scale_covariance = np.diag(subject_scales) @ log_covariance @ np.diag(subject_scales)
@@ -1113,9 +1144,7 @@ class HierarchicalSmoothWienerDriftDiffusion(SmoothWienerDriftDiffusion):
             scale_estimation_converged=scale_converged,
             scale_estimation_policy="laplace-em" if self.estimate_subject_scales else "fixed",
             subject_scale_uncertainty_policy=(
-                f"{self.subject_scale_uncertainty}-expected-prior-curvature"
-                if self.estimate_subject_scales and self.subject_scale_uncertainty == "local"
-                else "supplemented-laplace-em"
+                _SCALE_UNCERTAINTY_POLICIES[self.subject_scale_uncertainty]
                 if self.estimate_subject_scales
                 else "fixed"
             ),
@@ -1713,6 +1742,54 @@ def _expected_subject_prior_objective(
         second_moment = covariance + np.outer(deviation, deviation)
         quadratic += float(np.trace(precision @ second_moment))
     return 0.5 * (quadratic - len(deviations) * float(log_determinant))
+
+
+def _louis_scale_information(
+    scales: NDArray[np.float64],
+    deviations: NDArray[np.float64],
+    covariances: tuple[NDArray[np.float64], ...],
+    *,
+    subject_smoothness: float,
+    knots: tuple[float, ...],
+) -> NDArray[np.float64]:
+    """Return observed log-scale information as complete minus missing information.
+
+    The expected-prior curvature the M-step minimizes is complete-data information, which
+    is never smaller than the observed information the marginal likelihood carries. Louis'
+    identity subtracts the conditional variance of the complete-data score, which for a
+    Gaussian deviation prior is a closed form in the conditional means and covariances.
+    """
+
+    n_knots = len(knots)
+    n_parameters = len(scales)
+    n_subjects = len(covariances)
+    roughness = _roughness_matrix(knots)
+    precisions = np.asarray(scales, dtype=np.float64) ** -2.0
+    blocks = tuple(slice(index * n_knots, (index + 1) * n_knots) for index in range(n_parameters))
+    complete = np.zeros((n_parameters, n_parameters), dtype=np.float64)
+    for index, precision in enumerate(precisions):
+        prior_precision = precision * np.eye(n_knots) + subject_smoothness * roughness
+        prior_covariance = np.linalg.inv(prior_precision)
+        block = blocks[index]
+        second_moment = float(np.sum(deviations[:, index, :] ** 2)) + sum(
+            float(np.trace(covariance[block, block])) for covariance in covariances
+        )
+        complete[index, index] = 2.0 * precision * (
+            second_moment - n_subjects * float(np.trace(prior_covariance))
+        ) + 2.0 * n_subjects * precision**2 * float(np.sum(prior_covariance * prior_covariance))
+    missing = np.zeros((n_parameters, n_parameters), dtype=np.float64)
+    for row in range(n_parameters):
+        for column in range(row + 1):
+            total = 0.0
+            for subject, covariance in enumerate(covariances):
+                cross = covariance[blocks[row], blocks[column]]
+                left = deviations[subject, row, :]
+                right = deviations[subject, column, :]
+                total += 2.0 * float(np.sum(cross * cross)) + 4.0 * float(left @ cross @ right)
+            value = precisions[row] * precisions[column] * total
+            missing[row, column] = missing[column, row] = value
+    information = complete - missing
+    return 0.5 * (information + information.T)
 
 
 def _scale_standard_error(

@@ -80,7 +80,10 @@ build-backend = "uv_build"
 required-version = ">=0.10.12,<0.12.0"
 
 [tool.pytest.ini_options]
-addopts = ["-ra", "--strict-config", "--strict-markers"]
+addopts = ["-ra", "--strict-config", "--strict-markers", "-m", "not slow"]
+markers = [
+    "slow: re-executes a committed benchmark at its committed scale; run nightly, not by default",
+]
 pythonpath = ["."]
 testpaths = ["tests"]
 

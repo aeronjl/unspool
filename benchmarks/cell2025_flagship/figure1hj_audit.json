@@ -69,7 +69,7 @@
   },
   "unspool_display": {
     "asset": "docs/assets/cell2025-trajectories.svg",
-    "classification": "exact-reproduction",
+    "classification": "released-replay",
     "preserved": [
       "all 30 checksum-pinned released Gaussian-process paths",
       "100 released interpolation points per mouse",

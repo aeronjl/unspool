@@ -16,6 +16,16 @@
     "training_sessions": 5,
     "trials_per_session": 150
   },
+  "provenance": {
+    "git_describe": "41b8cd3-dirty",
+    "libraries": {
+      "numpy": "2.3.5",
+      "scipy": "1.18.0",
+      "unspool": "0.1.0"
+    },
+    "python": "3.12.13",
+    "schema_version": 1
+  },
   "regimes": {
     "changing": {
       "expected_winner": "smooth",
@@ -23,13 +33,13 @@
       "methods": {
         "smooth": {
           "all_fits_converged": true,
-          "mean_future_log_loss": -0.22988110952920762,
-          "mean_training_trajectory_rmse": 0.08843528751075559
+          "mean_future_log_loss": -0.30943210232374635,
+          "mean_training_trajectory_rmse": 0.09234804836924058
         },
         "static": {
           "all_fits_converged": true,
-          "mean_future_log_loss": 0.15136028373591287,
-          "mean_training_trajectory_rmse": 0.35798720477447227
+          "mean_future_log_loss": 0.09299576199271144,
+          "mean_training_trajectory_rmse": 0.3579821628447297
         }
       },
       "n_paired_eligible": 20,
@@ -46,11 +56,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.058467512679839614,
-                  "hessian_condition": 16564.179544620874,
+                  "gradient_norm": 0.45549930436456204,
+                  "hessian_condition": 22888.681874199527,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 166,
-                  "objective": 378.67265364114684,
+                  "n_iterations": 178,
+                  "objective": 356.0956893302645,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -58,18 +68,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 4.2324199171162036e-05,
-                  "relative_objective_range": 1.1176988558373959e-07,
+                  "objective_range": 3.8729340644749755e-05,
+                  "relative_objective_range": 1.0876104880008766e-07,
                   "selected_converged": true,
-                  "selected_objective": 378.67265364114684,
-                  "selected_restart": 1
+                  "selected_objective": 356.0956893302645,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.2918589339258535,
-              "objective": 378.67265364114684,
-              "training_trajectory_rmse": 0.10488103106508122
+              "future_log_loss": -0.31750668082348643,
+              "objective": 356.0956893302645,
+              "training_trajectory_rmse": 0.10917248795203147
             },
             "static": {
               "audit": {
@@ -81,11 +91,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0029251448825573243,
-                  "hessian_condition": 388.5899791748327,
+                  "gradient_norm": 0.028544989546995882,
+                  "hessian_condition": 513.9269586680152,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
                   "n_iterations": 18,
-                  "objective": 454.90414691734645,
+                  "objective": 425.92911858676996,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -93,18 +103,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 6.233584031178907e-06,
-                  "relative_objective_range": 1.370307145674694e-08,
+                  "objective_range": 3.6707210711028893e-06,
+                  "relative_objective_range": 8.618150088639908e-09,
                   "selected_converged": true,
-                  "selected_objective": 454.90414691734645,
-                  "selected_restart": 0
+                  "selected_objective": 425.92911858676996,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.10633581329942904,
-              "objective": 454.90414691734645,
-              "training_trajectory_rmse": 0.34646109926486734
+              "future_log_loss": 0.12650723460202148,
+              "objective": 425.92911858676996,
+              "training_trajectory_rmse": 0.3661463117859342
             }
           },
           "seed": 182411
@@ -121,11 +131,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.425670832280604,
-                  "hessian_condition": 19166.796176022515,
+                  "gradient_norm": 0.12586903423748258,
+                  "hessian_condition": 16628.960179991962,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 119,
-                  "objective": 357.19986530893595,
+                  "n_iterations": 115,
+                  "objective": 331.02615311578637,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -133,18 +143,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 5.07134113831853e-05,
-                  "relative_objective_range": 1.4197488943430634e-07,
+                  "objective_range": 0.00010432941263616158,
+                  "relative_objective_range": 3.151696977841785e-07,
                   "selected_converged": true,
-                  "selected_objective": 357.19986530893595,
-                  "selected_restart": 0
+                  "selected_objective": 331.02615311578637,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.27638924821272165,
-              "objective": 357.19986530893595,
-              "training_trajectory_rmse": 0.046327982342773966
+              "future_log_loss": -0.3349003659608237,
+              "objective": 331.02615311578637,
+              "training_trajectory_rmse": 0.069820207419365
             },
             "static": {
               "audit": {
@@ -156,11 +166,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.002516982685004077,
-                  "hessian_condition": 412.98826771139323,
+                  "gradient_norm": 0.002139443117142501,
+                  "hessian_condition": 476.2424313388324,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 22,
-                  "objective": 437.86985372130596,
+                  "n_iterations": 20,
+                  "objective": 396.6679053433425,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -168,18 +178,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 1.5980688203853788e-06,
-                  "relative_objective_range": 3.6496433970138367e-09,
+                  "objective_range": 3.526253067320795e-08,
+                  "relative_objective_range": 8.88968585514522e-11,
                   "selected_converged": true,
-                  "selected_objective": 437.86985372130596,
-                  "selected_restart": 2
+                  "selected_objective": 396.6679053433425,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.13241984746999008,
-              "objective": 437.86985372130596,
-              "training_trajectory_rmse": 0.356223647375763
+              "future_log_loss": 0.029926390764522318,
+              "objective": 396.6679053433425,
+              "training_trajectory_rmse": 0.3468893953685362
             }
           },
           "seed": 182421
@@ -196,11 +206,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.10418710623745817,
-                  "hessian_condition": 15111.023926824939,
+                  "gradient_norm": 0.14698240037874005,
+                  "hessian_condition": 15079.086705161446,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 139,
-                  "objective": 429.36039620638604,
+                  "n_iterations": 102,
+                  "objective": 411.0037545164226,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -208,18 +218,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00012427949002358218,
-                  "relative_objective_range": 2.8945261631406547e-07,
+                  "objective_range": 3.395300211650465e-05,
+                  "relative_objective_range": 8.260995609748859e-08,
                   "selected_converged": true,
-                  "selected_objective": 429.36039620638604,
-                  "selected_restart": 2
+                  "selected_objective": 411.0037545164226,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.3880457805580738,
-              "objective": 429.36039620638604,
-              "training_trajectory_rmse": 0.09807741523364093
+              "future_log_loss": -0.3058457372404146,
+              "objective": 411.0037545164226,
+              "training_trajectory_rmse": 0.10869803596254413
             },
             "static": {
               "audit": {
@@ -231,11 +241,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.00045017691006606943,
-                  "hessian_condition": 326.60485797137704,
+                  "gradient_norm": 0.002770345534051782,
+                  "hessian_condition": 355.6796554097236,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 20,
-                  "objective": 509.76104326880574,
+                  "n_iterations": 16,
+                  "objective": 483.6000203142795,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -243,18 +253,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 1.930880841882754e-06,
-                  "relative_objective_range": 3.7878156194540105e-09,
+                  "objective_range": 1.4354918675962836e-07,
+                  "relative_objective_range": 2.9683453418041496e-10,
                   "selected_converged": true,
-                  "selected_objective": 509.76104326880574,
+                  "selected_objective": 483.6000203142795,
                   "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.1272559691001659,
-              "objective": 509.76104326880574,
-              "training_trajectory_rmse": 0.37969168766676825
+              "future_log_loss": 0.12368798051029946,
+              "objective": 483.6000203142795,
+              "training_trajectory_rmse": 0.38669847235789406
             }
           },
           "seed": 182431
@@ -271,11 +281,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.13809742176988174,
-                  "hessian_condition": 16181.236902035309,
+                  "gradient_norm": 0.11977339564333438,
+                  "hessian_condition": 17213.21886165283,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 128,
-                  "objective": 350.30711651262465,
+                  "n_iterations": 134,
+                  "objective": 369.5751777845586,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -283,18 +293,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00019544435525631343,
-                  "relative_objective_range": 5.579228797918807e-07,
+                  "objective_range": 0.0002618721611611363,
+                  "relative_objective_range": 7.085761623141069e-07,
                   "selected_converged": true,
-                  "selected_objective": 350.30711651262465,
+                  "selected_objective": 369.5751777845586,
                   "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.037943916114453816,
-              "objective": 350.30711651262465,
-              "training_trajectory_rmse": 0.07393395806419834
+              "future_log_loss": -0.2213239768611649,
+              "objective": 369.5751777845586,
+              "training_trajectory_rmse": 0.0771274421450964
             },
             "static": {
               "audit": {
@@ -306,11 +316,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0008637394441054283,
-                  "hessian_condition": 422.5066687348049,
+                  "gradient_norm": 0.008066930343579744,
+                  "hessian_condition": 377.68749113637455,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 18,
-                  "objective": 425.1307163004434,
+                  "n_iterations": 15,
+                  "objective": 462.37866405181575,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -318,18 +328,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 7.87365877386037e-07,
-                  "relative_objective_range": 1.85205596113549e-09,
+                  "objective_range": 1.4308956792774552e-06,
+                  "relative_objective_range": 3.094640368434267e-09,
                   "selected_converged": true,
-                  "selected_objective": 425.1307163004434,
-                  "selected_restart": 0
+                  "selected_objective": 462.37866405181575,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.1893664049164057,
-              "objective": 425.1307163004434,
-              "training_trajectory_rmse": 0.3434930232743395
+              "future_log_loss": 0.11857834522555971,
+              "objective": 462.37866405181575,
+              "training_trajectory_rmse": 0.34900554270677114
             }
           },
           "seed": 182441
@@ -346,11 +356,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.37515653946553057,
-                  "hessian_condition": 16748.127431101027,
+                  "gradient_norm": 0.10201834402362789,
+                  "hessian_condition": 15235.406678229347,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 120,
-                  "objective": 369.151997711936,
+                  "n_iterations": 142,
+                  "objective": 399.80158291010474,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -358,18 +368,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00014378531301417752,
-                  "relative_objective_range": 3.895016521795418e-07,
+                  "objective_range": 0.00017616115587770764,
+                  "relative_objective_range": 4.4062145676225953e-07,
                   "selected_converged": true,
-                  "selected_objective": 369.151997711936,
-                  "selected_restart": 0
+                  "selected_objective": 399.80158291010474,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.2744433662632258,
-              "objective": 369.151997711936,
-              "training_trajectory_rmse": 0.08541985420197107
+              "future_log_loss": -0.37747119729115286,
+              "objective": 399.80158291010474,
+              "training_trajectory_rmse": 0.10271518679536255
             },
             "static": {
               "audit": {
@@ -381,11 +391,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.006571222153969378,
-                  "hessian_condition": 457.9958201972585,
+                  "gradient_norm": 0.02631343075817286,
+                  "hessian_condition": 385.557495316597,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 22,
-                  "objective": 432.6482387239413,
+                  "n_iterations": 20,
+                  "objective": 465.0568409509825,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -393,18 +403,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 3.4261802284163423e-09,
-                  "relative_objective_range": 7.9190897402508e-12,
+                  "objective_range": 2.3000296778263873e-07,
+                  "relative_objective_range": 4.945695827467277e-10,
                   "selected_converged": true,
-                  "selected_objective": 432.6482387239413,
+                  "selected_objective": 465.0568409509825,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.09763672215074926,
-              "objective": 432.6482387239413,
-              "training_trajectory_rmse": 0.35910916680910077
+              "future_log_loss": 0.02718507465245553,
+              "objective": 465.0568409509825,
+              "training_trajectory_rmse": 0.3577545474801675
             }
           },
           "seed": 182451
@@ -421,11 +431,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.20284533460581883,
-                  "hessian_condition": 17000.136407663766,
+                  "gradient_norm": 0.15109977061028118,
+                  "hessian_condition": 17080.67750694639,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 147,
-                  "objective": 394.31011241500755,
+                  "n_iterations": 98,
+                  "objective": 346.2592510301547,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -433,18 +443,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.0004677149545955217,
-                  "relative_objective_range": 1.1861601817182317e-06,
+                  "objective_range": 0.00011294579888954104,
+                  "relative_objective_range": 3.2618853807809144e-07,
                   "selected_converged": true,
-                  "selected_objective": 394.31011241500755,
-                  "selected_restart": 1
+                  "selected_objective": 346.2592510301547,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.4388641146255109,
-              "objective": 394.31011241500755,
-              "training_trajectory_rmse": 0.09360308739689839
+              "future_log_loss": -0.4028278274845903,
+              "objective": 346.2592510301547,
+              "training_trajectory_rmse": 0.13260809158390835
             },
             "static": {
               "audit": {
@@ -456,11 +466,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0015547896054877975,
-                  "hessian_condition": 364.1094949618533,
+                  "gradient_norm": 0.11318233267336938,
+                  "hessian_condition": 401.4728648275074,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 19,
-                  "objective": 480.6320090070076,
+                  "n_iterations": 18,
+                  "objective": 436.3502514481667,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -468,18 +478,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 8.637198334326968e-08,
-                  "relative_objective_range": 1.7970501698735254e-10,
+                  "objective_range": 3.723802990407421e-06,
+                  "relative_objective_range": 8.53397695555073e-09,
                   "selected_converged": true,
-                  "selected_objective": 480.6320090070076,
-                  "selected_restart": 0
+                  "selected_objective": 436.3502514481667,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.037379741721670995,
-              "objective": 480.6320090070076,
-              "training_trajectory_rmse": 0.36438530483915604
+              "future_log_loss": 0.03253085465680866,
+              "objective": 436.3502514481667,
+              "training_trajectory_rmse": 0.35090546150364516
             }
           },
           "seed": 182461
@@ -496,11 +506,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.2045630117382296,
-                  "hessian_condition": 16335.4204182924,
+                  "gradient_norm": 0.10974424878998418,
+                  "hessian_condition": 20888.31559072729,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 102,
-                  "objective": 396.64914927048346,
+                  "n_iterations": 167,
+                  "objective": 346.40574714440044,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -508,18 +518,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00017018944538449432,
-                  "relative_objective_range": 4.2906797026416545e-07,
+                  "objective_range": 5.799962212904575e-05,
+                  "relative_objective_range": 1.6743262087065896e-07,
                   "selected_converged": true,
-                  "selected_objective": 396.64914927048346,
-                  "selected_restart": 0
+                  "selected_objective": 346.40574714440044,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.3905882101247686,
-              "objective": 396.64914927048346,
-              "training_trajectory_rmse": 0.08907199994074311
+              "future_log_loss": -0.2516573348189072,
+              "objective": 346.40574714440044,
+              "training_trajectory_rmse": 0.09397381012751603
             },
             "static": {
               "audit": {
@@ -531,11 +541,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.01068647355945677,
-                  "hessian_condition": 344.0403130288001,
+                  "gradient_norm": 0.007855162007076186,
+                  "hessian_condition": 403.2584711559183,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
                   "n_iterations": 18,
-                  "objective": 486.10053751114435,
+                  "objective": 450.66561371373393,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -543,18 +553,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 3.421102519496344e-06,
-                  "relative_objective_range": 7.0378496946589196e-09,
+                  "objective_range": 1.2184841580165084e-06,
+                  "relative_objective_range": 2.70374335413684e-09,
                   "selected_converged": true,
-                  "selected_objective": 486.10053751114435,
+                  "selected_objective": 450.66561371373393,
                   "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.07390801631333808,
-              "objective": 486.10053751114435,
-              "training_trajectory_rmse": 0.3583523257083381
+              "future_log_loss": 0.12599489068162695,
+              "objective": 450.66561371373393,
+              "training_trajectory_rmse": 0.3678151725795134
             }
           },
           "seed": 182471
@@ -571,11 +581,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.2672944543047871,
-                  "hessian_condition": 17689.763645896044,
+                  "gradient_norm": 0.6315160043937018,
+                  "hessian_condition": 14207.845466329965,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 168,
-                  "objective": 342.48244462585154,
+                  "n_iterations": 98,
+                  "objective": 400.32120260282426,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -583,18 +593,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00013089173188518544,
-                  "relative_objective_range": 3.821852300434828e-07,
+                  "objective_range": 1.3748613014286093e-05,
+                  "relative_objective_range": 3.434395411708102e-08,
                   "selected_converged": true,
-                  "selected_objective": 342.48244462585154,
-                  "selected_restart": 2
+                  "selected_objective": 400.32120260282426,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.2838484128932433,
-              "objective": 342.48244462585154,
-              "training_trajectory_rmse": 0.10082816299691776
+              "future_log_loss": -0.32618987452459386,
+              "objective": 400.32120260282426,
+              "training_trajectory_rmse": 0.06690448696727133
             },
             "static": {
               "audit": {
@@ -606,11 +616,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.033296596312731824,
-                  "hessian_condition": 479.2488871303623,
+                  "gradient_norm": 0.013854974407502206,
+                  "hessian_condition": 357.8266062718285,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 21,
-                  "objective": 411.49544128685864,
+                  "n_iterations": 17,
+                  "objective": 466.4952678435522,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -618,18 +628,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 2.87096912643392e-06,
-                  "relative_objective_range": 6.9769159956076675e-09,
+                  "objective_range": 2.548068778196466e-08,
+                  "relative_objective_range": 5.4621535390387026e-11,
                   "selected_converged": true,
-                  "selected_objective": 411.49544128685864,
-                  "selected_restart": 1
+                  "selected_objective": 466.4952678435522,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.02790096106254963,
-              "objective": 411.49544128685864,
-              "training_trajectory_rmse": 0.35479625415440547
+              "future_log_loss": 0.0604856299951498,
+              "objective": 466.4952678435522,
+              "training_trajectory_rmse": 0.3524796848475269
             }
           },
           "seed": 182481
@@ -646,11 +656,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.09056212588543422,
-                  "hessian_condition": 16489.662664768508,
+                  "gradient_norm": 0.12067303462659686,
+                  "hessian_condition": 19098.40591721511,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 123,
-                  "objective": 360.5078210375202,
+                  "n_iterations": 130,
+                  "objective": 323.93990113210293,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -658,18 +668,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 3.0910057716937445e-05,
-                  "relative_objective_range": 8.574032493381176e-08,
+                  "objective_range": 0.00022774270303216326,
+                  "relative_objective_range": 7.030399843805892e-07,
                   "selected_converged": true,
-                  "selected_objective": 360.5078210375202,
-                  "selected_restart": 2
+                  "selected_objective": 323.93990113210293,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.11067093407636378,
-              "objective": 360.5078210375202,
-              "training_trajectory_rmse": 0.09401969565628684
+              "future_log_loss": -0.20527403898938307,
+              "objective": 323.93990113210293,
+              "training_trajectory_rmse": 0.057997799644062056
             },
             "static": {
               "audit": {
@@ -681,11 +691,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0010553911098901898,
-                  "hessian_condition": 387.9085980204919,
+                  "gradient_norm": 0.011330158248738186,
+                  "hessian_condition": 514.1138542166135,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 23,
-                  "objective": 434.7583822407686,
+                  "n_iterations": 22,
+                  "objective": 389.55633490185255,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -693,18 +703,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 1.0313274856343924e-06,
-                  "relative_objective_range": 2.372185397136851e-09,
+                  "objective_range": 6.384766493283678e-09,
+                  "relative_objective_range": 1.6389841266199148e-11,
                   "selected_converged": true,
-                  "selected_objective": 434.7583822407686,
+                  "selected_objective": 389.55633490185255,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.22942800218442783,
-              "objective": 434.7583822407686,
-              "training_trajectory_rmse": 0.3458027314759697
+              "future_log_loss": 0.16288909913080207,
+              "objective": 389.55633490185255,
+              "training_trajectory_rmse": 0.35335876322023574
             }
           },
           "seed": 182491
@@ -721,11 +731,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.10103357706563207,
-                  "hessian_condition": 17225.486870514844,
+                  "gradient_norm": 0.09041040487724522,
+                  "hessian_condition": 15374.96328059269,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 154,
-                  "objective": 375.426885843482,
+                  "n_iterations": 94,
+                  "objective": 400.5300696595344,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -733,18 +743,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 4.4205291430898797e-05,
-                  "relative_objective_range": 1.1774673870674324e-07,
+                  "objective_range": 0.000268500275126371,
+                  "relative_objective_range": 6.703623409713191e-07,
                   "selected_converged": true,
-                  "selected_objective": 375.426885843482,
-                  "selected_restart": 2
+                  "selected_objective": 400.5300696595344,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.2284998302567475,
-              "objective": 375.426885843482,
-              "training_trajectory_rmse": 0.055378590281676965
+              "future_log_loss": -0.22971514042490687,
+              "objective": 400.5300696595344,
+              "training_trajectory_rmse": 0.08027443664241458
             },
             "static": {
               "audit": {
@@ -756,11 +766,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0029141553618109764,
-                  "hessian_condition": 373.46553117286385,
+                  "gradient_norm": 0.031655652412940306,
+                  "hessian_condition": 359.5677452378873,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 15,
-                  "objective": 458.7206678808002,
+                  "n_iterations": 14,
+                  "objective": 470.7831123256444,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -768,18 +778,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 1.1402715927033569e-07,
-                  "relative_objective_range": 2.4857645895293724e-10,
+                  "objective_range": 8.981060091173276e-07,
+                  "relative_objective_range": 1.9076852707836737e-09,
                   "selected_converged": true,
-                  "selected_objective": 458.7206678808002,
-                  "selected_restart": 0
+                  "selected_objective": 470.7831123256444,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.13743143747828468,
-              "objective": 458.7206678808002,
-              "training_trajectory_rmse": 0.35200586596099936
+              "future_log_loss": 0.14386457775576939,
+              "objective": 470.7831123256444,
+              "training_trajectory_rmse": 0.35562415963880106
             }
           },
           "seed": 182501
@@ -796,11 +806,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.9266731125740326,
-                  "hessian_condition": 17972.230956986503,
+                  "gradient_norm": 0.10464824397596752,
+                  "hessian_condition": 17357.369762393417,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 143,
-                  "objective": 367.0030269063821,
+                  "n_iterations": 159,
+                  "objective": 368.364572207115,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -808,18 +818,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 8.062313980872204e-05,
-                  "relative_objective_range": 2.1967976800716688e-07,
+                  "objective_range": 0.00011002195367382228,
+                  "relative_objective_range": 2.9867680546641126e-07,
                   "selected_converged": true,
-                  "selected_objective": 367.0030269063821,
+                  "selected_objective": 368.364572207115,
                   "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.1732234506053483,
-              "objective": 367.0030269063821,
-              "training_trajectory_rmse": 0.07875284851493508
+              "future_log_loss": -0.3365880963020778,
+              "objective": 368.364572207115,
+              "training_trajectory_rmse": 0.09976587243813911
             },
             "static": {
               "audit": {
@@ -831,11 +841,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.00013559270477024086,
-                  "hessian_condition": 357.4713731589304,
+                  "gradient_norm": 0.003989594139870775,
+                  "hessian_condition": 466.5263637719114,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 20,
-                  "objective": 477.0203743536571,
+                  "n_iterations": 16,
+                  "objective": 433.7806145221151,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -843,18 +853,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 7.429565584970987e-08,
-                  "relative_objective_range": 1.55749439319814e-10,
+                  "objective_range": 6.467549269473238e-07,
+                  "relative_objective_range": 1.4909724070077151e-09,
                   "selected_converged": true,
-                  "selected_objective": 477.0203743536571,
-                  "selected_restart": 1
+                  "selected_objective": 433.7806145221151,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.19575157759575992,
-              "objective": 477.0203743536571,
-              "training_trajectory_rmse": 0.37623351326588433
+              "future_log_loss": 0.0879377149137945,
+              "objective": 433.7806145221151,
+              "training_trajectory_rmse": 0.3785527293340487
             }
           },
           "seed": 182511
@@ -871,11 +881,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.41618147383592763,
-                  "hessian_condition": 13895.503010681085,
+                  "gradient_norm": 0.25468239079898775,
+                  "hessian_condition": 17881.100588645622,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 149,
-                  "objective": 442.01636133723093,
+                  "n_iterations": 157,
+                  "objective": 386.38314480437595,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -883,18 +893,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 6.342131786141181e-05,
-                  "relative_objective_range": 1.4348183327319257e-07,
+                  "objective_range": 0.00013140597565097778,
+                  "relative_objective_range": 3.4009241194386997e-07,
                   "selected_converged": true,
-                  "selected_objective": 442.01636133723093,
-                  "selected_restart": 2
+                  "selected_objective": 386.38314480437595,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.2607008070382039,
-              "objective": 442.01636133723093,
-              "training_trajectory_rmse": 0.11991864800675137
+              "future_log_loss": -0.38541009593175063,
+              "objective": 386.38314480437595,
+              "training_trajectory_rmse": 0.1366280943025058
             },
             "static": {
               "audit": {
@@ -906,11 +916,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.00036943849437777253,
-                  "hessian_condition": 305.1013125693358,
+                  "gradient_norm": 5.598427485333944e-05,
+                  "hessian_condition": 364.0328908639897,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 18,
-                  "objective": 527.2490243483276,
+                  "n_iterations": 21,
+                  "objective": 475.20770856841864,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -918,18 +928,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 5.363876880437601e-07,
-                  "relative_objective_range": 1.0173327275602413e-09,
+                  "objective_range": 8.686907904120744e-08,
+                  "relative_objective_range": 1.8280233564161628e-10,
                   "selected_converged": true,
-                  "selected_objective": 527.2490243483276,
-                  "selected_restart": 1
+                  "selected_objective": 475.20770856841864,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.19079987462075096,
-              "objective": 527.2490243483276,
-              "training_trajectory_rmse": 0.37093250830945584
+              "future_log_loss": 0.10548858771277325,
+              "objective": 475.20770856841864,
+              "training_trajectory_rmse": 0.357501698541276
             }
           },
           "seed": 182521
@@ -946,11 +956,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.14562032665978963,
-                  "hessian_condition": 18950.358415166673,
+                  "gradient_norm": 0.4274802112631691,
+                  "hessian_condition": 21009.71873196206,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 100,
-                  "objective": 359.2147044832395,
+                  "n_iterations": 94,
+                  "objective": 351.82437904284154,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -958,18 +968,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 7.066478849537816e-05,
-                  "relative_objective_range": 1.9672019996240242e-07,
+                  "objective_range": 0.00020819829671836487,
+                  "relative_objective_range": 5.917676804682505e-07,
                   "selected_converged": true,
-                  "selected_objective": 359.2147044832395,
+                  "selected_objective": 351.82437904284154,
                   "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.19572364333754436,
-              "objective": 359.2147044832395,
-              "training_trajectory_rmse": 0.05311273397721098
+              "future_log_loss": -0.19426242290674028,
+              "objective": 351.82437904284154,
+              "training_trajectory_rmse": 0.07106029376438996
             },
             "static": {
               "audit": {
@@ -981,11 +991,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.03948443142712439,
-                  "hessian_condition": 450.9267393290909,
+                  "gradient_norm": 0.0008794027828944765,
+                  "hessian_condition": 520.8490069515243,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 14,
-                  "objective": 427.426248559031,
+                  "n_iterations": 16,
+                  "objective": 410.51900779199144,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -993,18 +1003,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 9.401717306900537e-07,
-                  "relative_objective_range": 2.1996115911449655e-09,
+                  "objective_range": 1.485439611315087e-07,
+                  "relative_objective_range": 3.6184429542121326e-10,
                   "selected_converged": true,
-                  "selected_objective": 427.426248559031,
-                  "selected_restart": 0
+                  "selected_objective": 410.51900779199144,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.1523754801967836,
-              "objective": 427.426248559031,
-              "training_trajectory_rmse": 0.3563697752154247
+              "future_log_loss": 0.15455340288515895,
+              "objective": 410.51900779199144,
+              "training_trajectory_rmse": 0.3466065354884856
             }
           },
           "seed": 182531
@@ -1021,11 +1031,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.06053518655666495,
-                  "hessian_condition": 14571.236513007983,
+                  "gradient_norm": 0.4185875532848935,
+                  "hessian_condition": 14566.522845510222,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 138,
-                  "objective": 398.4909706048779,
+                  "n_iterations": 150,
+                  "objective": 386.950943917737,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1033,18 +1043,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.0002546569357377848,
-                  "relative_objective_range": 6.390532145590041e-07,
+                  "objective_range": 6.69555557806234e-05,
+                  "relative_objective_range": 1.7303370577862622e-07,
                   "selected_converged": true,
-                  "selected_objective": 398.4909706048779,
+                  "selected_objective": 386.950943917737,
                   "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.21888479990173215,
-              "objective": 398.4909706048779,
-              "training_trajectory_rmse": 0.10631192824075959
+              "future_log_loss": -0.21366395727490367,
+              "objective": 386.950943917737,
+              "training_trajectory_rmse": 0.07523677591002677
             },
             "static": {
               "audit": {
@@ -1056,11 +1066,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0071411511822002454,
-                  "hessian_condition": 453.1200190696599,
+                  "gradient_norm": 0.005853544728932511,
+                  "hessian_condition": 372.11488354685184,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 22,
-                  "objective": 444.33264404830413,
+                  "n_iterations": 21,
+                  "objective": 451.14556388399143,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1068,18 +1078,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 1.7996501355810324e-07,
-                  "relative_objective_range": 4.050231644437516e-10,
+                  "objective_range": 1.4125407687970437e-07,
+                  "relative_objective_range": 3.131008884662928e-10,
                   "selected_converged": true,
-                  "selected_objective": 444.33264404830413,
+                  "selected_objective": 451.14556388399143,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.08952646095384278,
-              "objective": 444.33264404830413,
-              "training_trajectory_rmse": 0.3617895798119986
+              "future_log_loss": 0.12502700382697646,
+              "objective": 451.14556388399143,
+              "training_trajectory_rmse": 0.3457247998822513
             }
           },
           "seed": 182541
@@ -1096,11 +1106,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.6827846268912547,
-                  "hessian_condition": 13611.845566903286,
+                  "gradient_norm": 0.10487496930601482,
+                  "hessian_condition": 16190.475184412846,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 126,
-                  "objective": 428.14706116906433,
+                  "n_iterations": 82,
+                  "objective": 384.6496552042475,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1108,18 +1118,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00038657712116219045,
-                  "relative_objective_range": 9.029073330706363e-07,
+                  "objective_range": 4.635727373170084e-05,
+                  "relative_objective_range": 1.205181731076434e-07,
                   "selected_converged": true,
-                  "selected_objective": 428.14706116906433,
-                  "selected_restart": 1
+                  "selected_objective": 384.6496552042475,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.2968733941299579,
-              "objective": 428.14706116906433,
-              "training_trajectory_rmse": 0.08886468654696006
+              "future_log_loss": -0.2826212164640788,
+              "objective": 384.6496552042475,
+              "training_trajectory_rmse": 0.058816798085500784
             },
             "static": {
               "audit": {
@@ -1131,11 +1141,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0016040423168631847,
-                  "hessian_condition": 335.37649885877715,
+                  "gradient_norm": 0.010099381605794253,
+                  "hessian_condition": 385.5578579560404,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 18,
-                  "objective": 497.9316885270777,
+                  "n_iterations": 17,
+                  "objective": 459.93654143800734,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1143,18 +1153,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 3.282763316292403e-06,
-                  "relative_objective_range": 6.5927985543621115e-09,
+                  "objective_range": 6.083951120672282e-08,
+                  "relative_objective_range": 1.3227805517801653e-10,
                   "selected_converged": true,
-                  "selected_objective": 497.9316885270777,
+                  "selected_objective": 459.93654143800734,
                   "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.10230502450188042,
-              "objective": 497.9316885270777,
-              "training_trajectory_rmse": 0.37128831878315044
+              "future_log_loss": 0.13930561726725288,
+              "objective": 459.93654143800734,
+              "training_trajectory_rmse": 0.3670881200828993
             }
           },
           "seed": 182551
@@ -1171,11 +1181,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.4115816098555383,
-                  "hessian_condition": 16723.451720609057,
+                  "gradient_norm": 0.2054222920259383,
+                  "hessian_condition": 17519.774218240942,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 89,
-                  "objective": 370.07451925075,
+                  "n_iterations": 129,
+                  "objective": 354.8300548942621,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1183,18 +1193,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00034871898355959274,
-                  "relative_objective_range": 9.422939581617413e-07,
+                  "objective_range": 0.0005209092897189294,
+                  "relative_objective_range": 1.468052896122788e-06,
                   "selected_converged": true,
-                  "selected_objective": 370.07451925075,
-                  "selected_restart": 0
+                  "selected_objective": 354.8300548942621,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.06897043765217352,
-              "objective": 370.07451925075,
-              "training_trajectory_rmse": 0.11913556381952456
+              "future_log_loss": -0.4035333968404055,
+              "objective": 354.8300548942621,
+              "training_trajectory_rmse": 0.08701976152441585
             },
             "static": {
               "audit": {
@@ -1206,11 +1216,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.002097853332442954,
-                  "hessian_condition": 451.02446183516105,
+                  "gradient_norm": 0.00324463410131127,
+                  "hessian_condition": 411.6526342618422,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 15,
-                  "objective": 429.26555836547334,
+                  "n_iterations": 21,
+                  "objective": 434.67287929785886,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1218,18 +1228,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 4.279638687876286e-08,
-                  "relative_objective_range": 9.969676356454004e-11,
+                  "objective_range": 4.514822649070993e-08,
+                  "relative_objective_range": 1.038671346683495e-10,
                   "selected_converged": true,
-                  "selected_objective": 429.26555836547334,
-                  "selected_restart": 0
+                  "selected_objective": 434.67287929785886,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.30927014330403146,
-              "objective": 429.26555836547334,
-              "training_trajectory_rmse": 0.35614252687842357
+              "future_log_loss": 0.03876298570893573,
+              "objective": 434.67287929785886,
+              "training_trajectory_rmse": 0.34751998900073766
             }
           },
           "seed": 182561
@@ -1246,11 +1256,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.7573545963861947,
-                  "hessian_condition": 16373.893864535197,
+                  "gradient_norm": 0.14390446323435188,
+                  "hessian_condition": 16759.907015493336,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 151,
-                  "objective": 394.93169690769656,
+                  "n_iterations": 124,
+                  "objective": 394.8596692196852,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1258,18 +1268,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 4.765070059420395e-06,
-                  "relative_objective_range": 1.2065554871211281e-08,
+                  "objective_range": 0.00011787976058030836,
+                  "relative_objective_range": 2.985358337894075e-07,
                   "selected_converged": true,
-                  "selected_objective": 394.93169690769656,
+                  "selected_objective": 394.8596692196852,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.042175014537169694,
-              "objective": 394.93169690769656,
-              "training_trajectory_rmse": 0.1233190198159205
+              "future_log_loss": -0.38850433311475635,
+              "objective": 394.8596692196852,
+              "training_trajectory_rmse": 0.1336993760539447
             },
             "static": {
               "audit": {
@@ -1281,11 +1291,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0012965284778668794,
-                  "hessian_condition": 360.32637919848673,
+                  "gradient_norm": 0.039989156114338585,
+                  "hessian_condition": 336.09085505051775,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 20,
-                  "objective": 476.7408255852225,
+                  "n_iterations": 17,
+                  "objective": 470.7448232905594,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1293,18 +1303,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 9.228017461282434e-07,
-                  "relative_objective_range": 1.935646574835414e-09,
+                  "objective_range": 3.8991993278614245e-07,
+                  "relative_objective_range": 8.283042393553224e-10,
                   "selected_converged": true,
-                  "selected_objective": 476.7408255852225,
-                  "selected_restart": 0
+                  "selected_objective": 470.7448232905594,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.20004979019310418,
-              "objective": 476.7408255852225,
-              "training_trajectory_rmse": 0.3508344811393583
+              "future_log_loss": 0.030181337079553738,
+              "objective": 470.7448232905594,
+              "training_trajectory_rmse": 0.34466879448842797
             }
           },
           "seed": 182571
@@ -1321,11 +1331,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.08878003166324673,
-                  "hessian_condition": 15073.77474348107,
+                  "gradient_norm": 0.18926330340112105,
+                  "hessian_condition": 22056.30126588264,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 143,
-                  "objective": 398.92446783767275,
+                  "n_iterations": 161,
+                  "objective": 318.3295853587615,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1333,18 +1343,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.0002881398588101547,
-                  "relative_objective_range": 7.22291767090612e-07,
+                  "objective_range": 0.00014911761883240615,
+                  "relative_objective_range": 4.684378257344466e-07,
                   "selected_converged": true,
-                  "selected_objective": 398.92446783767275,
-                  "selected_restart": 2
+                  "selected_objective": 318.3295853587615,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.2594155296646196,
-              "objective": 398.92446783767275,
-              "training_trajectory_rmse": 0.06803176196319391
+              "future_log_loss": -0.3530608029200003,
+              "objective": 318.3295853587615,
+              "training_trajectory_rmse": 0.07669441368345033
             },
             "static": {
               "audit": {
@@ -1356,11 +1366,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0005319948818887745,
-                  "hessian_condition": 353.1483827511206,
+                  "gradient_norm": 0.01569928171737372,
+                  "hessian_condition": 479.74417981254334,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 19,
-                  "objective": 469.911857704864,
+                  "n_iterations": 17,
+                  "objective": 417.2181261991368,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1368,18 +1378,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 7.143461289160769e-08,
-                  "relative_objective_range": 1.5201704685748403e-10,
+                  "objective_range": 8.797053396847332e-08,
+                  "relative_objective_range": 2.108502206504932e-10,
                   "selected_converged": true,
-                  "selected_objective": 469.911857704864,
-                  "selected_restart": 0
+                  "selected_objective": 417.2181261991368,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.14387823760370677,
-              "objective": 469.911857704864,
-              "training_trajectory_rmse": 0.3551579917270115
+              "future_log_loss": 0.09035199936081308,
+              "objective": 417.2181261991368,
+              "training_trajectory_rmse": 0.37131210610967136
             }
           },
           "seed": 182581
@@ -1396,11 +1406,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.28207500280062764,
-                  "hessian_condition": 15361.140344009824,
+                  "gradient_norm": 0.21554715472365527,
+                  "hessian_condition": 19377.283300519837,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 150,
-                  "objective": 376.88214494629364,
+                  "n_iterations": 161,
+                  "objective": 322.2584043897328,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1408,18 +1418,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 8.665086852488457e-06,
-                  "relative_objective_range": 2.2991502698338886e-08,
+                  "objective_range": 0.00021069473518764426,
+                  "relative_objective_range": 6.538067970225357e-07,
                   "selected_converged": true,
-                  "selected_objective": 376.88214494629364,
+                  "selected_objective": 322.2584043897328,
                   "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.14842737009828433,
-              "objective": 376.88214494629364,
-              "training_trajectory_rmse": 0.08589473018236557
+              "future_log_loss": -0.30760531066427416,
+              "objective": 322.2584043897328,
+              "training_trajectory_rmse": 0.08796752798126699
             },
             "static": {
               "audit": {
@@ -1431,11 +1441,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.005449425326228497,
-                  "hessian_condition": 352.71680102788673,
+                  "gradient_norm": 0.0004928032653100441,
+                  "hessian_condition": 454.56312038897323,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 23,
-                  "objective": 457.22939871791414,
+                  "n_iterations": 19,
+                  "objective": 406.55860010887767,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1443,18 +1453,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 6.274468660194543e-07,
-                  "relative_objective_range": 1.3722802334645047e-09,
+                  "objective_range": 5.367027711145056e-07,
+                  "relative_objective_range": 1.3201117156807775e-09,
                   "selected_converged": true,
-                  "selected_objective": 457.22939871791414,
-                  "selected_restart": 0
+                  "selected_objective": 406.55860010887767,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.21418588986995127,
-              "objective": 457.22939871791414,
-              "training_trajectory_rmse": 0.34648070949223303
+              "future_log_loss": 0.06498319556478102,
+              "objective": 406.55860010887767,
+              "training_trajectory_rmse": 0.3427861815249546
             }
           },
           "seed": 182591
@@ -1471,11 +1481,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.9789312245340325,
-                  "hessian_condition": 14921.525407926993,
+                  "gradient_norm": 0.17695700576412762,
+                  "hessian_condition": 15584.488370965331,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 124,
-                  "objective": 401.32279892840944,
+                  "n_iterations": 151,
+                  "objective": 425.11010073938996,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1483,18 +1493,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 3.477419176078911e-05,
-                  "relative_objective_range": 8.664893161724499e-08,
+                  "objective_range": 0.0003960591394616131,
+                  "relative_objective_range": 9.316625005445676e-07,
                   "selected_converged": true,
-                  "selected_objective": 401.32279892840944,
+                  "selected_objective": 425.11010073938996,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": -0.2120749965681564,
-              "objective": 401.32279892840944,
-              "training_trajectory_rmse": 0.08382205196730166
+              "future_log_loss": -0.35068023963651607,
+              "objective": 425.11010073938996,
+              "training_trajectory_rmse": 0.12078006840159938
             },
             "static": {
               "audit": {
@@ -1506,11 +1516,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.009650777158668238,
-                  "hessian_condition": 346.2238358485738,
+                  "gradient_norm": 0.012485674749509948,
+                  "hessian_condition": 318.77837222707456,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 13,
-                  "objective": 487.8227752858937,
+                  "n_iterations": 16,
+                  "objective": 511.1940946989608,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1518,18 +1528,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 3.966431449953234e-08,
-                  "relative_objective_range": 8.130886155589321e-11,
+                  "objective_range": 2.2489729758490284e-06,
+                  "relative_objective_range": 4.399450226774305e-09,
                   "selected_converged": true,
-                  "selected_objective": 487.8227752858937,
-                  "selected_restart": 2
+                  "selected_objective": 511.1940946989608,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.2700002801814352,
-              "objective": 487.8227752858937,
-              "training_trajectory_rmse": 0.35419358433679726
+              "future_log_loss": 0.07167331755917374,
+              "objective": 511.1940946989608,
+              "training_trajectory_rmse": 0.37120479095281683
             }
           },
           "seed": 182601
@@ -1544,13 +1554,13 @@
       "methods": {
         "smooth": {
           "all_fits_converged": true,
-          "mean_future_log_loss": 0.3329250162310268,
-          "mean_training_trajectory_rmse": 0.09879829270349462
+          "mean_future_log_loss": 0.3253947755632253,
+          "mean_training_trajectory_rmse": 0.09173720849334469
         },
         "static": {
           "all_fits_converged": true,
-          "mean_future_log_loss": 0.32980034230972216,
-          "mean_training_trajectory_rmse": 0.05552271032421956
+          "mean_future_log_loss": 0.32273049140185006,
+          "mean_training_trajectory_rmse": 0.040434578255261075
         }
       },
       "n_paired_eligible": 20,
@@ -1567,11 +1577,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.20898586421110638,
-                  "hessian_condition": 15553.255437099602,
+                  "gradient_norm": 0.2802023510551273,
+                  "hessian_condition": 18225.540865590057,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 151,
-                  "objective": 297.690974083258,
+                  "n_iterations": 142,
+                  "objective": 223.988030146963,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1579,18 +1589,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00012643406722645523,
-                  "relative_objective_range": 4.247158235677452e-07,
+                  "objective_range": 0.00024392394792016603,
+                  "relative_objective_range": 1.0890043890297292e-06,
                   "selected_converged": true,
-                  "selected_objective": 297.690974083258,
+                  "selected_objective": 223.988030146963,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.31588330971466,
-              "objective": 297.690974083258,
-              "training_trajectory_rmse": 0.09485697965332075
+              "future_log_loss": 0.36915929013403703,
+              "objective": 223.988030146963,
+              "training_trajectory_rmse": 0.10919763192178263
             },
             "static": {
               "audit": {
@@ -1602,11 +1612,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0008027611080887243,
-                  "hessian_condition": 743.8204814167843,
+                  "gradient_norm": 0.0033374324695312754,
+                  "hessian_condition": 905.1963218925837,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 16,
-                  "objective": 300.63019819130153,
+                  "n_iterations": 15,
+                  "objective": 228.71093130517426,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1614,18 +1624,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 3.18515844810463e-08,
-                  "relative_objective_range": 1.0594938456840595e-10,
+                  "objective_range": 1.643918494664831e-07,
+                  "relative_objective_range": 7.187756550522339e-10,
                   "selected_converged": true,
-                  "selected_objective": 300.63019819130153,
+                  "selected_objective": 228.71093130517426,
                   "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.3155833556663197,
-              "objective": 300.63019819130153,
-              "training_trajectory_rmse": 0.037242772411926604
+              "future_log_loss": 0.376173772901696,
+              "objective": 228.71093130517426,
+              "training_trajectory_rmse": 0.02797534055714661
             }
           },
           "seed": 82411
@@ -1642,11 +1652,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.23524601601610023,
-                  "hessian_condition": 16692.28475294826,
+                  "gradient_norm": 0.15535255815010615,
+                  "hessian_condition": 17766.727879326787,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 122,
-                  "objective": 275.71393409744235,
+                  "n_iterations": 130,
+                  "objective": 247.0206130990365,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1654,18 +1664,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00013018588089153127,
-                  "relative_objective_range": 4.721773722379994e-07,
+                  "objective_range": 8.069751297057337e-05,
+                  "relative_objective_range": 3.266833158503246e-07,
                   "selected_converged": true,
-                  "selected_objective": 275.71393409744235,
+                  "selected_objective": 247.0206130990365,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.45715321853801943,
-              "objective": 275.71393409744235,
-              "training_trajectory_rmse": 0.12452793146182327
+              "future_log_loss": 0.3477447039948491,
+              "objective": 247.0206130990365,
+              "training_trajectory_rmse": 0.06586692353590895
             },
             "static": {
               "audit": {
@@ -1677,11 +1687,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0009358470956656994,
-                  "hessian_condition": 780.575358302567,
+                  "gradient_norm": 0.003276957775599603,
+                  "hessian_condition": 859.1280459892555,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 17,
-                  "objective": 281.0125535626619,
+                  "n_iterations": 25,
+                  "objective": 249.33146393714006,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1689,18 +1699,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 1.2300915841478854e-09,
-                  "relative_objective_range": 4.377354564957513e-12,
+                  "objective_range": 4.694540223226795e-07,
+                  "relative_objective_range": 1.882851104748799e-09,
                   "selected_converged": true,
-                  "selected_objective": 281.0125535626619,
+                  "selected_objective": 249.33146393714006,
                   "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.4571194858899009,
-              "objective": 281.0125535626619,
-              "training_trajectory_rmse": 0.0926569633661926
+              "future_log_loss": 0.3545230224891664,
+              "objective": 249.33146393714006,
+              "training_trajectory_rmse": 0.005166293446962126
             }
           },
           "seed": 82421
@@ -1717,11 +1727,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.07811815586678053,
-                  "hessian_condition": 16832.52554350111,
+                  "gradient_norm": 0.09549546313403585,
+                  "hessian_condition": 19101.93342097062,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 114,
-                  "objective": 258.4680893043152,
+                  "n_iterations": 126,
+                  "objective": 219.89394399618809,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1729,18 +1739,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 5.393171568357502e-05,
-                  "relative_objective_range": 2.08659087583059e-07,
+                  "objective_range": 6.055941298654943e-05,
+                  "relative_objective_range": 2.754028232246325e-07,
                   "selected_converged": true,
-                  "selected_objective": 258.4680893043152,
+                  "selected_objective": 219.89394399618809,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.22322427154593977,
-              "objective": 258.4680893043152,
-              "training_trajectory_rmse": 0.09529984527840506
+              "future_log_loss": 0.20836057670189193,
+              "objective": 219.89394399618809,
+              "training_trajectory_rmse": 0.09626422430339998
             },
             "static": {
               "audit": {
@@ -1752,11 +1762,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.009152621873445005,
-                  "hessian_condition": 796.0497070624716,
+                  "gradient_norm": 0.00915723352353021,
+                  "hessian_condition": 918.4732939838854,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 19,
-                  "objective": 261.76674794538087,
+                  "n_iterations": 20,
+                  "objective": 223.38604699695122,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1764,18 +1774,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 5.706426122742414e-07,
-                  "relative_objective_range": 2.179966006963227e-09,
+                  "objective_range": 3.3765741136448923e-07,
+                  "relative_objective_range": 1.51154208556767e-09,
                   "selected_converged": true,
-                  "selected_objective": 261.76674794538087,
-                  "selected_restart": 2
+                  "selected_objective": 223.38604699695122,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.22944812622417662,
-              "objective": 261.76674794538087,
-              "training_trajectory_rmse": 0.045297341862128915
+              "future_log_loss": 0.21176390650477933,
+              "objective": 223.38604699695122,
+              "training_trajectory_rmse": 0.039587000430594065
             }
           },
           "seed": 82431
@@ -1792,11 +1802,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0844573971340219,
-                  "hessian_condition": 18112.290107306417,
+                  "gradient_norm": 0.30988130822986854,
+                  "hessian_condition": 16255.064862799842,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 119,
-                  "objective": 204.15241076604926,
+                  "n_iterations": 144,
+                  "objective": 266.9162679773434,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1804,18 +1814,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 4.323258039562461e-05,
-                  "relative_objective_range": 2.1176620071936094e-07,
+                  "objective_range": 6.597580556899629e-05,
+                  "relative_objective_range": 2.471779111440165e-07,
                   "selected_converged": true,
-                  "selected_objective": 204.15241076604926,
-                  "selected_restart": 1
+                  "selected_objective": 266.9162679773434,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.36216132624893427,
-              "objective": 204.15241076604926,
-              "training_trajectory_rmse": 0.16477313161476695
+              "future_log_loss": 0.24946083138986058,
+              "objective": 266.9162679773434,
+              "training_trajectory_rmse": 0.1348690668825741
             },
             "static": {
               "audit": {
@@ -1827,11 +1837,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0025575527570610834,
-                  "hessian_condition": 885.84200485485,
+                  "gradient_norm": 0.0038858495427716495,
+                  "hessian_condition": 773.4509312631382,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 20,
-                  "objective": 209.45866384894146,
+                  "n_iterations": 21,
+                  "objective": 274.3265150801764,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1839,18 +1849,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 3.4139588933612686e-08,
-                  "relative_objective_range": 1.629896243310024e-10,
+                  "objective_range": 1.0601489179862256e-06,
+                  "relative_objective_range": 3.8645514002770735e-09,
                   "selected_converged": true,
-                  "selected_objective": 209.45866384894146,
-                  "selected_restart": 0
+                  "selected_objective": 274.3265150801764,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.3688238395265399,
-              "objective": 209.45866384894146,
-              "training_trajectory_rmse": 0.13469172388649506
+              "future_log_loss": 0.24792024305327012,
+              "objective": 274.3265150801764,
+              "training_trajectory_rmse": 0.060921604328590895
             }
           },
           "seed": 82441
@@ -1867,11 +1877,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.18932759304559818,
-                  "hessian_condition": 16827.51417807895,
+                  "gradient_norm": 0.04284203770806165,
+                  "hessian_condition": 18754.959462610914,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 100,
-                  "objective": 242.54379876387105,
+                  "n_iterations": 147,
+                  "objective": 211.445402815484,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1879,18 +1889,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 4.2723233605101996e-05,
-                  "relative_objective_range": 1.7614646848462728e-07,
+                  "objective_range": 4.263035876306276e-05,
+                  "relative_objective_range": 2.0161402515931632e-07,
                   "selected_converged": true,
-                  "selected_objective": 242.54379876387105,
-                  "selected_restart": 0
+                  "selected_objective": 211.445402815484,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.44093223075190036,
-              "objective": 242.54379876387105,
-              "training_trajectory_rmse": 0.10057197015749779
+              "future_log_loss": 0.34562529716380924,
+              "objective": 211.445402815484,
+              "training_trajectory_rmse": 0.08793426919323588
             },
             "static": {
               "audit": {
@@ -1902,11 +1912,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.003181014046103641,
-                  "hessian_condition": 801.7111522586998,
+                  "gradient_norm": 0.02833607856745783,
+                  "hessian_condition": 935.2902586112813,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
                   "n_iterations": 18,
-                  "objective": 246.48764530713703,
+                  "objective": 215.39076387268062,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1914,18 +1924,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 2.4683970423211576e-09,
-                  "relative_objective_range": 1.001428302520153e-11,
+                  "objective_range": 2.425213097012602e-07,
+                  "relative_objective_range": 1.1259596527760897e-09,
                   "selected_converged": true,
-                  "selected_objective": 246.48764530713703,
+                  "selected_objective": 215.39076387268062,
                   "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.4267386336795147,
-              "objective": 246.48764530713703,
-              "training_trajectory_rmse": 0.08009827426623937
+              "future_log_loss": 0.3505369604055523,
+              "objective": 215.39076387268062,
+              "training_trajectory_rmse": 0.044012201735510424
             }
           },
           "seed": 82451
@@ -1942,11 +1952,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0811985476024492,
-                  "hessian_condition": 17622.881125767402,
+                  "gradient_norm": 0.14726150009059524,
+                  "hessian_condition": 18804.361571562364,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 110,
-                  "objective": 181.21131984674696,
+                  "n_iterations": 115,
+                  "objective": 185.52278127197428,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1954,18 +1964,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00013745026461720045,
-                  "relative_objective_range": 7.585081590567528e-07,
+                  "objective_range": 6.653149856106211e-05,
+                  "relative_objective_range": 3.586163278973685e-07,
                   "selected_converged": true,
-                  "selected_objective": 181.21131984674696,
+                  "selected_objective": 185.52278127197428,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.3804787954876998,
-              "objective": 181.21131984674696,
-              "training_trajectory_rmse": 0.10423822791131021
+              "future_log_loss": 0.4687792128191529,
+              "objective": 185.52278127197428,
+              "training_trajectory_rmse": 0.08023993649537826
             },
             "static": {
               "audit": {
@@ -1977,11 +1987,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.000862180883300831,
-                  "hessian_condition": 912.9985807805359,
+                  "gradient_norm": 0.04693676786986541,
+                  "hessian_condition": 955.6668847342448,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 21,
-                  "objective": 182.7881328229384,
+                  "n_iterations": 20,
+                  "objective": 188.37624795593632,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -1989,18 +1999,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 1.1584688763832673e-07,
-                  "relative_objective_range": 6.337768532848042e-10,
+                  "objective_range": 1.911728872983076e-06,
+                  "relative_objective_range": 1.0148460295430954e-08,
                   "selected_converged": true,
-                  "selected_objective": 182.7881328229384,
+                  "selected_objective": 188.37624795593632,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.37855184419857074,
-              "objective": 182.7881328229384,
-              "training_trajectory_rmse": 0.09176807330013785
+              "future_log_loss": 0.4548568333726248,
+              "objective": 188.37624795593632,
+              "training_trajectory_rmse": 0.04751744221320188
             }
           },
           "seed": 82461
@@ -2017,11 +2027,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.1899065207479895,
-                  "hessian_condition": 18773.04077760774,
+                  "gradient_norm": 0.1048952021995205,
+                  "hessian_condition": 17560.65634699388,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 123,
-                  "objective": 269.0654340652053,
+                  "n_iterations": 143,
+                  "objective": 264.5140673920715,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2029,18 +2039,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 7.899001883515666e-05,
-                  "relative_objective_range": 2.935717815615596e-07,
+                  "objective_range": 0.00016511601944557697,
+                  "relative_objective_range": 6.242239631090642e-07,
                   "selected_converged": true,
-                  "selected_objective": 269.0654340652053,
-                  "selected_restart": 2
+                  "selected_objective": 264.5140673920715,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.21639418418475864,
-              "objective": 269.0654340652053,
-              "training_trajectory_rmse": 0.06773095494121084
+              "future_log_loss": 0.3257861864160666,
+              "objective": 264.5140673920715,
+              "training_trajectory_rmse": 0.06648208176187499
             },
             "static": {
               "audit": {
@@ -2052,11 +2062,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.004309574722044311,
-                  "hessian_condition": 876.1170981892092,
+                  "gradient_norm": 0.003162533048932489,
+                  "hessian_condition": 848.9895468254416,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 18,
-                  "objective": 270.8392801098897,
+                  "n_iterations": 15,
+                  "objective": 266.54880860053936,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2064,18 +2074,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 5.731342866965861e-07,
-                  "relative_objective_range": 2.1161416706765865e-09,
+                  "objective_range": 3.1473348371946486e-08,
+                  "relative_objective_range": 1.1807724272785513e-10,
                   "selected_converged": true,
-                  "selected_objective": 270.8392801098897,
-                  "selected_restart": 0
+                  "selected_objective": 266.54880860053936,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.21949503280370783,
-              "objective": 270.8392801098897,
-              "training_trajectory_rmse": 0.03203647554684299
+              "future_log_loss": 0.3275057417417495,
+              "objective": 266.54880860053936,
+              "training_trajectory_rmse": 0.05885782602063318
             }
           },
           "seed": 82471
@@ -2092,11 +2102,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.1816725152147589,
-                  "hessian_condition": 22388.758200415745,
+                  "gradient_norm": 0.13124634291290396,
+                  "hessian_condition": 23840.926747733498,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 154,
-                  "objective": 243.35054967520213,
+                  "n_iterations": 151,
+                  "objective": 203.71408148467899,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2104,18 +2114,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 4.7571402063795176e-05,
-                  "relative_objective_range": 1.954850816128762e-07,
+                  "objective_range": 0.00029735131315078434,
+                  "relative_objective_range": 1.459650265625588e-06,
                   "selected_converged": true,
-                  "selected_objective": 243.35054967520213,
+                  "selected_objective": 203.71408148467899,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.3114665031607731,
-              "objective": 243.35054967520213,
-              "training_trajectory_rmse": 0.08659929886672055
+              "future_log_loss": 0.37218590331938617,
+              "objective": 203.71408148467899,
+              "training_trajectory_rmse": 0.11693440849023898
             },
             "static": {
               "audit": {
@@ -2127,11 +2137,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.014333586857302176,
-                  "hessian_condition": 1029.9062726636155,
+                  "gradient_norm": 0.0021650571805824697,
+                  "hessian_condition": 1117.8253358158627,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 20,
-                  "objective": 247.51183908065366,
+                  "n_iterations": 22,
+                  "objective": 208.52156189242913,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2139,18 +2149,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 1.492139460879116e-07,
-                  "relative_objective_range": 6.028557932507184e-10,
+                  "objective_range": 5.3899486829323e-07,
+                  "relative_objective_range": 2.584839972430685e-09,
                   "selected_converged": true,
-                  "selected_objective": 247.51183908065366,
+                  "selected_objective": 208.52156189242913,
                   "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.3162736742372648,
-              "objective": 247.51183908065366,
-              "training_trajectory_rmse": 0.01571971622137201
+              "future_log_loss": 0.3598645448155005,
+              "objective": 208.52156189242913,
+              "training_trajectory_rmse": 0.0491047195027632
             }
           },
           "seed": 82481
@@ -2167,11 +2177,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.8128320514337374,
-                  "hessian_condition": 16928.999388782926,
+                  "gradient_norm": 0.45075717223721173,
+                  "hessian_condition": 19499.067222443024,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 137,
-                  "objective": 256.64242138816036,
+                  "n_iterations": 139,
+                  "objective": 198.57510677483222,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2179,18 +2189,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 9.795086816666299e-05,
-                  "relative_objective_range": 3.816628117707657e-07,
+                  "objective_range": 0.0006205826121004065,
+                  "relative_objective_range": 3.125178287347447e-06,
                   "selected_converged": true,
-                  "selected_objective": 256.64242138816036,
-                  "selected_restart": 0
+                  "selected_objective": 198.57510677483222,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.29604921520217703,
-              "objective": 256.64242138816036,
-              "training_trajectory_rmse": 0.08558149833235733
+              "future_log_loss": 0.3322316666422935,
+              "objective": 198.57510677483222,
+              "training_trajectory_rmse": 0.08341623648255928
             },
             "static": {
               "audit": {
@@ -2202,11 +2212,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.004586228354115117,
-                  "hessian_condition": 829.095935902555,
+                  "gradient_norm": 0.0006988100213439613,
+                  "hessian_condition": 986.0199139196758,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 22,
-                  "objective": 258.6198570767079,
+                  "n_iterations": 16,
+                  "objective": 201.0591951454482,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2214,18 +2224,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 3.678019311337266e-07,
-                  "relative_objective_range": 1.4221720454537054e-09,
+                  "objective_range": 1.1112803122159676e-07,
+                  "relative_objective_range": 5.527130014680784e-10,
                   "selected_converged": true,
-                  "selected_objective": 258.6198570767079,
-                  "selected_restart": 1
+                  "selected_objective": 201.0591951454482,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.29003191262614286,
-              "objective": 258.6198570767079,
-              "training_trajectory_rmse": 0.0171300367614722
+              "future_log_loss": 0.3324177306900426,
+              "objective": 201.0591951454482,
+              "training_trajectory_rmse": 0.059245310805820704
             }
           },
           "seed": 82491
@@ -2242,11 +2252,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.18325437361863414,
-                  "hessian_condition": 14761.623848392435,
+                  "gradient_norm": 0.16682968277202478,
+                  "hessian_condition": 17973.345372553806,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 129,
-                  "objective": 288.9182579128577,
+                  "n_iterations": 137,
+                  "objective": 269.782290486466,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2254,18 +2264,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.0007837951976057411,
-                  "relative_objective_range": 2.7128614275465627e-06,
+                  "objective_range": 0.00012389155091341308,
+                  "relative_objective_range": 4.5922788590019874e-07,
                   "selected_converged": true,
-                  "selected_objective": 288.9182579128577,
+                  "selected_objective": 269.782290486466,
                   "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.29882621772543405,
-              "objective": 288.9182579128577,
-              "training_trajectory_rmse": 0.10272660229843093
+              "future_log_loss": 0.24925820541594126,
+              "objective": 269.782290486466,
+              "training_trajectory_rmse": 0.08214032886633055
             },
             "static": {
               "audit": {
@@ -2277,11 +2287,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.03702654559101352,
-                  "hessian_condition": 688.9782167762115,
+                  "gradient_norm": 4.582862958005356e-05,
+                  "hessian_condition": 827.4842534287473,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 17,
-                  "objective": 293.00462278012947,
+                  "n_iterations": 28,
+                  "objective": 272.37652339941747,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2289,18 +2299,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 1.1402835298213176e-07,
-                  "relative_objective_range": 3.8916912607108794e-10,
+                  "objective_range": 2.169025492548826e-08,
+                  "relative_objective_range": 7.963334965429936e-11,
                   "selected_converged": true,
-                  "selected_objective": 293.00462278012947,
+                  "selected_objective": 272.37652339941747,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.3024443911518745,
-              "objective": 293.00462278012947,
-              "training_trajectory_rmse": 0.035270726788153024
+              "future_log_loss": 0.26573529906441334,
+              "objective": 272.37652339941747,
+              "training_trajectory_rmse": 0.044012064163875965
             }
           },
           "seed": 82501
@@ -2317,11 +2327,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0787051979708742,
-                  "hessian_condition": 13954.481941448985,
+                  "gradient_norm": 0.4251897287497663,
+                  "hessian_condition": 20072.130824799788,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 119,
-                  "objective": 308.17274618819,
+                  "n_iterations": 137,
+                  "objective": 192.3991319035268,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2329,18 +2339,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 4.360153974403147e-05,
-                  "relative_objective_range": 1.4148408736120221e-07,
+                  "objective_range": 2.3916604362739236e-05,
+                  "relative_objective_range": 1.2430723634829887e-07,
                   "selected_converged": true,
-                  "selected_objective": 308.17274618819,
+                  "selected_objective": 192.3991319035268,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.3307249361402102,
-              "objective": 308.17274618819,
-              "training_trajectory_rmse": 0.08962220914010302
+              "future_log_loss": 0.49674188296106936,
+              "objective": 192.3991319035268,
+              "training_trajectory_rmse": 0.1553269730850504
             },
             "static": {
               "audit": {
@@ -2352,11 +2362,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.01169842670736731,
-                  "hessian_condition": 589.7868170304055,
+                  "gradient_norm": 0.0005905905389611142,
+                  "hessian_condition": 1017.2636985986899,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 21,
-                  "objective": 313.84415165102916,
+                  "n_iterations": 24,
+                  "objective": 196.57153124107404,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2364,18 +2374,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 9.173994044431311e-07,
-                  "relative_objective_range": 2.9231049857612433e-09,
+                  "objective_range": 3.038826150714158e-07,
+                  "relative_objective_range": 1.5459136587725724e-09,
                   "selected_converged": true,
-                  "selected_objective": 313.84415165102916,
+                  "selected_objective": 196.57153124107404,
                   "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.32514296263706693,
-              "objective": 313.84415165102916,
-              "training_trajectory_rmse": 0.0455302268071716
+              "future_log_loss": 0.4813297467216563,
+              "objective": 196.57153124107404,
+              "training_trajectory_rmse": 0.06319489762836447
             }
           },
           "seed": 82511
@@ -2392,11 +2402,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.2609186875844973,
-                  "hessian_condition": 17884.264310497907,
+                  "gradient_norm": 0.1260489719358968,
+                  "hessian_condition": 20966.8882896762,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 103,
-                  "objective": 237.90326210861235,
+                  "n_iterations": 125,
+                  "objective": 174.3667113901804,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2404,18 +2414,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00013827749648953613,
-                  "relative_objective_range": 5.812341338405311e-07,
+                  "objective_range": 3.7623270856101954e-05,
+                  "relative_objective_range": 2.157709493752644e-07,
                   "selected_converged": true,
-                  "selected_objective": 237.90326210861235,
-                  "selected_restart": 1
+                  "selected_objective": 174.3667113901804,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.337728209638394,
-              "objective": 237.90326210861235,
-              "training_trajectory_rmse": 0.05823579390596298
+              "future_log_loss": 0.28301493698982566,
+              "objective": 174.3667113901804,
+              "training_trajectory_rmse": 0.08602786450732544
             },
             "static": {
               "audit": {
@@ -2427,11 +2437,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.006231662506914936,
-                  "hessian_condition": 865.8500458792762,
+                  "gradient_norm": 0.002776962461935425,
+                  "hessian_condition": 1045.9139993996448,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 15,
-                  "objective": 238.71158135690547,
+                  "n_iterations": 20,
+                  "objective": 178.11812100637113,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2439,18 +2449,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 4.753854909722577e-08,
-                  "relative_objective_range": 1.991463875652909e-10,
+                  "objective_range": 6.949854025606328e-07,
+                  "relative_objective_range": 3.901823119590251e-09,
                   "selected_converged": true,
-                  "selected_objective": 238.71158135690547,
-                  "selected_restart": 2
+                  "selected_objective": 178.11812100637113,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.33806787061838506,
-              "objective": 238.71158135690547,
-              "training_trajectory_rmse": 0.05196886625272279
+              "future_log_loss": 0.2697411223602779,
+              "objective": 178.11812100637113,
+              "training_trajectory_rmse": 0.05564676541754684
             }
           },
           "seed": 82521
@@ -2467,11 +2477,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.1648761734563364,
-                  "hessian_condition": 19972.447289754986,
+                  "gradient_norm": 0.09983720904252162,
+                  "hessian_condition": 17297.466768121616,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 125,
-                  "objective": 227.58700635927408,
+                  "n_iterations": 92,
+                  "objective": 230.70427581412602,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2479,18 +2489,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.0001758947011012424,
-                  "relative_objective_range": 7.728679414305884e-07,
+                  "objective_range": 3.77416855883439e-05,
+                  "relative_objective_range": 1.6359335107751382e-07,
                   "selected_converged": true,
-                  "selected_objective": 227.58700635927408,
+                  "selected_objective": 230.70427581412602,
                   "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.11518776873211278,
-              "objective": 227.58700635927408,
-              "training_trajectory_rmse": 0.08295957907299213
+              "future_log_loss": 0.25658026723507904,
+              "objective": 230.70427581412602,
+              "training_trajectory_rmse": 0.04358941084738211
             },
             "static": {
               "audit": {
@@ -2502,11 +2512,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.00013236707514641385,
-                  "hessian_condition": 1024.2878004371314,
+                  "gradient_norm": 0.014733026856772103,
+                  "hessian_condition": 871.5279734576645,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 18,
-                  "objective": 232.82523403751077,
+                  "n_iterations": 20,
+                  "objective": 231.9669486315408,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2514,18 +2524,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 2.4213581468757184e-06,
-                  "relative_objective_range": 1.0399895685214302e-08,
+                  "objective_range": 1.6198779917431239e-07,
+                  "relative_objective_range": 6.983227573149477e-10,
                   "selected_converged": true,
-                  "selected_objective": 232.82523403751077,
-                  "selected_restart": 0
+                  "selected_objective": 231.9669486315408,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.12704018698724626,
-              "objective": 232.82523403751077,
-              "training_trajectory_rmse": 0.0474909917459766
+              "future_log_loss": 0.2505251887317349,
+              "objective": 231.9669486315408,
+              "training_trajectory_rmse": 0.003021846676577549
             }
           },
           "seed": 82531
@@ -2542,11 +2552,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.09321983429521981,
-                  "hessian_condition": 17063.648273917126,
+                  "gradient_norm": 0.13276840719899466,
+                  "hessian_condition": 19289.199147116855,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 141,
-                  "objective": 246.270316998689,
+                  "n_iterations": 110,
+                  "objective": 205.8082677439802,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2554,18 +2564,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00029010621429392813,
-                  "relative_objective_range": 1.1779991102032508e-06,
+                  "objective_range": 3.0887297725712415e-05,
+                  "relative_objective_range": 1.5007802195845388e-07,
                   "selected_converged": true,
-                  "selected_objective": 246.270316998689,
-                  "selected_restart": 0
+                  "selected_objective": 205.8082677439802,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.4700400708217264,
-              "objective": 246.270316998689,
-              "training_trajectory_rmse": 0.11451361291228788
+              "future_log_loss": 0.2639119498952672,
+              "objective": 205.8082677439802,
+              "training_trajectory_rmse": 0.08923622860814763
             },
             "static": {
               "audit": {
@@ -2577,11 +2587,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.03349923696824631,
-                  "hessian_condition": 808.7361874943201,
+                  "gradient_norm": 0.01701566965459677,
+                  "hessian_condition": 917.094455317052,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 24,
-                  "objective": 258.1900856367193,
+                  "n_iterations": 20,
+                  "objective": 211.40611405765858,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2589,18 +2599,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 4.052918711749953e-08,
-                  "relative_objective_range": 1.5697421927550402e-10,
+                  "objective_range": 8.422176733802189e-09,
+                  "relative_objective_range": 3.9838851261913536e-11,
                   "selected_converged": true,
-                  "selected_objective": 258.1900856367193,
-                  "selected_restart": 1
+                  "selected_objective": 211.40611405765858,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.46106302245590475,
-              "objective": 258.1900856367193,
-              "training_trajectory_rmse": 0.021597697703280024
+              "future_log_loss": 0.26173257209851053,
+              "objective": 211.40611405765858,
+              "training_trajectory_rmse": 0.0543550364406893
             }
           },
           "seed": 82541
@@ -2617,11 +2627,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.29398049002821725,
-                  "hessian_condition": 18127.491563075542,
+                  "gradient_norm": 0.14415661411976569,
+                  "hessian_condition": 17880.416526544494,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 128,
-                  "objective": 231.82424721980297,
+                  "n_iterations": 125,
+                  "objective": 238.77034015632898,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2629,18 +2639,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00011251490337826908,
-                  "relative_objective_range": 4.853457079128942e-07,
+                  "objective_range": 0.00019249954655720103,
+                  "relative_objective_range": 8.062121385393458e-07,
                   "selected_converged": true,
-                  "selected_objective": 231.82424721980297,
-                  "selected_restart": 2
+                  "selected_objective": 238.77034015632898,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.340889611873804,
-              "objective": 231.82424721980297,
-              "training_trajectory_rmse": 0.13427631187218286
+              "future_log_loss": 0.25484447316758235,
+              "objective": 238.77034015632898,
+              "training_trajectory_rmse": 0.0777853479260101
             },
             "static": {
               "audit": {
@@ -2652,11 +2662,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.00798917164981537,
-                  "hessian_condition": 889.2224006793066,
+                  "gradient_norm": 0.021104680204869834,
+                  "hessian_condition": 883.6353965221442,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 24,
-                  "objective": 238.47857698027596,
+                  "n_iterations": 25,
+                  "objective": 244.0507297206696,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2664,18 +2674,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 4.633480443771987e-08,
-                  "relative_objective_range": 1.9429336179556337e-10,
+                  "objective_range": 6.02663584459151e-06,
+                  "relative_objective_range": 2.4694193094564186e-08,
                   "selected_converged": true,
-                  "selected_objective": 238.47857698027596,
-                  "selected_restart": 2
+                  "selected_objective": 244.0507297206696,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.3123377420051158,
-              "objective": 238.47857698027596,
-              "training_trajectory_rmse": 0.03212212953029834
+              "future_log_loss": 0.24043622325898129,
+              "objective": 244.0507297206696,
+              "training_trajectory_rmse": 0.012487038929146552
             }
           },
           "seed": 82551
@@ -2692,11 +2702,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.08182023335785531,
-                  "hessian_condition": 15507.279072314093,
+                  "gradient_norm": 0.5835620881315738,
+                  "hessian_condition": 19721.196286153496,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 145,
-                  "objective": 256.75937645719495,
+                  "n_iterations": 171,
+                  "objective": 196.92428725867555,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2704,18 +2714,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 4.548886937527641e-05,
-                  "relative_objective_range": 1.771653678355929e-07,
+                  "objective_range": 0.00022341021031024866,
+                  "relative_objective_range": 1.1344980013398844e-06,
                   "selected_converged": true,
-                  "selected_objective": 256.75937645719495,
-                  "selected_restart": 2
+                  "selected_objective": 196.92428725867555,
+                  "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.18127482049341653,
-              "objective": 256.75937645719495,
-              "training_trajectory_rmse": 0.101069464378124
+              "future_log_loss": 0.21762389864409148,
+              "objective": 196.92428725867555,
+              "training_trajectory_rmse": 0.11977156007994759
             },
             "static": {
               "audit": {
@@ -2727,11 +2737,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.051573428121338735,
-                  "hessian_condition": 724.788481745812,
+                  "gradient_norm": 0.004495495124921787,
+                  "hessian_condition": 1019.574859279992,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 22,
-                  "objective": 261.5436910630766,
+                  "n_iterations": 16,
+                  "objective": 202.18989884505947,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2739,18 +2749,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 1.8207344965048833e-07,
-                  "relative_objective_range": 6.961492701675514e-10,
+                  "objective_range": 1.1903296126547502e-07,
+                  "relative_objective_range": 5.88718635032759e-10,
                   "selected_converged": true,
-                  "selected_objective": 261.5436910630766,
-                  "selected_restart": 0
+                  "selected_objective": 202.18989884505947,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.17039899002177022,
-              "objective": 261.5436910630766,
-              "training_trajectory_rmse": 0.053256947955263235
+              "future_log_loss": 0.20034447701754843,
+              "objective": 202.18989884505947,
+              "training_trajectory_rmse": 0.03574106530982872
             }
           },
           "seed": 82561
@@ -2767,11 +2777,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.04356187584038408,
-                  "hessian_condition": 15759.599320488987,
+                  "gradient_norm": 0.3493569347984065,
+                  "hessian_condition": 15793.720262670577,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 81,
-                  "objective": 265.8902690169287,
+                  "n_iterations": 124,
+                  "objective": 277.7666159337931,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2779,18 +2789,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.0012667965802393155,
-                  "relative_objective_range": 4.764358563865537e-06,
+                  "objective_range": 5.0622974072211946e-05,
+                  "relative_objective_range": 1.822500299470047e-07,
                   "selected_converged": true,
-                  "selected_objective": 265.8902690169287,
-                  "selected_restart": 1
+                  "selected_objective": 277.7666159337931,
+                  "selected_restart": 0
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.4584878731696657,
-              "objective": 265.8902690169287,
-              "training_trajectory_rmse": 0.09780579131564147
+              "future_log_loss": 0.3290884168103973,
+              "objective": 277.7666159337931,
+              "training_trajectory_rmse": 0.07883165374810876
             },
             "static": {
               "audit": {
@@ -2802,11 +2812,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0002142778252710506,
-                  "hessian_condition": 701.7791641605462,
+                  "gradient_norm": 0.007608773494811007,
+                  "hessian_condition": 763.5964696382254,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 21,
-                  "objective": 270.3102810617739,
+                  "n_iterations": 18,
+                  "objective": 278.6919954464064,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2814,18 +2824,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 1.69530153470987e-07,
-                  "relative_objective_range": 6.27168721829875e-10,
+                  "objective_range": 2.3455743303202325e-07,
+                  "relative_objective_range": 8.41636777749254e-10,
                   "selected_converged": true,
-                  "selected_objective": 270.3102810617739,
+                  "selected_objective": 278.6919954464064,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.4560526179720125,
-              "objective": 270.3102810617739,
-              "training_trajectory_rmse": 0.07760201738652325
+              "future_log_loss": 0.33114042194463367,
+              "objective": 278.6919954464064,
+              "training_trajectory_rmse": 0.07511925099690613
             }
           },
           "seed": 82571
@@ -2842,11 +2852,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.24510085511616425,
-                  "hessian_condition": 15691.221892836047,
+                  "gradient_norm": 0.4288821086878272,
+                  "hessian_condition": 16734.567059712914,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 132,
-                  "objective": 282.75618758684647,
+                  "n_iterations": 115,
+                  "objective": 242.1772814982019,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2854,18 +2864,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.0003612979759282098,
-                  "relative_objective_range": 1.277772129450712e-06,
+                  "objective_range": 8.013693940256417e-05,
+                  "relative_objective_range": 3.309019694448885e-07,
                   "selected_converged": true,
-                  "selected_objective": 282.75618758684647,
+                  "selected_objective": 242.1772814982019,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.4154866977498265,
-              "objective": 282.75618758684647,
-              "training_trajectory_rmse": 0.05284772236852825
+              "future_log_loss": 0.45161692151677396,
+              "objective": 242.1772814982019,
+              "training_trajectory_rmse": 0.07652445717334352
             },
             "static": {
               "audit": {
@@ -2877,11 +2887,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.0026129986675310817,
-                  "hessian_condition": 735.5395329312823,
+                  "gradient_norm": 0.027927786935152066,
+                  "hessian_condition": 809.3819431923519,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 19,
-                  "objective": 284.1355648382553,
+                  "n_iterations": 20,
+                  "objective": 246.85499529681732,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2889,18 +2899,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 9.732673333928687e-09,
-                  "relative_objective_range": 3.425362586858506e-11,
+                  "objective_range": 1.5464560192413046e-06,
+                  "relative_objective_range": 6.2646332815013645e-09,
                   "selected_converged": true,
-                  "selected_objective": 284.1355648382553,
+                  "selected_objective": 246.85499529681732,
                   "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.41439348476998106,
-              "objective": 284.1355648382553,
-              "training_trajectory_rmse": 0.038037283391185214
+              "future_log_loss": 0.45715214215559447,
+              "objective": 246.85499529681732,
+              "training_trajectory_rmse": 0.005184678952168315
             }
           },
           "seed": 82581
@@ -2917,11 +2927,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.3298727743480855,
-                  "hessian_condition": 16690.454185877996,
+                  "gradient_norm": 0.10968193243980773,
+                  "hessian_condition": 19918.577485077934,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 112,
-                  "objective": 288.26993140469204,
+                  "n_iterations": 143,
+                  "objective": 218.70542718883203,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2929,18 +2939,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.0004287659751867068,
-                  "relative_objective_range": 1.487376685793765e-06,
+                  "objective_range": 6.12484548980774e-05,
+                  "relative_objective_range": 2.8005000006330425e-07,
                   "selected_converged": true,
-                  "selected_objective": 288.26993140469204,
-                  "selected_restart": 1
+                  "selected_objective": 218.70542718883203,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.2538030489558941,
-              "objective": 288.26993140469204,
-              "training_trajectory_rmse": 0.10060849734587925
+              "future_log_loss": 0.3602614603988556,
+              "objective": 218.70542718883203,
+              "training_trajectory_rmse": 0.11524085164830143
             },
             "static": {
               "audit": {
@@ -2952,11 +2962,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.007014795727828019,
-                  "hessian_condition": 806.6910930038795,
+                  "gradient_norm": 9.779711572601261e-05,
+                  "hessian_condition": 975.2226207638838,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 19,
-                  "objective": 289.865999071729,
+                  "n_iterations": 21,
+                  "objective": 223.62228063810963,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -2964,18 +2974,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 5.216975296207238e-08,
-                  "relative_objective_range": 1.7997886309239972e-10,
+                  "objective_range": 1.774557745193306e-08,
+                  "relative_objective_range": 7.935514028966961e-11,
                   "selected_converged": true,
-                  "selected_objective": 289.865999071729,
+                  "selected_objective": 223.62228063810963,
                   "selected_restart": 1
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.24407640702191344,
-              "objective": 289.865999071729,
-              "training_trajectory_rmse": 0.07985846063497842
+              "future_log_loss": 0.35412324070466666,
+              "objective": 223.62228063810963,
+              "training_trajectory_rmse": 0.04013341024893653
             }
           },
           "seed": 82591
@@ -2992,11 +3002,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.18140557962652157,
-                  "hessian_condition": 21569.072967281416,
+                  "gradient_norm": 0.616520601289039,
+                  "hessian_condition": 20482.40685747223,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 96,
-                  "objective": 217.02074624940536,
+                  "n_iterations": 145,
+                  "objective": 239.13295070760864,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -3004,18 +3014,18 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 0.00012809649453515703,
-                  "relative_objective_range": 5.902499956752776e-07,
+                  "objective_range": 0.0009698805301638913,
+                  "relative_objective_range": 4.055821363362753e-06,
                   "selected_converged": true,
-                  "selected_objective": 217.02074624940536,
-                  "selected_restart": 1
+                  "selected_objective": 239.13295070760864,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.45230801448519153,
-              "objective": 217.02074624940536,
-              "training_trajectory_rmse": 0.11712043124234699
+              "future_log_loss": 0.3256194296482767,
+              "objective": 239.13295070760864,
+              "training_trajectory_rmse": 0.06906471430999345
             },
             "static": {
               "audit": {
@@ -3027,11 +3037,11 @@
                 "numerical": {
                   "boundary_estimate": false,
                   "converged": true,
-                  "gradient_norm": 0.004894344628473432,
-                  "hessian_condition": 1186.2605577708937,
+                  "gradient_norm": 0.23866721266723762,
+                  "hessian_condition": 1061.5374415927906,
                   "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-                  "n_iterations": 23,
-                  "objective": 220.08025399121368,
+                  "n_iterations": 19,
+                  "objective": 241.1315879134358,
                   "optimizer": "L-BFGS-B (3 deterministic restarts)",
                   "status": 0
                 },
@@ -3039,24 +3049,24 @@
                   "failed_messages": [],
                   "n_converged": 3,
                   "n_restarts": 3,
-                  "objective_range": 6.180017010137817e-06,
-                  "relative_objective_range": 2.808074281114081e-08,
+                  "objective_range": 1.2602326648902817e-06,
+                  "relative_objective_range": 5.226327565771659e-09,
                   "selected_converged": true,
-                  "selected_objective": 220.08025399121368,
-                  "selected_restart": 0
+                  "selected_objective": 241.1315879134358,
+                  "selected_restart": 2
                 },
                 "status": "pass"
               },
               "converged": true,
-              "future_log_loss": 0.4429232657010342,
-              "objective": 220.08025399121368,
-              "training_trajectory_rmse": 0.08107748066603108
+              "future_log_loss": 0.3267866380046029,
+              "objective": 241.1315879134358,
+              "training_trajectory_rmse": 0.027407771299957924
             }
           },
           "seed": 82601
         }
       ],
-      "smooth_future_wins": 7,
+      "smooth_future_wins": 10,
       "trajectory_rmse_winner": "static"
     }
   },

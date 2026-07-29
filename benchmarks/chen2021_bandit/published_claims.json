@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "paper": {
+    "doi": "10.7554/eLife.69748",
+    "figure": "Cohort description and Figure 1",
+    "citation": "Chen C.S., Knep E., Han A., Ebitz R.B., Grissom N.M. (2021). Sex differences in learning from exploration. eLife 10, e69748."
+  },
+  "data": {
+    "accession": "10.5061/dryad.z612jm6c0",
+    "member_sha256": "90f0f9fa843a16788d0dcd7b857f81db068e8d18b8dd4eabf20ccaee3b67db04"
+  },
+  "result": "result.json",
+  "claims": [
+    {
+      "id": "cohort_size_mice",
+      "description": "Number of mice in the released restless two-armed-bandit cohort.",
+      "result_path": "design.n_subjects",
+      "published_value": 32,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0
+      },
+      "tolerance_rationale": "A cohort size is an exact integer; any difference means the released archive was read incorrectly.",
+      "observed_value": 32,
+      "status": "pass"
+    },
+    {
+      "id": "sessions_per_mouse",
+      "description": "Number of restless-bandit sessions recorded per mouse.",
+      "result_path": "design.n_sessions",
+      "published_value": 8,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0
+      },
+      "tolerance_rationale": "A session count is an exact integer; any difference means the released archive was read incorrectly.",
+      "observed_value": 8,
+      "status": "pass"
+    },
+    {
+      "id": "sex_difference_in_exploration",
+      "description": "The paper's headline claim that female mice explore more than male mice.",
+      "result_path": null,
+      "published_value": null,
+      "tolerance": null,
+      "observed_value": null,
+      "status": "waived",
+      "waiver_rationale": "This recipe is a literature-shaped prospective model comparison that never reads subject sex and fits no exploration parameter. The paper's sex effect is out of the declared boundary, so it is recorded as unchecked rather than silently implied."
+    }
+  ]
+}

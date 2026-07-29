@@ -31,6 +31,10 @@ jobs:
         run: uv run --group docs python examples/first_analysis.py first-analysis.svg
       - name: Validate documentation figures
         run: uv run --group docs pytest tests/test_documentation.py
+      - name: Check committed figures match the locked plotting stack
+        run: |
+          uv run --group docs python -m scripts.plot_documentation_figures --skip-cell
+          git diff --exit-code -- docs/assets
       - name: Build documentation
         run: uv run --group docs mkdocs build --strict
       - if: github.event_name != 'pull_request'

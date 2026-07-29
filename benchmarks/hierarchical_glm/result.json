@@ -78,5 +78,15 @@
   "partial_pooling_wins": {
     "mean_subject_coefficient_rmse": 3,
     "mean_prospective_log_loss": 3
+  },
+  "provenance": {
+    "schema_version": 1,
+    "git_describe": "41b8cd3-dirty",
+    "python": "3.12.13",
+    "libraries": {
+      "numpy": "2.3.5",
+      "scipy": "1.18.0",
+      "unspool": "0.1.0"
+    }
   }
 }

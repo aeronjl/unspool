@@ -26,10 +26,15 @@ extrapolation.
 
 | Truth | Method | Training path RMSE | Future joint log loss | Future wins |
 | --- | --- | ---: | ---: | ---: |
-| Stationary | Static | **0.05552** | **0.32980** | 13/20 |
-| Stationary | Smooth | 0.09880 | 0.33293 | 7/20 |
-| Changing | Static | 0.35799 | 0.15136 | 0/20 |
-| Changing | Smooth | **0.08844** | **-0.22988** | 20/20 |
+| Stationary | Static | **0.04043** | **0.32273** | 10/20 |
+| Stationary | Smooth | 0.09174 | 0.32539 | 10/20 |
+| Changing | Static | 0.35798 | 0.09300 | 0/20 |
+| Changing | Smooth | **0.09235** | **-0.30943** | 20/20 |
+
+The stationary future-wins column is now an even 10/20 split. The static model still wins
+on the mean score and on training-path RMSE, but a per-repetition win count near chance is
+the expected signature of two candidates that agree under stationarity; it is not evidence
+that the smooth family is free.
 
 All 80 fits converge and all paired fits remain audit-eligible. A continuous density may
 exceed one, so a mean negative joint log density can be negative; only matched differences

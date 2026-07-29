@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
 from benchmarks.hierarchical_glm.benchmark import POPULATION_PARAMETERS, build_design
+from benchmarks.provenance import render
 from unspool import HierarchicalBernoulliHistoryGLM, Study
 
 SUBJECT_COUNTS = (8, 24)
@@ -170,8 +170,9 @@ def main() -> None:
     )
     arguments = parser.parse_args()
     result = run(repetitions=arguments.repetitions, seed=arguments.seed)
-    arguments.output.write_text(json.dumps(result, indent=2) + "\n")
-    print(json.dumps(result, indent=2))
+    rendered = render(result, allow_nan=True, sort_keys=False)
+    arguments.output.write_text(rendered, encoding="utf-8")
+    print(rendered, end="")
 
 
 if __name__ == "__main__":

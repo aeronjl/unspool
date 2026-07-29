@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
+from benchmarks.provenance import render
 from unspool import BernoulliGLMHMM, Study, align_latent_states
 
 DEFAULT_REPETITIONS = 20
@@ -193,7 +193,7 @@ def main() -> None:
         seed=arguments.seed,
         check=not arguments.no_check,
     )
-    rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
+    rendered = render(result, allow_nan=True)
     if arguments.output is not None:
         arguments.output.write_text(rendered, encoding="utf-8")
     print(rendered, end="")

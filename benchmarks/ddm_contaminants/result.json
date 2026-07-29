@@ -8,13 +8,23 @@
   },
   "generator_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
   "naive_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+  "provenance": {
+    "git_describe": "41b8cd3-dirty",
+    "libraries": {
+      "numpy": "2.3.5",
+      "scipy": "1.18.0",
+      "unspool": "0.1.0"
+    },
+    "python": "3.12.13",
+    "schema_version": 1
+  },
   "repeats": 20,
   "runs": [
     {
       "design_seed": 128760963975366989,
       "future_mean_log_loss": {
-        "naive": 0.44680779346803645,
-        "robust": 0.40432950131923046
+        "naive": 0.48524886768006814,
+        "robust": 0.2745581214180424
       },
       "n_test_contaminants": 5,
       "n_train_contaminants": 48,
@@ -28,11 +38,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.008143136704204733,
-            "hessian_condition": 676.0759981220496,
+            "gradient_norm": 0.0010886664911298328,
+            "hessian_condition": 983.0233325907527,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 21,
-            "objective": 454.63367747314794,
+            "n_iterations": 17,
+            "objective": 520.3002276125487,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -40,40 +50,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 2.3192569642560557e-08,
-            "relative_objective_range": 5.1013751932027475e-11,
+            "objective_range": 7.522089617850725e-09,
+            "relative_objective_range": 1.4457209931209542e-11,
             "selected_converged": true,
-            "selected_objective": 454.63367747314794,
+            "selected_objective": 520.3002276125487,
             "selected_restart": 2
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.36002413596931,
-          "drift.intercept": 0.19220431358332493,
-          "drift.stimulus": 0.8069678256741124,
-          "nondecision_time": 0.22993495702562636,
-          "starting_bias": 0.43408061084980476
+          "boundary": 1.564763059830705,
+          "drift.intercept": 0.10375132466748165,
+          "drift.stimulus": 0.9102161013398206,
+          "nondecision_time": 0.154106723141074,
+          "starting_bias": 0.44982080765558746
         },
-        "objective": 454.63367747314794,
+        "objective": 520.3002276125487,
         "restart_objectives": [
-          454.6336774963405,
-          454.63367747377674,
-          454.63367747314794
+          520.3002276200708,
+          520.3002276161137,
+          520.3002276125487
         ],
         "selected_restart": 2,
         "standard_errors": {
-          "boundary": 0.021871882187176034,
-          "drift.intercept": 0.06707490496626829,
-          "drift.stimulus": 0.06105668518855117,
-          "nondecision_time": 0.0030461027742243285,
-          "starting_bias": 0.011841654424121672
+          "boundary": 0.025360128770027798,
+          "drift.intercept": 0.06458229653666683,
+          "drift.stimulus": 0.05763646726317056,
+          "nondecision_time": 0.002247485600913237,
+          "starting_bias": 0.01282248751452023
         }
       },
       "responsibility": {
-        "expected_count": 46.29925533999635,
-        "ordinary_trials": 0.02890210271176559,
-        "true_contaminants": 0.5117682104322631
+        "expected_count": 49.669458578987076,
+        "ordinary_trials": 0.03120420440210047,
+        "true_contaminants": 0.54591451809599
       },
       "robust": {
         "audit": {
@@ -85,11 +95,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.008101278120433033,
-            "hessian_condition": 767.428300119823,
+            "gradient_norm": 0.016818296263332855,
+            "hessian_condition": 1091.4836664869142,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 27,
-            "objective": 419.0008977087063,
+            "n_iterations": 26,
+            "objective": 399.26088757649586,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -97,36 +107,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 3.1516726153313357e-06,
-            "relative_objective_range": 7.521875567728284e-09,
+            "objective_range": 3.0912854072084883e-06,
+            "relative_objective_range": 7.742519999823969e-09,
             "selected_converged": true,
-            "selected_objective": 419.0008977087063,
-            "selected_restart": 1
+            "selected_objective": 399.26088757649586,
+            "selected_restart": 0
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.2256795365707667,
-          "contaminant_probability": 0.05787440805648056,
-          "drift.intercept": 0.17468561055341172,
-          "drift.stimulus": 0.9807762008619475,
-          "nondecision_time": 0.25154854757249634,
-          "starting_bias": 0.4358928755618736
+          "boundary": 1.2334688285161204,
+          "contaminant_probability": 0.06208598803252285,
+          "drift.intercept": 0.19703098540410016,
+          "drift.stimulus": 1.155927871854673,
+          "nondecision_time": 0.2490462242661154,
+          "starting_bias": 0.43222527280581435
         },
-        "objective": 419.0008977087063,
+        "objective": 399.26088757649586,
         "restart_objectives": [
-          419.0009008603789,
-          419.0008977087063,
-          419.0008980793163
+          399.26088757649586,
+          399.2608879019589,
+          399.26089066778127
         ],
-        "selected_restart": 1,
+        "selected_restart": 0,
         "standard_errors": {
-          "boundary": 0.026081788352684817,
-          "contaminant_probability": 0.012717997486640391,
-          "drift.intercept": 0.08106606900656643,
-          "drift.stimulus": 0.07694401213750857,
-          "nondecision_time": 0.0038987325937193903,
-          "starting_bias": 0.012590388979747026
+          "boundary": 0.025866580359052305,
+          "contaminant_probability": 0.012687117701267583,
+          "drift.intercept": 0.08241421077883752,
+          "drift.stimulus": 0.07942883079456566,
+          "nondecision_time": 0.0034596246481451566,
+          "starting_bias": 0.012516422300298941
         }
       },
       "simulation_seed": 18040046618882922809
@@ -134,138 +144,17 @@
     {
       "design_seed": 9481426141345355009,
       "future_mean_log_loss": {
-        "naive": 0.5512170813487312,
-        "robust": 0.33516419920749485
+        "naive": 0.5191126616645217,
+        "robust": 0.28997917965910597
       },
       "n_test_contaminants": 6,
       "n_train_contaminants": 47,
       "naive": {
         "audit": {
-          "issues": [],
-          "latent_states": null,
-          "model_name": "wiener-drift-diffusion",
-          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
-          "n_observations": 800,
-          "numerical": {
-            "boundary_estimate": false,
-            "converged": true,
-            "gradient_norm": 0.06794736176564939,
-            "hessian_condition": 892.2988161422911,
-            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 24,
-            "objective": 531.5211444008133,
-            "optimizer": "L-BFGS-B (3 deterministic restarts)",
-            "status": 0
-          },
-          "restarts": {
-            "failed_messages": [],
-            "n_converged": 3,
-            "n_restarts": 3,
-            "objective_range": 1.341664869869419e-06,
-            "relative_objective_range": 2.5241984895669297e-09,
-            "selected_converged": true,
-            "selected_objective": 531.5211444008133,
-            "selected_restart": 1
-          },
-          "status": "pass"
-        },
-        "estimates": {
-          "boundary": 1.6475087532576094,
-          "drift.intercept": 0.22249175405627222,
-          "drift.stimulus": 0.9137675705101117,
-          "nondecision_time": 0.10689602696960404,
-          "starting_bias": 0.45583844568085363
-        },
-        "objective": 531.5211444008133,
-        "restart_objectives": [
-          531.5211457424782,
-          531.5211444008133,
-          531.5211447868949
-        ],
-        "selected_restart": 1,
-        "standard_errors": {
-          "boundary": 0.027885029250046846,
-          "drift.intercept": 0.06478963988036597,
-          "drift.stimulus": 0.05353602668353599,
-          "nondecision_time": 0.0023424683235163434,
-          "starting_bias": 0.013359725332618016
-        }
-      },
-      "responsibility": {
-        "expected_count": 41.03942910682375,
-        "ordinary_trials": 0.024514337694582687,
-        "true_contaminants": 0.4804283579319783
-      },
-      "robust": {
-        "audit": {
-          "issues": [],
-          "latent_states": null,
-          "model_name": "uniform-contaminant-wiener-drift-diffusion",
-          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
-          "n_observations": 800,
-          "numerical": {
-            "boundary_estimate": false,
-            "converged": true,
-            "gradient_norm": 0.0011226395342946063,
-            "hessian_condition": 654.9898964082346,
-            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 21,
-            "objective": 365.5319717446244,
-            "optimizer": "L-BFGS-B (3 deterministic restarts)",
-            "status": 0
-          },
-          "restarts": {
-            "failed_messages": [],
-            "n_converged": 3,
-            "n_restarts": 3,
-            "objective_range": 2.2735827087672078e-07,
-            "relative_objective_range": 6.219928445426453e-10,
-            "selected_converged": true,
-            "selected_objective": 365.5319717446244,
-            "selected_restart": 2
-          },
-          "status": "pass"
-        },
-        "estimates": {
-          "boundary": 1.2574906999837423,
-          "contaminant_probability": 0.05129922435285325,
-          "drift.intercept": 0.221681932319635,
-          "drift.stimulus": 1.196296380951781,
-          "nondecision_time": 0.2462800643473337,
-          "starting_bias": 0.46866421649227274
-        },
-        "objective": 365.5319717446244,
-        "restart_objectives": [
-          365.53197178749167,
-          365.53197197198267,
-          365.5319717446244
-        ],
-        "selected_restart": 2,
-        "standard_errors": {
-          "boundary": 0.027583843969121367,
-          "contaminant_probability": 0.012250214940581556,
-          "drift.intercept": 0.0821412029770162,
-          "drift.stimulus": 0.074673464440984,
-          "nondecision_time": 0.004615140261849186,
-          "starting_bias": 0.013016879073900383
-        }
-      },
-      "simulation_seed": 8284123132759123660
-    },
-    {
-      "design_seed": 6872946642124573500,
-      "future_mean_log_loss": {
-        "naive": 0.7512735596693328,
-        "robust": 0.5084651713345347
-      },
-      "n_test_contaminants": 10,
-      "n_train_contaminants": 38,
-      "naive": {
-        "audit": {
           "issues": [
             {
               "code": "restart_objective_disagreement",
-              "message": "converged restarts reached materially different objective values (relative range 1.39)",
+              "message": "converged restarts reached materially different objective values (relative range 1.29)",
               "severity": "warning"
             }
           ],
@@ -276,11 +165,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.001119916338439872,
-            "hessian_condition": 980.8203716881168,
+            "gradient_norm": 0.0032028832827943397,
+            "hessian_condition": 834.2706032034903,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
             "n_iterations": 21,
-            "objective": 479.97181014657593,
+            "objective": 522.731010870776,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -288,40 +177,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 665.2818525778696,
-            "relative_objective_range": 1.3860852627463742,
+            "objective_range": 671.9444740633688,
+            "relative_objective_range": 1.2854498013118256,
             "selected_converged": true,
-            "selected_objective": 479.97181014657593,
+            "selected_objective": 522.731010870776,
             "selected_restart": 0
           },
           "status": "warning"
         },
         "estimates": {
-          "boundary": 1.6350481045968308,
-          "drift.intercept": 0.12427576716772284,
-          "drift.stimulus": 1.0427983627679185,
-          "nondecision_time": 0.10333054759424702,
-          "starting_bias": 0.48027061753192346
+          "boundary": 1.617375587183104,
+          "drift.intercept": 0.1572348719717668,
+          "drift.stimulus": 0.9043487935148864,
+          "nondecision_time": 0.11319666295718694,
+          "starting_bias": 0.48746885421045805
         },
-        "objective": 479.97181014657593,
+        "objective": 522.731010870776,
         "restart_objectives": [
-          479.97181014657593,
-          1145.2536627244456,
-          479.9718102088357
+          522.731010870776,
+          1194.6754849341448,
+          522.7310108917729
         ],
         "selected_restart": 0,
         "standard_errors": {
-          "boundary": 0.02846027420540924,
-          "drift.intercept": 0.06673224613063161,
-          "drift.stimulus": 0.05813615016110492,
-          "nondecision_time": 0.0022939088182632045,
-          "starting_bias": 0.013593947121184079
+          "boundary": 0.027423149658880642,
+          "drift.intercept": 0.06530006246819509,
+          "drift.stimulus": 0.054222171182685706,
+          "nondecision_time": 0.0024571962863216145,
+          "starting_bias": 0.013444913157637661
         }
       },
       "responsibility": {
-        "expected_count": 32.15593868037398,
-        "ordinary_trials": 0.017399712698290663,
-        "true_contaminants": 0.4972988843230656
+        "expected_count": 37.936233883266574,
+        "ordinary_trials": 0.020656586101468366,
+        "true_contaminants": 0.4762090329544872
       },
       "robust": {
         "audit": {
@@ -333,11 +222,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.009343697394999838,
-            "hessian_condition": 1212.2462218484718,
+            "gradient_norm": 0.0028465161466367803,
+            "hessian_condition": 858.706013399969,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 21,
-            "objective": 270.3432425109639,
+            "n_iterations": 18,
+            "objective": 374.59945564913033,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -345,48 +234,48 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 2.6961060939356685e-07,
-            "relative_objective_range": 9.972899891612148e-10,
+            "objective_range": 2.5766072440092103e-06,
+            "relative_objective_range": 6.878299488033952e-09,
             "selected_converged": true,
-            "selected_objective": 270.3432425109639,
+            "selected_objective": 374.59945564913033,
             "selected_restart": 0
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.1942393596957948,
-          "contaminant_probability": 0.04019455442693576,
-          "drift.intercept": 0.3228989158829808,
-          "drift.stimulus": 1.2810923988465026,
-          "nondecision_time": 0.2538516401167799,
-          "starting_bias": 0.425397422525969
+          "boundary": 1.24445371605427,
+          "contaminant_probability": 0.04742019410260728,
+          "drift.intercept": 0.293610751463651,
+          "drift.stimulus": 1.126614811064766,
+          "nondecision_time": 0.24752144614019725,
+          "starting_bias": 0.45679839454073495
         },
-        "objective": 270.3432425109639,
+        "objective": 374.59945564913033,
         "restart_objectives": [
-          270.3432425109639,
-          270.34324268920045,
-          270.3432427805745
+          374.59945564913033,
+          374.59945636012776,
+          374.5994582257376
         ],
         "selected_restart": 0,
         "standard_errors": {
-          "boundary": 0.025114207305450983,
-          "contaminant_probability": 0.010152021437022334,
-          "drift.intercept": 0.08317033089734154,
-          "drift.stimulus": 0.07673769571490345,
-          "nondecision_time": 0.003310955018094338,
-          "starting_bias": 0.012209517667107506
+          "boundary": 0.025569441996100756,
+          "contaminant_probability": 0.01107760729046531,
+          "drift.intercept": 0.07943872453934915,
+          "drift.stimulus": 0.07211925949477777,
+          "nondecision_time": 0.003634150577221317,
+          "starting_bias": 0.012333866075806365
         }
       },
-      "simulation_seed": 4482814635017711793
+      "simulation_seed": 8284123132759123660
     },
     {
-      "design_seed": 16145638377871379016,
+      "design_seed": 6872946642124573500,
       "future_mean_log_loss": {
-        "naive": 0.46109045178121816,
-        "robust": 0.3999546022623708
+        "naive": 0.6583705948676537,
+        "robust": 0.2898075194623699
       },
-      "n_test_contaminants": 6,
-      "n_train_contaminants": 46,
+      "n_test_contaminants": 10,
+      "n_train_contaminants": 38,
       "naive": {
         "audit": {
           "issues": [],
@@ -397,11 +286,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.00012270807676635092,
-            "hessian_condition": 856.0582061451428,
+            "gradient_norm": 0.004369229372588873,
+            "hessian_condition": 634.659729505992,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 22,
-            "objective": 449.48391822355705,
+            "n_iterations": 24,
+            "objective": 587.8482958530392,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -409,40 +298,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 5.455527229969448e-07,
-            "relative_objective_range": 1.2137313502851655e-09,
+            "objective_range": 3.5851712709700223e-07,
+            "relative_objective_range": 6.098803545509141e-10,
             "selected_converged": true,
-            "selected_objective": 449.48391822355705,
-            "selected_restart": 0
+            "selected_objective": 587.8482958530392,
+            "selected_restart": 2
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.4458231449099137,
-          "drift.intercept": -0.005743047664996681,
-          "drift.stimulus": 0.905102036549631,
-          "nondecision_time": 0.19227903403018706,
-          "starting_bias": 0.4929908483081529
+          "boundary": 1.6894864296751548,
+          "drift.intercept": 0.06924327638673308,
+          "drift.stimulus": 0.8811656205280632,
+          "nondecision_time": 0.05738896336806328,
+          "starting_bias": 0.48927572901479444
         },
-        "objective": 449.48391822355705,
+        "objective": 587.8482958530392,
         "restart_objectives": [
-          449.48391822355705,
-          449.4839185024297,
-          449.4839187691098
+          587.8482959006132,
+          587.8482962115563,
+          587.8482958530392
         ],
-        "selected_restart": 0,
+        "selected_restart": 2,
         "standard_errors": {
-          "boundary": 0.023254223793200048,
-          "drift.intercept": 0.06671306580558713,
-          "drift.stimulus": 0.0580289193039924,
-          "nondecision_time": 0.0025045997009361222,
-          "starting_bias": 0.012465597999034999
+          "boundary": 0.029500117181574827,
+          "drift.intercept": 0.06401600393479917,
+          "drift.stimulus": 0.054756222016539124,
+          "nondecision_time": 0.0027908095493294166,
+          "starting_bias": 0.013911898049036798
         }
       },
       "responsibility": {
-        "expected_count": 40.333064272855495,
-        "ordinary_trials": 0.026607815859504575,
-        "true_contaminants": 0.4406689372780225
+        "expected_count": 34.607987781409896,
+        "ordinary_trials": 0.022837484677124997,
+        "true_contaminants": 0.4527848541431749
       },
       "robust": {
         "audit": {
@@ -454,11 +343,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.048897565344456266,
-            "hessian_condition": 760.3743649317271,
+            "gradient_norm": 0.052615951824175174,
+            "hessian_condition": 1214.7663769354251,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 20,
-            "objective": 381.5567959313916,
+            "n_iterations": 21,
+            "objective": 312.13241906353187,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -466,36 +355,163 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 3.1529680200037546e-06,
-            "relative_objective_range": 8.263430382119824e-09,
+            "objective_range": 1.0412736628495622e-06,
+            "relative_objective_range": 3.335999720803176e-09,
             "selected_converged": true,
-            "selected_objective": 381.5567959313916,
-            "selected_restart": 2
+            "selected_objective": 312.13241906353187,
+            "selected_restart": 1
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.249548637960119,
-          "contaminant_probability": 0.050418032437604836,
-          "drift.intercept": -0.016962276795638952,
-          "drift.stimulus": 1.1282771163929592,
-          "nondecision_time": 0.24212223119300336,
-          "starting_bias": 0.4769322529743325
+          "boundary": 1.1904370253765917,
+          "contaminant_probability": 0.04325975139445252,
+          "drift.intercept": 0.2945747204766077,
+          "drift.stimulus": 1.1848849198986293,
+          "nondecision_time": 0.2517188418947047,
+          "starting_bias": 0.4259556458341284
         },
-        "objective": 381.5567959313916,
+        "objective": 312.13241906353187,
         "restart_objectives": [
-          381.5567990843596,
-          381.55679608860675,
-          381.5567959313916
+          312.13242010480553,
+          312.13241906353187,
+          312.1324190931253
         ],
-        "selected_restart": 2,
+        "selected_restart": 1,
         "standard_errors": {
-          "boundary": 0.026555523079965886,
-          "contaminant_probability": 0.01198622099624822,
-          "drift.intercept": 0.08076988522871503,
-          "drift.stimulus": 0.07396977257866692,
-          "nondecision_time": 0.0038985581789051965,
-          "starting_bias": 0.012766866910123227
+          "boundary": 0.02549515298732652,
+          "contaminant_probability": 0.011123105205135146,
+          "drift.intercept": 0.08230418653298334,
+          "drift.stimulus": 0.07795805802752909,
+          "nondecision_time": 0.003322289323414563,
+          "starting_bias": 0.01219118897142816
+        }
+      },
+      "simulation_seed": 4482814635017711793
+    },
+    {
+      "design_seed": 16145638377871379016,
+      "future_mean_log_loss": {
+        "naive": 0.7322878073219374,
+        "robust": 0.5055623560530488
+      },
+      "n_test_contaminants": 6,
+      "n_train_contaminants": 46,
+      "naive": {
+        "audit": {
+          "issues": [
+            {
+              "code": "restart_objective_disagreement",
+              "message": "converged restarts reached materially different objective values (relative range 1.15)",
+              "severity": "warning"
+            }
+          ],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.007805162375212638,
+            "hessian_condition": 768.9968402519302,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 24,
+            "objective": 583.6073860530203,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 671.3348997599016,
+            "relative_objective_range": 1.1503194027412658,
+            "selected_converged": true,
+            "selected_objective": 583.6073860530203,
+            "selected_restart": 0
+          },
+          "status": "warning"
+        },
+        "estimates": {
+          "boundary": 1.6588112456347024,
+          "drift.intercept": -0.09411075251110224,
+          "drift.stimulus": 0.7923737254584938,
+          "nondecision_time": 0.08619659265635785,
+          "starting_bias": 0.5070210544059228
+        },
+        "objective": 583.6073860530203,
+        "restart_objectives": [
+          583.6073860530203,
+          1254.942285812922,
+          583.6073865295456
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.02784474753652644,
+          "drift.intercept": 0.06328603313567288,
+          "drift.stimulus": 0.0509431577955885,
+          "nondecision_time": 0.002440043090700816,
+          "starting_bias": 0.013542311646173854
+        }
+      },
+      "responsibility": {
+        "expected_count": 45.084037215478844,
+        "ordinary_trials": 0.02702915858873563,
+        "true_contaminants": 0.5370446008602646
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.0020774461580842234,
+            "hessian_condition": 1011.1813283112399,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 23,
+            "objective": 367.69773563612046,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 3.9846213439886924e-08,
+            "relative_objective_range": 1.0836676318104763e-10,
+            "selected_converged": true,
+            "selected_objective": 367.69773563612046,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.2041824958428888,
+          "contaminant_probability": 0.05635503147553673,
+          "drift.intercept": 0.034066053517250984,
+          "drift.stimulus": 1.1472104726349446,
+          "nondecision_time": 0.24628584592800598,
+          "starting_bias": 0.4633710598560772
+        },
+        "objective": 367.69773563612046,
+        "restart_objectives": [
+          367.6977356555201,
+          367.69773563612046,
+          367.69773567596667
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.02506173330915701,
+          "contaminant_probability": 0.0117597507199025,
+          "drift.intercept": 0.08243851068282913,
+          "drift.stimulus": 0.0767936009788676,
+          "nondecision_time": 0.0035253822835366777,
+          "starting_bias": 0.012575937803614436
         }
       },
       "simulation_seed": 14392970268947175366
@@ -503,8 +519,8 @@
     {
       "design_seed": 16068294189314254790,
       "future_mean_log_loss": {
-        "naive": 0.8905622231020976,
-        "robust": 0.5055561378800678
+        "naive": 0.7228549960750615,
+        "robust": 0.4353652663135651
       },
       "n_test_contaminants": 11,
       "n_train_contaminants": 34,
@@ -513,7 +529,7 @@
           "issues": [
             {
               "code": "restart_objective_disagreement",
-              "message": "converged restarts reached materially different objective values (relative range 1.18)",
+              "message": "converged restarts reached materially different objective values (relative range 1.11)",
               "severity": "warning"
             }
           ],
@@ -524,11 +540,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.025632071026437074,
-            "hessian_condition": 867.516858054724,
+            "gradient_norm": 0.005904233733779858,
+            "hessian_condition": 718.4084631858843,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 12,
-            "objective": 569.1919194326591,
+            "n_iterations": 13,
+            "objective": 606.4142621945394,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -536,40 +552,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 669.8609526358365,
-            "relative_objective_range": 1.1768630751180007,
+            "objective_range": 674.5718613572975,
+            "relative_objective_range": 1.1123944527889302,
             "selected_converged": true,
-            "selected_objective": 569.1919194326591,
+            "selected_objective": 606.4142621945394,
             "selected_restart": 2
           },
           "status": "warning"
         },
         "estimates": {
-          "boundary": 1.6667251348659313,
-          "drift.intercept": 0.002421208019906325,
-          "drift.stimulus": 0.809575142484854,
-          "nondecision_time": 0.06495952594066745,
-          "starting_bias": 0.5058815940177439
+          "boundary": 1.692209442635595,
+          "drift.intercept": 0.11113007568594649,
+          "drift.stimulus": 0.817030168101189,
+          "nondecision_time": 0.08933258080575386,
+          "starting_bias": 0.4657914512633232
         },
-        "objective": 569.1919194326591,
+        "objective": 606.4142621945394,
         "restart_objectives": [
-          569.1919197706272,
-          1239.0528720684956,
-          569.1919194326591
+          606.4142621970508,
+          1280.986123551837,
+          606.4142621945394
         ],
         "selected_restart": 2,
         "standard_errors": {
-          "boundary": 0.028808432282711006,
-          "drift.intercept": 0.06509408439650027,
-          "drift.stimulus": 0.05192181040181028,
-          "nondecision_time": 0.0023699274166421305,
-          "starting_bias": 0.014010771932864955
+          "boundary": 0.028321441269098403,
+          "drift.intercept": 0.06218029685520715,
+          "drift.stimulus": 0.05120183243216725,
+          "nondecision_time": 0.0024889625450738957,
+          "starting_bias": 0.013440358698183283
         }
       },
       "responsibility": {
-        "expected_count": 42.54459335401286,
-        "ordinary_trials": 0.026105572929029264,
-        "true_contaminants": 0.6631683673640135
+        "expected_count": 50.38404898804298,
+        "ordinary_trials": 0.033542477838857075,
+        "true_contaminants": 0.7261914989258369
       },
       "robust": {
         "audit": {
@@ -581,11 +597,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.011614085653954342,
-            "hessian_condition": 1295.7322304824143,
+            "gradient_norm": 0.02200398172821873,
+            "hessian_condition": 902.8085243620889,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
             "n_iterations": 21,
-            "objective": 320.2686183217818,
+            "objective": 408.2330771584819,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -593,36 +609,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 8.638060592147667e-06,
-            "relative_objective_range": 2.697129877229743e-08,
+            "objective_range": 1.2932048321090406e-08,
+            "relative_objective_range": 3.1678100194879606e-11,
             "selected_converged": true,
-            "selected_objective": 320.2686183217818,
+            "selected_objective": 408.2330771584819,
             "selected_restart": 1
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.17684284431937,
-          "contaminant_probability": 0.053180653780724424,
-          "drift.intercept": 0.20337575460100266,
-          "drift.stimulus": 1.1838167815643101,
-          "nondecision_time": 0.2581778304108104,
-          "starting_bias": 0.4480713674074423
+          "boundary": 1.2544155401577508,
+          "contaminant_probability": 0.06297973977229968,
+          "drift.intercept": 0.19809408174403606,
+          "drift.stimulus": 1.223639507943905,
+          "nondecision_time": 0.24734832039462545,
+          "starting_bias": 0.4562181975689944
         },
-        "objective": 320.2686183217818,
+        "objective": 408.2330771584819,
         "restart_objectives": [
-          320.2686269598424,
-          320.2686183217818,
-          320.26861846394587
+          408.2330771714139,
+          408.2330771584819,
+          408.23307716166426
         ],
         "selected_restart": 1,
         "standard_errors": {
-          "boundary": 0.0234181781818396,
-          "contaminant_probability": 0.011098311931537987,
-          "drift.intercept": 0.08551677845474892,
-          "drift.stimulus": 0.08224420832326304,
-          "nondecision_time": 0.0032067684874094613,
-          "starting_bias": 0.012669457955947629
+          "boundary": 0.02683181668827505,
+          "contaminant_probability": 0.01298281126363983,
+          "drift.intercept": 0.0816775363075229,
+          "drift.stimulus": 0.07834403509875094,
+          "nondecision_time": 0.0037650111319885208,
+          "starting_bias": 0.012530863920093156
         }
       },
       "simulation_seed": 6962554599663866719
@@ -630,8 +646,8 @@
     {
       "design_seed": 17425462970062510803,
       "future_mean_log_loss": {
-        "naive": 0.851197172017081,
-        "robust": 0.5241340173217439
+        "naive": 1.8948580217808968,
+        "robust": 0.5621319513040346
       },
       "n_test_contaminants": 12,
       "n_train_contaminants": 31,
@@ -640,7 +656,7 @@
           "issues": [
             {
               "code": "restart_objective_disagreement",
-              "message": "converged restarts reached materially different objective values (relative range 1.23)",
+              "message": "converged restarts reached materially different objective values (relative range 1.31)",
               "severity": "warning"
             }
           ],
@@ -651,11 +667,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.00969822693110015,
-            "hessian_condition": 718.4719127685152,
+            "gradient_norm": 0.007900752671411779,
+            "hessian_condition": 788.7707220290977,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 14,
-            "objective": 546.5811257439317,
+            "n_iterations": 20,
+            "objective": 514.7741596595833,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -663,40 +679,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 672.5510790771333,
-            "relative_objective_range": 1.2304689046145685,
+            "objective_range": 676.8796431766359,
+            "relative_objective_range": 1.3149060233020473,
             "selected_converged": true,
-            "selected_objective": 546.5811257439317,
-            "selected_restart": 2
+            "selected_objective": 514.7741596595833,
+            "selected_restart": 0
           },
           "status": "warning"
         },
         "estimates": {
-          "boundary": 1.6975157972492965,
-          "drift.intercept": -0.0037297039077585285,
-          "drift.stimulus": 0.8791162222646918,
-          "nondecision_time": 0.06281869563104374,
-          "starting_bias": 0.49656371806601063
+          "boundary": 1.6415292425396324,
+          "drift.intercept": 0.05135708977337597,
+          "drift.stimulus": 0.8794121392790653,
+          "nondecision_time": 0.09160155420757042,
+          "starting_bias": 0.48989893608747864
         },
-        "objective": 546.5811257439317,
+        "objective": 514.7741596595833,
         "restart_objectives": [
-          546.5811258457163,
-          1219.132204821065,
-          546.5811257439317
+          514.7741596595833,
+          1191.6538028362193,
+          514.7741602817406
         ],
-        "selected_restart": 2,
+        "selected_restart": 0,
         "standard_errors": {
-          "boundary": 0.030056459698706184,
-          "drift.intercept": 0.06492542402540741,
-          "drift.stimulus": 0.05014595142580554,
-          "nondecision_time": 0.0026231422369219393,
-          "starting_bias": 0.013920323308981472
+          "boundary": 0.028614715406498455,
+          "drift.intercept": 0.06592405594202506,
+          "drift.stimulus": 0.051181846119058585,
+          "nondecision_time": 0.002547927696622122,
+          "starting_bias": 0.013724460676124565
         }
       },
       "responsibility": {
-        "expected_count": 36.25209913230038,
-        "ordinary_trials": 0.022618727492037236,
-        "true_contaminants": 0.6083321835781855
+        "expected_count": 34.632544767716695,
+        "ordinary_trials": 0.02308561127838745,
+        "true_contaminants": 0.5445067643431208
       },
       "robust": {
         "audit": {
@@ -708,11 +724,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.029082995229976344,
-            "hessian_condition": 1205.9573924601132,
+            "gradient_norm": 0.0005270215750486569,
+            "hessian_condition": 1069.3418193032837,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 20,
-            "objective": 291.4834619431226,
+            "n_iterations": 25,
+            "objective": 295.1129207844944,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -720,36 +736,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 1.0984990694851149e-07,
-            "relative_objective_range": 3.768649727714109e-10,
+            "objective_range": 3.762494316106313e-08,
+            "relative_objective_range": 1.2749337799593895e-10,
             "selected_converged": true,
-            "selected_objective": 291.4834619431226,
-            "selected_restart": 0
+            "selected_objective": 295.1129207844944,
+            "selected_restart": 2
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.2161472243738232,
-          "contaminant_probability": 0.04531493823563008,
-          "drift.intercept": 0.26858228440768034,
-          "drift.stimulus": 1.24076086016336,
-          "nondecision_time": 0.2506058154726114,
-          "starting_bias": 0.42839659877029773
+          "boundary": 1.211499953938617,
+          "contaminant_probability": 0.04329066840886953,
+          "drift.intercept": 0.16762606499878338,
+          "drift.stimulus": 1.175983387321027,
+          "nondecision_time": 0.24736301011969278,
+          "starting_bias": 0.4502169936270528
         },
-        "objective": 291.4834619431226,
+        "objective": 295.1129207844944,
         "restart_objectives": [
-          291.4834619431226,
-          291.4834620132183,
-          291.4834620529725
+          295.11292082211935,
+          295.11292078483905,
+          295.1129207844944
         ],
-        "selected_restart": 0,
+        "selected_restart": 2,
         "standard_errors": {
-          "boundary": 0.024958982884275446,
-          "contaminant_probability": 0.01062868227962256,
-          "drift.intercept": 0.08354330979827235,
-          "drift.stimulus": 0.07708685149156957,
-          "nondecision_time": 0.0032430709468412506,
-          "starting_bias": 0.012380180059300363
+          "boundary": 0.02523357364465655,
+          "contaminant_probability": 0.010754541285736458,
+          "drift.intercept": 0.08364092208197797,
+          "drift.stimulus": 0.07435574638355084,
+          "nondecision_time": 0.0034146601967561096,
+          "starting_bias": 0.012411506113918705
         }
       },
       "simulation_seed": 7373521858777928936
@@ -757,8 +773,8 @@
     {
       "design_seed": 142451928774831699,
       "future_mean_log_loss": {
-        "naive": 11.079374654860972,
-        "robust": 0.45170099364378385
+        "naive": 0.5785769379128817,
+        "robust": 0.44405563613498783
       },
       "n_test_contaminants": 10,
       "n_train_contaminants": 32,
@@ -772,11 +788,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.02498916479166423,
-            "hessian_condition": 555.0888925774583,
+            "gradient_norm": 0.004140347582956838,
+            "hessian_condition": 1107.8458402321935,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 17,
-            "objective": 323.01077536679014,
+            "n_iterations": 19,
+            "objective": 440.96545309522025,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -784,40 +800,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 2.936189957836177e-09,
-            "relative_objective_range": 9.090068139374081e-12,
+            "objective_range": 5.367663106881082e-06,
+            "relative_objective_range": 1.2172525237985052e-08,
             "selected_converged": true,
-            "selected_objective": 323.01077536679014,
-            "selected_restart": 2
+            "selected_objective": 440.96545309522025,
+            "selected_restart": 0
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.3017001588307426,
-          "drift.intercept": 0.056669238018362156,
-          "drift.stimulus": 1.046119212540343,
-          "nondecision_time": 0.23842898719927563,
-          "starting_bias": 0.4706096020257481
+          "boundary": 1.5579217519327033,
+          "drift.intercept": 0.05077973832561646,
+          "drift.stimulus": 0.9951147284330601,
+          "nondecision_time": 0.1445022951104128,
+          "starting_bias": 0.46915832850832967
         },
-        "objective": 323.01077536679014,
+        "objective": 440.96545309522025,
         "restart_objectives": [
-          323.01077536972633,
-          323.0107753679981,
-          323.01077536679014
+          440.96545309522025,
+          440.9654537955088,
+          440.96545846288336
         ],
-        "selected_restart": 2,
+        "selected_restart": 0,
         "standard_errors": {
-          "boundary": 0.023812894096305774,
-          "drift.intercept": 0.07045804712542571,
-          "drift.stimulus": 0.06167864403334653,
-          "nondecision_time": 0.003956777108039901,
-          "starting_bias": 0.011763957514931067
+          "boundary": 0.02634660123601769,
+          "drift.intercept": 0.06769655444837432,
+          "drift.stimulus": 0.05641680073531397,
+          "nondecision_time": 0.002205292199027019,
+          "starting_bias": 0.01324087231270196
         }
       },
       "responsibility": {
-        "expected_count": 30.04774715995146,
-        "ordinary_trials": 0.018264533856331578,
-        "true_contaminants": 0.5006432861965251
+        "expected_count": 31.16896734227292,
+        "ordinary_trials": 0.01947558622614862,
+        "true_contaminants": 0.5066161600184618
       },
       "robust": {
         "audit": {
@@ -829,11 +845,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.03923587949555593,
-            "hessian_condition": 946.9929360134671,
+            "gradient_norm": 0.0037517130147592596,
+            "hessian_condition": 916.8140928546117,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 27,
-            "objective": 296.80791472394264,
+            "n_iterations": 20,
+            "objective": 320.8863030024354,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -841,36 +857,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 3.750483870135213e-07,
-            "relative_objective_range": 1.263606421554995e-09,
+            "objective_range": 3.136960913252551e-09,
+            "relative_objective_range": 9.775926500760436e-12,
             "selected_converged": true,
-            "selected_objective": 296.80791472394264,
-            "selected_restart": 0
+            "selected_objective": 320.8863030024354,
+            "selected_restart": 1
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.2402304658168852,
-          "contaminant_probability": 0.03755924150279765,
-          "drift.intercept": 0.07101649917688012,
-          "drift.stimulus": 1.256108112733639,
-          "nondecision_time": 0.2455267053527833,
-          "starting_bias": 0.4682216507604596
+          "boundary": 1.2427456005809425,
+          "contaminant_probability": 0.03896107414910573,
+          "drift.intercept": 0.04564370729651135,
+          "drift.stimulus": 1.203095468118757,
+          "nondecision_time": 0.2450001759515555,
+          "starting_bias": 0.4697058857948797
         },
-        "objective": 296.80791472394264,
+        "objective": 320.8863030024354,
         "restart_objectives": [
-          296.80791472394264,
-          296.80791509899103,
-          296.8079150447486
+          320.8863030025668,
+          320.8863030024354,
+          320.88630300557236
         ],
-        "selected_restart": 0,
+        "selected_restart": 1,
         "standard_errors": {
-          "boundary": 0.025664870302124936,
-          "contaminant_probability": 0.01014904791943917,
-          "drift.intercept": 0.08098228026957734,
-          "drift.stimulus": 0.07701423043825122,
-          "nondecision_time": 0.003560538026624024,
-          "starting_bias": 0.012320589131445155
+          "boundary": 0.026263110740685946,
+          "contaminant_probability": 0.010440792610193709,
+          "drift.intercept": 0.08000071773201455,
+          "drift.stimulus": 0.07135137384879622,
+          "nondecision_time": 0.0035481730939332986,
+          "starting_bias": 0.012354016253620904
         }
       },
       "simulation_seed": 12096943901184909917
@@ -878,8 +894,8 @@
     {
       "design_seed": 10063264052522161572,
       "future_mean_log_loss": {
-        "naive": 0.6621439826675959,
-        "robust": 0.4147961147371187
+        "naive": 4.062544343668876,
+        "robust": 0.42701668194891496
       },
       "n_test_contaminants": 7,
       "n_train_contaminants": 42,
@@ -893,11 +909,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.0014777977078668642,
-            "hessian_condition": 546.5944113749857,
+            "gradient_norm": 0.004827716619733599,
+            "hessian_condition": 981.790446026886,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 16,
-            "objective": 579.7260090318621,
+            "n_iterations": 14,
+            "objective": 421.4300936333002,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -905,40 +921,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 6.78548985888483e-08,
-            "relative_objective_range": 1.1704649702048982e-10,
+            "objective_range": 5.341702831174189e-06,
+            "relative_objective_range": 1.2675181274126511e-08,
             "selected_converged": true,
-            "selected_objective": 579.7260090318621,
+            "selected_objective": 421.4300936333002,
             "selected_restart": 2
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.6178294167562346,
-          "drift.intercept": 0.09991131357137219,
-          "drift.stimulus": 0.8135388476884147,
-          "nondecision_time": 0.09267439322432647,
-          "starting_bias": 0.4801645076369649
+          "boundary": 1.4248090131018851,
+          "drift.intercept": 0.18878599412753894,
+          "drift.stimulus": 0.9282032458894423,
+          "nondecision_time": 0.19124612746902636,
+          "starting_bias": 0.4778676796704518
         },
-        "objective": 579.7260090318621,
+        "objective": 421.4300936333002,
         "restart_objectives": [
-          579.726009099717,
-          579.7260090372823,
-          579.7260090318621
+          421.43009436412694,
+          421.43009897500303,
+          421.4300936333002
         ],
         "selected_restart": 2,
         "standard_errors": {
-          "boundary": 0.02733194945905408,
-          "drift.intercept": 0.06323574263664337,
-          "drift.stimulus": 0.05429314969465795,
-          "nondecision_time": 0.002918906259201571,
-          "starting_bias": 0.013195161844820558
+          "boundary": 0.02291856558468889,
+          "drift.intercept": 0.06806340582777519,
+          "drift.stimulus": 0.0601687511747285,
+          "nondecision_time": 0.002382295269233179,
+          "starting_bias": 0.01250724739902972
         }
       },
       "responsibility": {
-        "expected_count": 41.15894432834841,
-        "ordinary_trials": 0.027912141147730166,
-        "true_contaminants": 0.4762271747230703
+        "expected_count": 35.42206156626173,
+        "ordinary_trials": 0.019208769968283683,
+        "true_contaminants": 0.4967098554833976
       },
       "robust": {
         "audit": {
@@ -950,11 +966,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.022691254890621758,
-            "hessian_condition": 880.2920411184396,
+            "gradient_norm": 0.020049376519288276,
+            "hessian_condition": 948.1525012155438,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
             "n_iterations": 21,
-            "objective": 387.94424442668486,
+            "objective": 348.51642367620707,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -962,36 +978,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 4.1517085946907173e-07,
-            "relative_objective_range": 1.0701817733695808e-09,
+            "objective_range": 3.6215819818607997e-06,
+            "relative_objective_range": 1.039142415057452e-08,
             "selected_converged": true,
-            "selected_objective": 387.94424442668486,
-            "selected_restart": 2
+            "selected_objective": 348.51642367620707,
+            "selected_restart": 1
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.2123494018709848,
-          "contaminant_probability": 0.05144859797243724,
-          "drift.intercept": 0.2030224175649634,
-          "drift.stimulus": 1.103727567250385,
-          "nondecision_time": 0.24452880080306694,
-          "starting_bias": 0.465635918993058
+          "boundary": 1.2049365251560376,
+          "contaminant_probability": 0.044278186186659026,
+          "drift.intercept": 0.27935766559815234,
+          "drift.stimulus": 1.0944420639424466,
+          "nondecision_time": 0.2497627068833014,
+          "starting_bias": 0.4521062021771719
         },
-        "objective": 387.94424442668486,
+        "objective": 348.51642367620707,
         "restart_objectives": [
-          387.9442448418557,
-          387.9442444342685,
-          387.94424442668486
+          348.51642729778905,
+          348.51642367620707,
+          348.5164238400063
         ],
-        "selected_restart": 2,
+        "selected_restart": 1,
         "standard_errors": {
-          "boundary": 0.025148844312277957,
-          "contaminant_probability": 0.011774966436702,
-          "drift.intercept": 0.08022029049375998,
-          "drift.stimulus": 0.07730809607903562,
-          "nondecision_time": 0.003701708811940767,
-          "starting_bias": 0.01226434159337058
+          "boundary": 0.024711202593875284,
+          "contaminant_probability": 0.010735285917638903,
+          "drift.intercept": 0.08076239740240876,
+          "drift.stimulus": 0.07435695024220522,
+          "nondecision_time": 0.003552413101109547,
+          "starting_bias": 0.012282465072288187
         }
       },
       "simulation_seed": 8981831225927350385
@@ -999,14 +1015,20 @@
     {
       "design_seed": 4479046374728555307,
       "future_mean_log_loss": {
-        "naive": 0.33182006535822983,
-        "robust": 0.30163375817761445
+        "naive": 0.5914020405006075,
+        "robust": 0.32375219623760915
       },
       "n_test_contaminants": 4,
       "n_train_contaminants": 42,
       "naive": {
         "audit": {
-          "issues": [],
+          "issues": [
+            {
+              "code": "restart_objective_disagreement",
+              "message": "converged restarts reached materially different objective values (relative range 1.19)",
+              "severity": "warning"
+            }
+          ],
           "latent_states": null,
           "model_name": "wiener-drift-diffusion",
           "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
@@ -1014,11 +1036,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.02183479215296336,
-            "hessian_condition": 543.9210057526877,
+            "gradient_norm": 0.007925456744963325,
+            "hessian_condition": 746.9977610036749,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 23,
-            "objective": 405.6992445015514,
+            "n_iterations": 22,
+            "objective": 561.7899887434835,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1026,40 +1048,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 7.111488173450198e-06,
-            "relative_objective_range": 1.75289657790403e-08,
+            "objective_range": 667.9434760095112,
+            "relative_objective_range": 1.1889558187098594,
             "selected_converged": true,
-            "selected_objective": 405.6992445015514,
+            "selected_objective": 561.7899887434835,
             "selected_restart": 0
           },
-          "status": "pass"
+          "status": "warning"
         },
         "estimates": {
-          "boundary": 1.347042382979767,
-          "drift.intercept": 0.06805231016383652,
-          "drift.stimulus": 0.9841026584239596,
-          "nondecision_time": 0.23115650367120844,
-          "starting_bias": 0.4805805168175262
+          "boundary": 1.6978629566794738,
+          "drift.intercept": 0.14220717506532546,
+          "drift.stimulus": 0.8912885283011106,
+          "nondecision_time": 0.08311883499900868,
+          "starting_bias": 0.4817357272241092
         },
-        "objective": 405.6992445015514,
+        "objective": 561.7899887434835,
         "restart_objectives": [
-          405.6992445015514,
-          405.6992452987646,
-          405.69925161303956
+          561.7899887434835,
+          1229.7334647529947,
+          561.7899890522577
         ],
         "selected_restart": 0,
         "standard_errors": {
-          "boundary": 0.022834652270310955,
-          "drift.intercept": 0.06762608353634647,
-          "drift.stimulus": 0.0630989130807726,
-          "nondecision_time": 0.00352163080467106,
-          "starting_bias": 0.011780529163734125
+          "boundary": 0.029343290998455687,
+          "drift.intercept": 0.06394001187343969,
+          "drift.stimulus": 0.05220756071987177,
+          "nondecision_time": 0.0025152319968151497,
+          "starting_bias": 0.013686446931888432
         }
       },
       "responsibility": {
-        "expected_count": 48.64048437107519,
-        "ordinary_trials": 0.02884045783252648,
-        "true_contaminants": 0.6376051746195266
+        "expected_count": 48.23067888029766,
+        "ordinary_trials": 0.029201067136618394,
+        "true_contaminants": 0.6213397616843077
       },
       "robust": {
         "audit": {
@@ -1071,11 +1093,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.09686343932553074,
-            "hessian_condition": 1063.7579902572293,
+            "gradient_norm": 0.008724029708617296,
+            "hessian_condition": 1190.0137208480949,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 27,
-            "objective": 356.8122332877208,
+            "n_iterations": 22,
+            "objective": 321.36659873233214,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1083,36 +1105,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 3.650971052593377e-06,
-            "relative_objective_range": 1.0232191365617677e-08,
+            "objective_range": 9.376060461363522e-08,
+            "relative_objective_range": 2.9175591048816153e-10,
             "selected_converged": true,
-            "selected_objective": 356.8122332877208,
+            "selected_objective": 321.36659873233214,
             "selected_restart": 1
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.2124873981372895,
-          "contaminant_probability": 0.06079908624667211,
-          "drift.intercept": 0.2245286364063912,
-          "drift.stimulus": 1.2538412869142233,
-          "nondecision_time": 0.2530126520541908,
-          "starting_bias": 0.45724825767359406
+          "boundary": 1.2052343387441053,
+          "contaminant_probability": 0.060288649158676724,
+          "drift.intercept": 0.3409504418023698,
+          "drift.stimulus": 1.2986030733337546,
+          "nondecision_time": 0.2582342632419116,
+          "starting_bias": 0.43722279626748983
         },
-        "objective": 356.8122332877208,
+        "objective": 321.36659873233214,
         "restart_objectives": [
-          356.81223693869185,
-          356.8122332877208,
-          356.8122332924471
+          321.3665987605225,
+          321.36659873233214,
+          321.36659882609274
         ],
         "selected_restart": 1,
         "standard_errors": {
-          "boundary": 0.02540023423206279,
-          "contaminant_probability": 0.012088311112080067,
-          "drift.intercept": 0.08408130608315158,
-          "drift.stimulus": 0.08265632441804335,
-          "nondecision_time": 0.00346854811528246,
-          "starting_bias": 0.012518141733016595
+          "boundary": 0.025708240848015484,
+          "contaminant_probability": 0.011969429887480147,
+          "drift.intercept": 0.08536575748019008,
+          "drift.stimulus": 0.07980128710221315,
+          "nondecision_time": 0.0033639645618527875,
+          "starting_bias": 0.012485544758605669
         }
       },
       "simulation_seed": 15273566970561670140
@@ -1120,14 +1142,20 @@
     {
       "design_seed": 11458455292191366000,
       "future_mean_log_loss": {
-        "naive": 0.8110283542640842,
-        "robust": 0.6232677671993943
+        "naive": 0.8945501075171812,
+        "robust": 0.399938604677986
       },
       "n_test_contaminants": 10,
       "n_train_contaminants": 36,
       "naive": {
         "audit": {
-          "issues": [],
+          "issues": [
+            {
+              "code": "restart_objective_disagreement",
+              "message": "converged restarts reached materially different objective values (relative range 1.13)",
+              "severity": "warning"
+            }
+          ],
           "latent_states": null,
           "model_name": "wiener-drift-diffusion",
           "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
@@ -1135,11 +1163,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.014413944345218617,
-            "hessian_condition": 649.9498038310135,
+            "gradient_norm": 0.006165213205795082,
+            "hessian_condition": 775.0211559961239,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 28,
-            "objective": 564.4029245326915,
+            "n_iterations": 20,
+            "objective": 588.360178372825,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1147,40 +1175,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 2.3733014131721575e-06,
-            "relative_objective_range": 4.204977171472276e-09,
+            "objective_range": 665.963408395628,
+            "relative_objective_range": 1.1318974887753677,
             "selected_converged": true,
-            "selected_objective": 564.4029245326915,
-            "selected_restart": 1
+            "selected_objective": 588.360178372825,
+            "selected_restart": 2
           },
-          "status": "pass"
+          "status": "warning"
         },
         "estimates": {
-          "boundary": 1.6663270994533532,
-          "drift.intercept": 0.2525601527029562,
-          "drift.stimulus": 0.8657833162525975,
-          "nondecision_time": 0.08394443189537103,
-          "starting_bias": 0.44911293827549
+          "boundary": 1.68695638599403,
+          "drift.intercept": 0.0903792624966585,
+          "drift.stimulus": 0.8237192122763207,
+          "nondecision_time": 0.055342201181229664,
+          "starting_bias": 0.4803399425143347
         },
-        "objective": 564.4029245326915,
+        "objective": 588.360178372825,
         "restart_objectives": [
-          564.4029269059929,
-          564.4029245326915,
-          564.4029245364065
+          588.360178568137,
+          1254.323586768453,
+          588.360178372825
         ],
-        "selected_restart": 1,
+        "selected_restart": 2,
         "standard_errors": {
-          "boundary": 0.028743922600257422,
-          "drift.intercept": 0.06400325415625219,
-          "drift.stimulus": 0.053420177884133176,
-          "nondecision_time": 0.002701636683462056,
-          "starting_bias": 0.013380530281245407
+          "boundary": 0.02918832120757862,
+          "drift.intercept": 0.06426078946624947,
+          "drift.stimulus": 0.05338331512084325,
+          "nondecision_time": 0.0024729805632930763,
+          "starting_bias": 0.013959218882523213
         }
       },
       "responsibility": {
-        "expected_count": 30.435051221911852,
-        "ordinary_trials": 0.017713735237910578,
-        "true_contaminants": 0.4694932638930048
+        "expected_count": 35.51497418895627,
+        "ordinary_trials": 0.019872867294484144,
+        "true_contaminants": 0.5647806548880664
       },
       "robust": {
         "audit": {
@@ -1192,11 +1220,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.009563191908746422,
-            "hessian_condition": 868.2801714723145,
+            "gradient_norm": 0.04170598854762482,
+            "hessian_condition": 1242.7768434804616,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 21,
-            "objective": 353.7780319518447,
+            "n_iterations": 24,
+            "objective": 296.76230082271024,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1204,36 +1232,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 1.030141731916956e-06,
-            "relative_objective_range": 2.9118306929164443e-09,
+            "objective_range": 5.483047971210908e-07,
+            "relative_objective_range": 1.847622813278616e-09,
             "selected_converged": true,
-            "selected_objective": 353.7780319518447,
-            "selected_restart": 2
+            "selected_objective": 296.76230082271024,
+            "selected_restart": 1
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.2579512407350846,
-          "contaminant_probability": 0.038043388542118105,
-          "drift.intercept": 0.3456472797271543,
-          "drift.stimulus": 1.1647496653621887,
-          "nondecision_time": 0.24596408819250618,
-          "starting_bias": 0.4336961699373939
+          "boundary": 1.165168880578866,
+          "contaminant_probability": 0.04439293280625688,
+          "drift.intercept": 0.28600092612213396,
+          "drift.stimulus": 1.1688788439808644,
+          "nondecision_time": 0.2570576552905215,
+          "starting_bias": 0.4360556879061969
         },
-        "objective": 353.7780319518447,
+        "objective": 296.76230082271024,
         "restart_objectives": [
-          353.7780329819864,
-          353.7780319658414,
-          353.7780319518447
+          296.76230137101504,
+          296.76230082271024,
+          296.762300878694
         ],
-        "selected_restart": 2,
+        "selected_restart": 1,
         "standard_errors": {
-          "boundary": 0.024834170394279396,
-          "contaminant_probability": 0.010053797126450291,
-          "drift.intercept": 0.07895989332455394,
-          "drift.stimulus": 0.07407141364395249,
-          "nondecision_time": 0.0035085834025133985,
-          "starting_bias": 0.012209014541375738
+          "boundary": 0.02310907938414795,
+          "contaminant_probability": 0.010073009547783987,
+          "drift.intercept": 0.0833395204667822,
+          "drift.stimulus": 0.07838815666941974,
+          "nondecision_time": 0.0031147180782432836,
+          "starting_bias": 0.012248219611145776
         }
       },
       "simulation_seed": 6616847821578068138
@@ -1241,8 +1269,8 @@
     {
       "design_seed": 2886358482002408006,
       "future_mean_log_loss": {
-        "naive": 0.7923414043287864,
-        "robust": 0.49730232962790555
+        "naive": 0.6920247657681603,
+        "robust": 0.3838524372742761
       },
       "n_test_contaminants": 9,
       "n_train_contaminants": 46,
@@ -1256,11 +1284,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.001472014079500652,
-            "hessian_condition": 548.2479989872356,
+            "gradient_norm": 0.012034394841875273,
+            "hessian_condition": 777.4807925003715,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 26,
-            "objective": 625.3289015099464,
+            "n_iterations": 14,
+            "objective": 586.6585735296248,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1268,40 +1296,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 1.694502316240687e-09,
-            "relative_objective_range": 2.7097777060184935e-12,
+            "objective_range": 4.744356374430936e-07,
+            "relative_objective_range": 8.087082655055338e-10,
             "selected_converged": true,
-            "selected_objective": 625.3289015099464,
-            "selected_restart": 1
+            "selected_objective": 586.6585735296248,
+            "selected_restart": 2
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.7082076826086503,
-          "drift.intercept": -0.06319837106877024,
-          "drift.stimulus": 0.8079556243849338,
-          "nondecision_time": 0.047401268794570094,
-          "starting_bias": 0.5153089562817416
+          "boundary": 1.7146185257597395,
+          "drift.intercept": 0.17468660146959947,
+          "drift.stimulus": 0.8866458245631212,
+          "nondecision_time": 0.07315733849925339,
+          "starting_bias": 0.4569705211497431
         },
-        "objective": 625.3289015099464,
+        "objective": 586.6585735296248,
         "restart_objectives": [
-          625.3289015103302,
-          625.3289015099464,
-          625.3289015116409
+          586.6585735999047,
+          586.6585740040605,
+          586.6585735296248
         ],
-        "selected_restart": 1,
+        "selected_restart": 2,
         "standard_errors": {
-          "boundary": 0.02954474379318953,
-          "drift.intercept": 0.06264670152055227,
-          "drift.stimulus": 0.05182707373588292,
-          "nondecision_time": 0.0029201765929722946,
-          "starting_bias": 0.013905071368236327
+          "boundary": 0.029341024670944384,
+          "drift.intercept": 0.06316478663427516,
+          "drift.stimulus": 0.05278112525266722,
+          "nondecision_time": 0.0024341462753077006,
+          "starting_bias": 0.01359297772770135
         }
       },
       "responsibility": {
-        "expected_count": 50.04196360661918,
-        "ordinary_trials": 0.03020534999200264,
-        "true_contaminants": 0.5927636894054172
+        "expected_count": 47.361006590455034,
+        "ordinary_trials": 0.027637037222445492,
+        "true_contaminants": 0.5765800114071987
       },
       "robust": {
         "audit": {
@@ -1313,11 +1341,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.031782016128555766,
-            "hessian_condition": 616.5611615286767,
+            "gradient_norm": 0.012977616455110431,
+            "hessian_condition": 1030.0544079934828,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
             "n_iterations": 22,
-            "objective": 347.9078424538437,
+            "objective": 341.55862112981447,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1325,36 +1353,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 2.9885654839745257e-07,
-            "relative_objective_range": 8.590106687149523e-10,
+            "objective_range": 4.779586788572487e-07,
+            "relative_objective_range": 1.399345966663782e-09,
             "selected_converged": true,
-            "selected_objective": 347.9078424538437,
+            "selected_objective": 341.55862112981447,
             "selected_restart": 1
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.1832105981270171,
-          "contaminant_probability": 0.06255054734276058,
-          "drift.intercept": 0.15761608228723525,
-          "drift.stimulus": 1.205663153354077,
-          "nondecision_time": 0.2541236504985802,
-          "starting_bias": 0.450779658153137
+          "boundary": 1.212670345160806,
+          "contaminant_probability": 0.059201276774340006,
+          "drift.intercept": 0.22058763714538512,
+          "drift.stimulus": 1.280138202653052,
+          "nondecision_time": 0.25361202739314814,
+          "starting_bias": 0.44762402142922014
         },
-        "objective": 347.9078424538437,
+        "objective": 341.55862112981447,
         "restart_objectives": [
-          347.90784259994876,
-          347.9078424538437,
-          347.9078427527003
+          341.55862126540245,
+          341.55862112981447,
+          341.55862160777315
         ],
         "selected_restart": 1,
         "standard_errors": {
-          "boundary": 0.02910153953556994,
-          "contaminant_probability": 0.012389875493207591,
-          "drift.intercept": 0.08547983204410668,
-          "drift.stimulus": 0.08333241137991475,
-          "nondecision_time": 0.005511733814728863,
-          "starting_bias": 0.012741523557924229
+          "boundary": 0.026716826755775944,
+          "contaminant_probability": 0.012253411726929201,
+          "drift.intercept": 0.08302946443406553,
+          "drift.stimulus": 0.07879279280237989,
+          "nondecision_time": 0.00353193075712003,
+          "starting_bias": 0.012396842569425283
         }
       },
       "simulation_seed": 15713938265775271776
@@ -1362,8 +1390,8 @@
     {
       "design_seed": 1591142979961782073,
       "future_mean_log_loss": {
-        "naive": 0.4852520754409719,
-        "robust": 0.32337107213801125
+        "naive": 0.4932441914301284,
+        "robust": 0.2462222766738234
       },
       "n_test_contaminants": 3,
       "n_train_contaminants": 32,
@@ -1377,11 +1405,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.0024200480605172663,
-            "hessian_condition": 897.6958011845023,
+            "gradient_norm": 0.03526107466459007,
+            "hessian_condition": 1099.747934420184,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
             "n_iterations": 24,
-            "objective": 454.4704152471554,
+            "objective": 454.54994567098004,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1389,40 +1417,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 3.084340960413101e-08,
-            "relative_objective_range": 6.786670500291507e-11,
+            "objective_range": 5.746657279814826e-06,
+            "relative_objective_range": 1.2642521101464322e-08,
             "selected_converged": true,
-            "selected_objective": 454.4704152471554,
-            "selected_restart": 0
+            "selected_objective": 454.54994567098004,
+            "selected_restart": 1
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.5401095746125295,
-          "drift.intercept": 0.2532508371233636,
-          "drift.stimulus": 0.9380586129548147,
-          "nondecision_time": 0.13571744627168777,
-          "starting_bias": 0.45983525083207466
+          "boundary": 1.513695846711717,
+          "drift.intercept": 0.257998957844798,
+          "drift.stimulus": 0.9156956686958742,
+          "nondecision_time": 0.15213559041410377,
+          "starting_bias": 0.4622108273452822
         },
-        "objective": 454.4704152471554,
+        "objective": 454.54994567098004,
         "restart_objectives": [
-          454.4704152471554,
-          454.4704152779988,
-          454.4704152548321
+          454.5499457134063,
+          454.54994567098004,
+          454.5499514176373
         ],
-        "selected_restart": 0,
+        "selected_restart": 1,
         "standard_errors": {
-          "boundary": 0.025926627396999108,
-          "drift.intercept": 0.0672043151056821,
-          "drift.stimulus": 0.056551476058808954,
-          "nondecision_time": 0.00243212920002803,
-          "starting_bias": 0.013008166975204403
+          "boundary": 0.025032963054812722,
+          "drift.intercept": 0.06773529263523029,
+          "drift.stimulus": 0.058509266643459464,
+          "nondecision_time": 0.0022078565552400508,
+          "starting_bias": 0.013083213086888507
         }
       },
       "responsibility": {
-        "expected_count": 29.709869752642852,
-        "ordinary_trials": 0.016310591775171076,
-        "true_contaminants": 0.5369792271659833
+        "expected_count": 32.86997445020567,
+        "ordinary_trials": 0.02054093627572241,
+        "true_contaminants": 0.5342042309515892
       },
       "robust": {
         "audit": {
@@ -1434,11 +1462,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.0015377799594618038,
-            "hessian_condition": 1022.2523661598301,
+            "gradient_norm": 0.0006806509876722536,
+            "hessian_condition": 1185.5280170975723,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 25,
-            "objective": 302.3893982559159,
+            "n_iterations": 22,
+            "objective": 317.391749324124,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1446,36 +1474,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 2.248274086014135e-06,
-            "relative_objective_range": 7.435029465257219e-09,
+            "objective_range": 9.78556613517867e-08,
+            "relative_objective_range": 3.0831192543652227e-10,
             "selected_converged": true,
-            "selected_objective": 302.3893982559159,
-            "selected_restart": 0
+            "selected_objective": 317.391749324124,
+            "selected_restart": 1
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.1986927211066007,
-          "contaminant_probability": 0.03713737689269358,
-          "drift.intercept": 0.3576496177950251,
-          "drift.stimulus": 1.1584445690216894,
-          "nondecision_time": 0.2508582828835197,
-          "starting_bias": 0.42913878493124574
+          "boundary": 1.1933747249786593,
+          "contaminant_probability": 0.04108746372548893,
+          "drift.intercept": 0.39407017818079526,
+          "drift.stimulus": 1.0945936433435013,
+          "nondecision_time": 0.25097532933179045,
+          "starting_bias": 0.4266163819851274
         },
-        "objective": 302.3893982559159,
+        "objective": 317.391749324124,
         "restart_objectives": [
-          302.3893982559159,
-          302.38939825600085,
-          302.38940050419
+          317.391749382002,
+          317.391749324124,
+          317.3917494219797
         ],
-        "selected_restart": 0,
+        "selected_restart": 1,
         "standard_errors": {
-          "boundary": 0.024001791400557297,
-          "contaminant_probability": 0.009690120936554747,
-          "drift.intercept": 0.08056400861014337,
-          "drift.stimulus": 0.07420772836301102,
-          "nondecision_time": 0.0034413959851084847,
-          "starting_bias": 0.011925368588254744
+          "boundary": 0.023779834867093137,
+          "contaminant_probability": 0.010205988057809947,
+          "drift.intercept": 0.08217679394124114,
+          "drift.stimulus": 0.07446739380253097,
+          "nondecision_time": 0.0031581656998255193,
+          "starting_bias": 0.012297223414273159
         }
       },
       "simulation_seed": 2372675779858296866
@@ -1483,14 +1511,20 @@
     {
       "design_seed": 7110188308025574591,
       "future_mean_log_loss": {
-        "naive": 7.524710934232599,
-        "robust": 0.3628669368881756
+        "naive": 0.46483253781183387,
+        "robust": 0.3297793392142716
       },
       "n_test_contaminants": 10,
       "n_train_contaminants": 44,
       "naive": {
         "audit": {
-          "issues": [],
+          "issues": [
+            {
+              "code": "restart_objective_disagreement",
+              "message": "converged restarts reached materially different objective values (relative range 1.45)",
+              "severity": "warning"
+            }
+          ],
           "latent_states": null,
           "model_name": "wiener-drift-diffusion",
           "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
@@ -1498,11 +1532,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.01743467907427034,
-            "hessian_condition": 943.3023373101373,
+            "gradient_norm": 0.011583970534968338,
+            "hessian_condition": 1004.6282618506982,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 21,
-            "objective": 444.6101128169726,
+            "n_iterations": 18,
+            "objective": 466.25502378833676,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1510,40 +1544,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 2.0423410433068057e-05,
-            "relative_objective_range": 4.59355508215251e-08,
+            "objective_range": 676.3390752472451,
+            "relative_objective_range": 1.4505775610779885,
             "selected_converged": true,
-            "selected_objective": 444.6101128169726,
-            "selected_restart": 0
+            "selected_objective": 466.25502378833676,
+            "selected_restart": 2
           },
-          "status": "pass"
+          "status": "warning"
         },
         "estimates": {
-          "boundary": 1.4824906588322937,
-          "drift.intercept": 0.2111512095115324,
-          "drift.stimulus": 0.9783344830332774,
-          "nondecision_time": 0.18685877849902824,
-          "starting_bias": 0.45719673417997175
+          "boundary": 1.582315735043338,
+          "drift.intercept": 0.15763932570292086,
+          "drift.stimulus": 0.9760108730238325,
+          "nondecision_time": 0.1385728871163531,
+          "starting_bias": 0.4641373069521457
         },
-        "objective": 444.6101128169726,
+        "objective": 466.25502378833676,
         "restart_objectives": [
-          444.6101128169726,
-          444.61013324038305,
-          444.61011294629714
+          466.25502388108487,
+          1142.5940990355818,
+          466.25502378833676
         ],
-        "selected_restart": 0,
+        "selected_restart": 2,
         "standard_errors": {
-          "boundary": 0.02372197660000149,
-          "drift.intercept": 0.06624753883087647,
-          "drift.stimulus": 0.058161222599656184,
-          "nondecision_time": 0.002356954611742473,
-          "starting_bias": 0.012412210819173115
+          "boundary": 0.02672827900651851,
+          "drift.intercept": 0.06678826261727872,
+          "drift.stimulus": 0.056216774154010496,
+          "nondecision_time": 0.0022642663346954476,
+          "starting_bias": 0.013228181412379598
         }
       },
       "responsibility": {
-        "expected_count": 50.21093204274237,
-        "ordinary_trials": 0.031492557653801365,
-        "true_contaminants": 0.6000581467379215
+        "expected_count": 37.05993786078141,
+        "ordinary_trials": 0.019761913823716806,
+        "true_contaminants": 0.5027257047738979
       },
       "robust": {
         "audit": {
@@ -1555,11 +1589,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.012332352327317152,
-            "hessian_condition": 1087.2159023335578,
+            "gradient_norm": 0.008533923889446434,
+            "hessian_condition": 1011.6445809185624,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 18,
-            "objective": 355.8292424172947,
+            "n_iterations": 23,
+            "objective": 312.9606275342795,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1567,36 +1601,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 1.073078124136373e-06,
-            "relative_objective_range": 3.015710897863568e-09,
+            "objective_range": 2.3871962184784934e-09,
+            "relative_objective_range": 7.627784482944317e-12,
             "selected_converged": true,
-            "selected_objective": 355.8292424172947,
-            "selected_restart": 0
+            "selected_objective": 312.9606275342795,
+            "selected_restart": 2
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.213823212330443,
-          "contaminant_probability": 0.06276411114259449,
-          "drift.intercept": 0.2581878672774291,
-          "drift.stimulus": 1.2488742911488362,
-          "nondecision_time": 0.2531310329276765,
-          "starting_bias": 0.4522485492434776
+          "boundary": 1.2336919303724079,
+          "contaminant_probability": 0.04632493959987654,
+          "drift.intercept": 0.20025358575982113,
+          "drift.stimulus": 1.3066217340253417,
+          "nondecision_time": 0.25134317878092755,
+          "starting_bias": 0.4566985657294451
         },
-        "objective": 355.8292424172947,
+        "objective": 312.9606275342795,
         "restart_objectives": [
-          355.8292424172947,
-          355.8292424481594,
-          355.82924349037285
+          312.9606275348249,
+          312.9606275366667,
+          312.9606275342795
         ],
-        "selected_restart": 0,
+        "selected_restart": 2,
         "standard_errors": {
-          "boundary": 0.02563498255179508,
-          "contaminant_probability": 0.012596227566493298,
-          "drift.intercept": 0.08456241737399763,
-          "drift.stimulus": 0.07855647054973962,
-          "nondecision_time": 0.0035499744398539384,
-          "starting_bias": 0.012496667273166192
+          "boundary": 0.02544172911462992,
+          "contaminant_probability": 0.010578807839792134,
+          "drift.intercept": 0.08257766009320665,
+          "drift.stimulus": 0.07750210583032731,
+          "nondecision_time": 0.0034702351021063194,
+          "starting_bias": 0.012455640635926187
         }
       },
       "simulation_seed": 4555526007956963109
@@ -1604,8 +1638,8 @@
     {
       "design_seed": 12013717727042744471,
       "future_mean_log_loss": {
-        "naive": 0.8167140505839267,
-        "robust": 0.5243027077382767
+        "naive": 0.6847367516466005,
+        "robust": 0.48160890237381937
       },
       "n_test_contaminants": 7,
       "n_train_contaminants": 44,
@@ -1614,7 +1648,7 @@
           "issues": [
             {
               "code": "restart_objective_disagreement",
-              "message": "converged restarts reached materially different objective values (relative range 1.05)",
+              "message": "converged restarts reached materially different objective values (relative range 1.29)",
               "severity": "warning"
             }
           ],
@@ -1625,11 +1659,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.05532027806563167,
-            "hessian_condition": 593.8989548789386,
+            "gradient_norm": 0.0037755157485779437,
+            "hessian_condition": 835.7418511018783,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 20,
-            "objective": 632.52204175523,
+            "n_iterations": 13,
+            "objective": 515.3640591535692,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1637,40 +1671,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 665.3825030709345,
-            "relative_objective_range": 1.0519514880849332,
+            "objective_range": 667.3659284354836,
+            "relative_objective_range": 1.294940763877794,
             "selected_converged": true,
-            "selected_objective": 632.52204175523,
+            "selected_objective": 515.3640591535692,
             "selected_restart": 2
           },
           "status": "warning"
         },
         "estimates": {
-          "boundary": 1.7931358993326532,
-          "drift.intercept": 0.10998349738121832,
-          "drift.stimulus": 0.8276144859836735,
-          "nondecision_time": 0.03303383103879931,
-          "starting_bias": 0.47611688170725974
+          "boundary": 1.699783532076547,
+          "drift.intercept": 0.03802063492437991,
+          "drift.stimulus": 0.9563510730336415,
+          "nondecision_time": 0.07142965720602228,
+          "starting_bias": 0.48240913756428705
         },
-        "objective": 632.52204175523,
+        "objective": 515.3640591535692,
         "restart_objectives": [
-          632.5220441880637,
-          1297.9045448261645,
-          632.52204175523
+          515.3640591552655,
+          1182.7299875890528,
+          515.3640591535692
         ],
         "selected_restart": 2,
         "standard_errors": {
-          "boundary": 0.031478340161547366,
-          "drift.intercept": 0.061664648228905244,
-          "drift.stimulus": 0.04829897921036079,
-          "nondecision_time": 0.0027207398208940075,
-          "starting_bias": 0.013904794383677161
+          "boundary": 0.030091948622992276,
+          "drift.intercept": 0.06564538103241421,
+          "drift.stimulus": 0.0522175256670362,
+          "nondecision_time": 0.0024445868531004825,
+          "starting_bias": 0.01380390473228506
         }
       },
       "responsibility": {
-        "expected_count": 56.12182165477247,
-        "ordinary_trials": 0.03393798901736126,
-        "true_contaminants": 0.6923795899465308
+        "expected_count": 38.54466761311891,
+        "ordinary_trials": 0.022582803797696484,
+        "true_contaminants": 0.48800154413773567
       },
       "robust": {
         "audit": {
@@ -1682,11 +1716,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.005543667360732643,
-            "hessian_condition": 1247.3979551344185,
+            "gradient_norm": 0.0026400693220845705,
+            "hessian_condition": 1269.2847728956292,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
             "n_iterations": 21,
-            "objective": 320.2032400910137,
+            "objective": 245.08534469382386,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1694,36 +1728,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 2.9611402396767517e-07,
-            "relative_objective_range": 9.247689807370735e-10,
+            "objective_range": 4.72683097996196e-07,
+            "relative_objective_range": 1.9286469314870773e-09,
             "selected_converged": true,
-            "selected_objective": 320.2032400910137,
+            "selected_objective": 245.08534469382386,
             "selected_restart": 1
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.1919669799938613,
-          "contaminant_probability": 0.07015205236843117,
-          "drift.intercept": 0.23266900217024145,
-          "drift.stimulus": 1.313241234051839,
-          "nondecision_time": 0.2568021573269195,
-          "starting_bias": 0.4350357214313241
+          "boundary": 1.1976961710140894,
+          "contaminant_probability": 0.04818079051033872,
+          "drift.intercept": 0.20457727748708687,
+          "drift.stimulus": 1.397839926873819,
+          "nondecision_time": 0.2531405082318239,
+          "starting_bias": 0.43032360829828303
         },
-        "objective": 320.2032400910137,
+        "objective": 245.08534469382386,
         "restart_objectives": [
-          320.2032403871277,
-          320.2032400910137,
-          320.20324010851107
+          245.08534469662732,
+          245.08534469382386,
+          245.08534516650695
         ],
         "selected_restart": 1,
         "standard_errors": {
-          "boundary": 0.025879091676314706,
-          "contaminant_probability": 0.01262863813201034,
-          "drift.intercept": 0.08724840320918094,
-          "drift.stimulus": 0.08246626420965215,
-          "nondecision_time": 0.0033952504608315724,
-          "starting_bias": 0.012481495085110596
+          "boundary": 0.025272737792446463,
+          "contaminant_probability": 0.010758184657373465,
+          "drift.intercept": 0.08591109510577809,
+          "drift.stimulus": 0.07968901755939432,
+          "nondecision_time": 0.0033620331132851173,
+          "starting_bias": 0.012179793755129438
         }
       },
       "simulation_seed": 6983993397191461026
@@ -1731,138 +1765,17 @@
     {
       "design_seed": 17491627006994735895,
       "future_mean_log_loss": {
-        "naive": 0.607049766545539,
-        "robust": 0.4348472803189734
+        "naive": 0.7726803173492397,
+        "robust": 0.45926079092005195
       },
       "n_test_contaminants": 7,
       "n_train_contaminants": 38,
       "naive": {
         "audit": {
-          "issues": [],
-          "latent_states": null,
-          "model_name": "wiener-drift-diffusion",
-          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
-          "n_observations": 800,
-          "numerical": {
-            "boundary_estimate": false,
-            "converged": true,
-            "gradient_norm": 0.007840360245326278,
-            "hessian_condition": 740.6306367111245,
-            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 17,
-            "objective": 501.3751429386989,
-            "optimizer": "L-BFGS-B (3 deterministic restarts)",
-            "status": 0
-          },
-          "restarts": {
-            "failed_messages": [],
-            "n_converged": 3,
-            "n_restarts": 3,
-            "objective_range": 2.068694016088557e-07,
-            "relative_objective_range": 4.1260402419700485e-10,
-            "selected_converged": true,
-            "selected_objective": 501.3751429386989,
-            "selected_restart": 2
-          },
-          "status": "pass"
-        },
-        "estimates": {
-          "boundary": 1.5937587013293226,
-          "drift.intercept": 0.1053509256109559,
-          "drift.stimulus": 0.9215677504074318,
-          "nondecision_time": 0.11249614769799901,
-          "starting_bias": 0.4681146865894746
-        },
-        "objective": 501.3751429386989,
-        "restart_objectives": [
-          501.3751429813721,
-          501.3751431455683,
-          501.3751429386989
-        ],
-        "selected_restart": 2,
-        "standard_errors": {
-          "boundary": 0.02734657216721236,
-          "drift.intercept": 0.0659816914183672,
-          "drift.stimulus": 0.05519809914365415,
-          "nondecision_time": 0.0026330719008663133,
-          "starting_bias": 0.013316950138133764
-        }
-      },
-      "responsibility": {
-        "expected_count": 36.0644501341372,
-        "ordinary_trials": 0.022806855384874047,
-        "true_contaminants": 0.4917270087069257
-      },
-      "robust": {
-        "audit": {
-          "issues": [],
-          "latent_states": null,
-          "model_name": "uniform-contaminant-wiener-drift-diffusion",
-          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
-          "n_observations": 800,
-          "numerical": {
-            "boundary_estimate": false,
-            "converged": true,
-            "gradient_norm": 0.0026222504375307634,
-            "hessian_condition": 977.3561328789627,
-            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 22,
-            "objective": 327.1233993062441,
-            "optimizer": "L-BFGS-B (3 deterministic restarts)",
-            "status": 0
-          },
-          "restarts": {
-            "failed_messages": [],
-            "n_converged": 3,
-            "n_restarts": 3,
-            "objective_range": 1.1180887895534397e-06,
-            "relative_objective_range": 3.417941950727637e-09,
-            "selected_converged": true,
-            "selected_objective": 327.1233993062441,
-            "selected_restart": 1
-          },
-          "status": "pass"
-        },
-        "estimates": {
-          "boundary": 1.2189866690073432,
-          "contaminant_probability": 0.04508052124669173,
-          "drift.intercept": 0.15872619034065694,
-          "drift.stimulus": 1.1953310629931617,
-          "nondecision_time": 0.2454517460335899,
-          "starting_bias": 0.46030767030745123
-        },
-        "objective": 327.1233993062441,
-        "restart_objectives": [
-          327.1234004243329,
-          327.1233993062441,
-          327.12340039981393
-        ],
-        "selected_restart": 1,
-        "standard_errors": {
-          "boundary": 0.02504550849087498,
-          "contaminant_probability": 0.010548498484283398,
-          "drift.intercept": 0.08210618859619903,
-          "drift.stimulus": 0.07623041333309523,
-          "nondecision_time": 0.003525198390114083,
-          "starting_bias": 0.012488379197244142
-        }
-      },
-      "simulation_seed": 10601751395106887863
-    },
-    {
-      "design_seed": 14532867363447711765,
-      "future_mean_log_loss": {
-        "naive": 4.376216398814024,
-        "robust": 0.6284812454555135
-      },
-      "n_test_contaminants": 14,
-      "n_train_contaminants": 32,
-      "naive": {
-        "audit": {
           "issues": [
             {
               "code": "restart_objective_disagreement",
-              "message": "converged restarts reached materially different objective values (relative range 1.43)",
+              "message": "converged restarts reached materially different objective values (relative range 1.13)",
               "severity": "warning"
             }
           ],
@@ -1873,11 +1786,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.007568258825079178,
-            "hessian_condition": 1067.0672419335522,
+            "gradient_norm": 0.003768954436540575,
+            "hessian_condition": 752.1162505002817,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 24,
-            "objective": 468.1714516453886,
+            "n_iterations": 27,
+            "objective": 595.9527065669798,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1885,40 +1798,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 669.4488806830964,
-            "relative_objective_range": 1.4299224746197536,
+            "objective_range": 670.4744739757358,
+            "relative_objective_range": 1.1250464451081075,
             "selected_converged": true,
-            "selected_objective": 468.1714516453886,
+            "selected_objective": 595.9527065669798,
             "selected_restart": 0
           },
           "status": "warning"
         },
         "estimates": {
-          "boundary": 1.5614884206269004,
-          "drift.intercept": 0.0994369789494026,
-          "drift.stimulus": 0.9446808957904267,
-          "nondecision_time": 0.12984228228599168,
-          "starting_bias": 0.4882370290291921
+          "boundary": 1.720653014071169,
+          "drift.intercept": -0.0556749903649141,
+          "drift.stimulus": 0.832403119185201,
+          "nondecision_time": 0.04457547336078878,
+          "starting_bias": 0.5061977314118056
         },
-        "objective": 468.1714516453886,
+        "objective": 595.9527065669798,
         "restart_objectives": [
-          468.1714516453886,
-          1137.620332328485,
-          468.1714516485223
+          595.9527065669798,
+          1266.4271805427156,
+          595.9527065942589
         ],
         "selected_restart": 0,
         "standard_errors": {
-          "boundary": 0.026237647262236773,
-          "drift.intercept": 0.06721947329991664,
-          "drift.stimulus": 0.05705870863088215,
-          "nondecision_time": 0.0022072816730614292,
-          "starting_bias": 0.013385664936219423
+          "boundary": 0.029955593690286362,
+          "drift.intercept": 0.06355890708820143,
+          "drift.stimulus": 0.050931751199966166,
+          "nondecision_time": 0.002476671521815226,
+          "starting_bias": 0.01399307305333882
         }
       },
       "responsibility": {
-        "expected_count": 34.77551241331631,
-        "ordinary_trials": 0.021209336057581546,
-        "true_contaminants": 0.5777106975341775
+        "expected_count": 34.637854512335004,
+        "ordinary_trials": 0.022823450126416192,
+        "true_contaminants": 0.4538522504212069
       },
       "robust": {
         "audit": {
@@ -1930,11 +1843,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.06698649576799398,
-            "hessian_condition": 1191.948242329738,
+            "gradient_norm": 0.003496757459612629,
+            "hessian_condition": 1064.9326827887405,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 18,
-            "objective": 293.97504967501425,
+            "n_iterations": 29,
+            "objective": 311.2570872181164,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -1942,36 +1855,157 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 4.6044192458793987e-08,
-            "relative_objective_range": 1.5662619160944192e-10,
+            "objective_range": 1.4505701528833015e-08,
+            "relative_objective_range": 4.660360237409793e-11,
             "selected_converged": true,
-            "selected_objective": 293.97504967501425,
+            "selected_objective": 311.2570872181164,
             "selected_restart": 0
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.194202551278834,
-          "contaminant_probability": 0.04346991337300067,
-          "drift.intercept": 0.31096722806469723,
-          "drift.stimulus": 1.2366394763406918,
-          "nondecision_time": 0.25205893417753383,
-          "starting_bias": 0.44509495760166967
+          "boundary": 1.2008606935418054,
+          "contaminant_probability": 0.04329716410702366,
+          "drift.intercept": 0.11641891706912652,
+          "drift.stimulus": 1.2273567889891102,
+          "nondecision_time": 0.2507697922826565,
+          "starting_bias": 0.4599083861275553
         },
-        "objective": 293.97504967501425,
+        "objective": 311.2570872181164,
         "restart_objectives": [
-          293.97504967501425,
-          293.97504972105844,
-          293.97504968627345
+          311.2570872181164,
+          311.2570872326221,
+          311.2570872210043
         ],
         "selected_restart": 0,
         "standard_errors": {
-          "boundary": 0.024049171470872686,
-          "contaminant_probability": 0.01066960899375796,
-          "drift.intercept": 0.08451374543335222,
-          "drift.stimulus": 0.08021749675120145,
-          "nondecision_time": 0.0033189304541652006,
-          "starting_bias": 0.01243750861319841
+          "boundary": 0.02455505361889113,
+          "contaminant_probability": 0.010947240572425987,
+          "drift.intercept": 0.08210312323538786,
+          "drift.stimulus": 0.0788148246293601,
+          "nondecision_time": 0.003366358800328802,
+          "starting_bias": 0.012335270174421795
+        }
+      },
+      "simulation_seed": 10601751395106887863
+    },
+    {
+      "design_seed": 14532867363447711765,
+      "future_mean_log_loss": {
+        "naive": 0.7879416182307688,
+        "robust": 0.5423796726648521
+      },
+      "n_test_contaminants": 14,
+      "n_train_contaminants": 32,
+      "naive": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "wiener-drift-diffusion",
+          "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.021928956259785297,
+            "hessian_condition": 580.6554725908009,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 24,
+            "objective": 577.1709290656684,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 4.712273948825896e-08,
+            "relative_objective_range": 8.164433985707119e-11,
+            "selected_converged": true,
+            "selected_objective": 577.1709290656684,
+            "selected_restart": 0
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.7101545276954462,
+          "drift.intercept": 0.10609397785031464,
+          "drift.stimulus": 0.8909522072383009,
+          "nondecision_time": 0.05940914355829523,
+          "starting_bias": 0.4898619931745796
+        },
+        "objective": 577.1709290656684,
+        "restart_objectives": [
+          577.1709290656684,
+          577.1709290823649,
+          577.1709291127911
+        ],
+        "selected_restart": 0,
+        "standard_errors": {
+          "boundary": 0.030134348658751815,
+          "drift.intercept": 0.06379724738454985,
+          "drift.stimulus": 0.05228553894299211,
+          "nondecision_time": 0.0028897589353868575,
+          "starting_bias": 0.013875579381007834
+        }
+      },
+      "responsibility": {
+        "expected_count": 39.03130925878247,
+        "ordinary_trials": 0.02535490531639924,
+        "true_contaminants": 0.6112106867433706
+      },
+      "robust": {
+        "audit": {
+          "issues": [],
+          "latent_states": null,
+          "model_name": "uniform-contaminant-wiener-drift-diffusion",
+          "model_signature": "uniform-contaminant-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001;nondecision_bounds=(0.1, 0.6);contaminant_time_bounds=(0.05, 3.0);contaminant_probability_bounds=(0.0, 0.2);contaminant_choice_probability=0.5]",
+          "n_observations": 800,
+          "numerical": {
+            "boundary_estimate": false,
+            "converged": true,
+            "gradient_norm": 0.005874992157206302,
+            "hessian_condition": 1160.7130877180675,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "n_iterations": 26,
+            "objective": 303.2698217761279,
+            "optimizer": "L-BFGS-B (3 deterministic restarts)",
+            "status": 0
+          },
+          "restarts": {
+            "failed_messages": [],
+            "n_converged": 3,
+            "n_restarts": 3,
+            "objective_range": 5.900442943129747e-07,
+            "relative_objective_range": 1.945608339324122e-09,
+            "selected_converged": true,
+            "selected_objective": 303.2698217761279,
+            "selected_restart": 1
+          },
+          "status": "pass"
+        },
+        "estimates": {
+          "boundary": 1.1940558494925804,
+          "contaminant_probability": 0.04878896690929716,
+          "drift.intercept": 0.2195554817177317,
+          "drift.stimulus": 1.2417853359356852,
+          "nondecision_time": 0.2547781029305038,
+          "starting_bias": 0.46097218753747105
+        },
+        "objective": 303.2698217761279,
+        "restart_objectives": [
+          303.2698223661722,
+          303.2698217761279,
+          303.26982213380757
+        ],
+        "selected_restart": 1,
+        "standard_errors": {
+          "boundary": 0.024295356214803256,
+          "contaminant_probability": 0.01095005250800617,
+          "drift.intercept": 0.0838657857577211,
+          "drift.stimulus": 0.07795118957578825,
+          "nondecision_time": 0.0032273646162449196,
+          "starting_bias": 0.012401579942918378
         }
       },
       "simulation_seed": 3779374628245122602
@@ -1979,8 +2013,8 @@
     {
       "design_seed": 1833955989810714314,
       "future_mean_log_loss": {
-        "naive": 0.7221034083229477,
-        "robust": 0.39458924185541133
+        "naive": 0.5516747455056441,
+        "robust": 0.34286594207946025
       },
       "n_test_contaminants": 8,
       "n_train_contaminants": 43,
@@ -1994,11 +2028,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.0007124274375951544,
-            "hessian_condition": 578.9346270709812,
+            "gradient_norm": 0.013288252854895823,
+            "hessian_condition": 1215.4046431734516,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 22,
-            "objective": 625.7904392291676,
+            "n_iterations": 28,
+            "objective": 461.3481041964768,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -2006,40 +2040,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 4.988106638847967e-07,
-            "relative_objective_range": 7.970889815753955e-10,
+            "objective_range": 1.9937095885325107e-06,
+            "relative_objective_range": 4.321486466287588e-09,
             "selected_converged": true,
-            "selected_objective": 625.7904392291676,
-            "selected_restart": 0
+            "selected_objective": 461.3481041964768,
+            "selected_restart": 1
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.7058821886183593,
-          "drift.intercept": 0.040416727679580655,
-          "drift.stimulus": 0.7533896905189761,
-          "nondecision_time": 0.048470934811399816,
-          "starting_bias": 0.4913499067649856
+          "boundary": 1.6003816254903773,
+          "drift.intercept": 0.12735043374005084,
+          "drift.stimulus": 0.9547404314041202,
+          "nondecision_time": 0.11646872120168898,
+          "starting_bias": 0.45461238200571435
         },
-        "objective": 625.7904392291676,
+        "objective": 461.3481041964768,
         "restart_objectives": [
-          625.7904392291676,
-          625.7904392792241,
-          625.7904397279783
+          461.34810419860776,
+          461.3481041964768,
+          461.3481061901864
         ],
-        "selected_restart": 0,
+        "selected_restart": 1,
         "standard_errors": {
-          "boundary": 0.029394098161073252,
-          "drift.intercept": 0.06251576445173594,
-          "drift.stimulus": 0.04894853264651033,
-          "nondecision_time": 0.002820301681660861,
-          "starting_bias": 0.013825375979838373
+          "boundary": 0.027484320926166466,
+          "drift.intercept": 0.06784921766169372,
+          "drift.stimulus": 0.05487254459287261,
+          "nondecision_time": 0.002103302001328449,
+          "starting_bias": 0.013506873848045811
         }
       },
       "responsibility": {
-        "expected_count": 49.32697394182773,
-        "ordinary_trials": 0.031222675372480847,
-        "true_contaminants": 0.5974746205781333
+        "expected_count": 31.16696162294758,
+        "ordinary_trials": 0.016106286361232153,
+        "true_contaminants": 0.44126750808127524
       },
       "robust": {
         "audit": {
@@ -2051,11 +2085,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.10564170673961516,
-            "hessian_condition": 1203.4859453836527,
+            "gradient_norm": 0.0006435116895046344,
+            "hessian_condition": 1292.9429986088842,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 32,
-            "objective": 348.8409643832265,
+            "n_iterations": 23,
+            "objective": 264.06674482451103,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -2063,36 +2097,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 1.2591090126079507e-07,
-            "relative_objective_range": 3.609406982445818e-10,
+            "objective_range": 7.046946848277003e-08,
+            "relative_objective_range": 2.668623363748488e-10,
             "selected_converged": true,
-            "selected_objective": 348.8409643832265,
-            "selected_restart": 1
+            "selected_objective": 264.06674482451103,
+            "selected_restart": 0
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.1907194583732243,
-          "contaminant_probability": 0.06165904109492371,
-          "drift.intercept": 0.23774027804198833,
-          "drift.stimulus": 1.136174276612079,
-          "nondecision_time": 0.2507618887449706,
-          "starting_bias": 0.4248366442738054
+          "boundary": 1.1990498638376585,
+          "contaminant_probability": 0.03895871908382384,
+          "drift.intercept": 0.13829888133077464,
+          "drift.stimulus": 1.2419337743868755,
+          "nondecision_time": 0.2481842925364101,
+          "starting_bias": 0.4347436771485729
         },
-        "objective": 348.8409643832265,
+        "objective": 264.06674482451103,
         "restart_objectives": [
-          348.8409645091374,
-          348.8409643832265,
-          348.84096445968146
+          264.06674482451103,
+          264.06674486589867,
+          264.0667448949805
         ],
-        "selected_restart": 1,
+        "selected_restart": 0,
         "standard_errors": {
-          "boundary": 0.024583638989543338,
-          "contaminant_probability": 0.012052577083512046,
-          "drift.intercept": 0.08564171776183968,
-          "drift.stimulus": 0.07655998793767295,
-          "nondecision_time": 0.0034196930218411583,
-          "starting_bias": 0.012739593194308119
+          "boundary": 0.023892005757145892,
+          "contaminant_probability": 0.009547405721285039,
+          "drift.intercept": 0.08437051336641219,
+          "drift.stimulus": 0.07560325289051927,
+          "nondecision_time": 0.003151413680732217,
+          "starting_bias": 0.012537685172012215
         }
       },
       "simulation_seed": 3804689071943683187
@@ -2100,14 +2134,20 @@
     {
       "design_seed": 3489070530367279845,
       "future_mean_log_loss": {
-        "naive": 7.692777427882072,
-        "robust": 0.46067142690307483
+        "naive": 0.8243104649485352,
+        "robust": 0.5308877548093055
       },
       "n_test_contaminants": 10,
       "n_train_contaminants": 34,
       "naive": {
         "audit": {
-          "issues": [],
+          "issues": [
+            {
+              "code": "restart_objective_disagreement",
+              "message": "converged restarts reached materially different objective values (relative range 1.09)",
+              "severity": "warning"
+            }
+          ],
           "latent_states": null,
           "model_name": "wiener-drift-diffusion",
           "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
@@ -2115,11 +2155,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.008443339361092896,
-            "hessian_condition": 999.4081859312033,
+            "gradient_norm": 0.009028667670826409,
+            "hessian_condition": 748.2235194280504,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 25,
-            "objective": 485.4094058127861,
+            "n_iterations": 23,
+            "objective": 609.8924357024092,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -2127,40 +2167,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 3.527392777868954e-06,
-            "relative_objective_range": 7.266840600178662e-09,
+            "objective_range": 667.7259756238342,
+            "relative_objective_range": 1.0948258029382156,
             "selected_converged": true,
-            "selected_objective": 485.4094058127861,
+            "selected_objective": 609.8924357024092,
             "selected_restart": 0
           },
-          "status": "pass"
+          "status": "warning"
         },
         "estimates": {
-          "boundary": 1.5892390123701627,
-          "drift.intercept": 0.1209909489419834,
-          "drift.stimulus": 0.923553961615144,
-          "nondecision_time": 0.12396332738903097,
-          "starting_bias": 0.4932040900630391
+          "boundary": 1.7228280947403314,
+          "drift.intercept": 0.12557391064994397,
+          "drift.stimulus": 0.8193215160010101,
+          "nondecision_time": 0.04519218025592479,
+          "starting_bias": 0.49626629378718634
         },
-        "objective": 485.4094058127861,
+        "objective": 609.8924357024092,
         "restart_objectives": [
-          485.4094058127861,
-          485.40940934017885,
-          485.4094058365281
+          609.8924357024092,
+          1277.6184113262434,
+          609.8924363544131
         ],
         "selected_restart": 0,
         "standard_errors": {
-          "boundary": 0.02687795577957903,
-          "drift.intercept": 0.06663206465757862,
-          "drift.stimulus": 0.055066650331696464,
-          "nondecision_time": 0.002266669788468403,
-          "starting_bias": 0.013469665927610905
+          "boundary": 0.029717225933468525,
+          "drift.intercept": 0.06322241680707129,
+          "drift.stimulus": 0.051672982709009115,
+          "nondecision_time": 0.0024808369023934895,
+          "starting_bias": 0.014006652303028493
         }
       },
       "responsibility": {
-        "expected_count": 29.49989483521299,
-        "ordinary_trials": 0.01679339884285474,
-        "true_contaminants": 0.48929856828194895
+        "expected_count": 41.909397001874005,
+        "ordinary_trials": 0.02685361663567158,
+        "true_contaminants": 0.6276331370279288
       },
       "robust": {
         "audit": {
@@ -2172,11 +2212,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.017482542567405265,
-            "hessian_condition": 932.3176795223957,
+            "gradient_norm": 0.0029202307186667127,
+            "hessian_condition": 1225.950332079702,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 22,
-            "objective": 312.93550477656197,
+            "n_iterations": 24,
+            "objective": 315.46475832136986,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -2184,36 +2224,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 2.18315392430668e-07,
-            "relative_objective_range": 6.976370181662405e-10,
+            "objective_range": 9.292292020290915e-07,
+            "relative_objective_range": 2.9455879857187356e-09,
             "selected_converged": true,
-            "selected_objective": 312.93550477656197,
-            "selected_restart": 1
+            "selected_objective": 315.46475832136986,
+            "selected_restart": 2
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.2122641707773154,
-          "contaminant_probability": 0.03687500582285998,
-          "drift.intercept": 0.19334863398959878,
-          "drift.stimulus": 1.166816543051295,
-          "nondecision_time": 0.2508275689891578,
-          "starting_bias": 0.4763230006417509
+          "boundary": 1.171961940558739,
+          "contaminant_probability": 0.05238673898566616,
+          "drift.intercept": 0.283946271451169,
+          "drift.stimulus": 1.208398300587383,
+          "nondecision_time": 0.25572433254329974,
+          "starting_bias": 0.4752532530667405
         },
-        "objective": 312.93550477656197,
+        "objective": 315.46475832136986,
         "restart_objectives": [
-          312.9355048559488,
-          312.93550477656197,
-          312.93550499487736
+          315.4647583296892,
+          315.46475925059906,
+          315.46475832136986
         ],
-        "selected_restart": 1,
+        "selected_restart": 2,
         "standard_errors": {
-          "boundary": 0.02543836980751786,
-          "contaminant_probability": 0.010312560281731909,
-          "drift.intercept": 0.0805345226020868,
-          "drift.stimulus": 0.07484621198159092,
-          "nondecision_time": 0.0035790527923849013,
-          "starting_bias": 0.01220776240420171
+          "boundary": 0.024673125081173218,
+          "contaminant_probability": 0.011654797198446778,
+          "drift.intercept": 0.08489727283972871,
+          "drift.stimulus": 0.07979578995912079,
+          "nondecision_time": 0.0033988767449851486,
+          "starting_bias": 0.012303733140486526
         }
       },
       "simulation_seed": 13899807755296116302
@@ -2221,8 +2261,8 @@
     {
       "design_seed": 12738356500159110061,
       "future_mean_log_loss": {
-        "naive": 0.6083973414618656,
-        "robust": 0.39705894491372523
+        "naive": 0.7650495803233761,
+        "robust": 0.46993692877837956
       },
       "n_test_contaminants": 12,
       "n_train_contaminants": 43,
@@ -2236,11 +2276,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.0007790452254795762,
-            "hessian_condition": 998.9435682831815,
+            "gradient_norm": 0.0065641228543129836,
+            "hessian_condition": 763.3916883693665,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 21,
-            "objective": 462.0650565786515,
+            "n_iterations": 18,
+            "objective": 555.6038655011386,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -2248,40 +2288,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 7.923520684016694e-07,
-            "relative_objective_range": 1.7148062964739628e-09,
+            "objective_range": 2.4735140868870076e-07,
+            "relative_objective_range": 4.4519382251884975e-10,
             "selected_converged": true,
-            "selected_objective": 462.0650565786515,
-            "selected_restart": 1
+            "selected_objective": 555.6038655011386,
+            "selected_restart": 2
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.5581359190090511,
-          "drift.intercept": 7.836540947719984e-05,
-          "drift.stimulus": 0.969252511129472,
-          "nondecision_time": 0.14471534345371098,
-          "starting_bias": 0.4880587670314824
+          "boundary": 1.6811135598895686,
+          "drift.intercept": 0.059358257898579944,
+          "drift.stimulus": 0.8794181932301736,
+          "nondecision_time": 0.06196287878546937,
+          "starting_bias": 0.470085941550849
         },
-        "objective": 462.0650565786515,
+        "objective": 555.6038655011386,
         "restart_objectives": [
-          462.0650565792636,
-          462.0650565786515,
-          462.06505737100355
+          555.60386574849,
+          555.6038655137164,
+          555.6038655011386
         ],
-        "selected_restart": 1,
+        "selected_restart": 2,
         "standard_errors": {
-          "boundary": 0.02617450847822787,
-          "drift.intercept": 0.06677447189763412,
-          "drift.stimulus": 0.056578428252349156,
-          "nondecision_time": 0.0022692747927488925,
-          "starting_bias": 0.01317631612659698
+          "boundary": 0.02928898660470891,
+          "drift.intercept": 0.06466344612256424,
+          "drift.stimulus": 0.05252630426323418,
+          "nondecision_time": 0.002507217520691869,
+          "starting_bias": 0.013754831306966248
         }
       },
       "responsibility": {
-        "expected_count": 28.111457645443284,
-        "ordinary_trials": 0.0161473684201995,
-        "true_contaminants": 0.3694860407291224
+        "expected_count": 36.4402221025135,
+        "ordinary_trials": 0.01987402820389277,
+        "true_contaminants": 0.49757169191085276
       },
       "robust": {
         "audit": {
@@ -2293,11 +2333,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.00019797510935112302,
-            "hessian_condition": 900.7229336130158,
+            "gradient_norm": 0.027142432526067985,
+            "hessian_condition": 1271.4823822213953,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 24,
-            "objective": 327.43999486182355,
+            "n_iterations": 31,
+            "objective": 282.122511356681,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -2305,36 +2345,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 2.8209070705997874e-06,
-            "relative_objective_range": 8.615035166336912e-09,
+            "objective_range": 2.0140760170761496e-08,
+            "relative_objective_range": 7.13901208163357e-11,
             "selected_converged": true,
-            "selected_objective": 327.43999486182355,
-            "selected_restart": 2
+            "selected_objective": 282.122511356681,
+            "selected_restart": 1
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.2423789552304276,
-          "contaminant_probability": 0.0351393191479983,
-          "drift.intercept": 0.16722741446889616,
-          "drift.stimulus": 1.2031805368969397,
-          "nondecision_time": 0.24841269952416029,
-          "starting_bias": 0.44563248339288997
+          "boundary": 1.168650165846267,
+          "contaminant_probability": 0.04554973832740612,
+          "drift.intercept": 0.24516106207575206,
+          "drift.stimulus": 1.2150862920136054,
+          "nondecision_time": 0.25621194435054245,
+          "starting_bias": 0.42966266368035505
         },
-        "objective": 327.43999486182355,
+        "objective": 282.122511356681,
         "restart_objectives": [
-          327.4399976827306,
-          327.43999490747444,
-          327.43999486182355
+          282.12251137682176,
+          282.122511356681,
+          282.1225113670326
         ],
-        "selected_restart": 2,
+        "selected_restart": 1,
         "standard_errors": {
-          "boundary": 0.025293681771850072,
-          "contaminant_probability": 0.009816395516423534,
-          "drift.intercept": 0.07892489155515854,
-          "drift.stimulus": 0.07411865308017718,
-          "nondecision_time": 0.0035457942056999914,
-          "starting_bias": 0.0121966647360375
+          "boundary": 0.023632807647856385,
+          "contaminant_probability": 0.010465042015064633,
+          "drift.intercept": 0.08489733106663568,
+          "drift.stimulus": 0.0774721595236962,
+          "nondecision_time": 0.003307601718664465,
+          "starting_bias": 0.012351939254616312
         }
       },
       "simulation_seed": 9233296902958379113
@@ -2342,20 +2382,14 @@
     {
       "design_seed": 3204596500634884489,
       "future_mean_log_loss": {
-        "naive": 0.7875910489069236,
-        "robust": 0.5062227343648309
+        "naive": 0.6662492142843267,
+        "robust": 0.41288654607044917
       },
       "n_test_contaminants": 9,
       "n_train_contaminants": 39,
       "naive": {
         "audit": {
-          "issues": [
-            {
-              "code": "restart_objective_disagreement",
-              "message": "converged restarts reached materially different objective values (relative range 1.14)",
-              "severity": "warning"
-            }
-          ],
+          "issues": [],
           "latent_states": null,
           "model_name": "wiener-drift-diffusion",
           "model_signature": "wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.0001]",
@@ -2363,11 +2397,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.12835376501842066,
-            "hessian_condition": 746.7864645914156,
+            "gradient_norm": 0.0003657024789187104,
+            "hessian_condition": 699.2587640740809,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
-            "n_iterations": 15,
-            "objective": 584.9179784069737,
+            "n_iterations": 17,
+            "objective": 491.27589234521696,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -2375,40 +2409,40 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 667.1760750799575,
-            "relative_objective_range": 1.1406318487542715,
+            "objective_range": 8.905772119760513e-09,
+            "relative_objective_range": 1.8127842742795273e-11,
             "selected_converged": true,
-            "selected_objective": 584.9179784069737,
-            "selected_restart": 2
+            "selected_objective": 491.27589234521696,
+            "selected_restart": 0
           },
-          "status": "warning"
+          "status": "pass"
         },
         "estimates": {
-          "boundary": 1.7156561804443393,
-          "drift.intercept": 0.03577274773914005,
-          "drift.stimulus": 0.859386792555454,
-          "nondecision_time": 0.051117197610958114,
-          "starting_bias": 0.48914203203193163
+          "boundary": 1.6077534244399672,
+          "drift.intercept": 0.09106518091947961,
+          "drift.stimulus": 1.0496216359637076,
+          "nondecision_time": 0.11844250627729182,
+          "starting_bias": 0.46967621035050233
         },
-        "objective": 584.9179784069737,
+        "objective": 491.27589234521696,
         "restart_objectives": [
-          584.917988445138,
-          1252.0940534869312,
-          584.9179784069737
+          491.27589234521696,
+          491.27589235412273,
+          491.27589234890195
         ],
-        "selected_restart": 2,
+        "selected_restart": 0,
         "standard_errors": {
-          "boundary": 0.030065362965181485,
-          "drift.intercept": 0.06397903355254256,
-          "drift.stimulus": 0.052047938525779644,
-          "nondecision_time": 0.002506367238977747,
-          "starting_bias": 0.013998298714607033
+          "boundary": 0.027519340460183245,
+          "drift.intercept": 0.0652470028660129,
+          "drift.stimulus": 0.058687403564192595,
+          "nondecision_time": 0.002688864564201253,
+          "starting_bias": 0.013082935455980629
         }
       },
       "responsibility": {
-        "expected_count": 32.167039766115586,
-        "ordinary_trials": 0.01777316660689774,
-        "true_contaminants": 0.47799128149401027
+        "expected_count": 42.6295336377088,
+        "ordinary_trials": 0.024618351947602306,
+        "true_contaminants": 0.6126914821944476
       },
       "robust": {
         "audit": {
@@ -2420,11 +2454,11 @@
           "numerical": {
             "boundary_estimate": false,
             "converged": true,
-            "gradient_norm": 0.058626547974899614,
-            "hessian_condition": 1088.639026598337,
+            "gradient_norm": 0.01571786831131936,
+            "hessian_condition": 996.0060107984777,
             "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
             "n_iterations": 20,
-            "objective": 297.5166014246382,
+            "objective": 331.56098870672247,
             "optimizer": "L-BFGS-B (3 deterministic restarts)",
             "status": 0
           },
@@ -2432,36 +2466,36 @@
             "failed_messages": [],
             "n_converged": 3,
             "n_restarts": 3,
-            "objective_range": 3.492821747386188e-07,
-            "relative_objective_range": 1.1739922177992911e-09,
+            "objective_range": 3.1855790894042e-08,
+            "relative_objective_range": 9.607822385346904e-11,
             "selected_converged": true,
-            "selected_objective": 297.5166014246382,
-            "selected_restart": 1
+            "selected_objective": 331.56098870672247,
+            "selected_restart": 0
           },
           "status": "pass"
         },
         "estimates": {
-          "boundary": 1.2046175680503917,
-          "contaminant_probability": 0.04020874954526004,
-          "drift.intercept": 0.22137115794492476,
-          "drift.stimulus": 1.247687235333281,
-          "nondecision_time": 0.253619856516705,
-          "starting_bias": 0.44040556549187143
+          "boundary": 1.2202053280476846,
+          "contaminant_probability": 0.053287604265751874,
+          "drift.intercept": 0.15506327295019792,
+          "drift.stimulus": 1.3358505052018488,
+          "nondecision_time": 0.24952027148938907,
+          "starting_bias": 0.45405058335255594
         },
-        "objective": 297.5166014246382,
+        "objective": 331.56098870672247,
         "restart_objectives": [
-          297.5166017739204,
-          297.5166014246382,
-          297.5166014939865
+          331.56098870672247,
+          331.56098873857826,
+          331.56098872040764
         ],
-        "selected_restart": 1,
+        "selected_restart": 0,
         "standard_errors": {
-          "boundary": 0.024715224363261564,
-          "contaminant_probability": 0.010224943663293622,
-          "drift.intercept": 0.08219490961756584,
-          "drift.stimulus": 0.07784681711410181,
-          "nondecision_time": 0.003403729402507561,
-          "starting_bias": 0.01226565477129826
+          "boundary": 0.026107957655694028,
+          "contaminant_probability": 0.011817284095094475,
+          "drift.intercept": 0.08238434726847281,
+          "drift.stimulus": 0.08288370995902675,
+          "nondecision_time": 0.003653467706696822,
+          "starting_bias": 0.01230820946788114
         }
       },
       "simulation_seed": 4562600715984923356
@@ -2473,42 +2507,42 @@
   ],
   "seed": 73901,
   "summary": {
-    "contaminant_probability_rmse": 0.010469659465097775,
+    "contaminant_probability_rmse": 0.00751482459926947,
     "future_mean_log_loss": {
-      "naive": 2.062483459752852,
-      "naive_minus_robust": 1.6125476505884895,
-      "robust": 0.4499358091643626,
+      "naive": 0.892127528314415,
+      "naive_minus_robust": 0.4845351231109973,
+      "robust": 0.40759240520341766,
       "robust_better_runs": 20
     },
     "mean_responsibility": {
-      "ordinary_trials": 0.023838921329146678,
-      "true_contaminants": 0.5355751355459912
+      "ordinary_trials": 0.023613357161150216,
+      "true_contaminants": 0.5408917974523305
     },
     "n_paired_eligible": 20,
     "parameter_rmse": {
       "boundary": {
-        "naive": 0.4035960686439502,
-        "robust": 0.027858824142948598,
+        "naive": 0.4461014296310836,
+        "robust": 0.02544578771122384,
         "robust_better": true
       },
       "drift.intercept": {
-        "naive": 0.13747083751025138,
-        "robust": 0.08791551819032702,
+        "naive": 0.12867038928920696,
+        "robust": 0.09057532371731654,
         "robust_better": true
       },
       "drift.stimulus": {
-        "naive": 0.3108696155495533,
-        "robust": 0.07213485913228856,
+        "naive": 0.30749237752309533,
+        "robust": 0.07885731226448614,
         "robust_better": true
       },
       "nondecision_time": {
-        "naive": 0.1437824875780292,
-        "robust": 0.004191128523539833,
+        "naive": 0.15798552485760128,
+        "robust": 0.0039014515274870248,
         "robust_better": true
       },
       "starting_bias": {
-        "naive": 0.03468187098895014,
-        "robust": 0.016546299725752684,
+        "naive": 0.03182613491424594,
+        "robust": 0.014852236993534402,
         "robust_better": true
       }
     }

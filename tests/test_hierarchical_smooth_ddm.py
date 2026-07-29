@@ -16,7 +16,12 @@ from unspool import (
     leave_one_subject_out_splits,
     run_parameter_recovery,
 )
-from unspool.models.hierarchical_smooth_ddm import _arrowhead_covariance, _scales_at_bounds
+from unspool.models.hierarchical_smooth_ddm import (
+    _arrowhead_covariance,
+    _louis_scale_information,
+    _scale_standard_error,
+    _scales_at_bounds,
+)
 
 
 def make_design(
@@ -234,6 +239,94 @@ def test_subject_scales_are_estimated_by_parameter_with_retained_diagnostics() -
     assert np.all(fit.subject_scale_standard_errors >= fit.subject_scale_local_standard_errors)
     with pytest.raises(ValueError, match="cannot set WRITEABLE flag"):
         fit.subject_parameter_scales.setflags(write=True)
+
+
+def test_observed_scale_information_is_complete_information_minus_missing_information() -> None:
+    generator = np.random.default_rng(4)
+    knots = (0.0, 2.0, 5.0)
+    n_knots = len(knots)
+    n_subjects = 6
+    smoothness = 3.0
+    scales = np.asarray([0.30, 0.12])
+    deviations = generator.normal(0.0, 0.15, (n_subjects, len(scales), n_knots))
+    covariances = tuple(
+        0.001 * (matrix @ matrix.T) + 0.002 * np.eye(len(scales) * n_knots)
+        for matrix in generator.normal(0.0, 1.0, (n_subjects, len(scales) * n_knots, 6))
+    )
+
+    information = _louis_scale_information(
+        scales,
+        deviations,
+        covariances,
+        subject_smoothness=smoothness,
+        knots=knots,
+    )
+
+    complete = np.diag(
+        [
+            (
+                scale
+                / _scale_standard_error(
+                    scale,
+                    deviations[:, index, :],
+                    tuple(
+                        covariance[
+                            index * n_knots : (index + 1) * n_knots,
+                            index * n_knots : (index + 1) * n_knots,
+                        ]
+                        for covariance in covariances
+                    ),
+                    subject_smoothness=smoothness,
+                    knots=knots,
+                )
+            )
+            ** 2
+            for index, scale in enumerate(scales)
+        ]
+    )
+    selectors = [
+        np.diag(np.repeat(np.arange(len(scales)) == index, n_knots).astype(np.float64))
+        for index in range(len(scales))
+    ]
+    means = deviations.reshape(n_subjects, -1)
+    missing = np.empty((len(scales), len(scales)), dtype=np.float64)
+    for row in range(len(scales)):
+        for column in range(len(scales)):
+            missing[row, column] = sum(
+                2.0 * np.trace(selectors[row] @ covariance @ selectors[column] @ covariance)
+                + 4.0 * mean @ selectors[row] @ covariance @ selectors[column] @ mean
+                for covariance, mean in zip(covariances, means, strict=True)
+            ) / (scales[row] ** 2 * scales[column] ** 2)
+
+    np.testing.assert_allclose(information, complete - missing, rtol=1e-5)
+    assert np.all(np.diag(information) < np.diag(complete))
+
+
+def test_observed_scale_uncertainty_widens_the_uncorrected_curvature_interval() -> None:
+    model = hierarchical_model(
+        subject_parameter_scales={"drift.stimulus": 0.22, "boundary": 0.08},
+        estimate_subject_scales=True,
+        subject_scale_bounds=(0.04, 0.5),
+        scale_max_iterations=12,
+        scale_tolerance=0.03,
+        n_restarts=1,
+    )
+    design = make_design(n_subjects=8, trials_per_session=70)
+    study = model.simulate(design, population_truth(model), seed=91)
+
+    fit = model.fit(study)
+
+    assert model.subject_scale_uncertainty == "observed"
+    assert fit.subject_scale_uncertainty_policy == "louis-observed-information"
+    assert fit.subject_scale_em_rate_matrix is None
+    assert fit.subject_scale_em_spectral_radius is None
+    assert np.all(fit.subject_scale_standard_errors > fit.subject_scale_local_standard_errors)
+    assert np.min(np.linalg.eigvalsh(fit.subject_scale_covariance)) > 0.0
+    for parameter, (lower, upper) in (fit.subject_scale_confidence_intervals_95 or {}).items():
+        local_lower, local_upper = (fit.subject_scale_local_confidence_intervals_95 or {})[
+            parameter
+        ]
+        assert lower <= local_lower < local_upper <= upper
 
 
 def test_subject_scale_boundary_diagnostics_use_declared_log_scale_tolerance() -> None:

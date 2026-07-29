@@ -26,6 +26,8 @@ from unspool.models.ddm import (
     DriftDiffusionParameters,
     DriftDiffusionSimulation,
     WienerDriftDiffusion,
+    _bridge_crossings,
+    _crossing_fractions,
     _numerical_hessian,
     _upper_boundary_probability,
     _wiener_log_density,
@@ -744,18 +746,32 @@ def _simulate_trialwise_wiener(
         current = previous + drift[active_indices] * time_step
         current += generator.normal(0.0, noise_scale, len(active_indices))
         positions[active_indices] = current
-        upper = current >= boundary[active_indices]
+        active_boundary = boundary[active_indices]
+        upper = current >= active_boundary
         lower = current <= 0.0
+        endpoint_crossed = upper | lower
+        interior = np.flatnonzero(~endpoint_crossed)
+        if len(interior):
+            bridge_upper, bridge_lower = _bridge_crossings(
+                previous[interior],
+                current[interior],
+                active_boundary[interior],
+                time_step=time_step,
+                generator=generator,
+            )
+            upper[interior] = bridge_upper
+            lower[interior] = bridge_lower
         crossed = upper | lower
         if not np.any(crossed):
             continue
         crossed_indices = active_indices[crossed]
-        previous_crossed = previous[crossed]
-        current_crossed = current[crossed]
         upper_crossed = upper[crossed]
-        target = np.where(upper_crossed, boundary[crossed_indices], 0.0)
-        fraction = (target - previous_crossed) / (current_crossed - previous_crossed)
-        fraction = np.clip(fraction, 0.0, 1.0)
+        fraction = _crossing_fractions(
+            previous[crossed],
+            current[crossed],
+            np.where(upper_crossed, boundary[crossed_indices], 0.0),
+            endpoint_crossed=endpoint_crossed[crossed],
+        )
         decision_times[crossed_indices] = (step + fraction) * time_step
         choices[crossed_indices] = upper_crossed.astype(np.int8)
         active[crossed_indices] = False

@@ -1099,7 +1099,7 @@ def _plot_cell_strategy(data_path: Path, colour_path: Path, path: Path) -> None:
             fontsize=8,
         )
     figure.suptitle(
-        "Independent reproduction of Cell Figure 1G and 1I",
+        "Published parity with Cell Figure 1G and 1I",
         weight="semibold",
     )
     figure.text(

@@ -53,6 +53,7 @@ def smooth_model(
     n_sessions: int = 5,
     varying_parameters: tuple[str, ...] = ("drift.stimulus", "boundary"),
     shared_trajectory: bool = False,
+    tolerance: float = 1e-8,
 ) -> SmoothWienerDriftDiffusion:
     return SmoothWienerDriftDiffusion(
         covariates=("stimulus",),
@@ -63,6 +64,7 @@ def smooth_model(
         max_iterations=300,
         simulation_time_step=0.001,
         shared_trajectory=shared_trajectory,
+        tolerance=tolerance,
     )
 
 
@@ -178,14 +180,14 @@ def test_simulation_and_fitting_recover_inspectable_parameter_trajectories() -> 
 
 
 def test_unobserved_future_knots_carry_forward_without_outcome_leakage() -> None:
-    model = smooth_model(n_sessions=5)
+    model = smooth_model(n_sessions=5, tolerance=1e-12)
     design = make_design(n_sessions=4, trials_per_session=100)
     parameters = smooth_truth(model)
     study = model.simulate(design, parameters, seed=6)
 
     trajectory = model.parameter_trajectory(model.fit(study))
 
-    np.testing.assert_allclose(trajectory.values[-1], trajectory.values[-2], atol=1e-3)
+    np.testing.assert_allclose(trajectory.values[-1], trajectory.values[-2], atol=1e-5)
 
 
 def test_fixed_knots_cover_the_clock_and_subject_alignment_is_explicit() -> None:

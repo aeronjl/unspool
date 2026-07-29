@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "paper": {
+    "doi": "10.7554/eLife.63711",
+    "figure": "Figure 2b, Figure 2g, Figure 2-figure supplement 1, Figure 3c and Figure 3d",
+    "citation": "International Brain Laboratory, Aguillon-Rodriguez V., Angelaki D., Bayer H., Bonacchi N., Carandini M., et al. (2021). Standardized and reproducible measurement of decision-making in mice. eLife 10:e63711."
+  },
+  "data": {
+    "accession": "ONE release tag 2021_Q1_IBL_et_al_Behaviour on https://openalyx.internationalbrainlab.org (CC-BY-4.0)",
+    "member_sha256": "4c925fb747fd48893b6c9fc69e427f5f8b372d63c36e82d73d02567880e0bcca"
+  },
+  "result": "result.json",
+  "claims": [
+    {
+      "id": "threshold_during_training_pct",
+      "description": "Figure 2b contrast threshold sigma in percent contrast, fitted per session from the first session containing a 12.5% contrast onward and averaged first within and then across mice.",
+      "result_path": "threshold_during_training_pct",
+      "published_value": 17.8,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 1.938
+      },
+      "tolerance_rationale": "1.96 x 11.7 / sqrt(140): the 95% interval the paper's own published dispersion places around its own mean. It uses only published quantities, so it cannot be widened by narrowing the reproduced cohort, and it is tighter than the two-sample band that treating the cohorts as independent samples would justify.",
+      "observed_value": 16.283772991264534,
+      "status": "pass"
+    },
+    {
+      "id": "easy_trial_error_pct_at_proficiency",
+      "description": "Figure 3c error rate on easy (50% and 100%) contrast trials over the three sessions at which each mouse reached basic-task proficiency, pooled over trials within mouse and averaged across mice.",
+      "result_path": "easy_trial_error_pct_at_proficiency",
+      "published_value": 9.5,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 2.667
+      },
+      "tolerance_rationale": "1.96 x 3.6 / sqrt(7), using the n = 7 laboratories the paper prints. The paper's own figure panel plots one point per mouse, which would give the far tighter band 0.596; the printed n is used because taking a paper at its stated word is the defensible default, and the tighter band is reported separately in result.json as non-gating evidence.",
+      "observed_value": 9.646231384370358,
+      "status": "pass"
+    },
+    {
+      "id": "threshold_pct_at_proficiency",
+      "description": "Figure 3d contrast threshold sigma in percent contrast, from a single erf_psycho_2gammas fit to all trials of the three proficiency sessions pooled per mouse, averaged across mice.",
+      "result_path": "threshold_pct_at_proficiency",
+      "published_value": 14.3,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 2.815
+      },
+      "tolerance_rationale": "1.96 x 3.8 / sqrt(7), using the n = 7 laboratories the paper prints beside this value. As with the easy-trial error, the corresponding figure panel plots one point per mouse, which would give the band 0.630; that stricter band is reported in result.json as non-gating evidence and this reproduction meets it as well.",
+      "observed_value": 14.17310930085841,
+      "status": "pass"
+    },
+    {
+      "id": "training_days_to_proficiency",
+      "description": "Figure 2g mean number of distinct training days from a mouse's first training session up to and including the last session of the first triplet meeting the trained_1a or trained_1b criterion.",
+      "result_path": "training_days_to_proficiency",
+      "published_value": 18.4,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 2.153
+      },
+      "tolerance_rationale": "1.96 x 13.0 / sqrt(140), the 95% interval the paper's own reported dispersion places around its own mean, and the paper states s.d. and n = 140 explicitly for this value. At plus or minus 11.7% relative this is narrow enough that a misimplemented proficiency criterion would fail it.",
+      "observed_value": 16.666666666666668,
+      "status": "pass"
+    },
+    {
+      "id": "training_kilotrials_to_proficiency",
+      "description": "Figure 2-figure supplement 1 mean number of thousands of trials completed from a mouse's first training session up to and including its proficiency session.",
+      "result_path": "training_kilotrials_to_proficiency",
+      "published_value": 10.8,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 1.425
+      },
+      "tolerance_rationale": "1.96 x 8.6 / sqrt(140), the 95% interval implied by the s.d. and n = 140 the paper states explicitly for this value. It depends only on published quantities and so cannot be relaxed by changing the reproduced cohort.",
+      "observed_value": 10.067107142857143,
+      "status": "pass"
+    },
+    {
+      "id": "n_proficient_subjects",
+      "description": "Figure 2 legend cohort size: the number of mice reaching basic-task proficiency and therefore contributing to the Figure 2 and Figure 3 means.",
+      "result_path": "n_proficient_subjects",
+      "published_value": 140,
+      "tolerance": {
+        "kind": "relative",
+        "value": 0.05
+      },
+      "tolerance_rationale": "A cohort size is a count, not a mean with a dispersion, so no standard-error band exists. Five percent of 140 is plus or minus 7 mice, declared in advance as the margin within which the public release would be considered to expose the paper's analysed population rather than a materially different one.",
+      "observed_value": 84,
+      "status": "fail"
+    },
+    {
+      "id": "bias_shift_at_zero_contrast_pct",
+      "description": "Figure 4d,e mean shift in rightward choices at 0% contrast between the 20:80 and 80:20 block conditions, read off the fitted psychometric curves of the full task.",
+      "result_path": null,
+      "published_value": 28.5,
+      "tolerance": null,
+      "observed_value": null,
+      "status": "waived",
+      "waiver_rationale": "Declared out of scope in PROTOCOL.md before any computation. It is measured on the full task over a different cohort, the n = 98 mice meeting the ready4ephysrig criterion, and requires biasedChoiceWorld sessions this benchmark does not retrieve. The published full-task criterion also contains two apparent sign errors, so implementing it would require guessing the authors' intent."
+    }
+  ]
+}

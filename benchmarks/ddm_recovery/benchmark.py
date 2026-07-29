@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
+from benchmarks.provenance import render
 from unspool import Study, WienerDriftDiffusion, run_parameter_recovery
 
 DESIGNS = {"400_trials": 400, "1200_trials": 1_200}
@@ -75,7 +75,7 @@ def run(*, repeats: int = 20, seed: int = 91_337) -> dict[str, Any]:
         "scored_columns": list(model.scored_columns),
         "truth": dict(truth),
         "simulation": {
-            "method": "Euler-Maruyama with linear crossing-time interpolation",
+            "method": "Euler-Maruyama with Brownian-bridge absorption and crossing interpolation",
             "time_step_seconds": model.simulation_time_step,
             "maximum_time_seconds": model.simulation_max_time,
             "likelihood": "Navarro-Fuss paired small/large-time Wiener series",
@@ -95,7 +95,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=Path(__file__).with_name("result.json"))
     arguments = parser.parse_args()
     result = run(repeats=arguments.repeats, seed=arguments.seed)
-    rendered = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    rendered = render(result)
     arguments.output.write_text(rendered, encoding="utf-8")
     print(rendered, end="")
 

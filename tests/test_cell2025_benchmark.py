@@ -8,10 +8,12 @@ from benchmarks.cell2025.benchmark import (
     EXPECTED,
     calculate_figure1_subject_metrics,
     calculate_session_metrics,
+    contract_matches,
     load_study,
 )
 
 ROOT = Path(__file__).parents[1]
+BENCHMARK = ROOT / "benchmarks" / "cell2025"
 
 
 def _write_synthetic_source(
@@ -99,9 +101,7 @@ def test_figure1_late_window_uses_paper_days_not_five_observed_rows(tmp_path: Pa
 
 
 def test_figure1gi_audit_freezes_the_panel_contract() -> None:
-    audit = json.loads(
-        (ROOT / "benchmarks" / "cell2025" / "figure1gi_audit.json").read_text(encoding="utf-8")
-    )
+    audit = json.loads((BENCHMARK / "figure1gi_audit.json").read_text(encoding="utf-8"))
 
     assert audit["schema_version"] == 1
     assert audit["paper"]["pdf_page"] == 3
@@ -120,6 +120,51 @@ def test_figure1gi_audit_freezes_the_panel_contract() -> None:
     )
     assert "paper-day" in audit["panels"]["1G"]["y"]
     assert audit["unspool_display"]["bootstrap_seed"] == 202501
+    assert audit["unspool_display"]["classification"] == "published-parity"
+
+
+def test_committed_result_carries_the_audited_figure1gi_statistics() -> None:
+    result = json.loads((BENCHMARK / "result.json").read_text(encoding="utf-8"))
+    audit = json.loads((BENCHMARK / "figure1gi_audit.json").read_text(encoding="utf-8"))
+
+    assert result["contract_passed"]
+    assert result["n_subjects"] == audit["source_data"]["retained_animals"] == 30
+    assert result["n_trials"] == audit["source_data"]["retained_trials"] == 192_238
+    assert result["source_member_sha256"] == audit["source_data"]["member_sha256"]
+    assert result["early_late_bias_r"] == audit["panels"]["1G"]["reproduced_r"]
+    assert result["early_late_bias_p"] == audit["panels"]["1G"]["reproduced_p"]
+    assert result["early_bias_late_slope_r"] == audit["panels"]["1I"]["reproduced_r"]
+    assert result["early_bias_late_slope_p"] == audit["panels"]["1I"]["reproduced_p"]
+    assert contract_matches({key: result[key] for key in EXPECTED})
+
+
+def test_reproduced_correlations_agree_with_the_values_printed_in_the_paper() -> None:
+    """Compare the reproduction to the paper, not only to the benchmark's own pin."""
+
+    audit = json.loads((BENCHMARK / "figure1gi_audit.json").read_text(encoding="utf-8"))
+    contract = json.loads((BENCHMARK / "published_claims.json").read_text(encoding="utf-8"))
+    claims = {claim["id"]: claim for claim in contract["claims"]}
+
+    assert contract["paper"]["doi"] == audit["paper"]["doi"]
+    for panel, correlation, probability in (
+        ("1G", "early_late_bias_r", "early_late_bias_p"),
+        ("1I", "early_bias_late_slope_r", "early_bias_late_slope_p"),
+    ):
+        claim = claims[correlation]
+        reported = audit["panels"][panel]["reported_r"]
+        reproduced = audit["panels"][panel]["reproduced_r"]
+
+        assert claim["published_value"] == reported
+        assert claim["observed_value"] == reproduced
+        assert abs(reproduced - reported) < claim["tolerance"]["value"]
+        assert claim["status"] == "pass"
+
+        bound = claims[probability]
+        assert audit["panels"][panel]["reported_p"] == f"p < {bound['published_value']:g}"
+        assert audit["panels"][panel]["reproduced_p"] < bound["published_value"]
+        assert bound["status"] == "pass"
+
+    assert claims["n_subjects"]["published_value"] == audit["panels"]["1G"]["n"] == 30
 
 
 def test_distinct_source_sessions_survive_a_paper_session_collision(tmp_path: Path) -> None:

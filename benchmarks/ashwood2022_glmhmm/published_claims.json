@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "paper": {
+    "doi": "10.1038/s41593-021-01007-z",
+    "figure": "Figures 2b, 2f, 4d and 4e, and the Methods cohort description",
+    "citation": "Ashwood Z.C., Roy N.A., Stone I.R., International Brain Laboratory, Urai A.E., Churchland A.K., Pouget A. & Pillow J.W. (2022). Mice alternate between discrete strategies during perceptual decision-making. Nature Neuroscience 25, 201-212."
+  },
+  "data": {
+    "accession": "10.6084/m9.figshare.11636748.v7",
+    "member_sha256": "18bfacccf615a767dd6e3935473b628fe4266e9b12c09200ee7f4eac2c54c4e6"
+  },
+  "result": "result.json",
+  "claims": [
+    {
+      "id": "n_animals",
+      "description": "Number of IBL mice modelled: animals with at least thirty bias-block sessions.",
+      "result_path": "n_animals",
+      "published_value": 37,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0
+      },
+      "tolerance_rationale": "A cohort size is an exact integer; any difference means the paper's three selection filters were reimplemented incorrectly.",
+      "observed_value": 37,
+      "status": "pass"
+    },
+    {
+      "id": "example_mouse_n_trials",
+      "description": "Number of trials contributed by the example mouse of Figures 2 and 3, printed in the Results as '5,040 total trials over 56 sessions'.",
+      "result_path": "example_n_trials",
+      "published_value": 5040,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0
+      },
+      "tolerance_rationale": "A trial count is an exact integer. The article names no example animal; the identifier CSHL_008 comes solely from the reference implementation, which branches on it when drawing these figures. An exact match on 5,040 trials is therefore the evidence that the code-derived identification is the right one.",
+      "observed_value": 5040,
+      "status": "pass"
+    },
+    {
+      "id": "example_mouse_n_sessions",
+      "description": "Number of sessions contributed by the example mouse of Figures 2 and 3, printed in the Results as '5,040 total trials over 56 sessions'.",
+      "result_path": "example_n_sessions",
+      "published_value": 56,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0
+      },
+      "tolerance_rationale": "A session count is an exact integer. As above, the animal identity comes from the reference implementation rather than the article, so matching 56 sessions is part of what establishes that this is the mouse the paper plotted.",
+      "observed_value": 56,
+      "status": "pass"
+    },
+    {
+      "id": "n_sessions",
+      "description": "Number of sessions across the 37 modelled mice, printed in the Figure 4c caption and in the Results as '83% of 2,017 sessions across all animals'.",
+      "result_path": "n_sessions",
+      "published_value": 2017,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0
+      },
+      "tolerance_rationale": "A session count is an exact integer. Note the paper prints it as the number entering those two specific analyses rather than as a Methods-level dataset descriptor, so it is checked as a consequence of the selection rule rather than as a stated inclusion criterion.",
+      "observed_value": 2017,
+      "status": "pass"
+    },
+    {
+      "id": "n_source_trials",
+      "description": "Total number of trials across the 37 modelled mice, printed in the Extended Data Figure 8 caption as 'the 181,530 trials of real choice data'.",
+      "result_path": "n_source_trials",
+      "published_value": 181530,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0
+      },
+      "tolerance_rationale": "A trial count is an exact integer; any difference means the unbiased-block and violation filters were reimplemented incorrectly. The value appears once, in an Extended Data caption, and independently as an assertion in the reference code.",
+      "observed_value": 181530,
+      "status": "pass"
+    },
+    {
+      "id": "example_engaged_accuracy",
+      "description": "Figure 2f: the example mouse's accuracy on non-zero-contrast trials attributed to the engaged state.",
+      "result_path": "example_state_accuracies.0",
+      "published_value": 0.9,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0.05
+      },
+      "tolerance_rationale": "The paper prints whole percentages for a single animal. Five percentage points is the band that absorbs the declared substitutions in PROTOCOL.md section 6 - filtered rather than smoothed posteriors, no transition prior, dropped violations - and nothing wider would still be the same reported result.",
+      "observed_value": 0.9392265193370166,
+      "status": "pass"
+    },
+    {
+      "id": "example_biased_left_accuracy",
+      "description": "Figure 2f: the example mouse's accuracy on non-zero-contrast trials attributed to the biased-left state.",
+      "result_path": "example_state_accuracies.1",
+      "published_value": 0.6,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0.05
+      },
+      "tolerance_rationale": "The paper prints whole percentages for a single animal. Five percentage points is the band that absorbs the declared substitutions in PROTOCOL.md section 6 - filtered rather than smoothed posteriors, no transition prior, dropped violations - and nothing wider would still be the same reported result.",
+      "observed_value": 0.4085603112840467,
+      "status": "fail"
+    },
+    {
+      "id": "example_biased_right_accuracy",
+      "description": "Figure 2f: the example mouse's accuracy on non-zero-contrast trials attributed to the biased-right state.",
+      "result_path": "example_state_accuracies.2",
+      "published_value": 0.58,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0.05
+      },
+      "tolerance_rationale": "The paper prints whole percentages for a single animal. Five percentage points is the band that absorbs the declared substitutions in PROTOCOL.md section 6 - filtered rather than smoothed posteriors, no transition prior, dropped violations - and nothing wider would still be the same reported result.",
+      "observed_value": 0.41025641025641024,
+      "status": "fail"
+    },
+    {
+      "id": "median_engaged_dwell_time",
+      "description": "Figure 4e: median across the 37 mice of the engaged state's expected dwell time, computed from each animal's fitted transition matrix.",
+      "result_path": "median_dwell_times.0",
+      "published_value": 24.0,
+      "tolerance": {
+        "kind": "relative",
+        "value": 0.25
+      },
+      "tolerance_rationale": "Dwell time is 1/(1 - A_kk), which is violently nonlinear as the self-transition probability approaches one: a change of 0.002 in A_kk moves a 24-trial dwell by more than a trial. The reproduction also fits the transition matrix without the paper's Dirichlet prior, which acts directly on A, so a proportional band is the honest one.",
+      "observed_value": 30.823023000648845,
+      "status": "fail"
+    },
+    {
+      "id": "median_biased_left_dwell_time",
+      "description": "Figure 4e: median across the 37 mice of the biased-left state's expected dwell time.",
+      "result_path": "median_dwell_times.1",
+      "published_value": 13.0,
+      "tolerance": {
+        "kind": "relative",
+        "value": 0.25
+      },
+      "tolerance_rationale": "Dwell time is 1/(1 - A_kk), which is violently nonlinear as the self-transition probability approaches one. The reproduction also fits the transition matrix without the paper's Dirichlet prior, which acts directly on A, so a proportional band is the honest one.",
+      "observed_value": 16.45496630121876,
+      "status": "fail"
+    },
+    {
+      "id": "median_biased_right_dwell_time",
+      "description": "Figure 4e: median across the 37 mice of the biased-right state's expected dwell time.",
+      "result_path": "median_dwell_times.2",
+      "published_value": 12.0,
+      "tolerance": {
+        "kind": "relative",
+        "value": 0.25
+      },
+      "tolerance_rationale": "Dwell time is 1/(1 - A_kk), which is violently nonlinear as the self-transition probability approaches one. The reproduction also fits the transition matrix without the paper's Dirichlet prior, which acts directly on A, so a proportional band is the honest one.",
+      "observed_value": 10.295493311073214,
+      "status": "pass"
+    },
+    {
+      "id": "median_engaged_occupancy",
+      "description": "Figure 4d and Results: the fraction of trials the median mouse spends in the engaged state.",
+      "result_path": "median_engaged_occupancy",
+      "published_value": 0.69,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0.05
+      },
+      "tolerance_rationale": "The paper prints a whole percentage. Five percentage points is the band that absorbs the definitional substitution in PROTOCOL.md section 6: the paper counts hard arg-max state assignments while Unspool publishes the mean smoothed posterior probability per state.",
+      "observed_value": 0.5816932590081362,
+      "status": "fail"
+    },
+    {
+      "id": "bits_per_trial_over_lapse",
+      "description": "Figure 2b and Results: the example mouse's cross-validated test log-likelihood advantage of the three-state model over the classic lapse model, in bits per trial.",
+      "result_path": "bits_per_trial_over_lapse",
+      "published_value": 0.09,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0.02
+      },
+      "tolerance_rationale": "The paper prints two decimal places. Two hundredths of a bit is the band that absorbs the comparator substitution in PROTOCOL.md section 6: a three-parameter symmetric-lapse model stands in for the paper's four-parameter asymmetric one.",
+      "observed_value": 0.1273969859586941,
+      "status": "fail"
+    },
+    {
+      "id": "bits_per_trial_over_single_state",
+      "description": "Figure 2b and Results: the example mouse's cross-validated test log-likelihood advantage of the three-state model over the one-state GLM, in bits per trial.",
+      "result_path": "bits_per_trial_over_single_state",
+      "published_value": 0.13,
+      "tolerance": {
+        "kind": "absolute",
+        "value": 0.02
+      },
+      "tolerance_rationale": "The paper prints two decimal places. Two hundredths of a bit is the band that absorbs the optimizer and prior substitutions in PROTOCOL.md section 6 while still distinguishing the published advantage from no advantage at all.",
+      "observed_value": 0.1308636609521519,
+      "status": "pass"
+    },
+    {
+      "id": "three_state_selection",
+      "description": "Figures 2b and 4a: the paper adopts a three-state GLM-HMM for all subsequent analyses, reporting that the improvement 'approximately levels off at three latent states'.",
+      "result_path": null,
+      "published_value": null,
+      "tolerance": null,
+      "observed_value": null,
+      "status": "waived",
+      "waiver_rationale": "This is a parsimony judgement, not a reported arg-max. The article claims only that the multi-state model beats the one-state GLM and the classic lapse model, and that the gain levels off; it never claims three states beat four or five. Encoding an arg-max would invent a published value, so the state count is computed and reported in result.json - with the full bits-per-trial curve over K - without being asserted as parity. The two numeric example-mouse advantages the paper does print are checked instead."
+    },
+    {
+      "id": "population_state_selection",
+      "description": "Figure 4a: the cross-validated state-count sweep repeated for all 37 mice, from which the population-level three-state conclusion is drawn.",
+      "result_path": null,
+      "published_value": null,
+      "tolerance": null,
+      "observed_value": null,
+      "status": "waived",
+      "waiver_rationale": "Only the example mouse is cross-validated here. Repeating five folds across five candidates for all 37 animals is roughly forty hours of single-core time with this implementation, so the population sweep is recorded as unchecked rather than implied by the single-animal sweep that was run."
+    },
+    {
+      "id": "global_fit_state_alignment",
+      "description": "Methods, Algorithm 1: a single GLM-HMM fitted to all 37 animals pooled, used to seed and align the per-animal fits.",
+      "result_path": null,
+      "published_value": null,
+      "tolerance": null,
+      "observed_value": null,
+      "status": "waived",
+      "waiver_rationale": "Unspool offers no way to initialize a fit from externally supplied parameters, so the paper's multi-stage seeding procedure cannot be expressed at all; a pooled fit over 181,530 trials is also out of compute reach here. States are instead aligned by canonicalizing on the fitted stimulus weight."
+    },
+    {
+      "id": "population_predictive_accuracy_gain",
+      "description": "Results: the three-state model predicts choices 4.2% more accurately than the basic GLM and 2.8% more accurately than the classic lapse model, averaged over animals.",
+      "result_path": null,
+      "published_value": null,
+      "tolerance": null,
+      "observed_value": null,
+      "status": "waived",
+      "waiver_rationale": "Both figures are averages over the same 37-animal cross-validation that is waived above, so they inherit its compute boundary. Nothing in this benchmark computes a population-averaged predictive accuracy, and the claim is recorded as unchecked rather than quietly suggested by the single-animal numbers that are checked."
+    },
+    {
+      "id": "response_time_state_signature",
+      "description": "Figure 6: response times differ systematically between the engaged and biased states, which the paper uses as independent evidence that the states are real.",
+      "result_path": null,
+      "published_value": null,
+      "tolerance": null,
+      "observed_value": null,
+      "status": "waived",
+      "waiver_rationale": "Unspool's GLM-HMM has Bernoulli choice emissions only and cannot attach a latency distribution to a latent state. The analysis is structurally inexpressible in this package rather than merely expensive, so it is waived rather than attempted."
+    },
+    {
+      "id": "other_species_and_cohorts",
+      "description": "Figures 5 and 7: the same discrete-strategy conclusion in 15 mice from Odoemene et al. and in 27 human participants from Urai et al.",
+      "result_path": null,
+      "published_value": null,
+      "tolerance": null,
+      "observed_value": null,
+      "status": "waived",
+      "waiver_rationale": "These are different datasets under different accessions, neither of which this benchmark fetches. The declared data boundary in PROTOCOL.md is the single IBL archive, so the generality claim these cohorts support is recorded as unchecked."
+    }
+  ]
+}

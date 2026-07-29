@@ -78,6 +78,16 @@
       "shape_distance": 1.8585302624050457
     }
   },
+  "provenance": {
+    "git_describe": "41b8cd3-dirty",
+    "libraries": {
+      "numpy": "2.3.5",
+      "scipy": "1.18.0",
+      "unspool": "0.1.0"
+    },
+    "python": "3.12.13",
+    "schema_version": 1
+  },
   "recovery_rates": {
     "amplitude_interval_excludes_zero": 1.0,
     "amplitude_shift_is_largest_reference_amplitude_contrast": 1.0,

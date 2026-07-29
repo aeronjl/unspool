@@ -24,25 +24,31 @@ uniform component describes every lapse or outlier process.
 
 ## Result
 
-All 20 contaminant-aware fits pass audit. Fourteen naive fits pass and six retain warnings.
+All 20 contaminant-aware fits pass audit. Ten naive fits pass and ten retain warnings.
 The contaminant-aware model has lower RMSE for every shared parameter:
 
 | Parameter | Contaminant-aware RMSE | Naive RMSE |
 | --- | ---: | ---: |
-| Drift intercept | 0.08792 | 0.13747 |
-| Stimulus drift | 0.07213 | 0.31087 |
-| Boundary | 0.02786 | 0.40360 |
-| Starting bias | 0.01655 | 0.03468 |
-| Non-decision time | 0.00419 | 0.14378 |
+| Drift intercept | 0.09058 | 0.12867 |
+| Stimulus drift | 0.07886 | 0.30749 |
+| Boundary | 0.02545 | 0.44610 |
+| Starting bias | 0.01485 | 0.03183 |
+| Non-decision time | 0.00390 | 0.15799 |
 
-The contaminant-probability RMSE is `0.01047`. Mean posterior contaminant responsibility
-is `0.53558` on generated contaminant trials and `0.02384` on ordinary trials. These
+The contaminant-probability RMSE is `0.00751`. Mean posterior contaminant responsibility
+is `0.54089` on generated contaminant trials and `0.02361` on ordinary trials. These
 responsibilities express uncertainty; they are not hard outlier labels.
 
 The contaminant-aware fit also has lower future-session mean negative joint log density in
-all 20 repetitions (`0.44994` versus `2.06248`; paired naive-minus-aware difference
-`1.61255`). These density scores are comparable because both candidates declare the same
+all 20 repetitions (`0.40759` versus `0.89213`; paired naive-minus-aware difference
+`0.48454`). These density scores are comparable because both candidates declare the same
 choice/response-time observation and physical unit.
+
+The naive penalty is smaller than it was before the simulator's Brownian-bridge absorption
+test was added: the paired forecast gap fell from `1.61255` to `0.48454`, almost entirely
+because the naive model's own forecast improved from `2.06248` to `0.89213` while the
+contaminant-aware forecast barely moved. The direction of every comparison is unchanged,
+and the naive fit still degrades most on boundary and non-decision time.
 
 ## Interpretation boundary
 

@@ -31,6 +31,7 @@ from benchmarks.cell2025_flagship.benchmark import (
     _models,
     build_forecast_panel,
 )
+from benchmarks.provenance import render
 from unspool import (
     AggregationWeighting,
     CandidateSpec,
@@ -489,10 +490,7 @@ def _main() -> None:
         "evaluation": run.report.to_dict(retain_predictions=False),
         "parity": {**asdict(parity_result), "passed": parity_result.passed},
     }
-    PROTOCOL_RESULT.write_text(
-        json.dumps(result, allow_nan=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    PROTOCOL_RESULT.write_text(render(result), encoding="utf-8")
 
 
 if __name__ == "__main__":

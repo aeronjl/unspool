@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -16,6 +15,7 @@ from benchmarks.ibl2021_replicated.manifest import (
     EXPECTED_MANIFEST_SHA256,
     load_manifest,
 )
+from benchmarks.provenance import render
 from unspool import (
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
@@ -497,8 +497,9 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=Path(__file__).with_name("result.json"))
     args = parser.parse_args()
     result = run(args.cache)
-    args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps(result, indent=2, sort_keys=True))
+    rendered = render(result, allow_nan=True)
+    args.output.write_text(rendered, encoding="utf-8")
+    print(rendered, end="")
 
 
 if __name__ == "__main__":

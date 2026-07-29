@@ -1,0 +1,57 @@
+{
+  "benchmark": "International Brain Laboratory et al. (2021), eLife 10:e63711",
+  "claim_status": {
+    "easy_trial_error_pct_at_proficiency": "pass",
+    "n_proficient_subjects": "fail",
+    "threshold_during_training_pct": "pass",
+    "threshold_pct_at_proficiency": "pass",
+    "training_days_to_proficiency": "pass",
+    "training_kilotrials_to_proficiency": "pass"
+  },
+  "classification": "failed-parity",
+  "contract_passed": false,
+  "easy_trial_error_pct_at_proficiency": 9.646231384370358,
+  "easy_trial_error_pct_at_proficiency_sd": 3.788935088562477,
+  "licence": "CC-BY-4.0",
+  "manifest_sha256": "4c925fb747fd48893b6c9fc69e427f5f8b372d63c36e82d73d02567880e0bcca",
+  "n_institutions": 7,
+  "n_manifest_sessions": 3058,
+  "n_manifest_subjects": 138,
+  "n_non_proficient_failing_behavioural_gates": 41,
+  "n_non_proficient_failing_only_psychometric_bounds": 10,
+  "n_non_proficient_with_too_few_sessions": 3,
+  "n_proficient_subjects": 84,
+  "n_trained_1a": 82,
+  "n_trained_1b": 2,
+  "n_trials": 1744819,
+  "proficiency_rate": 0.6086956521739131,
+  "provenance": {
+    "git_describe": "41b8cd3-dirty",
+    "libraries": {
+      "numpy": "2.3.5",
+      "one-api": "3.5.2",
+      "scipy": "1.18.0",
+      "unspool": "0.1.0"
+    },
+    "python": "3.12.13",
+    "schema_version": 1
+  },
+  "psychometric_seed": 20210101,
+  "public_alyx_url": "https://openalyx.internationalbrainlab.org",
+  "release_tag": "2021_Q1_IBL_et_al_Behaviour",
+  "rightward_choice_code": -1,
+  "source_doi": "10.7554/eLife.63711",
+  "strict_band_status": {
+    "easy_trial_error_pct_at_proficiency": "pass",
+    "threshold_pct_at_proficiency": "pass"
+  },
+  "threshold_during_training_pct": 16.283772991264534,
+  "threshold_during_training_pct_sd": 5.5168687167062,
+  "threshold_pct_at_proficiency": 14.17310930085841,
+  "threshold_pct_at_proficiency_sd": 3.7991966689545347,
+  "threshold_seed_sensitivity_pct": 3.783614852537198e-06,
+  "training_days_to_proficiency": 16.666666666666668,
+  "training_days_to_proficiency_sd": 10.53431951054271,
+  "training_kilotrials_to_proficiency": 10.067107142857143,
+  "training_kilotrials_to_proficiency_sd": 7.43769551370901
+}

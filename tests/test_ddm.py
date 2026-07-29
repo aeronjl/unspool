@@ -158,11 +158,11 @@ def test_fit_recovers_joint_choice_rt_parameters_and_retains_restart_diagnostics
     assert fit.restart_converged.shape == (ddm.n_restarts,)
     assert fit.likelihood_floor_count == 0
     assert fit.audit().status.value in {"pass", "warning"}
-    assert recovered.drift_map["drift.intercept"] == pytest.approx(0.2, abs=0.3)
-    assert recovered.drift_map["drift.stimulus"] == pytest.approx(1.2, abs=0.25)
-    assert recovered.boundary == pytest.approx(1.2, abs=0.15)
-    assert recovered.starting_bias == pytest.approx(0.45, abs=0.1)
-    assert recovered.nondecision_time == pytest.approx(0.25, abs=0.03)
+    assert recovered.drift_map["drift.intercept"] == pytest.approx(0.2, abs=0.155)
+    assert recovered.drift_map["drift.stimulus"] == pytest.approx(1.2, abs=0.145)
+    assert recovered.boundary == pytest.approx(1.2, abs=0.043)
+    assert recovered.starting_bias == pytest.approx(0.45, abs=0.024)
+    assert recovered.nondecision_time == pytest.approx(0.25, abs=0.0063)
     assert np.all(np.isfinite(ddm.pointwise_log_prob(simulated, fit)))
 
 

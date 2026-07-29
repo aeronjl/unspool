@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import json
 import math
 from collections import defaultdict
 from dataclasses import asdict, dataclass
@@ -21,6 +20,7 @@ from benchmarks.cell2025.fetch_data import (
     MEMBER_SHA256,
     sha256,
 )
+from benchmarks.provenance import render
 from unspool import Study
 
 EXPECTED = {
@@ -355,9 +355,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("data", type=Path, help="checksum-pinned Cell 2025 behaviour CSV")
     parser.add_argument("--no-check", action="store_true", help="report without enforcing contract")
+    parser.add_argument("--output", type=Path, help="also write the JSON result to this path")
     args = parser.parse_args()
     result = run(args.data.resolve(), check=not args.no_check)
-    print(json.dumps(asdict(result), indent=2, sort_keys=True))
+    rendered = render(asdict(result))
+    if args.output is not None:
+        args.output.write_text(rendered, encoding="utf-8")
+    print(rendered, end="")
 
 
 if __name__ == "__main__":

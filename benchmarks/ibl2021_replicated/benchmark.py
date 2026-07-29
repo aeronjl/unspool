@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,6 +16,7 @@ from benchmarks.ibl2021_replicated.manifest import (
     load_manifest,
     sources_from_manifest,
 )
+from benchmarks.provenance import render
 from unspool import (
     Study,
     TrajectoryPanel,
@@ -263,7 +263,7 @@ def main() -> None:
         bootstrap_resamples=args.bootstrap_resamples,
         bootstrap_seed=args.bootstrap_seed,
     )
-    rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
+    rendered = render(result, allow_nan=True)
     args.output.write_text(rendered, encoding="utf-8")
     print(rendered, end="")
 

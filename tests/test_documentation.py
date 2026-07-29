@@ -55,15 +55,25 @@ MODEL_CARD_CLASSES = {
     "WienerDriftDiffusion",
     "WinStayLoseShift",
 }
+EVIDENCE_LADDER = (
+    "published-parity",
+    "independent-analysis",
+    "released-replay",
+    "literature-shaped",
+    "demonstration",
+)
+RETAINED_OUTCOMES = ("failed-parity",)
+NON_COMPARATIVE_CLASSES = ("mixed-evidence", "synthetic-benchmark", "conceptual")
 FIGURE_CLASSES = {
-    "conceptual": "Conceptual",
+    "published-parity": "Published parity",
+    "independent-analysis": "Independent analysis",
+    "released-replay": "Released replay",
+    "literature-shaped": "Literature-shaped",
     "demonstration": "Demonstration",
-    "exact-reproduction": "Exact reproduction",
-    "independent-reproduction": "Independent reproduction",
-    "literature-shaped-analysis": "Literature-shaped analysis",
+    "failed-parity": "Failed parity",
     "mixed-evidence": "Mixed evidence",
-    "released-result": "Released result",
     "synthetic-benchmark": "Synthetic benchmark",
+    "conceptual": "Conceptual",
 }
 MANIFEST_FIELDS = {
     "classification",
@@ -77,11 +87,32 @@ MANIFEST_FIELDS = {
 }
 
 
-def _figure_manifest() -> dict[str, dict[str, str]]:
+def _figure_manifest_payload() -> dict[str, object]:
     path = ROOT / "docs" / "reference" / "figure-manifest.json"
     payload = json.loads(path.read_text(encoding="utf-8"))
-    assert payload["schema_version"] == 1
-    return payload["figures"]
+    assert payload["schema_version"] == 2
+    return payload
+
+
+def _figure_manifest() -> dict[str, dict[str, str]]:
+    return _figure_manifest_payload()["figures"]
+
+
+def test_evidence_ladder_ranks_published_parity_above_released_replay() -> None:
+    """A replay of released artifacts is a lower evidential bar than a published comparison."""
+
+    payload = _figure_manifest_payload()
+    ladder = payload["evidence_ladder"]
+
+    assert tuple(ladder) == EVIDENCE_LADDER
+    assert ladder.index("published-parity") < ladder.index("independent-analysis")
+    assert ladder.index("independent-analysis") < ladder.index("released-replay")
+    assert ladder.index("released-replay") < ladder.index("literature-shaped")
+    assert tuple(payload["retained_outcomes"]) == RETAINED_OUTCOMES
+    assert tuple(payload["non_comparative_classifications"]) == NON_COMPARATIVE_CLASSES
+    assert set(ladder) | set(RETAINED_OUTCOMES) | set(NON_COMPARATIVE_CLASSES) == set(
+        FIGURE_CLASSES
+    )
 
 
 def test_documentation_figures_are_versioned_valid_svgs() -> None:
@@ -191,7 +222,7 @@ def test_cell_figure1gi_asset_and_chapter_name_both_published_panels() -> None:
     assert "Figure 1G and 1I" in chapter
     assert "final-five-**paper-day** window" in chapter
     assert 'class="doc-figure__full-resolution"' in chapter
-    assert "Independent reproduction of Cell Figure 1G and 1I" in figure_text
+    assert "Published parity with Cell Figure 1G and 1I" in figure_text
     assert {"G", "I"} <= text_labels
     assert "Early bias (days 4-8)" in figure_text
     assert "DejaVu Sans" in (ASSETS / "cell2025-strategy.svg").read_text(encoding="utf-8")

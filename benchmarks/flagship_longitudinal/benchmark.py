@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -16,6 +15,7 @@ from benchmarks.cell2025.fetch_data import FIGSHARE_ARTICLE_DOI, MEMBER_SHA256, 
 from benchmarks.ibl2021.benchmark import load_study as load_ibl_study
 from benchmarks.ibl2021.fetch_data import DEFAULT_DESTINATION as DEFAULT_IBL_DATA
 from benchmarks.ibl2021.fetch_data import EXPECTED_MANIFEST_SHA256
+from benchmarks.provenance import render
 from unspool import (
     BernoulliHistoryGLM,
     FitResult,
@@ -382,7 +382,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=Path(__file__).with_name("result.json"))
     arguments = parser.parse_args()
     result = run(arguments.cell_data.resolve(), arguments.ibl_data.resolve())
-    rendered = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    rendered = render(result)
     arguments.output.write_text(rendered, encoding="utf-8")
     print(rendered, end="")
 

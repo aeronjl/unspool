@@ -45,3 +45,11 @@ design; it does not establish which mechanism generated the real animals.
 Data are released under CC0. The source dataset DOI is
 [`10.5061/dryad.z612jm6c0`](https://doi.org/10.5061/dryad.z612jm6c0), and the analysis
 reference is [`10.7554/eLife.69748`](https://doi.org/10.7554/eLife.69748).
+
+## Published parity
+
+[`published_claims.json`](published_claims.json) checks the two cohort facts this recipe
+does reproduce — 32 mice and eight sessions each — and records the paper's sex-difference
+result as `waived` with a written rationale. The waiver is the point: the recipe never
+reads subject sex and fits no exploration parameter, so the claim is machine-readably
+unchecked rather than quietly implied by proximity to the citation.
