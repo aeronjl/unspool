@@ -45,6 +45,13 @@ audits, comparisons, recovery assessment, rendered figures, and bounded report r
 separate artifacts. This makes it possible to identify what changed between two analyses
 without loading a Python object graph.
 
+`predictions/pointwise.json` and `audits/fits.json` are keyed candidate-by-candidate and
+then fold-by-fold, under the name the fold declared through
+[`ValidationFold.identifier`](../reference/contracts.md). That is the only key those maps
+have, so `evaluate_splits` refuses a split set whose fold names collide rather than letting
+one fold overwrite another in the archive. See
+[every fold names itself](../validation.md#every-fold-names-itself) for the naming scheme.
+
 ## Archive the Bayesian half
 
 `PosteriorEvidence` carries the posterior artefacts. Every slot is optional and an empty

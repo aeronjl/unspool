@@ -8,7 +8,8 @@ from typing import Any
 
 import numpy as np
 
-from behavio import HierarchicalSmoothWienerDriftDiffusion, Study
+from behavio import Study, WienerDriftDiffusion
+from behavio.compose import HierarchicalModel, hierarchical, smooth
 from benchmarks.provenance import render
 
 SUBJECT_COUNTS = (6, 12)
@@ -65,13 +66,13 @@ def experiment(*, n_subjects: int, seed: int) -> dict[str, Any]:
     estimated_fit = estimated_model.fit(train)
     oracle_model = _model(subject_scales=TRUE_SCALES)
     oracle_fit = oracle_model.fit(train)
-    intervals = estimated_fit.subject_scale_confidence_intervals_95
-    standard_errors = estimated_fit.subject_scale_standard_error_map
-    boundary = estimated_fit.subject_scale_at_boundary_map
+    intervals = estimated_fit.scale_confidence_intervals_95
+    standard_errors = estimated_fit.scale_standard_error_map
+    boundary = estimated_fit.scale_at_boundary_map
     if intervals is None or standard_errors is None or boundary is None:
         raise AssertionError("estimated fit did not retain scale diagnostics")
 
-    estimates = dict(estimated_fit.subject_scale_map)
+    estimates = dict(estimated_fit.scale_map)
     return {
         "seed": seed,
         "scale_estimates": estimates,
@@ -185,27 +186,34 @@ def _model(
     *,
     subject_scales: dict[str, float],
     estimate: bool = False,
-) -> HierarchicalSmoothWienerDriftDiffusion:
-    return HierarchicalSmoothWienerDriftDiffusion(
-        covariates=("stimulus",),
-        knots=KNOTS,
-        varying_parameters=("drift.stimulus", "boundary"),
-        subject_parameters=("drift.stimulus", "boundary"),
-        smoothness=8.0,
-        subject_parameter_scales=subject_scales,
-        estimate_subject_scales=estimate,
-        subject_scale_bounds=SCALE_BOUNDS,
+) -> HierarchicalModel:
+    return hierarchical(
+        smooth(
+            WienerDriftDiffusion(
+                covariates=("stimulus",),
+                n_restarts=1,
+                max_iterations=400,
+                tolerance=1e-6,
+                simulation_time_step=0.001,
+            ),
+            over="session_order",
+            knots=KNOTS,
+            parameters=("drift.stimulus", "boundary"),
+            smoothness=8.0,
+            group_smoothness=8.0,
+        ),
+        over="subject",
+        parameters=("drift.stimulus", "boundary"),
+        parameter_scales=subject_scales,
+        estimate_scale=estimate,
+        scale_estimator="laplace-em",
+        scale_bounds=SCALE_BOUNDS,
         scale_max_iterations=20,
         scale_tolerance=0.03,
-        subject_smoothness=8.0,
-        n_restarts=1,
-        max_iterations=400,
-        tolerance=1e-6,
-        simulation_time_step=0.001,
     )
 
 
-def _population_truth(model: HierarchicalSmoothWienerDriftDiffusion) -> dict[str, float]:
+def _population_truth(model: HierarchicalModel) -> dict[str, float]:
     return model.parameters_from_paths(
         {
             "drift.intercept": 0.1,

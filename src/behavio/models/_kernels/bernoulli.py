@@ -59,8 +59,14 @@ class BernoulliLikelihood:
         loss = np.logaddexp(0.0, linear_predictor).sum() - outcomes @ linear_predictor
         return float(loss), np.asarray(expit(linear_predictor) - outcomes, dtype=np.float64)
 
-    def curvature(self, linear_predictor: NDArray[np.float64]) -> NDArray[np.float64]:
-        """Return the per-row Fisher weight ``p (1 - p)``."""
+    def curvature(
+        self, linear_predictor: NDArray[np.float64], outcomes: NDArray[np.float64] | None = None
+    ) -> NDArray[np.float64]:
+        """Return the per-row Fisher weight ``p (1 - p)``.
+
+        The logit is the canonical link, so expected and observed information agree and the
+        observation is not read.
+        """
 
         probabilities = expit(linear_predictor)
         return np.asarray(probabilities * (1.0 - probabilities), dtype=np.float64)

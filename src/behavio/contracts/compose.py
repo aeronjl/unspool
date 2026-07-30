@@ -26,6 +26,27 @@ be widened, not the coordinate. Nothing about hierarchy or smoothness is per-fam
 nothing about them is per-shape either: :func:`expand_group_design` gained one ellipsis
 and :func:`expand_group_penalty` gained nothing at all.
 
+Channels: how wide one row's *observation* is
+---------------------------------------------
+A Bernoulli GLM observes one number per row and so does a multinomial logit -- a category
+code is still one number. A drift-diffusion model observes a **joint** event: which boundary
+was reached *and* when. :attr:`PenalisedLinearEstimator.outcome_channels` names that shape
+on the outcome side exactly as :attr:`~PenalisedLinearEstimator.predictor_cells` names it on
+the predictor side. ``()`` is the scalar case and ``outcomes`` is ``(rows,)``; a non-empty
+tuple names one **channel** per column of a ``(rows, channels)`` outcome.
+
+The compact alternative was a signed response time, one number carrying choice in its sign
+and latency in its magnitude. It was rejected. Signed RT cannot represent an omission -- a
+trial with a latency and no choice -- because zero is not a sign; it cannot carry a third
+observed quantity such as a confidence report or a wager, so the next joint family would
+have needed the widening anyway; and it makes every consumer that touches an outcome learn
+one family's sign convention. An explicit channel axis costs one validation branch here and
+nothing at all in either combinator, because grouping and smoothing partition *rows*: a
+channel axis sits to the right of the row axis, exactly where a cell axis does, and
+``outcomes[rows_of_one_group]`` selects a group's observations whatever their width. The
+likelihood is the only object that reads a channel, which is where knowing what "choice" and
+"response time" mean has always belonged.
+
 Support: which cells exist on which rows
 ----------------------------------------
 :meth:`PenalisedLinearEstimator.predictor_offsets` is the one thing a likelihood may read
@@ -123,10 +144,13 @@ from behavio.study import Study
 
 __all__ = [
     "GroupBlocks",
+    "GroupExpansion",
     "LinearPredictorLikelihood",
     "PenalisedDesign",
+    "PenalisedFitResult",
     "PenalisedLinearEstimator",
     "VaryingEffects",
+    "expand_group_box",
     "expand_group_design",
     "expand_group_penalty",
     "group_blocks",
@@ -162,6 +186,12 @@ class LinearPredictorLikelihood(Protocol):
     returns ``(rows,)`` second derivatives or ``(rows, cells, cells)`` Hessian blocks.
     :func:`parameter_gradient` and :func:`information_matrix` are the two shape-aware
     contractions that carry either back to the parameter coordinate.
+
+    ``outcomes`` is ``(rows,)`` or ``(rows, channels)`` and the two shapes are independent:
+    a family may score a joint observation through a scalar predictor or a scalar
+    observation through a per-cell one. This protocol is the *only* place in the package
+    that may know which channel is which, and a Wiener likelihood is exactly that -- a
+    density in two observed quantities whose predictor happens to be four numbers wide.
     """
 
     def prediction(
@@ -182,14 +212,67 @@ class LinearPredictorLikelihood(Protocol):
         """Return the negative log likelihood and its gradient in the linear predictor."""
         ...
 
-    def curvature(self, linear_predictor: NDArray[np.float64]) -> NDArray[np.float64]:
-        """Return the per-row second derivative of the negative log likelihood."""
+    def curvature(
+        self, linear_predictor: NDArray[np.float64], outcomes: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Return the per-row second derivative of the negative log likelihood.
+
+        The observation is an argument because *expected* and *observed* information
+        coincide only under a canonical link. They do for every exponential-family member
+        here, which is why this used to take the predictor alone; they do not for a
+        first-passage density, which has no closed-form expected information at all. A
+        family for which the two agree ignores the argument and returns what it always did.
+        """
         ...
 
 
 # --------------------------------------------------------------------------------------
 # The penalised problem
 # --------------------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class GroupExpansion:
+    """How a joint coordinate was built out of a population one.
+
+    :func:`expand_group_design` produces a coordinate whose structure is invisible in the
+    flat vector the optimizer sees. Most solvers do not need to see it: a penalised linear
+    fit is a penalised linear fit however its columns came about. A solver that *does* need
+    it -- one whose parameters are bounded on a natural scale, so that a group's admissible
+    deviation depends on where the population value sits, or one that exploits the arrowhead
+    sparsity of the joint Hessian rather than forming it densely -- reads it here rather
+    than parsing the joint parameter names.
+
+    ``columns`` is the population column each group block copies, in the order the block
+    holds them, so column ``n_population + group * width + j`` is a deviation from
+    population column ``columns[j]``.
+    """
+
+    n_population: int
+    n_groups: int
+    columns: NDArray[np.intp]
+
+    def __post_init__(self) -> None:
+        columns = protected_array(self.columns, dtype=np.intp)
+        if self.n_population < 1 or self.n_groups < 1:
+            raise ValueError("a group expansion needs a population block and at least one group")
+        if columns.ndim != 1 or not len(columns):
+            raise ValueError("a group expansion needs at least one varying column")
+        if columns.min() < 0 or columns.max() >= self.n_population:
+            raise ValueError("varying columns must index the population block")
+        object.__setattr__(self, "columns", columns)
+
+    @property
+    def width(self) -> int:
+        """The number of coordinates in one group's deviation block."""
+
+        return len(self.columns)
+
+    def group_slice(self, group: int) -> slice:
+        """The joint coordinates holding one group's deviations."""
+
+        start = self.n_population + group * self.width
+        return slice(start, start + self.width)
 
 
 @dataclass(frozen=True, slots=True)
@@ -203,7 +286,14 @@ class PenalisedDesign:
     ``design_matrix`` is ``(rows, parameters)`` for a scalar predictor and
     ``(rows, cells, parameters)`` for a per-cell one. ``offsets`` matches the linear
     predictor's shape and may contain ``-inf`` to place a cell outside the support of a
-    row.
+    row. ``outcomes`` is ``(rows,)`` for a scalar observation and ``(rows, channels)`` for a
+    joint one; nothing here interprets a channel, and nothing but the likelihood may.
+
+    ``box``, ``initial_points`` and ``expansion`` are what a *bounded* model's own solver
+    needs in order to still be its own solver on a wider problem. A quadratically penalised
+    logistic fit is unconstrained and starts from the origin, so all three are ``None`` for
+    it; a Wiener fit is a box-constrained multi-start problem on natural-scale parameters,
+    and none of that survives being handed a bare design matrix.
 
     ``derived_estimates`` is where reporting policy that the joint coordinate cannot
     express is handed back to the model. A hierarchical fit has to know whether
@@ -221,6 +311,9 @@ class PenalisedDesign:
     penalty_matrix: NDArray[np.float64]
     likelihood: LinearPredictorLikelihood
     offsets: NDArray[np.float64] | None = None
+    box: NDArray[np.float64] | None = None
+    initial_points: tuple[NDArray[np.float64], ...] | None = field(default=None, compare=False)
+    expansion: GroupExpansion | None = None
     derived_estimates: Callable[[NDArray[np.float64]], NDArray[np.float64]] | None = field(
         default=None, compare=False
     )
@@ -236,8 +329,10 @@ class PenalisedDesign:
             raise ValueError("the design matrix must have one column per parameter")
         if design.ndim == 3 and design.shape[1] < 1:
             raise ValueError("a per-cell design needs at least one predictor cell")
-        if outcomes.ndim != 1 or outcomes.shape[0] != design.shape[0]:
-            raise ValueError("outcomes must have one value per design row")
+        if outcomes.ndim not in (1, 2) or outcomes.shape[0] != design.shape[0]:
+            raise ValueError("outcomes must have one value or one channel vector per design row")
+        if outcomes.ndim == 2 and outcomes.shape[1] < 2:
+            raise ValueError("an outcome of one channel is the scalar case: pass it as (rows,)")
         if penalty.shape != (len(names), len(names)):
             raise ValueError("the penalty must be square with one row per parameter")
         if not isinstance(self.likelihood, LinearPredictorLikelihood):
@@ -248,6 +343,10 @@ class PenalisedDesign:
         object.__setattr__(self, "design_matrix", design)
         object.__setattr__(self, "outcomes", outcomes)
         object.__setattr__(self, "penalty_matrix", penalty)
+        self._validate_box(len(names))
+        self._validate_initial_points(len(names))
+        if self.expansion is not None and self.expansion.n_population > len(names):
+            raise ValueError("a group expansion must fit inside the joint coordinate")
         if self.offsets is None:
             return
         offsets = np.asarray(self.offsets, dtype=np.float64)
@@ -256,6 +355,28 @@ class PenalisedDesign:
         if np.any(np.isnan(offsets)) or np.any(np.isposinf(offsets)):
             raise ValueError("offsets may contain finite values or -inf")
         object.__setattr__(self, "offsets", offsets)
+
+    def _validate_box(self, n_parameters: int) -> None:
+        if self.box is None:
+            return
+        box = np.asarray(self.box, dtype=np.float64)
+        if box.shape != (n_parameters, 2):
+            raise ValueError("the box must contain a lower and an upper bound per parameter")
+        if not np.all(np.isfinite(box)) or np.any(box[:, 1] <= box[:, 0]):
+            raise ValueError("box bounds must be finite and increasing")
+        object.__setattr__(self, "box", box)
+
+    def _validate_initial_points(self, n_parameters: int) -> None:
+        if self.initial_points is None:
+            return
+        points = tuple(np.asarray(point, dtype=np.float64) for point in self.initial_points)
+        if not points:
+            raise ValueError("initial_points must contain at least one starting vector")
+        if any(point.shape != (n_parameters,) for point in points):
+            raise ValueError("every initial point must have one value per parameter")
+        if any(not np.all(np.isfinite(point)) for point in points):
+            raise ValueError("initial points must be finite")
+        object.__setattr__(self, "initial_points", points)
 
     @property
     def n_observations(self) -> int:
@@ -268,6 +389,12 @@ class PenalisedDesign:
         """The width of one row's linear predictor, or ``None`` when it is a scalar."""
 
         return None if self.design_matrix.ndim == 2 else int(self.design_matrix.shape[1])
+
+    @property
+    def n_channels(self) -> int | None:
+        """The width of one row's observation, or ``None`` when it is a scalar."""
+
+        return None if self.outcomes.ndim == 1 else int(self.outcomes.shape[1])
 
     @property
     def predictor_shape(self) -> tuple[int, ...]:
@@ -331,6 +458,34 @@ def information_matrix(
     )
 
 
+@dataclass(frozen=True, slots=True)
+class PenalisedFitResult(FitResult):
+    """A joint fit that also reports each group block's conditional covariance.
+
+    An EM estimate of a group scale needs the second moment of the deviations it is the
+    scale of, which is the squared conditional mode plus the conditional variance. The mode
+    is a slice of the estimate vector; the variance is not anywhere in a
+    :class:`~behavio.contracts.estimator.FitResult`, and recomputing it outside the solver
+    would mean rebuilding the objective the solver already had. A model whose
+    :meth:`PenalisedLinearEstimator.fit_penalised` was given a
+    :class:`GroupExpansion` returns this instead, and a combinator that does not need the
+    blocks simply does not read them.
+    """
+
+    conditional_group_covariances: NDArray[np.float64] | None = field(default=None, kw_only=True)
+
+    def __post_init__(self) -> None:
+        FitResult.__post_init__(self)
+        if self.conditional_group_covariances is None:
+            return
+        covariances = protected_array(self.conditional_group_covariances, dtype=np.float64)
+        if covariances.ndim != 3 or covariances.shape[1] != covariances.shape[2]:
+            raise ValueError("conditional group covariances must be one square block per group")
+        if not np.all(np.isfinite(covariances)):
+            raise ValueError("conditional group covariances must be finite")
+        object.__setattr__(self, "conditional_group_covariances", covariances)
+
+
 @runtime_checkable
 class PenalisedLinearEstimator(Protocol):
     """A model whose fit is a quadratically penalised linear-predictor problem.
@@ -352,6 +507,15 @@ class PenalisedLinearEstimator(Protocol):
         A multinomial logit names its categories here; a Bernoulli GLM declares ``()`` and
         every array it exchanges with a combinator keeps the shape it always had. The
         names are not parameters -- they say what the *predictor* is a predictor of.
+        """
+        ...
+
+    @property
+    def outcome_channels(self) -> tuple[str, ...]:
+        """Names for the columns of one row's observation, or ``()`` if it is scalar.
+
+        A drift-diffusion family names ``("choice", "response_time")`` here; every family
+        that scores a single number declares ``()`` and its ``outcomes`` stays ``(rows,)``.
         """
         ...
 
@@ -383,6 +547,37 @@ class PenalisedLinearEstimator(Protocol):
 
     def penalty_matrix(self) -> NDArray[np.float64]:
         """Return the quadratic penalty on the parameter coordinate."""
+        ...
+
+    def coordinate_box(self, study: Study) -> NDArray[np.float64] | None:
+        """Return the ``(parameters, 2)`` box this coordinate is estimated in, or ``None``.
+
+        ``None`` means unconstrained, which is the answer for every family whose parameters
+        are log-odds. A family whose coordinate is on a natural scale -- a boundary
+        separation is positive, a starting bias lies strictly inside ``(0, 1)`` -- answers
+        with the box, and it takes the study because one bound of it may be data-derived:
+        no non-decision time can exceed the fastest response.
+        """
+        ...
+
+    def initial_points(self, study: Study) -> tuple[NDArray[np.float64], ...]:
+        """Return the deterministic starting vectors this model's solver would use.
+
+        One point for a convex problem started at the origin; several for a family whose
+        objective is multi-modal enough to need restarts. A combinator maps each of them
+        onto the wider coordinate it built, which is the only way a composed multi-start
+        fit can start where the model itself would have started.
+        """
+        ...
+
+    def group_parameter_expansion(self, name: str) -> tuple[str, ...]:
+        """Return the reported parameters one declared varying name stands for.
+
+        ``(name,)`` for a model whose parameters are numbers. A smooth model answers with
+        every knot of a coefficient, because a path varies by group as a whole path: this
+        is what lets ``hierarchical(smooth(model), parameters=("boundary",))`` name the
+        coefficient the modeller thinks in rather than the knots the coordinate holds.
+        """
         ...
 
     def fit_penalised(
@@ -763,6 +958,28 @@ def expand_group_penalty(
         start = n_parameters + block * width
         joint[start : start + width, start : start + width] = group_penalty
     return joint
+
+
+def expand_group_box(
+    box: NDArray[np.float64] | None,
+    blocks: GroupBlocks,
+    columns: NDArray[np.intp],
+) -> NDArray[np.float64] | None:
+    """Return the box pairing :func:`expand_group_design`, or ``None`` for an open one.
+
+    A population coordinate keeps its own bounds. A deviation is bounded by the *width* of
+    the bound on the parameter it deviates from: a group cannot be moved further than from
+    one end of a parameter's admissible range to the other, and anything tighter would be a
+    prior smuggled in as a constraint. The bound that matters -- that population plus
+    deviation stays admissible -- is not a box at all, because it couples two coordinates;
+    it belongs to whichever solver reads :class:`GroupExpansion`.
+    """
+
+    if box is None:
+        return None
+    widths = box[columns, 1] - box[columns, 0]
+    deviation = np.column_stack([-widths, widths])
+    return np.vstack([box, np.tile(deviation, (blocks.n_groups, 1))])
 
 
 def joint_parameter_names(

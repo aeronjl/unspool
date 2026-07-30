@@ -75,13 +75,16 @@ class MultinomialLikelihood:
         gradient[rows, codes] -= 1.0
         return loss, np.asarray(gradient, dtype=np.float64)
 
-    def curvature(self, linear_predictor: NDArray[np.float64]) -> NDArray[np.float64]:
+    def curvature(
+        self, linear_predictor: NDArray[np.float64], outcomes: NDArray[np.float64] | None = None
+    ) -> NDArray[np.float64]:
         """Return each row's ``diag(p) - p p'`` block of the negative log likelihood.
 
         A scalar-predictor family returns one number per row here. A multinomial's cells
         are not independent -- a probability taken from one category is given to another --
         so the curvature is a matrix per row, and it is singular by construction: adding a
-        constant to every cell of a row changes nothing.
+        constant to every cell of a row changes nothing. The softmax is the canonical link,
+        so expected and observed information agree and the observation is not read.
         """
 
         probabilities = self._probabilities(linear_predictor)

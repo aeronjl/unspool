@@ -1,8 +1,53 @@
-# Partially pooled Wiener trajectories
+# Partially pooled drift diffusion
 
-`HierarchicalSmoothWienerDriftDiffusion` estimates a smooth population trajectory together
-with shrunken animal-specific deviations. It occupies the middle ground between treating
-all animals as copies of one average animal and fitting every animal independently.
+A study with several animals offers two bad answers and one good one. Fitting every animal
+together treats them as copies of one average animal and hides the individual differences
+the experiment was run to measure. Fitting every animal separately throws away the fact
+that they performed the same task, and gives the animals with the fewest trials the noisiest
+parameters. Partial pooling is the middle ground: a population estimate and a shrunken
+per-animal deviation from it, estimated together, with the amount of shrinkage governed by
+a declared prior width rather than by a choice between the two extremes.
+
+In Behavio this is `hierarchical()` applied to a Wiener model. It is not a class of its
+own — [Composing models](composing-models.md) covers the combinator, and this page covers
+what the resulting model means for a cohort of animals.
+
+## The two shapes
+
+```python
+from behavio import WienerDriftDiffusion
+from behavio.compose import hierarchical, smooth
+
+base = WienerDriftDiffusion(covariates=("stimulus",))
+
+# Animals differ, but nothing changes across sessions.
+pooled = hierarchical(base, over="subject", parameters=("drift.stimulus", "boundary"), scale=0.2)
+
+# Animals differ *and* the population follows a path across sessions.
+paths = smooth(
+    base,
+    over="session_order",
+    knots=(0.0, 2.0, 4.0),
+    parameters=("drift.stimulus", "boundary"),
+    smoothness=8.0,
+    group_smoothness=8.0,
+)
+pooled_paths = hierarchical(
+    paths, over="subject", parameters=("drift.stimulus", "boundary"), scale=0.2
+)
+```
+
+The first of those never existed before the combinators: there was a hierarchical *smooth*
+drift-diffusion class but no hierarchical static one, so a cohort with no longitudinal
+hypothesis had to declare knots it did not believe in. It is now the ordinary case, and it
+is the shape most published hierarchical DDM analyses actually have.
+
+**Hierarchy is the outer combinator.** `hierarchical(smooth(model))` is the working order
+and `smooth(hierarchical(model))` raises `TypeError`: a hierarchical estimator reports the
+population coordinate while fitting a joint one whose width depends on how many animals the
+study contains, and nothing outside it can expand a coordinate of unknown width.
+
+## Shrinkage
 
 For selected parameter \(p\), animal \(s\), and knot \(k\),
 
@@ -10,8 +55,8 @@ For selected parameter \(p\), animal \(s\), and knot \(k\),
 \theta_{spk}=\mu_{pk}+\delta_{spk}.
 \]
 
-The population path \(\mu_p\) has the same time-scaled first-difference penalty as
-`SmoothWienerDriftDiffusion`. Subject deviations use
+The population path \(\mu_p\) carries the same time-scaled first-difference penalty as any
+smooth model. Animal deviations use
 
 \[
 \frac{1}{2\sigma_p^2}\sum_k\delta_{spk}^2
@@ -19,61 +64,83 @@ The population path \(\mu_p\) has the same time-scaled first-difference penalty 
 \frac{(\delta_{spk}-\delta_{sp,k-1})^2}{u_k-u_{k-1}}.
 \]
 
-Each selected parameter may have its own natural-scale deviation size \(\sigma_p\), while
-`subject_smoothness` is the shared \(\lambda_s\). The model performs a joint penalized
-maximum-a-posteriori fit. It is hierarchical partial pooling, but it is not a full Bayesian
-posterior sampler.
+The first term is what shrinks: as \(\sigma_p \to 0\) every animal collapses onto the
+population estimate, which is complete pooling, and as \(\sigma_p \to \infty\) the animals
+separate into independent fits. Each selected parameter has its own natural-scale deviation
+size \(\sigma_p\), declared with `scale=` or per parameter with `parameter_scales=`.
+
+The second term exists because **a deviation from a path is itself a path**. \(\lambda_s\)
+is the `group_smoothness` declared on the inner `smooth()` call, and it defaults to
+`smoothness`. Without it, an animal's deviation would get a plain isotropic ridge — one
+independent Gaussian per knot — and every animal would be free to jump between adjacent
+knots at no cost, so the fitted "individual trajectories" would be noise wearing a
+trajectory's clothes. A parameter that was never smoothed has a deviation that is a number
+rather than a path, and gets the ordinary ridge.
+
+The model performs a joint penalized maximum-a-posteriori fit. It is hierarchical partial
+pooling, but it is not a full Bayesian posterior sampler.
 
 ## Declaring the hierarchy
 
-Only parameters already listed in `varying_parameters` may receive subject paths. A narrow
-hypothesis keeps the optimization and interpretation tractable:
+Any parameter of the wrapped model may vary by animal, whether or not it follows a path. A
+smooth parameter varies as a *whole path*: naming `"boundary"` names every knot of the
+boundary path and gives the whole path one scale, because a partial path has no roughness
+prior. A narrow hypothesis keeps the optimization and interpretation tractable:
 
 ```python
-from behavio import HierarchicalSmoothWienerDriftDiffusion
-
-model = HierarchicalSmoothWienerDriftDiffusion(
-    covariates=("stimulus",),
-    time="session_order",
-    knots=(0.0, 2.0, 4.0),
-    varying_parameters=("drift.stimulus", "boundary"),
-    subject_parameters=("drift.stimulus", "boundary"),
-    smoothness=8.0,
-    subject_parameter_scales={"drift.stimulus": 0.2, "boundary": 0.08},
-    subject_smoothness=8.0,
+model = hierarchical(
+    smooth(
+        WienerDriftDiffusion(covariates=("stimulus",)),
+        over="session_order",
+        knots=(0.0, 2.0, 4.0),
+        parameters=("drift.stimulus", "boundary"),
+        smoothness=8.0,
+        group_smoothness=8.0,
+    ),
+    over="subject",
+    parameters=("drift.stimulus", "boundary"),
+    parameter_scales={"drift.stimulus": 0.2, "boundary": 0.08},
 )
 ```
 
-`subject_scale` remains a backward-compatible common fallback when
-`subject_parameter_scales` is omitted. A mapping must name every selected subject
-parameter exactly; its values are ordered internally by `subject_parameters`, never by
-mapping insertion order.
+`scale=` is the common fallback when `parameter_scales=` omits a parameter. `over=` is any
+study column, so `over="lab"` declares a lab-level model with the same machinery — though
+whether a handful of labs supports population-of-labs inference is a design question, not a
+mechanical one.
 
 ## Estimating heterogeneity from training data
 
-Fixed scales remain the default. To estimate separate components, declare bounds and a
-neutral starting value for every parameter:
+Fixed scales remain the default. `estimate_scale=True` with
+`scale_estimator="laplace-em"` estimates one scale per named parameter from the training
+rows, starting at the declared values:
 
 ```python
-model = HierarchicalSmoothWienerDriftDiffusion(
-    covariates=("stimulus",),
-    time="session_order",
-    knots=(0.0, 2.0, 4.0),
-    varying_parameters=("drift.stimulus", "boundary"),
-    subject_parameters=("drift.stimulus", "boundary"),
-    subject_parameter_scales={"drift.stimulus": 0.15, "boundary": 0.15},
-    estimate_subject_scales=True,
-    subject_scale_bounds=(0.03, 0.5),
-    subject_scale_uncertainty="supplemented",
+model = hierarchical(
+    smooth(
+        WienerDriftDiffusion(covariates=("stimulus",)),
+        over="session_order",
+        knots=(0.0, 2.0, 4.0),
+        parameters=("drift.stimulus", "boundary"),
+    ),
+    over="subject",
+    parameters=("drift.stimulus", "boundary"),
+    parameter_scales={"drift.stimulus": 0.15, "boundary": 0.15},
+    estimate_scale=True,
+    scale_estimator="laplace-em",
+    scale_bounds=(0.03, 0.5),
 )
 
 fit = model.fit(training_study)
-print(fit.subject_scale_map)
-print(fit.subject_scale_standard_error_map)
-print(fit.subject_scale_at_boundary_map)
+print(fit.scale_map)
+print(fit.scale_standard_error_map)
+print(fit.scale_at_boundary_map)
 ```
 
-The estimator alternates a joint path-MAP step with bounded variance-component updates.
+The other estimator, `scale_estimator="laplace-profile"` (the default), optimises one
+common multiplier on the declared scales instead. Use `"laplace-em"` when the parameters
+that vary are not commensurable — a drift coefficient and a boundary separation are not.
+
+The EM estimator alternates a joint path-MAP step with bounded variance-component updates.
 Each update minimizes the expected normalized Gaussian-prior loss under a local
 conditional Laplace approximation. This avoids treating scales as raw joint-MAP
 coordinates, which would reward collapsing scales and deviations together. It is an
@@ -81,11 +148,12 @@ approximate Laplace-EM procedure, not exact marginal likelihood.
 
 Only rows passed to `fit()` participate. Consequently, prospective split evaluation
 estimates scales from each training study before scoring its held-out sessions or animals.
-`scale_estimation_iterations`, `scale_estimation_converged`, and named bound flags remain
-on the fit result. A bound hit means the design did not resolve heterogeneity beyond the
-declared range; it is not evidence that the true variance equals the bound.
+`fit.scale_estimation_iterations`, `fit.scale_estimation_converged`, and
+`fit.scale_at_boundary_map` remain on the fit result. A bound hit means the design did not
+resolve heterogeneity beyond the declared range; it is not evidence that the true variance
+equals the bound.
 
-The opt-in `subject_scale_uncertainty="local"` mode uses final expected-prior curvature in
+The opt-in `scale_uncertainty="local"` mode uses final expected-prior curvature in
 log-scale coordinates. That curvature is complete-data information, which is never smaller
 than the information the marginal likelihood actually carries, so local intervals are
 systematically too narrow. They are optimization diagnostics rather than calibrated
@@ -99,50 +167,73 @@ E-step already computes, so the correction adds no optimization and cannot fail 
 stability condition. A non-positive-definite corrected information raises
 `ModelDataError` rather than being clipped.
 
-The opt-in `"supplemented"` mode instead differentiates one forced EM update around the
+The opt-in `scale_uncertainty="supplemented"` mode instead differentiates one forced EM update around the
 fitted log scales and uses its rate matrix to correct the complete-data information for
 missing information. This follows the supplemented EM construction of
 [Meng and Rubin (1991)](https://doi.org/10.1080/01621459.1991.10475130), applied to
 Behavio's approximate Laplace-EM map. The fit retains both
-`subject_scale_local_standard_errors` and the selected
-`subject_scale_standard_errors`, plus `subject_scale_covariance`,
-`subject_scale_em_rate_matrix`, and `subject_scale_em_spectral_radius`. Reported 95%
-intervals are transformed on the log scale and clipped only to the declared scale bounds.
+`fit.scale_local_standard_errors` and the selected `fit.scale_standard_errors`, plus
+`fit.scale_covariance`, `fit.scale_em_rate_matrix`, and `fit.scale_em_spectral_radius`.
+Reported 95% intervals are transformed on the log scale and clipped only to the declared
+scale bounds.
 
 Supplementation requires a converged scale procedure, an EM spectral radius below one,
 and positive observed information. A failed condition raises `ModelDataError`; Behavio
-does not manufacture a covariance by clipping eigenvalues. The pinned benchmark now
+does not manufacture a covariance by clipping eigenvalues. Because it can refuse, it is
+requested rather than assumed — `hierarchical(..., scale_uncertainty="supplemented")` is
+also rejected at construction unless `estimate_scale=True` and
+`scale_estimator="laplace-em"` are both set, so the refusal cannot be discovered halfway
+through a study. The pinned benchmark now
 resolves 20/20 panels, with a maximum spectral radius of `0.89677`; the refusal path is
 retained and still fires on an unstable map, but this pinned design no longer exercises
 it. That is a guarded finite-design improvement rather than a universal calibration
 guarantee.
 
-Population simulation parameters retain the smooth Wiener's stable natural-scale
-coordinates. `simulate_with_effects()` either draws deviation paths from the configured
-Gaussian precision or accepts explicit paths for recovery experiments. Realized random
-effects are returned in `HierarchicalSmoothDriftDiffusionSimulation`; they are never added
-to observed `Study` columns.
+## Simulation and reading a fit
+
+Population simulation parameters are the wrapped model's own stable natural-scale
+coordinates, so a recovery study compares fitted population estimates against the same
+named truth it simulated from. `simulate_with_effects()` either draws deviation paths from
+the configured Gaussian precision or accepts explicit `group_deviations` for recovery
+experiments. Realized random effects are returned on the `HierarchicalSimulation`; they are
+never added to observed `Study` columns.
 
 ```python
 simulation = model.simulate_with_effects(design, population_truth, seed=31)
 fit = model.fit(simulation.study)
 
-population = model.population_trajectory(fit)
-mouse_path = model.subject_trajectory(fit, "mouse-03")
+population = model.coefficient_trajectory(fit)
+mouse_path = model.group_trajectory(fit, "mouse-03")
 ```
 
-`HierarchicalSmoothDriftDiffusionFitResult` retains population estimates, every subject
-deviation and local standard error, restart evidence, the common fit audit, and the
-declared population policy. Arrays are read-only.
+`HierarchicalFitResult` retains population estimates, every animal deviation and local
+standard error, the fitted scales, restart evidence, the common fit audit, and the declared
+unseen-group policy. `fit.group_deviations` is `(groups, varying)`,
+`fit.parameters_for("mouse-03")` is one animal's full parameter vector, and
+`fit.group_was_fitted(label)` says whether an animal was in training. Arrays are read-only.
+Without an inner `smooth()` there are no trajectories to read, and
+`coefficient_trajectory` says so rather than inventing a clock.
 
 ## Natural-scale constraints
 
-Deviations are additive on the public natural scale. Effective drift, boundary, and bias
-paths must therefore remain within their configured bounds. Explicit simulation paths are
-rejected if they violate those bounds. Random simulation draws use bounded rejection, and
-the joint optimizer uses a continuous quadratic constraint penalty while evaluating the
-likelihood at the nearest admissible path. A fitted optimum outside tolerance is rejected
-rather than silently clipped.
+Deviations are additive on the public natural scale, with no link function between them and
+the likelihood. Effective drift, boundary, bias and non-decision values must therefore
+remain within the configured natural bounds, and that requirement couples two coordinates
+rather than bounding either one: a deviation is boxed only by the *width* of its parameter's
+admissible range, because anything tighter would be a prior smuggled in as a constraint.
+
+The fit is where it is enforced. The joint optimizer evaluates the likelihood at the nearest
+admissible population-plus-deviation value and prices the excursion with a continuous
+quadratic penalty, so the search is pushed back inside rather than walking off the natural
+scale; a fitted optimum still outside tolerance raises `ModelDataError` instead of being
+silently clipped, and the boundary diagnostic inspects population-plus-deviation rather than
+only the coordinates the optimizer returned.
+
+Simulation does not enforce it. Neither a Gaussian deviation draw nor an explicit
+`group_deviations` mapping is rejected for leaving the natural range, so a `scale` large
+relative to a parameter's range can generate an animal whose effective boundary is
+inadmissible and whose trials are degenerate. Declared scales are a modelling statement
+about a cohort; check them against the parameter's bounds before simulating from them.
 
 The local Hessian has an arrowhead structure: all animals couple to the population block,
 but one animal's deviation block does not couple directly to another's. Behavio evaluates
@@ -154,36 +245,39 @@ approximation conditional on the fitted penalties.
 ## Seen and unseen animals
 
 For an animal present during fitting, prediction uses its fitted population-plus-deviation
-trajectory. A completely unseen animal uses the population trajectory plug-in, recorded as
-`unseen_subject_policy="population-trajectory-plugin"`. This remains the deterministic
-`predict()` behavior, making generic prospective evaluation reproducible and cheap.
+parameters. A completely unseen animal uses the population plug-in, recorded as
+`unseen_group_policy="population-plugin"`. This remains the deterministic `predict()`
+behavior, making generic prospective evaluation reproducible and cheap. It is the *mode* of
+a new animal's prior, which is not that animal's predictive distribution: a new animal is
+not an average animal.
 
 For a predictive distribution over new heterogeneity, use the explicit Monte Carlo API:
 
 ```python
-predictive = model.predict_new_subjects(
+predictive = model.predict_new_groups(
     held_out_animals,
     fit,
     n_draws=4096,
     seed=812,
 )
 
-print(predictive.prediction.probability)
-print(predictive.subject_joint_log_probability_map)
-print(predictive.subject_effective_draws)
-print(predictive.subject_log_probability_mcse)
+print(predictive.probability)
+print(predictive.group_joint_log_probability_map)
+print(predictive.group_effective_draws)
+print(predictive.group_log_probability_mcse)
 ```
 
-Every draw samples one smooth deviation path per unseen animal and reuses it across all of
-that animal's rows. This preserves within-animal dependence. The result distinguishes
-pointwise marginal joint densities from the scientifically appropriate subject-joint
-score, which takes the log only after multiplying each draw's trial densities. It also
-retains marginal choice probabilities, the random-effect draws, effective draw counts,
-and delta-method log-score Monte Carlo standard errors. The method rejects any animal that
-appeared in the fit, preventing accidental replacement of fitted individual trajectories.
+Every draw samples one deviation per unseen animal — one smooth path per animal when the
+wrapped model is smooth — and reuses it across all of that animal's rows. This preserves
+within-animal dependence. The result distinguishes pointwise marginal joint densities from
+the scientifically appropriate subject-joint score, which takes the log only after
+multiplying each draw's trial densities. It also retains marginal choice probabilities, the
+random-effect draws, effective draw counts, and delta-method log-score Monte Carlo standard
+errors. The method rejects any animal that appeared in the fit, preventing accidental
+replacement of fitted individual trajectories.
 
-This distribution conditions on the fitted population trajectories and scale estimates;
-it does not integrate their uncertainty. It is therefore empirical-Bayes random-effect
+This distribution conditions on the fitted population parameters and scale estimates; it
+does not integrate their uncertainty. It is therefore empirical-Bayes random-effect
 prediction, not full Bayesian posterior prediction.
 
 Use complete-subject holdouts to test the population policy and cohort-forward session
@@ -203,14 +297,23 @@ Current limitations are explicit:
 - scale estimation is empirical-Bayes Laplace-EM rather than full posterior inference;
 - supplemented scale intervals remain a local numerical approximation and can be
   unresolved when the fitted EM map is unstable;
-- all parameter-specific components share one path-smoothness value;
-- subject deviations for stationary non-decision time are not supported;
-- contaminant mixtures and within-decision time-varying dynamics are not supported;
+- one `group_smoothness` value governs every deviation path;
+- deviations are independent across parameters: there is no correlated random-effect
+  covariance;
+- within-decision time-varying dynamics are not supported, here or anywhere in the family;
 - unseen-animal random-effect prediction does not propagate population or scale
   uncertainty;
-- lab-level random effects remain future work; aligned fitted trajectories can be passed
-  to the separate [cross-lab trajectory-shape contract](trajectory-shapes.md), which first
-  audits independent animals per lab.
+- fitting uses a dense joint design and Hessian, so it targets moderate cohorts rather
+  than thousands of animals;
+- `over="lab"` is mechanically available, but cross-lab claims should still go through the
+  separate [cross-lab trajectory-shape contract](trajectory-shapes.md), which first audits
+  independent animals per lab.
+
+Two limitations the hand-written class carried have gone. A stationary parameter such as
+non-decision time can now carry an animal deviation, because `parameters=` is a free
+declaration over the wrapped coordinate rather than a subset of the smoothed parameters.
+And a contaminant weight composes like any other parameter, so a per-animal lapse rate is
+an ordinary use of `hierarchical()`.
 
 ## Recovery evidence
 
@@ -245,6 +348,13 @@ all 20 panels and reaches conditional coverage of 100% for both. Across 80 entir
 animals, integrating fitted random effects improves mean subject-joint log probability by
 `0.98299` and wins for 68.75%; effective draws and score Monte Carlo errors remain
 attached to every subject.
+
+`tests/test_compose_ddm.py` additionally replays a stored reference produced by the deleted
+`HierarchicalSmoothWienerDriftDiffusion` before it was removed. Simulated data and drawn
+random effects are bit-for-bit equal and the joint objective agrees to one unit in the last
+place at the deleted class's own optimum; the fitted estimates agree to about `1e-3`,
+which is the optimizer's amplification of that last-place difference rather than a
+modelling change.
 
 Run the example and benchmark with:
 

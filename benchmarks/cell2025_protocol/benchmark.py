@@ -6,6 +6,18 @@ hierarchical and hierarchical-smooth candidates are now
 the wrapped model's signature instead of naming a single class. The fits themselves are
 bit-identical -- the composition reproduces the deleted classes exactly -- so only the
 recorded identity strings move, and they move on the next re-run against the real data.
+
+It is **also stale in every fingerprint**, for a second and unrelated reason.
+:class:`~behavio.protocol.ComparisonSpec` now declares its ``multiplicity``, which moved
+the schema to ``behavio.study-protocol/2``. The recorded payload is a version 1 protocol
+and keeps its own fingerprint when read back -- ``protocol_from_dict`` preserves a
+superseded record's content address exactly so its lifecycle events stay verifiable -- but
+:func:`build_protocol` now emits version 2, so ``parity.protocol_fingerprint``,
+``plan.fingerprint``, ``evaluation.fingerprint`` and the four lifecycle
+``artifact_fingerprint`` values will all move on the next re-run. The adjustment declared
+is Benjamini-Hochberg, which is what the runner applied unconditionally when this result
+was recorded, so **no score, interval, audit or verdict changes with them** -- only the
+declaration's content address.
 """
 
 from __future__ import annotations
@@ -20,6 +32,7 @@ from behavio import (
     CandidateSpec,
     CohortPredicate,
     CohortSpec,
+    ComparisonMultiplicity,
     ComparisonSpec,
     CompiledProtocol,
     EstimandSpec,
@@ -326,7 +339,8 @@ def build_protocol() -> StudyProtocol:
             BOOTSTRAP_SEED,
             True,
             WinnerPolicy.INTERVAL_EXCLUDES_ZERO,
-            "pooled_psychometric",
+            multiplicity=ComparisonMultiplicity.BENJAMINI_HOCHBERG,
+            reference_candidate="pooled_psychometric",
         ),
         recovery=(
             RecoverySpec(

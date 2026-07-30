@@ -8,7 +8,8 @@ from typing import Any
 
 import numpy as np
 
-from behavio import HierarchicalSmoothWienerDriftDiffusion, ModelDataError, Study
+from behavio import ModelDataError, Study, WienerDriftDiffusion
+from behavio.compose import HierarchicalModel, hierarchical, smooth
 from benchmarks.provenance import render
 
 TRAINING_SUBJECTS = 8
@@ -87,7 +88,7 @@ def experiment(*, seed: int) -> dict[str, Any]:
             scale_uncertainty="local",
         )
         fit = estimated_model.fit(training)
-    predictive = estimated_model.predict_new_subjects(
+    predictive = estimated_model.predict_new_groups(
         unseen,
         fit,
         n_draws=PREDICTIVE_DRAWS,
@@ -95,9 +96,9 @@ def experiment(*, seed: int) -> dict[str, Any]:
     )
 
     supplemented_intervals = (
-        None if supplemented_error is not None else fit.subject_scale_confidence_intervals_95
+        None if supplemented_error is not None else fit.scale_confidence_intervals_95
     )
-    local_intervals = fit.subject_scale_local_confidence_intervals_95
+    local_intervals = fit.scale_local_confidence_intervals_95
     if local_intervals is None:
         raise AssertionError("estimated fit did not retain local scale intervals")
     if supplemented_error is None and supplemented_intervals is None:
@@ -107,7 +108,7 @@ def experiment(*, seed: int) -> dict[str, Any]:
         subject: float(np.sum(plugin_pointwise[unseen["subject"] == subject]))
         for subject in unseen.subjects
     }
-    predictive_subject = predictive.subject_joint_log_probability_map
+    predictive_subject = predictive.group_joint_log_probability_map
     subject_improvements = {
         subject: predictive_subject[subject] - plugin_subject[subject]
         for subject in unseen.subjects
@@ -116,9 +117,9 @@ def experiment(*, seed: int) -> dict[str, Any]:
         "seed": seed,
         "fit_audit": fit.audit().to_dict(),
         "scale_estimation_converged": fit.scale_estimation_converged,
-        "scale_em_spectral_radius": fit.subject_scale_em_spectral_radius,
+        "scale_em_spectral_radius": fit.scale_em_spectral_radius,
         "supplemented_interval_error": supplemented_error,
-        "scale_estimates": dict(fit.subject_scale_map),
+        "scale_estimates": dict(fit.scale_map),
         "local_intervals": {
             parameter: list(interval) for parameter, interval in local_intervals.items()
         },
@@ -280,28 +281,35 @@ def _model(
     subject_scales: dict[str, float],
     estimate: bool = False,
     scale_uncertainty: str = "local",
-) -> HierarchicalSmoothWienerDriftDiffusion:
-    return HierarchicalSmoothWienerDriftDiffusion(
-        covariates=("stimulus",),
-        knots=KNOTS,
-        varying_parameters=("drift.stimulus", "boundary"),
-        subject_parameters=("drift.stimulus", "boundary"),
-        smoothness=8.0,
-        subject_parameter_scales=subject_scales,
-        estimate_subject_scales=estimate,
-        subject_scale_bounds=SCALE_BOUNDS,
+) -> HierarchicalModel:
+    return hierarchical(
+        smooth(
+            WienerDriftDiffusion(
+                covariates=("stimulus",),
+                n_restarts=1,
+                max_iterations=350,
+                tolerance=1e-6,
+                simulation_time_step=0.001,
+            ),
+            over="session_order",
+            knots=KNOTS,
+            parameters=("drift.stimulus", "boundary"),
+            smoothness=8.0,
+            group_smoothness=8.0,
+        ),
+        over="subject",
+        parameters=("drift.stimulus", "boundary"),
+        parameter_scales=subject_scales,
+        estimate_scale=estimate,
+        scale_estimator="laplace-em",
+        scale_bounds=SCALE_BOUNDS,
         scale_max_iterations=20,
         scale_tolerance=0.04,
-        subject_scale_uncertainty=scale_uncertainty,
-        subject_smoothness=8.0,
-        n_restarts=1,
-        max_iterations=350,
-        tolerance=1e-6,
-        simulation_time_step=0.001,
+        scale_uncertainty=scale_uncertainty,
     )
 
 
-def _population_truth(model: HierarchicalSmoothWienerDriftDiffusion) -> dict[str, float]:
+def _population_truth(model: HierarchicalModel) -> dict[str, float]:
     return model.parameters_from_paths(
         {
             "drift.intercept": 0.1,

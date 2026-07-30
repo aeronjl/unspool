@@ -214,8 +214,9 @@ class FoldEvaluation:
     ``posterior`` is ``None`` for an optimizer fit and carries the sampling evidence when
     the fold was scored from a posterior, so the two are never confused for one another.
 
-    ``identifier`` is the fold's stable name. A compiled protocol fold supplies its own;
-    anything else is numbered in the order it was evaluated. ``audit`` is the fold fit's
+    ``identifier`` is the fold's stable name, taken from
+    :attr:`~behavio.contracts.fold.ValidationFold.identifier` on the split it scored, so
+    a report always names the fold the splitter named. ``audit`` is the fold fit's
     normalized numerical audit, computed once here rather than recomputed by every layer
     that needs to know whether the fold is usable.
     """
@@ -399,7 +400,9 @@ def evaluate_splits(
 
     evaluations: list[FoldEvaluation] = []
     failures: list[FoldFailure] = []
+    seen: dict[str, int] = {}
     for position, split in enumerate(splits):
+        identifier = _fold_identifier(split, position, seen)
         if require_prospective and not split.prospective:
             raise ValueError(
                 f"split scheme {split.scheme!r} is not prospective; "
@@ -412,7 +415,6 @@ def evaluate_splits(
             len(study),
             "prediction_context_indices",
         )
-        identifier = str(getattr(split, "identifier", "") or f"fold-{position:04d}")
         stage = FoldStage.FIT
         try:
             training = study.take(split.train_indices)
@@ -452,6 +454,43 @@ def evaluate_splits(
                 )
             )
     return SplitEvaluation(tuple(evaluations), tuple(failures), failure_policy)
+
+
+def _fold_identifier(split: ValidationFold, position: int, seen: dict[str, int]) -> str:
+    """Read one fold's declared name and refuse a split set that cannot be keyed by it.
+
+    ``identifier`` is a declared member of :class:`~behavio.contracts.fold.ValidationFold`.
+    It used to be read with a ``getattr`` fallback that numbered unnamed folds by position,
+    which meant the library depended on a name it had never asked any fold to supply, and
+    silently produced ``fold-0003`` for anything that did not. A split that does not name
+    itself now fails the contract, loudly, at the fold that broke it.
+
+    Duplicate names are refused for the same reason: a retained failure names its fold, and
+    an evidence bundle keys its prediction and audit maps on the name. Two folds sharing one
+    would not be an ambiguity to resolve later -- one of them would simply disappear from
+    the record.
+    """
+
+    try:
+        identifier = split.identifier
+    except AttributeError:
+        raise TypeError(
+            f"the split at position {position} declares no identifier and so does not "
+            "satisfy behavio.contracts.fold.ValidationFold"
+        ) from None
+    if not isinstance(identifier, str) or not identifier:
+        raise ValueError(
+            f"the split at position {position} must declare a non-empty string identifier; "
+            f"got {identifier!r}"
+        )
+    if identifier in seen:
+        raise ValueError(
+            f"splits at positions {seen[identifier]} and {position} share the identifier "
+            f"{identifier!r}; fold names key retained failures and evidence-bundle records, "
+            "so they must be distinct within one split set"
+        )
+    seen[identifier] = position
+    return identifier
 
 
 def _fold_fit(

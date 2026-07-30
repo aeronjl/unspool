@@ -157,8 +157,8 @@ nav:
       - GLM-HMM: glm-hmm.md
       - Reinforcement learning: q-learning.md
       - Drift diffusion: drift-diffusion.md
-      - Smooth drift diffusion: smooth-ddm.md
-      - Hierarchical smooth DDM: hierarchical-smooth-ddm.md
+      - Session-varying drift diffusion: smooth-ddm.md
+      - Partially pooled drift diffusion: hierarchical-smooth-ddm.md
   - Data:
       - Tabular, IBL, NWB, and DANDI: interoperability.md
       - Observed behaviour: observed-behaviour.md

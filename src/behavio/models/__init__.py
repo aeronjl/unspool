@@ -46,12 +46,6 @@ from behavio.models.glm_hmm import (
     GLMHMMParameters,
     GLMHMMSimulation,
 )
-from behavio.models.hierarchical_smooth_ddm import (
-    HierarchicalSmoothDriftDiffusionFitResult,
-    HierarchicalSmoothDriftDiffusionSimulation,
-    HierarchicalSmoothWienerDriftDiffusion,
-    UnseenSubjectPosteriorPrediction,
-)
 from behavio.models.multinomial import MultinomialLogit
 from behavio.models.psychometric import (
     PsychometricFitResult,
@@ -96,11 +90,6 @@ from behavio.models.sdt import (
     roc_points,
     z_roc_summary,
 )
-from behavio.models.smooth_ddm import (
-    DriftDiffusionTrajectory,
-    SmoothDriftDiffusionFitResult,
-    SmoothWienerDriftDiffusion,
-)
 
 __all__ = [
     "AsymmetricLearning",
@@ -120,7 +109,6 @@ __all__ = [
     "DriftDiffusionFitResult",
     "DriftDiffusionParameters",
     "DriftDiffusionSimulation",
-    "DriftDiffusionTrajectory",
     "EqualVarianceSDT",
     "FilteredStateProbabilities",
     "FitDiagnostics",
@@ -129,9 +117,6 @@ __all__ = [
     "GLMHMMParameters",
     "GLMHMMSimulation",
     "GenerativeBehaviourModel",
-    "HierarchicalSmoothDriftDiffusionFitResult",
-    "HierarchicalSmoothDriftDiffusionSimulation",
-    "HierarchicalSmoothWienerDriftDiffusion",
     "LapsePsychometric",
     "LapsePsychometricFitResult",
     "LapsePsychometricParameters",
@@ -160,14 +145,11 @@ __all__ = [
     "RatingCounts",
     "ResetRule",
     "SignalDetectionSummary",
-    "SmoothDriftDiffusionFitResult",
-    "SmoothWienerDriftDiffusion",
     "SoftmaxPolicy",
     "SymmetricLearning",
     "UnchosenForgetting",
     "UnequalVarianceSDT",
     "UniformResponseTimeContaminant",
-    "UnseenSubjectPosteriorPrediction",
     "UnsupportedPredictionMode",
     "ValueTrajectory",
     "WienerDriftDiffusion",

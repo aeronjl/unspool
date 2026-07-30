@@ -12,6 +12,8 @@ from behavio import (
     leave_one_subject_out_splits,
     within_session_rolling_splits,
 )
+from behavio.contracts.fold import ValidationFold
+from behavio.evaluation import FoldFailurePolicy, FoldStage
 
 
 def simulated_study() -> tuple[BernoulliHistoryGLM, Study]:
@@ -226,3 +228,73 @@ def test_lab_session_forecast_rejects_unaligned_subject_clocks() -> None:
             train_session_count=2,
             horizon=1,
         )
+
+
+def test_a_retained_fold_failure_is_named_by_the_splitter_not_by_position() -> None:
+    """The declared fold name is what a scientist reads back off a failure."""
+
+    _model, study = simulated_study()
+    splits = forward_session_splits(study, min_train_sessions=1)
+
+    class RefusingModel(BernoulliHistoryGLM):
+        def fit(self, study):  # type: ignore[override]
+            raise RuntimeError("deliberate failure")
+
+    result = evaluate_splits(
+        RefusingModel(covariates=("stimulus",), choice_lags=1, l2=0.1),
+        study,
+        splits,
+        on_failure=FoldFailurePolicy.RETAIN,
+    )
+
+    assert result.evaluations == ()
+    assert [failure.fold for failure in result.failures] == [split.identifier for split in splits]
+    assert [failure.fold for failure in result.failures] == [
+        "forward-session/subject=a/forecast-sessions=1",
+        "forward-session/subject=a/forecast-sessions=2",
+        "forward-session/subject=a/forecast-sessions=3",
+    ]
+    assert all(failure.stage is FoldStage.FIT for failure in result.failures)
+    # Every failure record is portable, so the name survives serialization too.
+    assert [failure.to_dict()["fold"] for failure in result.failures] == [
+        split.identifier for split in splits
+    ]
+
+
+def test_a_completed_fold_carries_the_splitter_name_it_was_scored_under() -> None:
+    model, study = simulated_study()
+    splits = forward_session_splits(study, min_train_sessions=2)
+
+    evaluations = evaluate_splits(model, study, splits)
+
+    assert [evaluation.identifier for evaluation in evaluations] == [
+        split.identifier for split in splits
+    ]
+
+
+def test_a_split_that_does_not_name_itself_fails_the_fold_contract() -> None:
+    """The old ``getattr`` fallback numbered such a split; the contract now refuses it."""
+
+    model, study = simulated_study()
+    split = forward_session_splits(study, min_train_sessions=2)[0]
+
+    class UnnamedSplit:
+        train_indices = split.train_indices
+        test_indices = split.test_indices
+        prediction_context_indices = split.prediction_context_indices
+        scheme = "anonymous"
+        prospective = True
+
+    assert not isinstance(UnnamedSplit(), ValidationFold)
+    with pytest.raises(TypeError, match="declares no identifier"):
+        evaluate_splits(model, study, (UnnamedSplit(),))
+
+
+def test_two_folds_may_not_share_one_name() -> None:
+    """A shared name would silently drop one fold from every record keyed by it."""
+
+    model, study = simulated_study()
+    split = forward_session_splits(study, min_train_sessions=2)[0]
+
+    with pytest.raises(ValueError, match="share the identifier"):
+        evaluate_splits(model, study, (split, split))

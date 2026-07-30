@@ -74,6 +74,18 @@ class ModelDescription:
     parameter_names: tuple[str, ...]
     parameter_bounds: Mapping[str, tuple[float, float]] = field(default_factory=dict)
     priors: tuple[str, ...] = ()
+    clock: str | None = None
+    """The `Study` column a composed model's coefficients vary over, if any.
+
+    A smoothed model's parameters are paths rather than scalars, and which column indexes
+    those paths decides what the fit means -- the same knots read against `session_order`
+    and against `cumulative_trial` are different models. `None` for a model whose
+    coefficients are constant.
+    """
+
+    group: str | None = None
+    """The `Study` column a hierarchical model pools over, if any."""
+
     findings: tuple[ModelFinding, ...] = ()
     design_column_notes: Mapping[str, str] = field(default_factory=dict)
     """What a design column is, where the name alone does not say.
@@ -181,9 +193,18 @@ def describe_model(model: Any, study: Study | None = None) -> ModelDescription:
         parameter_names=parameter_names,
         parameter_bounds=_parameter_bounds(model, parameter_names),
         priors=tuple(getattr(model, "declared_priors", ())),
+        clock=_optional_column(model, "clock"),
+        group=_optional_column(model, "group"),
         findings=tuple(findings),
         design_column_notes=_design_column_notes(design),
     )
+
+
+def _optional_column(model: Any, attribute: str) -> str | None:
+    """Read a composed model's clock or grouping column, if it declares one."""
+
+    value = getattr(model, attribute, None)
+    return None if value is None else str(value)
 
 
 def _design_column_notes(design: DesignSpec | None) -> dict[str, str]:

@@ -1,7 +1,9 @@
 """Tests for common execution under an audited protocol plan."""
 
+from collections.abc import Mapping
 from dataclasses import replace
 
+import numpy as np
 import pytest
 from test_compiler import (
     capabilities,
@@ -9,11 +11,20 @@ from test_compiler import (
     frozen_small_protocol,
     source_study,
 )
+from test_protocol import example_protocol
 
+from behavio.comparison import ComparisonMultiplicity
 from behavio.compiler import compile_execution_plan, materialize_protocol
 from behavio.compose import smooth
+from behavio.contracts.audit import FitDiagnostics
 from behavio.evaluation import FoldStage
-from behavio.models import BernoulliHistoryGLM, PredictionMode
+from behavio.models import (
+    BernoulliHistoryGLM,
+    FitResult,
+    ModelCapabilities,
+    Prediction,
+    PredictionMode,
+)
 from behavio.protocol import (
     CandidateSpec,
     ProtocolState,
@@ -29,6 +40,7 @@ from behavio.runner import (
     run_protocol,
     verify_candidate_declarations,
 )
+from behavio.study import Study
 from behavio.validation import cohort_forward_session_splits
 
 
@@ -457,3 +469,215 @@ def test_nested_selection_verifies_the_same_frozen_declaration() -> None:
 
     with pytest.raises(ProtocolRunError, match="hyperparameter:choice_lags"):
         run_nested_protocol(compiled_nested(), models)
+
+
+#: Per-subject score penalties that put the leading candidate on the exact boundary the
+#: multiplicity declaration decides. Both contrasts against the leader invert to a
+#: two-sided bootstrap probability just under 0.05, so both intervals exclude zero; the
+#: third contrast, between two near-identical rivals, is nowhere near separating. The
+#: Benjamini-Hochberg step-up over ``(0.037, 0.037, 0.740)`` accepts nothing -- the largest
+#: probability sinks the whole family -- while the uncorrected reading accepts two. The
+#: numbers are held fixed rather than simulated so the boundary cannot drift.
+MARGINAL_PENALTIES = (
+    -0.009816,
+    -0.044661,
+    0.029201,
+    0.033149,
+    0.003637,
+    0.022593,
+    0.060199,
+    0.042011,
+    0.032122,
+    0.031565,
+)
+
+
+def marginal_study() -> Study:
+    """Ten animals, three sessions each, with the columns the example protocol declares."""
+
+    rows: list[dict[str, object]] = []
+    source_row = 0
+    for index in range(len(MARGINAL_PENALTIES)):
+        subject = f"m{index:02d}"
+        for session_order in range(3):
+            for trial in range(2):
+                rows.append(
+                    {
+                        "subject": subject,
+                        "session": f"{subject}-s{session_order}",
+                        "trial": trial,
+                        "session_order": session_order,
+                        "choice": (index + trial) % 2,
+                        "stimulus": float(trial * 2 - 1),
+                        "species": "mouse",
+                        "source_asset": "asset-01",
+                        "source_row": source_row,
+                    }
+                )
+                source_row += 1
+    return Study.from_records(rows)
+
+
+class PrescribedScoreModel:
+    """An estimator whose per-subject log loss is fixed by construction.
+
+    The thing under test is the declared multiplicity adjustment, not an optimizer, so the
+    fold loop, the equal-unit aggregation, the paired bootstrap, the step-up and the winner
+    rule all run for real while the scores they consume are held exactly where the verdict
+    turns.
+    """
+
+    required_task_columns = ()
+    supported_prediction_modes = (PredictionMode.FILTERED,)
+    scored_columns = ("choice",)
+
+    def __init__(self, name: str, penalties: Mapping[str, float]) -> None:
+        self.model_name = name
+        self.signature = f"{name}[prescribed]"
+        self._penalties = dict(penalties)
+
+    def _log_probabilities(self, study) -> np.ndarray:
+        return -np.asarray(
+            [self._penalties[str(subject)] for subject in study["subject"]], dtype=float
+        )
+
+    def fit(self, study) -> FitResult:
+        return FitResult(
+            model_name=self.model_name,
+            model_signature=self.signature,
+            parameter_names=("intercept",),
+            estimates=np.array([0.0]),
+            standard_errors=np.array([0.1]),
+            covariance=np.array([[0.01]]),
+            n_observations=len(study),
+            diagnostics=FitDiagnostics(
+                converged=True,
+                optimizer="prescribed",
+                status=0,
+                message="prescribed",
+                n_iterations=1,
+                objective=1.0,
+                gradient_norm=0.0,
+                hessian_condition=1.0,
+                boundary_estimate=False,
+            ),
+        )
+
+    def predict(self, study, fit, *, mode=PredictionMode.FILTERED) -> Prediction:
+        probability = np.exp(self._log_probabilities(study))
+        return Prediction(
+            probability=probability,
+            linear_predictor=np.log(probability / (1.0 - probability)),
+            mode=PredictionMode(mode),
+        )
+
+    def pointwise_log_prob(self, study, fit, *, mode=PredictionMode.FILTERED) -> np.ndarray:
+        return self._log_probabilities(study)
+
+
+def marginal_candidates() -> dict[str, PrescribedScoreModel]:
+    subjects = [f"m{index:02d}" for index in range(len(MARGINAL_PENALTIES))]
+    base = {subject: 0.60 + 0.01 * index for index, subject in enumerate(subjects)}
+    rival = {
+        subject: base[subject] + penalty
+        for subject, penalty in zip(subjects, MARGINAL_PENALTIES, strict=True)
+    }
+    twin = {
+        subject: rival[subject] + (0.0004 if index % 2 == 0 else -0.0004)
+        for index, subject in enumerate(subjects)
+    }
+    return {
+        "best": PrescribedScoreModel("best", base),
+        "rival_a": PrescribedScoreModel("rival_a", rival),
+        "rival_b": PrescribedScoreModel("rival_b", twin),
+    }
+
+
+def compiled_marginal_protocol(multiplicity: ComparisonMultiplicity):
+    implementation = f"{PrescribedScoreModel.__module__}.PrescribedScoreModel"
+    candidates = tuple(
+        CandidateSpec(
+            name=name,
+            implementation=implementation,
+            hyperparameters=(),
+            scored_columns=("choice",),
+        )
+        for name in ("best", "rival_a", "rival_b")
+    )
+    protocol = example_protocol(with_recovery=False)
+    protocol = replace(
+        protocol,
+        candidates=candidates,
+        cohort=replace(
+            protocol.cohort,
+            expected_subjects=10,
+            expected_sessions=30,
+            expected_observations=60,
+        ),
+        panel=replace(protocol.panel, minimum_sessions=3),
+        comparison=replace(
+            protocol.comparison,
+            multiplicity=multiplicity,
+            reference_candidate=None,
+        ),
+    )
+    materialized = materialize_protocol(protocol.freeze(), marginal_study())
+    splits = cohort_forward_session_splits(materialized.study, min_train_sessions=2)
+    capability = ModelCapabilities(
+        scored_columns=("choice",),
+        prediction_modes=(PredictionMode.FILTERED,),
+        can_simulate=False,
+        can_recover_parameters=False,
+    )
+    return compile_execution_plan(
+        materialized,
+        splits,
+        capabilities={name: capability for name in ("best", "rival_a", "rival_b")},
+    )
+
+
+def test_the_declared_multiplicity_decides_which_candidate_wins() -> None:
+    """Same scores, same folds, same seed; only the frozen adjustment differs."""
+
+    uncorrected = run_protocol(
+        compiled_marginal_protocol(ComparisonMultiplicity.NONE), marginal_candidates()
+    )
+    corrected = run_protocol(
+        compiled_marginal_protocol(ComparisonMultiplicity.BENJAMINI_HOCHBERG),
+        marginal_candidates(),
+    )
+
+    def probabilities(run):
+        return {
+            (item.left_model, item.right_model): round(item.two_sided_probability, 3)
+            for item in run.report.paired_comparisons
+        }
+
+    # The evidence itself is identical: adjustment reads the same numbers either way.
+    assert probabilities(uncorrected) == probabilities(corrected)
+    assert probabilities(uncorrected) == {
+        ("best", "rival_a"): 0.037,
+        ("best", "rival_b"): 0.037,
+        ("rival_a", "rival_b"): 0.740,
+    }
+    assert uncorrected.report.ranking.family.n_separated == 2
+    assert corrected.report.ranking.family.n_separated == 2
+
+    assert uncorrected.report.ranking.status is RankingStatus.RESOLVED
+    assert uncorrected.report.ranking.winner == "best"
+    assert uncorrected.report.ranking.family.n_decisive == 2
+    assert "uncorrected per-contrast reading" in uncorrected.report.ranking.reason
+
+    assert corrected.report.ranking.status is RankingStatus.UNRESOLVED
+    assert corrected.report.ranking.winner is None
+    assert corrected.report.ranking.family.n_decisive == 0
+    assert "benjamini-hochberg adjustment" in corrected.report.ranking.reason
+
+
+def test_the_runner_records_the_adjustment_the_protocol_froze() -> None:
+    for multiplicity in ComparisonMultiplicity:
+        run = run_protocol(compiled_marginal_protocol(multiplicity), marginal_candidates())
+
+        assert run.report.ranking.family.multiplicity is multiplicity
+        assert run.report.to_dict()["ranking"]["family"]["multiplicity"] == multiplicity.value
+        assert run.protocol.comparison.multiplicity is multiplicity

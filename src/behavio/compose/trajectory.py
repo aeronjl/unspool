@@ -36,3 +36,12 @@ class CoefficientTrajectory:
         object.__setattr__(self, "times", times)
         object.__setattr__(self, "coefficient_names", names)
         object.__setattr__(self, "values", values)
+
+    def path(self, coefficient: str) -> NDArray[np.float64]:
+        """Return one protected coefficient path by name."""
+
+        try:
+            column = self.coefficient_names.index(coefficient)
+        except ValueError:
+            raise KeyError(coefficient) from None
+        return protected_array(self.values[:, column], dtype=np.float64)

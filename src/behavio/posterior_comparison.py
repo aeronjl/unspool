@@ -21,19 +21,53 @@ leave-one-trial-out ELPD are different quantities that happen to share units.
 
 Following :mod:`behavio.runner`, no winner is declared when a paired interval fails to exclude
 zero, and a model whose posterior failed its convergence audit is never ranked.
+
+Simultaneous inference
+----------------------
+``K`` eligible models produce ``K(K-1)/2`` paired differences read against one interval, so
+this ranking has exactly the multiplicity problem :mod:`behavio.comparison` has, and it is
+sized and corrected by the same record:
+:class:`~behavio._internal.multiplicity.ComparisonFamily`, reported on
+:attr:`PosteriorModelComparison.family`, with the adjustment declared through
+``multiplicity`` and Benjamini-Hochberg by default.
+
+What it deliberately does **not** share is the machinery underneath. A paired score
+comparison inverts a percentile bootstrap over resampled aggregation units; a paired ELPD
+comparison has no bootstrap, only :math:`\\mathrm{se}_{\\mathrm{diff}}` and the normal
+approximation the reporting scale of two standard errors already assumes. So this module
+keeps :class:`PairedELPDDifference` and its own standard error, and converts *that* into
+the per-contrast probability the shared step-up consumes:
+:math:`p = 2\\Phi(-|\\Delta| / \\mathrm{se})`, with the interval level
+:math:`1 - 2\\Phi(-\\text{interval\\_scale})` implied by the declared multiplier. Because
+both the interval and the probability come from the same normal, ``excludes_zero`` and
+``two_sided_probability < 1 - interval_level`` agree exactly -- unlike the bootstrap case,
+where a finite resample can pin the probability above a threshold its interval has already
+crossed.
+
+Correction can only remove a separation, so a comparison that named a best model on
+uncorrected intervals may now decline to. That is the intended direction: this package
+refuses to name a winner on insufficient evidence, and a family of ten contrasts read at
+one interval level *is* insufficient evidence for the one that happens to clear it.
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
 from types import MappingProxyType
 from typing import Any, Final
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.stats import norm
 
+from behavio._internal.multiplicity import (
+    ComparisonFamily,
+    ComparisonMultiplicity,
+    adjust_probabilities,
+    excess_probability,
+)
 from behavio.contracts.audit import AuditSeverity
 from behavio.posterior import PosteriorError, PosteriorResult
 from behavio.posterior_diagnostics import PosteriorAuditPolicy, PosteriorAuditStatus
@@ -46,6 +80,11 @@ Two standard errors is the conventional ELPD-difference reporting scale (Vehtari
 Gabry 2017). It is a normal approximation over the pointwise unit, which is why
 ``comparison.few-observations`` fires when there are too few units to support it.
 """
+
+#: The smallest step below one a float can represent. A per-contrast rate is clamped into
+#: the open unit interval with it, because ``2 * norm.sf(scale)`` underflows to exactly zero
+#: for a large enough multiplier and a family record cannot describe a rate of zero or one.
+_SMALLEST_STEP: Final = float(1.0 - np.nextafter(1.0, 0.0))
 
 
 class ModelComparisonStatus(StrEnum):
@@ -137,7 +176,21 @@ class ScoredModel:
 
 @dataclass(frozen=True, slots=True)
 class PairedELPDDifference:
-    """A paired ELPD difference and its own standard error, on aligned observations."""
+    """A paired ELPD difference and its own standard error, on aligned observations.
+
+    ``elpd_difference``, ``se``, ``lower`` and ``upper`` are unadjusted and mean exactly
+    what they always meant. ``two_sided_probability`` is the normal-approximation
+    probability of a difference at least this extreme under no difference, computed from
+    this contrast's own standard error rather than from a bootstrap.
+    ``adjusted_probability`` is that probability after the family's declared multiplicity
+    adjustment, and ``decisive`` is the only member the ranking reads.
+
+    All three are ``None``/``False`` for a contrast that was not part of the tested family
+    -- that is, one involving a model whose posterior or importance sampling failed. Such a
+    model is never ranked, so its contrasts are reported as evidence but are not tests, and
+    inflating the family with them would correct the eligible contrasts against readings
+    that were never going to decide anything.
+    """
 
     left_model: str
     right_model: str
@@ -147,6 +200,9 @@ class PairedELPDDifference:
     upper: float
     interval_scale: float
     n_data_points: int
+    two_sided_probability: float | None = None
+    adjusted_probability: float | None = None
+    decisive: bool = False
 
     def __post_init__(self) -> None:
         if not self.left_model or not self.right_model or self.left_model == self.right_model:
@@ -155,12 +211,36 @@ class PairedELPDDifference:
             raise ValueError("a paired difference standard error must be non-negative")
         if self.lower > self.upper:
             raise ValueError("paired difference lower bound must not exceed its upper bound")
+        for value, label in (
+            (self.two_sided_probability, "two_sided_probability"),
+            (self.adjusted_probability, "adjusted_probability"),
+        ):
+            if value is not None and (not np.isfinite(value) or not 0 <= value <= 1):
+                raise ValueError(f"{label} must be null or lie between zero and one")
+        if not isinstance(self.decisive, bool):
+            raise TypeError("decisive must be boolean")
+        if self.decisive and self.adjusted_probability is None:
+            raise ValueError(
+                "a decisive contrast must record the adjusted probability that made it"
+            )
 
     @property
     def excludes_zero(self) -> bool:
         """Whether the interval separates the two models at the declared scale."""
 
         return self.lower > 0.0 or self.upper < 0.0
+
+    @property
+    def favours(self) -> str | None:
+        """The named model this contrast decisively favours, or ``None``.
+
+        ELPD is higher-is-better, so a positive difference favours the left model. A
+        contrast that did not survive the family adjustment favours nobody.
+        """
+
+        if not self.decisive:
+            return None
+        return self.left_model if self.elpd_difference > 0.0 else self.right_model
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -176,6 +256,9 @@ class PairedELPDDifference:
             "upper": _json_float(self.upper),
             "interval_scale": self.interval_scale,
             "excludes_zero": self.excludes_zero,
+            "two_sided_probability": self.two_sided_probability,
+            "adjusted_probability": self.adjusted_probability,
+            "decisive": self.decisive,
             "n_data_points": self.n_data_points,
         }
 
@@ -195,10 +278,13 @@ class PosteriorModelComparison:
     status: ModelComparisonStatus
     best_model: str | None
     reason: str
+    family: ComparisonFamily
     issues: tuple[ModelComparisonIssue, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "status", ModelComparisonStatus(self.status))
+        if not isinstance(self.family, ComparisonFamily):
+            raise TypeError("comparison family must be a ComparisonFamily")
         if (self.status is ModelComparisonStatus.RESOLVED) != (self.best_model is not None):
             raise ValueError("a comparison names a best model exactly when it is resolved")
         dims = tuple(self.dims)
@@ -233,6 +319,12 @@ class PosteriorModelComparison:
         return tuple(model.name for model in self.models if model.eligible)
 
     @property
+    def decisive_differences(self) -> tuple[PairedELPDDifference, ...]:
+        """Contrasts that survive the declared multiplicity adjustment."""
+
+        return tuple(item for item in self.differences if item.decisive)
+
+    @property
     def issue_codes(self) -> tuple[str, ...]:
         return tuple(issue.code for issue in self.issues)
 
@@ -243,6 +335,9 @@ class PosteriorModelComparison:
             if item.left_model == left and item.right_model == right:
                 return item
             if item.left_model == right and item.right_model == left:
+                # Reversing the direction negates the difference and reflects the interval;
+                # the probabilities and the verdict are direction-free and carry across
+                # unchanged.
                 return PairedELPDDifference(
                     left_model=left,
                     right_model=right,
@@ -252,6 +347,9 @@ class PosteriorModelComparison:
                     upper=-item.lower,
                     interval_scale=item.interval_scale,
                     n_data_points=item.n_data_points,
+                    two_sided_probability=item.two_sided_probability,
+                    adjusted_probability=item.adjusted_probability,
+                    decisive=item.decisive,
                 )
         raise KeyError((left, right))
 
@@ -270,6 +368,7 @@ class PosteriorModelComparison:
             "status": self.status.value,
             "best_model": self.best_model,
             "reason": self.reason,
+            "simultaneous_family": self.family.to_dict(),
             "models": [model.to_dict() for model in self.models],
             "eligible_models": list(self.eligible_models),
             "differences": [item.to_dict() for item in self.differences],
@@ -285,6 +384,7 @@ def compare_posterior_models(
     block_values: Sequence[Any] | NDArray[Any] | None = None,
     policy: PosteriorAuditPolicy | None = None,
     interval_scale: float = DEFAULT_INTERVAL_SCALE,
+    multiplicity: ComparisonMultiplicity = ComparisonMultiplicity.BENJAMINI_HOCHBERG,
 ) -> PosteriorModelComparison:
     """Compare two or more models on paired ELPD over identically labelled observations.
 
@@ -298,11 +398,20 @@ def compare_posterior_models(
             :class:`PSISLOOResult` inputs must already agree with it.
         block_values: Passed to :func:`~behavio.posterior_loo.psis_loo` for posteriors.
         policy: Convergence thresholds applied to every posterior scored here.
-        interval_scale: Standard-error multiplier for the reported difference interval.
+        interval_scale: Standard-error multiplier for the reported difference interval. It
+            also fixes the per-contrast error rate the family is corrected at, which is the
+            normal tail mass outside it: ``2 * norm.sf(interval_scale)``, or about 0.045 at
+            the default of two standard errors.
+        multiplicity: Adjustment applied across the ``K(K-1)/2`` contrasts among eligible
+            models, defaulting to Benjamini-Hochberg so a Bayesian comparison is corrected
+            on the same terms as :func:`behavio.comparison.compare_models`.
+            :attr:`ComparisonMultiplicity.NONE` restores the uncorrected per-contrast
+            reading and will name a best model strictly more often.
 
     Returns:
         A :class:`PosteriorModelComparison` carrying every model's status, every paired
-        difference, and a ranking that stays unresolved when the evidence is not separating.
+        difference, the simultaneous family they were read against, and a ranking that
+        stays unresolved when the evidence is not separating.
 
     Raises:
         PosteriorError: If fewer than two models are supplied, if any two results were computed
@@ -328,9 +437,11 @@ def compare_posterior_models(
             key=lambda model: (-model.elpd_loo, model.name),
         )
     )
-    differences = _paired_differences(scored, models, interval_scale)
+    adjustment = ComparisonMultiplicity(multiplicity)
+    unadjusted = _paired_differences(scored, models, interval_scale)
+    differences, family = _corrected_family(unadjusted, models, interval_scale, adjustment)
     issues = _comparison_issues(scored, models, reference)
-    status, best, reason = _rank(models, differences)
+    status, best, reason = _rank(models, differences, family)
     return PosteriorModelComparison(
         block=reference.block,
         estimand=reference.estimand,
@@ -343,6 +454,7 @@ def compare_posterior_models(
         status=status,
         best_model=best,
         reason=reason,
+        family=family,
         issues=issues,
     )
 
@@ -478,6 +590,114 @@ def _difference(
     )
 
 
+def _per_contrast_rate(interval_scale: float) -> float:
+    """Normal tail mass outside ``+/- interval_scale`` standard errors.
+
+    This is the per-contrast error rate the declared reporting scale already implies. It is
+    not a second threshold: at the conventional two standard errors it is 0.0455, which is
+    what "two SE" has always meant.
+    """
+
+    rate = float(2.0 * norm.sf(interval_scale))
+    return min(max(rate, _SMALLEST_STEP), 1.0 - _SMALLEST_STEP)
+
+
+def _two_sided_probability(difference: PairedELPDDifference) -> float:
+    """Normal-approximation probability of a difference at least this extreme.
+
+    The interval and this probability come from the same normal with the same standard
+    error, so ``excludes_zero`` holds exactly when this falls below the per-contrast rate.
+    A zero standard error is not a division to guard against silently: identical pointwise
+    ELPD in both models is complete agreement, and anything else with no spread at all is
+    a difference the data resolve exactly.
+    """
+
+    if difference.se == 0.0:
+        return 0.0 if difference.elpd_difference != 0.0 else 1.0
+    return float(2.0 * norm.sf(abs(difference.elpd_difference) / difference.se))
+
+
+def _corrected_family(
+    differences: tuple[PairedELPDDifference, ...],
+    models: tuple[ScoredModel, ...],
+    interval_scale: float,
+    multiplicity: ComparisonMultiplicity,
+) -> tuple[tuple[PairedELPDDifference, ...], ComparisonFamily]:
+    """Size the simultaneous family and mark the contrasts that survive its adjustment.
+
+    The family is the contrasts among *eligible* models, which is the same rule
+    :func:`behavio.comparison.paired_comparisons` follows when the runner hands it only
+    eligible candidates. A contrast touching a model that failed convergence or importance
+    sampling is retained and reported, but its probabilities stay ``None``: it was never a
+    test, because the model on one side of it cannot be ranked at whatever the answer.
+    """
+
+    eligible = {model.name for model in models if model.eligible}
+    tested = tuple(
+        item for item in differences if item.left_model in eligible and item.right_model in eligible
+    )
+    rate = _per_contrast_rate(interval_scale)
+    interval_level = 1.0 - rate
+    probabilities = np.asarray([_two_sided_probability(item) for item in tested], dtype=np.float64)
+    separated = np.asarray([item.excludes_zero for item in tested], dtype=bool)
+    threshold, adjusted = adjust_probabilities(
+        probabilities,
+        multiplicity=multiplicity,
+        error_rate=rate,
+        unadjusted_threshold=rate,
+    )
+    # As in `behavio.comparison`, a contrast must both survive the adjustment and have an
+    # unadjusted interval that excludes zero, so correction can only take a separation
+    # away. Here the two conditions cannot disagree -- interval and probability are the
+    # same normal statement -- but the conjunction is kept so the two comparison paths
+    # define `decisive` identically.
+    corrected = len(tested) > 1 and multiplicity is not ComparisonMultiplicity.NONE
+    decisive = separated & (adjusted <= rate) if corrected else separated
+    by_pair = {
+        (item.left_model, item.right_model): (probability, adjustment_value, bool(is_decisive))
+        for item, probability, adjustment_value, is_decisive in zip(
+            tested, probabilities, adjusted, decisive, strict=True
+        )
+    }
+    n_separated = int(np.count_nonzero(separated))
+    family = ComparisonFamily(
+        n_candidates=len(eligible),
+        n_comparisons=len(tested),
+        interval_level=interval_level,
+        multiplicity=multiplicity,
+        family_error_rate=rate,
+        n_separated=n_separated,
+        expected_separated=float(len(tested) * rate),
+        excess_probability=excess_probability(n_separated, len(tested), rate),
+        adjusted_threshold=float(threshold),
+        n_decisive=int(np.count_nonzero(decisive)),
+    )
+    return (
+        tuple(
+            _with_family_verdict(item, by_pair.get((item.left_model, item.right_model)))
+            for item in differences
+        ),
+        family,
+    )
+
+
+def _with_family_verdict(
+    difference: PairedELPDDifference,
+    verdict: tuple[float, float, bool] | None,
+) -> PairedELPDDifference:
+    """Attach a family reading to one contrast, or leave it untested."""
+
+    if verdict is None:
+        return difference
+    probability, adjusted, decisive = verdict
+    return replace(
+        difference,
+        two_sided_probability=float(probability),
+        adjusted_probability=float(adjusted),
+        decisive=decisive,
+    )
+
+
 def _comparison_issues(
     scored: Mapping[str, PSISLOOResult],
     models: tuple[ScoredModel, ...],
@@ -546,8 +766,16 @@ def _comparison_issues(
 def _rank(
     models: tuple[ScoredModel, ...],
     differences: tuple[PairedELPDDifference, ...],
+    family: ComparisonFamily,
 ) -> tuple[ModelComparisonStatus, str | None, str]:
-    """Name a best model only when the paired evidence actually separates it."""
+    """Name a best model only when the corrected paired evidence separates it.
+
+    The rule reads :attr:`PairedELPDDifference.decisive`, so the family adjustment is the
+    only thing standing between an interval above zero and a named winner. This used to
+    read ``item.lower <= 0.0``: a third implementation of "declare a winner when every
+    pairwise interval excludes zero", with no multiplicity control at all, which named a
+    best model roughly four times in ten among five equally good models.
+    """
 
     eligible = tuple(model for model in models if model.eligible)
     if not eligible:
@@ -564,18 +792,35 @@ def _rank(
             f"{best} is the only model with a usable posterior; no comparison was possible",
         )
     by_pair = {(item.left_model, item.right_model): item for item in differences}
-    for other in eligible[1:]:
-        item = by_pair.get((best, other.name))
-        if item is None or item.lower <= 0.0:
-            return (
-                ModelComparisonStatus.UNRESOLVED,
-                None,
-                "at least one paired interval does not exclude equal predictive performance",
-            )
+    undecided = tuple(
+        other.name
+        for other in eligible[1:]
+        if (item := by_pair.get((best, other.name))) is None or item.favours != best
+    )
+    reading = (
+        f"after {family.multiplicity.value} adjustment at {family.family_error_rate:.3g}"
+        if family.corrected
+        else f"under the uncorrected per-contrast reading at {family.family_error_rate:.3g}"
+    )
+    if undecided:
+        return (
+            ModelComparisonStatus.UNRESOLVED,
+            None,
+            (
+                f"{len(undecided)} of {len(eligible) - 1} contrasts against {best} do not "
+                f"exclude equal predictive performance across the family of "
+                f"{family.n_comparisons} simultaneous contrasts "
+                f"({family.n_decisive} decisive {reading}; "
+                f"{family.n_separated} separated on the unadjusted interval alone)"
+            ),
+        )
     return (
         ModelComparisonStatus.RESOLVED,
         best,
-        f"{best} improves on every eligible competitor with paired intervals above zero",
+        (
+            f"{best} improves on every eligible competitor across all "
+            f"{family.n_comparisons} simultaneous contrasts {reading}"
+        ),
     )
 
 

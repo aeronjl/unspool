@@ -2,7 +2,8 @@
 
 import numpy as np
 
-from behavio import SmoothWienerDriftDiffusion, Study, evaluate_splits, forward_session_splits
+from behavio import Study, WienerDriftDiffusion, evaluate_splits, forward_session_splits
+from behavio.compose import smooth
 
 n_sessions = 5
 design = Study.factorial(
@@ -12,14 +13,17 @@ design = Study.factorial(
     columns={"stimulus": lambda rng, n_rows: rng.normal(size=n_rows)},
     seed=301,
 )
-model = SmoothWienerDriftDiffusion(
-    covariates=("stimulus",),
+model = smooth(
+    WienerDriftDiffusion(
+        covariates=("stimulus",),
+        n_restarts=2,
+        max_iterations=300,
+        simulation_time_step=0.001,
+    ),
+    over="session_order",
     knots=tuple(float(session) for session in range(n_sessions)),
-    varying_parameters=("drift.stimulus", "boundary"),
+    parameters=("drift.stimulus", "boundary"),
     smoothness=10.0,
-    n_restarts=2,
-    max_iterations=300,
-    simulation_time_step=0.001,
 )
 truth = model.parameters_from_paths(
     {
@@ -32,7 +36,7 @@ truth = model.parameters_from_paths(
 )
 study = model.simulate(design, truth, seed=302)
 fit = model.fit(study)
-trajectory = model.parameter_trajectory(fit)
+trajectory = model.coefficient_trajectory(fit)
 fold = evaluate_splits(
     model,
     study,

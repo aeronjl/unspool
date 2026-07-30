@@ -4,6 +4,16 @@
 :mod:`behavio.contracts.fold` and is re-exported from this module, so
 ``from behavio.validation import ValidationFold`` keeps working. Every split type defined
 below satisfies it.
+
+Fold names
+----------
+Every split declares an ``identifier``. It is derived, never stored: a fold's name is a
+function of the scientific coordinates the fold already carries, so it cannot disagree
+with them and cannot be set to something else. Each name begins with the scheme and then
+states the one thing that distinguishes this fold from its siblings within a single
+splitter call -- the held-out subject, the held-out lab, the forecast session, the origin
+trial. Reordering or filtering the returned tuple therefore renames nothing, which is what
+makes a name usable as a key in a retained failure or an evidence bundle.
 """
 
 from __future__ import annotations
@@ -143,6 +153,29 @@ class ValidationSplit:
         object.__setattr__(self, "test_trials", test_trials)
 
     @property
+    def identifier(self) -> str:
+        """Stable, scheme-led name for this subject-level fold.
+
+        All three schemes name the subject first, because a subject-level fold set is read
+        subject by subject. What follows is the coordinate the scheme varies: the sessions
+        being forecast, the session held out, or the trial the within-session origin sits
+        at. Session *orders* are used rather than source session identifiers because the
+        orders are the aligned coordinate the fold is actually built on, and they sort.
+        """
+
+        subject = _label(self.subject)
+        if self.scheme == "within-session-rolling-origin":
+            return (
+                f"within-session-rolling-origin/subject={subject}"
+                f"/session={self.origin_session_order}/origin-trial={self.origin_trial}"
+            )
+        if self.scheme == "leave-one-session-out":
+            held_out = self.test_session_orders[0]
+            return f"leave-one-session-out/subject={subject}/held-out-session={held_out}"
+        forecast = "+".join(str(order) for order in self.test_session_orders)
+        return f"forward-session/subject={subject}/forecast-sessions={forecast}"
+
+    @property
     def prospective(self) -> bool:
         """Whether the split forbids training on observations from the test set's future."""
 
@@ -216,6 +249,17 @@ class PopulationValidationSplit:
         object.__setattr__(self, "train_groups", train_groups)
         object.__setattr__(self, "test_groups", test_groups)
         object.__setattr__(self, "held_out_group", held_out_group)
+
+    @property
+    def identifier(self) -> str:
+        """Stable name built from the population unit this fold holds out.
+
+        The group column is part of the name, not just its value: ``lab=cortexlab`` and
+        ``institution=cortexlab`` are different held-out units, and a report that dropped
+        the column would show them as the same fold.
+        """
+
+        return f"{self.scheme}/{self.group_column}={_label(self.held_out_group)}"
 
     @property
     def prospective(self) -> bool:
@@ -310,6 +354,17 @@ class PopulationForecastSplit:
         object.__setattr__(self, "test_session_orders", test_orders)
 
     @property
+    def identifier(self) -> str:
+        """Stable name built from the held-out group; the horizon is common to all folds.
+
+        Every fold in one ``leave_one_lab_out_session_forecast_splits`` call shares the
+        same training prefix and forecast horizon, so the held-out group alone separates
+        them and adding the orders would add length without adding distinction.
+        """
+
+        return f"{self.scheme}/{self.group_column}={_label(self.held_out_group)}"
+
+    @property
     def prospective(self) -> bool:
         """Whether both the held-out population and future-session boundary are protected."""
 
@@ -388,6 +443,17 @@ class CohortValidationSplit:
         object.__setattr__(self, "test_sessions", MappingProxyType(test_sessions))
         object.__setattr__(self, "train_session_orders", MappingProxyType(train_orders))
         object.__setattr__(self, "test_session_orders", MappingProxyType(test_orders))
+
+    @property
+    def identifier(self) -> str:
+        """Stable name built from the training prefix this cohort fold was fitted on.
+
+        A cohort fold joins every eligible subject, so no subject distinguishes it. What
+        moves from fold to fold is the expanding history, and ``train_session_count`` is
+        exactly the origin the fold was generated at.
+        """
+
+        return f"{self.scheme}/train-sessions={self.train_session_count}"
 
     @property
     def prospective(self) -> bool:
@@ -497,6 +563,19 @@ class HistoricalCohortForecastSplit:
         object.__setattr__(self, "reference_session_orders", reference_orders)
         object.__setattr__(self, "context_session_orders", context_orders)
         object.__setattr__(self, "test_session_orders", test_orders)
+
+    @property
+    def identifier(self) -> str:
+        """Stable name built from the deterministic round-robin position.
+
+        The forecast subjects are what really distinguishes one fold from another, but
+        there can be many of them and listing them would make the name unusable as a
+        column heading. ``fold_index`` selects them deterministically from a sorted subject
+        list, so it names the same animals on every run; ``n_folds`` is carried with it
+        because the same index means different animals under a different fold count.
+        """
+
+        return f"{self.scheme}/fold={self.fold_index}-of-{self.n_folds}"
 
     @property
     def prospective(self) -> bool:
@@ -1273,6 +1352,27 @@ def _equal(left: Any, right: Any) -> bool:
 
 def _scalar(value: Any) -> Any:
     return value.item() if isinstance(value, np.generic) else value
+
+
+def _label(value: Any) -> str:
+    """Render one identifier for a fold name, stably across runs.
+
+    NumPy scalars are unwrapped first so that ``np.str_('M1')`` and ``'M1'`` name the same
+    fold; a float keeps ``repr`` so that ``1.0`` and ``1`` stay distinguishable, which they
+    are as subject identifiers. Everything else falls back to ``str``, which is what a
+    ``date`` or a source-specific identifier type should contribute to a readable name.
+    Uniqueness is not assumed here: :func:`behavio.evaluation.evaluate_splits` refuses a
+    split set whose names collide, rather than letting one fold overwrite another.
+    """
+
+    scalar = _scalar(value)
+    if isinstance(scalar, str):
+        return scalar
+    if isinstance(scalar, bool):
+        return "true" if scalar else "false"
+    if isinstance(scalar, float):
+        return repr(scalar)
+    return str(scalar)
 
 
 def _stable_identifier_sort_key(value: Any) -> tuple[str, str]:

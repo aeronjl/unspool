@@ -14,15 +14,29 @@ from dataclasses import asdict, dataclass, fields, replace
 from enum import StrEnum
 from typing import Any, Self
 
-SCHEMA_VERSION = "behavio.study-protocol/1"
+from behavio._internal.multiplicity import ComparisonMultiplicity
 
-#: Schema names this format has been published under. The package was distributed as
-#: ``unspool`` up to and including 0.1.0, and a frozen protocol is content-addressed, so a
-#: protocol recorded before the rename cannot be restamped without invalidating its own
-#: fingerprint. The payload is byte-identical apart from this name, so it is read as-is and
-#: its recorded name is preserved on the reconstructed object.
-SUPERSEDED_SCHEMA_VERSIONS = ("unspool.study-protocol/1",)
+SCHEMA_VERSION = "behavio.study-protocol/2"
+
+#: Schema names this format has been published under, newest first. The package was
+#: distributed as ``unspool`` up to and including 0.1.0, and a frozen protocol is
+#: content-addressed, so a protocol recorded before the rename cannot be restamped without
+#: invalidating its own fingerprint; that payload is byte-identical apart from this name,
+#: so it is read as-is and its recorded name is preserved on the reconstructed object.
+#:
+#: Version 2 adds :attr:`ComparisonSpec.multiplicity`. Unlike the rename, that is a real
+#: new field: a version 1 payload does not carry it, so :func:`protocol_from_dict` supplies
+#: :attr:`~behavio._internal.multiplicity.ComparisonMultiplicity.BENJAMINI_HOCHBERG`, which
+#: is what the runner applied unconditionally while version 1 was current. The
+#: reconstructed protocol keeps its recorded version-1 name but **does not** keep its
+#: recorded fingerprint, because its declaration genuinely gained a member. That is the
+#: honest reading: the adjustment always decided the winner, and version 1 simply did not
+#: say so.
+SUPERSEDED_SCHEMA_VERSIONS = ("behavio.study-protocol/1", "unspool.study-protocol/1")
 ACCEPTED_SCHEMA_VERSIONS = (SCHEMA_VERSION, *SUPERSEDED_SCHEMA_VERSIONS)
+
+#: Schema names published before :attr:`ComparisonSpec.multiplicity` existed.
+PRE_MULTIPLICITY_SCHEMA_VERSIONS = ("behavio.study-protocol/1", "unspool.study-protocol/1")
 
 JSONScalar = str | int | float | bool | None
 JSONValue = JSONScalar | tuple["JSONValue", ...]
@@ -462,7 +476,21 @@ class CandidateSpec:
 
 @dataclass(frozen=True, slots=True)
 class ComparisonSpec:
-    """Common scoring, uncertainty, pairing, and winner declaration."""
+    """Common scoring, uncertainty, pairing, multiplicity, and winner declaration.
+
+    ``multiplicity`` is frozen here for the same reason every other member is. ``K``
+    eligible candidates produce ``K(K-1)/2`` simultaneous contrasts against one interval
+    level, so :attr:`WinnerPolicy.INTERVAL_EXCLUDES_ZERO` reads a family rather than a
+    test, and the adjustment applied to that family decides which candidate wins. Leaving
+    it undeclared would leave a verdict-determining choice outside the frozen contract.
+
+    The default, :attr:`ComparisonMultiplicity.BENJAMINI_HOCHBERG`, is exactly what
+    :mod:`behavio.runner` applied unconditionally before the member existed, so adopting
+    it changes no verdict; it is the declaration of an existing behaviour, not a new one.
+    :attr:`ComparisonMultiplicity.NONE` restores the uncorrected per-contrast reading and
+    will name a winner strictly more often. The family error rate is not separately
+    declarable: it is ``1 - interval_level``, the rate the protocol already fixed.
+    """
 
     metric: ScoreMetric
     aggregation_unit: str
@@ -473,6 +501,7 @@ class ComparisonSpec:
     seed: int
     paired: bool
     winner_policy: WinnerPolicy
+    multiplicity: ComparisonMultiplicity = ComparisonMultiplicity.BENJAMINI_HOCHBERG
     reference_candidate: str | None = None
 
     def __post_init__(self) -> None:
@@ -499,6 +528,7 @@ class ComparisonSpec:
         if not self.paired:
             raise ProtocolValidationError("the protocol runner requires paired comparisons")
         object.__setattr__(self, "winner_policy", WinnerPolicy(self.winner_policy))
+        object.__setattr__(self, "multiplicity", ComparisonMultiplicity(self.multiplicity))
         if self.reference_candidate is not None:
             _name(self.reference_candidate, "comparison reference candidate")
 
@@ -656,6 +686,17 @@ class StudyProtocol:
                 f"unsupported schema_version {self.schema_version!r}; "
                 f"expected one of {ACCEPTED_SCHEMA_VERSIONS!r}"
             )
+        if (
+            self.schema_version in PRE_MULTIPLICITY_SCHEMA_VERSIONS
+            and self.comparison.multiplicity is not ComparisonMultiplicity.BENJAMINI_HOCHBERG
+        ):
+            raise ProtocolValidationError(
+                f"schema_version {self.schema_version!r} predates the comparison "
+                f"multiplicity declaration and can only carry "
+                f"{ComparisonMultiplicity.BENJAMINI_HOCHBERG.value!r}, the adjustment its "
+                f"runner applied; record this protocol under {SCHEMA_VERSION!r} to "
+                f"declare a different one"
+            )
         object.__setattr__(self, "state", ProtocolState(self.state))
         for field_name in ("units", "observations", "clocks", "estimands", "candidates"):
             if not getattr(self, field_name):
@@ -670,9 +711,20 @@ class StudyProtocol:
         return hashlib.sha256(self.scientific_json().encode("utf-8")).hexdigest()
 
     def to_dict(self, *, scientific_only: bool = False) -> dict[str, Any]:
-        """Return a standards-compliant JSON value with stable field names."""
+        """Return a standards-compliant JSON value with stable field names.
+
+        A protocol recorded under a schema version that predates
+        :attr:`ComparisonSpec.multiplicity` is serialized without it. A frozen protocol is
+        content-addressed, so writing a member its author never declared into the payload
+        would change the identity of a declaration nobody amended -- and every lifecycle
+        event that recorded the old fingerprint would stop verifying. The omission is safe
+        because :meth:`__post_init__` refuses any such protocol whose adjustment differs
+        from the one its era applied, so nothing distinguishable is ever dropped.
+        """
 
         value = _to_json(asdict(self))
+        if self.schema_version in PRE_MULTIPLICITY_SCHEMA_VERSIONS:
+            value["comparison"].pop("multiplicity")
         if scientific_only:
             value.pop("state")
             value.pop("lifecycle")
@@ -706,6 +758,12 @@ class StudyProtocol:
         Amendments are forbidden once materialization begins.  The caller must explicitly
         name every changed top-level section; lifecycle and amendment history cannot be
         overwritten through ``changes``.
+
+        The amended draft is stamped with the current :data:`SCHEMA_VERSION`. It is a new
+        declaration with a new fingerprint, linked to its parent by
+        ``amendments[-1].parent_fingerprint``, so recording it under a superseded schema
+        name would describe it as something it is not -- and would deny it any member that
+        schema predates.
         """
 
         if self.state != ProtocolState.FROZEN:
@@ -732,6 +790,7 @@ class StudyProtocol:
         return replace(
             self,
             **changes,
+            schema_version=SCHEMA_VERSION,
             amendments=(*self.amendments, amendment),
             state=ProtocolState.DRAFT,
             lifecycle=(),
@@ -925,7 +984,14 @@ class StudyProtocol:
 
 
 def protocol_from_dict(value: dict[str, Any]) -> StudyProtocol:
-    """Deserialize a protocol from plain JSON data and re-run every invariant."""
+    """Deserialize a protocol from plain JSON data and re-run every invariant.
+
+    A payload recorded under a schema version that predates
+    :attr:`ComparisonSpec.multiplicity` carries no such member, so the adjustment its
+    runner applied -- Benjamini-Hochberg -- is supplied for it. The reconstructed protocol
+    keeps its recorded schema name, and therefore keeps its fingerprint: see
+    :meth:`StudyProtocol.to_dict`.
+    """
 
     if not isinstance(value, dict):
         raise TypeError("protocol value must be a JSON object")
@@ -958,7 +1024,7 @@ def protocol_from_dict(value: dict[str, Any]) -> StudyProtocol:
         transforms=many("transforms", TransformSpec),
         validation=_construct(ValidationSpec, value["validation"]),
         candidates=many("candidates", CandidateSpec),
-        comparison=_construct(ComparisonSpec, value["comparison"]),
+        comparison=_comparison_from_payload(value["comparison"], value["schema_version"]),
         recovery=many("recovery", RecoverySpec),
         reporting=_construct(ReportingSpec, value["reporting"]),
         selection=(
@@ -971,6 +1037,21 @@ def protocol_from_dict(value: dict[str, Any]) -> StudyProtocol:
         state=value["state"],
         lifecycle=many("lifecycle", LifecycleEvent),
     )
+
+
+def _comparison_from_payload(payload: Any, schema_version: Any) -> ComparisonSpec:
+    """Construct a comparison declaration, supplying members its schema predates."""
+
+    if schema_version in PRE_MULTIPLICITY_SCHEMA_VERSIONS:
+        if not isinstance(payload, dict):
+            raise ProtocolValidationError("ComparisonSpec must be a JSON object")
+        if "multiplicity" in payload:
+            raise ProtocolValidationError(
+                f"schema_version {schema_version!r} predates the comparison multiplicity "
+                "declaration, so a payload recorded under it must not carry one"
+            )
+        payload = {**payload, "multiplicity": ComparisonMultiplicity.BENJAMINI_HOCHBERG.value}
+    return _construct(ComparisonSpec, payload)
 
 
 def protocol_from_json(value: str) -> StudyProtocol:

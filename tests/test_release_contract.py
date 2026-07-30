@@ -45,8 +45,6 @@ MODEL_CATALOGUE = {
     "BinaryRLAgent",
     "MultinomialLogit",
     "WienerDriftDiffusion",
-    "SmoothWienerDriftDiffusion",
-    "HierarchicalSmoothWienerDriftDiffusion",
     "EqualVarianceSDT",
     "UnequalVarianceSDT",
     "MetaSDT",
@@ -201,6 +199,13 @@ DATA_SOURCE_AND_VERIFICATION_SURFACE = {
 #: (``FoldFailurePolicy``) and the record that makes a ranking readable
 #: (``ComparisonFamily``) without reaching into a private module. ``PairedComparison`` is
 #: pinned because both reports carry it and ``decisive`` is the member a winner rule reads.
+#:
+#: ``ComparisonFamily`` and ``ComparisonMultiplicity`` are now *defined* in
+#: ``behavio._internal.multiplicity`` beside the step-up they describe, so that
+#: ``behavio.protocol`` can freeze the adjustment and ``behavio.posterior_comparison`` can
+#: size an ELPD family without either importing the estimator stack. That is exactly why
+#: the names are pinned here: three callers share two types, and the public address of both
+#: has to stay ``behavio``.
 SHARED_EXECUTION_SURFACE = {
     "evaluate_splits",
     "FoldEvaluation",

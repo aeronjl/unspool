@@ -225,6 +225,44 @@ only for training subjects cannot be applied to a new test subject, and Behavio 
 rather than silently estimating it from held-out data. Population-transferable transforms
 must define how new-subject values are obtained using training-fold information alone.
 
+## Every fold names itself
+
+Each split declares an `identifier`. It is derived from the coordinates the fold already
+carries, so it cannot disagree with them, and it never depends on the fold's position in
+the returned tuple — filtering or reordering the splits renames nothing.
+
+| Splitter | Identifier |
+| --- | --- |
+| `forward_session_splits` | `forward-session/subject=M1/forecast-sessions=4` |
+| `cohort_forward_session_splits` | `cohort-forward-session/train-sessions=5` |
+| `historical_cohort_forecast_splits` | `historical-cohort-session-forecast/fold=1-of-3` |
+| `within_session_rolling_splits` | `within-session-rolling-origin/subject=M1/session=2/origin-trial=57` |
+| `leave_one_session_out_splits` | `leave-one-session-out/subject=M1/held-out-session=2` |
+| `leave_one_subject_out_splits` | `leave-one-subject-out/subject=M1` |
+| `leave_one_lab_out_splits` | `leave-one-lab-out/lab=cortexlab` |
+| `leave_one_lab_out_session_forecast_splits` | `leave-one-lab-out-session-forecast/lab=cortexlab` |
+
+Each name begins with the scheme and then states the one coordinate that distinguishes the
+fold from its siblings within a single splitter call: the held-out subject, the held-out
+lab, the sessions being forecast, the trial the origin sits at. A cohort fold joins every
+eligible subject, so what separates cohort folds is the expanding training prefix; a
+historical-cohort fold selects its forecast animals deterministically from a sorted subject
+list, so the round-robin position names the same animals on every run and is carried with
+`n_folds`, because the same index means different animals under a different fold count.
+
+The name is not decoration. `evaluate_splits` copies it onto
+`FoldEvaluation.identifier`; a fold that fails under `FoldFailurePolicy.RETAIN` is recorded
+under it; and an [evidence bundle](protocols/evidence-bundles.md) keys its prediction and
+audit maps on it. Two folds sharing a name would not be an ambiguity to resolve later — one
+of them would simply disappear from the record — so `evaluate_splits` refuses a split set
+whose names collide.
+
+`identifier` is a declared member of the
+[`ValidationFold`](reference/contracts.md) protocol, which means a splitter you write
+yourself must supply one. It used to be read with a `getattr` fallback that numbered
+unnamed folds `fold-0000`; the library depended on a name it had never asked any fold for,
+which is exactly the hidden name-based contract this package has been removing.
+
 ## Current boundary
 
 The hierarchical Bernoulli GLMs can estimate static or smooth population and individual

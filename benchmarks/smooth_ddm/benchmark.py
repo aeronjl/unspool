@@ -8,7 +8,8 @@ from typing import Any
 
 import numpy as np
 
-from behavio import SmoothWienerDriftDiffusion, Study, WienerDriftDiffusion
+from behavio import Study, WienerDriftDiffusion
+from behavio.compose import SmoothModel, smooth
 from benchmarks.provenance import render
 
 N_SESSIONS = 6
@@ -46,14 +47,14 @@ def experiment(*, regime: str, seed: int) -> dict[str, Any]:
 
     if regime not in REGIMES:
         raise ValueError(f"unknown regime {regime!r}")
-    smooth = _smooth_model()
+    smooth_model = _smooth_model()
     static = _static_model()
     truth_paths = _truth_paths(regime)
-    truth = smooth.parameters_from_paths(truth_paths)
-    study = smooth.simulate(build_design(seed=seed), truth, seed=seed + 1)
+    truth = smooth_model.parameters_from_paths(truth_paths)
+    study = smooth_model.simulate(build_design(seed=seed), truth, seed=seed + 1)
     train = study.take(np.flatnonzero(study["session_order"] < TRAINING_SESSIONS))
     test = study.take(np.flatnonzero(study["session_order"] == TRAINING_SESSIONS))
-    smooth_fit = smooth.fit(train)
+    smooth_fit = smooth_model.fit(train)
     static_fit = static.fit(train)
 
     truth_matrix = np.column_stack(
@@ -62,7 +63,7 @@ def experiment(*, regime: str, seed: int) -> dict[str, Any]:
             np.asarray(truth_paths["boundary"][:TRAINING_SESSIONS]),
         ]
     )
-    smooth_trajectory = smooth.parameter_trajectory(
+    smooth_trajectory = smooth_model.coefficient_trajectory(
         smooth_fit,
         times=range(TRAINING_SESSIONS),
     )
@@ -93,7 +94,7 @@ def experiment(*, regime: str, seed: int) -> dict[str, Any]:
             "smooth": _method_record(
                 fit=smooth_fit,
                 trajectory_rmse=_rmse(smooth_matrix, truth_matrix),
-                future_log_loss=-float(np.mean(smooth.pointwise_log_prob(test, smooth_fit))),
+                future_log_loss=-float(np.mean(smooth_model.pointwise_log_prob(test, smooth_fit))),
             ),
         },
     }
@@ -192,15 +193,18 @@ def run(*, repetitions: int = 20, seed: int = 82_411) -> dict[str, Any]:
     }
 
 
-def _smooth_model() -> SmoothWienerDriftDiffusion:
-    return SmoothWienerDriftDiffusion(
-        covariates=("stimulus",),
+def _smooth_model() -> SmoothModel:
+    return smooth(
+        WienerDriftDiffusion(
+            covariates=("stimulus",),
+            n_restarts=3,
+            max_iterations=400,
+            simulation_time_step=0.0005,
+        ),
+        over="session_order",
         knots=tuple(float(session) for session in range(N_SESSIONS)),
-        varying_parameters=("drift.stimulus", "boundary"),
+        parameters=("drift.stimulus", "boundary"),
         smoothness=10.0,
-        n_restarts=3,
-        max_iterations=400,
-        simulation_time_step=0.0005,
     )
 
 

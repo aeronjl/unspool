@@ -1,7 +1,8 @@
 # Longitudinal DDM predictive uncertainty
 
 This benchmark tests two uncertainty contracts for the parameter-specific subject scales
-of `HierarchicalSmoothWienerDriftDiffusion`, then scores entirely unseen animals after
+of `hierarchical(smooth(WienerDriftDiffusion(...)), over="subject")`, then scores entirely
+unseen animals after
 integrating over fitted random-effect paths. It uses 20 matched panels, each with eight
 training animals, four new animals, three sessions, and 35 trials per session.
 

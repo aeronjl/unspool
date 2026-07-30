@@ -1,29 +1,135 @@
 """The one step-up multiplicity adjustment the package applies to a family of tests.
 
-Behavio evaluates two families of simultaneous tests. A posterior-predictive audit
+Behavio evaluates several families of simultaneous tests. A posterior-predictive audit
 evaluates ``groups x discrepancies`` tail probabilities
-(:mod:`behavio.posterior_predictive`); a model comparison evaluates ``K(K-1)/2`` pairwise
-contrasts (:mod:`behavio.comparison`). The domains are unrelated and their records name
+(:mod:`behavio.posterior_predictive`); a frequentist model comparison evaluates
+``K(K-1)/2`` pairwise score contrasts (:mod:`behavio.comparison`); a Bayesian model
+comparison evaluates ``K(K-1)/2`` pairwise ELPD contrasts
+(:mod:`behavio.posterior_comparison`). The domains are unrelated and their records name
 different things, but the arithmetic that turns many probabilities into a decision is the
-same arithmetic, and it was written twice before this module existed. The two copies had
+same arithmetic, and it was written three times before this module existed. The copies had
 already begun to disagree.
 
-The two callers keep their own family records and their own definition of which item counts
-as *extreme* -- a tail probability below a threshold in one case, an interval excluding zero
-in the other. What they share, and what lives here, is the step-up itself and the exact
-binomial tail that says how many extremes chance alone supplies.
+Each caller keeps its own definition of which item counts as *extreme* -- a tail
+probability below a threshold in one case, an interval excluding zero in the others -- and
+its own way of obtaining a per-contrast probability: a percentile bootstrap for a paired
+score difference, a normal approximation for a paired ELPD difference. What they share,
+and what lives here, is the step-up itself, the exact binomial tail that says how many
+extremes chance alone supplies, the name of the adjustment
+(:class:`ComparisonMultiplicity`), and the record of the family it was applied to
+(:class:`ComparisonFamily`).
+
+:class:`ComparisonMultiplicity` and :class:`ComparisonFamily` are private only in their
+address. Both are re-exported from :mod:`behavio.comparison` and from the top-level
+``behavio`` namespace under those exact names; they live here so that
+:mod:`behavio.protocol`, which must declare the adjustment before data is seen and imports
+nothing else from the package, and :mod:`behavio.posterior_comparison`, which must not
+drag in the estimator stack, can both reach them without a cycle.
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.stats import binom
 
-#: Adjustment names, shared so the two public enums cannot drift apart in spelling.
+#: Adjustment names, shared so the public enums cannot drift apart in spelling.
 NONE = "none"
 BENJAMINI_HOCHBERG = "benjamini-hochberg"
 BONFERRONI = "bonferroni"
+
+
+class ComparisonMultiplicity(StrEnum):
+    """How one comparison turns many simultaneous contrasts into decisive ones.
+
+    ``NONE`` restores the per-comparison reading: every contrast whose unadjusted interval
+    excludes zero is decisive, and the expected number of spurious separations grows with
+    the family size. ``BENJAMINI_HOCHBERG`` controls the false-discovery rate across the
+    family at ``family_error_rate``. ``BONFERRONI`` controls the family-wise error rate at
+    the same level.
+
+    The member values are shared with
+    :class:`~behavio.posterior_predictive.PredictiveMultiplicity`, so the families the
+    package evaluates cannot drift apart in either spelling or arithmetic.
+    """
+
+    NONE = NONE
+    BENJAMINI_HOCHBERG = BENJAMINI_HOCHBERG
+    BONFERRONI = BONFERRONI
+
+
+@dataclass(frozen=True, slots=True)
+class ComparisonFamily:
+    """The simultaneous family of pairwise contrasts evaluated in one comparison.
+
+    Retained whether or not anything separates, so a reader can always compare the number
+    of contrasts that excluded zero with the number expected there by chance alone.
+    ``excess_probability`` is the exact binomial probability of at least ``n_separated``
+    separations among ``n_comparisons`` independent contrasts at per-contrast error rate
+    ``1 - interval_level``; contrasts sharing candidates are not independent, so it is a
+    guide to whether the pattern is remarkable, not a test.
+
+    The same record sizes a frequentist comparison of paired scores
+    (:func:`behavio.comparison.paired_comparisons`) and a Bayesian comparison of paired
+    ELPD differences (:func:`behavio.posterior_comparison.compare_posterior_models`). They
+    reach ``interval_level`` differently -- one declares a bootstrap percentile level, the
+    other converts its standard-error multiplier into the equivalent normal tail mass --
+    and the field means the same thing in both: the per-contrast level below which a
+    contrast is read as separating.
+    """
+
+    n_candidates: int
+    n_comparisons: int
+    interval_level: float
+    multiplicity: ComparisonMultiplicity
+    family_error_rate: float
+    n_separated: int
+    expected_separated: float
+    excess_probability: float
+    adjusted_threshold: float
+    n_decisive: int
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "multiplicity", ComparisonMultiplicity(self.multiplicity))
+        if self.n_candidates < 0 or self.n_comparisons < 0:
+            raise ValueError("comparison family counts must be non-negative")
+        if not 0 <= self.n_separated <= self.n_comparisons:
+            raise ValueError("separated contrasts must lie inside the family")
+        if not 0 <= self.n_decisive <= self.n_comparisons:
+            raise ValueError("decisive contrasts must lie inside the family")
+        if not 0 < self.interval_level < 1:
+            raise ValueError("interval_level must lie strictly between zero and one")
+        if not 0 < self.family_error_rate < 1:
+            raise ValueError("family_error_rate must lie strictly between zero and one")
+        for value in (self.expected_separated, self.excess_probability, self.adjusted_threshold):
+            if not np.isfinite(value) or value < 0:
+                raise ValueError("comparison family rates must be finite and non-negative")
+
+    @property
+    def corrected(self) -> bool:
+        """Whether an adjustment actually applies to this family."""
+
+        return self.multiplicity is not ComparisonMultiplicity.NONE and self.n_comparisons > 1
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return the family size and its chance yield as a JSON-safe record."""
+
+        return {
+            "n_candidates": self.n_candidates,
+            "n_comparisons": self.n_comparisons,
+            "interval_level": self.interval_level,
+            "multiplicity": self.multiplicity.value,
+            "family_error_rate": self.family_error_rate,
+            "n_separated": self.n_separated,
+            "expected_separated": self.expected_separated,
+            "excess_probability": self.excess_probability,
+            "adjusted_threshold": self.adjusted_threshold,
+            "n_decisive": self.n_decisive,
+        }
 
 
 def adjust_probabilities(
@@ -78,7 +184,7 @@ def excess_probability(n_extreme: int, n_tests: int, per_test_rate: float) -> fl
 
     Tests that share an item -- two contrasts against the same candidate, two discrepancies
     over the same group -- are not independent, so this is a guide to whether a pattern is
-    remarkable rather than a test in its own right. Both callers say so in their own words.
+    remarkable rather than a test in its own right. Every caller says so in its own words.
     """
 
     if n_extreme <= 0 or n_tests <= 0:

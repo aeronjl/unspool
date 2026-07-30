@@ -216,10 +216,35 @@ class MultinomialLogit(Describable):
         return tuple(f"category[{category!r}]" for category in self.categories)
 
     @property
+    def outcome_channels(self) -> tuple[str, ...]:
+        """A category code is one number per row, so this family declares no channels.
+
+        Cells and channels are independent widenings, and this family is the proof: its
+        predictor is one number per category while its observation stays a single code.
+        """
+
+        return ()
+
+    @property
     def likelihood(self) -> MultinomialLikelihood:
         """The observation model this estimator's per-category logits feed."""
 
         return MultinomialLikelihood(self.categories)
+
+    def coordinate_box(self, study: Study) -> None:
+        """Return ``None``: a multinomial logit coefficient is admissible anywhere."""
+
+        return None
+
+    def initial_points(self, study: Study) -> tuple[NDArray[np.float64], ...]:
+        """Return the origin, which is where a penalised softmax fit has always started."""
+
+        return (np.zeros(len(self.parameter_names), dtype=np.float64),)
+
+    def group_parameter_expansion(self, name: str) -> tuple[str, ...]:
+        """Return ``(name,)``: this model's parameters are numbers, not structured objects."""
+
+        return (name,)
 
     def category_parameter_names(self, category: Any) -> tuple[str, ...]:
         """Return the parameter names belonging to one modeled category.

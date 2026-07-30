@@ -207,10 +207,31 @@ class BernoulliHistoryGLM(Describable):
 
         return ()
 
+    @property
+    def outcome_channels(self) -> tuple[str, ...]:
+        """A binary choice is one number per row, so this family declares no channels."""
+
+        return ()
+
     def predictor_offsets(self, study: Study) -> None:
         """Return ``None``: nothing is added to this model's linear predictor."""
 
         return None
+
+    def coordinate_box(self, study: Study) -> None:
+        """Return ``None``: a log-odds coefficient is admissible anywhere on the line."""
+
+        return None
+
+    def initial_points(self, study: Study) -> tuple[NDArray[np.float64], ...]:
+        """Return the origin, which is where a penalised logistic fit has always started."""
+
+        return (np.zeros(len(self.parameter_names), dtype=np.float64),)
+
+    def group_parameter_expansion(self, name: str) -> tuple[str, ...]:
+        """Return ``(name,)``: this model's parameters are numbers, not structured objects."""
+
+        return (name,)
 
     def simulate(
         self,

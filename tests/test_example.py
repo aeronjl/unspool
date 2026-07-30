@@ -171,7 +171,7 @@ def test_hierarchical_smooth_ddm_example_exposes_population_policy(
 
     output = capsys.readouterr().out
     assert "Partially pooled drift-diffusion trajectories" in output
-    assert "unseen-subject policy: population-trajectory-plugin" in output
+    assert "unseen-group policy: population-plugin" in output
     assert "population stimulus:" in output
     assert "mouse-0 stimulus:" in output
     assert "new-mouse stimulus:" in output

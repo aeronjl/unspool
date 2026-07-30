@@ -32,7 +32,7 @@ when the runner is handed its models.
 | `validation` | Deployment geometry, prediction information, origin, and horizon |
 | `candidates` | Closed candidate set and fixed hyperparameters |
 | `selection` | Optional inner validation performed inside outer training data |
-| `comparison` | Proper score, pairing, uncertainty, seed, and winner policy |
+| `comparison` | Proper score, pairing, uncertainty, seed, multiplicity adjustment, and winner policy |
 | `recovery` | Exact-design falsification requirements and the claims they gate |
 | `reporting` | Required evidence, limitations, and prohibited claims |
 
@@ -172,7 +172,7 @@ and folds, bit for bit.
 `WinnerPolicy.INTERVAL_EXCLUDES_ZERO` reads the whole family of contrasts, not one at a
 time. `K` eligible candidates produce `K(K-1)/2` simultaneous readings of the same interval
 level, so a leader compared against four rivals has four chances to clear a threshold stated
-for one. The winner rule therefore requires each contrast to survive a Benjamini-Hochberg
+for one. The winner rule therefore requires each contrast to survive a multiplicity
 adjustment across the family at `1 - interval_level` — the rate the protocol already
 declared, now controlled family-wise rather than per contrast. `Ranking.family` records the
 family size, how many contrasts separated before adjustment, how many were expected to by
@@ -180,6 +180,38 @@ chance, the exact binomial probability of at least that many, and how many survi
 `Ranking.reason` states all of it in prose. Every per-contrast interval and probability
 remains unadjusted and fully retained. Correction can only remove a separation, never add
 one, so this makes `UNRESOLVED` strictly more likely than the uncorrected rule did.
+
+That adjustment is **declared, not chosen after the fact**. It is
+`ComparisonSpec.multiplicity`, frozen with the rest of the design:
+
+```python
+ComparisonSpec(
+    metric=ScoreMetric.LOG_LOSS,
+    aggregation_unit="animal",
+    weighting=AggregationWeighting.EQUAL_UNIT,
+    interval_method="paired-unit-bootstrap",
+    interval_level=0.95,
+    bootstrap_repetitions=5_000,
+    seed=2025,
+    paired=True,
+    winner_policy=WinnerPolicy.INTERVAL_EXCLUDES_ZERO,
+    multiplicity=ComparisonMultiplicity.BENJAMINI_HOCHBERG,
+)
+```
+
+Every other verdict-determining choice in this package is fixed before data is seen; an
+adjustment that decides which candidate wins had no business being the one exception. The
+default is `BENJAMINI_HOCHBERG`, which is exactly what the runner applied unconditionally
+before the member existed, so adopting it changes no verdict — it writes down a behaviour
+that was already happening. `BONFERRONI` controls the family-wise rather than the
+false-discovery rate. `NONE` restores the uncorrected per-contrast reading and will name a
+winner strictly more often; `Ranking.reason` then says so in as many words rather than
+reporting an adjustment that did not run. There is no separate family error rate to
+declare: it is `1 - interval_level`, the rate the protocol already fixed.
+
+Adding the member moved the schema to `behavio.study-protocol/2`. Protocols recorded under
+version 1 still load, keep their fingerprints, and are read as declaring Benjamini-Hochberg
+— see [serialization and schema versions](lifecycle.md#serialization-and-schema-versions).
 
 ## Start from a complete study
 

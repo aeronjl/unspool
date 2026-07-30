@@ -6,6 +6,11 @@ markers and a dashed interval; the comparison's status, reason, and ``best_model
 absence) are written onto the axes. Rows keep the order the report produced -- the plot never
 re-sorts models, because re-sorting would manufacture the ranking the report declined to
 make.
+
+The markers report whether an interval excludes zero, which is a fact about one contrast.
+Whether the *verdict* accepted it is a fact about the whole family, so the note states the
+declared multiplicity adjustment and how many contrasts survived it beside how many
+separated without it.
 """
 
 from __future__ import annotations
@@ -14,6 +19,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from behavio._internal.multiplicity import ComparisonFamily
 from behavio.plot._axes import annotate_note, resolve_axes, status_colour
 from behavio.plot.style import ALERT, INDIGO, INK, MUTED, TEAL, figure_style
 from behavio.posterior_comparison import ModelComparisonStatus, PosteriorModelComparison
@@ -85,12 +91,33 @@ def plot_elpd_differences(
         ineligible = tuple(model.name for model in comparison.models if model.name not in eligible)
         annotate_note(
             axes,
-            f"{comparison.n_data_points} pointwise units"
+            f"{comparison.n_data_points} pointwise units; {_family_note(comparison.family)}"
             + (f"; ineligible: {', '.join(ineligible)}" if ineligible else "")
             + (f"; issues: {', '.join(comparison.issue_codes)}" if comparison.issue_codes else ""),
             alert=bool(ineligible),
         )
     return figure
+
+
+def _family_note(family: ComparisonFamily) -> str:
+    """State how many contrasts survived the family adjustment, and which one.
+
+    The markers say which intervals exclude zero; only this says how many of them the
+    verdict actually accepted. Without it a reader sees three filled markers beside an
+    ``UNRESOLVED`` verdict and has no way to tell that the correction is what separates
+    the two.
+    """
+
+    if not family.corrected:
+        return (
+            f"{family.n_separated} of {family.n_comparisons} contrasts separate, uncorrected "
+            f"at {family.family_error_rate:.3g}"
+        )
+    return (
+        f"{family.n_decisive} of {family.n_comparisons} contrasts decisive after "
+        f"{family.multiplicity.value} at {family.family_error_rate:.3g} "
+        f"({family.n_separated} separated before it)"
+    )
 
 
 def _annotate_verdict(axes: Axes, comparison: PosteriorModelComparison) -> None:

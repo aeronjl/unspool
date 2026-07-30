@@ -85,6 +85,26 @@ The current schema identifier is embedded in every protocol. Unknown schema vers
 rejected rather than guessed. Canonical JSON sorts keys, uses deterministic separators,
 and rejects non-finite or executable values, making fingerprints stable across processes.
 
+The current version is `behavio.study-protocol/2`. Two superseded names are still read:
+
+| Superseded name | What it lacks | How it is read |
+| --- | --- | --- |
+| `behavio.study-protocol/1` | `ComparisonSpec.multiplicity` | the adjustment its runner applied unconditionally, `benjamini-hochberg`, is supplied |
+| `unspool.study-protocol/1` | nothing; the package was renamed | read as-is |
+
+A protocol reconstructed from a superseded payload **keeps its recorded schema name and
+its fingerprint**. A frozen protocol is content-addressed and its own freeze event quotes
+that address, so writing a member its author never declared into the payload would change
+the identity of a declaration nobody amended, and would invalidate every lifecycle event
+recorded against it. `to_dict` therefore omits `multiplicity` from a version 1 record, and
+`StudyProtocol` refuses to construct a version 1 protocol carrying any adjustment other
+than the one its era applied — so nothing distinguishable is ever dropped.
+
+`amend` stamps the current schema version on the new draft. An amendment is a new
+declaration with a new fingerprint, linked to its parent by
+`amendments[-1].parent_fingerprint`, so it is recorded under the schema it is written in
+rather than inheriting a name that would deny it members that schema predates.
+
 ## What the lifecycle does not prove
 
 A `reported` state proves that the required sequence and artifact identities are

@@ -107,20 +107,23 @@ choice/RT responses and retains posterior trial responsibilities without silentl
 them.
 See the [joint choice and response-time guide](drift-diffusion.md).
 
-`SmoothWienerDriftDiffusion` places selected drift coefficients, boundary separation, and
-starting bias on fixed-knot paths over an explicit study clock while retaining stationary
-non-decision time. Its future-knot persistence forecast, single-subject default, and strict
-distinction between across-trial trajectories and within-decision dynamics are detailed in
-the [session-varying drift-diffusion guide](smooth-ddm.md).
+The same two combinators apply to it. `smooth(WienerDriftDiffusion(...), over=...)` places
+named drift coefficients, boundary separation, starting bias, non-decision time, or a
+contaminant weight on fixed-knot paths over an explicit study clock; parameters left out of
+`parameters=` stay stationary. Its future-knot persistence forecast, single-subject default,
+and strict distinction between across-trial trajectories and within-decision dynamics are
+detailed in the [session-varying drift-diffusion guide](smooth-ddm.md).
 
-`HierarchicalSmoothWienerDriftDiffusion` adds smooth Gaussian-shrunken animal deviations
-around those population paths. Represented animals use their fitted paths; unseen animals
-use an explicitly recorded population-trajectory plug-in by default. Its separate
-`predict_new_subjects()` contract integrates fitted random-effect paths and reports
-subject-joint likelihoods with Monte Carlo diagnostics. The fixed- or estimated-scale MAP
-contract, supplemented scale uncertainty, natural-bound safeguards, arrowhead local
-uncertainty, and recovery evidence are detailed in the
-[hierarchical drift-diffusion guide](hierarchical-smooth-ddm.md).
+`hierarchical(WienerDriftDiffusion(...), over="subject")` gives each animal a shrunken
+deviation from the population parameters, and
+`hierarchical(smooth(WienerDriftDiffusion(...)), over="subject")` gives each animal a
+shrunken deviation *path* around the population trajectory. Represented animals use their
+fitted values; unseen animals use an explicitly recorded population plug-in by default,
+while `predict_new_groups()` integrates the fitted random effect and reports subject-joint
+likelihoods with Monte Carlo diagnostics. The fixed- or estimated-scale MAP contract,
+supplemented scale uncertainty, natural-bound safeguards, arrowhead local uncertainty, and
+recovery evidence are detailed in the
+[partially pooled drift-diffusion guide](hierarchical-smooth-ddm.md).
 
 The GLM implementations use SciPy's deterministic L-BFGS-B optimizer. An optional L2
 penalty applies to non-intercept coefficients. Standard errors and 95% coverage summaries

@@ -9,12 +9,10 @@ from behavio import (
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
     DesignSpec,
-    HierarchicalSmoothWienerDriftDiffusion,
     HistoryKernelTerm,
     HistoryTerm,
     InteractionTerm,
     NumericTerm,
-    SmoothWienerDriftDiffusion,
     Study,
     WienerDriftDiffusion,
 )
@@ -359,8 +357,6 @@ ALL_COVARIATE_MODELS = (
     BernoulliHistoryGLM,
     BernoulliGLMHMM,
     WienerDriftDiffusion,
-    SmoothWienerDriftDiffusion,
-    HierarchicalSmoothWienerDriftDiffusion,
 )
 
 

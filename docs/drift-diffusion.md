@@ -28,14 +28,35 @@ All public parameters use their natural scale:
 - `starting_bias` strictly between zero and one;
 - non-negative `nondecision_time`, expressed in seconds.
 
-This is deliberately the stationary member of the family. The base configuration does not model
-across-trial Wiener-parameter variability, collapsing bounds, history-dependent starting
-points, or parameters that drift across learning. `SmoothWienerDriftDiffusion` adds
-fixed-knot longitudinal paths for selected drift coefficients, boundary, and starting bias;
-see the [session-varying guide](smooth-ddm.md). An optional contaminant mixture provides a
-narrow robustness account for responses outside the stationary decision process.
-The [hierarchical trajectory guide](hierarchical-smooth-ddm.md) extends the longitudinal
-family to partially pooled animal-specific paths.
+This is deliberately the stationary member of the family. The base configuration does not
+model across-trial Wiener-parameter variability, collapsing bounds, history-dependent
+starting points, or parameters that drift across learning. An optional contaminant mixture
+provides a narrow robustness account for responses outside the stationary decision process.
+
+Change across a study and structure across animals are not separate classes. They are the
+two combinators of [Composing models](composing-models.md) applied to this model:
+
+```python
+from behavio import WienerDriftDiffusion
+from behavio.compose import hierarchical, smooth
+
+base = WienerDriftDiffusion(covariates=("stimulus",))
+
+paths = smooth(
+    base,
+    over="session_order",
+    knots=(0.0, 2.0),
+    parameters=("drift.stimulus", "boundary"),
+)
+pooled = hierarchical(base, over="subject", parameters=("drift.stimulus", "boundary"))
+both = hierarchical(paths, over="subject", parameters=("drift.stimulus", "boundary"))
+```
+
+`smooth()` puts named parameters on fixed-knot paths over an explicit study clock; see the
+[session-varying guide](smooth-ddm.md). `hierarchical()` gives each animal a shrunken
+deviation from the population estimate, with or without an inner `smooth()`; see the
+[partial-pooling guide](hierarchical-smooth-ddm.md). Hierarchy is the outer combinator:
+`smooth(hierarchical(...))` is refused.
 
 ## Response-time schema
 

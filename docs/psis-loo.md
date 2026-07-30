@@ -202,6 +202,54 @@ whenever a paired interval fails to exclude zero. There is no automatic winner, 
 threshold at which an overlapping interval is quietly resolved in favour of the larger point
 estimate.
 
+## Many models means many simultaneous tests
+
+`K` eligible models produce `K(K-1)/2` paired differences read against one interval, which is
+the same multiplicity problem [frequentist model comparison](comparison.md#many-candidates-means-many-simultaneous-tests)
+has. It is sized and corrected by the same record.
+
+```python
+comparison = compare_posterior_models(
+    {"rich": rich, "plain": plain, "null": null},
+    block="subject",
+)
+family = comparison.family
+print(family.n_comparisons, family.n_separated, family.n_decisive)
+for item in comparison.differences:
+    print(item.left_model, item.right_model, item.two_sided_probability, item.decisive)
+```
+
+`comparison.family` is a `ComparisonFamily` — the very class `compare_models` reports — and
+`multiplicity` defaults to `ComparisonMultiplicity.BENJAMINI_HOCHBERG`, so a Bayesian model
+comparison is corrected on the same terms as a frequentist one. `PairedELPDDifference.decisive`
+is the member the ranking reads, and `PairedELPDDifference.favours` names the model a decisive
+contrast puts ahead.
+
+What it deliberately does **not** share is the machinery underneath. There is no bootstrap
+here: the per-contrast probability comes from this comparison's own paired standard error
+under the normal approximation that "two standard errors" already assumes,
+$p = 2\Phi(-|\Delta| / \mathrm{se})$, and the per-contrast rate is the tail mass outside the
+declared `interval_scale` — about 0.045 at the conventional two. Because interval and
+probability are the same normal statement, `excludes_zero` and the probability agree exactly,
+which is not true of a percentile bootstrap over a finite number of resamples.
+
+A contrast involving an ineligible model is retained and reported, but its
+`two_sided_probability` and `adjusted_probability` stay `None` and it is never `decisive`:
+that model cannot be ranked whatever the answer, so the contrast was never a test, and
+counting it would correct the real contrasts against a reading that could not decide
+anything.
+
+!!! warning "This changed a verdict"
+
+    Before the family was wired in, ranking required only that every paired interval against
+    the leader exclude zero — a third copy of the winner rule with no multiplicity control at
+    all. Among five equally good models that named a best model roughly four times in ten. A
+    comparison that used to be `resolved` on marginal intervals may now be `unresolved`.
+    That is the intended direction: a correction should make the refusal more likely, never
+    paper over it. Pass `multiplicity=ComparisonMultiplicity.NONE` to reproduce the old
+    reading explicitly; the family record then says the reading was uncorrected rather than
+    crediting an adjustment that did not run.
+
 ## Reading Pareto $k$
 
 PSIS approximates each leave-one-out posterior by reweighting draws from the full

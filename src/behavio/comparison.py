@@ -30,22 +30,33 @@ per-contrast interval and probability remains unadjusted and fully retained; adj
 adds :attr:`PairedComparison.adjusted_probability` and
 :attr:`PairedComparison.decisive` beside them. A single contrast is never adjusted, so a
 two-candidate comparison behaves exactly as it did.
+
+:class:`ComparisonMultiplicity` and :class:`ComparisonFamily` are re-exported here from
+:mod:`behavio._internal.multiplicity`, which owns the step-up arithmetic. They live there
+so that :mod:`behavio.protocol` can freeze the adjustment in
+:class:`~behavio.protocol.ComparisonSpec` and
+:mod:`behavio.posterior_comparison` can size its own ELPD family, without either module
+importing the estimator stack this one rests on. The names, values and behaviour are
+unchanged.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
-from enum import StrEnum
 from types import MappingProxyType
 from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
-from behavio._internal import multiplicity as _multiplicity
 from behavio._internal.arrays import protected_array
-from behavio._internal.multiplicity import adjust_probabilities, excess_probability
+from behavio._internal.multiplicity import (
+    ComparisonFamily,
+    ComparisonMultiplicity,
+    adjust_probabilities,
+    excess_probability,
+)
 from behavio.contracts.posterior import (
     AnyBehaviourEstimator,
     any_model_capabilities,
@@ -147,88 +158,6 @@ def bootstrap_interval(
         raise ValueError("bootstrap values must be one-dimensional")
     draws = bootstrap_unit_draws(len(observed), resamples=resamples, seed=seed)
     return _bootstrap_interval(observed, np.mean(observed[draws], axis=1), confidence_level)
-
-
-class ComparisonMultiplicity(StrEnum):
-    """How one comparison turns many simultaneous contrasts into decisive ones.
-
-    ``NONE`` restores the per-comparison reading: every contrast whose unadjusted interval
-    excludes zero is decisive, and the expected number of spurious separations grows with
-    the family size. ``BENJAMINI_HOCHBERG`` controls the false-discovery rate across the
-    family at ``family_error_rate``. ``BONFERRONI`` controls the family-wise error rate at
-    the same level.
-
-    The member values are shared with
-    :class:`~behavio.posterior_predictive.PredictiveMultiplicity` through
-    :mod:`behavio._internal.multiplicity`, which also owns the step-up itself, so the two
-    families the package evaluates cannot drift apart in either spelling or arithmetic.
-    """
-
-    NONE = _multiplicity.NONE
-    BENJAMINI_HOCHBERG = _multiplicity.BENJAMINI_HOCHBERG
-    BONFERRONI = _multiplicity.BONFERRONI
-
-
-@dataclass(frozen=True, slots=True)
-class ComparisonFamily:
-    """The simultaneous family of pairwise contrasts evaluated in one comparison.
-
-    Retained whether or not anything separates, so a reader can always compare the number
-    of contrasts that excluded zero with the number expected there by chance alone.
-    ``excess_probability`` is the exact binomial probability of at least ``n_separated``
-    separations among ``n_comparisons`` independent contrasts at per-contrast error rate
-    ``1 - interval_level``; contrasts sharing candidates are not independent, so it is a
-    guide to whether the pattern is remarkable, not a test.
-    """
-
-    n_candidates: int
-    n_comparisons: int
-    interval_level: float
-    multiplicity: ComparisonMultiplicity
-    family_error_rate: float
-    n_separated: int
-    expected_separated: float
-    excess_probability: float
-    adjusted_threshold: float
-    n_decisive: int
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "multiplicity", ComparisonMultiplicity(self.multiplicity))
-        if self.n_candidates < 0 or self.n_comparisons < 0:
-            raise ValueError("comparison family counts must be non-negative")
-        if not 0 <= self.n_separated <= self.n_comparisons:
-            raise ValueError("separated contrasts must lie inside the family")
-        if not 0 <= self.n_decisive <= self.n_comparisons:
-            raise ValueError("decisive contrasts must lie inside the family")
-        if not 0 < self.interval_level < 1:
-            raise ValueError("interval_level must lie strictly between zero and one")
-        if not 0 < self.family_error_rate < 1:
-            raise ValueError("family_error_rate must lie strictly between zero and one")
-        for value in (self.expected_separated, self.excess_probability, self.adjusted_threshold):
-            if not np.isfinite(value) or value < 0:
-                raise ValueError("comparison family rates must be finite and non-negative")
-
-    @property
-    def corrected(self) -> bool:
-        """Whether an adjustment actually applies to this family."""
-
-        return self.multiplicity is not ComparisonMultiplicity.NONE and self.n_comparisons > 1
-
-    def to_dict(self) -> dict[str, Any]:
-        """Return the family size and its chance yield as a JSON-safe record."""
-
-        return {
-            "n_candidates": self.n_candidates,
-            "n_comparisons": self.n_comparisons,
-            "interval_level": self.interval_level,
-            "multiplicity": self.multiplicity.value,
-            "family_error_rate": self.family_error_rate,
-            "n_separated": self.n_separated,
-            "expected_separated": self.expected_separated,
-            "excess_probability": self.excess_probability,
-            "adjusted_threshold": self.adjusted_threshold,
-            "n_decisive": self.n_decisive,
-        }
 
 
 @dataclass(frozen=True, slots=True)

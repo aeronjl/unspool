@@ -108,6 +108,21 @@ been the lowest point estimate among audit-eligible candidates and remains descr
 `behavio.runner`'s `INTERVAL_EXCLUDES_ZERO` policy reads `decisive`, and records the family
 it read on `Ranking.family` and in `Ranking.reason`.
 
+### The adjustment is declared, not chosen at read time
+
+Under a frozen protocol the adjustment is not a keyword argument. It is
+`ComparisonSpec.multiplicity`, fixed with the rest of the design before any data is seen,
+because *which contrasts survive it decides which candidate wins*. See
+[study protocols](protocols/index.md#one-fold-loop-and-how-many-contrasts-read-it).
+
+`ComparisonMultiplicity` and `ComparisonFamily` are one type each, shared by three callers.
+`compare_models` and the protocol runner reach them through `behavio.comparison`;
+`compare_posterior_models` reaches the same records for its ELPD family; and the step-up
+arithmetic itself is written once. A Bayesian model comparison is therefore corrected on
+the same terms as a frequentist one and reports the same family statistics — see
+[PSIS-LOO and posterior model comparison](psis-loo.md#many-models-means-many-simultaneous-tests)
+for what it deliberately does *not* share.
+
 ## Serialization and fitted evidence
 
 ```python

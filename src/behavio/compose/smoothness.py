@@ -1,4 +1,4 @@
-"""``smooth(model)``: let every parameter of a model follow a path in clock time."""
+"""``smooth(model)``: let declared parameters of a model follow a path in clock time."""
 
 from __future__ import annotations
 
@@ -43,16 +43,24 @@ def smooth(
     over: str = "session_order",
     knots: Sequence[float] = (0.0, 1.0),
     smoothness: float = 1.0,
+    parameters: Sequence[str] | None = None,
     group_smoothness: float | None = None,
     shared_trajectory: bool = False,
 ) -> SmoothModel:
-    """Return ``model`` with every parameter replaced by a smooth path in ``over``.
+    """Return ``model`` with ``parameters`` replaced by smooth paths in ``over``.
 
-    Each parameter becomes one value per knot, linearly interpolated between knots, with a
-    spacing-scaled first-difference penalty -- a Gaussian random walk observed at the knots
-    -- supplying the smoothness prior. The knots and their clock are part of the
+    Each declared parameter becomes one value per knot, linearly interpolated between
+    knots, with a spacing-scaled first-difference penalty -- a Gaussian random walk observed
+    at the knots -- supplying the smoothness prior. The knots and their clock are part of the
     specification and are fixed before fitting, so held-out outcomes can never choose the
     temporal basis.
+
+    ``parameters=None`` smooths every parameter, which is what the deleted
+    ``SmoothBernoulliHistoryGLM`` did and all it could do. Naming a subset leaves the rest
+    **stationary**: one coordinate rather than one per knot, and no roughness penalty. That
+    is not a convenience -- a Wiener non-decision time that drifts between knots is a
+    different and much weaker model than one that does not, and the hand-written smooth
+    drift-diffusion family held it fixed for that reason.
 
     ``group_smoothness`` is not used by the smooth model itself. It is the roughness a
     *group's deviation path* is given when :func:`behavio.compose.hierarchical` wraps this
@@ -69,11 +77,28 @@ def smooth(
             "many groups the study has, so it cannot be expanded again from outside"
         )
     require_penalised_linear(model, combinator="smooth")
+    available = tuple(model.parameter_names)
+    if parameters is None:
+        varying = available
+    else:
+        if isinstance(parameters, str):
+            raise ValueError("parameters must be a sequence of parameter names")
+        declared = tuple(parameters)
+        unknown = [name for name in declared if name not in available]
+        if not declared or len(set(declared)) != len(declared):
+            raise ValueError("smoothed parameters must be non-empty and unique")
+        if unknown:
+            raise ValueError(
+                f"smoothed parameters are not parameters of this model: {sorted(unknown)}; "
+                f"available: {list(available)}"
+            )
+        varying = tuple(name for name in available if name in set(declared))
     return SmoothModel(
         model=model,
         clock=over,
         knots=tuple(knots),
         smoothness=smoothness,
+        varying=varying,
         group_smoothness=smoothness if group_smoothness is None else group_smoothness,
         shared_trajectory=shared_trajectory,
     )
@@ -81,25 +106,31 @@ def smooth(
 
 @dataclass(frozen=True, slots=True)
 class SmoothModel(Describable):
-    """A model whose parameters are values at fixed knots of one clock column.
+    """A model whose declared parameters are values at fixed knots of one clock column.
 
-    Parameter naming is stable and mechanical: a parameter ``p`` of the wrapped model
-    becomes ``p[clock=knot]`` for each knot, in coefficient-major, knot-minor order. So
+    Parameter naming is stable and mechanical: a smoothed parameter ``p`` of the wrapped
+    model becomes ``p[clock=knot]`` for each knot, in coefficient-major, knot-minor order,
+    and a parameter that was not smoothed keeps its own name and its single coordinate. So
     ``BernoulliHistoryGLM(covariates=("stimulus",))`` smoothed over ``session_order`` with
     knots ``(0, 4)`` has parameters ``intercept[session_order=0]``,
     ``intercept[session_order=4]``, ``stimulus[session_order=0]``,
-    ``stimulus[session_order=4]``, ``choice_lag_1[session_order=0]``, ...
+    ``stimulus[session_order=4]``, ``choice_lag_1[session_order=0]``, ...; smoothing only
+    ``("stimulus",)`` gives ``intercept``, ``stimulus[session_order=0]``,
+    ``stimulus[session_order=4]``, ``choice_lag_1``.
     """
 
     model: PenalisedLinearEstimator
     clock: str
     knots: tuple[float, ...]
     smoothness: float
+    varying: tuple[str, ...]
     group_smoothness: float
     shared_trajectory: bool
 
     def __post_init__(self) -> None:
         knots = validated_knots(self.knots)
+        varying = tuple(self.varying)
+        available = tuple(self.model.parameter_names)
         if not isinstance(self.clock, str) or not self.clock:
             raise ValueError("over must be a non-empty Study column name")
         if self.clock in self.model.scored_columns:
@@ -112,7 +143,12 @@ class SmoothModel(Describable):
                 raise ValueError(f"{label} must be finite and positive")
         if not isinstance(self.shared_trajectory, bool):
             raise ValueError("shared_trajectory must be boolean")
+        if not varying or len(set(varying)) != len(varying):
+            raise ValueError("smoothed parameters must be non-empty and unique")
+        if set(varying) - set(available):
+            raise ValueError("smoothed parameters must be parameters of the wrapped model")
         object.__setattr__(self, "knots", knots)
+        object.__setattr__(self, "varying", tuple(name for name in available if name in varying))
 
     # -- identity ---------------------------------------------------------------------
 
@@ -123,11 +159,19 @@ class SmoothModel(Describable):
     @property
     def signature(self) -> str:
         knots = ",".join(format_time(knot) for knot in self.knots)
+        selection = "" if self.smooths_every_parameter else f"varying={','.join(self.varying)};"
         return (
-            f"smooth[time={self.clock};knots={knots};smoothness={self.smoothness};"
+            f"smooth[time={self.clock};knots={knots};{selection}"
+            f"smoothness={self.smoothness};"
             f"group_smoothness={self.group_smoothness};"
             f"shared_trajectory={self.shared_trajectory}]({self.model.signature})"
         )
+
+    @property
+    def smooths_every_parameter(self) -> bool:
+        """Whether every wrapped parameter follows a path, which is the default."""
+
+        return self.varying == tuple(self.model.parameter_names)
 
     @property
     def time(self) -> str:
@@ -137,17 +181,40 @@ class SmoothModel(Describable):
 
     @property
     def coefficient_names(self) -> tuple[str, ...]:
-        """The wrapped model's parameters, each of which now follows a path."""
+        """The wrapped model's parameters, some of which now follow a path."""
 
         return tuple(self.model.parameter_names)
 
     @property
+    def varying_coefficients(self) -> tuple[str, ...]:
+        """The wrapped parameters that follow a path, in model order."""
+
+        return tuple(self.varying)
+
+    @property
     def parameter_names(self) -> tuple[str, ...]:
-        return tuple(
-            f"{coefficient}[{self.clock}={format_time(knot)}]"
-            for coefficient in self.coefficient_names
-            for knot in self.knots
-        )
+        names: list[str] = []
+        for coefficient, _start, width in self.layout:
+            if width == 1:
+                names.append(coefficient)
+            else:
+                names.extend(
+                    f"{coefficient}[{self.clock}={format_time(knot)}]" for knot in self.knots
+                )
+        return tuple(names)
+
+    @property
+    def layout(self) -> tuple[tuple[str, int, int], ...]:
+        """``(coefficient, first column, width)`` per wrapped parameter, in model order."""
+
+        varying = set(self.varying)
+        blocks: list[tuple[str, int, int]] = []
+        offset = 0
+        for coefficient in self.coefficient_names:
+            width = len(self.knots) if coefficient in varying else 1
+            blocks.append((coefficient, offset, width))
+            offset += width
+        return tuple(blocks)
 
     @property
     def scored_columns(self) -> tuple[str, ...]:
@@ -169,8 +236,9 @@ class SmoothModel(Describable):
 
     @property
     def declared_priors(self) -> tuple[str, ...]:
+        paths = "every parameter" if self.smooths_every_parameter else ", ".join(self.varying)
         return (
-            f"random walk over {self.clock} knots {self.knots}: "
+            f"random walk over {self.clock} knots {self.knots} for {paths}: "
             f"first-difference penalty scaled by smoothness={self.smoothness}",
             *getattr(self.model, "declared_priors", ()),
         )
@@ -184,6 +252,12 @@ class SmoothModel(Describable):
         """The wrapped model's cells: a path in clock time is not a new cell."""
 
         return tuple(self.model.predictor_cells)
+
+    @property
+    def outcome_channels(self) -> tuple[str, ...]:
+        """The wrapped model's channels: smoothing a parameter cannot change what is seen."""
+
+        return tuple(self.model.outcome_channels)
 
     @property
     def categories(self) -> tuple[Any, ...]:
@@ -219,24 +293,112 @@ class SmoothModel(Describable):
         return self.model.predictor_offsets(study)
 
     def design_matrix(self, study: Study) -> NDArray[np.float64]:
-        """Return the wrapped design multiplied row-wise by the temporal basis."""
+        """Return the wrapped design multiplied row-wise by the temporal basis.
+
+        The all-varying case is written as the single ``einsum`` it has always been, because
+        a fit published before parameters could be smoothed selectively must still be
+        reproducible to the last bit; the selective case assembles the same product one
+        coefficient block at a time.
+        """
 
         features = validate_predictor_shape(self.model, self.model.design_matrix(study))
         basis = self.time_basis(study)
-        if features.ndim == 2:
-            return np.einsum("ij,ik->ijk", features, basis).reshape(len(study), -1)
-        return np.einsum("icj,ik->icjk", features, basis, optimize=True).reshape(
-            len(study), features.shape[1], -1
-        )
+        if self.smooths_every_parameter:
+            if features.ndim == 2:
+                return np.einsum("ij,ik->ijk", features, basis).reshape(len(study), -1)
+            return np.einsum("icj,ik->icjk", features, basis, optimize=True).reshape(
+                len(study), features.shape[1], -1
+            )
+        columns: list[NDArray[np.float64]] = []
+        for index, (_coefficient, _start, width) in enumerate(self.layout):
+            feature = features[..., index]
+            if width == 1:
+                columns.append(feature[..., None])
+            else:
+                columns.append(
+                    feature[..., None]
+                    * basis.reshape(len(study), *([1] * (feature.ndim - 1)), width)
+                )
+        return np.concatenate(columns, axis=-1)
 
     def penalty_matrix(self) -> NDArray[np.float64]:
         """Return the wrapped penalty lifted onto knots plus the roughness penalty."""
 
         n_knots = len(self.knots)
         inner = self.model.penalty_matrix()
-        lifted = np.kron(inner, np.eye(n_knots))
-        roughness = self.smoothness * np.kron(np.eye(inner.shape[0]), roughness_matrix(self.knots))
-        return lifted + roughness
+        if self.smooths_every_parameter:
+            lifted = np.kron(inner, np.eye(n_knots))
+            roughness = self.smoothness * np.kron(
+                np.eye(inner.shape[0]), roughness_matrix(self.knots)
+            )
+            return lifted + roughness
+        size = len(self.parameter_names)
+        penalty = np.zeros((size, size), dtype=np.float64)
+        blocks = self.layout
+        for row, (_left, left_start, left_width) in enumerate(blocks):
+            for column, (_right, right_start, right_width) in enumerate(blocks):
+                value = float(inner[row, column])
+                if not value:
+                    continue
+                if left_width != right_width:
+                    raise ValueError(
+                        "the wrapped penalty couples a smoothed parameter to a stationary "
+                        "one, and there is no knot grid the coupling can be lifted onto"
+                    )
+                block = value * np.eye(left_width)
+                penalty[
+                    left_start : left_start + left_width,
+                    right_start : right_start + right_width,
+                ] += block
+        roughness = self.smoothness * roughness_matrix(self.knots)
+        for _coefficient, start, width in blocks:
+            if width > 1:
+                penalty[start : start + width, start : start + width] += roughness
+        return penalty
+
+    def coordinate_box(self, study: Study) -> NDArray[np.float64] | None:
+        """Return the wrapped box repeated over each parameter's knots.
+
+        Every point of a path is a value of the parameter, so it is admissible exactly
+        where the parameter is. A box does not become a different box for being sampled.
+        """
+
+        box = self.model.coordinate_box(study)
+        if box is None:
+            return None
+        return np.vstack(
+            [
+                np.tile(box[index], (width, 1))
+                for index, (_name, _start, width) in enumerate(self.layout)
+            ]
+        )
+
+    def initial_points(self, study: Study) -> tuple[NDArray[np.float64], ...]:
+        """Return the wrapped starts as flat paths, one knot value per wrapped value."""
+
+        return tuple(self.expand_coefficients(point) for point in self.model.initial_points(study))
+
+    def expand_coefficients(self, values: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Return one wrapped-coordinate vector as a constant path in this coordinate."""
+
+        flat = np.asarray(values, dtype=np.float64)
+        if flat.shape != (len(self.coefficient_names),):
+            raise ValueError("expanding needs one value per wrapped parameter")
+        return np.concatenate(
+            [
+                np.full(width, flat[index])
+                for index, (_name, _start, width) in enumerate(self.layout)
+            ]
+        )
+
+    def group_parameter_expansion(self, name: str) -> tuple[str, ...]:
+        """Return every knot of a coefficient, so a path varies by group as a whole path."""
+
+        for index, (coefficient, start, width) in enumerate(self.layout):
+            if coefficient == name:
+                del index
+                return self.parameter_names[start : start + width]
+        return (name,)
 
     def fit_penalised(
         self,
@@ -259,15 +421,20 @@ class SmoothModel(Describable):
         This is the member that makes a hierarchical smooth model a composition rather than
         a sibling. A group's deviation from a smooth population path is itself a path, so it
         inherits the roughness penalty; drop that and every subject's deviation is free to
-        jump between adjacent knots, which is a different and much weaker model.
+        jump between adjacent knots, which is a different and much weaker model. A
+        stationary parameter's deviation is a number and gets the ordinary ridge.
         """
 
-        coefficients = self._coefficient_blocks(columns)
+        widths = self._selected_widths(columns)
         ridge = np.diag(1.0 / np.asarray(scales, dtype=np.float64) ** 2)
-        roughness = self.group_smoothness * np.kron(
-            np.eye(len(coefficients)), roughness_matrix(self.knots)
-        )
-        return ridge + roughness
+        roughness = self.group_smoothness * roughness_matrix(self.knots)
+        penalty = np.array(ridge, dtype=np.float64)
+        offset = 0
+        for width in widths:
+            if width > 1:
+                penalty[offset : offset + width, offset : offset + width] += roughness
+            offset += width
+        return penalty
 
     def draw_group_deviations(
         self,
@@ -279,24 +446,25 @@ class SmoothModel(Describable):
     ) -> NDArray[np.float64]:
         """Draw one deviation path per group and varying coefficient."""
 
-        coefficients = self._coefficient_blocks(columns)
-        n_knots = len(self.knots)
+        widths = self._selected_widths(columns)
         scale_array = np.asarray(scales, dtype=np.float64)
         roughness = self.group_smoothness * roughness_matrix(self.knots)
-        covariances = [
-            np.linalg.pinv(
-                np.diag(1.0 / scale_array[block * n_knots : (block + 1) * n_knots] ** 2)
-                + roughness,
-                hermitian=True,
-            )
-            for block in range(len(coefficients))
-        ]
-        deviations = np.empty((groups, len(coefficients) * n_knots), dtype=np.float64)
+        covariances = []
+        offset = 0
+        for width in widths:
+            block = np.diag(1.0 / scale_array[offset : offset + width] ** 2)
+            if width > 1:
+                block = block + roughness
+            covariances.append(np.linalg.pinv(block, hermitian=True))
+            offset += width
+        deviations = np.empty((groups, int(sum(widths))), dtype=np.float64)
         for group in range(groups):
-            for block in range(len(coefficients)):
-                deviations[group, block * n_knots : (block + 1) * n_knots] = (
-                    generator.multivariate_normal(np.zeros(n_knots), covariances[block])
+            offset = 0
+            for width, covariance in zip(widths, covariances, strict=True):
+                deviations[group, offset : offset + width] = generator.multivariate_normal(
+                    np.zeros(width), covariance
                 )
+                offset += width
         return deviations
 
     def simulate_rows(
@@ -309,13 +477,13 @@ class SmoothModel(Describable):
         """Collapse per-row knot values onto the wrapped coordinate and delegate."""
 
         values = np.asarray(coefficients, dtype=np.float64)
-        n_coefficients = len(self.coefficient_names)
-        if values.shape != (len(design), n_coefficients * len(self.knots)):
+        if values.shape != (len(design), len(self.parameter_names)):
             raise ValueError("simulate_rows needs one knot value per parameter per study row")
         basis = self.time_basis(design)
-        rows = np.einsum(
-            "ijk,ik->ij", values.reshape(len(design), n_coefficients, len(self.knots)), basis
-        )
+        rows = np.empty((len(design), len(self.coefficient_names)), dtype=np.float64)
+        for index, (_coefficient, start, width) in enumerate(self.layout):
+            block = values[:, start : start + width]
+            rows[:, index] = block[:, 0] if width == 1 else np.einsum("ik,ik->i", block, basis)
         return self.model.simulate_rows(design, rows, seed=seed)
 
     # -- the estimator contract --------------------------------------------------------
@@ -332,6 +500,8 @@ class SmoothModel(Describable):
                 penalty_matrix=self.penalty_matrix(),
                 likelihood=self.likelihood,
                 offsets=self.predictor_offsets(study),
+                box=self.coordinate_box(study),
+                initial_points=self.initial_points(study),
             ),
             model_name=self.model_name,
             model_signature=self.signature,
@@ -349,10 +519,15 @@ class SmoothModel(Describable):
         self._validate_study_scope(study)
         prediction_mode = self._prediction_mode(mode)
         self._validate_fit(fit)
-        predictor = linear_predictor(
+        return self.likelihood.prediction(self.row_predictor(study, fit), mode=prediction_mode)
+
+    def row_predictor(self, study: Study, fit: FitResult) -> NDArray[np.float64]:
+        """Return the linear predictor of each row under a fitted set of paths."""
+
+        self._validate_fit(fit)
+        return linear_predictor(
             self.design_matrix(study), fit.estimates, self.predictor_offsets(study)
         )
-        return self.likelihood.prediction(predictor, mode=prediction_mode)
 
     def pointwise_log_prob(
         self,
@@ -361,11 +536,19 @@ class SmoothModel(Describable):
         *,
         mode: PredictionMode = PredictionMode.FILTERED,
     ) -> NDArray[np.float64]:
-        """Score each observation under the fitted paths."""
+        """Score each observation under the fitted paths.
 
-        outcomes = self.outcomes(study)
-        prediction = self.predict(study, fit, mode=mode)
-        return self.likelihood.pointwise_log_prob(prediction.linear_predictor, outcomes)
+        The likelihood is scored on the model's own linear predictor rather than on the one
+        a :class:`~behavio.contracts.estimator.Prediction` carries. Those are the same array
+        for a family whose prediction *is* its predictor, and they are not for a
+        drift-diffusion family, whose four predictor cells produce one choice probability.
+        """
+
+        self._validate_study_scope(study)
+        self._prediction_mode(mode)
+        return self.likelihood.pointwise_log_prob(
+            self.row_predictor(study, fit), self.outcomes(study)
+        )
 
     def simulate(
         self,
@@ -377,16 +560,16 @@ class SmoothModel(Describable):
         """Generate observations under smooth parameter paths."""
 
         self._validate_study_scope(design)
-        knot_values = self.parameter_vector(parameters).reshape(
-            len(self.coefficient_names), len(self.knots)
-        )
+        knot_values = self.knot_grid(self.parameter_vector(parameters))
         coefficients = self.time_basis(design) @ knot_values.T
         return self.model.simulate_rows(design, coefficients, seed=seed)
 
     # -- reading paths back ------------------------------------------------------------
 
-    def parameters_from_paths(self, paths: Mapping[str, Sequence[float]]) -> Mapping[str, float]:
-        """Pack named parameter paths into this model's simulation coordinates."""
+    def parameters_from_paths(
+        self, paths: Mapping[str, float | Sequence[float]]
+    ) -> Mapping[str, float]:
+        """Pack named parameter paths and stationary values into simulation coordinates."""
 
         expected = set(self.coefficient_names)
         observed = set(paths)
@@ -397,12 +580,18 @@ class SmoothModel(Describable):
             )
         values: dict[str, float] = {}
         offset = 0
-        for coefficient in self.coefficient_names:
-            path = np.asarray(paths[coefficient], dtype=np.float64)
-            if path.shape != (len(self.knots),) or not np.all(np.isfinite(path)):
+        for coefficient, _start, width in self.layout:
+            try:
+                path = np.atleast_1d(np.asarray(paths[coefficient], dtype=np.float64))
+            except (TypeError, ValueError):
                 raise ValueError(
                     f"path {coefficient!r} must contain one finite value per temporal knot"
+                ) from None
+            if path.shape != (width,) or not np.all(np.isfinite(path)):
+                requirement = (
+                    "one finite value" if width == 1 else "one finite value per temporal knot"
                 )
+                raise ValueError(f"path {coefficient!r} must contain {requirement}")
             for value in path:
                 values[self.parameter_names[offset]] = float(value)
                 offset += 1
@@ -422,20 +611,28 @@ class SmoothModel(Describable):
         *,
         times: Sequence[float] | None = None,
     ) -> CoefficientTrajectory:
-        """Evaluate any flat knot vector on this model's basis."""
+        """Evaluate any flat coordinate vector on this model's basis."""
 
         evaluation_times = self.knots if times is None else times
         time_array = np.asarray(evaluation_times, dtype=np.float64)
         basis = linear_time_basis(time_array, self.knots)
-        values = np.asarray(knot_values, dtype=np.float64).reshape(
-            len(self.coefficient_names), len(self.knots)
-        )
         return CoefficientTrajectory(
             clock=self.clock,
             times=time_array,
             coefficient_names=self.coefficient_names,
-            values=basis @ values.T,
+            values=basis @ self.knot_grid(knot_values).T,
         )
+
+    def knot_grid(self, values: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Return a flat coordinate vector as ``(coefficients, knots)``, stationary repeated."""
+
+        flat = np.asarray(values, dtype=np.float64)
+        if flat.shape != (len(self.parameter_names),):
+            raise ValueError("a knot grid needs one value per parameter of this model")
+        grid = np.empty((len(self.coefficient_names), len(self.knots)), dtype=np.float64)
+        for index, (_coefficient, start, width) in enumerate(self.layout):
+            grid[index] = flat[start] if width == 1 else flat[start : start + width]
+        return grid
 
     def time_basis(self, study: Study) -> NDArray[np.float64]:
         """Return the piecewise-linear interpolation weights for each row's clock value."""
@@ -470,19 +667,22 @@ class SmoothModel(Describable):
 
     # -- internals ---------------------------------------------------------------------
 
-    def _coefficient_blocks(self, columns: NDArray[np.intp]) -> tuple[int, ...]:
-        """Return the wrapped-parameter positions ``columns`` selects, whole paths only."""
+    def _selected_widths(self, columns: NDArray[np.intp]) -> tuple[int, ...]:
+        """Return the widths of the coefficient blocks ``columns`` selects, whole blocks only."""
 
-        n_knots = len(self.knots)
-        selected = np.asarray(columns, dtype=np.intp)
-        blocks = tuple(dict.fromkeys(int(column) // n_knots for column in selected))
-        expected = [block * n_knots + knot for block in blocks for knot in range(n_knots)]
-        if list(selected) != expected:
+        selected = [int(column) for column in np.asarray(columns, dtype=np.intp)]
+        widths: list[int] = []
+        expected: list[int] = []
+        for _coefficient, start, width in self.layout:
+            if start in selected:
+                widths.append(width)
+                expected.extend(range(start, start + width))
+        if selected != expected:
             raise ValueError(
                 "a smooth parameter varies by group as a whole path: name every knot of a "
                 "coefficient, or name the coefficient before smoothing it"
             )
-        return blocks
+        return tuple(widths)
 
     def _validate_study_scope(self, study: Study) -> None:
         if len(study.subjects) > 1 and not self.shared_trajectory:

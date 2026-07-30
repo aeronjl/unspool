@@ -36,6 +36,7 @@ from behavio.compose.hierarchy import (
     HierarchicalFitResult,
     HierarchicalModel,
     HierarchicalSimulation,
+    UnseenGroupPrediction,
     hierarchical,
 )
 from behavio.compose.smoothness import SmoothModel, smooth
@@ -47,6 +48,7 @@ __all__ = [
     "HierarchicalModel",
     "HierarchicalSimulation",
     "SmoothModel",
+    "UnseenGroupPrediction",
     "hierarchical",
     "model_from_formula",
     "smooth",

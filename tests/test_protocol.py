@@ -1,5 +1,7 @@
 """Tests for the immutable study-protocol declaration and lifecycle."""
 
+import hashlib
+import json
 from dataclasses import FrozenInstanceError, replace
 
 import pytest
@@ -10,6 +12,7 @@ from behavio.protocol import (
     CandidateSpec,
     CohortPredicate,
     CohortSpec,
+    ComparisonMultiplicity,
     ComparisonSpec,
     EstimandSpec,
     LifecycleEvent,
@@ -37,6 +40,7 @@ from behavio.protocol import (
     ValidationGeometry,
     ValidationSpec,
     WinnerPolicy,
+    protocol_from_dict,
     protocol_from_json,
 )
 
@@ -385,3 +389,94 @@ def test_allowed_values_may_declare_missing_observations_explicitly() -> None:
             ObservationDataType.CONTINUOUS,
             allowed_values=(None, None),
         )
+
+
+def test_the_declared_multiplicity_defaults_to_the_adjustment_the_runner_applied() -> None:
+    protocol = example_protocol()
+
+    assert protocol.schema_version == "behavio.study-protocol/2"
+    assert protocol.comparison.multiplicity is ComparisonMultiplicity.BENJAMINI_HOCHBERG
+
+
+def test_a_declared_multiplicity_round_trips_through_protocol_json() -> None:
+    for adjustment in ComparisonMultiplicity:
+        protocol = replace(
+            example_protocol(),
+            comparison=replace(example_protocol().comparison, multiplicity=adjustment),
+        )
+
+        restored = protocol_from_json(protocol.canonical_json())
+
+        assert restored.comparison.multiplicity is adjustment
+        assert restored == protocol
+        assert restored.fingerprint == protocol.fingerprint
+    # The declaration is part of the content address, which is the whole point: two
+    # protocols identical but for the adjustment that picks their winner are two protocols.
+    corrected = example_protocol()
+    uncorrected = replace(
+        corrected,
+        comparison=replace(corrected.comparison, multiplicity=ComparisonMultiplicity.NONE),
+    )
+    assert corrected.fingerprint != uncorrected.fingerprint
+
+
+def test_a_version_one_payload_still_loads_and_keeps_its_own_fingerprint() -> None:
+    """A frozen protocol is content-addressed and its freeze event quotes that address."""
+
+    protocol = example_protocol().freeze()
+    recorded = json.loads(protocol.canonical_json())
+    # Exactly what a protocol frozen before the member existed looks like on disk.
+    del recorded["comparison"]["multiplicity"]
+    recorded["schema_version"] = "behavio.study-protocol/1"
+    recorded["lifecycle"][0]["artifact_fingerprint"] = _legacy_fingerprint(recorded)
+
+    restored = protocol_from_dict(recorded)
+
+    assert restored.schema_version == "behavio.study-protocol/1"
+    assert restored.comparison.multiplicity is ComparisonMultiplicity.BENJAMINI_HOCHBERG
+    assert restored.fingerprint == recorded["lifecycle"][0]["artifact_fingerprint"]
+    assert json.loads(restored.canonical_json()) == recorded
+    assert restored.state is ProtocolState.FROZEN
+
+
+def _legacy_fingerprint(recorded: dict) -> str:
+    scientific = {
+        key: value for key, value in recorded.items() if key not in ("state", "lifecycle")
+    }
+    payload = json.dumps(
+        scientific, ensure_ascii=False, allow_nan=False, sort_keys=True, separators=(",", ":")
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def test_a_superseded_schema_cannot_smuggle_in_an_adjustment_it_predates() -> None:
+    with pytest.raises(ProtocolValidationError, match="predates the comparison"):
+        replace(
+            example_protocol(),
+            schema_version="behavio.study-protocol/1",
+            comparison=replace(
+                example_protocol().comparison,
+                multiplicity=ComparisonMultiplicity.BONFERRONI,
+            ),
+        )
+    recorded = json.loads(example_protocol().canonical_json())
+    recorded["schema_version"] = "behavio.study-protocol/1"
+    with pytest.raises(ProtocolValidationError, match="must not carry one"):
+        protocol_from_dict(recorded)
+
+
+def test_an_amendment_is_recorded_under_the_schema_it_is_written_in() -> None:
+    legacy = replace(
+        example_protocol(),
+        schema_version="behavio.study-protocol/1",
+    ).freeze()
+
+    amended = legacy.amend(
+        identifier="declare-the-adjustment",
+        reason="state the multiplicity correction the runner was already applying",
+        comparison=replace(legacy.comparison, multiplicity=ComparisonMultiplicity.BONFERRONI),
+    )
+
+    assert amended.schema_version == SCHEMA_VERSION
+    assert amended.comparison.multiplicity is ComparisonMultiplicity.BONFERRONI
+    assert amended.amendments[-1].parent_fingerprint == legacy.fingerprint

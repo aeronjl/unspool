@@ -8,6 +8,7 @@ import pytest
 from test_reporting import recovered, report_items
 from test_runner import candidate_models, compiled_nested
 
+from behavio.contracts.fold import ValidationFold
 from behavio.evidence import (
     BUNDLE_SCHEMA_VERSION,
     POSTERIOR_CONVERGENCE_PATH,
@@ -80,8 +81,32 @@ from behavio.runner import run_nested_protocol
 #: constants were recomputed rather than the check relaxed.
 #: Previously: bundle ``294a26f658c331e22218fd00531cd35a2f0ddd66268086eb20fb7c672e715418``,
 #: zip ``7155e4957ce5cd007751d278ae62be88f22af18cd1906687cf53282b6d14d609``.
-SCHEMA_1_BUNDLE_ID = "f32d7b629b44f96e4070a6d21708d0c3dacbe62b5cdf906d7f06cea01b580089"
-SCHEMA_1_ZIP_SHA256 = "d39f4d919eb1ee682b606dad8a69dd0d11ce8a8b9adfbce8d39d54a2af41c09f"
+#:
+#: Recomputed a fourth time by ``behavio.study-protocol/2``, which adds
+#: ``ComparisonSpec.multiplicity``: the family adjustment decides which candidate wins, and
+#: a verdict-determining choice belongs inside the frozen declaration. The eighteen
+#: archived files were diffed one by one against the ones the previous constants describe.
+#: Exactly **two** differ in content:
+#:
+#: ``protocol/protocol.json`` gains one line, ``"multiplicity": "benjamini-hochberg"``,
+#: and its ``schema_version`` moves from ``behavio.study-protocol/1`` to ``/2``.
+#: ``report/report.md`` quotes that schema version on its provenance line.
+#:
+#: Six more -- the cohort manifest, the execution plan, the evaluation, the recovery
+#: report, ``report/report.json`` and ``reproduction/replay.json`` -- differ **only** in
+#: the fingerprints they quote, all of which are content addresses that chain off the
+#: protocol fingerprint. Ten are byte-identical, including every fold, every pointwise
+#: prediction, every fit audit and the figure.
+#:
+#: Nothing in ``comparison/evaluation.json`` moved except quoted fingerprints, and that is
+#: the point of the exercise: the declared default is Benjamini-Hochberg, which is exactly
+#: what the runner applied unconditionally before it could be declared, so
+#: ``ranking.family``, ``ranking.reason``, every adjusted probability and every ``decisive``
+#: flag are bit-identical. The declaration changed; the verdict did not.
+#: Previously: bundle ``f32d7b629b44f96e4070a6d21708d0c3dacbe62b5cdf906d7f06cea01b580089``,
+#: zip ``d39f4d919eb1ee682b606dad8a69dd0d11ce8a8b9adfbce8d39d54a2af41c09f``.
+SCHEMA_1_BUNDLE_ID = "4ca817aadce37f3be74a835c5438773ef873a0ed1f810ec008db52cbb0286763"
+SCHEMA_1_ZIP_SHA256 = "c271ac752e9f02ee9152d17a0ef3442e3d5a6c27d5a496768cacc7cd85329986"
 
 
 def reported():
@@ -393,3 +418,24 @@ def test_source_control_reports_a_directory_that_is_not_a_repository(tmp_path) -
         "available": False,
         "reason": "not-a-git-repository",
     }
+
+
+def test_the_declared_fold_identifier_keys_the_prediction_and_audit_maps() -> None:
+    """A fold names itself, and that name is the key a bundle reader looks a fold up by."""
+
+    evidence = bundle()
+    run = recovered().evaluation
+    folds = run.report.candidates[0].folds
+    declared = tuple(fold.split.identifier for fold in folds)
+
+    predictions = json.loads(evidence.file("predictions/pointwise.json").content)
+    audits = json.loads(evidence.file("audits/fits.json").content)
+
+    assert declared
+    # `evaluate_splits` copies the split's declared name onto the evaluation, and every
+    # downstream record keys on that one string rather than on a fold's position.
+    assert tuple(fold.identifier for fold in folds) == declared
+    for candidate in run.report.candidates:
+        assert tuple(predictions[candidate.name]) == declared
+        assert tuple(audits[candidate.name]["folds"]) == declared
+    assert all(isinstance(split, ValidationFold) for split in (fold.split for fold in folds))

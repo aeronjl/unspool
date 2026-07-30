@@ -1583,9 +1583,11 @@ def _paired_comparisons(
 ) -> tuple[tuple[PairedComparison, ...], ComparisonFamily]:
     """Compare every eligible pair through the one shared paired-bootstrap implementation.
 
-    The family-level error rate is ``1 - interval_level``: the rate the protocol already
-    declared, now controlled across the whole family of contrasts instead of one contrast
-    at a time. No new threshold is introduced.
+    The adjustment is :attr:`behavio.protocol.ComparisonSpec.multiplicity`, frozen with the
+    rest of the design before any data was seen, because which contrasts survive it decides
+    which candidate wins. The family-level error rate is ``1 - interval_level``: the rate
+    the protocol already declared, now controlled across the whole family of contrasts
+    instead of one contrast at a time. No new threshold is introduced.
     """
 
     eligible = tuple(candidate for candidate in candidate_runs if candidate.eligible)
@@ -1601,7 +1603,7 @@ def _paired_comparisons(
         resamples=comparison.bootstrap_repetitions,
         seed=comparison.seed,
         confidence_level=comparison.interval_level,
-        multiplicity=ComparisonMultiplicity.BENJAMINI_HOCHBERG,
+        multiplicity=ComparisonMultiplicity(comparison.multiplicity),
     )
 
 
@@ -1654,9 +1656,8 @@ def _rank(
             names,
             (
                 f"the best candidate improves on every eligible competitor across all "
-                f"{family.n_comparisons} simultaneous contrasts after "
-                f"{family.multiplicity.value} adjustment at "
-                f"{family.family_error_rate:.3g}"
+                f"{family.n_comparisons} simultaneous contrasts "
+                f"{_adjustment_phrase(family)}"
             ),
             family,
         )
@@ -1668,11 +1669,23 @@ def _rank(
             f"{len(undecided)} of {len(names) - 1} contrasts against the leading candidate "
             f"do not exclude equal predictive performance across the family of "
             f"{family.n_comparisons} simultaneous contrasts "
-            f"({family.n_decisive} decisive after {family.multiplicity.value} adjustment "
-            f"at {family.family_error_rate:.3g}; {family.n_separated} separated before it)"
+            f"({family.n_decisive} decisive {_adjustment_phrase(family)}; "
+            f"{family.n_separated} separated on the unadjusted interval alone)"
         ),
         family,
     )
+
+
+def _adjustment_phrase(family: ComparisonFamily) -> str:
+    """Name the declared adjustment, or say plainly that none was applied.
+
+    ``ComparisonMultiplicity.NONE`` and a family of one both leave the reading
+    uncorrected; a verdict must say so rather than report ``after none adjustment``.
+    """
+
+    if not family.corrected:
+        return f"under the uncorrected per-contrast reading at {family.family_error_rate:.3g}"
+    return f"after {family.multiplicity.value} adjustment at {family.family_error_rate:.3g}"
 
 
 def _decisively_favours(comparisons: tuple[PairedComparison, ...], winner: str, other: str) -> bool:

@@ -8,12 +8,8 @@ from typing import Any
 
 import numpy as np
 
-from behavio import (
-    HierarchicalSmoothWienerDriftDiffusion,
-    SmoothWienerDriftDiffusion,
-    Study,
-    WienerDriftDiffusion,
-)
+from behavio import Study, WienerDriftDiffusion
+from behavio.compose import HierarchicalModel, SmoothModel, hierarchical, smooth
 from behavio.models._kernels.basis import linear_time_basis
 from benchmarks.provenance import render
 
@@ -70,13 +66,16 @@ def experiment(*, regime: str, seed: int) -> dict[str, Any]:
     if regime not in REGIMES:
         raise ValueError(f"unknown regime {regime!r}")
     design = build_design(seed=seed)
-    hierarchical = _hierarchical_model()
+    pooled = _hierarchical_model()
     population_paths, deviations = _truth(regime, design.subjects, seed=seed + 1)
-    simulation = hierarchical.simulate_with_effects(
+    simulation = pooled.simulate_with_effects(
         design,
-        hierarchical.parameters_from_paths(population_paths),
+        pooled.parameters_from_paths(population_paths),
         seed=seed + 2,
-        subject_deviation_paths=deviations,
+        group_deviations={
+            subject: np.concatenate([paths[parameter] for parameter in PATH_PARAMETERS])
+            for subject, paths in deviations.items()
+        },
     )
     train = simulation.study.take(
         np.flatnonzero(simulation.study["session_order"] < TRAINING_SESSIONS)
@@ -85,7 +84,10 @@ def experiment(*, regime: str, seed: int) -> dict[str, Any]:
         np.flatnonzero(simulation.study["session_order"] == TRAINING_SESSIONS)
     )
     evaluation_times = np.arange(TRAINING_SESSIONS, dtype=np.float64)
-    truth_paths = _evaluated_truth(simulation.subject_knot_values, evaluation_times)
+    truth_paths = _evaluated_truth(
+        np.stack([pooled.knot_grid(vector) for vector in simulation.group_parameter_vectors]),
+        evaluation_times,
+    )
 
     complete = _complete_model()
     complete_fit = complete.fit(train)
@@ -101,7 +103,7 @@ def experiment(*, regime: str, seed: int) -> dict[str, Any]:
     shared = _shared_model()
     shared_fit = shared.fit(train)
     shared_paths = np.broadcast_to(
-        _selected_trajectory(shared.parameter_trajectory(shared_fit, times=evaluation_times)),
+        _selected_trajectory(shared.coefficient_trajectory(shared_fit, times=evaluation_times)),
         truth_paths.shape,
     )
 
@@ -109,31 +111,31 @@ def experiment(*, regime: str, seed: int) -> dict[str, Any]:
     independent_scores: list[np.ndarray[Any, np.dtype[np.float64]]] = []
     independent_audits: list[dict[str, Any]] = []
     independent_converged = True
-    for subject in simulation.subjects:
+    for subject in simulation.groups:
         subject_train = _subject_study(train, subject)
         subject_test = _subject_study(test, subject)
         independent = _independent_model()
         independent_fit = independent.fit(subject_train)
         independent_paths.append(
             _selected_trajectory(
-                independent.parameter_trajectory(independent_fit, times=evaluation_times)
+                independent.coefficient_trajectory(independent_fit, times=evaluation_times)
             )
         )
         independent_scores.append(independent.pointwise_log_prob(subject_test, independent_fit))
         independent_audits.append(independent_fit.audit().to_dict())
         independent_converged &= independent_fit.diagnostics.converged
 
-    hierarchical_fit = hierarchical.fit(train)
+    hierarchical_fit = pooled.fit(train)
     hierarchical_paths = np.stack(
         [
             _selected_trajectory(
-                hierarchical.subject_trajectory(
+                pooled.group_trajectory(
                     hierarchical_fit,
                     subject,
                     times=evaluation_times,
                 )
             )
-            for subject in simulation.subjects
+            for subject in simulation.groups
         ]
     )
     records = {
@@ -157,9 +159,7 @@ def experiment(*, regime: str, seed: int) -> dict[str, Any]:
         ),
         "hierarchical_smooth": _method_record(
             trajectory_rmse=_rmse(hierarchical_paths, truth_paths),
-            future_log_loss=-float(
-                np.mean(hierarchical.pointwise_log_prob(test, hierarchical_fit))
-            ),
+            future_log_loss=-float(np.mean(pooled.pointwise_log_prob(test, hierarchical_fit))),
             converged=hierarchical_fit.diagnostics.converged,
             audits=[hierarchical_fit.audit().to_dict()],
         ),
@@ -236,7 +236,7 @@ def run(*, repetitions: int = 20, seed: int = 64_219) -> dict[str, Any]:
         },
         "scope": {
             "varying_parameters": list(PATH_PARAMETERS),
-            "subject_scale": _hierarchical_model().subject_scale,
+            "subject_scale": float(_hierarchical_model().varying_effects.scales[0]),
             "subject_smoothness": _hierarchical_model().subject_smoothness,
             "prediction": "fifth session for animals represented in training",
             "trajectory_metric": "subject RMSE for stimulus drift and boundary in training",
@@ -250,53 +250,46 @@ def run(*, repetitions: int = 20, seed: int = 64_219) -> dict[str, Any]:
     }
 
 
-def _hierarchical_model() -> HierarchicalSmoothWienerDriftDiffusion:
-    return HierarchicalSmoothWienerDriftDiffusion(
-        covariates=("stimulus",),
-        knots=KNOTS,
-        varying_parameters=PATH_PARAMETERS,
-        subject_parameters=PATH_PARAMETERS,
-        smoothness=8.0,
-        subject_scale=0.2,
-        subject_smoothness=8.0,
-        n_restarts=2,
-        max_iterations=350,
-        simulation_time_step=0.001,
-    )
-
-
-def _shared_model() -> SmoothWienerDriftDiffusion:
-    return SmoothWienerDriftDiffusion(
-        covariates=("stimulus",),
-        knots=KNOTS,
-        varying_parameters=PATH_PARAMETERS,
-        smoothness=8.0,
-        shared_trajectory=True,
-        n_restarts=2,
-        max_iterations=350,
-        simulation_time_step=0.001,
-    )
-
-
-def _independent_model() -> SmoothWienerDriftDiffusion:
-    return SmoothWienerDriftDiffusion(
-        covariates=("stimulus",),
-        knots=KNOTS,
-        varying_parameters=PATH_PARAMETERS,
-        smoothness=8.0,
-        n_restarts=2,
-        max_iterations=350,
-        simulation_time_step=0.001,
-    )
-
-
-def _complete_model() -> WienerDriftDiffusion:
+def _base_model() -> WienerDriftDiffusion:
     return WienerDriftDiffusion(
         covariates=("stimulus",),
         n_restarts=2,
         max_iterations=350,
         simulation_time_step=0.001,
     )
+
+
+def _paths_model(*, shared_trajectory: bool) -> SmoothModel:
+    return smooth(
+        _base_model(),
+        over="session_order",
+        knots=KNOTS,
+        parameters=PATH_PARAMETERS,
+        smoothness=8.0,
+        group_smoothness=8.0,
+        shared_trajectory=shared_trajectory,
+    )
+
+
+def _hierarchical_model() -> HierarchicalModel:
+    return hierarchical(
+        _paths_model(shared_trajectory=False),
+        over="subject",
+        parameters=PATH_PARAMETERS,
+        scale=0.2,
+    )
+
+
+def _shared_model() -> SmoothModel:
+    return _paths_model(shared_trajectory=True)
+
+
+def _independent_model() -> SmoothModel:
+    return _paths_model(shared_trajectory=False)
+
+
+def _complete_model() -> WienerDriftDiffusion:
+    return _base_model()
 
 
 def _truth(

@@ -16,7 +16,8 @@ performance rankings. “Supported” refers to the evidence boundary in the
 | Psychometric family | Binary choice | None; a fixed threshold, width, guess and lapse | Complete pooling | link choice, threshold convention, lapse versus slope |
 | Signal detection | Yes/no, rating, or response + confidence | None; fixed sensitivity and criteria | Complete pooling | extreme-rate corrections, equal versus unequal variance, meta-d' constraints |
 | Multinomial logit | Categorical choice | Static or smooth per-category coefficients | Complete or partial pooling | availability, omissions, coding |
-| Wiener DDM | Choice + response time | Within-decision accumulation; optionally smooth across-trial parameters | Single subject or partial pooling | contaminants, RT origin, scale trade-offs |
+| Wiener DDM | Choice + response time | Within-decision accumulation; parameters fixed across trials | Complete or partial pooling | contaminants, RT origin, scale trade-offs |
+| Session-varying Wiener DDM | Choice + response time | Smooth parameter paths between decisions | Single subject, complete, or partial pooling | across-trial paths versus within-decision dynamics |
 
 Every family exposes filtered prediction and pointwise scoring. Generative families also
 support simulation and design-specific recovery. Configuration-specific signatures prevent
@@ -275,31 +276,38 @@ time without adequate design; nor comparability with choice-only log scores.
 
 [Detailed assumptions](drift-diffusion.md)
 
-## Smooth and hierarchical Wiener drift diffusion
+## Session-varying and partially pooled Wiener drift diffusion
 
-**Classes:** `SmoothWienerDriftDiffusion`,
-`HierarchicalSmoothWienerDriftDiffusion`
+**Expressions:** `smooth(WienerDriftDiffusion(...))`,
+`hierarchical(WienerDriftDiffusion(...), over="subject")`,
+`hierarchical(smooth(WienerDriftDiffusion(...)), over="subject")`
 
-**Use when:** selected DDM parameters may change smoothly across trials or sessions, with
-optional shrunken animal-specific deviations.
+**Use when:** named DDM parameters may change smoothly across trials or sessions, or may
+differ between animals, or both. The middle expression — a cohort with no longitudinal
+hypothesis — had no hand-written class and is now an ordinary case.
 
-**Requires:** all static DDM commitments plus a fixed across-trial clock, knots, changing
-parameter set, and population prediction policy.
+**Requires:** all static DDM commitments; `smooth()` additionally requires a fixed
+across-trial clock and knots, and `hierarchical()` requires at least two labelled groups
+and a declared deviation scale.
 
 **Predicts:** joint future choice/response-time outcomes. Represented subjects use their
-paths; unseen-subject prediction can integrate or plug in population structure through
-the documented method.
+fitted deviations; unseen-subject prediction plugs in the population by default or
+integrates the fitted random effect through `predict_new_groups()`.
 
-**Parameters:** fixed-knot drift, boundary, or starting-bias paths; stationary non-decision
-time; optional subject deviation scales.
+**Parameters:** the wrapped model's own coordinate, with each smoothed parameter replaced
+by fixed-knot values named `parameter[clock=knot]`. Hierarchy renames nothing: the reported
+coordinate is the population one, and deviations are read off the fit by group label under
+fixed or bounded-estimated per-parameter scales.
 
 **Evidence:** smooth, hierarchical, contaminant, predictive-uncertainty, and subject-scale
-recovery benchmarks.
+recovery benchmarks, plus a stored replay of the two deleted classes these expressions
+replaced.
 
 **Does not establish:** changing within-trial diffusion dynamics. The smooth clock indexes
 decisions across the study, not time within a decision.
 
-[Smooth DDM](smooth-ddm.md) · [Hierarchical smooth DDM](hierarchical-smooth-ddm.md)
+[Session-varying DDM](smooth-ddm.md) · [Partially pooled DDM](hierarchical-smooth-ddm.md) ·
+[Composing models](composing-models.md)
 
 ## Card-level release rule
 

@@ -172,10 +172,14 @@ predictor, which `predictor_cells` declares.
 | --- | --- | --- |
 | `BernoulliHistoryGLM(...)` | `()` | `(rows, parameters)` |
 | `MultinomialLogit(options=("left", "right", "up"))` | `("category['left']", "category['right']", "category['up']")` | `(rows, 3, parameters)` |
+| `WienerDriftDiffusion(...)` | `("drift", "boundary", "starting_bias", "nondecision_time")` | `(rows, 4, parameters)` |
 
 `()` is the scalar case, and every array a scalar-predictor model exchanges with a
 combinator has exactly the shape it always had -- which is why the fits the deleted
-hand-written classes published are still reproduced bit for bit. Nothing about hierarchy or
+hand-written GLM classes published are still reproduced bit for bit. A cell axis re-orders
+the same products rather than changing them, so the deleted drift-diffusion classes are
+reproduced to the optimizer's tolerance instead; see
+[migration guides](migration-guides.md). Nothing about hierarchy or
 smoothness is per-family, so nothing about them turned out to be per-shape either:
 grouping partitions *rows*, and a cell axis sits between the row axis and the coordinate
 axis it never touches, so `expand_group_design` copies a group's block across every cell of
@@ -273,8 +277,10 @@ A model is composable if it satisfies
 `behavio.contracts.compose.PenalisedLinearEstimator`: its likelihood must see a study only
 through a **quadratically penalised linear predictor**, and its row scores must be
 independent given that predictor. Every generalized linear family in Behavio is one of
-those, `MultinomialLogit` included. The drift-diffusion families are not, and neither is
-the GLM-HMM; both are refused rather than silently mis-composed.
+those, `MultinomialLogit` included, and so is `WienerDriftDiffusion`: there is no link on
+its four predictor cells, but each of them is still a design times a coefficient block, and
+a trial's joint choice/latency density depends on the study through nothing else. The
+GLM-HMM is not, and is refused rather than silently mis-composed.
 
 Five things a combinator needs, and the members that carry each:
 

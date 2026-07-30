@@ -1,8 +1,23 @@
-"""A simple Wiener drift-diffusion model for binary choice and response time."""
+"""A Wiener drift-diffusion model for binary choice and response time.
+
+Smoothness and hierarchy used to be two more dataclasses, in two sibling modules totalling
+two and a half thousand lines; they are now :func:`behavio.compose.smooth` and
+:func:`behavio.compose.hierarchical` applied to this one. What that cost this module is the
+block of contract members at the end of the class -- most of all
+:meth:`~WienerDriftDiffusion.fit_penalised`, which is the bounded multi-start solver every
+drift-diffusion fit in this package has always used, now able to run on a coordinate a
+combinator widened.
+
+Two things make the drift-diffusion case harder than the generalized linear one, and both
+are visible in what the contract had to grow. The observation is **joint** -- a choice and a
+latency -- so ``outcomes`` is ``(rows, 2)``. And the coordinate is on a **natural scale**
+inside a box, with no link function, so a combinator that expands the coordinate has to
+carry the box, the restart points and the group block structure along with the design.
+"""
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from types import MappingProxyType
 
@@ -11,7 +26,18 @@ from numpy.typing import NDArray
 from scipy.optimize import minimize
 
 from behavio._internal.arrays import protected_array
+from behavio.contracts.compose import (
+    GroupExpansion,
+    PenalisedDesign,
+    PenalisedFitResult,
+    ridge_group_draw,
+    ridge_group_penalty,
+)
 from behavio.design import DesignSpec
+from behavio.models._kernels.arrowhead import (
+    arrowhead_covariance,
+    conditional_block_covariances,
+)
 from behavio.models._kernels.curvature import bounded_value_difference_hessian
 from behavio.models._kernels.design import (
     build_matrix,
@@ -20,10 +46,15 @@ from behavio.models._kernels.design import (
 )
 from behavio.models._kernels.introspection import Describable
 from behavio.models._kernels.wiener import (
+    INADMISSIBLE_OBJECTIVE,
     LOG_DENSITY_FLOOR,
+    OUTCOME_CHANNELS,
+    WienerLikelihood,
     bridge_crossings,
     crossing_fractions,
+    simulate_trialwise_wiener,
     upper_boundary_probability,
+    wiener_cell_design,
     wiener_log_density,
 )
 from behavio.models.base import (
@@ -36,6 +67,16 @@ from behavio.models.base import (
 )
 from behavio.response_times import ResponseTimeSpec
 from behavio.study import REQUIRED_COLUMNS, Study
+
+EFFECTIVE_BOUND_PENALTY = 1e6
+"""Quadratic price of a group whose population-plus-deviation leaves the natural box.
+
+A box constrains each coordinate on its own, and the coordinate that has to stay admissible
+here is a *sum* of two of them: a subject whose boundary deviation carries it below zero is
+not a subject with an unusual boundary, it is not a diffusion process. The constraint is
+enforced as a penalty on the violation plus a clip inside the likelihood, because a bounded
+quasi-Newton search has no way to express a linear inequality between two coordinates.
+"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -149,8 +190,14 @@ class DriftDiffusionSimulation:
 
 
 @dataclass(frozen=True, slots=True)
-class DriftDiffusionFitResult(FitResult):
-    """Wiener fit with retained deterministic restart evidence."""
+class DriftDiffusionFitResult(PenalisedFitResult):
+    """Wiener fit with retained deterministic restart evidence.
+
+    This is what a *composed* Wiener fit returns too, because a composed fit is this
+    model's own solver run on a wider problem: ``smooth(ddm).fit(study)`` reports the same
+    restart objectives, the same likelihood floor count and the same fastest observed
+    response as a plain one, on the coordinate the combinator named.
+    """
 
     restart_objectives: NDArray[np.float64]
     restart_converged: NDArray[np.bool_]
@@ -161,7 +208,7 @@ class DriftDiffusionFitResult(FitResult):
     posterior_contaminant_probability: NDArray[np.float64]
 
     def __post_init__(self) -> None:
-        FitResult.__post_init__(self)
+        PenalisedFitResult.__post_init__(self)
         objectives = protected_array(self.restart_objectives, dtype=np.float64)
         converged = protected_array(self.restart_converged, dtype=np.bool_)
         posterior = protected_array(
@@ -973,6 +1020,366 @@ class WienerDriftDiffusion(Describable):
     def _validate_fit(self, fit: FitResult) -> None:
         if fit.model_signature != self.signature or fit.parameter_names != self.parameter_names:
             raise ValueError("fit result belongs to a different model specification")
+
+    # -- what a combinator needs, and nothing a combinator does not ---------------------
+
+    @property
+    def likelihood(self) -> WienerLikelihood:
+        """The first-passage density this model's four predictor cells feed."""
+
+        return WienerLikelihood(density_terms=self.density_terms, contaminant=self.contaminant)
+
+    @property
+    def predictor_cells(self) -> tuple[str, ...]:
+        """The four natural-scale numbers a row's density is a function of.
+
+        There is no link on any of them: a boundary separation is a boundary separation.
+        The contract asks only that the *predictor* be linear in the coordinate, which it
+        is -- drift is a design times coefficients, and each of the other three is an
+        intercept column times its own parameter.
+        """
+
+        return self.likelihood.cells
+
+    @property
+    def outcome_channels(self) -> tuple[str, ...]:
+        """A drift-diffusion trial is observed jointly: which boundary, and when."""
+
+        return OUTCOME_CHANNELS
+
+    def outcomes(self, study: Study) -> NDArray[np.float64]:
+        """Return the ``(rows, 2)`` observed choice and response time in seconds."""
+
+        return np.column_stack([self._outcomes(study), self.response_time.read(study).seconds])
+
+    def design_matrix(self, study: Study) -> NDArray[np.float64]:
+        """Return the ``(rows, cells, parameters)`` design of the four predictor cells."""
+
+        return wiener_cell_design(
+            self._feature_matrix(study), n_extra_cells=len(self.predictor_cells) - 1
+        )
+
+    def predictor_offsets(self, study: Study) -> None:
+        """Return ``None``: nothing is added to a Wiener predictor that no parameter multiplies."""
+
+        return None
+
+    def penalty_matrix(self) -> NDArray[np.float64]:
+        """Return a zero penalty: an unsmoothed Wiener fit is a bounded maximum likelihood."""
+
+        size = len(self.parameter_names)
+        return np.zeros((size, size), dtype=np.float64)
+
+    def coordinate_box(self, study: Study) -> NDArray[np.float64]:
+        """Return the natural-scale box, with the non-decision bound the study allows.
+
+        The one bound that depends on data is the upper limit on non-decision time: no
+        decision can take less than nothing, so the fastest response caps it. That is why
+        this member takes a study at all.
+        """
+
+        minimum_response_time = float(np.min(self.response_time.read(study).seconds))
+        bounds: list[tuple[float, float]] = [
+            (-self.drift_bound, self.drift_bound) for _ in self.coefficient_names
+        ]
+        bounds.append(self.boundary_bounds)
+        bounds.append(self.starting_bias_bounds)
+        bounds.append(self._fit_nondecision_time_bounds(minimum_response_time))
+        if self.contaminant is not None:
+            bounds.append(self.contaminant.probability_bounds)
+        return np.asarray(bounds, dtype=np.float64)
+
+    def initial_points(self, study: Study) -> tuple[NDArray[np.float64], ...]:
+        """Return the deterministic restarts this family has always begun from."""
+
+        response_times = self.response_time.read(study).seconds
+        nondecision_bounds = self._fit_nondecision_time_bounds(float(np.min(response_times)))
+        return self._initial_points(self._outcomes(study), response_times, nondecision_bounds)
+
+    def group_parameter_expansion(self, name: str) -> tuple[str, ...]:
+        """Return ``(name,)``: a Wiener parameter is a number, not a structured object."""
+
+        return (name,)
+
+    def group_penalty(
+        self, columns: NDArray[np.intp], scales: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Return the isotropic Gaussian prior on one group's parameter deviations."""
+
+        return ridge_group_penalty(scales)
+
+    def draw_group_deviations(
+        self,
+        columns: NDArray[np.intp],
+        scales: NDArray[np.float64],
+        *,
+        groups: int,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Draw independent Gaussian parameter deviations for each group."""
+
+        return ridge_group_draw(scales, groups=groups, generator=generator)
+
+    def simulate_rows(
+        self,
+        design: Study,
+        coefficients: NDArray[np.float64],
+        *,
+        seed: int | np.random.Generator,
+    ) -> Study:
+        """Generate choices and response times given one parameter vector per row.
+
+        This is the simulator both combinators hand work down to: parameters that differ by
+        clock value and parameters that differ by group collapse to the same thing, one
+        parameter vector per trial. It is trial-wise by construction and so cannot reuse
+        :meth:`simulate`'s vectorised scalar-boundary loop; the two therefore consume the
+        generator differently, which is why :meth:`simulate` is left exactly as it was.
+        """
+
+        values = np.asarray(coefficients, dtype=np.float64)
+        if values.shape != (len(design), len(self.parameter_names)):
+            raise ValueError("simulate_rows needs one value per parameter per study row")
+        n_coefficients = len(self.coefficient_names)
+        features = self._feature_matrix(design)
+        drifts = np.sum(features * values[:, :n_coefficients], axis=1)
+        generator = seed if isinstance(seed, np.random.Generator) else np.random.default_rng(seed)
+        contaminants = np.zeros(len(design), dtype=np.bool_)
+        if self.contaminant is not None:
+            contaminants = generator.binomial(
+                1, np.clip(values[:, n_coefficients + 3], 0.0, 1.0)
+            ).astype(np.bool_)
+        choices, response_seconds = simulate_trialwise_wiener(
+            drifts,
+            values[:, n_coefficients],
+            values[:, n_coefficients + 1],
+            values[:, n_coefficients + 2],
+            generator=generator,
+            time_step=self.simulation_time_step,
+            maximum_time=self.simulation_max_time,
+        )
+        if self.contaminant is not None and np.any(contaminants):
+            count = int(np.sum(contaminants))
+            choices = np.array(choices, copy=True)
+            response_seconds = np.array(response_seconds, copy=True)
+            choices[contaminants] = generator.binomial(
+                1, self.contaminant.choice_probability, count
+            )
+            lower, upper = self.contaminant.time_bounds
+            response_seconds[contaminants] = generator.uniform(lower, upper, count)
+        columns = {name: design[name] for name in design.columns}
+        columns[self.outcome] = choices
+        columns[self.response_time.column] = (
+            response_seconds / self.response_time.unit.seconds_per_unit
+        )
+        return Study(columns)
+
+    def fit_penalised(
+        self,
+        design: PenalisedDesign,
+        *,
+        model_name: str,
+        model_signature: str,
+    ) -> DriftDiffusionFitResult:
+        """Solve any penalised Wiener problem on this model's own optimizer settings.
+
+        The same bounded multi-start L-BFGS-B, the same restart-selection rule and the same
+        second-difference Hessian a plain fit runs, on whatever coordinate the design names.
+        Two things a generalized linear solver never has to do are done here. The
+        population-plus-deviation of a group has to stay inside the natural box, which no
+        per-coordinate bound can express, so it is clipped inside the likelihood and priced
+        outside it. And the joint Hessian of a hierarchical fit is an arrowhead, which a
+        model differencing its objective numerically cannot afford to form densely.
+        """
+
+        box = design.box
+        starts = design.initial_points
+        if box is None or starts is None:
+            raise ValueError(
+                "a Wiener fit needs the box its coordinate is admissible in and the "
+                "restarts it begins from; a combinator supplies both from this model"
+            )
+        bounds = [(float(lower), float(upper)) for lower, upper in box]
+        outcomes = design.outcomes
+        response_times = outcomes[:, 1]
+        likelihood = design.likelihood
+        penalty = design.penalty_matrix
+        expansion = design.expansion
+        admissible = _effective_coordinate(box, expansion)
+
+        def objective(values: NDArray[np.float64]) -> float:
+            clipped, violation = admissible(values)
+            loss = likelihood.negative_log_likelihood(design.linear_predictor(clipped), outcomes)
+            if loss >= INADMISSIBLE_OBJECTIVE:
+                return INADMISSIBLE_OBJECTIVE
+            return float(loss + 0.5 * float(values @ penalty @ values) + violation)
+
+        results = [
+            minimize(
+                objective,
+                start,
+                method="L-BFGS-B",
+                bounds=bounds,
+                options={
+                    "maxiter": self.max_iterations,
+                    "ftol": self.tolerance,
+                    "gtol": self.tolerance,
+                    "maxls": 50,
+                },
+            )
+            for start in starts
+        ]
+        restart_objectives = np.asarray(
+            [float(result.fun) if np.isfinite(result.fun) else np.inf for result in results]
+        )
+        finite = np.flatnonzero(np.isfinite(restart_objectives)).tolist()
+        if not finite:
+            messages = "; ".join(str(result.message) for result in results)
+            raise ModelDataError(f"all DDM restarts produced non-finite objectives: {messages}")
+        successful = [index for index in finite if results[index].success]
+        eligible = successful if successful else finite
+        selected = min(eligible, key=lambda index: float(restart_objectives[index]))
+        chosen = results[selected]
+        estimates = np.asarray(chosen.x, dtype=np.float64)
+        value = objective(estimates)
+        _, violation = admissible(estimates)
+        if violation > EFFECTIVE_BOUND_PENALTY * 1e-10:
+            raise ModelDataError(
+                "the joint Wiener optimum violates the natural-scale bounds of at least "
+                "one group's population-plus-deviation"
+            )
+        conditional_covariances = None
+        if expansion is None:
+            hessian = bounded_value_difference_hessian(objective, estimates, bounds)
+            condition = float(np.linalg.cond(hessian))
+            covariance = np.linalg.pinv(hessian, hermitian=True)
+        else:
+            population_bounds = bounds[: expansion.n_population]
+            group_bounds = bounds[expansion.n_population : expansion.n_population + expansion.width]
+            arrowhead = arrowhead_covariance(
+                objective,
+                estimates,
+                population_bounds=population_bounds,
+                group_bounds=group_bounds,
+                n_groups=expansion.n_groups,
+            )
+            covariance = arrowhead.covariance
+            condition = arrowhead.condition
+            conditional_covariances = conditional_block_covariances(
+                objective,
+                estimates,
+                n_population=expansion.n_population,
+                group_bounds=group_bounds,
+                n_groups=expansion.n_groups,
+            )
+        standard_errors = np.sqrt(np.maximum(np.diag(covariance), 0.0))
+        clipped, _ = admissible(estimates)
+        predictor = design.linear_predictor(clipped)
+        log_density = likelihood.log_density(predictor, outcomes)
+        floor_count = int(np.sum(log_density <= LOG_DENSITY_FLOOR))
+        minimum_response_time = float(np.min(response_times))
+        diagnostics = FitDiagnostics(
+            converged=bool(chosen.success),
+            optimizer=f"L-BFGS-B ({len(starts)} deterministic restarts)",
+            status=int(chosen.status),
+            message=str(chosen.message),
+            n_iterations=int(chosen.nit),
+            objective=float(value),
+            gradient_norm=float(np.linalg.norm(np.asarray(chosen.jac, dtype=np.float64))),
+            hessian_condition=condition,
+            boundary_estimate=self._penalised_boundary_warning(
+                estimates,
+                box,
+                design,
+                decision_times=response_times - predictor[:, 3],
+                floor_count=floor_count,
+            ),
+        )
+        return DriftDiffusionFitResult(
+            model_name=model_name,
+            model_signature=model_signature,
+            parameter_names=design.parameter_names,
+            estimates=estimates,
+            standard_errors=standard_errors,
+            covariance=covariance,
+            n_observations=design.n_observations,
+            diagnostics=diagnostics,
+            restart_objectives=restart_objectives,
+            restart_converged=np.asarray([result.success for result in results]),
+            restart_messages=tuple(str(result.message) for result in results),
+            selected_restart=selected,
+            minimum_observed_response_time=minimum_response_time,
+            likelihood_floor_count=floor_count,
+            posterior_contaminant_probability=np.zeros(design.n_observations, dtype=np.float64),
+            conditional_group_covariances=conditional_covariances,
+        )
+
+    def _penalised_boundary_warning(
+        self,
+        estimates: NDArray[np.float64],
+        box: NDArray[np.float64],
+        design: PenalisedDesign,
+        *,
+        decision_times: NDArray[np.float64],
+        floor_count: int,
+    ) -> bool:
+        tolerances = 1e-4 * np.maximum(1.0, box[:, 1] - box[:, 0])
+        near_bound = bool(
+            np.any(estimates - box[:, 0] <= tolerances)
+            or np.any(box[:, 1] - estimates <= tolerances)
+        )
+        expansion = design.expansion
+        if not near_bound and expansion is not None and design.derived_estimates is not None:
+            effective = np.asarray(design.derived_estimates(estimates), dtype=np.float64)
+            lower = box[expansion.columns, 0]
+            upper = box[expansion.columns, 1]
+            group_tolerance = 1e-4 * np.maximum(1.0, upper - lower)
+            near_bound = bool(
+                np.any(effective - lower <= group_tolerance)
+                or np.any(upper - effective <= group_tolerance)
+            )
+        near_response = self.contaminant is None and bool(
+            np.min(decision_times) <= 5 * self.minimum_decision_time
+        )
+        return bool(near_bound or near_response or floor_count > 0)
+
+
+def _effective_coordinate(
+    box: NDArray[np.float64], expansion: GroupExpansion | None
+) -> Callable[[NDArray[np.float64]], tuple[NDArray[np.float64], float]]:
+    """Return the map from a joint coordinate to an admissible one, and the price paid.
+
+    Nothing happens without a group expansion: an unexpanded coordinate is already inside
+    its box because the optimizer keeps it there. With one, the quantity that has to be
+    admissible is population plus deviation, and the map clips that sum back inside the
+    box -- which, because a group block copies population columns, is exactly the same as
+    clipping the linear predictor the two of them build together.
+    """
+
+    if expansion is None:
+
+        def identity(values: NDArray[np.float64]) -> tuple[NDArray[np.float64], float]:
+            return values, 0.0
+
+        return identity
+
+    n_population = expansion.n_population
+    columns = expansion.columns
+    lower = box[columns, 0]
+    upper = box[columns, 1]
+
+    def effective(values: NDArray[np.float64]) -> tuple[NDArray[np.float64], float]:
+        population = values[:n_population][columns]
+        deviations = values[n_population:].reshape(expansion.n_groups, expansion.width)
+        combined = population[None, :] + deviations
+        violation = np.minimum(combined - lower, 0.0) + np.maximum(combined - upper, 0.0)
+        price = EFFECTIVE_BOUND_PENALTY * float(np.sum(violation**2))
+        if price == 0.0:
+            return values, 0.0
+        clipped = np.array(values, copy=True)
+        clipped[n_population:] = (np.clip(combined, lower, upper) - population[None, :]).ravel()
+        return clipped, price
+
+    return effective
 
 
 def _ordered_bounds(values: Sequence[float], name: str) -> tuple[float, float]:

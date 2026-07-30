@@ -507,3 +507,94 @@ def test_within_session_split_rejects_complete_sessions_after_the_origin() -> No
             origin_trial=4,
             test_trials=(5,),
         )
+
+
+def test_every_first_party_splitter_names_its_folds_by_scientific_coordinate() -> None:
+    study = longitudinal_study()
+    population = population_study()
+    aligned = aligned_forecast_study()
+
+    assert [split.identifier for split in forward_session_splits(study)] == [
+        "forward-session/subject=a/forecast-sessions=1",
+        "forward-session/subject=a/forecast-sessions=2",
+        "forward-session/subject=b/forecast-sessions=1",
+    ]
+    assert [split.identifier for split in leave_one_session_out_splits(study)] == [
+        "leave-one-session-out/subject=a/held-out-session=0",
+        "leave-one-session-out/subject=a/held-out-session=1",
+        "leave-one-session-out/subject=a/held-out-session=2",
+        "leave-one-session-out/subject=b/held-out-session=0",
+        "leave-one-session-out/subject=b/held-out-session=1",
+    ]
+    assert [split.identifier for split in within_session_rolling_splits(study)] == [
+        "within-session-rolling-origin/subject=a/session=0/origin-trial=0",
+        "within-session-rolling-origin/subject=a/session=1/origin-trial=0",
+        "within-session-rolling-origin/subject=b/session=0/origin-trial=0",
+    ]
+    assert [split.identifier for split in cohort_forward_session_splits(study)] == [
+        "cohort-forward-session/train-sessions=1"
+    ]
+    # A leave-one-out fold names the unit it holds out, and a lab fold names the column
+    # the unit came from: `lab=north` and `institution=north` are different holdouts.
+    assert [split.identifier for split in leave_one_subject_out_splits(population)] == [
+        "leave-one-subject-out/subject=a",
+        "leave-one-subject-out/subject=c",
+        "leave-one-subject-out/subject=b",
+        "leave-one-subject-out/subject=d",
+    ]
+    assert [split.identifier for split in leave_one_lab_out_splits(population)] == [
+        "leave-one-lab-out/lab=north",
+        "leave-one-lab-out/lab=south",
+        "leave-one-lab-out/lab=east",
+    ]
+    forecasts = historical_cohort_forecast_splits(
+        aligned, context_session_count=2, horizon=1, n_folds=2
+    )
+    assert [split.identifier for split in forecasts] == [
+        "historical-cohort-session-forecast/fold=0-of-2",
+        "historical-cohort-session-forecast/fold=1-of-2",
+    ]
+
+
+def test_fold_names_do_not_depend_on_position_in_the_returned_tuple() -> None:
+    """A name derived from a coordinate survives filtering; a positional one would not."""
+
+    study = longitudinal_study()
+    splits = forward_session_splits(study)
+
+    subset = tuple(split for split in splits if split.subject == "b")
+
+    assert [split.identifier for split in subset] == [
+        "forward-session/subject=b/forecast-sessions=1"
+    ]
+    assert subset[0].identifier == splits[-1].identifier
+
+
+def test_fold_names_render_numeric_subjects_and_keep_integers_apart_from_floats() -> None:
+    study = Study(
+        {
+            "subject": [11, 11, 12, 12],
+            "session": ["a-0", "a-1", "b-0", "b-1"],
+            "trial": [0, 0, 0, 0],
+            "session_order": [0, 1, 0, 1],
+        }
+    )
+
+    assert [split.identifier for split in forward_session_splits(study)] == [
+        "forward-session/subject=11/forecast-sessions=1",
+        "forward-session/subject=12/forecast-sessions=1",
+    ]
+    # A float subject keeps its decimal point. Rendering 11.0 as "11" would give it the
+    # same fold name as integer subject 11, and the whole point of a name is to key a
+    # record by it.
+    float_subject = ValidationSplit(
+        train_indices=np.array([0]),
+        test_indices=np.array([1]),
+        subject=11.0,
+        train_sessions=("s0",),
+        test_sessions=("s1",),
+        train_session_orders=(0,),
+        test_session_orders=(1,),
+        scheme="forward-session",
+    )
+    assert float_subject.identifier == "forward-session/subject=11.0/forecast-sessions=1"

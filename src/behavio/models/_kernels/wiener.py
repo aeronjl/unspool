@@ -1,26 +1,65 @@
 """The two-boundary Wiener likelihood and the simulator's absorption geometry.
 
-Three families -- ``ddm``, ``smooth_ddm`` and ``hierarchical_smooth_ddm`` -- score the same
-first-passage density. Before this module existed they shared it by importing four to six
-underscore-prefixed names out of ``behavio.models.ddm``, which made the plain DDM the
-accidental owner of a likelihood that is not specific to it.
+The drift-diffusion families score the same first-passage density. Before this module
+existed they shared it by importing four to six underscore-prefixed names out of
+``behavio.models.ddm``, which made the plain DDM the accidental owner of a likelihood that
+is not specific to it.
 
-Nothing here knows what a :class:`~behavio.study.Study` is. Every function takes broadcast
-arrays in the canonical parameterization -- drift rate, boundary separation, relative
-starting bias in ``(0, 1)``, decision time in seconds -- and returns arrays.
+Most of this module knows nothing about what a :class:`~behavio.study.Study` is. Every
+function takes broadcast arrays in the canonical parameterization -- drift rate, boundary
+separation, relative starting bias in ``(0, 1)``, decision time in seconds -- and returns
+arrays. :class:`WienerLikelihood` is the same density again, exposed as the four operations
+:class:`~behavio.contracts.compose.LinearPredictorLikelihood` asks for, so that a combinator
+can write an objective over it without importing anything about drift diffusion.
+
+Accuracy of the series
+----------------------
+:func:`wiener_log_density` sums a fixed ``terms`` of the small-time and large-time
+expansions and switches between them at a hardcoded scaled time of ``0.15``. Published
+implementations instead choose the number of terms adaptively for a requested error bound
+(Navarro & Fuss, 2009), which is strictly better and is a separate change: the switch point
+and the term count are the only things about this function anyone would alter, and both are
+arguments to a single vectorised expression, so nothing structural depends on them.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
 import numpy as np
 from numpy.typing import NDArray
 from scipy.special import logsumexp
+
+from behavio.contracts.estimator import Prediction, PredictionMode
+
+if TYPE_CHECKING:  # pragma: no cover - imported for typing only
+    from behavio.models.ddm import UniformResponseTimeContaminant
 
 LOG_DENSITY_FLOOR = float(np.log(np.finfo(np.float64).tiny))
 """Smallest representable log density, used as the floor for impossible observations."""
 
 BRIDGE_EXPONENT_LIMIT = 30.0
 """Above this exponent a Brownian-bridge absorption probability underflows to zero."""
+
+INADMISSIBLE_OBJECTIVE = float(np.finfo(np.float64).max / 1e100)
+"""The value a Wiener objective takes where no decision time is left to explain."""
+
+PREDICTOR_CELLS = ("drift", "boundary", "starting_bias", "nondecision_time")
+"""The four numbers a Wiener density needs from one row, before any contaminant."""
+
+OUTCOME_CHANNELS = ("choice", "response_time")
+"""The two numbers a Wiener density scores on one row."""
+
+PREDICTOR_STEP = 1e-6
+"""Central-difference step for gradients and curvature in the linear predictor.
+
+The Wiener density has no tractable derivative in its parameters, which is why every
+drift-diffusion fit in this package has always used a derivative-free optimizer and a
+numerical Hessian. Differentiating in the *predictor* rather than in the coordinate is what
+makes it affordable: rows are independent, so one central difference per cell is one extra
+vectorised evaluation of the density and not one per parameter.
+"""
 
 
 def wiener_log_density(
@@ -262,3 +301,200 @@ def simulate_trialwise_wiener(
             f"{maximum_time:g} seconds"
         )
     return choices, decision_times + nondecision_time
+
+
+# --------------------------------------------------------------------------------------
+# The density again, as the four operations a combinator writes objectives over
+# --------------------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class WienerLikelihood:
+    """The joint choice/response-time density seen through one cell vector per row.
+
+    A row's linear predictor is ``(drift, boundary, starting_bias, nondecision_time)``, plus
+    ``contaminant_probability`` when a contaminant is configured, and every one of them
+    enters the density on its natural scale: there is no link function, and the box that
+    keeps a boundary positive is the estimator's, not this object's. A row's observation is
+    ``(choice, response_time)`` in seconds.
+
+    That this is expressible at all is the whole reason the drift-diffusion families
+    compose. Nothing about the contract required the *density* to be linear -- only the
+    predictor -- and a Wiener density is an arbitrary function of four numbers each of which
+    is a linear function of the coefficient vector.
+    """
+
+    density_terms: int
+    contaminant: UniformResponseTimeContaminant | None = None
+
+    @property
+    def cells(self) -> tuple[str, ...]:
+        """The predictor cells this likelihood reads, contaminant weight included."""
+
+        if self.contaminant is None:
+            return PREDICTOR_CELLS
+        return (*PREDICTOR_CELLS, "contaminant_probability")
+
+    def prediction(
+        self, linear_predictor: NDArray[np.float64], *, mode: PredictionMode
+    ) -> Prediction:
+        """Return marginal upper-boundary choice probabilities."""
+
+        cells = np.asarray(linear_predictor, dtype=np.float64)
+        probability = upper_boundary_probability(
+            cells[:, 0], boundary=cells[:, 1], starting_bias=cells[:, 2]
+        )
+        if self.contaminant is not None:
+            weight = cells[:, 4]
+            probability = (1.0 - weight) * probability
+            probability = probability + weight * self.contaminant.choice_probability
+        probability = np.clip(probability, np.finfo(float).tiny, 1.0 - np.finfo(float).eps)
+        return Prediction(
+            probability=probability,
+            linear_predictor=np.log(probability) - np.log1p(-probability),
+            mode=PredictionMode(mode),
+        )
+
+    def pointwise_log_prob(
+        self, linear_predictor: NDArray[np.float64], outcomes: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Return the joint log density of each observed choice and response time."""
+
+        cells = np.asarray(linear_predictor, dtype=np.float64)
+        observed = np.asarray(outcomes, dtype=np.float64)
+        return self.log_density(cells, observed)
+
+    def log_density(
+        self, cells: NDArray[np.float64], outcomes: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Return the per-row joint log density, contaminant mixture included."""
+
+        choice = outcomes[:, 0]
+        response_time = outcomes[:, 1]
+        regular = wiener_log_density(
+            response_time - cells[:, 3],
+            choice,
+            cells[:, 0],
+            boundary=cells[:, 1],
+            starting_bias=cells[:, 2],
+            terms=self.density_terms,
+        )
+        if self.contaminant is None:
+            return regular
+        weight = cells[:, 4]
+        regular_component = np.log1p(-weight) + regular
+        contaminant_component = np.log(np.where(weight > 0, weight, 1.0))
+        contaminant_component = contaminant_component + self.contaminant.pointwise_log_density(
+            response_time, choice
+        )
+        mixture = np.where(
+            weight > 0,
+            np.logaddexp(regular_component, contaminant_component),
+            regular_component,
+        )
+        return np.maximum(mixture, LOG_DENSITY_FLOOR)
+
+    def negative_log_likelihood(
+        self, linear_predictor: NDArray[np.float64], outcomes: NDArray[np.float64]
+    ) -> float:
+        """Return the summed negative log density, or a large finite value if inadmissible.
+
+        A non-decision time longer than a response leaves no decision time to explain, which
+        is not a small likelihood but no likelihood at all. Returning a large finite number
+        rather than an infinity is what keeps a bounded quasi-Newton search able to walk
+        back out of the region.
+        """
+
+        cells = np.asarray(linear_predictor, dtype=np.float64)
+        observed = np.asarray(outcomes, dtype=np.float64)
+        if self.contaminant is None and np.any(observed[:, 1] - cells[:, 3] <= 0):
+            return INADMISSIBLE_OBJECTIVE
+        return float(-np.sum(self.log_density(cells, observed)))
+
+    def value_and_gradient(
+        self, linear_predictor: NDArray[np.float64], outcomes: NDArray[np.float64]
+    ) -> tuple[float, NDArray[np.float64]]:
+        """Return the negative log likelihood and its central-difference cell gradient."""
+
+        cells = np.asarray(linear_predictor, dtype=np.float64)
+        observed = np.asarray(outcomes, dtype=np.float64)
+        value = self.negative_log_likelihood(cells, observed)
+        gradient = np.zeros_like(cells)
+        if value == INADMISSIBLE_OBJECTIVE:
+            return value, gradient
+        for cell in range(cells.shape[1]):
+            forward = cells.copy()
+            backward = cells.copy()
+            forward[:, cell] += PREDICTOR_STEP
+            backward[:, cell] -= PREDICTOR_STEP
+            gradient[:, cell] = (
+                -self.log_density(forward, observed) + self.log_density(backward, observed)
+            ) / (2.0 * PREDICTOR_STEP)
+        return value, gradient
+
+    def curvature(
+        self, linear_predictor: NDArray[np.float64], outcomes: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Return each row's observed information block in the predictor cells.
+
+        Observed and not expected: a first-passage density has no closed-form expected
+        information, so the observation has to be read. Rows are independent, so the whole
+        ``(rows, cells, cells)`` stack costs one vectorised density evaluation per entry
+        rather than one per row per entry.
+        """
+
+        cells = np.asarray(linear_predictor, dtype=np.float64)
+        observed = np.asarray(outcomes, dtype=np.float64)
+        n_cells = cells.shape[1]
+        step = PREDICTOR_STEP
+        centre = -self.log_density(cells, observed)
+        blocks = np.zeros((cells.shape[0], n_cells, n_cells), dtype=np.float64)
+        shifted: dict[tuple[int, int], NDArray[np.float64]] = {}
+        for cell in range(n_cells):
+            for sign in (1, -1):
+                moved = cells.copy()
+                moved[:, cell] += sign * step
+                shifted[(cell, sign)] = -self.log_density(moved, observed)
+            blocks[:, cell, cell] = (
+                shifted[(cell, 1)] - 2.0 * centre + shifted[(cell, -1)]
+            ) / step**2
+        for row_cell in range(n_cells):
+            for column_cell in range(row_cell):
+                corners = np.zeros(cells.shape[0], dtype=np.float64)
+                for row_sign in (1, -1):
+                    for column_sign in (1, -1):
+                        moved = cells.copy()
+                        moved[:, row_cell] += row_sign * step
+                        moved[:, column_cell] += column_sign * step
+                        corners = corners + row_sign * column_sign * (
+                            -self.log_density(moved, observed)
+                        )
+                value = corners / (4.0 * step**2)
+                blocks[:, row_cell, column_cell] = value
+                blocks[:, column_cell, row_cell] = value
+        return blocks
+
+
+def wiener_cell_design(features: NDArray[np.float64], *, n_extra_cells: int) -> NDArray[np.float64]:
+    """Return the ``(rows, cells, parameters)`` design a Wiener predictor is built from.
+
+    The drift cell holds the covariate features; every other cell is a single intercept
+    column, because boundary, starting bias, non-decision time and any contaminant weight
+    are trial-constant parameters of the family rather than functions of the design. Making
+    them cells rather than a separate vector of "the other parameters" is what lets one
+    combinator smooth a boundary and another let it vary by animal.
+    """
+
+    n_rows, n_features = features.shape
+    n_cells = 1 + n_extra_cells
+    design = np.zeros((n_rows, n_cells, n_features + n_extra_cells), dtype=np.float64)
+    design[:, 0, :n_features] = features
+    for cell in range(n_extra_cells):
+        design[:, 1 + cell, n_features + cell] = 1.0
+    return design
+
+
+def wiener_cell_bytes(n_rows: int, n_cells: int, n_parameters: int) -> int:
+    """The memory one dense Wiener design occupies, for reporting before allocating it."""
+
+    return int(n_rows) * int(n_cells) * int(n_parameters) * np.dtype(np.float64).itemsize

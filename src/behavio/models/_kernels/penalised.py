@@ -72,7 +72,7 @@ def fit_penalised_linear(
         options={"maxiter": max_iterations, "ftol": tolerance, "gtol": tolerance},
     )
     estimates = np.asarray(result.x, dtype=np.float64)
-    curvature = likelihood.curvature(linear_predictor(design_matrix, estimates, offsets))
+    curvature = likelihood.curvature(linear_predictor(design_matrix, estimates, offsets), outcomes)
     hessian = information_matrix(design_matrix, curvature) + penalty_matrix
     condition = float(np.linalg.cond(hessian))
     covariance = np.linalg.pinv(hessian, hermitian=True)

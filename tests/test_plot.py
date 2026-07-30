@@ -25,6 +25,7 @@ matplotlib.use("Agg")
 from matplotlib.collections import PolyCollection  # noqa: E402
 from matplotlib.text import Text  # noqa: E402
 
+from behavio.comparison import ComparisonFamily, ComparisonMultiplicity  # noqa: E402
 from behavio.contracts.audit import AuditSeverity, FitAudit, FitDiagnostics, FitIssue  # noqa: E402
 from behavio.plot import (  # noqa: E402
     FIGURE_RC_PARAMS,
@@ -190,6 +191,9 @@ def make_comparison(
         upper=18.0 if decisive else 28.0,
         interval_scale=2.0,
         n_data_points=12,
+        two_sided_probability=0.0001 if decisive else 0.4,
+        adjusted_probability=0.0003 if decisive else 0.6,
+        decisive=decisive,
     )
     second = PairedELPDDifference(
         left_model="rich",
@@ -200,6 +204,8 @@ def make_comparison(
         upper=14.0,
         interval_scale=2.0,
         n_data_points=12,
+        two_sided_probability=0.42,
+        adjusted_probability=0.63,
     )
     third = PairedELPDDifference(
         left_model="plain",
@@ -210,6 +216,8 @@ def make_comparison(
         upper=0.0,
         interval_scale=2.0,
         n_data_points=12,
+        two_sided_probability=0.0455,
+        adjusted_probability=0.1365,
     )
     third_status = PosteriorAuditStatus.FAIL if ineligible else PosteriorAuditStatus.PASS
     return PosteriorModelComparison(
@@ -228,6 +236,18 @@ def make_comparison(
         status=status,
         best_model=best_model,
         reason="the paired interval does not exclude zero",
+        family=ComparisonFamily(
+            n_candidates=2 if ineligible else 3,
+            n_comparisons=1 if ineligible else 3,
+            interval_level=0.9545,
+            multiplicity=ComparisonMultiplicity.BENJAMINI_HOCHBERG,
+            family_error_rate=0.0455,
+            n_separated=1 if decisive else 0,
+            expected_separated=0.1365,
+            excess_probability=0.13 if decisive else 1.0,
+            adjusted_threshold=0.0001 if decisive else 0.0,
+            n_decisive=1 if decisive else 0,
+        ),
         issues=(
             (ModelComparisonIssue(code="comparison.ineligible-model", message="null failed"),)
             if ineligible
