@@ -80,61 +80,6 @@ quasi-Newton search has no way to express a linear inequality between two coordi
 
 
 @dataclass(frozen=True, slots=True)
-class UniformResponseTimeContaminant:
-    """A fixed-support joint choice/RT contaminant distribution.
-
-    Response time is uniform over ``time_bounds`` in canonical seconds and choice is an
-    independent Bernoulli draw with the fixed upper-boundary probability
-    ``choice_probability``. Only the mixture probability is fitted.
-    """
-
-    time_bounds: tuple[float, float]
-    probability_bounds: tuple[float, float] = (0.0, 0.25)
-    choice_probability: float = 0.5
-
-    def __post_init__(self) -> None:
-        time_bounds = _ordered_bounds(self.time_bounds, "contaminant time_bounds")
-        probability_bounds = _probability_bounds(
-            self.probability_bounds,
-            "contaminant probability_bounds",
-        )
-        if not np.isfinite(self.choice_probability) or not 0 < self.choice_probability < 1:
-            raise ValueError(
-                "contaminant choice_probability must lie strictly between zero and one"
-            )
-        object.__setattr__(self, "time_bounds", time_bounds)
-        object.__setattr__(self, "probability_bounds", probability_bounds)
-
-    def pointwise_log_density(
-        self,
-        response_time_seconds: NDArray[np.float64],
-        choice: NDArray[np.float64],
-    ) -> NDArray[np.float64]:
-        """Return the normalized joint contaminant log density."""
-
-        response_times, choices = np.broadcast_arrays(
-            np.asarray(response_time_seconds, dtype=np.float64),
-            np.asarray(choice, dtype=np.float64),
-        )
-        lower, upper = self.time_bounds
-        result = np.full(response_times.shape, -np.inf, dtype=np.float64)
-        valid = (
-            np.isfinite(response_times)
-            & (response_times >= lower)
-            & (response_times <= upper)
-            & ((choices == 0) | (choices == 1))
-        )
-        if np.any(valid):
-            log_choice = np.where(
-                choices[valid] == 1,
-                np.log(self.choice_probability),
-                np.log1p(-self.choice_probability),
-            )
-            result[valid] = log_choice - np.log(upper - lower)
-        return result
-
-
-@dataclass(frozen=True, slots=True)
 class DriftDiffusionParameters:
     """Natural-scale parameters of the fixed-parameter Wiener model."""
 
@@ -143,7 +88,6 @@ class DriftDiffusionParameters:
     boundary: float
     starting_bias: float
     nondecision_time: float
-    contaminant_probability: float = 0.0
 
     def __post_init__(self) -> None:
         coefficients = protected_array(self.drift_coefficients, dtype=np.float64)
@@ -158,11 +102,6 @@ class DriftDiffusionParameters:
             raise ValueError("starting_bias must lie strictly between zero and one")
         if not np.isfinite(self.nondecision_time) or self.nondecision_time < 0:
             raise ValueError("nondecision_time must be finite and non-negative")
-        if (
-            not np.isfinite(self.contaminant_probability)
-            or not 0 <= self.contaminant_probability < 1
-        ):
-            raise ValueError("contaminant_probability must lie between zero inclusive and one")
         object.__setattr__(self, "drift_coefficients", coefficients)
         object.__setattr__(self, "coefficient_names", names)
 
@@ -171,22 +110,6 @@ class DriftDiffusionParameters:
         return MappingProxyType(
             dict(zip(self.coefficient_names, self.drift_coefficients.tolist(), strict=True))
         )
-
-
-@dataclass(frozen=True, slots=True)
-class DriftDiffusionSimulation:
-    """Observed simulated study paired with unexposed contaminant truth."""
-
-    study: Study
-    contaminants: NDArray[np.bool_]
-
-    def __post_init__(self) -> None:
-        if not isinstance(self.study, Study):
-            raise TypeError("study must be a Study")
-        contaminants = protected_array(self.contaminants, dtype=np.bool_)
-        if contaminants.shape != (len(self.study),):
-            raise ValueError("contaminants must contain one indicator per study row")
-        object.__setattr__(self, "contaminants", contaminants)
 
 
 @dataclass(frozen=True, slots=True)
@@ -205,16 +128,11 @@ class DriftDiffusionFitResult(PenalisedFitResult):
     selected_restart: int
     minimum_observed_response_time: float
     likelihood_floor_count: int
-    posterior_contaminant_probability: NDArray[np.float64]
 
     def __post_init__(self) -> None:
         PenalisedFitResult.__post_init__(self)
         objectives = protected_array(self.restart_objectives, dtype=np.float64)
         converged = protected_array(self.restart_converged, dtype=np.bool_)
-        posterior = protected_array(
-            self.posterior_contaminant_probability,
-            dtype=np.float64,
-        )
         messages = tuple(self.restart_messages)
         if objectives.ndim != 1 or converged.shape != objectives.shape:
             raise ValueError("restart arrays must be one-dimensional and aligned")
@@ -232,22 +150,9 @@ class DriftDiffusionFitResult(PenalisedFitResult):
             or self.likelihood_floor_count < 0
         ):
             raise ValueError("likelihood_floor_count must be a non-negative integer")
-        if posterior.shape != (self.n_observations,) or not np.all(np.isfinite(posterior)):
-            raise ValueError(
-                "posterior_contaminant_probability must contain one finite value per observation"
-            )
-        if np.any((posterior < 0) | (posterior > 1)):
-            raise ValueError("posterior contaminant probabilities must lie between zero and one")
         object.__setattr__(self, "restart_objectives", objectives)
         object.__setattr__(self, "restart_converged", converged)
         object.__setattr__(self, "restart_messages", messages)
-        object.__setattr__(self, "posterior_contaminant_probability", posterior)
-
-    @property
-    def expected_contaminant_count(self) -> float:
-        """Return the sum of fitted per-trial contaminant responsibilities."""
-
-        return float(np.sum(self.posterior_contaminant_probability))
 
 
 @dataclass(frozen=True, slots=True)
@@ -272,7 +177,6 @@ class WienerDriftDiffusion(Describable):
     boundary_bounds: tuple[float, float] = (0.1, 5.0)
     starting_bias_bounds: tuple[float, float] = (0.02, 0.98)
     nondecision_time_bounds: tuple[float, float] | None = None
-    contaminant: UniformResponseTimeContaminant | None = None
     minimum_decision_time: float = 1e-4
     design: DesignSpec | None = field(default=None, kw_only=True)
 
@@ -315,13 +219,6 @@ class WienerDriftDiffusion(Describable):
                 nondecision_bounds,
                 "nondecision_time_bounds",
             )
-        if self.contaminant is not None and not isinstance(
-            self.contaminant,
-            UniformResponseTimeContaminant,
-        ):
-            raise TypeError("contaminant must be a UniformResponseTimeContaminant")
-        if self.contaminant is not None and nondecision_bounds is None:
-            raise ValueError("contaminant-aware fitting requires fixed nondecision_time_bounds")
         if self.simulation_time_step >= self.simulation_max_time:
             raise ValueError("simulation_time_step must be smaller than simulation_max_time")
         object.__setattr__(self, "covariates", covariates)
@@ -331,8 +228,6 @@ class WienerDriftDiffusion(Describable):
 
     @property
     def model_name(self) -> str:
-        if self.contaminant is not None:
-            return "uniform-contaminant-wiener-drift-diffusion"
         return "wiener-drift-diffusion"
 
     @property
@@ -347,12 +242,6 @@ class WienerDriftDiffusion(Describable):
         signature += self._design_signature
         if self.nondecision_time_bounds is not None:
             signature += f";nondecision_bounds={self.nondecision_time_bounds}"
-        if self.contaminant is not None:
-            signature += (
-                f";contaminant_time_bounds={self.contaminant.time_bounds};"
-                f"contaminant_probability_bounds={self.contaminant.probability_bounds};"
-                f"contaminant_choice_probability={self.contaminant.choice_probability}"
-            )
         return signature + "]"
 
     @property
@@ -387,15 +276,12 @@ class WienerDriftDiffusion(Describable):
 
     @property
     def parameter_names(self) -> tuple[str, ...]:
-        names = (
+        return (
             *self.coefficient_names,
             "boundary",
             "starting_bias",
             "nondecision_time",
         )
-        if self.contaminant is not None:
-            return (*names, "contaminant_probability")
-        return names
 
     @property
     def required_task_columns(self) -> tuple[str, ...]:
@@ -411,9 +297,9 @@ class WienerDriftDiffusion(Describable):
     def parameter_bounds(self) -> dict[str, tuple[float, float]]:
         """The optimizer box, as configured. Reported by :meth:`describe`.
 
-        ``nondecision_time`` is the one bound the study can tighten: without a configured
-        upper bound the fit derives one from the fastest observed response, so what is
-        reported here is what the model declares, not what a particular study will allow.
+        ``nondecision_time`` is the one bound a study can supply: with no configured bound
+        the fit derives one from the fastest observed response, so what is reported here is
+        what the model declares, not what a particular study will produce.
         """
 
         bounds: dict[str, tuple[float, float]] = {
@@ -423,8 +309,6 @@ class WienerDriftDiffusion(Describable):
         bounds["starting_bias"] = self.starting_bias_bounds
         if self.nondecision_time_bounds is not None:
             bounds["nondecision_time"] = self.nondecision_time_bounds
-        if self.contaminant is not None:
-            bounds["contaminant_probability"] = self.contaminant.probability_bounds
         return bounds
 
     @property
@@ -442,7 +326,6 @@ class WienerDriftDiffusion(Describable):
         boundary: float,
         starting_bias: float = 0.5,
         nondecision_time: float = 0.0,
-        contaminant_probability: float = 0.0,
     ) -> Mapping[str, float]:
         """Validate and pack natural-scale drift and timing parameters."""
 
@@ -461,17 +344,13 @@ class WienerDriftDiffusion(Describable):
             boundary=float(boundary),
             starting_bias=float(starting_bias),
             nondecision_time=float(nondecision_time),
-            contaminant_probability=float(contaminant_probability),
         )
-        self._validate_contaminant_probability(components.contaminant_probability)
         values = (
             *components.drift_coefficients.tolist(),
             components.boundary,
             components.starting_bias,
             components.nondecision_time,
         )
-        if self.contaminant is not None:
-            values = (*values, components.contaminant_probability)
         return MappingProxyType(dict(zip(self.parameter_names, values, strict=True)))
 
     def parameter_components(
@@ -500,18 +379,13 @@ class WienerDriftDiffusion(Describable):
             if not np.all(np.isfinite(values)):
                 raise ValueError("parameters must contain finite numeric values")
         n_coefficients = len(self.coefficient_names)
-        components = DriftDiffusionParameters(
+        return DriftDiffusionParameters(
             drift_coefficients=values[:n_coefficients],
             coefficient_names=self.coefficient_names,
             boundary=float(values[n_coefficients]),
             starting_bias=float(values[n_coefficients + 1]),
             nondecision_time=float(values[n_coefficients + 2]),
-            contaminant_probability=(
-                float(values[n_coefficients + 3]) if self.contaminant is not None else 0.0
-            ),
         )
-        self._validate_contaminant_probability(components.contaminant_probability)
-        return components
 
     def simulate(
         self,
@@ -520,35 +394,16 @@ class WienerDriftDiffusion(Describable):
         *,
         seed: int | np.random.Generator,
     ) -> Study:
-        """Simulate observed choices and response times without exposing mixture truth."""
-
-        return self.simulate_with_contaminants(design, parameters, seed=seed).study
-
-    def simulate_with_contaminants(
-        self,
-        design: Study,
-        parameters: Mapping[str, float],
-        *,
-        seed: int | np.random.Generator,
-    ) -> DriftDiffusionSimulation:
-        """Simulate observations and retain contaminant indicators separately."""
+        """Simulate observed choices and response times."""
 
         components = self.parameter_components(parameters)
         drifts = self._drifts(design, components.drift_coefficients)
         generator = seed if isinstance(seed, np.random.Generator) else np.random.default_rng(seed)
         n_rows = len(design)
-        if components.contaminant_probability > 0:
-            contaminants = generator.binomial(
-                1,
-                components.contaminant_probability,
-                n_rows,
-            ).astype(np.bool_)
-        else:
-            contaminants = np.zeros(n_rows, dtype=np.bool_)
         positions = np.full(n_rows, components.boundary * components.starting_bias)
         decision_times = np.zeros(n_rows, dtype=np.float64)
         choices = np.zeros(n_rows, dtype=np.int8)
-        active = ~contaminants
+        active = np.ones(n_rows, dtype=np.bool_)
         time_step = self.simulation_time_step
         noise_scale = np.sqrt(time_step)
         max_steps = int(np.ceil(self.simulation_max_time / time_step))
@@ -596,29 +451,11 @@ class WienerDriftDiffusion(Describable):
             )
 
         response_seconds = decision_times + components.nondecision_time
-        if np.any(contaminants):
-            if self.contaminant is None:
-                raise RuntimeError("non-zero contaminant probability requires a contaminant model")
-            n_contaminants = int(np.sum(contaminants))
-            choices[contaminants] = generator.binomial(
-                1,
-                self.contaminant.choice_probability,
-                n_contaminants,
-            )
-            lower, upper = self.contaminant.time_bounds
-            response_seconds[contaminants] = generator.uniform(
-                lower,
-                upper,
-                n_contaminants,
-            )
         response_values = response_seconds / self.response_time.unit.seconds_per_unit
         columns = {name: design[name] for name in design.columns}
         columns[self.outcome] = choices
         columns[self.response_time.column] = response_values
-        return DriftDiffusionSimulation(
-            study=Study(columns),
-            contaminants=contaminants,
-        )
+        return Study(columns)
 
     def fit(self, study: Study) -> DriftDiffusionFitResult:
         """Fit the joint choice/RT likelihood with deterministic bounded restarts."""
@@ -637,13 +474,11 @@ class WienerDriftDiffusion(Describable):
                 nondecision_bounds,
             ]
         )
-        if self.contaminant is not None:
-            bounds.append(self.contaminant.probability_bounds)
 
         def objective(values: NDArray[np.float64]) -> float:
             components = self._components_from_vector(values)
             decision_times = response_times - components.nondecision_time
-            if self.contaminant is None and np.any(decision_times <= 0):
+            if np.any(decision_times <= 0):
                 return float(np.finfo(np.float64).max / 1e100)
             drifts = features @ components.drift_coefficients
             log_density = self._joint_log_density(
@@ -695,12 +530,6 @@ class WienerDriftDiffusion(Describable):
             drifts,
             components,
         )
-        posterior_contaminant_probability = self._posterior_contaminant_probability(
-            response_times,
-            outcomes,
-            drifts,
-            components,
-        )
         floor_count = int(np.sum(log_density <= LOG_DENSITY_FLOOR))
         gradient = np.asarray(chosen.jac, dtype=np.float64)
         boundary_warning = self._boundary_warning(
@@ -735,7 +564,6 @@ class WienerDriftDiffusion(Describable):
             selected_restart=selected,
             minimum_observed_response_time=minimum_response_time,
             likelihood_floor_count=floor_count,
-            posterior_contaminant_probability=posterior_contaminant_probability,
         )
 
     def predict(
@@ -759,9 +587,6 @@ class WienerDriftDiffusion(Describable):
             boundary=components.boundary,
             starting_bias=components.starting_bias,
         )
-        if self.contaminant is not None:
-            probability = (1.0 - components.contaminant_probability) * probability
-            probability += components.contaminant_probability * self.contaminant.choice_probability
         probability = np.clip(probability, np.finfo(float).tiny, 1.0 - np.finfo(float).eps)
         return Prediction(
             probability=probability,
@@ -795,25 +620,6 @@ class WienerDriftDiffusion(Describable):
         )
         return protected_array(scores, dtype=np.float64)
 
-    def contaminant_responsibility(
-        self,
-        study: Study,
-        fit: FitResult,
-    ) -> NDArray[np.float64]:
-        """Return fitted posterior contaminant probability for each requested trial."""
-
-        components = self.parameter_components(fit)
-        outcomes = self._outcomes(study)
-        response_times = self.response_time.read(study).seconds
-        drifts = self._drifts(study, components.drift_coefficients)
-        posterior = self._posterior_contaminant_probability(
-            response_times,
-            outcomes,
-            drifts,
-            components,
-        )
-        return protected_array(posterior, dtype=np.float64)
-
     def _joint_log_density(
         self,
         response_times: NDArray[np.float64],
@@ -821,7 +627,7 @@ class WienerDriftDiffusion(Describable):
         drifts: NDArray[np.float64],
         components: DriftDiffusionParameters,
     ) -> NDArray[np.float64]:
-        regular_log_density = wiener_log_density(
+        return wiener_log_density(
             response_times - components.nondecision_time,
             outcomes,
             drifts,
@@ -829,42 +635,6 @@ class WienerDriftDiffusion(Describable):
             starting_bias=components.starting_bias,
             terms=self.density_terms,
         )
-        if self.contaminant is None:
-            return regular_log_density
-        probability = components.contaminant_probability
-        regular_component = np.log1p(-probability) + regular_log_density
-        if probability == 0:
-            return regular_component
-        contaminant_component = np.log(probability)
-        contaminant_component += self.contaminant.pointwise_log_density(
-            response_times,
-            outcomes,
-        )
-        mixture = np.logaddexp(regular_component, contaminant_component)
-        return np.maximum(mixture, LOG_DENSITY_FLOOR)
-
-    def _posterior_contaminant_probability(
-        self,
-        response_times: NDArray[np.float64],
-        outcomes: NDArray[np.float64],
-        drifts: NDArray[np.float64],
-        components: DriftDiffusionParameters,
-    ) -> NDArray[np.float64]:
-        if self.contaminant is None or components.contaminant_probability == 0:
-            return np.zeros(len(response_times), dtype=np.float64)
-        contaminant_component = np.log(components.contaminant_probability)
-        contaminant_component += self.contaminant.pointwise_log_density(
-            response_times,
-            outcomes,
-        )
-        denominator = self._joint_log_density(
-            response_times,
-            outcomes,
-            drifts,
-            components,
-        )
-        posterior = np.exp(contaminant_component - denominator)
-        return np.clip(posterior, 0.0, 1.0)
 
     def _feature_matrix(self, study: Study) -> NDArray[np.float64]:
         design = self.design_spec
@@ -899,9 +669,6 @@ class WienerDriftDiffusion(Describable):
             boundary=float(values[n_coefficients]),
             starting_bias=float(values[n_coefficients + 1]),
             nondecision_time=float(values[n_coefficients + 2]),
-            contaminant_probability=(
-                float(values[n_coefficients + 3]) if self.contaminant is not None else 0.0
-            ),
         )
 
     def _initial_points(
@@ -913,45 +680,41 @@ class WienerDriftDiffusion(Describable):
         mean_choice = float(np.clip(np.mean(outcomes), 0.05, 0.95))
         base_drift = float(np.log(mean_choice / (1.0 - mean_choice)))
         nondecision_lower, nondecision_upper = nondecision_bounds
-        if self.contaminant is None:
-            nondecision_reference = float(np.min(response_times))
-        else:
-            nondecision_reference = float(np.quantile(response_times, 0.1))
-        nondecision_reference = np.clip(
-            nondecision_reference,
-            nondecision_lower,
-            nondecision_upper,
+        fastest = float(np.min(response_times))
+        # A declared upper bound that outruns the fastest response is a statement that the
+        # fastest response need not have been a decision -- which is exactly what a study
+        # mixed with a uniform response process is. The restarts then span the declared
+        # range rather than the observed one, because the observed one is no longer a bound.
+        nondecision_reference = float(
+            np.clip(
+                nondecision_upper if nondecision_upper > fastest else fastest,
+                nondecision_lower,
+                nondecision_upper,
+            )
         )
         configurations = (
-            (1.0, 0.5, 0.50, 0.10),
-            (0.7, 0.4, 0.25, 0.25),
-            (1.4, 0.6, 0.75, 0.50),
-            (2.0, mean_choice, 0.10, 0.75),
+            (1.0, 0.5, 0.50),
+            (0.7, 0.4, 0.25),
+            (1.4, 0.6, 0.75),
+            (2.0, mean_choice, 0.10),
         )
         starts: list[NDArray[np.float64]] = []
-        for boundary, bias, nondecision_fraction, contaminant_fraction in configurations[
-            : self.n_restarts
-        ]:
+        for boundary, bias, nondecision_fraction in configurations[: self.n_restarts]:
             drift = np.zeros(len(self.coefficient_names), dtype=np.float64)
             drift[0] = np.clip(base_drift / boundary, -self.drift_bound, self.drift_bound)
             nondecision = nondecision_lower + nondecision_fraction * (
                 nondecision_reference - nondecision_lower
             )
-            natural_parameters = [
-                np.clip(boundary, *self.boundary_bounds),
-                np.clip(bias, *self.starting_bias_bounds),
-                np.clip(nondecision, nondecision_lower, nondecision_upper),
-            ]
-            if self.contaminant is not None:
-                probability_lower, probability_upper = self.contaminant.probability_bounds
-                natural_parameters.append(
-                    probability_lower
-                    + contaminant_fraction * (probability_upper - probability_lower)
-                )
             values = np.concatenate(
                 (
                     drift,
-                    np.asarray(natural_parameters),
+                    np.asarray(
+                        [
+                            np.clip(boundary, *self.boundary_bounds),
+                            np.clip(bias, *self.starting_bias_bounds),
+                            np.clip(nondecision, nondecision_lower, nondecision_upper),
+                        ]
+                    ),
                 )
             )
             starts.append(values)
@@ -970,33 +733,26 @@ class WienerDriftDiffusion(Describable):
         self,
         minimum_response_time: float,
     ) -> tuple[float, float]:
-        maximum_from_data = minimum_response_time - self.minimum_decision_time
-        if self.nondecision_time_bounds is None:
-            if maximum_from_data <= 0:
-                raise ModelDataError(
-                    "minimum response time is too short for the configured minimum_decision_time"
-                )
-            return 0.0, maximum_from_data
-        lower, configured_upper = self.nondecision_time_bounds
-        if self.contaminant is not None:
-            return lower, configured_upper
-        upper = min(configured_upper, maximum_from_data)
-        if upper <= lower:
-            raise ModelDataError(
-                "observed response times leave no admissible nondecision-time interval"
-            )
-        return lower, upper
+        """Return the interval the non-decision time is searched in.
 
-    def _validate_contaminant_probability(self, probability: float) -> None:
-        if self.contaminant is None:
-            if probability != 0:
-                raise ValueError("non-zero contaminant_probability requires a contaminant model")
-            return
-        lower, upper = self.contaminant.probability_bounds
-        if not lower <= probability <= upper:
-            raise ValueError(
-                "contaminant_probability must lie within contaminant probability_bounds"
+        A **declared** bound is authoritative. That is a change of meaning and a deliberate
+        one: the fastest observed response caps the non-decision time only under the
+        assumption that every response was a decision, and that assumption is exactly what a
+        mixture with a uniform response process denies. Deriving the bound from the data
+        when nothing was declared keeps a plain fit unable to explain away its own fastest
+        trial; honouring a declaration lets ``mix(model, UniformResponseGuess(...))`` say
+        that some responses were not decisions without the model's box having to know that a
+        combinator is in play.
+        """
+
+        if self.nondecision_time_bounds is not None:
+            return self.nondecision_time_bounds
+        maximum_from_data = minimum_response_time - self.minimum_decision_time
+        if maximum_from_data <= 0:
+            raise ModelDataError(
+                "minimum response time is too short for the configured minimum_decision_time"
             )
+        return 0.0, maximum_from_data
 
     def _boundary_warning(
         self,
@@ -1012,9 +768,7 @@ class WienerDriftDiffusion(Describable):
             near_bound |= value - lower <= tolerance or upper - value <= tolerance
         nondecision_index = len(self.coefficient_names) + 2
         nondecision = float(estimates[nondecision_index])
-        near_rt = self.contaminant is None and (
-            minimum_response_time - nondecision <= 5 * self.minimum_decision_time
-        )
+        near_rt = minimum_response_time - nondecision <= 5 * self.minimum_decision_time
         return bool(near_bound or near_rt or floor_count > 0)
 
     def _validate_fit(self, fit: FitResult) -> None:
@@ -1027,7 +781,7 @@ class WienerDriftDiffusion(Describable):
     def likelihood(self) -> WienerLikelihood:
         """The first-passage density this model's four predictor cells feed."""
 
-        return WienerLikelihood(density_terms=self.density_terms, contaminant=self.contaminant)
+        return WienerLikelihood(density_terms=self.density_terms)
 
     @property
     def predictor_cells(self) -> tuple[str, ...]:
@@ -1085,8 +839,6 @@ class WienerDriftDiffusion(Describable):
         bounds.append(self.boundary_bounds)
         bounds.append(self.starting_bias_bounds)
         bounds.append(self._fit_nondecision_time_bounds(minimum_response_time))
-        if self.contaminant is not None:
-            bounds.append(self.contaminant.probability_bounds)
         return np.asarray(bounds, dtype=np.float64)
 
     def initial_points(self, study: Study) -> tuple[NDArray[np.float64], ...]:
@@ -1143,11 +895,6 @@ class WienerDriftDiffusion(Describable):
         features = self._feature_matrix(design)
         drifts = np.sum(features * values[:, :n_coefficients], axis=1)
         generator = seed if isinstance(seed, np.random.Generator) else np.random.default_rng(seed)
-        contaminants = np.zeros(len(design), dtype=np.bool_)
-        if self.contaminant is not None:
-            contaminants = generator.binomial(
-                1, np.clip(values[:, n_coefficients + 3], 0.0, 1.0)
-            ).astype(np.bool_)
         choices, response_seconds = simulate_trialwise_wiener(
             drifts,
             values[:, n_coefficients],
@@ -1157,15 +904,6 @@ class WienerDriftDiffusion(Describable):
             time_step=self.simulation_time_step,
             maximum_time=self.simulation_max_time,
         )
-        if self.contaminant is not None and np.any(contaminants):
-            count = int(np.sum(contaminants))
-            choices = np.array(choices, copy=True)
-            response_seconds = np.array(response_seconds, copy=True)
-            choices[contaminants] = generator.binomial(
-                1, self.contaminant.choice_probability, count
-            )
-            lower, upper = self.contaminant.time_bounds
-            response_seconds[contaminants] = generator.uniform(lower, upper, count)
         columns = {name: design[name] for name in design.columns}
         columns[self.outcome] = choices
         columns[self.response_time.column] = (
@@ -1309,7 +1047,6 @@ class WienerDriftDiffusion(Describable):
             selected_restart=selected,
             minimum_observed_response_time=minimum_response_time,
             likelihood_floor_count=floor_count,
-            posterior_contaminant_probability=np.zeros(design.n_observations, dtype=np.float64),
             conditional_group_covariances=conditional_covariances,
         )
 
@@ -1337,7 +1074,12 @@ class WienerDriftDiffusion(Describable):
                 np.any(effective - lower <= group_tolerance)
                 or np.any(upper - effective <= group_tolerance)
             )
-        near_response = self.contaminant is None and bool(
+        # A response barely longer than the fitted non-decision time is a warning about
+        # *this* family's density, and only while this family's density is the whole of the
+        # objective. Under a mixture a response shorter than the non-decision time is not a
+        # squeezed decision, it is a trial the second process is there to explain, so the
+        # warning belongs to whoever owns the density the design actually carries.
+        near_response = isinstance(design.likelihood, WienerLikelihood) and bool(
             np.min(decision_times) <= 5 * self.minimum_decision_time
         )
         return bool(near_bound or near_response or floor_count > 0)

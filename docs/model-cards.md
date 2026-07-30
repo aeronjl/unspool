@@ -25,8 +25,7 @@ fits from being reused under a different specification.
 
 ## Canonical binary baselines
 
-**Classes:** `BiasOnly`, `Psychometric`, `Perseveration`, `WinStayLoseShift`,
-`LapsePsychometric`
+**Classes:** `BiasOnly`, `Psychometric`, `Perseveration`, `WinStayLoseShift`
 
 **Use when:** the intended explanation is one named observable regularity, or a richer
 model needs a strong minimal comparator.
@@ -261,12 +260,14 @@ calibration summaries remain limited.
 first-passage account.
 
 **Requires:** binary choice, positive eligible response time, explicit time unit and
-origin, fixed noise scale, and declared contaminant support if the mixture is enabled.
+origin, fixed noise scale, and -- when the model is mixed with a uniform response process --
+a declared latency support for that process.
 
 **Predicts:** a joint choice/response-time density and binary choice probability.
 
-**Parameters:** drift regression coefficients, boundary separation, starting bias,
-non-decision time, and optional contaminant probability.
+**Parameters:** drift regression coefficients, boundary separation, starting bias, and
+non-decision time. A contaminant is not a parameter of this model: it is
+`mix(model, UniformResponseGuess(...))`, which adds one mixing weight.
 
 **Evidence:** analytic/numerical density checks, multistart fit audit, prospective IBL
 example, contaminant and parameter recovery benchmarks.

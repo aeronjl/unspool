@@ -134,8 +134,8 @@ without emitting non-standard JSON `NaN` values.
 The first response-time family now supplies an explicit positive column and unit metadata,
 a joint Wiener choice/response-time likelihood with finite tail handling, generative
 simulation, deterministic restart diagnostics, and dedicated parameter-recovery
-benchmarks. Its optional contaminant component has the same scored observation, so it can
-be compared directly with the naive Wiener model. See the
+benchmarks. Mixing it with a uniform response process through `mix()` leaves the scored
+observation unchanged, so the two can be compared directly. See the
 [drift-diffusion guide](drift-diffusion.md).
 
 It intentionally stops short of across-trial Wiener-parameter variation, hierarchical

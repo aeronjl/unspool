@@ -4,12 +4,12 @@ import pytest
 from behavio import (
     BehaviourModel,
     BiasOnly,
-    LapsePsychometric,
-    LapsePsychometricFitResult,
     Perseveration,
     Psychometric,
     Study,
+    UniformChoiceGuess,
     WinStayLoseShift,
+    mix,
     run_parameter_recovery,
 )
 
@@ -46,31 +46,59 @@ def test_named_glm_baselines_satisfy_the_complete_model_contract(model, paramete
     assert fit.audit().model_name == model.model_name
 
 
-def test_lapse_psychometric_retains_natural_rate_and_restart_evidence() -> None:
-    model = LapsePsychometric(maximum_lapse=0.3, n_restarts=4)
-    parameters = model.parameters_from_components(intercept=-0.1, slope=1.4, lapse_rate=0.08)
+def lapse_psychometric(maximum_lapse: float = 0.3, **changes: object):
+    """What the deleted ``LapsePsychometric`` class is now an expression for."""
+
+    return mix(
+        Psychometric(),
+        UniformChoiceGuess(),
+        weight_bounds=(0.0, maximum_lapse),
+        **changes,
+    )
+
+
+def test_a_mixed_psychometric_replaces_the_deleted_lapse_class() -> None:
+    model = lapse_psychometric(n_restarts=4)
+    parameters = model.from_natural({"intercept": -0.1, "stimulus": 1.4, "lapse_rate": 0.08})
     study = model.simulate(design(1_000), parameters, seed=25)
 
     fit = model.fit(study)
-    components = model.parameter_components(fit)
+    natural = model.to_natural(fit.estimates)
+    probability = model.predict(study, fit).probability
 
     assert isinstance(model, BehaviourModel)
-    assert isinstance(fit, LapsePsychometricFitResult)
-    assert len(fit.restart_objectives) == 4
-    # The typed ``lapse_rate`` reader is gone; the rate lives in ``derived``, where it
-    # carries a delta-method standard error rather than being a bare renamed number.
-    assert fit.derived_value("lapse_rate") == pytest.approx(components.lapse_rate)
+    assert fit.derived_value("lapse_rate") == pytest.approx(natural["lapse_rate"])
     assert fit.derived_quantities["lapse_rate"].standard_error > 0
-    assert 0 < components.lapse_rate < model.maximum_lapse
-    assert components.slope > 0.5
-    assert model.predict(study, fit).probability.min() >= components.lapse_rate / 2
-    assert model.predict(study, fit).probability.max() <= 1 - components.lapse_rate / 2
+    assert 0 < natural["lapse_rate"] < 0.3
+    assert natural["stimulus"] > 0.5
+    # The deleted class mixed a logistic with a symmetric coin, so the curve was confined
+    # to [lapse/2, 1 - lapse/2]. That is a consequence of the mixture rather than a
+    # property of the class, so it survives the class.
+    assert probability.min() >= natural["lapse_rate"] / 2
+    assert probability.max() <= 1 - natural["lapse_rate"] / 2
     assert np.all(np.isfinite(model.pointwise_log_prob(study, fit)))
 
 
-def test_lapse_psychometric_participates_in_parameter_recovery() -> None:
-    model = LapsePsychometric(n_restarts=2)
-    truth = dict(model.parameters_from_components(intercept=0.1, slope=1.0, lapse_rate=0.05))
+def test_a_mixed_psychometric_is_the_closed_form_the_deleted_class_evaluated() -> None:
+    """``lapse/2 + (1 - lapse) * expit(a + b x)``, computed here rather than trusted."""
+
+    model = lapse_psychometric()
+    parameters = model.from_natural({"intercept": -0.1, "stimulus": 1.4, "lapse_rate": 0.08})
+    study = model.simulate(design(500), parameters, seed=25)
+    fit = model.fit(study)
+    natural = model.to_natural(fit.estimates)
+
+    logistic = 1.0 / (
+        1.0 + np.exp(-(natural["intercept"] + natural["stimulus"] * np.asarray(study["stimulus"])))
+    )
+    expected = natural["lapse_rate"] * 0.5 + (1.0 - natural["lapse_rate"]) * logistic
+
+    assert model.predict(study, fit).probability == pytest.approx(expected)
+
+
+def test_a_mixed_psychometric_participates_in_parameter_recovery() -> None:
+    model = lapse_psychometric(maximum_lapse=0.2, n_restarts=2)
+    truth = dict(model.from_natural({"intercept": 0.1, "stimulus": 1.0, "lapse_rate": 0.05}))
 
     report = run_parameter_recovery(model, design(300), [truth], seed=2)
 
@@ -79,13 +107,13 @@ def test_lapse_psychometric_participates_in_parameter_recovery() -> None:
     assert report.n_runs == 1
 
 
-def test_lapse_psychometric_validates_natural_parameters_and_fit_identity() -> None:
-    model = LapsePsychometric(maximum_lapse=0.2)
-    with pytest.raises(ValueError, match="smaller than maximum_lapse"):
-        model.parameters_from_components(intercept=0.0, slope=1.0, lapse_rate=0.2)
+def test_a_mixed_psychometric_validates_its_declared_weight_range() -> None:
+    model = lapse_psychometric(maximum_lapse=0.2)
+    with pytest.raises(ValueError, match="strictly inside"):
+        model.from_natural({"intercept": 0.0, "stimulus": 1.0, "lapse_rate": 0.2})
 
-    other = LapsePsychometric(maximum_lapse=0.3)
-    parameters = other.parameters_from_components(intercept=0.0, slope=1.0, lapse_rate=0.1)
+    other = lapse_psychometric(maximum_lapse=0.3)
+    parameters = other.from_natural({"intercept": 0.0, "stimulus": 1.0, "lapse_rate": 0.1})
     study = other.simulate(design(100), parameters, seed=4)
     fit = other.fit(study)
     with pytest.raises(ValueError, match="different model"):

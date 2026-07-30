@@ -18,7 +18,7 @@ use these pages when you need exact signatures, return types, and public attribu
 | --- | --- | --- |
 | [Observable choice models](choice-models.md) | baselines, static and smooth GLMs, partial pooling, multinomial choice | [Model cards](../model-cards.md) |
 | [Latent-state and reinforcement-learning models](latent-and-rl-models.md) | GLM-HMMs, Q-learning, composable RL agents | [Model-choice guide](../model-choice-guide.md) |
-| [Drift-diffusion models](drift-diffusion-models.md) | static, smooth, hierarchical, and contaminant DDMs | [Drift diffusion](../drift-diffusion.md) |
+| [Drift-diffusion models](drift-diffusion-models.md) | static, smooth, hierarchical, and mixed DDMs | [Drift diffusion](../drift-diffusion.md) |
 
 ## Evidence and computation
 

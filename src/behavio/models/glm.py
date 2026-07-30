@@ -29,7 +29,6 @@ from behavio.design import DesignSpec
 from behavio.models._kernels.bernoulli import (
     BERNOULLI,
     BernoulliLikelihood,
-    fit_bernoulli,
     ordered_session_indices,
 )
 from behavio.models._kernels.design import (
@@ -40,6 +39,7 @@ from behavio.models._kernels.design import (
     validate_design_choice,
 )
 from behavio.models._kernels.introspection import Describable
+from behavio.models._kernels.penalised import fit_penalised_linear
 from behavio.models.base import (
     FitResult,
     ModelDataError,
@@ -316,19 +316,29 @@ class BernoulliHistoryGLM(Describable):
         model_name: str,
         model_signature: str,
     ) -> FitResult:
-        """Solve any penalized Bernoulli problem on this model's optimizer settings."""
+        """Solve any penalized problem this model's linear predictor feeds.
 
-        return fit_bernoulli(
+        The likelihood comes from the design rather than from this class, because a
+        combinator may have replaced it: ``mix(glm, component)`` hands down a two-process
+        density over a widened predictor, and the arithmetic that solves it is still this
+        model's own. ``fit_bernoulli`` remains the entry point for the families that fit a
+        design matrix against a binary outcome directly and never see a combinator.
+        """
+
+        return fit_penalised_linear(
             model_name=model_name,
             model_signature=model_signature,
             parameter_names=design.parameter_names,
             design_matrix=design.design_matrix,
             outcomes=design.outcomes,
             penalty_matrix=design.penalty_matrix,
+            likelihood=design.likelihood,
             max_iterations=self.max_iterations,
             tolerance=self.tolerance,
             coefficient_warning_threshold=self.coefficient_warning_threshold,
             offsets=design.offsets,
+            box=design.box,
+            initial_points=design.initial_points,
             derived_estimates=design.derived_estimates,
         )
 

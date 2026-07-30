@@ -65,7 +65,7 @@ wrapped implementation, and settings prefixed `base.` configure it, nested once 
 ## From the deleted drift-diffusion variant classes
 
 `SmoothWienerDriftDiffusion` and `HierarchicalSmoothWienerDriftDiffusion` no longer exist
-either. The same two combinators now wrap `WienerDriftDiffusion`, and the renames in the
+either. The same combinators now wrap `WienerDriftDiffusion`, and the renames in the
 table above apply unchanged.
 
 | Deleted | Replacement |
@@ -88,9 +88,30 @@ diffing an old parameter vector at full precision.
 
 Two cells the deleted classes did not have are now available. `hierarchical()` applied
 directly to `WienerDriftDiffusion` gives a cohort model with no longitudinal hypothesis and
-no knots to declare, and a contaminant weight composes with both combinators, so a lapse
-rate that varies by animal or across sessions no longer needs the mixture to be switched
-off.
+no knots to declare, and a contaminant is now `mix(model, UniformResponseGuess(...))` --
+whose weight is an ordinary parameter -- so a lapse rate that varies by animal or across
+sessions no longer needs the mixture to be switched off.
+
+## `WienerDriftDiffusion(contaminant=...)` and `LapsePsychometric`
+
+Both are gone, and both were the same idea said twice.
+
+| Deleted | Write instead |
+| --- | --- |
+| `WienerDriftDiffusion(contaminant=UniformResponseTimeContaminant(time_bounds=b, probability_bounds=w))` | `mix(WienerDriftDiffusion(...), UniformResponseGuess(time_bounds=b), weight_bounds=w)` |
+| `LapsePsychometric(stimulus=s, maximum_lapse=m)` | `mix(Psychometric(stimulus=s), UniformChoiceGuess(), weight_bounds=(0.0, m))` |
+| `model.simulate_with_contaminants(...)` | `model.simulate_with_component(...)`, whose indicator is `from_component` |
+| `model.contaminant_responsibility(study, fit)` | `model.component_responsibility(study, fit)` |
+| `fit.posterior_contaminant_probability` | `model.component_responsibility(study, fit)` |
+| parameter `contaminant_probability` (natural) | parameter `mixture_logit`, reported as `contaminant_rate` |
+| parameter `lapse_logit` | parameter `mixture_logit`, reported as `lapse_rate` |
+
+One behaviour changed with them. `nondecision_time_bounds`, when declared, is now
+**authoritative** rather than being capped again by the fastest observed response. The cap
+was only ever valid under the assumption that every response was a decision, which is the
+assumption a response-time mixture denies; declaring the bound is what says the fastest
+trial need not have been a decision. A model that declares no bound still derives one from
+the data exactly as before.
 
 ## Hand-written SciPy likelihoods
 

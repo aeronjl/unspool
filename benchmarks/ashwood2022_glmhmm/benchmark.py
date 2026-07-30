@@ -34,9 +34,12 @@ from numpy.typing import NDArray
 from behavio import (
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
-    LapsePsychometric,
+    MixtureModel,
     PredictionMode,
+    Psychometric,
     Study,
+    UniformChoiceGuess,
+    mix,
 )
 from benchmarks.ashwood2022_glmhmm.fetch_data import (
     ARCHIVE_LICENCE,
@@ -310,10 +313,14 @@ def single_state_glm() -> BernoulliHistoryGLM:
     return BernoulliHistoryGLM(covariates=COVARIATES, choice_lags=CHOICE_LAGS, l2=L2)
 
 
-def lapse_model() -> LapsePsychometric:
+def lapse_model() -> MixtureModel:
     """Behavio's nearest available stand-in for the paper's classic lapse model."""
 
-    return LapsePsychometric(stimulus="stimulus", l2=L2)
+    return mix(
+        Psychometric(stimulus="stimulus", l2=L2),
+        UniformChoiceGuess(),
+        weight_bounds=(0.0, 0.2),
+    )
 
 
 def paper_state_order(coefficients: NDArray[np.float64]) -> tuple[int, ...]:

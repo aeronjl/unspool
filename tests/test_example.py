@@ -218,7 +218,7 @@ def test_contaminant_ddm_example_exposes_mixture_truth_and_responsibility(
     assert "fit audit: pass []" in output
     assert "generated contaminants:" in output
     assert "posterior expected count:" in output
-    assert "contaminant_probability" in output
+    assert "contaminant_rate" in output
 
 
 def test_behavior_interoperability_example_runs_end_to_end(

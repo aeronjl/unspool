@@ -35,7 +35,7 @@ from behavio import (
     DriftDiffusionFitResult,
     ModelDataError,
     Study,
-    UniformResponseTimeContaminant,
+    UniformResponseGuess,
     WienerDriftDiffusion,
     cohort_forward_session_splits,
     compare_models,
@@ -47,9 +47,11 @@ from behavio import (
 from behavio.compose import (
     HierarchicalFitResult,
     HierarchicalModel,
+    MixtureModel,
     SmoothModel,
     UnseenGroupPrediction,
     hierarchical,
+    mix,
     smooth,
 )
 from behavio.contracts.compose import PenalisedLinearEstimator, group_blocks
@@ -684,27 +686,25 @@ def test_unobserved_future_knots_carry_forward_without_outcome_leakage() -> None
 
 
 # --------------------------------------------------------------------------------------
-# The contaminant, which composition admitted rather than refused
+# The mixture, which the deleted classes refused and the combinators do not
 # --------------------------------------------------------------------------------------
 
 
-def contaminated_ddm(**changes: Any) -> WienerDriftDiffusion:
-    return base_ddm(
-        contaminant=UniformResponseTimeContaminant(time_bounds=(0.15, 3.0)),
-        nondecision_time_bounds=(0.05, 0.4),
-        **changes,
+def contaminated_ddm(**changes: Any) -> MixtureModel:
+    return mix(
+        base_ddm(nondecision_time_bounds=(0.05, 0.4), **changes),
+        UniformResponseGuess(time_bounds=(0.15, 3.0)),
+        weight_bounds=(0.0, 0.25),
     )
 
 
-def test_a_contaminant_weight_is_a_fifth_cell_and_therefore_composes() -> None:
+def test_a_mixture_weight_is_a_predictor_cell_and_therefore_composes() -> None:
     """``SmoothWienerDriftDiffusion`` refused contaminants; the composition does not.
 
     The deleted class raised ``"does not yet support contaminants"`` from its constructor:
-    the field composed syntactically and the model refused semantically. Once the
-    contaminant weight is a predictor cell like any other, a smooth or group-varying lapse
-    rate is an ordinary instance of the two combinators and the refusal has nothing left to
-    protect. This is not ``.mix()`` -- the mixture is still one hard-coded uniform
-    component inside one likelihood -- but the *restriction* is gone, so it is not kept.
+    the field composed syntactically and the model refused semantically. The mixture is now
+    a combinator of its own, and its weight is a predictor cell like any other, so a
+    drifting or group-varying lapse rate is an ordinary instance of the other two.
     """
 
     model = contaminated_ddm()
@@ -714,20 +714,22 @@ def test_a_contaminant_weight_is_a_fifth_cell_and_therefore_composes() -> None:
         "boundary",
         "starting_bias",
         "nondecision_time",
-        "contaminant_probability",
+        "mixture_weight",
+        "component_log_density",
+        "component_probability[0]",
     )
-    assert model.parameter_names[-1] == "contaminant_probability"
+    assert model.parameter_names[-1] == "mixture_logit"
 
     drifting = smooth(
         model,
         over="session_order",
         knots=KNOTS,
         smoothness=SMOOTHNESS,
-        parameters=("contaminant_probability",),
+        parameters=("mixture_logit",),
     )
     assert drifting.parameter_names[-2:] == (
-        "contaminant_probability[session_order=0]",
-        "contaminant_probability[session_order=2]",
+        "mixture_logit[session_order=0]",
+        "mixture_logit[session_order=2]",
     )
     truth = drifting.parameters_from_paths(
         {
@@ -736,7 +738,7 @@ def test_a_contaminant_weight_is_a_fifth_cell_and_therefore_composes() -> None:
             "boundary": 1.3,
             "starting_bias": 0.48,
             "nondecision_time": 0.25,
-            "contaminant_probability": [0.02, 0.18],
+            "mixture_logit": [-3.0, -0.5],
         }
     )
     study = drifting.simulate(design(n_subjects=1, n_trials=120), truth, seed=15)
@@ -748,26 +750,30 @@ def test_a_contaminant_weight_is_a_fifth_cell_and_therefore_composes() -> None:
     assert early < late
 
 
-def test_a_group_varying_contaminant_weight_fits() -> None:
+def test_a_group_varying_mixture_weight_fits() -> None:
     model = hierarchical(
         contaminated_ddm(),
         over="subject",
-        parameters=("contaminant_probability",),
-        scale=0.05,
+        parameters=("mixture_logit",),
+        scale=0.4,
     )
-    truth = {
-        "drift.intercept": 0.1,
-        "drift.stimulus": 1.1,
-        "boundary": 1.3,
-        "starting_bias": 0.48,
-        "nondecision_time": 0.25,
-        "contaminant_probability": 0.1,
-    }
+    truth = dict(
+        model.model.from_natural(
+            {
+                "drift.intercept": 0.1,
+                "drift.stimulus": 1.1,
+                "boundary": 1.3,
+                "starting_bias": 0.48,
+                "nondecision_time": 0.25,
+                "contaminant_rate": 0.1,
+            }
+        )
+    )
     study = model.simulate(design(n_subjects=3, n_trials=60), truth, seed=21)
 
     fit = model.fit(study)
 
-    assert fit.varying_parameters == ("contaminant_probability",)
+    assert fit.varying_parameters == ("mixture_logit",)
     assert fit.group_deviations.shape == (3, 1)
     assert np.all(np.isfinite(fit.group_deviations))
 

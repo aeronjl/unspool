@@ -1,7 +1,8 @@
 # Drift-diffusion model API
 
-These models jointly score choice and response time. Unit declarations, contaminant
-assumptions, and the prediction mode remain part of the fitted contract.
+These models jointly score choice and response time. Unit declarations, the declared
+support of any mixture component, and the prediction mode remain part of the fitted
+contract.
 
 ## Static DDM
 

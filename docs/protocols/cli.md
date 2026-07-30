@@ -90,7 +90,7 @@ execute arbitrary code.
 The model allowlist is `behavio.registry.builtin_estimator_registry()` — the same
 [`EstimatorRegistry`](../extensions.md#local-registration) the documentation offers as the
 extension point, not a second private dictionary beside it. It resolves the four built-in
-estimators and the two combinators:
+estimators and the combinators:
 
 ```text
 behavio.models.BernoulliHistoryGLM

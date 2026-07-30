@@ -15,11 +15,15 @@ with a **guess** rate \(\gamma\) and a **lapse** rate \(\lambda\) as two separat
 parameters -- the two-gamma form -- a threshold \(\alpha\) and a width \(w\) in stimulus
 units, and a declared link \(F\).
 
-!!! note "The logistic baselines are unchanged"
-    `Psychometric` and `LapsePsychometric` in [canonical baselines](baselines.md) remain
-    exactly as they were: logistic-link only, with a single symmetric lapse. They are
-    pinned, exported, and tested. `PsychometricFunction` is a new family beside them, not a
-    replacement.
+!!! note "The logistic baseline is unchanged"
+    `Psychometric` in [canonical baselines](baselines.md) remains exactly as it was:
+    logistic link, intercept and slope. A lapse is added to it by `mix()` rather than by a
+    class of its own, and the resulting model has *one* symmetric rate.
+    `PsychometricFunction` is a new family beside them, not a replacement: it estimates a
+    guess rate and a lapse rate **separately** inside the link, which a mixture cannot do
+    with one weight. See
+    [composing models](composing-models.md#mix-a-simpler-process-alongside-the-model) for
+    why that line falls where it does.
 
 ## Links
 

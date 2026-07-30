@@ -18,7 +18,8 @@ re-export them, so older imports keep working.
 | A file format, archive, or data service | `StudyAdapter` | declared identity and chronology policy, plus a runnable conformance harness |
 | A fitted predictive model | `BehaviourEstimator` | prospective evaluation and matched comparison |
 | A model that can also simulate | `GenerativeBehaviourModel` | parameter and model recovery |
-| A model whose likelihood is a quadratically penalised linear predictor | `PenalisedLinearEstimator` | `smooth()` and `hierarchical()` apply to it, so the time-variation and population cells of your family exist without being written |
+| A model whose likelihood is a quadratically penalised linear predictor | `PenalisedLinearEstimator` | `smooth()`, `hierarchical()` and `mix()` apply to it, so the time-variation, population and mixture cells of your family exist without being written |
+| A simpler process a model could be mixed with | `MixtureComponent` | `mix()` accepts it against any composable family, so one lapse or contaminant serves every model that scores the same observation |
 | A natural/optimizer parameter description | `ParameterSpaceProvider` | portable transforms, bounds, priors, and backend adapters |
 | An optimizer | `OptimizationBackend` | identical deterministic problems with complete attempt records |
 | Posterior samples | `PosteriorResult` or ArviZ adapter | convergence audit, PPC, PSIS-LOO, SBC, and sensitivity |
@@ -38,8 +39,8 @@ changes if you do not:
 | A multistart optimizer whose restarts you retain | `MultistartFit` | an automatic `RestartAudit` in every fit audit |
 
 `PenalisedLinearEstimator` is the widest of the optional surfaces and the one with the
-largest payoff, because implementing it is what makes hierarchy and time-variation *derive*
-rather than be written twice more. Its five ingredients, and which member carries each, are
+largest payoff, because implementing it is what makes hierarchy, time-variation and
+mixtures *derive* rather than be written three times more. Its five ingredients, and which member carries each, are
 documented in [composing models](composing-models.md#the-contract). A family whose row
 predicts several numbers rather than one -- a multinomial's per-category logits -- declares
 them as `predictor_cells` and is composable on the same terms; a family with per-trial
@@ -52,6 +53,14 @@ whose row scores are not independent given the predictor cannot satisfy it eithe
 its members are shaped: a mixture over latent states scores row *r* through a recursion
 over every row before it. The second kind cannot be detected structurally, so a model in
 that position declares `penalised_linear_refusal` and the combinators report the reason.
+
+`MixtureComponent` is the smaller of the two composition surfaces and points the other way:
+it is what a *process* implements so that any composable model can be mixed with it. It is
+five members -- a per-row log density on the model's own outcome coordinate, a prediction of
+the model's own shape, a simulator, an identity, and a refusal in a sentence -- and no
+estimated parameters at all, because the only thing a mixture estimates is its weight. The
+three components that ship are documented in
+[composing models](composing-models.md#what-a-component-must-expose).
 
 `required_task_columns` used to appear in that table, behind a separate
 `TaskColumnEstimator` protocol. It is now a member of `BehaviourEstimator` itself and the

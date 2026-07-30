@@ -43,13 +43,14 @@ first matched alternatives for more elaborate latent or mechanistic accounts.
       show_root_heading: false
       show_source: false
 
-## Combinators: smoothness and hierarchy
+## Combinators: smoothness, hierarchy and mixture
 
 The smooth, hierarchical, and hierarchical-smooth GLMs are not classes, and neither are
-their multinomial counterparts. They are
-[`smooth()` and `hierarchical()`](../composing-models.md) applied to the model above or to
-`MultinomialLogit`, and the contract a family implements to be composable is
-`behavio.contracts.compose.PenalisedLinearEstimator`.
+their multinomial counterparts, and neither is a lapse model. They are
+[`smooth()`, `hierarchical()` and `mix()`](../composing-models.md) applied to the model
+above or to `MultinomialLogit`. The contract a family implements to be composable is
+`behavio.contracts.compose.PenalisedLinearEstimator`; the contract a *simpler process*
+implements to be mixable is `behavio.contracts.mixture.MixtureComponent`.
 
 ::: behavio.contracts.compose
     options:
@@ -76,6 +77,24 @@ their multinomial counterparts. They are
       show_source: false
 
 ::: behavio.compose.trajectory
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+::: behavio.contracts.mixture
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+::: behavio.compose.mixture
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+::: behavio.compose.components
     options:
       members_order: source
       show_root_heading: false

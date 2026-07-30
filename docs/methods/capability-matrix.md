@@ -22,7 +22,7 @@ its inferential or design coverage remains deliberately narrow.
 | GLM-HMM | **Experimental** | Input-driven emissions with stationary transitions and an optional sticky self-transition prior; state interpretation requires alignment and competitors. |
 | Binary Q-learning | **Experimental** | Compact two-action, session-reset implementation. |
 | Composable binary RL | **Experimental** | Symmetric/asymmetric updates, unchosen forgetting, choice kernels, lapse-softmax policies, and explicit reset columns; rich assemblies require design-specific recovery. |
-| Static and session-varying drift diffusion | **Experimental** | Joint choice/RT data with explicit units and fixed support assumptions; `smooth()` puts named parameters, including a contaminant weight, on fixed knots. |
+| Static and session-varying drift diffusion | **Experimental** | Joint choice/RT data with explicit units and fixed support assumptions; `smooth()` puts named parameters, a mixture weight included, on fixed knots. |
 | Hierarchical drift diffusion, with or without smoothing | **Experimental** | `hierarchical()` composes over the static and the session-varying model alike; plug-in population prediction and bounded variance-component estimation. |
 | Threshold learning landmarks | **Experimental** | Fold-fitted plug-in bootstrap; unresolved draws remain visible. |
 | Cross-lab trajectory geometry | **Experimental** | Fixed empirical labs, no population-of-labs generalization. |

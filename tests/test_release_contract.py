@@ -35,7 +35,6 @@ GOLDEN_PATH = {
 MODEL_CATALOGUE = {
     "BiasOnly",
     "Psychometric",
-    "LapsePsychometric",
     "PsychometricFunction",
     "Perseveration",
     "WinStayLoseShift",
@@ -50,27 +49,35 @@ MODEL_CATALOGUE = {
     "MetaSDT",
 }
 
-#: The two combinators and the one call that turns a formula into a model. This is the
+#: The three combinators and the one call that turns a formula into a model. This is the
 #: headline capability of the model layer: eleven hand-written variant classes across two axes
-#: became two functions over an ordinary estimator, so what a user is promised is the *pair of
-#: verbs*, not a grid of nouns. ``SmoothModel`` and ``HierarchicalModel`` are pinned because
-#: they are what the verbs return and therefore what a caller annotates; ``HierarchicalFitResult``
-#: because a hierarchical fit's group deviations are read off it by name and no other type
-#: carries them.
+#: plus three unrelated hard-coded mixtures became three functions over an ordinary estimator,
+#: so what a user is promised is the *set of verbs*, not a grid of nouns. ``SmoothModel``,
+#: ``HierarchicalModel`` and ``MixtureModel`` are pinned because they are what the verbs return
+#: and therefore what a caller annotates; ``HierarchicalFitResult`` because a hierarchical fit's
+#: group deviations are read off it by name and no other type carries them. The three
+#: components are pinned because ``mix`` is useless without one and there is no way to write
+#: your own without first seeing these.
 #:
 #: Deliberately unpinned, though all remain importable from ``behavio``:
-#: ``HierarchicalSimulation`` and ``CoefficientTrajectory`` (records you read back off a call,
-#: free to gain fields, in the same class as ``PsychometricSummary``), and the whole of
-#: ``behavio.contracts.compose`` -- ``PenalisedLinearEstimator`` and its neighbours are the
-#: surface a *model author* implements to become composable, and it is reached through
-#: ``behavio.contracts`` alongside the other extension protocols rather than from the top level.
+#: ``HierarchicalSimulation``, ``MixtureSimulation`` and ``CoefficientTrajectory`` (records you
+#: read back off a call, free to gain fields, in the same class as ``PsychometricSummary``), and
+#: the whole of ``behavio.contracts.compose`` and ``behavio.contracts.mixture`` --
+#: ``PenalisedLinearEstimator``, ``MixtureComponent`` and their neighbours are the surface a
+#: *model author* implements, and they are reached through ``behavio.contracts`` alongside the
+#: other extension protocols rather than from the top level.
 COMBINATOR_SURFACE = {
     "smooth",
     "hierarchical",
+    "mix",
     "model_from_formula",
     "SmoothModel",
     "HierarchicalModel",
     "HierarchicalFitResult",
+    "MixtureModel",
+    "UniformChoiceGuess",
+    "UniformCategoryGuess",
+    "UniformResponseGuess",
 }
 
 #: The closed-form detection-theory summaries. These are pinned for the same reason as the
@@ -272,6 +279,33 @@ MODEL_EXTENSION_SURFACE = {
     "DerivedQuantity",
 }
 
+#: What a caller needs to *use* opt-in parallelism and to *handle* it going wrong. The
+#: ``workers`` and ``backend`` arguments themselves are pinned by the functions that take
+#: them -- ``run_model_recovery``, ``compare_models``, ``nested_select_model`` and
+#: ``run_simulation_based_calibration`` are all pinned above -- so what remains is the
+#: vocabulary those arguments are written in.
+#:
+#: ``WorkerBackend`` is pinned even though ``backend="thread"`` is a correct call, for the
+#: same reason ``SourceType`` is: it is a ``StrEnum``, so the string works, but a caller
+#: selecting a backend from configuration wants to validate it against the closed set rather
+#: than discover a typo at dispatch. ``UnpicklableTaskError`` and ``ParallelWorkerError`` are
+#: pinned because they are meant to be caught: the first is the routine outcome of passing a
+#: lambda splitter and has a documented fix, and the second is the only thing that stands
+#: between a caller and a bare ``BrokenProcessPool``. An exception a user cannot name is an
+#: exception they cannot handle.
+#:
+#: ``map_ordered`` and ``resolve_workers`` are deliberately unpinned and stay in
+#: ``behavio._internal.parallel``. They are the scheduler the library runs its own loops
+#: through, not a general-purpose parallel map offered to users; pinning them would promise
+#: that Behavio's determinism guarantee extends to arbitrary user callables, which is
+#: precisely the thing it cannot promise, because the guarantee rests on the caller's task
+#: being pure and position-seeded.
+PARALLELISM_SURFACE = {
+    "WorkerBackend",
+    "UnpicklableTaskError",
+    "ParallelWorkerError",
+}
+
 
 def test_completed_release_surface_is_public_and_explicit() -> None:
     promised = (
@@ -284,6 +318,7 @@ def test_completed_release_surface_is_public_and_explicit() -> None:
         | OBSERVED_BEHAVIOUR_SURFACE
         | MODEL_EXTENSION_SURFACE
         | SHARED_EXECUTION_SURFACE
+        | PARALLELISM_SURFACE
     )
 
     assert promised <= set(behavio.__all__)
@@ -306,6 +341,7 @@ def test_release_orientation_documents_are_in_the_strict_site_navigation() -> No
         "extensions.md",
         "reference/validation-and-comparison.md",
         "reference/figure-standard.md",
+        "parallelism.md",
         "roadmap.md",
     )
 

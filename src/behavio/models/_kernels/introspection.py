@@ -182,6 +182,7 @@ def describe_model(model: Any, study: Study | None = None) -> ModelDescription:
         findings.extend(_missing_column_findings(study, design, scored, required))
         findings.extend(_column_type_findings(study, source_columns))
         findings.extend(_knot_findings(model, study))
+        findings.extend(_declared_findings(model, study))
     return ModelDescription(
         model_name=str(getattr(model, "model_name", type(model).__name__)),
         signature=str(getattr(model, "signature", "")),
@@ -198,6 +199,26 @@ def describe_model(model: Any, study: Study | None = None) -> ModelDescription:
         findings=tuple(findings),
         design_column_notes=_design_column_notes(design),
     )
+
+
+def _declared_findings(model: Any, study: Study) -> list[ModelFinding]:
+    """Collect findings only the model itself can state, through one optional member.
+
+    Two failures are generic enough to live here -- a column that is missing and a knot the
+    data does not surround -- and the rest are not. Whether a mixture weight is identified
+    by a design is a fact about mixtures, and asking every model in the package to be
+    inspected for it would put one combinator's mathematics into the description of every
+    family. A model that has something extra to say declares ``additional_findings``; a
+    model that does not is described exactly as it was before this hook existed.
+    """
+
+    declared = getattr(model, "additional_findings", None)
+    if not callable(declared):
+        return []
+    findings = list(declared(study))
+    if any(not isinstance(finding, ModelFinding) for finding in findings):
+        raise TypeError("additional_findings must return ModelFinding records")
+    return findings
 
 
 def _optional_column(model: Any, attribute: str) -> str | None:

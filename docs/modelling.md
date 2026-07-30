@@ -107,7 +107,7 @@ choice/RT responses and retains posterior trial responsibilities without silentl
 them.
 See the [joint choice and response-time guide](drift-diffusion.md).
 
-The same two combinators apply to it. `smooth(WienerDriftDiffusion(...), over=...)` places
+The same combinators apply to it. `smooth(WienerDriftDiffusion(...), over=...)` places
 named drift coefficients, boundary separation, starting bias, non-decision time, or a
 contaminant weight on fixed-knot paths over an explicit study clock; parameters left out of
 `parameters=` stay stationary. Its future-knot persistence forecast, single-subject default,

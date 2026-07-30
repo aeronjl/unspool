@@ -1,9 +1,9 @@
-# Composing models: `smooth()` and `hierarchical()`
+# Composing models: `smooth()`, `hierarchical()` and `mix()`
 
-Two questions get asked of almost every behavioural model. *Does this coefficient change
-over the course of training?* and *does it differ between animals?* Neither is a property
-of one model family. Both are transformations you apply to whatever family you already
-have.
+Three questions get asked of almost every behavioural model. *Does this coefficient change
+over the course of training?*, *does it differ between animals?* and *did the animal do the
+task on every trial?* None is a property of one model family. All three are transformations
+you apply to whatever family you already have.
 
 Behavio used to answer them by writing another class. There was a Bernoulli history GLM, a
 smooth one, a hierarchical one, and a hierarchical smooth one; the same four again for
@@ -13,17 +13,24 @@ re-implemented `simulate`, `fit`, `predict` and `pointwise_log_prob`. Worse, the
 did not compose: `HierarchicalSmoothBernoulliHistoryGLM` extended the *base* GLM, not the
 smooth one, so it was a fourth sibling rather than the combination of the second and third.
 
+The third question had it worse. Three unrelated mechanisms existed for one idea: a
+`contaminant=` slot on the drift-diffusion model, a whole `LapsePsychometric` class whose
+only job was adding a symmetric lapse to a logistic curve, and a bounded lapse inside a
+reinforcement-learning policy. None composed with the others, and a lapse on a GLM, on a
+multinomial or on a GLM-HMM could not be written at all.
+
 They are combinators now.
 
 ```python
 from behavio import BernoulliHistoryGLM
-from behavio.compose import hierarchical, smooth
+from behavio.compose import UniformChoiceGuess, hierarchical, mix, smooth
 
 base = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.02)
 
 drifting = smooth(base, over="session_order", knots=(0.0, 2.0, 4.0), smoothness=3.0)
 pooled = hierarchical(base, over="subject", scale=0.4)
-both = hierarchical(drifting, over="subject", scale=0.4)
+lapsing = mix(base, UniformChoiceGuess(), weight_bounds=(0.0, 0.2))
+everything = hierarchical(smooth(lapsing, over="session_order", knots=(0.0, 4.0)))
 ```
 
 Each returns an ordinary estimator, so `fit_model`, `evaluate_splits`, `compare_models`,
@@ -61,21 +68,39 @@ group to the parameters named in `parameters`, and fits population and deviation
 by maximum a posteriori. The design matrix gains one zero-padded copy of the varying
 columns per group; the penalty gains one Gaussian block per group.
 
+`mix(model, component, weight_bounds=...)` replaces each row's density with a weighted
+average of the model's and a declared simpler process's, and adds exactly one parameter --
+the weight. The design gains one intercept column and the linear predictor gains cells the
+component fills.
+
 ## Order matters, and only one order is accepted
 
-**Hierarchy is the outer combinator.** Write `hierarchical(smooth(model))`. The reverse
-raises:
+**Hierarchy outermost, mixture innermost.** Write `hierarchical(smooth(mix(model)))`, and
+every prefix of it is a model. Both reverses raise:
 
 ```python
 smooth(hierarchical(base, over="subject"), over="session_order", knots=(0.0, 4.0))
 # TypeError: hierarchy is the outer combinator: write hierarchical(smooth(model)) ...
+
+mix(smooth(base, over="session_order", knots=(0.0, 4.0)), UniformChoiceGuess())
+# TypeError: mix is the innermost combinator: write smooth(mix(model)) ...
 ```
+
+The two refusals have different reasons and that is worth knowing.
 
 A hierarchical estimator *reports* the population coordinate while *fitting* a joint one
 whose width depends on how many groups the study happens to contain, and an outer
 combinator cannot expand a coordinate whose width it does not know until it sees the data.
-The restriction is real, and it is also the right way round: "which parameters vary by
-group" is the last question to ask about a model, not the first.
+That restriction is arithmetic, and it is also the right way round: "which parameters vary
+by group" is the last question to ask about a model, not the first.
+
+Nothing stops `mix(smooth(model))` arithmetically. It is refused because it is a *second
+spelling*: `mix(smooth(model))` is a smooth model with a stationary weight, and
+`smooth(mix(model), parameters=<the model's own names>)` is exactly that model, while
+`smooth(mix(model))` with the weight named is the one `mix(smooth(model))` could not
+express. One order reaches both models; two orders reach the same models twice. Keeping
+each combinator wrapping only things more primitive than itself is also what keeps the
+number of pass-through members linear in the number of combinators rather than quadratic.
 
 ## A group's deviation inherits the shape of what it deviates from
 
@@ -128,6 +153,169 @@ hierarchical(drifting, over="subject", parameters=("intercept[session_order=0]",
 # ValueError: a smooth parameter varies by group as a whole path ...
 ```
 
+## `mix()`: a simpler process alongside the model
+
+A lapse is a mixture with a guessing process. A contaminant is a mixture with a
+distribution over the scored outcome. They are one concept with different components, so
+`mix()` takes a **component** and there is no vocabulary of processes to learn:
+
+\[
+p(y_r) = (1-\omega)\,p_{\text{model}}(y_r) + \omega\,p_{\text{component}}(y_r).
+\]
+
+Three components ship, one per shape of observation:
+
+| Component | Scores | Guesses |
+| --- | --- | --- |
+| `UniformChoiceGuess(outcome=..., probability=0.5)` | one binary column | a coin |
+| `UniformCategoryGuess(choice=ChoiceSpec(...))` | a category code | uniformly over the options the trial offered |
+| `UniformResponseGuess(time_bounds=..., ...)` | a joint choice and latency | an independent coin and a uniform latency |
+
+```python
+from behavio import (
+    ChoiceSpec,
+    MultinomialLogit,
+    UniformCategoryGuess,
+    UniformResponseGuess,
+    UniformChoiceGuess,
+    WienerDriftDiffusion,
+    mix,
+)
+
+lapsing_glm = mix(base, UniformChoiceGuess(), weight_bounds=(0.0, 0.2))
+lapsing_actions = mix(actions, UniformCategoryGuess(choice=actions.choice))
+contaminated_ddm = mix(
+    WienerDriftDiffusion(covariates=("stimulus",), nondecision_time_bounds=(0.1, 0.6)),
+    UniformResponseGuess(time_bounds=(0.05, 3.0)),
+    weight_bounds=(0.0, 0.25),
+)
+```
+
+### The weight is estimated; its range is declared
+
+`weight_bounds` is the general form of the `maximum_lapse` and `probability_bounds`
+arguments the three deleted mechanisms each carried in their own dialect. It says how large
+the mixture is *allowed* to be, and nothing about where in that range it sits.
+
+The estimated coordinate is a single unbounded number, `mixture_logit`, and the reported
+weight is the component's own name for it -- `lapse_rate` for a guessing process,
+`contaminant_rate` for a distribution over response times:
+
+```python
+fit = lapsing_glm.fit(study)
+
+lapsing_glm.weight(fit)  # the natural rate
+fit.derived_value("lapse_rate")  # the same number, with a standard error
+lapsing_glm.to_natural(fit.estimates)  # every parameter on its reported scale
+lapsing_glm.component_responsibility(study, fit)  # posterior P(component) per trial
+```
+
+A logit rather than the weight itself, for three reasons that are one reason. A penalised
+linear fit is unconstrained and a Bernoulli GLM's solver has no box to put a bound in, so a
+natural-scale weight would have forced a box onto every coefficient of every model that
+could be mixed. A group deviation on a rate near zero is not Gaussian and a deviation on its
+log odds is, so `hierarchical(mix(model))` gets the right prior for free. And a Wald interval
+formed on a logit and mapped back cannot leave `[0, 1]`.
+
+The price is that a saturated weight is a large coordinate rather than a coordinate at a
+bound, so `|mixture_logit| >= 12` sets the usual `boundary_estimate` diagnostic. A weight
+resting there means *the data are consistent with no second process*, not *the weight is
+zero*.
+
+### A responsibility is not a label
+
+`component_responsibility(study, fit)` returns the posterior probability that each trial
+came from the component. A fast response is evidence for a contaminant; it is not a
+contaminant. Nothing in Behavio turns responsibilities into an exclusion rule.
+
+### Asymmetry belongs to the link, not to the mixture
+
+A component has **no estimated parameters**: only the weight is estimated. That line is
+where the psychophysical two-gamma form falls on the far side. Writing
+
+\[
+\gamma + (1-\gamma-\lambda)F(z)
+ = (\gamma+\lambda)\frac{\gamma}{\gamma+\lambda} + \bigl(1-(\gamma+\lambda)\bigr)F(z)
+\]
+
+shows it *is* a mixture, with weight \(\gamma+\lambda\) and a Bernoulli guess of
+probability \(\gamma/(\gamma+\lambda)\). But two free rates are two estimated numbers,
+and a component with an estimated parameter is a second model hiding inside the first: it
+would need its own coordinate, its own box, its own group prior and its own place in every
+combinator. A **declared** asymmetry costs nothing and is available today --
+`UniformChoiceGuess(probability=0.6)`. An **estimated** one is a shape of the curve, and
+[`PsychometricFunction`](psychometric-functions.md) already estimates both rates inside the
+link, which is where a shape of a curve belongs.
+
+### Identifiability is reported before the fit, not after it
+
+A lapse rate and a shallow slope trade off: the weight is estimated from how flat the
+asymptotes are relative to how steep the middle is. At the limit -- a model whose prediction
+is the *same on every row* -- the trade-off is exact rather than merely awkward, and any
+weight can be traded against the model's own parameters without changing the fit at all.
+`describe(study)` says so:
+
+```python
+mix(BiasOnly(), UniformChoiceGuess()).describe(study).findings
+# [warning] unidentified_mixture: lapse_rate is not identified by this design: the model
+# predicts the same thing on every row, so any weight can be traded against the model's
+# own parameters without changing the fit
+```
+
+The mirror image is reported too: a component that gives zero density to every observation
+cannot have produced any of them, so its weight can only rest on the floor of its range.
+That is `unreachable_mixture_component`, and it is what a contaminant window declared in
+the wrong unit looks like.
+
+Neither is an error, because both are modelling decisions only their author can judge --
+the same standing as a knot placed outside the data's support.
+
+## What a component must expose
+
+`behavio.contracts.mixture.MixtureComponent`, which sits beside `PenalisedLinearEstimator`
+for the same reason: it names what a combinator needs that structural typing cannot check.
+
+| Ingredient | Member |
+| --- | --- |
+| A density on the model's own outcome | `pointwise_log_density(study, outcomes)` |
+| A prediction of the model's own shape | `prediction_probability(study)`, `prediction_width` |
+| A simulator, so the weight can be recovered | `simulate_outcomes(study, rows, generator=...)` |
+| An identity, so a fit records what it was mixed with | `component_name`, `signature`, `weight_name` |
+| A refusal, in a sentence | `mixture_refusal(model)` |
+
+The refusal is a method rather than an inspection because structural typing answers "does
+this object have these members", which is not the question: a uniform guess over three
+categories and a multinomial over four have identical member sets and cannot be mixed.
+
+Everything the mixed likelihood needs arrives through the **linear predictor**. The wrapped
+model's cells come first, then the mixture logit -- the only new cell a parameter multiplies
+-- then the component's log density and its predicted probability, carried as *offsets*:
+terms no parameter multiplies. That is the channel per-trial option availability already
+travels down, widened by one observation, and it is why a mixture survives being sliced by
+group or multiplied by a temporal basis without either outer combinator knowing what it is
+carrying.
+
+## Models that decline a mixture
+
+`mix()` runs the same `require_penalised_linear` check the other two do, so a model whose
+likelihood is not a sum of independent row scores is refused by name:
+
+```python
+mix(BinaryRLAgent(), UniformChoiceGuess())
+# TypeError: mix() cannot be applied to BinaryRLAgent: a value-updating agent is a
+# recursion over trials, not a penalised linear model ...
+```
+
+`SoftmaxPolicy(maximum_lapse=...)` therefore stays where it is, and that is a statement
+about the model rather than a leftover. `mix()` mixes two densities *given a linear
+predictor*, and a value-updating agent has none: a trial's choice probability is a function
+of a value trace every earlier trial in the session wrote to. The policy lapse is also in
+the right place scientifically -- it mixes the *action* the agent emits while leaving the
+value update to see the action that was actually taken, which is what makes the learned
+trace on a lapse trial the trace the animal's own choice produced. A mixture applied from
+outside the recursion could not express that, because from outside there is no recursion to
+reach into.
+
 ## Parameter names
 
 Naming is mechanical and stable, and it is part of the promise:
@@ -138,6 +326,8 @@ Naming is mechanical and stable, and it is part of the promise:
 | `smooth(base, over="session_order", knots=(0, 4))` | `intercept[session_order=0]`, `intercept[session_order=4]`, `stimulus[session_order=0]`, ... |
 | `hierarchical(base, over="subject")` | `intercept`, `stimulus`, `choice_lag_1` |
 | `hierarchical(smooth(base, ...), over="subject")` | the smooth names, unchanged |
+| `mix(base, UniformChoiceGuess())` | the base names, plus `mixture_logit` |
+| `smooth(mix(base, ...), over="session_order", knots=(0, 4))` | the smooth names, plus `mixture_logit[session_order=0]`, ... |
 | `MultinomialLogit(...)` | `category['right']::intercept`, `category['right']::stimulus`, `category['up']::intercept`, ... |
 | `smooth(actions, over="session_order", knots=(0, 4))` | `category['right']::intercept[session_order=0]`, ... |
 | `hierarchical(actions, over="subject")` | the multinomial names, unchanged |
@@ -173,6 +363,7 @@ predictor, which `predictor_cells` declares.
 | `BernoulliHistoryGLM(...)` | `()` | `(rows, parameters)` |
 | `MultinomialLogit(options=("left", "right", "up"))` | `("category['left']", "category['right']", "category['up']")` | `(rows, 3, parameters)` |
 | `WienerDriftDiffusion(...)` | `("drift", "boundary", "starting_bias", "nondecision_time")` | `(rows, 4, parameters)` |
+| `mix(BernoulliHistoryGLM(...), UniformChoiceGuess())` | `("linear_predictor", "mixture_weight", "component_log_density", "component_probability[0]")` | `(rows, 4, parameters + 1)` |
 
 `()` is the scalar case, and every array a scalar-predictor model exchanges with a
 combinator has exactly the shape it always had -- which is why the fits the deleted
@@ -332,7 +523,7 @@ BernoulliGLMHMM(covariates=("stimulus",)).penalised_linear_refusal
 # 'a GLM-HMM is a latent-state mixture, not a penalised linear model: ...'
 ```
 
-`require_penalised_linear` -- the single check both combinators run -- reads the declaration
+`require_penalised_linear` -- the single check all three combinators run -- reads the declaration
 before it runs the structural test that would say yes, and reports the sentence in the
 `TypeError`.
 

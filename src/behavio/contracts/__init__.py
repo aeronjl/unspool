@@ -15,6 +15,7 @@ A parameter description                          :class:`ParameterSpaceProvider`
 An optimizer                                     :class:`OptimizationBackend`
 A behavioural summary                            :class:`PredictiveDiscrepancy`
 A composable penalised linear model              :class:`PenalisedLinearEstimator`
+A simpler process a model can be mixed with      :class:`MixtureComponent`
 A fold-fitted temporal transform                 :class:`StudyTransform`
 A training/test partition                        :class:`ValidationFold`
 A reporting coordinate distinct from the fit     :class:`NaturalParameterisation`
@@ -118,6 +119,13 @@ from behavio.contracts.estimator import (
     validate_required_task_columns,
 )
 from behavio.contracts.fold import ValidationFold
+from behavio.contracts.mixture import (
+    MixtureComponent,
+    mixture_logit,
+    mixture_weight,
+    require_mixture_component,
+    validate_weight_bounds,
+)
 from behavio.contracts.natural import (
     NaturalParameterisation,
     natural_covariance,
@@ -170,6 +178,7 @@ __all__ = [
     "LatentStateAudit",
     "LatentStateFit",
     "LinearPredictorLikelihood",
+    "MixtureComponent",
     "ModelCapabilities",
     "ModelDataError",
     "ModelPrediction",
@@ -206,6 +215,8 @@ __all__ = [
     "is_posterior_estimator",
     "joint_parameter_names",
     "linear_predictor",
+    "mixture_logit",
+    "mixture_weight",
     "model_capabilities",
     "model_task_columns",
     "natural_covariance",
@@ -218,9 +229,11 @@ __all__ = [
     "posterior_point_summary",
     "posterior_summary_message",
     "register_fit_auditor",
+    "require_mixture_component",
     "require_penalised_linear",
     "ridge_group_draw",
     "ridge_group_penalty",
     "validate_predictor_shape",
     "validate_required_task_columns",
+    "validate_weight_bounds",
 ]

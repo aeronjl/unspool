@@ -9,7 +9,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from behavio import Study, UniformResponseTimeContaminant, WienerDriftDiffusion
+from behavio import Study, UniformResponseGuess, WienerDriftDiffusion, mix
 from benchmarks.provenance import render
 
 N_SESSIONS = 5
@@ -52,17 +52,17 @@ def run(*, repeats: int = 20, seed: int = 73_901) -> dict[str, Any]:
         raise ValueError("repeats must be a positive integer")
     if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
         raise ValueError("seed must be a non-negative integer")
-    contaminant = UniformResponseTimeContaminant(
-        time_bounds=(0.05, 3.0),
-        probability_bounds=(0.0, 0.2),
-    )
-    robust = WienerDriftDiffusion(
-        covariates=("stimulus",),
-        contaminant=contaminant,
-        nondecision_time_bounds=(0.1, 0.6),
+    robust = mix(
+        WienerDriftDiffusion(
+            covariates=("stimulus",),
+            nondecision_time_bounds=(0.1, 0.6),
+            n_restarts=3,
+            max_iterations=400,
+            simulation_time_step=0.0001,
+        ),
+        UniformResponseGuess(time_bounds=(0.05, 3.0)),
+        weight_bounds=(0.0, 0.2),
         n_restarts=3,
-        max_iterations=400,
-        simulation_time_step=0.0001,
     )
     naive = WienerDriftDiffusion(
         covariates=("stimulus",),
@@ -70,18 +70,21 @@ def run(*, repeats: int = 20, seed: int = 73_901) -> dict[str, Any]:
         max_iterations=400,
         simulation_time_step=0.0001,
     )
-    truth = robust.parameters_from_components(
-        drift={"drift.intercept": 0.2, "drift.stimulus": 1.2},
-        boundary=1.2,
-        starting_bias=0.45,
-        nondecision_time=0.25,
-        contaminant_probability=0.05,
+    truth = robust.from_natural(
+        {
+            "drift.intercept": 0.2,
+            "drift.stimulus": 1.2,
+            "boundary": 1.2,
+            "starting_bias": 0.45,
+            "nondecision_time": 0.25,
+            "contaminant_rate": 0.05,
+        }
     )
     sequences = np.random.SeedSequence(seed).spawn(repeats)
     runs: list[dict[str, Any]] = []
     for sequence in sequences:
         design_seed, simulation_seed = sequence.generate_state(2, dtype=np.uint64)
-        simulation = robust.simulate_with_contaminants(
+        simulation = robust.simulate_with_component(
             build_design(seed=int(design_seed)),
             truth,
             seed=int(simulation_seed),
@@ -92,14 +95,14 @@ def run(*, repeats: int = 20, seed: int = 73_901) -> dict[str, Any]:
         test = simulation.study.take(test_indices)
         robust_fit = robust.fit(train)
         naive_fit = naive.fit(train)
-        robust_posterior = robust_fit.posterior_contaminant_probability
-        train_truth = simulation.contaminants[train_indices]
+        robust_posterior = robust.component_responsibility(train, robust_fit)
+        train_truth = simulation.from_component[train_indices]
         runs.append(
             {
                 "design_seed": int(design_seed),
                 "simulation_seed": int(simulation_seed),
                 "n_train_contaminants": int(np.sum(train_truth)),
-                "n_test_contaminants": int(np.sum(simulation.contaminants[test_indices])),
+                "n_test_contaminants": int(np.sum(simulation.from_component[test_indices])),
                 "robust": _fit_record(robust_fit),
                 "naive": _fit_record(naive_fit),
                 "future_mean_log_loss": {
@@ -109,7 +112,7 @@ def run(*, repeats: int = 20, seed: int = 73_901) -> dict[str, Any]:
                 "responsibility": {
                     "true_contaminants": _optional_mean(robust_posterior[train_truth]),
                     "ordinary_trials": _optional_mean(robust_posterior[~train_truth]),
-                    "expected_count": robust_fit.expected_contaminant_count,
+                    "expected_count": float(np.sum(robust_posterior)),
                 },
             }
         )
@@ -164,8 +167,8 @@ def run(*, repeats: int = 20, seed: int = 73_901) -> dict[str, Any]:
             "n_paired_eligible": len(eligible),
             "parameter_rmse": parameter_rmse,
             "contaminant_probability_rmse": _rmse(
-                [row["robust"]["estimates"]["contaminant_probability"] for row in eligible],
-                truth["contaminant_probability"],
+                [row["robust"]["estimates"]["mixture_logit"] for row in eligible],
+                truth["mixture_logit"],
             ),
             "future_mean_log_loss": {
                 "robust": float(np.mean(robust_losses)),

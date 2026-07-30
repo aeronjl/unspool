@@ -122,11 +122,11 @@ A session-varying Wiener model still excludes:
   approximation at the penalised optimum.
 
 Two restrictions the hand-written class carried are gone, because they were properties of
-that class rather than of the science. A contaminant mixture composes: with
-`WienerDriftDiffusion(contaminant=...)`, `contaminant_probability` is a predictor cell like
-any other, so a lapse rate that grows or shrinks across training is an ordinary use of
-`smooth()`. And per-parameter deviation scales are available through `hierarchical()`
-rather than being a feature the smooth class had to grow.
+that class rather than of the science. A contaminant mixture composes: it is
+`mix(model, UniformResponseGuess(...))`, whose weight is an ordinary parameter, so a lapse
+rate that grows or shrinks across training is `smooth(mix(model), ...)` and nothing new.
+And per-parameter deviation scales are available through `hierarchical()` rather than being
+a feature the smooth class had to grow.
 
 The distinction between the two senses of *time-varying* is empirically important. Learning
 studies have long treated diffusion components as possible loci of behavioral change, and a

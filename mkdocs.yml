@@ -108,6 +108,8 @@ nav:
       - Establish credibility:
           - Parameter and model recovery: model-recovery.md
           - Fit diagnostics: diagnostics.md
+      - Run at scale:
+          - Parallelism and determinism: parallelism.md
       - Freeze and audit:
           - Study protocols: protocols/index.md
           - Freeze and amend: protocols/lifecycle.md

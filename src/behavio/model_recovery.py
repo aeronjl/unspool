@@ -17,6 +17,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from behavio._internal.arrays import protected_array
+from behavio._internal.parallel import WorkerBackend, map_ordered, resolve_workers
 from behavio.contracts.posterior import (
     AnyBehaviourEstimator,
     AnyGenerativeBehaviourModel,
@@ -68,6 +69,29 @@ class ModelRecoveryScenario:
         parameters = {name: float(self.parameters[name]) for name in self.generator.parameter_names}
         if not np.all(np.isfinite(tuple(parameters.values()))):
             raise ValueError("scenario parameters must be finite")
+        object.__setattr__(self, "parameters", MappingProxyType(parameters))
+
+    def __getstate__(self) -> dict[str, object]:
+        """Send the parameters as a plain mapping so a scenario reaches a worker process.
+
+        ``parameters`` is wrapped in a :class:`~types.MappingProxyType` to make the frozen
+        scenario deeply immutable, and a mapping proxy cannot be pickled. The proxy is a
+        storage detail rather than part of the declaration, so it is unwrapped on the way
+        out and re-established on the way in.
+        """
+
+        return {
+            "name": self.name,
+            "truth_label": self.truth_label,
+            "generator": self.generator,
+            "parameters": dict(self.parameters),
+        }
+
+    def __setstate__(self, state: Mapping[str, object]) -> None:
+        object.__setattr__(self, "name", state["name"])
+        object.__setattr__(self, "truth_label", state["truth_label"])
+        object.__setattr__(self, "generator", state["generator"])
+        parameters = dict(state["parameters"])  # type: ignore[arg-type]
         object.__setattr__(self, "parameters", MappingProxyType(parameters))
 
 
@@ -433,6 +457,100 @@ class ModelRecoveryGridReport:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class _RecoveryTask:
+    """Everything one ``(scenario, repeat)`` cell needs, and nothing it shares.
+
+    The cell is addressed by position: ``child_seed`` was drawn from
+    ``SeedSequence(seed).spawn(n_runs)[position]`` before any work started, so it depends on
+    where the cell sits and not on when it runs. That is the whole of why these cells can
+    be executed in any order, or in parallel, without changing a number.
+    """
+
+    design: Study
+    scenario: ModelRecoveryScenario
+    candidates: tuple[AnyBehaviourEstimator, ...]
+    child_seed: int
+    min_train_sessions: int
+    horizon: int
+    step: int
+    splitter: Callable[[Study], Iterable[ValidationFold]] | None
+    aggregation_column: str | None
+    posterior_policy: PosteriorFoldPolicy | None
+
+
+@dataclass(frozen=True, slots=True)
+class _RecoveryCell:
+    """One recovery cell's complete result, with one entry per candidate in column order."""
+
+    seed: int
+    n_folds: int
+    scores: tuple[float, ...]
+    converged: tuple[bool, ...]
+    failure_messages: tuple[str, ...]
+    audit_statuses: tuple[FitAuditStatus, ...]
+    audit_issue_codes: tuple[tuple[str, ...], ...]
+
+
+def _run_recovery_cell(task: _RecoveryTask) -> _RecoveryCell:
+    """Simulate one scenario repeat and score every candidate against it.
+
+    This is a pure function of ``task``. It draws no randomness of its own -- the only seed
+    it uses is the position-determined one it was handed -- and it touches nothing outside
+    its argument, which is what lets :func:`run_model_recovery` schedule these cells freely.
+    """
+
+    scenario = task.scenario
+    simulated = scenario.generator.simulate(task.design, scenario.parameters, seed=task.child_seed)
+    if task.splitter is None:
+        splits: tuple[ValidationFold, ...] = forward_session_splits(
+            simulated,
+            min_train_sessions=task.min_train_sessions,
+            horizon=task.horizon,
+            step=task.step,
+        )
+    else:
+        splits = tuple(task.splitter(simulated))
+    if not splits:
+        raise ValueError(f"scenario {scenario.name!r} produced no eligible prospective folds")
+
+    scores: list[float] = []
+    converged: list[bool] = []
+    failure_messages: list[str] = []
+    audit_statuses: list[FitAuditStatus] = []
+    audit_issue_codes: list[tuple[str, ...]] = []
+    for model in task.candidates:
+        evaluations = evaluate_splits(
+            model,
+            simulated,
+            splits,
+            posterior_policy=(task.posterior_policy if is_posterior_estimator(model) else None),
+        )
+        scores.append(
+            _mean_log_probability(
+                simulated,
+                evaluations,
+                aggregation_column=task.aggregation_column,
+            )
+        )
+        converged.append(
+            all(not evaluation.fit.diagnostics.failed_to_converge for evaluation in evaluations)
+        )
+        failure_messages.append(_failure_message(evaluations))
+        audit_status, issue_codes = _aggregate_audits(evaluations)
+        audit_statuses.append(audit_status)
+        audit_issue_codes.append(issue_codes)
+    return _RecoveryCell(
+        seed=task.child_seed,
+        n_folds=len(splits),
+        scores=tuple(scores),
+        converged=tuple(converged),
+        failure_messages=tuple(failure_messages),
+        audit_statuses=tuple(audit_statuses),
+        audit_issue_codes=tuple(audit_issue_codes),
+    )
+
+
 def run_model_recovery(
     design: Study,
     scenarios: Sequence[ModelRecoveryScenario],
@@ -448,6 +566,8 @@ def run_model_recovery(
     splitter_name: str | None = None,
     aggregation_column: str | None = None,
     posterior_policy: PosteriorFoldPolicy | None = None,
+    workers: int = 1,
+    backend: WorkerBackend | str = WorkerBackend.PROCESS,
 ) -> ModelRecoveryReport:
     """Simulate scenarios and select candidates by prospective mean log probability.
 
@@ -456,6 +576,21 @@ def run_model_recovery(
     simulation; ``splitter_name`` then provides stable provenance in the report.
     ``posterior_policy`` declares the projection and convergence gate applied to sampled
     candidates, which the report names in ``sampled_candidate_labels``.
+
+    ``workers`` runs the ``scenarios x repeats`` cells concurrently and is the one place in
+    this function where anything is scheduled. The report it returns is **bit-identical**
+    for every worker count, because each cell's simulation seed comes from
+    ``SeedSequence(seed).spawn(scenarios * repeats)`` indexed by the cell's position and
+    every result is written back by that same position -- including ``failure_messages``,
+    ``audit_statuses`` and ``audit_issue_codes``, which are built inside a cell and never
+    appended in completion order. ``workers=1`` is the default and runs a plain loop with
+    no executor, so a small run pays nothing.
+
+    ``backend`` selects processes (the default, which sidesteps the GIL) or threads.
+    Processes require ``design``, the scenarios, the candidates and any ``splitter`` to be
+    picklable, which rules out a lambda splitter; threads pickle nothing and are the
+    fallback for one. The ``Parallelism and determinism`` guide records measured speedups
+    and the crossover below which ``workers=1`` wins.
     """
 
     scenarios = tuple(scenarios)
@@ -497,81 +632,62 @@ def run_model_recovery(
             raise ValueError("aggregation_column must be None or a non-empty string")
         if aggregation_column not in design.columns:
             raise ValueError(f"design is missing aggregation column {aggregation_column!r}")
+    backend = WorkerBackend(backend)
+    # Validated alongside every other argument, rather than after the simulation setup that
+    # `map_ordered` sits behind: a bad `workers` is a caller's typo and should be reported
+    # with the other caller's typos.
+    resolve_workers(workers, n_tasks=1)
 
     n_runs = len(scenarios) * repeats
     child_sequences = np.random.SeedSequence(seed).spawn(n_runs)
-    scores = np.empty((n_runs, len(candidate_labels)), dtype=np.float64)
-    converged = np.empty((n_runs, len(candidate_labels)), dtype=np.bool_)
-    seeds = np.empty(n_runs, dtype=np.uint64)
-    n_folds = np.empty(n_runs, dtype=np.int64)
-    scenario_names: list[str] = []
-    generator_signatures: list[str] = []
-    generator_parameters: list[Mapping[str, float]] = []
-    truth_labels: list[str] = []
-    selected_labels: list[str | None] = []
-    failure_messages: list[tuple[str, ...]] = []
-    audit_statuses: list[tuple[FitAuditStatus, ...]] = []
-    audit_issue_codes: list[tuple[tuple[str, ...], ...]] = []
+    # One cell per (scenario, repeat), in the order the report will report them. Every seed
+    # is drawn here, from the cell's position, before any cell runs.
+    cells = tuple(scenario for scenario in scenarios for _ in range(repeats))
+    models = tuple(candidate_models.values())
+    tasks = tuple(
+        _RecoveryTask(
+            design=design,
+            scenario=scenario,
+            candidates=models,
+            child_seed=int(child_sequences[position].generate_state(1, dtype=np.uint64)[0]),
+            min_train_sessions=min_train_sessions,
+            horizon=horizon,
+            step=step,
+            splitter=splitter,
+            aggregation_column=aggregation_column,
+            posterior_policy=posterior_policy,
+        )
+        for position, scenario in enumerate(cells)
+    )
+    completed = map_ordered(_run_recovery_cell, tasks, workers=workers, backend=backend)
 
-    run = 0
-    for scenario in scenarios:
-        for _ in range(repeats):
-            child_seed = int(child_sequences[run].generate_state(1, dtype=np.uint64)[0])
-            simulated = scenario.generator.simulate(design, scenario.parameters, seed=child_seed)
-            if splitter is None:
-                splits: tuple[ValidationFold, ...] = forward_session_splits(
-                    simulated,
-                    min_train_sessions=min_train_sessions,
-                    horizon=horizon,
-                    step=step,
-                )
-            else:
-                splits = tuple(splitter(simulated))
-            if not splits:
-                raise ValueError(
-                    f"scenario {scenario.name!r} produced no eligible prospective folds"
-                )
-            n_folds[run] = len(splits)
-            run_failures: list[str] = []
-            run_audit_statuses: list[FitAuditStatus] = []
-            run_issue_codes: list[tuple[str, ...]] = []
-            for column, model in enumerate(candidate_models.values()):
-                evaluations = evaluate_splits(
-                    model,
-                    simulated,
-                    splits,
-                    posterior_policy=(posterior_policy if is_posterior_estimator(model) else None),
-                )
-                scores[run, column] = _mean_log_probability(
-                    simulated,
-                    evaluations,
-                    aggregation_column=aggregation_column,
-                )
-                candidate_converged = all(
-                    not evaluation.fit.diagnostics.failed_to_converge for evaluation in evaluations
-                )
-                converged[run, column] = candidate_converged
-                run_failures.append(_failure_message(evaluations))
-                audit_status, issue_codes = _aggregate_audits(evaluations)
-                run_audit_statuses.append(audit_status)
-                run_issue_codes.append(issue_codes)
-
-            numerically_usable = np.asarray(
-                [status is not FitAuditStatus.FAIL for status in run_audit_statuses],
+    scores = np.asarray([run.scores for run in completed], dtype=np.float64).reshape(
+        n_runs, len(candidate_labels)
+    )
+    converged = np.asarray([run.converged for run in completed], dtype=np.bool_).reshape(
+        n_runs, len(candidate_labels)
+    )
+    seeds = np.asarray([run.seed for run in completed], dtype=np.uint64)
+    n_folds = np.asarray([run.n_folds for run in completed], dtype=np.int64)
+    selected_labels = [
+        _select_candidate(
+            scores[position],
+            np.asarray(
+                [status is not FitAuditStatus.FAIL for status in run.audit_statuses],
                 dtype=np.bool_,
-            )
-            selected_labels.append(
-                _select_candidate(scores[run], numerically_usable, candidate_labels, tie_tolerance)
-            )
-            seeds[run] = child_seed
-            scenario_names.append(scenario.name)
-            generator_signatures.append(scenario.generator.signature)
-            generator_parameters.append(scenario.parameters)
-            truth_labels.append(scenario.truth_label)
-            failure_messages.append(tuple(run_failures))
-            audit_statuses.append(tuple(run_audit_statuses))
-            audit_issue_codes.append(tuple(run_issue_codes))
-            run += 1
+            ),
+            candidate_labels,
+            tie_tolerance,
+        )
+        for position, run in enumerate(completed)
+    ]
+    scenario_names = [scenario.name for scenario in cells]
+    generator_signatures = [scenario.generator.signature for scenario in cells]
+    generator_parameters: list[Mapping[str, float]] = [scenario.parameters for scenario in cells]
+    truth_labels = [scenario.truth_label for scenario in cells]
+    failure_messages = [run.failure_messages for run in completed]
+    audit_statuses = [run.audit_statuses for run in completed]
+    audit_issue_codes = [run.audit_issue_codes for run in completed]
 
     return ModelRecoveryReport(
         candidate_labels=candidate_labels,
@@ -618,8 +734,18 @@ def run_model_recovery_grid(
     splitter_name: str | None = None,
     aggregation_column: str | None = None,
     posterior_policy: PosteriorFoldPolicy | None = None,
+    workers: int = 1,
+    backend: WorkerBackend | str = WorkerBackend.PROCESS,
 ) -> ModelRecoveryGridReport:
-    """Run one fixed recovery contract across named study-design cells."""
+    """Run one fixed recovery contract across named study-design cells.
+
+    ``workers`` is forwarded to each design cell rather than used to run the cells against
+    one another. Design cells are the coarser level, but they are also the level at which
+    the work is least even -- a grid usually varies trial count, so one cell can cost many
+    times another -- and parallelising the cells would leave the largest one running alone
+    at the end. Parallelising inside each cell keeps every worker busy for the whole grid,
+    and avoids nesting one pool inside another.
+    """
 
     if not isinstance(designs, Mapping) or not designs:
         raise ValueError("designs must be a non-empty mapping")
@@ -653,6 +779,8 @@ def run_model_recovery_grid(
             splitter_name=splitter_name,
             aggregation_column=aggregation_column,
             posterior_policy=posterior_policy,
+            workers=workers,
+            backend=backend,
         )
         for design, child_seed in zip(validated_designs.values(), seeds, strict=True)
     )

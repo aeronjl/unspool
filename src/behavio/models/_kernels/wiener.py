@@ -25,16 +25,12 @@ arguments to a single vectorised expression, so nothing structural depends on th
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.special import logsumexp
 
 from behavio.contracts.estimator import Prediction, PredictionMode
-
-if TYPE_CHECKING:  # pragma: no cover - imported for typing only
-    from behavio.models.ddm import UniformResponseTimeContaminant
 
 LOG_DENSITY_FLOOR = float(np.log(np.finfo(np.float64).tiny))
 """Smallest representable log density, used as the floor for impossible observations."""
@@ -46,7 +42,7 @@ INADMISSIBLE_OBJECTIVE = float(np.finfo(np.float64).max / 1e100)
 """The value a Wiener objective takes where no decision time is left to explain."""
 
 PREDICTOR_CELLS = ("drift", "boundary", "starting_bias", "nondecision_time")
-"""The four numbers a Wiener density needs from one row, before any contaminant."""
+"""The four numbers a Wiener density needs from one row."""
 
 OUTCOME_CHANNELS = ("choice", "response_time")
 """The two numbers a Wiener density scores on one row."""
@@ -312,11 +308,10 @@ def simulate_trialwise_wiener(
 class WienerLikelihood:
     """The joint choice/response-time density seen through one cell vector per row.
 
-    A row's linear predictor is ``(drift, boundary, starting_bias, nondecision_time)``, plus
-    ``contaminant_probability`` when a contaminant is configured, and every one of them
-    enters the density on its natural scale: there is no link function, and the box that
-    keeps a boundary positive is the estimator's, not this object's. A row's observation is
-    ``(choice, response_time)`` in seconds.
+    A row's linear predictor is ``(drift, boundary, starting_bias, nondecision_time)``, and
+    every one of them enters the density on its natural scale: there is no link function,
+    and the box that keeps a boundary positive is the estimator's, not this object's. A
+    row's observation is ``(choice, response_time)`` in seconds.
 
     That this is expressible at all is the whole reason the drift-diffusion families
     compose. Nothing about the contract required the *density* to be linear -- only the
@@ -325,15 +320,12 @@ class WienerLikelihood:
     """
 
     density_terms: int
-    contaminant: UniformResponseTimeContaminant | None = None
 
     @property
     def cells(self) -> tuple[str, ...]:
-        """The predictor cells this likelihood reads, contaminant weight included."""
+        """The predictor cells this likelihood reads."""
 
-        if self.contaminant is None:
-            return PREDICTOR_CELLS
-        return (*PREDICTOR_CELLS, "contaminant_probability")
+        return PREDICTOR_CELLS
 
     def prediction(
         self, linear_predictor: NDArray[np.float64], *, mode: PredictionMode
@@ -344,10 +336,6 @@ class WienerLikelihood:
         probability = upper_boundary_probability(
             cells[:, 0], boundary=cells[:, 1], starting_bias=cells[:, 2]
         )
-        if self.contaminant is not None:
-            weight = cells[:, 4]
-            probability = (1.0 - weight) * probability
-            probability = probability + weight * self.contaminant.choice_probability
         probability = np.clip(probability, np.finfo(float).tiny, 1.0 - np.finfo(float).eps)
         return Prediction(
             probability=probability,
@@ -367,32 +355,16 @@ class WienerLikelihood:
     def log_density(
         self, cells: NDArray[np.float64], outcomes: NDArray[np.float64]
     ) -> NDArray[np.float64]:
-        """Return the per-row joint log density, contaminant mixture included."""
+        """Return the per-row joint log density."""
 
-        choice = outcomes[:, 0]
-        response_time = outcomes[:, 1]
-        regular = wiener_log_density(
-            response_time - cells[:, 3],
-            choice,
+        return wiener_log_density(
+            outcomes[:, 1] - cells[:, 3],
+            outcomes[:, 0],
             cells[:, 0],
             boundary=cells[:, 1],
             starting_bias=cells[:, 2],
             terms=self.density_terms,
         )
-        if self.contaminant is None:
-            return regular
-        weight = cells[:, 4]
-        regular_component = np.log1p(-weight) + regular
-        contaminant_component = np.log(np.where(weight > 0, weight, 1.0))
-        contaminant_component = contaminant_component + self.contaminant.pointwise_log_density(
-            response_time, choice
-        )
-        mixture = np.where(
-            weight > 0,
-            np.logaddexp(regular_component, contaminant_component),
-            regular_component,
-        )
-        return np.maximum(mixture, LOG_DENSITY_FLOOR)
 
     def negative_log_likelihood(
         self, linear_predictor: NDArray[np.float64], outcomes: NDArray[np.float64]
@@ -407,7 +379,7 @@ class WienerLikelihood:
 
         cells = np.asarray(linear_predictor, dtype=np.float64)
         observed = np.asarray(outcomes, dtype=np.float64)
-        if self.contaminant is None and np.any(observed[:, 1] - cells[:, 3] <= 0):
+        if np.any(observed[:, 1] - cells[:, 3] <= 0):
             return INADMISSIBLE_OBJECTIVE
         return float(-np.sum(self.log_density(cells, observed)))
 
@@ -479,10 +451,11 @@ def wiener_cell_design(features: NDArray[np.float64], *, n_extra_cells: int) -> 
     """Return the ``(rows, cells, parameters)`` design a Wiener predictor is built from.
 
     The drift cell holds the covariate features; every other cell is a single intercept
-    column, because boundary, starting bias, non-decision time and any contaminant weight
-    are trial-constant parameters of the family rather than functions of the design. Making
-    them cells rather than a separate vector of "the other parameters" is what lets one
-    combinator smooth a boundary and another let it vary by animal.
+    column, because boundary, starting bias and non-decision time are trial-constant
+    parameters of the family rather than functions of the design. Making them cells rather
+    than a separate vector of "the other parameters" is what lets one combinator smooth a
+    boundary, another let it vary by animal, and a third mix the whole density with a
+    simpler process by appending cells of its own.
     """
 
     n_rows, n_features = features.shape

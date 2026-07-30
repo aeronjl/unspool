@@ -10,11 +10,12 @@ settings for a generic GLM.
 | `BiasOnly` | one stationary choice intercept | none |
 | `Psychometric` | intercept plus one stimulus slope | none |
 | `Perseveration` | intercept plus previous effect-coded choice | subject/session |
-| `LapsePsychometric` | psychometric curve plus random-response mixture | none |
 | `WinStayLoseShift` | previous choice after reward versus non-reward | subject/session |
 
-All five models simulate, fit, predict, score pointwise, emit the common numerical audit,
-and enter parameter or model recovery through the same public contract.
+All four models simulate, fit, predict, score pointwise, emit the common numerical audit,
+and enter parameter or model recovery through the same public contract. All four also
+satisfy `PenalisedLinearEstimator`, so `smooth()`, `hierarchical()` and `mix()` apply to
+them exactly as they apply to the GLM underneath.
 
 ## Fit the nested baselines first
 
@@ -40,19 +41,20 @@ distinct in fits, audits, comparisons, recovery reports, and exported fit artifa
 
 ## Lapse mixtures
 
-```python
-from behavio import LapsePsychometric
+There is no lapse *class*. A lapse is a mixture with a guessing process, so it is
+[`mix()`](composing-models.md#mix-a-simpler-process-alongside-the-model) applied to whichever
+baseline the lapse is a lapse on:
 
-model = LapsePsychometric(
-    stimulus="signed_contrast",
-    maximum_lapse=0.2,
+```python
+from behavio import Psychometric, UniformChoiceGuess, mix
+
+model = mix(
+    Psychometric(stimulus="signed_contrast"),
+    UniformChoiceGuess(),
+    weight_bounds=(0.0, 0.2),
     n_restarts=5,
 )
-truth = model.parameters_from_components(
-    intercept=0.0,
-    slope=1.5,
-    lapse_rate=0.05,
-)
+truth = model.from_natural({"intercept": 0.0, "signed_contrast": 1.5, "lapse_rate": 0.05})
 ```
 
 The response probability is
@@ -62,17 +64,22 @@ p(y=1\mid x)=\frac{\lambda}{2} + (1-\lambda)\,
 \operatorname{logit}^{-1}(\beta_0 + \beta_1 x).
 \]
 
-`maximum_lapse` fixes the upper support before fitting. The optimizer estimates an
-unconstrained `lapse_logit`; `parameter_components()` reports the natural lapse rate.
-Every deterministic restart and the selected optimum remain on
-`LapsePsychometricFitResult`, so a lapse parameter cannot silently absorb poor local
-optimization. That restart evidence is all the subclass adds; the lapse rate itself is
-read with `fit.derived_value("lapse_rate")`, where it carries a delta-method standard
-error rather than being a bare number a subclass renamed.
+`weight_bounds` fixes the range \(\lambda\) is estimated inside, before fitting. The
+optimizer estimates an unconstrained `mixture_logit`; `to_natural()` and
+`fit.derived_value("lapse_rate")` report the natural rate with a delta-method standard
+error. Deterministic restarts are what `n_restarts` buys: a mixture likelihood is not
+convex in the weight and the model's parameters jointly, so a lapse parameter could
+otherwise silently absorb poor local optimization.
+
+The same call puts a lapse on any composable model. `mix(BernoulliHistoryGLM(...), ...)`,
+`mix(MultinomialLogit(...), UniformCategoryGuess(...))` and
+`mix(WienerDriftDiffusion(...), UniformResponseGuess(...))` are the same idea on three
+families that could not express it before.
 
 A lapse mixture is still only one account of asymptotic errors. It should be compared with
 stimulus nonlinearities, history, contaminants, state mixtures, and task-specific motor or
-omission processes when those alternatives are scientifically plausible.
+omission processes when those alternatives are scientifically plausible. `describe(study)`
+reports when the design cannot separate a lapse from the model's own parameters at all.
 
 ## Win-stay/lose-shift is an outcome-conditioned baseline
 

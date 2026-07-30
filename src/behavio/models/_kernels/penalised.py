@@ -45,6 +45,8 @@ def fit_penalised_linear(
     tolerance: float,
     coefficient_warning_threshold: float,
     offsets: NDArray[np.float64] | None = None,
+    box: NDArray[np.float64] | None = None,
+    initial_points: tuple[NDArray[np.float64], ...] | None = None,
     derived_estimates: Callable[[NDArray[np.float64]], NDArray[np.float64]] | None = None,
     optimizer: str = "L-BFGS-B",
 ) -> FitResult:
@@ -54,6 +56,14 @@ def fit_penalised_linear(
     coordinates of it -- a hierarchical fit's population-plus-deviation -- and they are held
     to the same ``coefficient_warning_threshold`` as the coordinate itself, so that the
     boundary a composed fit reports is decided by the same convention as the one it wraps.
+
+    ``box`` and ``initial_points`` are what a *mixed* problem needs and an unmixed one never
+    did. A penalised generalized linear objective is convex and has one optimum, reached
+    from the origin; mixing a model with a simpler process is not convex in the weight and
+    the model's parameters jointly, so the problem becomes a multi-start one and the wrapped
+    family's solver has to be able to run it as one. Both default to ``None``, and with both
+    absent this is the single search from the origin it has always been, on the same doubles
+    in the same order.
     """
 
     def objective(coefficients: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
@@ -64,13 +74,27 @@ def fit_penalised_linear(
         gradient += penalty_matrix @ coefficients
         return float(loss), np.asarray(gradient, dtype=np.float64)
 
-    result = minimize(
-        objective,
-        np.zeros(len(parameter_names), dtype=np.float64),
-        method="L-BFGS-B",
-        jac=True,
-        options={"maxiter": max_iterations, "ftol": tolerance, "gtol": tolerance},
+    bounds = None if box is None else [(float(low), float(high)) for low, high in box]
+    starts = (
+        (np.zeros(len(parameter_names), dtype=np.float64),)
+        if initial_points is None
+        else tuple(initial_points)
     )
+    results = [
+        minimize(
+            objective,
+            start,
+            method="L-BFGS-B",
+            jac=True,
+            bounds=bounds,
+            options={"maxiter": max_iterations, "ftol": tolerance, "gtol": tolerance},
+        )
+        for start in starts
+    ]
+    objectives = [float(item.fun) if np.isfinite(item.fun) else np.inf for item in results]
+    successful = [index for index, item in enumerate(results) if item.success]
+    eligible = successful if successful else list(range(len(results)))
+    result = results[min(eligible, key=lambda index: objectives[index])]
     estimates = np.asarray(result.x, dtype=np.float64)
     curvature = likelihood.curvature(linear_predictor(design_matrix, estimates, offsets), outcomes)
     hessian = information_matrix(design_matrix, curvature) + penalty_matrix

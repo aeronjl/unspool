@@ -57,13 +57,19 @@ from behavio._internal.multiplicity import (
     adjust_probabilities,
     excess_probability,
 )
+from behavio._internal.parallel import WorkerBackend, map_ordered, resolve_workers
 from behavio.contracts.posterior import (
     AnyBehaviourEstimator,
     any_model_capabilities,
     is_posterior_estimator,
 )
 from behavio.diagnostics import FitAudit, FitAuditStatus
-from behavio.evaluation import FoldEvaluation, PosteriorFoldPolicy, evaluate_splits
+from behavio.evaluation import (
+    FoldEvaluation,
+    PosteriorFoldPolicy,
+    SplitEvaluation,
+    evaluate_splits,
+)
 from behavio.models.base import (
     BehaviourEstimator,
     CategoricalPrediction,
@@ -822,6 +828,61 @@ class NestedProspectiveSelectionReport:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class _CandidateTask:
+    """One candidate's whole fold evaluation, holding nothing shared with another.
+
+    ``evaluate_splits`` is already pure over ``(model, study, folds)`` -- it fits inside
+    each fold from scratch and reads no state that survives a candidate -- so a candidate is
+    a work item without any further adaptation.
+    """
+
+    model: AnyBehaviourEstimator
+    study: Study
+    folds: tuple[ValidationFold, ...]
+    mode: PredictionMode
+    posterior_policy: PosteriorFoldPolicy | None
+
+
+def _evaluate_candidate(task: _CandidateTask) -> SplitEvaluation:
+    return evaluate_splits(
+        task.model,
+        task.study,
+        task.folds,
+        mode=task.mode,
+        posterior_policy=task.posterior_policy,
+    )
+
+
+def _rebind_splits(
+    evaluated: SplitEvaluation, folds: tuple[ValidationFold, ...]
+) -> SplitEvaluation:
+    """Restore the caller's own fold objects after a round trip through a worker.
+
+    A fold that crosses a process boundary comes back as an equal but distinct object, and
+    this package checks fold provenance by *identity*:
+    :meth:`ProspectiveComparisonReport.__post_init__` requires that every candidate retained
+    the report's exact folds, which is what stops two candidates being compared over folds
+    that merely look alike. Rebinding here makes the parallel result the serial result --
+    the parent's fold objects, in the parent's order -- rather than weakening the check that
+    would otherwise notice the difference.
+
+    ``workers=1`` never reaches the rebinding branch, because the evaluation already holds
+    the very objects it was given.
+    """
+
+    if all(
+        evaluation.split is fold
+        for evaluation, fold in zip(evaluated.evaluations, folds, strict=False)
+    ):
+        return evaluated
+    rebound = tuple(
+        evaluation if evaluation.split is fold else replace(evaluation, split=fold)
+        for evaluation, fold in zip(evaluated.evaluations, folds, strict=True)
+    )
+    return SplitEvaluation(rebound, evaluated.failures, evaluated.policy)
+
+
 def compare_models(
     models: Mapping[str, AnyBehaviourEstimator],
     study: Study,
@@ -836,6 +897,8 @@ def compare_models(
     posterior_policy: PosteriorFoldPolicy | None = None,
     multiplicity: ComparisonMultiplicity = ComparisonMultiplicity.BENJAMINI_HOCHBERG,
     family_error_rate: float | None = None,
+    workers: int = 1,
+    backend: WorkerBackend | str = WorkerBackend.PROCESS,
 ) -> ProspectiveComparisonReport:
     """Compare frequentist and sampled candidates on common folds with equal unit weights.
 
@@ -848,6 +911,15 @@ def compare_models(
     :attr:`PairedComparison.decisive` once more than one contrast exists; they never change
     an interval, a probability, or :attr:`ProspectiveComparisonReport.winner`, which has
     always been the lowest point estimate among audit-eligible candidates.
+
+    ``workers`` evaluates candidates concurrently. Only the fold evaluation is scheduled;
+    aggregation, bootstrapping and ranking stay in this process and stay in the insertion
+    order of ``models``, which is what breaks point-estimate ties. The report is therefore
+    bit-identical for every worker count: the bootstrap seed is a declared constant rather
+    than a generator advanced per candidate, so no candidate's draws depend on which
+    candidate ran first. Parallelism is bounded by the number of candidates -- two
+    candidates cannot use four workers -- so the fold-level and repeat-level entry points
+    scale further.
     """
 
     candidates = _validated_models(models)
@@ -871,15 +943,24 @@ def compare_models(
         bootstrap_seed=bootstrap_seed,
         confidence_level=confidence_level,
     )
+    completed = map_ordered(
+        _evaluate_candidate,
+        tuple(
+            _CandidateTask(
+                model=model,
+                study=study,
+                folds=folds,
+                mode=mode,
+                posterior_policy=_policy_for(model, posterior_policy),
+            )
+            for model in candidates.values()
+        ),
+        workers=workers,
+        backend=WorkerBackend(backend),
+    )
     evaluations = {
-        name: evaluate_splits(
-            model,
-            study,
-            folds,
-            mode=mode,
-            posterior_policy=_policy_for(model, posterior_policy),
-        )
-        for name, model in candidates.items()
+        name: _rebind_splits(evaluated, folds)
+        for name, evaluated in zip(candidates, completed, strict=True)
     }
     aggregates = {
         name: _aggregate_evaluations(
@@ -942,6 +1023,73 @@ def compare_models(
     )
 
 
+@dataclass(frozen=True, slots=True)
+class _OuterFoldTask:
+    """One outer fold's whole nested selection: inner comparison, then the outer score.
+
+    ``bootstrap_seed`` is carried as the caller's root rather than as this fold's derived
+    seed, because the derived value is ``bootstrap_seed + fold_index + 1`` -- a function of
+    where the fold sits, not of when it runs. Deriving it inside the worker keeps that
+    visible next to the position it is derived from.
+    """
+
+    fold_index: int
+    outer_split: ValidationFold
+    models: Mapping[str, AnyBehaviourEstimator]
+    study: Study
+    inner_splitter: Callable[[Study], Iterable[ValidationFold]]
+    aggregation_column: str
+    outcome_column: str
+    mode: PredictionMode
+    inner_bootstrap_resamples: int
+    bootstrap_seed: int
+    confidence_level: float
+    posterior_policy: PosteriorFoldPolicy | None
+
+
+def _run_nested_outer_fold(task: _OuterFoldTask) -> NestedSelectionFold:
+    """Select inside one outer training study and score that fold's untouched test rows.
+
+    The inner comparison runs with ``workers=1`` on purpose. Outer folds are the outer
+    level and already saturate the pool, so handing the inner comparison its own pool would
+    nest one executor inside another -- which oversubscribes the machine and, with process
+    workers, is not something a worker process can do at all.
+    """
+
+    outer_training = task.study.take(task.outer_split.train_indices)
+    inner_splits = tuple(task.inner_splitter(outer_training))
+    if not inner_splits:
+        raise ValueError(f"inner_splitter produced no folds for outer fold {task.fold_index}")
+    inner_report = compare_models(
+        task.models,
+        outer_training,
+        inner_splits,
+        aggregation_column=task.aggregation_column,
+        outcome_column=task.outcome_column,
+        mode=task.mode,
+        bootstrap_resamples=task.inner_bootstrap_resamples,
+        bootstrap_seed=task.bootstrap_seed + task.fold_index + 1,
+        confidence_level=task.confidence_level,
+        posterior_policy=task.posterior_policy,
+    )
+    selected = inner_report.winner
+    if selected is None:
+        raise RuntimeError(f"all candidates failed fit audit inside outer fold {task.fold_index}")
+    outer_evaluation = evaluate_splits(
+        task.models[selected],
+        task.study,
+        (task.outer_split,),
+        mode=task.mode,
+        posterior_policy=_policy_for(task.models[selected], task.posterior_policy),
+    )[0]
+    return NestedSelectionFold(
+        outer_split=task.outer_split,
+        selected_model=selected,
+        inner_report=inner_report,
+        outer_evaluation=outer_evaluation,
+    )
+
+
 def nested_select_model(
     candidates: Mapping[str, AnyBehaviourEstimator],
     study: Study,
@@ -956,6 +1104,8 @@ def nested_select_model(
     inner_bootstrap_resamples: int = 1_000,
     confidence_level: float = 0.95,
     posterior_policy: PosteriorFoldPolicy | None = None,
+    workers: int = 1,
+    backend: WorkerBackend | str = WorkerBackend.PROCESS,
 ) -> NestedProspectiveSelectionReport:
     """Select a candidate inside each outer training fold, then score untouched test data.
 
@@ -964,6 +1114,19 @@ def nested_select_model(
     outer test row. Candidate insertion order breaks exact inner-score ties. A sampled
     candidate whose posterior fails its convergence audit inside an inner fold cannot be
     selected there, because inner selection reuses :attr:`ProspectiveComparisonReport.winner`.
+
+    ``workers`` runs outer folds concurrently, which is the deepest of these loops and the
+    one with the most work under it: every candidate is refitted on every inner fold of
+    every outer fold. Each outer fold's inner bootstrap seed is ``bootstrap_seed +
+    fold_index + 1`` -- determined by the fold's position, not by how many folds preceded it
+    at runtime -- so the report is bit-identical for every worker count, and the selected
+    model per fold cannot change.
+
+    ``backend="process"`` requires ``inner_splitter`` to be picklable. A lambda is not, and
+    a lambda is the natural way to write one, so this is the entry point most likely to
+    need either a :func:`functools.partial` of a module-level splitter or
+    ``backend="thread"``. The failure is raised before any fitting starts and names the
+    argument.
     """
 
     models = _validated_models(candidates)
@@ -990,45 +1153,44 @@ def nested_select_model(
     _require_positive_integer(inner_bootstrap_resamples, "inner_bootstrap_resamples")
     if not callable(inner_splitter):
         raise TypeError("inner_splitter must be callable")
+    resolve_workers(workers, n_tasks=1)
 
-    selections: list[NestedSelectionFold] = []
-    outer_evaluations: list[FoldEvaluation] = []
-    for fold_index, outer_split in enumerate(folds):
-        outer_training = study.take(outer_split.train_indices)
-        inner_splits = tuple(inner_splitter(outer_training))
-        if not inner_splits:
-            raise ValueError(f"inner_splitter produced no folds for outer fold {fold_index}")
-        inner_report = compare_models(
-            models,
-            outer_training,
-            inner_splits,
-            aggregation_column=aggregation_column,
-            outcome_column=outcome_column,
-            mode=mode,
-            bootstrap_resamples=inner_bootstrap_resamples,
-            bootstrap_seed=bootstrap_seed + fold_index + 1,
-            confidence_level=confidence_level,
-            posterior_policy=posterior_policy,
-        )
-        selected = inner_report.winner
-        if selected is None:
-            raise RuntimeError(f"all candidates failed fit audit inside outer fold {fold_index}")
-        outer_evaluation = evaluate_splits(
-            models[selected],
-            study,
-            (outer_split,),
-            mode=mode,
-            posterior_policy=_policy_for(models[selected], posterior_policy),
-        )[0]
-        selections.append(
-            NestedSelectionFold(
+    selections = map_ordered(
+        _run_nested_outer_fold,
+        tuple(
+            _OuterFoldTask(
+                fold_index=fold_index,
                 outer_split=outer_split,
-                selected_model=selected,
-                inner_report=inner_report,
-                outer_evaluation=outer_evaluation,
+                # `_validated_models` returns a MappingProxyType, which cannot be pickled.
+                # The proxy protects the caller's mapping from this function, not the worker
+                # from itself, so a plain copy is what crosses the boundary.
+                models=dict(models),
+                study=study,
+                inner_splitter=inner_splitter,
+                aggregation_column=aggregation_column,
+                outcome_column=outcome_column,
+                mode=mode,
+                inner_bootstrap_resamples=inner_bootstrap_resamples,
+                bootstrap_seed=bootstrap_seed,
+                confidence_level=confidence_level,
+                posterior_policy=posterior_policy,
             )
+            for fold_index, outer_split in enumerate(folds)
+        ),
+        workers=workers,
+        backend=WorkerBackend(backend),
+    )
+    selections = [
+        selection
+        if selection.outer_split is fold
+        else replace(
+            selection,
+            outer_split=fold,
+            outer_evaluation=replace(selection.outer_evaluation, split=fold),
         )
-        outer_evaluations.append(outer_evaluation)
+        for selection, fold in zip(selections, folds, strict=True)
+    ]
+    outer_evaluations = [selection.outer_evaluation for selection in selections]
 
     aggregate = _aggregate_evaluations(
         study,

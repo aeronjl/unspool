@@ -13,7 +13,13 @@ import numpy as np
 import pytest
 from scipy.special import erf, expit, ndtr
 
-from behavio import Study, model_capabilities, run_parameter_recovery
+from behavio import (
+    Study,
+    UniformChoiceGuess,
+    mix,
+    model_capabilities,
+    run_parameter_recovery,
+)
 from behavio.contracts import (
     BehaviourModel,
     DerivedQuantity,
@@ -22,7 +28,6 @@ from behavio.contracts import (
     UnsupportedPredictionMode,
 )
 from behavio.models import (
-    LapsePsychometric,
     Psychometric,
     PsychometricFitResult,
     PsychometricFunction,
@@ -375,15 +380,15 @@ def test_the_erf_model_predicts_the_released_two_gamma_curve() -> None:
     assert np.allclose(predicted, released, rtol=0, atol=1e-12)
 
 
-def test_the_pinned_logistic_baselines_are_untouched_by_the_new_family() -> None:
-    """`Psychometric` and `LapsePsychometric` stay exported and keep working."""
+def test_the_pinned_logistic_baseline_is_untouched_by_the_new_family() -> None:
+    """`Psychometric` stays exported, and gains a lapse only by being mixed."""
 
     baseline = Psychometric()
     study = baseline.simulate(design(600), {"intercept": -0.2, "stimulus": 1.1}, seed=10)
-    lapse = LapsePsychometric(n_restarts=2)
+    lapse = mix(baseline, UniformChoiceGuess(), weight_bounds=(0.0, 0.2))
     lapse_study = lapse.simulate(
         design(600),
-        lapse.parameters_from_components(intercept=0.1, slope=1.0, lapse_rate=0.05),
+        lapse.from_natural({"intercept": 0.1, "stimulus": 1.0, "lapse_rate": 0.05}),
         seed=11,
     )
 
@@ -391,6 +396,40 @@ def test_the_pinned_logistic_baselines_are_untouched_by_the_new_family() -> None
     assert lapse.fit(lapse_study).model_name == "lapse-psychometric"
     assert PsychometricFunction().model_name == "psychometric-logistic"
     assert baseline.parameter_names == ("intercept", "stimulus")
+
+
+def test_asymmetry_is_the_link_s_business_and_not_the_mixture_s() -> None:
+    """A declared asymmetric guess is expressible; two *estimated* rates are the link's.
+
+    The two-gamma form is algebraically a mixture -- weight ``guess + lapse`` on a Bernoulli
+    guess of probability ``guess / (guess + lapse)`` -- so it is not that `mix` cannot reach
+    it, but that reaching it needs a second estimated number inside the component.
+    `PsychometricFunction` estimates both rates inside the link, which is where the shape of
+    a curve belongs; `mix` estimates one weight over a component whose asymmetry is declared.
+    """
+
+    declared = mix(
+        Psychometric(),
+        UniformChoiceGuess(probability=0.7),
+        weight_bounds=(0.0, 0.3),
+    )
+    parameters = declared.from_natural({"intercept": 0.0, "stimulus": 1.5, "lapse_rate": 0.2})
+    study = declared.simulate(design(800), parameters, seed=3)
+    fit = declared.fit(study)
+    probability = declared.predict(study, fit).probability
+
+    # A guess that favours one response makes the two asymptotes different, which a
+    # symmetric mixture cannot do at all.
+    assert probability.max() < 1.0 - 1e-6
+    assert probability.min() > 1e-6
+    assert 1.0 - probability.max() != pytest.approx(probability.min(), rel=0.2)
+    assert declared.parameter_names == ("intercept", "stimulus", "mixture_logit")
+    assert PsychometricFunction().parameter_names == (
+        "threshold",
+        "log_width",
+        "guess_logit",
+        "lapse_logit",
+    )
 
 
 @pytest.mark.parametrize(

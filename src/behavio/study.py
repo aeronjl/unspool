@@ -44,6 +44,35 @@ class Study:
             raise AttributeError(f"{type(self).__name__} is immutable")
         object.__setattr__(self, name, value)
 
+    def __getstate__(self) -> dict[str, Any]:
+        """Return the columns alone, so a study can cross a process boundary.
+
+        A study is stored as a :class:`~types.MappingProxyType` over read-only arrays, and
+        a mapping proxy cannot be pickled. Default pickling of a ``__slots__`` object would
+        try to send that proxy verbatim and fail with ``cannot pickle 'mappingproxy'``,
+        which is a statement about a storage detail rather than about the data. Sending the
+        plain column mapping instead is enough: it is the only thing
+        :meth:`__init__` needs, and ``_length`` and ``_subjects`` are derived from it.
+        """
+
+        return {"columns": dict(self._columns)}
+
+    def __setstate__(self, state: Mapping[str, Any]) -> None:
+        """Rebuild a study from its columns, re-running the full contract.
+
+        Reconstruction goes through the same validation and the same read-only copy that
+        :meth:`__init__` performs, rather than restoring slots directly. Unpickling yields
+        writeable arrays, so trusting the sent state would produce a mutable "immutable"
+        study -- and a study that arrived from another process would be the one place in
+        the package where the data contract had not actually been checked.
+        """
+
+        arrays = _copy_columns(state["columns"])
+        length, subjects = _validate_columns(arrays)
+        object.__setattr__(self, "_columns", MappingProxyType(arrays))
+        object.__setattr__(self, "_length", length)
+        object.__setattr__(self, "_subjects", subjects)
+
     @classmethod
     def from_columns(cls, columns: Mapping[str, Sequence[Any] | NDArray[Any]]) -> Study:
         """Construct a study from equally sized one-dimensional columns."""

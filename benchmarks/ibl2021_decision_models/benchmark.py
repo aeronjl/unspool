@@ -16,8 +16,9 @@ from behavio import (
     ResponseTimeSpec,
     ResponseTimeUnit,
     Study,
-    UniformResponseTimeContaminant,
+    UniformResponseGuess,
     WienerDriftDiffusion,
+    mix,
     read_ibl_one_sessions,
 )
 from benchmarks.ibl2021.refresh_manifest import PUBLIC_PASSWORD
@@ -267,9 +268,9 @@ def _analyze_ddm(panel: Study) -> dict[str, Any]:
     naive_scores = naive.pointwise_log_prob(test, naive_fit)
     robust_scores = robust.pointwise_log_prob(test, robust_fit)
     prediction = robust.predict(test, robust_fit).probability
-    responsibilities = robust.contaminant_responsibility(test, robust_fit)
+    responsibilities = robust.component_responsibility(test, robust_fit)
     predictive = robust.simulate(test, robust_fit.parameters, seed=SEED)
-    components = robust.parameter_components(robust_fit)
+    components = naive.parameter_components(robust_fit.estimates[:-1])
 
     return {
         "scored_columns": list(robust.scored_columns),
@@ -396,22 +397,26 @@ def _analyze_glm_hmm(panel: Study) -> dict[str, Any]:
     }
 
 
-def _ddm(*, robust: bool) -> WienerDriftDiffusion:
-    contaminant = None
-    if robust:
-        contaminant = UniformResponseTimeContaminant(
-            time_bounds=(RT_MIN_SECONDS, RT_MAX_SECONDS),
-            probability_bounds=(0.0, 0.3),
-        )
-    return WienerDriftDiffusion(
+def _ddm(*, robust: bool) -> Any:
+    model = WienerDriftDiffusion(
         covariates=("stimulus",),
         response_time=ResponseTimeSpec(unit=ResponseTimeUnit.SECONDS),
         n_restarts=4,
         max_iterations=500,
         nondecision_time_bounds=(0.0, RT_MIN_SECONDS - 0.001),
-        contaminant=contaminant,
         simulation_time_step=0.002,
         simulation_max_time=60.0,
+    )
+    if not robust:
+        return model
+    return mix(
+        model,
+        UniformResponseGuess(
+            time_bounds=(RT_MIN_SECONDS, RT_MAX_SECONDS),
+            response_time=ResponseTimeSpec(unit=ResponseTimeUnit.SECONDS),
+        ),
+        weight_bounds=(0.0, 0.3),
+        n_restarts=4,
     )
 
 

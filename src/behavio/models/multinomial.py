@@ -391,6 +391,8 @@ MultinomialLikelihood` checks that what it is handed is integral before it index
             tolerance=self.tolerance,
             coefficient_warning_threshold=self.coefficient_warning_threshold,
             offsets=design.offsets,
+            box=design.box,
+            initial_points=design.initial_points,
             derived_estimates=design.derived_estimates,
             optimizer="L-BFGS-B (analytic softmax gradient)",
         )

@@ -90,7 +90,7 @@ omission only if the task explicitly sets `missing_is_omission=True`.
 ## Drift and between-animal variation
 
 `MultinomialLogit` satisfies
-[`PenalisedLinearEstimator`](composing-models.md#the-contract), so the two combinators
+[`PenalisedLinearEstimator`](composing-models.md#the-contract), so the combinators
 apply to it and there is no smooth, hierarchical or hierarchical-smooth multinomial *class*
 to reach for:
 

@@ -46,7 +46,6 @@ MODEL_CARD_CLASSES = {
     "BinaryQLearning",
     "BinaryRLAgent",
     "EqualVarianceSDT",
-    "LapsePsychometric",
     "MetaSDT",
     "MultinomialLogit",
     "Perseveration",

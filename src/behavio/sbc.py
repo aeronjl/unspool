@@ -33,6 +33,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy import stats
 
+from behavio._internal.parallel import WorkerBackend, map_ordered, resolve_workers
 from behavio.contracts.audit import AuditSeverity
 from behavio.posterior import PosteriorResult, PosteriorVariable
 from behavio.posterior_diagnostics import (
@@ -646,6 +647,122 @@ SBCSimulator = Callable[[int], SBCSimulation]
 SBCInference = Callable[[Study, int], PosteriorResult]
 
 
+@dataclass(frozen=True, slots=True)
+class _ReplicateTask:
+    """Everything one SBC replicate needs, addressed by its position in the run.
+
+    ``seeds`` is the replicate's ``(simulation, inference, rank)`` triple, drawn from
+    ``SeedSequence(seed).spawn(repeats)[replicate]`` before any work began. No worker draws
+    randomness of its own, so a replicate produces the same ranks wherever it runs.
+    """
+
+    replicate: int
+    simulator: SBCSimulator
+    inference: SBCInference
+    quantities: tuple[SBCTestQuantity, ...]
+    seeds: tuple[int, int, int]
+    thin: int
+    interval_probability: float
+    audit_policy: PosteriorAuditPolicy | None
+
+
+@dataclass(frozen=True, slots=True)
+class _ReplicateOutcome:
+    """One replicate's ranks, or the failure that replaced them, plus its target identity.
+
+    The posterior itself is deliberately not carried back. A replicate's draws are the
+    largest thing it produces and nothing outside the worker reads them, so returning the
+    ranks and the audit verdict alone keeps the inter-process traffic proportional to the
+    evidence rather than to the sampler.
+    """
+
+    replicate: int
+    simulation_seed: int
+    inference_seed: int
+    failure: SBCFailure | None
+    ranks: tuple[SBCRank, ...]
+    identity: tuple[tuple[str, tuple[str, ...], tuple[tuple[Any, ...], ...]], ...] | None
+    audit_failure: SBCFailure | None
+
+
+def _run_replicate(task: _ReplicateTask) -> _ReplicateOutcome:
+    """Simulate, fit, rank and audit one replicate as a pure function of its position.
+
+    This mirrors the serial stage order exactly -- simulate, infer, rank, audit -- with one
+    deliberate omission: the cross-replicate target-identity check cannot be made here,
+    because it compares this replicate against whichever earlier replicate established the
+    targets. The identity is returned instead and
+    :func:`run_simulation_based_calibration` settles it in replicate order.
+
+    Auditing still happens here even though a later identity mismatch would discard the
+    result. ``audit_posterior`` is a pure function of the draws, so computing it and
+    throwing it away costs time and changes nothing; the alternative would be to carry the
+    whole posterior back to the parent just so it could be audited there.
+    """
+
+    simulation_seed, inference_seed, rank_seed = task.seeds
+    replicate = task.replicate
+    try:
+        simulation = task.simulator(simulation_seed)
+        if not isinstance(simulation, SBCSimulation):
+            raise TypeError("simulator must return SBCSimulation")
+    except Exception as error:
+        return _outcome(
+            task, failure=_failure(replicate, "simulation", error, simulation_seed, inference_seed)
+        )
+    try:
+        posterior = task.inference(simulation.study, inference_seed)
+        if not isinstance(posterior, PosteriorResult):
+            raise TypeError("inference must return PosteriorResult")
+    except Exception as error:
+        return _outcome(
+            task, failure=_failure(replicate, "inference", error, simulation_seed, inference_seed)
+        )
+    try:
+        local, identity = _rank_replicate(
+            replicate,
+            simulation,
+            posterior,
+            task.quantities,
+            thin=task.thin,
+            interval_probability=task.interval_probability,
+            rank_seed=rank_seed,
+        )
+    except Exception as error:
+        return _outcome(
+            task, failure=_failure(replicate, "evaluation", error, simulation_seed, inference_seed)
+        )
+    audit_failure: SBCFailure | None = None
+    if task.audit_policy is not None:
+        try:
+            audit = audit_posterior(posterior, policy=task.audit_policy)
+        except Exception as error:
+            audit_failure = _failure(replicate, "audit", error, simulation_seed, inference_seed)
+        else:
+            if audit.status is PosteriorAuditStatus.FAIL:
+                audit_failure = _unconverged(replicate, audit, simulation_seed, inference_seed)
+    return _outcome(task, ranks=local, identity=identity, audit_failure=audit_failure)
+
+
+def _outcome(
+    task: _ReplicateTask,
+    *,
+    failure: SBCFailure | None = None,
+    ranks: tuple[SBCRank, ...] = (),
+    identity: tuple[tuple[str, tuple[str, ...], tuple[tuple[Any, ...], ...]], ...] | None = None,
+    audit_failure: SBCFailure | None = None,
+) -> _ReplicateOutcome:
+    return _ReplicateOutcome(
+        replicate=task.replicate,
+        simulation_seed=task.seeds[0],
+        inference_seed=task.seeds[1],
+        failure=failure,
+        ranks=ranks,
+        identity=identity,
+        audit_failure=audit_failure,
+    )
+
+
 def run_simulation_based_calibration(
     simulator: SBCSimulator,
     inference: SBCInference,
@@ -658,6 +775,8 @@ def run_simulation_based_calibration(
     thin: int = 1,
     interval_probability: float = 0.9,
     audit_policy: PosteriorAuditPolicy | None = DEFAULT_SBC_AUDIT_POLICY,
+    workers: int = 1,
+    backend: WorkerBackend | str = WorkerBackend.PROCESS,
 ) -> SBCReport:
     """Run a prior-predictive SBC pipeline and retain every rank or failure.
 
@@ -666,6 +785,19 @@ def run_simulation_based_calibration(
     check conditional on convergence, so a divergent or unmixed replicate cannot be pooled
     into the histogram it is supposed to test. ``audit_policy=None`` disables the check and
     is recorded on the report.
+
+    ``workers`` runs replicates concurrently. The report is **bit-identical** for every
+    worker count: each replicate's ``(simulation, inference, rank)`` seeds come from
+    ``SeedSequence(seed).spawn(repeats)`` indexed by replicate, and both ``ranks`` and
+    ``failures`` are assembled in replicate order rather than in completion order, so a
+    retained failure sits where it sat serially. ``workers=1`` is the default and builds no
+    executor.
+
+    ``backend`` selects processes or threads. Processes require ``simulator`` and
+    ``inference`` to be picklable -- a lambda or a locally defined closure is the usual
+    thing that is not, and :class:`~behavio._internal.parallel.UnpicklableTaskError` says so
+    before any replicate runs. ``backend="thread"`` pickles nothing and is the fallback;
+    it is also the right choice when inference is a sampler that already releases the GIL.
     """
 
     if not callable(simulator) or not callable(inference):
@@ -698,66 +830,56 @@ def run_simulation_based_calibration(
         raise ValueError("interval_probability must be finite and lie between zero and one")
     if audit_policy is not None and not isinstance(audit_policy, PosteriorAuditPolicy):
         raise TypeError("audit_policy must be a PosteriorAuditPolicy or None")
+    backend = WorkerBackend(backend)
+    resolve_workers(workers, n_tasks=1)
 
     child_sequences = np.random.SeedSequence(seed).spawn(repeats)
+    tasks = tuple(
+        _ReplicateTask(
+            replicate=replicate,
+            simulator=simulator,
+            inference=inference,
+            quantities=declared,
+            seeds=tuple(int(value) for value in sequence.generate_state(3, dtype=np.uint64)),
+            thin=thin,
+            interval_probability=interval_probability,
+            audit_policy=audit_policy,
+        )
+        for replicate, sequence in enumerate(child_sequences)
+    )
+    outcomes = map_ordered(_run_replicate, tasks, workers=workers, backend=backend)
+
     ranks: list[SBCRank] = []
     failures: list[SBCFailure] = []
     expected_targets: (
         tuple[tuple[str, tuple[str, ...], tuple[tuple[Any, ...], ...]], ...] | None
     ) = None
-    for replicate, sequence in enumerate(child_sequences):
-        simulation_seed, inference_seed, rank_seed = (
-            int(value) for value in sequence.generate_state(3, dtype=np.uint64)
-        )
-        try:
-            simulation = simulator(simulation_seed)
-            if not isinstance(simulation, SBCSimulation):
-                raise TypeError("simulator must return SBCSimulation")
-        except Exception as error:
-            failures.append(
-                _failure(replicate, "simulation", error, simulation_seed, inference_seed)
-            )
+    # The cross-replicate identity check is the one part of a replicate that is *not*
+    # independent of the others, so it is settled here, in replicate order, rather than in a
+    # worker that cannot see what the earlier replicates declared. Everything a worker does
+    # is a pure function of its own replicate; this loop replays the serial decision tree
+    # over those results and so retains failures in replicate order under any worker count.
+    for outcome in outcomes:
+        if outcome.failure is not None:
+            failures.append(outcome.failure)
             continue
-        try:
-            posterior = inference(simulation.study, inference_seed)
-            if not isinstance(posterior, PosteriorResult):
-                raise TypeError("inference must return PosteriorResult")
-        except Exception as error:
+        if expected_targets is None:
+            expected_targets = outcome.identity
+        elif outcome.identity != expected_targets:
             failures.append(
-                _failure(replicate, "inference", error, simulation_seed, inference_seed)
-            )
-            continue
-        try:
-            local, identity = _rank_replicate(
-                replicate,
-                simulation,
-                posterior,
-                declared,
-                thin=thin,
-                interval_probability=interval_probability,
-                rank_seed=rank_seed,
-            )
-            if expected_targets is None:
-                expected_targets = identity
-            elif identity != expected_targets:
-                raise SBCError("SBC target dimensions or coordinates changed across replicates")
-        except Exception as error:
-            failures.append(
-                _failure(replicate, "evaluation", error, simulation_seed, inference_seed)
-            )
-            continue
-        if audit_policy is not None:
-            try:
-                audit = audit_posterior(posterior, policy=audit_policy)
-            except Exception as error:
-                failures.append(
-                    _failure(replicate, "audit", error, simulation_seed, inference_seed)
+                _failure(
+                    outcome.replicate,
+                    "evaluation",
+                    SBCError("SBC target dimensions or coordinates changed across replicates"),
+                    outcome.simulation_seed,
+                    outcome.inference_seed,
                 )
-                continue
-            if audit.status is PosteriorAuditStatus.FAIL:
-                failures.append(_unconverged(replicate, audit, simulation_seed, inference_seed))
-                continue
-        ranks.extend(local)
+            )
+            continue
+        if outcome.audit_failure is not None:
+            failures.append(outcome.audit_failure)
+            continue
+        ranks.extend(outcome.ranks)
 
     return SBCReport(
         simulation_signature=simulation_signature,

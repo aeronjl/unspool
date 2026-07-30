@@ -121,7 +121,7 @@ protocol rather than discovered afterwards.
 | applies a Gaussian prior to all four weights including the bias | penalize every coefficient except the intercept | the bias term is unregularized |
 | fits one pooled model over all 37 animals and seeds each per-animal fit from it, so state labels align | canonicalize labels by a named coefficient | no pooled fit; and 181,530 trials in one fit is out of compute reach here |
 | conditions per-state accuracy on the smoothed marginal posterior | publish filtered and one-step-ahead predictive state probabilities only | filtered probabilities are substituted |
-| compares against a lapse model with two asymmetric lapse rates | offer `LapsePsychometric` with one symmetric rate | a three-parameter comparator stands in for a four-parameter one |
+| compares against a lapse model with two asymmetric lapse rates | offer `mix(Psychometric(...), UniformChoiceGuess())` with one symmetric rate | a three-parameter comparator stands in for a four-parameter one |
 | cross-validates a sweep over the number of states | *nothing in the package does this* | the sweep is assembled inside the benchmark from `Study.take` and `pointwise_log_prob` |
 
 That last row is the one worth dwelling on. Ashwood's headline structure **is** a

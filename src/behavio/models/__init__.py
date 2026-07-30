@@ -24,9 +24,6 @@ from behavio.models.base import (
 )
 from behavio.models.baselines import (
     BiasOnly,
-    LapsePsychometric,
-    LapsePsychometricFitResult,
-    LapsePsychometricParameters,
     Perseveration,
     Psychometric,
     WinStayLoseShift,
@@ -34,8 +31,6 @@ from behavio.models.baselines import (
 from behavio.models.ddm import (
     DriftDiffusionFitResult,
     DriftDiffusionParameters,
-    DriftDiffusionSimulation,
-    UniformResponseTimeContaminant,
     WienerDriftDiffusion,
 )
 from behavio.models.glm import BernoulliHistoryGLM
@@ -108,7 +103,6 @@ __all__ = [
     "DetectionCounts",
     "DriftDiffusionFitResult",
     "DriftDiffusionParameters",
-    "DriftDiffusionSimulation",
     "EqualVarianceSDT",
     "FilteredStateProbabilities",
     "FitDiagnostics",
@@ -117,9 +111,6 @@ __all__ = [
     "GLMHMMParameters",
     "GLMHMMSimulation",
     "GenerativeBehaviourModel",
-    "LapsePsychometric",
-    "LapsePsychometricFitResult",
-    "LapsePsychometricParameters",
     "LearningRule",
     "MetaSDT",
     "ModelCapabilities",
@@ -149,7 +140,6 @@ __all__ = [
     "SymmetricLearning",
     "UnchosenForgetting",
     "UnequalVarianceSDT",
-    "UniformResponseTimeContaminant",
     "UnsupportedPredictionMode",
     "ValueTrajectory",
     "WienerDriftDiffusion",

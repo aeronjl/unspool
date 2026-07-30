@@ -34,7 +34,7 @@ starting points, or parameters that drift across learning. An optional contamina
 provides a narrow robustness account for responses outside the stationary decision process.
 
 Change across a study and structure across animals are not separate classes. They are the
-two combinators of [Composing models](composing-models.md) applied to this model:
+combinators of [Composing models](composing-models.md) applied to this model:
 
 ```python
 from behavio import WienerDriftDiffusion
@@ -130,7 +130,9 @@ trigger retained diagnostics when encountered during fitting.
 
 ## Explicit response contaminants
 
-`UniformResponseTimeContaminant` adds one normalized joint mixture component:
+A contaminant is a *mixture*, not a drift-diffusion feature, so it is
+[`mix()`](composing-models.md#mix-a-simpler-process-alongside-the-model) with
+`UniformResponseGuess` -- a process that emits a response without making a decision:
 
 \[
 p(y,t) = (1-\pi)f_{\mathrm{Wiener}}(y,t)
@@ -138,34 +140,37 @@ p(y,t) = (1-\pi)f_{\mathrm{Wiener}}(y,t)
          \frac{\mathbb{1}[L \le t \le U]}{U-L}.
 \]
 
-The fitted `contaminant_probability` is \(\pi\). The response-time support \([L,U]\),
-its unit in canonical seconds, the fixed contaminant choice probability \(q\), and the
-mixture-probability bounds are model configuration. They are not estimated from the scored
-session.
+\(\pi\) is the estimated mixing weight and is reported as `contaminant_rate`. The
+response-time support \([L,U]\) in canonical seconds, the fixed contaminant choice
+probability \(q\), and the range \(\pi\) is estimated inside are model configuration. They
+are not estimated from the scored session.
 
 ```python
-from behavio import UniformResponseTimeContaminant, WienerDriftDiffusion
+from behavio import UniformResponseGuess, WienerDriftDiffusion, mix
 
-model = WienerDriftDiffusion(
-    covariates=("stimulus",),
-    contaminant=UniformResponseTimeContaminant(
-        time_bounds=(0.05, 3.0),
-        probability_bounds=(0.0, 0.2),
+model = mix(
+    WienerDriftDiffusion(
+        covariates=("stimulus",),
+        nondecision_time_bounds=(0.1, 0.6),
     ),
-    nondecision_time_bounds=(0.1, 0.6),
+    UniformResponseGuess(time_bounds=(0.05, 3.0)),
+    weight_bounds=(0.0, 0.2),
 )
 ```
 
-A fixed non-decision-time search interval is required in this configuration. Otherwise the
-fastest observed contaminant would constrain non-decision time before the mixture could
-explain it. Both intervals should come from task timing, equipment limits, prior studies,
-or a rule fitted only to training data.
+A **declared** non-decision-time interval matters here. Without one, the fit derives the
+upper bound from the fastest observed response, which is only a bound under the assumption
+that every response was a decision -- the assumption the mixture exists to deny. Declaring
+`nondecision_time_bounds` is what says the fastest response need not have been a decision.
+Both intervals should come from task timing, equipment limits, prior studies, or a rule
+fitted only to training data.
 
-`simulate_with_contaminants()` returns a `DriftDiffusionSimulation` whose latent Boolean
-indicators are separate from its observed `Study`. `fit.posterior_contaminant_probability`
-and `model.contaminant_responsibility(study, fit)` expose soft trial assignments. The
-prediction API also marginalizes the contaminant choice process rather than returning the
-Wiener choice probability alone.
+`simulate_with_component()` returns a `MixtureSimulation` whose latent Boolean indicators
+are separate from its observed `Study`, and `model.component_responsibility(study, fit)`
+returns the posterior probability that each trial came from the contaminant. That is a
+responsibility, not a label: a fast response is evidence for the contaminant, not a
+contaminant. Prediction marginalises the contaminant choice process rather than returning
+the Wiener choice probability alone.
 
 ## Interpretation boundary
 

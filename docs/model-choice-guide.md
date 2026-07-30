@@ -41,8 +41,8 @@ itself imply a population-of-laboratories estimand.
 
 ### Observable choice structure
 
-Use `BiasOnly`, `Psychometric`, `Perseveration`, `WinStayLoseShift`, or
-`LapsePsychometric` when the question can be expressed as a canonical behavioural summary.
+Use `BiasOnly`, `Psychometric`, `Perseveration` or `WinStayLoseShift` when the question can
+be expressed as a canonical behavioural summary; add a lapse to any of them with `mix()`.
 Use `BernoulliHistoryGLM` when several declared covariates and reset-safe histories must be
 estimated together. These models are scientific controls, not disposable preliminaries.
 

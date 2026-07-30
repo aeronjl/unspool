@@ -389,7 +389,22 @@ class RLTrajectory:
 
 @dataclass(frozen=True, slots=True)
 class BinaryRLAgent:
-    """A two-action agent assembled from explicit learning, memory, and policy parts."""
+    """A two-action agent assembled from explicit learning, memory, and policy parts.
+
+    The lapse this agent can carry lives in :class:`SoftmaxPolicy`, not in
+    :func:`behavio.compose.mix`, and that is a statement about the model rather than a
+    leftover. ``mix`` mixes two densities *given a linear predictor*, and this agent has no
+    linear predictor: a trial's choice probability is a function of a value trace that every
+    earlier trial in the session wrote to, so its log likelihood is a recursion and not a sum
+    of independent row scores. :attr:`penalised_linear_refusal` says so, and every combinator
+    reports that sentence rather than failing somewhere inside an optimizer.
+
+    The lapse is also in the right place scientifically. A policy lapse mixes the *action*
+    the agent emits while leaving the value update to see the action that was actually taken,
+    which is what makes the learned trace on a lapse trial the trace the animal's own choice
+    produced. A mixture applied from outside the recursion could not express that, because
+    from outside there is no recursion to reach into.
+    """
 
     learning: LearningRule = SymmetricLearning()
     forgetting: UnchosenForgetting | None = None
@@ -454,6 +469,19 @@ class BinaryRLAgent:
     @property
     def model_name(self) -> str:
         return "binary-rl-agent"
+
+    @property
+    def penalised_linear_refusal(self) -> str:
+        """Why no combinator may rewrite this model's problem."""
+
+        return (
+            "a value-updating agent is a recursion over trials, not a penalised linear "
+            "model: a trial's choice probability depends on every earlier trial in the "
+            "session, so its log likelihood does not factorise into independent row scores "
+            "and there is no linear predictor for a combinator to widen. Its lapse is "
+            "declared on the policy, where it mixes the emitted action while leaving the "
+            "value update to see the action that was taken"
+        )
 
     @property
     def signature(self) -> str:
