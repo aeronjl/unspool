@@ -134,6 +134,32 @@ CLOSED_FORM_SUMMARIES = {
 # through a pinned call that already names it in its own signature, so pinning them separately
 # would add nothing the model catalogue does not already promise.
 
+# The task ontology -- ``TaskFamily``, ``TaskProtocol``, ``CanonicalTrial``,
+# ``CanonicalVariable``, ``ChoiceDeclaration``, the twelve vocabulary enums,
+# ``CONTROLLED_VOCABULARIES``, the three JSON-Schema emitters, and
+# ``study_from_canonical_trials`` -- is deliberately absent from every set below, and its
+# absence is the promise rather than an oversight.
+#
+# The rule this file is drawn with pins what a user writes down *on the shortest correct
+# path* from a table of trials to a validated result. The ontology is not on that path in
+# either direction. Someone fitting a GLM to their own CSV writes
+# ``TaskSpec(choice=ChoiceSpec(options=(0, 1)))`` and never names a family; that call is
+# pinned in ``GOLDEN_PATH`` and is unchanged by everything the ontology adds. Someone who
+# *does* need a family needs it because they are reconciling several separately curated
+# sources, which is a deliberate, one-off act of declaration rather than a step in an
+# analysis, and they reach it at ``behavio.task.<name>`` and
+# ``behavio.adapters.study_from_canonical_trials``.
+#
+# Pinning it would also assert that the vocabulary is finished. It is not: nine of the
+# eighteen curated protocols the enums were derived from cannot yet name what their
+# alternatives mean, and a wagering task has no term for its opt-out. A closed set that is
+# still growing does not belong in a namespace whose whole argument is that it is small and
+# stable.
+#
+# Two names *were* added to already-pinned types and are covered by the existing sets:
+# ``ResponseTimeSpec.origin`` and ``RewardSpec.units``. Both are optional members of
+# constructors ``GOLDEN_PATH`` already promises, so the surface did not widen.
+
 INTEROPERABILITY_AND_EVIDENCE = {
     "ParameterSpace",
     "ScipyMultistart",

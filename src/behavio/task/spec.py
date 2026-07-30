@@ -211,15 +211,26 @@ class ChoiceData:
 
 @dataclass(frozen=True, slots=True)
 class RewardSpec:
-    """One scalar reward observation with explicit support and missingness."""
+    """One scalar reward observation with explicit support, missingness, and units.
+
+    ``units`` names the physical quantity the column is measured in -- ``"uL"``, ``"mL"``,
+    ``"points"``. Behavio does not convert between them and deliberately does not try: a
+    microlitre and a millilitre of water are not interchangeable rewards, and a library that
+    silently rescaled one into the other would make a pooled analysis look valid when it is
+    not. Declaring the unit is what lets a comparison across sources notice that they
+    differ.
+    """
 
     column: str = "reward"
     minimum: float | None = None
     maximum: float | None = None
     allow_missing: bool = False
+    units: str | None = None
 
     def __post_init__(self) -> None:
         _column(self.column, "reward column")
+        if self.units is not None and (not isinstance(self.units, str) or not self.units.strip()):
+            raise TaskValidationError("reward units must be a non-empty string or null")
         if self.minimum is not None and not np.isfinite(self.minimum):
             raise TaskValidationError("reward minimum must be finite or null")
         if self.maximum is not None and not np.isfinite(self.maximum):

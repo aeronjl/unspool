@@ -68,6 +68,10 @@ behavio = "behavio.cli:main"
 #   parquet        pyarrow Apache-2.0
 #   plots          matplotlib PSF-based (BSD-compatible)
 #   pyddm          pyddm MIT
+#   bambi          bambi MIT; its transitive closure is permissive throughout -- pymc
+#                  Apache-2.0, pytensor BSD-3-Clause, formulae MIT, pandas BSD-3-Clause,
+#                  matplotlib PSF-based, seaborn BSD-3-Clause, sparse BSD-3-Clause,
+#                  graphviz MIT, arviz-base/-stats/-plots Apache-2.0
 [project.optional-dependencies]
 readers = [
     "h5py>=3.11",
@@ -120,6 +124,21 @@ plots = [
 pyddm = [
     "pyddm>=0.9,<0.10",
 ]
+# `behavio.foreign.bambi` wraps Bambi's PyMC-compiled regression models behind
+# `PosteriorBehaviourEstimator`. Bambi is MIT, like Behavio, and so is every package in its
+# transitive closure (see the block above), so this extra adds no obligation.
+#
+# The 3.11/3.12 split is the same one the `bayesian` and `probabilistic` extras already
+# carry, and for the same underlying reason: Bambi 0.18 raised its floor to Python 3.12 and
+# moved to PyMC 6, while Behavio still supports 3.11. Declaring only the 3.12 pin would make
+# `pip install 'behavio[bambi]'` a silent no-op on the interpreter floor this package claims,
+# so the 3.11 branch pins the last series that runs there. Unlike `pyddm`, the supported
+# series is *not* written into the wrapper's signature; see the argument in
+# `BambiRegression.signature`.
+bambi = [
+    "bambi>=0.17.2,<0.18 ; python_full_version < '3.12'",
+    "bambi>=0.19,<0.20 ; python_full_version >= '3.12'",
+]
 
 [dependency-groups]
 dev = [
@@ -130,6 +149,12 @@ dev = [
     # declaring it would force a 1.x statistics API onto 0.x inference data.
     "arviz>=0.22,<1.2 ; python_full_version < '3.12'",
     "arviz>=1.2,<2 ; python_full_version >= '3.12'",
+    # bambi mirrors the `bambi` extra, including its 3.11/3.12 split, so the sampled
+    # wrapper in `behavio.foreign` is exercised by the default test run rather than skipped.
+    # `tests/test_bambi_model.py` still gates on `pytest.importorskip`, so a checkout
+    # without it skips cleanly.
+    "bambi>=0.17.2,<0.18 ; python_full_version < '3.12'",
+    "bambi>=0.19,<0.20 ; python_full_version >= '3.12'",
     # h5py, pandas, tables and xarray back the reader fixtures: the
     # pinned DeepLabCut, SLEAP, Keypoint-MoSeq and BORIS writer contracts, and
     # the duck-typed `movement` poses dataset.

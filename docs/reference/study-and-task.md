@@ -26,3 +26,31 @@ trial columns before choosing a model.
       members_order: source
       show_root_heading: false
       show_source: false
+
+## Controlled vocabulary
+
+The closed sets a declaration is written in. See
+[the task ontology](../task-ontology.md) for how the named layer produces the structural
+one above.
+
+::: behavio.task.vocabulary
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+## Task families, protocols, and canonical trials
+
+::: behavio.task.ontology
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+## Emitted JSON Schema
+
+::: behavio.task.jsonschema
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false

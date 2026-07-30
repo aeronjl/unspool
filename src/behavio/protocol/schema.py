@@ -7,14 +7,27 @@ and how evidence will be judged; execution is handled by the protocol compiler a
 
 from __future__ import annotations
 
-import hashlib
 import json
 import math
 from dataclasses import asdict, dataclass, fields, replace
 from enum import StrEnum
 from typing import Any, Self
 
+from behavio._internal.declaration import (
+    JSONScalar,
+    JSONValue,
+    canonical_json,
+    canonical_scalar,
+    content_fingerprint,
+    json_ready,
+    json_value,
+    require_fingerprint,
+    require_name,
+    require_names,
+)
 from behavio._internal.scoring import ComparisonMultiplicity, ScoreMetric
+from behavio.task.ontology import TaskProtocol
+from behavio.task.vocabulary import ObservationDataType, ObservationRole
 
 PROTOCOL_SCHEMA_VERSION = "behavio.study-protocol/2"
 
@@ -38,8 +51,14 @@ ACCEPTED_PROTOCOL_SCHEMA_VERSIONS = (PROTOCOL_SCHEMA_VERSION, *SUPERSEDED_PROTOC
 #: Schema names published before :attr:`ComparisonSpec.multiplicity` existed.
 PRE_MULTIPLICITY_PROTOCOL_SCHEMA_VERSIONS = ("behavio.study-protocol/1", "unspool.study-protocol/1")
 
-JSONScalar = str | int | float | bool | None
-JSONValue = JSONScalar | tuple["JSONValue", ...]
+# ``ObservationRole`` and ``ObservationDataType`` are defined in
+# :mod:`behavio.task.vocabulary` and imported above under their original names, so
+# ``behavio.protocol.schema.ObservationDataType`` still resolves to the one object. They are
+# the measurement vocabulary a declared column is typed with, and a study protocol was never
+# their only user: a canonical task variable is typed the same way, so keeping two spellings
+# of "this column holds a count" would have been exactly the duplication the task ontology
+# exists to remove. The member values are unchanged, so every serialized protocol keeps its
+# fingerprint.
 
 
 class ProtocolValidationError(ValueError):
@@ -72,33 +91,6 @@ class PredicateOperator(StrEnum):
     GREATER_EQUAL = "greater-equal"
     LESS_EQUAL = "less-equal"
     PRESENT = "present"
-
-
-class ObservationRole(StrEnum):
-    """How a declared column may be used by the study."""
-
-    OUTCOME = "outcome"
-    PREDICTOR = "predictor"
-    AUXILIARY = "auxiliary"
-
-
-class ObservationDataType(StrEnum):
-    """Closed measurement vocabulary for one declared observation column.
-
-    ``data_type`` was a free string until it acquired an enforced meaning. The member
-    values *are* the wire format, so every protocol Behavio has ever serialized keeps
-    round-tripping byte-identically and keeps its fingerprint: ``"binary"`` and
-    ``"continuous"`` are the only strings any released declaration recorded, and both are
-    members here. Widening this vocabulary later stays backward compatible; narrowing it
-    would not, and would need the :data:`SUPERSEDED_PROTOCOL_SCHEMA_VERSIONS` treatment that the
-    package rename used.
-    """
-
-    BINARY = "binary"
-    CATEGORICAL = "categorical"
-    CONTINUOUS = "continuous"
-    COUNT = "count"
-    ORDINAL = "ordinal"
 
 
 class UnitRole(StrEnum):
@@ -299,7 +291,7 @@ class ObservationSpec:
         )
         if any(isinstance(value, tuple) for value in values):
             raise ProtocolValidationError("allowed observation values must be scalars")
-        if len({_canonical_scalar(value) for value in values}) != len(values):
+        if len({canonical_scalar(value) for value in values}) != len(values):
             raise ProtocolValidationError("allowed observation values must be unique")
         object.__setattr__(self, "allowed_values", values)
 
@@ -700,7 +692,7 @@ class StudyProtocol:
     def fingerprint(self) -> str:
         """SHA-256 identity of the scientific declaration and amendment history."""
 
-        return hashlib.sha256(self.scientific_json().encode("utf-8")).hexdigest()
+        return content_fingerprint(self.scientific_json())
 
     def to_dict(self, *, scientific_only: bool = False) -> dict[str, Any]:
         """Return a standards-compliant JSON value with stable field names.
@@ -714,7 +706,7 @@ class StudyProtocol:
         from the one its era applied, so nothing distinguishable is ever dropped.
         """
 
-        value = _to_json(asdict(self))
+        value = json_ready(asdict(self))
         if self.schema_version in PRE_MULTIPLICITY_PROTOCOL_SCHEMA_VERSIONS:
             value["comparison"].pop("multiplicity")
         if scientific_only:
@@ -725,12 +717,12 @@ class StudyProtocol:
     def canonical_json(self) -> str:
         """Serialize the full protocol deterministically without executable objects."""
 
-        return _canonical_json(self.to_dict())
+        return canonical_json(self.to_dict())
 
     def scientific_json(self) -> str:
         """Serialize only fingerprinted scientific content deterministically."""
 
-        return _canonical_json(self.to_dict(scientific_only=True))
+        return canonical_json(self.to_dict(scientific_only=True))
 
     def freeze(self) -> Self:
         """Freeze a valid draft before any source materialization or model fitting."""
@@ -975,6 +967,79 @@ class StudyProtocol:
             raise ProtocolValidationError("lifecycle events do not terminate at protocol state")
 
 
+def observations_from_task_protocol(protocol: TaskProtocol) -> tuple[ObservationSpec, ...]:
+    """Derive a study protocol's observation contract from a declared task protocol.
+
+    This is the second place the task ontology reaches the execution path, and it exists so
+    that a column's *value* contract has one source rather than two.
+    :meth:`~behavio.task.ontology.TaskProtocol.task_spec` already produces the
+    :class:`~behavio.task.spec.ChoiceSpec` a model is validated against; without this
+    function a study protocol would separately restate the same option set in
+    :attr:`ObservationSpec.allowed_values`, and the two could disagree with nothing to
+    notice.
+
+    The choice becomes a categorical outcome whose ``allowed_values`` are the declared
+    terms, including omissions; a response time becomes a continuous outcome carrying the
+    declared unit; a reward becomes a continuous auxiliary observation carrying the declared
+    reward units; and every canonical variable bound to a column becomes an observation with
+    the role and data type that binding declared. Nothing is invented: a task protocol that
+    binds no variables yields the outcome observations alone.
+    """
+
+    if not isinstance(protocol, TaskProtocol):
+        raise TypeError("protocol must be a TaskProtocol")
+    task = protocol.task_spec()
+    observations: list[ObservationSpec] = [
+        ObservationSpec(
+            column=task.choice.column,
+            role=ObservationRole.OUTCOME,
+            data_type=ObservationDataType.CATEGORICAL,
+            allowed_values=(*task.choice.options, *task.choice.omission_values),
+        )
+    ]
+    if task.response_time is not None:
+        observations.append(
+            ObservationSpec(
+                column=task.response_time.column,
+                role=ObservationRole.OUTCOME,
+                data_type=ObservationDataType.CONTINUOUS,
+                unit=task.response_time.unit.value,
+            )
+        )
+    if task.reward is not None:
+        observations.append(
+            ObservationSpec(
+                column=task.reward.column,
+                role=ObservationRole.AUXILIARY,
+                data_type=ObservationDataType.CONTINUOUS,
+                unit=task.reward.units,
+            )
+        )
+    declared = {item.column for item in observations}
+    for variable in protocol.bound_variables:
+        if variable.column in declared:
+            continue
+        observations.append(
+            ObservationSpec(
+                column=str(variable.column),
+                role=variable.role or ObservationRole.AUXILIARY,
+                data_type=variable.data_type or ObservationDataType.CONTINUOUS,
+                unit=variable.unit,
+                allowed_values=variable.allowed_values,
+            )
+        )
+        declared.add(variable.column)
+    if protocol.block_column is not None and protocol.block_column not in declared:
+        observations.append(
+            ObservationSpec(
+                column=protocol.block_column,
+                role=ObservationRole.AUXILIARY,
+                data_type=ObservationDataType.CATEGORICAL,
+            )
+        )
+    return tuple(observations)
+
+
 def protocol_from_dict(value: dict[str, Any]) -> StudyProtocol:
     """Deserialize a protocol from plain JSON data and re-run every invariant.
 
@@ -1132,40 +1197,8 @@ def _allowed_transitions_for_state(
     return ()
 
 
-def _canonical_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        allow_nan=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    )
-
-
-def _to_json(value: Any) -> Any:
-    if isinstance(value, StrEnum):
-        return value.value
-    if isinstance(value, dict):
-        return {key: _to_json(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_to_json(item) for item in value]
-    return value
-
-
 def _json_value(value: Any, label: str) -> JSONValue:
-    if isinstance(value, list):
-        value = tuple(value)
-    if isinstance(value, tuple):
-        return tuple(_json_value(item, label) for item in value)
-    if value is None or isinstance(value, (str, bool, int)):
-        return value
-    if isinstance(value, float) and math.isfinite(value):
-        return value
-    raise ProtocolValidationError(f"{label} must be a finite JSON scalar or tuple")
-
-
-def _canonical_scalar(value: JSONScalar) -> str:
-    return _canonical_json(value)
+    return json_value(value, label, error=ProtocolValidationError)
 
 
 def _observation_data_type(value: Any) -> ObservationDataType:
@@ -1179,20 +1212,11 @@ def _observation_data_type(value: Any) -> ObservationDataType:
 
 
 def _name(value: str, label: str) -> None:
-    if not isinstance(value, str) or not value.strip():
-        raise ProtocolValidationError(f"{label} must be a non-empty string")
+    require_name(value, label, error=ProtocolValidationError)
 
 
 def _names(values: tuple[str, ...], label: str, *, allow_empty: bool = False) -> None:
-    if isinstance(values, str):
-        raise ProtocolValidationError(f"{label} must be a tuple")
-    values = tuple(values)
-    if not allow_empty and not values:
-        raise ProtocolValidationError(f"{label} must not be empty")
-    for value in values:
-        _name(value, label)
-    if len(set(values)) != len(values):
-        raise ProtocolValidationError(f"{label} must be unique")
+    require_names(values, label, allow_empty=allow_empty, error=ProtocolValidationError)
 
 
 def _settings(values: tuple[Setting, ...], label: str) -> None:
@@ -1218,11 +1242,4 @@ def _unique_columned(values: tuple[Any, ...], label: str) -> set[str]:
 
 
 def _fingerprint(value: str, label: str) -> None:
-    if not isinstance(value, str) or len(value) != 64:
-        raise ProtocolValidationError(f"{label} must be a lowercase SHA-256 hex digest")
-    try:
-        parsed = bytes.fromhex(value)
-    except ValueError:
-        parsed = b""
-    if len(parsed) != 32 or value != value.lower():
-        raise ProtocolValidationError(f"{label} must be a lowercase SHA-256 hex digest")
+    require_fingerprint(value, label, error=ProtocolValidationError)

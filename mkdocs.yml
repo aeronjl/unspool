@@ -94,6 +94,7 @@ nav:
       - Core concepts:
           - Longitudinal study contract: data-contract.md
           - Behavioural task contract: task-contract.md
+          - Task families and vocabulary: task-ontology.md
           - Clocks and transforms: clocks-and-transforms.md
           - Fixed design matrices: design-matrices.md
           - Design formulas: design-formulas.md

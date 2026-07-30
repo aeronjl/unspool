@@ -4,6 +4,13 @@
 Keeping these contracts separate lets one longitudinal table support several scientifically
 different models without hiding task semantics inside model-specific preprocessing.
 
+`TaskSpec` is deliberately silent about what the *experiment* was: it takes column labels as
+it finds them, so two studies of the same task coding choice `-1`/`+1` and `"left"`/`"right"`
+produce two unrelated specifications. When one analysis has to span separately curated
+sources, [the task ontology](task-ontology.md) supplies the missing half — a controlled
+vocabulary and a declared task family — and *derives* the `TaskSpec` below from it. Nothing
+on this page requires it.
+
 ## A first fit
 
 ```python

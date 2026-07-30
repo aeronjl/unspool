@@ -1,0 +1,2218 @@
+{
+  "human-auditory-clicks-button": {
+    "aliases": [
+      "human Poisson clicks task",
+      "human auditory evidence accumulation task"
+    ],
+    "apparatus": [
+      "headphones or speakers",
+      "keyboard or button box"
+    ],
+    "choice": {
+      "action_mapping": "Button or key identity maps to the side with more clicks.",
+      "alternatives": [
+        "left",
+        "right"
+      ],
+      "choice_type": "2afc",
+      "response_modalities": [
+        "button-press",
+        "keyboard"
+      ]
+    },
+    "curation_status": "data-linked",
+    "dataset_ids": [
+      "dataset.london-human-poisson-clicks-dbs-mendeley"
+    ],
+    "description": "Human participants listen to left and right click trains and report which side generated more evidence using keyboard or button responses. Click timing and count difference control the sensory evidence.\n",
+    "expected_analyses": [
+      "psychometric curve by click count difference",
+      "chronometric curve by evidence strength",
+      "temporal weighting or evidence-kernel analysis",
+      "drift-diffusion or accumulation model fit"
+    ],
+    "family_id": "family.auditory-click-accumulation",
+    "feedback": {
+      "feedback_type": "none",
+      "notes": "Feedback and reward are source-dependent in human implementations."
+    },
+    "id": "protocol.human-auditory-clicks-button",
+    "interpretive_claims": [
+      {
+        "confidence": "high",
+        "label": "evidence accumulation",
+        "source": "ref.brunton-2013-clicks"
+      }
+    ],
+    "name": "Human auditory clicks button task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Separate auditory side, interval, and response-device variants when source records require it.",
+      "Clarify how the source alpha, beta, and gamma parameters map onto the click-generation equations.",
+      "Add a non-DBS healthy-human source when a public trial table is identified."
+    ],
+    "provenance": {
+      "created": "2026-04-24",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Human variant now has a concrete Mendeley Data DBS OFF/ON dataset and report-backed vertical slice. The protocol remains broader than that clinical source, so DBS-specific caveats live on the dataset and slice.\n",
+      "updated": "2026-04-25"
+    },
+    "references": [
+      {
+        "citation": "Brunton BW, Botvinick MM, Brody CD. Rats and humans can optimally accumulate evidence for decision-making. Science, 2013.\n",
+        "doi": "10.1126/science.1233912",
+        "id": "ref.brunton-2013-clicks",
+        "url": "https://www.science.org/doi/10.1126/science.1233912"
+      },
+      {
+        "citation": "London D. Poisson Clicks Task, DBS OFF/ON. Mendeley Data, V1, 2018.\n",
+        "doi": "10.17632/3j86m7mjx2.1",
+        "id": "ref.london-2018-poisson-clicks-dbs",
+        "url": "https://data.mendeley.com/datasets/3j86m7mjx2/1"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "species": [
+      "human"
+    ],
+    "stimulus": {
+      "evidence_schedule": "Left and right auditory clicks are generated over time; difficulty is controlled by the difference in click counts or rates.\n",
+      "evidence_type": "pulse-train",
+      "modalities": [
+        "auditory"
+      ],
+      "units": [
+        "clicks",
+        "clicks per second"
+      ],
+      "variables": [
+        "left click count",
+        "right click count",
+        "click count difference",
+        "click timing",
+        "stimulus duration"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Participant begins or readies the trial.",
+        "duration": "protocol-specific",
+        "name": "fixation_or_ready"
+      },
+      {
+        "description": "Auditory evidence unfolds over time.",
+        "duration": "protocol-specific",
+        "name": "click_train"
+      },
+      {
+        "description": "Participant reports which side had more clicks.",
+        "duration": "response-limited",
+        "name": "response"
+      }
+    ],
+    "training": {
+      "stages": [
+        "instructions",
+        "practice trials"
+      ]
+    }
+  },
+  "human-rdm-button-reaction-time": {
+    "aliases": [
+      "human RDM reaction-time task",
+      "human motion coherence button task"
+    ],
+    "apparatus": [
+      "visual display",
+      "keyboard or button box"
+    ],
+    "choice": {
+      "action_mapping": "Button or key identity maps to the judged motion direction.",
+      "alternatives": [
+        "direction A",
+        "direction B"
+      ],
+      "choice_type": "2afc",
+      "response_modalities": [
+        "button-press",
+        "keyboard"
+      ]
+    },
+    "curation_status": "data-linked",
+    "dataset_ids": [
+      "dataset.palmer-huk-shadlen-human-rdm-cosmo2017"
+    ],
+    "description": "Human observers judge the dominant direction of motion in a random-dot kinematogram and report the decision with a button or keyboard response. Motion coherence controls stimulus strength and reaction time is a primary dependent measure.\n",
+    "expected_analyses": [
+      "psychometric curve by motion coherence",
+      "chronometric curve by motion coherence",
+      "drift-diffusion model fit"
+    ],
+    "family_id": "family.random-dot-motion",
+    "feedback": {
+      "feedback_type": "none",
+      "notes": "Feedback and speed-accuracy instruction are source-dependent."
+    },
+    "id": "protocol.human-rdm-button-reaction-time",
+    "interpretive_claims": [
+      {
+        "confidence": "high",
+        "label": "perceptual decision-making",
+        "source": "ref.palmer-huk-shadlen-2005"
+      }
+    ],
+    "name": "Human random-dot motion button reaction-time task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Add speed-accuracy instruction fields if original block annotations are recovered.",
+      "Decide whether fixed-duration and reaction-time RDM should be separate records."
+    ],
+    "provenance": {
+      "created": "2026-04-24",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Linked to the CoSMo2017 MATLAB distribution of Palmer, Huk, and Shadlen Experiment 1 so the human reaction-time RDM protocol has a first report-backed vertical slice.\n",
+      "updated": "2026-04-25"
+    },
+    "references": [
+      {
+        "citation": "Palmer J, Huk AC, Shadlen MN. The effect of stimulus strength on the speed and accuracy of a perceptual decision. Journal of Vision, 2005.\n",
+        "doi": "10.1167/5.5.1",
+        "id": "ref.palmer-huk-shadlen-2005",
+        "url": "https://doi.org/10.1167/5.5.1"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "species": [
+      "human"
+    ],
+    "stimulus": {
+      "evidence_schedule": "Dot motion coherence varies across trials; speed-accuracy instructions or stimulus strength can be manipulated across blocks.\n",
+      "evidence_type": "stochastic-motion",
+      "modalities": [
+        "visual"
+      ],
+      "units": [
+        "percent coherence"
+      ],
+      "variables": [
+        "motion coherence",
+        "motion direction",
+        "stimulus duration"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Observer fixates before stimulus onset.",
+        "duration": "protocol-specific",
+        "name": "fixation"
+      },
+      {
+        "description": "Random-dot motion evidence is shown.",
+        "duration": "fixed or response-dependent, protocol-specific",
+        "name": "motion_stimulus"
+      },
+      {
+        "description": "Observer reports the judged motion direction.",
+        "duration": "response-limited",
+        "name": "response"
+      }
+    ],
+    "training": {
+      "stages": [
+        "instructions",
+        "practice trials"
+      ]
+    }
+  },
+  "human-visual-contrast-2afc-keyboard": {
+    "aliases": [
+      "human Gabor contrast discrimination",
+      "human grating contrast psychophysics",
+      "human SSVEP contrast prior-cue task"
+    ],
+    "apparatus": [
+      "calibrated visual display",
+      "keyboard or response box"
+    ],
+    "choice": {
+      "action_mapping": "Keyboard or button responses indicate which side or interval contained the target visual contrast.\n",
+      "alternatives": [
+        "interval A or left",
+        "interval B or right"
+      ],
+      "choice_type": "2afc",
+      "response_modalities": [
+        "keyboard",
+        "button-press"
+      ]
+    },
+    "curation_status": "data-linked",
+    "dataset_ids": [
+      "dataset.walsh-prior-cue-human-contrast-osf"
+    ],
+    "description": "Human observers judge which of two visual alternatives contains the stronger or target contrast signal, commonly using keyboard or button responses. The first linked slice uses overlaid flickering gratings with probabilistic cues and points feedback. Contrast is varied to estimate psychometric threshold and lapse parameters.\n",
+    "expected_analyses": [
+      "psychometric curve by contrast",
+      "threshold and lapse estimates",
+      "bootstrap confidence intervals"
+    ],
+    "family_id": "family.visual-2afc-contrast",
+    "feedback": {
+      "feedback_type": "mixed",
+      "notes": "Feedback is protocol-dependent; the first linked slice uses points feedback."
+    },
+    "id": "protocol.human-visual-contrast-2afc-keyboard",
+    "interpretive_claims": [
+      {
+        "confidence": "medium",
+        "label": "visual sensitivity",
+        "source": "ref.wichmann-hill-2001"
+      }
+    ],
+    "name": "Human visual contrast 2AFC keyboard task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Split side-based and interval-based variants if detailed datasets are linked.",
+      "Decide whether the Walsh SSVEP prior-cue task should eventually become a more specific concrete protocol variant.",
+      "Add display calibration and staircase details for source-specific records beyond the current processed stats slice."
+    ],
+    "provenance": {
+      "created": "2026-04-24",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Linked to Walsh et al.'s OSF behavioural stats dataset so the human visual contrast protocol has a first report-backed vertical slice. The protocol id remains stable, but the first source uses mouse/button responses rather than a literal keyboard.\n",
+      "updated": "2026-04-25"
+    },
+    "references": [
+      {
+        "citation": "Wichmann FA, Hill NJ. The psychometric function: I. Fitting, sampling, and goodness of fit. Perception & Psychophysics, 2001.\n",
+        "doi": "10.3758/BF03194544",
+        "id": "ref.wichmann-hill-2001",
+        "url": "https://doi.org/10.3758/BF03194544"
+      },
+      {
+        "citation": "Walsh K, McGovern DP, Dully J, Kelly SP, O'Connell RG. Prior probability cues bias sensory encoding with increasing task exposure. eLife 12: RP91135, 2024.\n",
+        "doi": "10.7554/eLife.91135.3",
+        "id": "ref.walsh-2024-prior-cues",
+        "url": "https://elifesciences.org/articles/91135"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "species": [
+      "human"
+    ],
+    "stimulus": {
+      "evidence_schedule": "Contrast levels are sampled across trials, often with fixed grids or adaptive procedures designed to estimate a psychometric function. The first linked slice uses session-titrated target/distractor contrast differences and valid, invalid, or neutral cues.\n",
+      "evidence_type": "adaptive",
+      "modalities": [
+        "visual"
+      ],
+      "units": [
+        "percent contrast",
+        "Michelson contrast"
+      ],
+      "variables": [
+        "contrast",
+        "stimulus interval",
+        "stimulus side",
+        "probabilistic cue",
+        "flicker frequency"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Observer fixates before stimulus presentation.",
+        "duration": "protocol-specific",
+        "name": "fixation"
+      },
+      {
+        "description": "One or more contrast-defined visual stimuli are shown.",
+        "duration": "protocol-specific",
+        "name": "stimulus"
+      },
+      {
+        "description": "Observer reports the chosen interval or side.",
+        "duration": "response-limited",
+        "name": "response"
+      }
+    ],
+    "training": {
+      "notes": "Training is usually minimal relative to animal implementations.",
+      "stages": [
+        "instructions",
+        "practice trials"
+      ]
+    }
+  },
+  "ibl-visual-decision-v1": {
+    "aliases": [
+      "IBL biased choice world"
+    ],
+    "apparatus": [
+      "head fixation",
+      "response wheel",
+      "visual display",
+      "water delivery",
+      "auditory cue and feedback"
+    ],
+    "choice": {
+      "action_mapping": "Wheel turns move the visual stimulus toward the center; the rewarded turn direction depends on stimulus side.\n",
+      "alternatives": [
+        "left",
+        "right"
+      ],
+      "choice_type": "2afc",
+      "response_modalities": [
+        "wheel"
+      ]
+    },
+    "curation_status": "adapter-ready",
+    "dataset_ids": [
+      "dataset.ibl-public-behavior",
+      "dataset.ibl-brainwide-map-2025"
+    ],
+    "description": "Head-fixed mice report the side of a visual grating stimulus by turning a wheel to bring the stimulus to the center. Contrast and blockwise prior probability manipulate sensory and value-related evidence.\n",
+    "expected_analyses": [
+      "psychometric curve by contrast and prior block",
+      "chronometric curve by contrast",
+      "lapse, bias, and threshold estimates",
+      "history-dependent choice model"
+    ],
+    "family_id": "family.visual-2afc-contrast",
+    "feedback": {
+      "feedback_type": "mixed",
+      "penalty": "Noise burst and longer inter-trial interval for incorrect decisions.",
+      "reward": "Sweetened water for correct decisions."
+    },
+    "id": "protocol.ibl-visual-decision-v1",
+    "interpretive_claims": [
+      {
+        "caveat": "The protocol also intentionally manipulates prior probability and learned value, so records should not reduce it to sensory evidence alone.\n",
+        "confidence": "high",
+        "label": "perceptual decision-making",
+        "source": "ref.ibl-2021-standardized"
+      }
+    ],
+    "name": "IBL visual decision task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Extend Brainwide Map curation from behavior trials to probe insertions, brain regions, spike-sorting QC, and video pose features.",
+      "Split biased and unbiased variants if the schema needs finer protocol granularity."
+    ],
+    "provenance": {
+      "created": "2026-04-24",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Seed protocol record drafted from the open eLife/PMC article. The protocol now has adapter-backed behavioral slices for both the broad IBL public behavior archive and the IBL Brainwide Map 2025 ephys release. The two 2025 Nature companion papers are linked as source analyses for the ephys and block-prior variants.\n",
+      "updated": "2026-04-30"
+    },
+    "references": [
+      {
+        "citation": "The International Brain Laboratory et al. Standardized and reproducible measurement of decision-making in mice. eLife, 2021.\n",
+        "doi": "10.7554/eLife.63711",
+        "id": "ref.ibl-2021-standardized",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8137147/"
+      },
+      {
+        "citation": "The International Brain Laboratory et al. A brain-wide map of neural activity during complex behaviour. Nature, 2025.\n",
+        "doi": "10.1038/s41586-025-09235-0",
+        "id": "ref.ibl-2025-brainwide-map",
+        "url": "https://www.nature.com/articles/s41586-025-09235-0"
+      },
+      {
+        "citation": "The International Brain Laboratory et al. Brain-wide representations of prior information in mouse decision-making. Nature, 2025.\n",
+        "doi": "10.1038/s41586-025-09226-1",
+        "id": "ref.ibl-2025-prior-map",
+        "url": "https://www.nature.com/articles/s41586-025-09226-1"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "software": [
+      "IBL task control software"
+    ],
+    "species": [
+      "mouse"
+    ],
+    "stimulus": {
+      "evidence_schedule": "Grating appears on the left or right at variable contrast; sessions can include blockwise changes in prior probability.\n",
+      "evidence_type": "mixed",
+      "modalities": [
+        "visual"
+      ],
+      "notes": "This record deliberately separates stimulus contrast from prior probability because both can influence choice.\n",
+      "units": [
+        "percent contrast"
+      ],
+      "variables": [
+        "contrast",
+        "stimulus side",
+        "block prior probability"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Mouse holds the wheel still before trial start.",
+        "duration": "variable, approximately 0.4-0.7 s in the standardized task",
+        "name": "quiescence"
+      },
+      {
+        "description": "Auditory cue announces the response period.",
+        "duration": "brief auditory event",
+        "name": "go_cue"
+      },
+      {
+        "description": "Visual grating is displayed and coupled to wheel movement.",
+        "duration": "response-limited",
+        "name": "stimulus_and_response"
+      },
+      {
+        "contingent_on": "choice correctness",
+        "duration": "outcome-dependent",
+        "name": "feedback"
+      }
+    ],
+    "training": {
+      "notes": "Standardized IBL training stages should be captured in a deeper version.",
+      "stages": [
+        "shaping",
+        "visual discrimination",
+        "biased blocks"
+      ]
+    }
+  },
+  "macaque-rdm-confidence-wager": {
+    "aliases": [
+      "RDM opt-out task",
+      "post-decision wager random-dot motion task"
+    ],
+    "apparatus": [
+      "visual display",
+      "eye tracking",
+      "fluid reward"
+    ],
+    "choice": {
+      "action_mapping": "Saccades to choice targets report direction; a distinct target can report a sure-bet or confidence-related option.\n",
+      "alternatives": [
+        "direction A",
+        "direction B",
+        "sure or wager option"
+      ],
+      "choice_type": "wagering",
+      "response_modalities": [
+        "saccade"
+      ]
+    },
+    "curation_status": "data-linked",
+    "dataset_ids": [
+      "dataset.khalvati-kiani-rao-rdm-confidence-source-data"
+    ],
+    "description": "Trained non-human primates judge random-dot motion direction and can express confidence through a wager or opt-out response. Motion coherence controls sensory evidence, while the wager response probes decision confidence.\n",
+    "expected_analyses": [
+      "psychometric curve by motion coherence",
+      "confidence or wager probability by coherence and accuracy",
+      "decision confidence model"
+    ],
+    "family_id": "family.random-dot-motion",
+    "feedback": {
+      "feedback_type": "reward",
+      "reward": "Fluid reward amount depends on correctness and wager condition."
+    },
+    "id": "protocol.macaque-rdm-confidence-wager",
+    "interpretive_claims": [
+      {
+        "confidence": "high",
+        "label": "confidence report",
+        "source": "ref.kiani-shadlen-2009"
+      }
+    ],
+    "name": "Macaque random-dot motion confidence wagering task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Decide whether confidence and wagering should be modeled as task variants or analysis claims.",
+      "Add target layout fields if full raw behavioral files are recovered.",
+      "Split figure source-data rows from unique raw trial rows if a complete behavioral export is linked."
+    ],
+    "provenance": {
+      "created": "2026-04-24",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Linked to the Khalvati-Kiani-Rao Nature Communications source-data ZIP so the Kiani-Shadlen confidence/wagering task has a first report-backed slice.\n",
+      "updated": "2026-04-25"
+    },
+    "references": [
+      {
+        "citation": "Kiani R, Shadlen MN. Representation of confidence associated with a decision by neurons in the parietal cortex. Science, 2009.\n",
+        "doi": "10.1126/science.1169405",
+        "id": "ref.kiani-shadlen-2009",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/19423820/"
+      },
+      {
+        "citation": "Khalvati K, Kiani R, Rao RPN. Bayesian inference with incomplete knowledge explains perceptual confidence and its deviations from accuracy. Nature Communications, 2021.\n",
+        "doi": "10.1038/s41467-021-25419-4",
+        "id": "ref.khalvati-kiani-rao-2021",
+        "url": "https://www.nature.com/articles/s41467-021-25419-4"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "species": [
+      "non-human-primate"
+    ],
+    "stimulus": {
+      "evidence_schedule": "Random-dot motion coherence varies across trials; confidence report opportunities are interleaved with standard direction choices.\n",
+      "evidence_type": "stochastic-motion",
+      "modalities": [
+        "visual"
+      ],
+      "units": [
+        "percent coherence"
+      ],
+      "variables": [
+        "motion coherence",
+        "motion direction",
+        "wager option"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Subject maintains fixation before stimulus onset.",
+        "duration": "protocol-specific",
+        "name": "fixation"
+      },
+      {
+        "description": "Random-dot motion evidence is shown.",
+        "duration": "protocol-specific",
+        "name": "motion_stimulus"
+      },
+      {
+        "description": "Subject reports direction or wager option with eye movement.",
+        "duration": "response-limited",
+        "name": "choice_or_wager"
+      },
+      {
+        "contingent_on": "choice and wager outcome",
+        "duration": "outcome-dependent",
+        "name": "feedback"
+      }
+    ],
+    "training": {
+      "stages": [
+        "fixation training",
+        "motion discrimination training",
+        "wager option training"
+      ]
+    }
+  },
+  "mouse-audiovisual-spatial-wheel": {
+    "aliases": [
+      "Coen-Sit audiovisual localization task",
+      "mouse additive multisensory decision task"
+    ],
+    "apparatus": [
+      "head fixation",
+      "response wheel",
+      "visual displays",
+      "speaker array",
+      "water delivery"
+    ],
+    "choice": {
+      "action_mapping": "Wheel movement reports the inferred side of the stimulus location.\n",
+      "alternatives": [
+        "left",
+        "right"
+      ],
+      "choice_type": "2afc",
+      "response_modalities": [
+        "wheel"
+      ]
+    },
+    "curation_status": "adapter-ready",
+    "dataset_ids": [
+      "dataset.coen-audiovisual-decisions-ucl"
+    ],
+    "description": "Head-fixed mice localize visual and auditory stimuli presented across lateral screens and speakers, reporting left or right by turning a wheel. Visual-only, auditory-only, congruent audiovisual, and conflict audiovisual trials allow modality-specific and multisensory decision variables to be separated.\n",
+    "expected_analyses": [
+      "modality-split psychometric curves",
+      "additive audiovisual choice model",
+      "conflict-trial weighting",
+      "inactivation effects by cortical target",
+      "reaction time by stimulus condition"
+    ],
+    "family_id": "family.audiovisual-spatial-decision",
+    "feedback": {
+      "feedback_type": "mixed",
+      "notes": "Correctness on conflict trials is analysis-specific and should be encoded explicitly.",
+      "penalty": "Timeout or error feedback for incorrect choices, source-dependent.",
+      "reward": "Water reward for correct choices on defined unisensory or congruent trials."
+    },
+    "id": "protocol.mouse-audiovisual-spatial-wheel",
+    "interpretive_claims": [
+      {
+        "caveat": "Evidence for integration depends on modeling modality-specific cue values and conflict trials, not only pooled left/right accuracy.\n",
+        "confidence": "high",
+        "label": "multisensory integration",
+        "source": "ref.coen-2023-audiovisual-decisions"
+      }
+    ],
+    "name": "Mouse audiovisual spatial wheel task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Verify a full local source export against the default adapter once BehaviorData.zip is downloaded.",
+      "Add a paper-matched additive audiovisual GLM and inactivation-effect analysis."
+    ],
+    "provenance": {
+      "created": "2026-04-29",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Protocol added from the UCL data record and Neuron resource table, then promoted to adapter-ready after confirming the public code's processed trial fields for visual evidence, auditory evidence, response, reaction time, trial type, and inactivation metadata.\n",
+      "updated": "2026-04-29"
+    },
+    "references": [
+      {
+        "citation": "Coen P, Sit TPH, Wells MJ, Carandini M, Harris KD. Mouse frontal cortex mediates additive multisensory decisions. Neuron, 2023.\n",
+        "doi": "10.1016/j.neuron.2023.05.008",
+        "id": "ref.coen-2023-audiovisual-decisions",
+        "url": "https://www.cell.com/neuron/fulltext/S0896-6273(23)00381-1"
+      },
+      {
+        "citation": "Coen P, Carandini M, Harris K, Sit PH, Wells M. Mouse frontal cortex mediates additive multisensory decisions. UCL Research Data Repository, 2023.\n",
+        "id": "ref.coen-2023-ucl-rdr",
+        "url": "https://rdr.ucl.ac.uk/articles/dataset/Mouse_frontal_cortex_mediates_additive_multisensory_decisions/22363180"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "software": [
+      "Rigbox",
+      "Signals"
+    ],
+    "species": [
+      "mouse"
+    ],
+    "stimulus": {
+      "evidence_schedule": "Trials sample visual contrast and auditory location, including unisensory, congruent multisensory, and conflict multisensory conditions.\n",
+      "evidence_type": "mixed",
+      "modalities": [
+        "visual",
+        "auditory",
+        "multisensory"
+      ],
+      "units": [
+        "percent contrast",
+        "degrees azimuth"
+      ],
+      "variables": [
+        "visual contrast",
+        "auditory azimuth",
+        "modality condition",
+        "cue congruence"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Delay between trials.",
+        "duration": "1.5-2.5 s",
+        "name": "inter_trial_interval"
+      },
+      {
+        "description": "Mouse must hold the wheel still before stimulus onset.",
+        "duration": "100-250 ms",
+        "name": "wheel_quiescence"
+      },
+      {
+        "description": "Stimuli are presented while wheel movement does not move the stimulus.",
+        "duration": "500 ms",
+        "name": "open_loop_stimulus"
+      },
+      {
+        "description": "Stimulus position is yoked to wheel movement.",
+        "duration": "up to 1 s",
+        "name": "closed_loop_response"
+      }
+    ],
+    "training": {
+      "stages": [
+        "visual localization",
+        "auditory localization",
+        "audiovisual integration"
+      ]
+    }
+  },
+  "mouse-unforced-visual-contrast-wheel": {
+    "aliases": [
+      "Steinmetz visual discrimination task",
+      "mouse two-alternative unforced visual choice"
+    ],
+    "apparatus": [
+      "head fixation",
+      "response wheel",
+      "three-screen visual display",
+      "lick spout",
+      "water delivery"
+    ],
+    "choice": {
+      "action_mapping": "Wheel turns report leftward or rightward choices; withholding movement can be rewarded on no-stimulus trials.\n",
+      "alternatives": [
+        "left",
+        "right",
+        "no-go"
+      ],
+      "choice_type": "free-response",
+      "response_modalities": [
+        "wheel"
+      ]
+    },
+    "curation_status": "data-linked",
+    "dataset_ids": [
+      "dataset.steinmetz-visual-decision-figshare",
+      "dataset.zatka-haas-visual-decision-figshare"
+    ],
+    "description": "Head-fixed mice view one or two Gabor patches on lateral screens and use a wheel to report the side with visual evidence, while trials with no visible stimulus can be rewarded for withholding movement. The protocol distinguishes visual stimulus coding, action initiation, and left/right choice because no-go/no-turn trials are valid behavioral outcomes rather than missing data.\n",
+    "expected_analyses": [
+      "choice surface by left and right contrast",
+      "no-go rate by zero-contrast condition",
+      "reaction time by contrast combination",
+      "stimulus, action, and choice encoding by trial condition"
+    ],
+    "family_id": "family.visual-2afc-contrast",
+    "feedback": {
+      "feedback_type": "mixed",
+      "penalty": "Error feedback for incorrect movement or missed stimulus reports.",
+      "reward": "Water reward for correct side choices or correct no-go outcomes."
+    },
+    "id": "protocol.mouse-unforced-visual-contrast-wheel",
+    "interpretive_claims": [
+      {
+        "caveat": "The task is not a strict 2AFC design because no-go/no-turn responses are meaningful and must remain explicit in model comparisons.\n",
+        "confidence": "high",
+        "label": "perceptual decision-making",
+        "source": "ref.steinmetz-2019-distributed-coding"
+      }
+    ],
+    "name": "Mouse unforced visual contrast wheel task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Decide whether no-go trials should be modeled as a third choice or as a censored action state for each analysis.",
+      "Verify one named extracted session end-to-end and record its subject, trial count, and generated report metrics."
+    ],
+    "provenance": {
+      "created": "2026-04-29",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Catalog-only protocol added from the public Steinmetz et al. 2019 Figshare release and paper methods. Updated with an adapter-backed vertical slice contract that verifies trial field names and source choice coding from the Steinmetz ALF data dictionary. Burgess and Zatka-Haas references were added during the visual contrast family-depth pass to connect the unforced wheel task lineage; the Zatka-Haas Figshare archive was then added as a public source for deeper behavior/neural curation.\n",
+      "updated": "2026-04-30"
+    },
+    "references": [
+      {
+        "citation": "Burgess CP et al. High-Yield Methods for Accurate Two-Alternative Visual Psychophysics in Head-Fixed Mice. Cell Reports, 2017.\n",
+        "doi": "10.1016/j.celrep.2017.08.047",
+        "id": "ref.burgess-2017-high-yield-visual-psychophysics",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5603732/"
+      },
+      {
+        "citation": "Steinmetz NA, Zatka-Haas P, Carandini M, Harris KD. Distributed coding of choice, action and engagement across the mouse brain. Nature, 2019.\n",
+        "doi": "10.1038/s41586-019-1787-x",
+        "id": "ref.steinmetz-2019-distributed-coding",
+        "url": "https://www.nature.com/articles/s41586-019-1787-x"
+      },
+      {
+        "citation": "Steinmetz N, Zatka-Haas P, Carandini M, Harris K, Rossant C. Distributed coding of choice, action, and engagement across the mouse brain. Figshare, version 3, 2021.\n",
+        "doi": "10.6084/m9.figshare.9974357.v3",
+        "id": "ref.steinmetz-figshare-one",
+        "url": "https://figshare.com/articles/dataset/Distributed_coding_of_choice_action_and_engagement_across_the_mouse_brain/9974357"
+      },
+      {
+        "citation": "Zatka-Haas P, Steinmetz NA, Carandini M, Harris KD. Sensory coding and the causal impact of mouse cortex in a visual decision. eLife, 2021.\n",
+        "doi": "10.7554/eLife.63163",
+        "id": "ref.zatka-haas-2021-sensory-coding-causal-impact",
+        "url": "https://elifesciences.org/articles/63163"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "software": [
+      "ONE-compatible data export"
+    ],
+    "species": [
+      "mouse"
+    ],
+    "stimulus": {
+      "evidence_schedule": "Gabor stimuli are presented on the left screen, right screen, both screens, or neither screen with contrast sampled from a small fixed set.\n",
+      "evidence_type": "static",
+      "modalities": [
+        "visual"
+      ],
+      "units": [
+        "percent contrast"
+      ],
+      "variables": [
+        "left contrast",
+        "right contrast",
+        "bilateral contrast combination",
+        "stimulus side"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Mouse holds the wheel before stimulus onset.",
+        "duration": "protocol-specific",
+        "name": "trial_initiation"
+      },
+      {
+        "description": "Lateralized Gabor stimuli are shown.",
+        "duration": "response-dependent",
+        "name": "visual_stimulus"
+      },
+      {
+        "description": "Mouse turns the wheel or withholds movement.",
+        "duration": "response-limited",
+        "name": "movement_or_withhold"
+      },
+      {
+        "contingent_on": "choice correctness",
+        "duration": "outcome-dependent",
+        "name": "feedback"
+      }
+    ],
+    "training": {
+      "stages": [
+        "wheel handling",
+        "contrast discrimination",
+        "no-go trials"
+      ]
+    }
+  },
+  "mouse-visual-change-detection-allen": {
+    "aliases": [
+      "Allen Brain Observatory Visual Behavior task",
+      "VBO change detection"
+    ],
+    "apparatus": [
+      "head fixation",
+      "visual display",
+      "lick spout with capacitive sensor",
+      "water delivery"
+    ],
+    "choice": {
+      "action_mapping": "Licking the spout within the response window after a stimulus change is a go response (hit). Withholding licking through the response window is a no-go response (miss on change trials, correct rejection on catch trials). Licking before the change window is an aborted trial.\n",
+      "alternatives": [
+        "go",
+        "withhold"
+      ],
+      "choice_type": "go-no-go",
+      "response_modalities": [
+        "lick"
+      ]
+    },
+    "curation_status": "adapter-ready",
+    "dataset_ids": [
+      "dataset.allen-brain-observatory-visual-behavior",
+      "dataset.allen-visual-behavior-neuropixels"
+    ],
+    "description": "Head-fixed mice view a stream of natural images flashed at a fixed cadence (250 ms image, 500 ms gray) and must lick within a short response window after the image identity changes. A subset of trials are catch trials in which the image does not change, and the mouse must withhold licking. The task is the standardized behavioral protocol used by the Allen Institute Visual Behavior 2P and Visual Behavior Neuropixels datasets.\n",
+    "expected_analyses": [
+      "hit rate, miss rate, false-alarm rate, correct-rejection rate",
+      "d-prime by image change pair",
+      "lick-latency distribution after change",
+      "per-image-pair detectability table"
+    ],
+    "family_id": "family.visual-change-detection",
+    "feedback": {
+      "feedback_type": "reward",
+      "penalty": "No active punishment beyond reward omission and trial abort on early licks.",
+      "reward": "Sweetened water for hits."
+    },
+    "id": "protocol.mouse-visual-change-detection-allen",
+    "interpretive_claims": [
+      {
+        "caveat": "The change-detection paradigm probes detection of a categorical transition. Reading it as a measure of generic perceptual sensitivity conflates change detection with novelty, image-set learning, and task-rule familiarity.\n",
+        "confidence": "high",
+        "label": "visual change detection",
+        "source": "ref.garrett-2023-visual-behavior"
+      }
+    ],
+    "name": "Allen Visual Behavior change detection",
+    "object_type": "protocol",
+    "open_questions": [
+      "Capture image-set membership (training vs. novel) in slice-level analyses.",
+      "Decide whether auto-rewarded trials should be retained or filtered in canonical rows.",
+      "Add explicit VBN neural/probe/channel/unit joins without mixing them into behavioral trial harmonization."
+    ],
+    "provenance": {
+      "created": "2026-04-27",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Initial concrete protocol record for the Allen Visual Behavior change detection task; harmonized via the Allen SDK BehaviorSession trial table. The protocol now has adapter-backed behavioral slices for both the Allen Visual Behavior 2P NWB source and the Visual Behavior Neuropixels NWB release, while neural and video joins remain future work.\n",
+      "updated": "2026-04-29"
+    },
+    "references": [
+      {
+        "citation": "Garrett, M. E. et al. Stimulus novelty uncovers coding diversity in visual cortical circuits. bioRxiv, 2023.\n",
+        "doi": "10.1101/2023.02.14.528085",
+        "id": "ref.garrett-2023-visual-behavior",
+        "url": "https://www.biorxiv.org/content/10.1101/2023.02.14.528085v1"
+      },
+      {
+        "citation": "Groblewski, P. A. et al. Characterization of learning, motivation, and visual perception in five transgenic mouse lines. Frontiers in Behavioral Neuroscience, 2020.\n",
+        "doi": "10.3389/fnbeh.2020.00104",
+        "id": "ref.groblewski-2020-vbo",
+        "url": "https://www.frontiersin.org/articles/10.3389/fnbeh.2020.00104/full"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "software": [
+      "Allen Institute behavior task control"
+    ],
+    "species": [
+      "mouse"
+    ],
+    "stimulus": {
+      "evidence_schedule": "A repeating sequence of identical natural-image flashes is shown until a pseudo-randomly scheduled change time, at which point one image is replaced by a different image drawn from the same image set. On catch trials the scheduled change does not occur and the mouse must withhold licking through the response window.\n",
+      "evidence_type": "change-detection",
+      "modalities": [
+        "visual"
+      ],
+      "notes": "The relevant operational evidence is a categorical image transition, not a scalar contrast or coherence value. Image identity, change time, and catch-trial flag are preserved as task variables.\n",
+      "units": [
+        "flashes",
+        "seconds"
+      ],
+      "variables": [
+        "pre-change image identity",
+        "change image identity",
+        "flashes since trial start",
+        "stimulus change indicator"
+      ]
+    },
+    "timing": [
+      {
+        "description": "One natural image is shown.",
+        "duration": "250 ms",
+        "name": "image_flash"
+      },
+      {
+        "description": "Gray screen between flashes.",
+        "duration": "500 ms",
+        "name": "gray_interval"
+      },
+      {
+        "description": "Response window after a scheduled change time.",
+        "duration": "response-limited",
+        "name": "change_window"
+      },
+      {
+        "contingent_on": "hit, miss, false alarm, or correct rejection",
+        "duration": "outcome-dependent",
+        "name": "feedback"
+      }
+    ],
+    "training": {
+      "notes": "Allen Visual Behavior follows a fixed multi-stage curriculum; only the final stage is treated as the protocol-of-record for harmonized analyses.\n",
+      "stages": [
+        "habituation",
+        "go-only static gratings",
+        "go-only natural images",
+        "full change detection"
+      ]
+    }
+  },
+  "mouse-visual-contrast-lick-gonogo": {
+    "aliases": [
+      "mouse go/no-go visual contrast discrimination",
+      "Pho parietal visual discrimination task"
+    ],
+    "apparatus": [
+      "head fixation",
+      "visual display",
+      "lick spout",
+      "water delivery"
+    ],
+    "choice": {
+      "action_mapping": "Licking reports the target or go stimulus; withholding lick reports the non-target or no-go condition.\n",
+      "alternatives": [
+        "lick",
+        "withhold lick"
+      ],
+      "choice_type": "go-no-go",
+      "response_modalities": [
+        "lick"
+      ]
+    },
+    "curation_status": "literature-curated",
+    "description": "Head-fixed mice view target and non-target visual stimuli, including variable-contrast conditions, and report the target class by licking or withholding a lick. This is a contrast-family boundary variant: it uses the same visual evidence axis as 2AFC contrast tasks but has asymmetric go/no-go response demands.\n",
+    "expected_analyses": [
+      "hit and false-alarm rates by contrast",
+      "contrast modulation of neural responses",
+      "task-engaged versus passive-viewing response comparison",
+      "target/non-target selectivity and choice selectivity"
+    ],
+    "family_id": "family.visual-2afc-contrast",
+    "feedback": {
+      "feedback_type": "mixed",
+      "penalty": "Protocol-specific penalty or lack of reward for false alarms and misses.",
+      "reward": "Water reward for correct licks on target trials."
+    },
+    "id": "protocol.mouse-visual-contrast-lick-gonogo",
+    "interpretive_claims": [
+      {
+        "caveat": "Go/no-go licking confounds response criterion and action initiation more than symmetric two-choice tasks, so operational response class must stay explicit.\n",
+        "confidence": "medium",
+        "label": "sensorimotor transformation",
+        "source": "ref.pho-2018-task-dependent-parietal"
+      }
+    ],
+    "name": "Mouse visual contrast lick go/no-go task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Decide whether go/no-go contrast tasks should remain in this family or move to a linked contrast-detection subfamily.",
+      "Search for reusable trial-level data from Pho et al. or closely matched go/no-go contrast datasets."
+    ],
+    "provenance": {
+      "created": "2026-04-30",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Added during the visual 2AFC/contrast depth pass as an explicitly marked go/no-go boundary variant for contrast-family coverage.\n",
+      "updated": "2026-04-30"
+    },
+    "references": [
+      {
+        "citation": "Pho GN, Goard MJ, Woodson J, Crawford B, Sur M. Task-dependent representations of stimulus and choice in mouse parietal cortex. Nature Communications, 2018.\n",
+        "doi": "10.1038/s41467-018-05012-y",
+        "id": "ref.pho-2018-task-dependent-parietal",
+        "url": "https://www.nature.com/articles/s41467-018-05012-y"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "species": [
+      "mouse"
+    ],
+    "stimulus": {
+      "evidence_schedule": "Visual target and non-target stimuli are presented during engaged task performance and passive-viewing controls; variable-contrast blocks probe sensitivity to stimulus strength.\n",
+      "evidence_type": "static",
+      "modalities": [
+        "visual"
+      ],
+      "units": [
+        "percent contrast"
+      ],
+      "variables": [
+        "contrast",
+        "target identity",
+        "task engagement condition"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Target or non-target visual stimulus is presented.",
+        "duration": "protocol-specific",
+        "name": "stimulus"
+      },
+      {
+        "description": "Mouse licks or withholds licking during the response epoch.",
+        "duration": "response-limited",
+        "name": "response"
+      },
+      {
+        "contingent_on": "hit, miss, false alarm, or correct rejection",
+        "duration": "outcome-dependent",
+        "name": "feedback"
+      }
+    ],
+    "training": {
+      "stages": [
+        "lick shaping",
+        "target/non-target discrimination",
+        "passive-viewing controls"
+      ]
+    }
+  },
+  "mouse-visual-contrast-port-2afc": {
+    "aliases": [
+      "Busse visual contrast detection task",
+      "freely moving mouse visual contrast 2AFC",
+      "central-port visual contrast detection"
+    ],
+    "apparatus": [
+      "behavioral choice box",
+      "central initiation port",
+      "left and right response ports",
+      "visual display",
+      "water delivery"
+    ],
+    "choice": {
+      "action_mapping": "After central-port trial initiation and stimulus presentation, choosing the left or right port reports the stimulus side.\n",
+      "alternatives": [
+        "left port",
+        "right port"
+      ],
+      "choice_type": "2afc",
+      "response_modalities": [
+        "nose-poke"
+      ]
+    },
+    "curation_status": "literature-curated",
+    "description": "Freely moving mice initiate each trial at a central port, view a lateralized visual contrast stimulus, and report the perceived stimulus side by choosing a left or right response port. This variant preserves the port-based action sequence and reward/history effects separately from head-fixed wheel tasks.\n",
+    "expected_analyses": [
+      "psychometric curve by signed contrast",
+      "contrast threshold by session and subject",
+      "port bias estimates",
+      "logistic choice model with stimulus, bias, and recent-history predictors"
+    ],
+    "family_id": "family.visual-2afc-contrast",
+    "feedback": {
+      "feedback_type": "mixed",
+      "notes": "Busse et al. modeled choice as a function of contrast, overall bias, and recent success/failure history; the protocol record keeps those analysis variables distinct from the visual stimulus variables.\n",
+      "penalty": "Error or timeout penalty for incorrect choices and task-rule violations.",
+      "reward": "Water reward for correct left or right port choices."
+    },
+    "id": "protocol.mouse-visual-contrast-port-2afc",
+    "interpretive_claims": [
+      {
+        "caveat": "Reward imbalance and recent trial outcomes can influence choices, so contrast sensitivity should not be interpreted from raw accuracy alone.\n",
+        "confidence": "high",
+        "label": "visual contrast detection",
+        "source": "ref.busse-2011-detection-visual-contrast"
+      }
+    ],
+    "name": "Mouse port-based visual contrast 2AFC task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Locate or request reusable trial-level data from Busse et al. or close replications.",
+      "Decide whether later port-based history-bias studies should share this protocol or get source-specific variants."
+    ],
+    "provenance": {
+      "created": "2026-04-30",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Added during the visual 2AFC/contrast depth pass to represent the classic port-based mouse contrast task separately from head-fixed wheel protocols.\n",
+      "updated": "2026-04-30"
+    },
+    "references": [
+      {
+        "citation": "Busse L, Ayaz A, Dhruv NT, Katzner S, Saleem AB, Scholvinck ML, Zaharia AD, Carandini M. The detection of visual contrast in the behaving mouse. Journal of Neuroscience, 2011.\n",
+        "doi": "10.1523/JNEUROSCI.6689-10.2011",
+        "id": "ref.busse-2011-detection-visual-contrast",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/21813694/"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "species": [
+      "mouse"
+    ],
+    "stimulus": {
+      "evidence_schedule": "A visual stimulus of variable contrast is presented on the left or right; signed contrast encodes both stimulus strength and side.\n",
+      "evidence_type": "static",
+      "modalities": [
+        "visual"
+      ],
+      "units": [
+        "percent contrast"
+      ],
+      "variables": [
+        "signed contrast",
+        "stimulus side"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Mouse initiates a trial by entering or holding the central port.",
+        "duration": "self-paced",
+        "name": "trial_initiation"
+      },
+      {
+        "description": "Lateralized visual contrast stimulus is presented.",
+        "duration": "protocol-specific",
+        "name": "visual_stimulus"
+      },
+      {
+        "description": "Mouse exits the central port and selects a side response port.",
+        "duration": "response-limited",
+        "name": "report"
+      },
+      {
+        "contingent_on": "choice correctness",
+        "duration": "outcome-dependent",
+        "name": "feedback"
+      }
+    ],
+    "training": {
+      "stages": [
+        "port shaping",
+        "side response training",
+        "contrast detection"
+      ]
+    }
+  },
+  "mouse-visual-contrast-wheel-temporal-regularities": {
+    "aliases": [
+      "Fritsche temporal-regularities visual wheel task",
+      "mouse visual choice-history regularity task",
+      "wheel visual 2AFC with repeating and alternating stimulus sequences"
+    ],
+    "apparatus": [
+      "head fixation",
+      "response wheel",
+      "visual display",
+      "water delivery"
+    ],
+    "choice": {
+      "action_mapping": "Wheel turns report the side of the visual stimulus; rare NoGo source rows are mapped to no-response because they are timeout/no-turn outcomes, not a rewarded third option.\n",
+      "alternatives": [
+        "left",
+        "right"
+      ],
+      "choice_type": "2afc",
+      "response_modalities": [
+        "wheel"
+      ]
+    },
+    "curation_status": "analysis-verified",
+    "dataset_ids": [
+      "dataset.fritsche-temporal-regularities-figshare"
+    ],
+    "description": "Head-fixed mice report the side of a lateralized visual grating by turning a response wheel while the experiment manipulates trial-to-trial stimulus-side transition probabilities across Neutral, Repeating, and Alternating environments. The protocol preserves sequence regularity as an operational task variable rather than treating it as an inferred history bias.\n",
+    "expected_analyses": [
+      "psychometric curve by contrast and sequence environment",
+      "choice-history kernels by Neutral, Repeating, and Alternating environments",
+      "reinforcement-learning model with current stimulus and previous-choice memory states",
+      "dopamine photometry alignment to behavior and model predictions"
+    ],
+    "family_id": "family.visual-2afc-contrast",
+    "feedback": {
+      "feedback_type": "mixed",
+      "notes": "Reward contingency is symmetric in the public behavior CSVs used by the MVP adapter.\n",
+      "penalty": "Error sound or timeout for incorrect choices.",
+      "reward": "Water reward for correct left/right choices."
+    },
+    "id": "protocol.mouse-visual-contrast-wheel-temporal-regularities",
+    "interpretive_claims": [
+      {
+        "caveat": "The atlas keeps environment, previous choices, reward outcomes, and model predictions separable so choice-history bias remains an analysis result, not a hidden task variable.\n",
+        "confidence": "medium",
+        "label": "adaptive choice-history bias under temporal regularities",
+        "source": "ref.fritsche-2024-temporal-regularities"
+      }
+    ],
+    "name": "Mouse visual contrast wheel task with temporal regularities",
+    "object_type": "protocol",
+    "open_questions": [
+      "Decide whether the IBL comparison CSV in the Figshare deposit should become a separate model-comparison artifact or remain covered by existing IBL slices.",
+      "Add explicit choice-history kernel extraction after the behavior-first canonical trial table is stable."
+    ],
+    "provenance": {
+      "created": "2026-04-30",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Added during the visual contrast depth pass after verifying a public Figshare deposit with generated behavior CSVs for the temporal-regularity experiments.\n",
+      "updated": "2026-04-30"
+    },
+    "references": [
+      {
+        "citation": "Fritsche M, Majumdar A, Strickland L, Liebana Garcia S, Bogacz R, Lak A. Temporal regularities shape perceptual decisions and striatal dopamine signals. Nature Communications, 2024.\n",
+        "doi": "10.1038/s41467-024-51393-8",
+        "id": "ref.fritsche-2024-temporal-regularities",
+        "url": "https://www.nature.com/articles/s41467-024-51393-8"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "species": [
+      "mouse"
+    ],
+    "stimulus": {
+      "evidence_schedule": "A grating appears on the left or right screen at one of several contrast levels. Across sessions, stimulus side follows neutral, repeating, or alternating sequence statistics.\n",
+      "evidence_type": "static",
+      "modalities": [
+        "visual"
+      ],
+      "units": [
+        "percent contrast"
+      ],
+      "variables": [
+        "contrast",
+        "stimulus side",
+        "stimulus-side transition probability",
+        "sequence environment"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Mouse holds the wheel still before stimulus onset.",
+        "duration": "protocol-specific",
+        "name": "quiescence"
+      },
+      {
+        "description": "Visual stimulus is presented while the mouse reports with the wheel.",
+        "duration": "response-limited",
+        "name": "stimulus_and_response"
+      },
+      {
+        "contingent_on": "choice correctness",
+        "duration": "outcome-dependent",
+        "name": "feedback"
+      }
+    ],
+    "training": {
+      "stages": [
+        "wheel shaping",
+        "visual discrimination",
+        "temporal-regularity environment exposure"
+      ]
+    }
+  },
+  "mouse-visual-contrast-wheel-unbiased": {
+    "aliases": [
+      "unbiased mouse choice world",
+      "mouse visual contrast wheel 2AFC"
+    ],
+    "apparatus": [
+      "head fixation",
+      "response wheel",
+      "visual display",
+      "water delivery"
+    ],
+    "choice": {
+      "action_mapping": "Wheel movement reports the side of the stimulus, usually by moving the stimulus toward a response position.\n",
+      "alternatives": [
+        "left",
+        "right"
+      ],
+      "choice_type": "2afc",
+      "response_modalities": [
+        "wheel"
+      ]
+    },
+    "curation_status": "data-linked",
+    "dataset_ids": [
+      "dataset.ibl-public-behavior"
+    ],
+    "description": "Head-fixed mice report the side of a visual contrast stimulus with a response wheel in sessions without an explicit blockwise prior manipulation. The task isolates contrast and stimulus side as the primary decision variables.\n",
+    "expected_analyses": [
+      "psychometric curve by contrast",
+      "chronometric curve by contrast",
+      "lapse, bias, and threshold estimates"
+    ],
+    "family_id": "family.visual-2afc-contrast",
+    "feedback": {
+      "feedback_type": "mixed",
+      "penalty": "Auditory or timeout penalty for incorrect choices, source-dependent.",
+      "reward": "Water reward for correct choices."
+    },
+    "id": "protocol.mouse-visual-contrast-wheel-unbiased",
+    "interpretive_claims": [
+      {
+        "confidence": "medium",
+        "label": "perceptual decision-making",
+        "source": "ref.ibl-2021-standardized"
+      }
+    ],
+    "name": "Mouse unbiased visual contrast wheel task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Decide whether this should be modeled as a variant of the IBL protocol or a separate record.",
+      "Decide how to represent the broader multi-session training trajectory beyond the current single-session slice."
+    ],
+    "provenance": {
+      "created": "2026-04-24",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Linked to the broad IBL public behavioral dataset because IBL public data include behavior acquired during the standardized training pipeline, and IBL tooling distinguishes `trainingChoiceWorld` from biased and ephys choice-world sessions. A first report-backed vertical slice now pins one public trainingChoiceWorld session from that archive. Burgess et al. was added as the protocol-methods anchor for head-fixed wheel visual psychophysics. Lak et al. 2020 eLife was added for reward-history analysis of a standard mouse visual contrast wheel task; the human component of that paper is motion, not contrast, and is not represented by this protocol.\n",
+      "updated": "2026-04-30"
+    },
+    "references": [
+      {
+        "citation": "Burgess CP et al. High-Yield Methods for Accurate Two-Alternative Visual Psychophysics in Head-Fixed Mice. Cell Reports, 2017.\n",
+        "doi": "10.1016/j.celrep.2017.08.047",
+        "id": "ref.burgess-2017-high-yield-visual-psychophysics",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5603732/"
+      },
+      {
+        "citation": "Lak A et al. Reinforcement biases subsequent perceptual decisions when confidence is low, a widespread behavioral phenomenon. eLife, 2020.\n",
+        "doi": "10.7554/eLife.49834",
+        "id": "ref.lak-2020-reinforcement-biases-confidence",
+        "url": "https://elifesciences.org/articles/49834"
+      },
+      {
+        "citation": "The International Brain Laboratory et al. Standardized and reproducible measurement of decision-making in mice. eLife, 2021.\n",
+        "doi": "10.7554/eLife.63711",
+        "id": "ref.ibl-2021-standardized",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8137147/"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "species": [
+      "mouse"
+    ],
+    "stimulus": {
+      "evidence_schedule": "A grating or similar visual stimulus appears on one side with contrast sampled across trials.\n",
+      "evidence_type": "static",
+      "modalities": [
+        "visual"
+      ],
+      "units": [
+        "percent contrast"
+      ],
+      "variables": [
+        "contrast",
+        "stimulus side"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Mouse holds the wheel still before stimulus onset.",
+        "duration": "protocol-specific",
+        "name": "quiescence"
+      },
+      {
+        "description": "Visual stimulus remains available during the response period.",
+        "duration": "response-limited",
+        "name": "stimulus_and_response"
+      },
+      {
+        "contingent_on": "choice correctness",
+        "duration": "outcome-dependent",
+        "name": "feedback"
+      }
+    ],
+    "training": {
+      "stages": [
+        "wheel shaping",
+        "visual discrimination"
+      ]
+    }
+  },
+  "mouse-visual-contrast-wheel-value-blocks": {
+    "aliases": [
+      "mouse visual confidence and reward value task",
+      "Lak visual contrast reward-value task",
+      "wheel visual 2AFC with value blocks"
+    ],
+    "apparatus": [
+      "head fixation",
+      "response wheel",
+      "visual displays",
+      "water delivery"
+    ],
+    "choice": {
+      "action_mapping": "Wheel turns report the side of the visual stimulus.\n",
+      "alternatives": [
+        "left",
+        "right"
+      ],
+      "choice_type": "2afc",
+      "response_modalities": [
+        "wheel"
+      ]
+    },
+    "curation_status": "literature-curated",
+    "description": "Head-fixed mice report the side of a lateralized visual contrast stimulus with a response wheel while reward value differs between sides and switches across blocks. This variant separates reward-value learning from the IBL stimulus-prior manipulation, even though both use wheel-based visual 2AFC behavior.\n",
+    "expected_analyses": [
+      "psychometric curve by contrast and reward-value block",
+      "choice updating after rewarded and unrewarded trials",
+      "reinforcement-learning model with sensory-confidence terms",
+      "neural correlates of pending reward and prediction error"
+    ],
+    "family_id": "family.visual-2afc-contrast",
+    "feedback": {
+      "feedback_type": "mixed",
+      "notes": "Reward-value block state is an operational task variable and should remain separate from sensory confidence or inferred decision confidence.\n",
+      "penalty": "Error feedback or timeout for incorrect choices, source-dependent.",
+      "reward": "Water reward for correct choices; reward magnitude or value can be larger on one side and switch across blocks.\n"
+    },
+    "id": "protocol.mouse-visual-contrast-wheel-value-blocks",
+    "interpretive_claims": [
+      {
+        "caveat": "Sensory contrast, reward value, and inferred confidence are separable quantities and should not be collapsed into a single evidence axis.\n",
+        "confidence": "medium",
+        "label": "reward-value learning under sensory uncertainty",
+        "source": "ref.lak-2020-dopaminergic-prefrontal"
+      }
+    ],
+    "name": "Mouse visual contrast wheel task with reward-value blocks",
+    "object_type": "protocol",
+    "open_questions": [
+      "Identify whether public trial-level behavioral tables exist for the Lak visual contrast reward-value studies.",
+      "Decide whether the cross-species Lak eLife analyses require separate human and mouse source-specific protocol records."
+    ],
+    "provenance": {
+      "created": "2026-04-30",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Added during the visual 2AFC/contrast depth pass to keep reward-value block manipulations separate from IBL-style stimulus-prior blocks. The source-availability pass narrowed this protocol to the Neuron reward-value paper; Lak et al. 2020 eLife remains linked to the standard wheel protocol because its mouse visual task does not add explicit value blocks.\n",
+      "updated": "2026-04-30"
+    },
+    "references": [
+      {
+        "citation": "Lak A et al. Dopaminergic and prefrontal basis of learning from sensory confidence and reward value. Neuron, 2020.\n",
+        "doi": "10.1016/j.neuron.2019.11.018",
+        "id": "ref.lak-2020-dopaminergic-prefrontal",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31859030/"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "species": [
+      "mouse"
+    ],
+    "stimulus": {
+      "evidence_schedule": "A sinusoidal grating or similar visual stimulus appears on the left or right monitor at variable contrast.\n",
+      "evidence_type": "static",
+      "modalities": [
+        "visual"
+      ],
+      "units": [
+        "percent contrast"
+      ],
+      "variables": [
+        "contrast",
+        "stimulus side"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Mouse holds the wheel still before stimulus onset.",
+        "duration": "protocol-specific",
+        "name": "quiescence"
+      },
+      {
+        "description": "Visual stimulus is presented while the mouse reports with the wheel.",
+        "duration": "response-limited",
+        "name": "stimulus_and_response"
+      },
+      {
+        "contingent_on": "choice correctness and current reward-value block",
+        "duration": "outcome-dependent",
+        "name": "feedback"
+      }
+    ],
+    "training": {
+      "stages": [
+        "wheel shaping",
+        "visual discrimination",
+        "reward-value block training"
+      ]
+    }
+  },
+  "mouse-visual-flash-rate-accumulation": {
+    "aliases": [
+      "Odoemene visual evidence accumulation task",
+      "unrestrained mouse flash-rate discrimination"
+    ],
+    "apparatus": [
+      "unrestrained operant chamber",
+      "center nose port",
+      "left and right response ports",
+      "visual display or LED stimulus",
+      "water delivery"
+    ],
+    "choice": {
+      "action_mapping": "Left and right response ports map to low-rate or high-rate choices, with contingency manipulations in some animals.\n",
+      "alternatives": [
+        "low rate",
+        "high rate"
+      ],
+      "choice_type": "2afc",
+      "response_modalities": [
+        "nose-poke"
+      ]
+    },
+    "curation_status": "adapter-ready",
+    "dataset_ids": [
+      "dataset.odoemene-visual-evidence-accumulation-cshl"
+    ],
+    "description": "Freely moving mice initiate a trial at a center port, view a one-second sequence of visual flashes, and choose between side ports according to whether the flash sequence was generated by a low-rate or high-rate process.\n",
+    "expected_analyses": [
+      "psychometric curve by flash rate",
+      "psychophysical kernel over stimulus time",
+      "brightness-manipulation sensitivity",
+      "previous-outcome and previous-choice effects"
+    ],
+    "family_id": "family.visual-pulse-evidence-accumulation",
+    "feedback": {
+      "feedback_type": "mixed",
+      "penalty": "Timeout after incorrect choices.",
+      "reward": "Water reward for correct choices."
+    },
+    "id": "protocol.mouse-visual-flash-rate-accumulation",
+    "interpretive_claims": [
+      {
+        "caveat": "Accumulation claims require preserving the pulse timing stream, not only aggregate flash rate.\n",
+        "confidence": "high",
+        "label": "evidence accumulation",
+        "source": "ref.odoemene-2018-visual-accumulation"
+      }
+    ],
+    "name": "Mouse visual flash-rate accumulation task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Verify one full local source-file run and record exact subject/session counts in generated artifacts.",
+      "Represent brightness manipulations as task variables rather than nuisance metadata."
+    ],
+    "provenance": {
+      "created": "2026-04-29",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Catalog-only protocol added from the CSHL repository record and open paper. Updated with an adapter-backed vertical slice contract after verifying the MATLAB raw choice field list in the CSHL metadata PDF.\n",
+      "updated": "2026-04-29"
+    },
+    "references": [
+      {
+        "citation": "Odoemene O, Pisupati S, Nguyen H, Churchland AK. Visual evidence accumulation guides decision-making in unrestrained mice. Journal of Neuroscience, 2018.\n",
+        "doi": "10.1523/JNEUROSCI.3478-17.2018",
+        "id": "ref.odoemene-2018-visual-accumulation",
+        "url": "https://www.jneurosci.org/content/38/47/10143"
+      },
+      {
+        "citation": "Odoemene O, Pisupati S, Nguyen H, Churchland AK. Dataset from: Visual evidence accumulation guides decision-making in unrestrained mice. CSHL Scientific Digital Repository, 2020.\n",
+        "doi": "10.14224/1.38944",
+        "id": "ref.odoemene-2020-cshl-dataset",
+        "url": "https://repository.cshl.edu/id/eprint/38944/"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "species": [
+      "mouse"
+    ],
+    "stimulus": {
+      "evidence_schedule": "Visual flashes occur over a 1000 ms stimulus period with trial-specific rate and timing; brightness manipulations are present in some sessions.\n",
+      "evidence_type": "pulse-train",
+      "modalities": [
+        "visual"
+      ],
+      "units": [
+        "flashes per second",
+        "seconds"
+      ],
+      "variables": [
+        "flash rate",
+        "flash timing",
+        "flash brightness",
+        "stimulus duration"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Mouse waits at the center port before and during stimulus delivery.",
+        "duration": "at least 1100 ms",
+        "name": "center_hold"
+      },
+      {
+        "description": "Visual evidence is delivered as a flash sequence.",
+        "duration": "1000 ms",
+        "name": "visual_flash_train"
+      },
+      {
+        "description": "Auditory cue signals the response epoch.",
+        "duration": "brief auditory event",
+        "name": "go_tone"
+      },
+      {
+        "description": "Mouse chooses a side port.",
+        "duration": "response-limited",
+        "name": "response"
+      }
+    ],
+    "training": {
+      "stages": [
+        "port initiation",
+        "low-rate versus high-rate discrimination",
+        "manipulation sessions"
+      ]
+    }
+  },
+  "mouse-whisker-object-recognition-lick": {
+    "aliases": [
+      "Rodgers tactile shape discrimination task",
+      "mouse whisker shape detection task"
+    ],
+    "apparatus": [
+      "head fixation",
+      "motorized object actuator",
+      "high-speed whisker video",
+      "lick pipes",
+      "water delivery"
+    ],
+    "choice": {
+      "action_mapping": "In shape-discrimination sessions, lick side maps to concave versus convex shape; in shape-detection sessions, lick side maps to object present versus catch/no-object trials.\n",
+      "alternatives": [
+        "left lick",
+        "right lick"
+      ],
+      "choice_type": "mixed",
+      "response_modalities": [
+        "lick"
+      ]
+    },
+    "curation_status": "adapter-ready",
+    "dataset_ids": [
+      "dataset.rodgers-whisker-object-recognition-dandi"
+    ],
+    "description": "Head-fixed mice actively sample a presented object with a trimmed row of whiskers and report either object shape or object presence with left/right lick responses. The linked dataset includes both shape-discrimination and shape-detection task rules.\n",
+    "expected_analyses": [
+      "accuracy by shape and object position",
+      "hit and false-alarm rates for detection sessions",
+      "touch-aligned choice and neural summaries",
+      "whisker-contact feature extraction"
+    ],
+    "family_id": "family.whisker-object-discrimination",
+    "feedback": {
+      "feedback_type": "reward",
+      "reward": "Water reward for correct lick choice."
+    },
+    "id": "protocol.mouse-whisker-object-recognition-lick",
+    "interpretive_claims": [
+      {
+        "caveat": "Shape identity, object presence, and active-contact kinematics are separable operational variables and should not be collapsed into a single tactile evidence scalar prematurely.\n",
+        "confidence": "high",
+        "label": "tactile object recognition",
+        "source": "ref.rodgers-2022-object-recognition"
+      }
+    ],
+    "name": "Mouse whisker object-recognition lick task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Decide whether detection and discrimination sessions should split into two concrete protocols after multi-session curation.",
+      "Extend the optional contact-count fields into a richer per-whisker kinematics schema."
+    ],
+    "provenance": {
+      "created": "2026-04-29",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Protocol added from the Scientific Data paper and DANDI release, then promoted to adapter-ready with a behavior-first NWB/CSV adapter. The adapter handles the dual detection/discrimination task rules and treats external video/contact data as optional task variables.\n",
+      "updated": "2026-04-29"
+    },
+    "references": [
+      {
+        "citation": "Rodgers CC. A detailed behavioral, videographic, and neural dataset on object recognition in mice. Scientific Data, 2022.\n",
+        "doi": "10.1038/s41597-022-01728-1",
+        "id": "ref.rodgers-2022-object-recognition",
+        "url": "https://www.nature.com/articles/s41597-022-01728-1"
+      },
+      {
+        "citation": "Rodgers CC. A detailed behavioral, videographic, and neural dataset on object recognition in mice. DANDI Archive, 2022.\n",
+        "doi": "10.48324/dandi.000231/0.220904.1554",
+        "id": "ref.rodgers-2022-dandi",
+        "url": "https://dandiarchive.org/dandiset/000231/0.220904.1554"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "software": [
+      "Arduino task control",
+      "Neurodata Without Borders"
+    ],
+    "species": [
+      "mouse"
+    ],
+    "stimulus": {
+      "evidence_schedule": "A motorized object moves into whisker range and stops at a close, medium, or far position; mice actively whisk to contact the shape before choosing.\n",
+      "evidence_type": "static",
+      "modalities": [
+        "somatosensory"
+      ],
+      "units": [
+        "categorical shape",
+        "position",
+        "seconds"
+      ],
+      "variables": [
+        "object shape",
+        "object presence",
+        "object position",
+        "whisker contact timing"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Object moves toward the whiskers.",
+        "duration": "approximately 2 s before response window",
+        "name": "object_approach"
+      },
+      {
+        "description": "Mouse actively whisks and may contact the object.",
+        "duration": "protocol-specific",
+        "name": "sampling"
+      },
+      {
+        "description": "Mouse reports the object class with a lick response.",
+        "duration": "response-limited",
+        "name": "response_window"
+      }
+    ],
+    "training": {
+      "stages": [
+        "shaping",
+        "shape detection or discrimination",
+        "neural recording sessions"
+      ]
+    }
+  },
+  "poisson-clicks-evidence-accumulation": {
+    "aliases": [
+      "auditory clicks accumulation task"
+    ],
+    "apparatus": [
+      "auditory speakers",
+      "response ports or buttons"
+    ],
+    "choice": {
+      "action_mapping": "Subjects choose the side with more clicks, using species- and apparatus- specific response actions.\n",
+      "alternatives": [
+        "left",
+        "right"
+      ],
+      "choice_type": "2afc",
+      "response_modalities": [
+        "nose-poke",
+        "button-press"
+      ]
+    },
+    "curation_status": "literature-curated",
+    "dataset_ids": [
+      "dataset.brody-lab-poisson-clicks-2009-2024"
+    ],
+    "description": "Subjects accumulate temporally distributed auditory click evidence and choose the side associated with the greater click count or rate over the stimulus period.\n",
+    "expected_analyses": [
+      "psychometric curve by click count difference",
+      "chronometric curve by evidence strength",
+      "evidence-kernel or reverse-correlation analysis",
+      "accumulation model fit"
+    ],
+    "family_id": "family.auditory-click-accumulation",
+    "feedback": {
+      "feedback_type": "mixed",
+      "penalty": "Error feedback or timeout depending on implementation.",
+      "reward": "Reward for correct side choices in animal implementations."
+    },
+    "id": "protocol.poisson-clicks-evidence-accumulation",
+    "interpretive_claims": [
+      {
+        "confidence": "high",
+        "label": "evidence accumulation",
+        "source": "ref.brunton-2013-clicks"
+      }
+    ],
+    "name": "Poisson clicks evidence accumulation task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Separate rat and human implementations after deeper source curation.",
+      "Add exact click-generation parameters from the original study."
+    ],
+    "protocol_scope": "template",
+    "provenance": {
+      "created": "2026-04-24",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Seed template protocol record for dynamic auditory evidence accumulation. Concrete species/apparatus-specific variants should point back to this record with `template_protocol_id`.\n",
+      "updated": "2026-04-24"
+    },
+    "references": [
+      {
+        "citation": "Brunton BW, Botvinick MM, Brody CD. Rats and humans can optimally accumulate evidence for decision-making. Science, 2013.\n",
+        "doi": "10.1126/science.1233912",
+        "id": "ref.brunton-2013-clicks",
+        "url": "https://www.science.org/doi/10.1126/science.1233912"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "species": [
+      "rat",
+      "human"
+    ],
+    "stimulus": {
+      "evidence_schedule": "Left and right click trains are generated over time, commonly with stochastic timing; accumulated evidence is the relative count or rate across sides.\n",
+      "evidence_type": "pulse-train",
+      "modalities": [
+        "auditory"
+      ],
+      "units": [
+        "clicks",
+        "clicks per second"
+      ],
+      "variables": [
+        "left click count",
+        "right click count",
+        "click count difference",
+        "click rate",
+        "stimulus duration"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Subject initiates the trial.",
+        "duration": "protocol-specific",
+        "name": "trial_initiation"
+      },
+      {
+        "description": "Auditory evidence unfolds over time.",
+        "duration": "protocol-specific",
+        "name": "click_train"
+      },
+      {
+        "description": "Subject reports the side with greater accumulated evidence.",
+        "duration": "protocol-specific",
+        "name": "response"
+      },
+      {
+        "contingent_on": "choice correctness",
+        "duration": "outcome-dependent",
+        "name": "feedback"
+      }
+    ],
+    "training": {
+      "notes": "Human and rat implementations require separate implementation records.",
+      "stages": [
+        "task shaping",
+        "accumulation training"
+      ]
+    }
+  },
+  "random-dot-motion-classic-macaque": {
+    "aliases": [
+      "macaque RDM coherence task"
+    ],
+    "apparatus": [
+      "visual display",
+      "eye tracking",
+      "fluid reward"
+    ],
+    "choice": {
+      "action_mapping": "Choice is mapped to one of two motion-direction alternatives, often using target-directed saccades after stimulus presentation.\n",
+      "alternatives": [
+        "direction A",
+        "direction B"
+      ],
+      "choice_type": "2afc",
+      "response_modalities": [
+        "saccade"
+      ]
+    },
+    "curation_status": "literature-curated",
+    "dataset_ids": [
+      "dataset.roitman-shadlen-rdm-pyddm"
+    ],
+    "description": "Non-human primates discriminate the net direction of motion in a stochastic random-dot display. Motion coherence controls sensory evidence strength and choices are commonly reported with eye movements or other trained responses.\n",
+    "expected_analyses": [
+      "psychometric curve by motion coherence",
+      "chronometric curve where reaction times are available",
+      "neurometric-psychometric comparison where neural recordings are available"
+    ],
+    "family_id": "family.random-dot-motion",
+    "feedback": {
+      "feedback_type": "reward",
+      "reward": "Juice or fluid reward for correct decisions in trained animals."
+    },
+    "id": "protocol.random-dot-motion-classic-macaque",
+    "interpretive_claims": [
+      {
+        "confidence": "high",
+        "label": "perceptual decision-making",
+        "source": "ref.britten-1992-motion"
+      }
+    ],
+    "name": "Classic macaque random-dot motion discrimination",
+    "object_type": "protocol",
+    "open_questions": [
+      "Decide whether human keyboard/button RDM tasks should be separate protocol records.",
+      "Add canonical parameter ranges only after source-specific curation."
+    ],
+    "provenance": {
+      "created": "2026-04-24",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Seed protocol representing the canonical RDM task family.",
+      "updated": "2026-04-24"
+    },
+    "references": [
+      {
+        "citation": "Britten KH, Shadlen MN, Newsome WT, Movshon JA. The analysis of visual motion: a comparison of neuronal and psychophysical performance. Journal of Neuroscience, 1992.\n",
+        "id": "ref.britten-1992-motion",
+        "url": "https://www.jneurosci.org/content/12/12/4745"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "species": [
+      "non-human-primate"
+    ],
+    "stimulus": {
+      "evidence_schedule": "A fraction of dots move coherently in one direction while the remainder move stochastically; coherence varies across trials.\n",
+      "evidence_type": "stochastic-motion",
+      "modalities": [
+        "visual"
+      ],
+      "units": [
+        "percent coherence",
+        "degrees"
+      ],
+      "variables": [
+        "motion coherence",
+        "motion direction",
+        "stimulus duration"
+      ]
+    },
+    "timing": [
+      {
+        "description": "Subject maintains fixation before stimulus onset.",
+        "duration": "protocol-specific",
+        "name": "fixation"
+      },
+      {
+        "description": "Random-dot motion evidence is shown.",
+        "duration": "fixed or response-dependent, protocol-specific",
+        "name": "motion_stimulus"
+      },
+      {
+        "description": "Subject reports the judged motion direction.",
+        "duration": "protocol-specific",
+        "name": "choice"
+      },
+      {
+        "contingent_on": "choice correctness",
+        "duration": "outcome-dependent",
+        "name": "feedback"
+      }
+    ],
+    "training": {
+      "notes": "Training details vary substantially across laboratories.",
+      "stages": [
+        "fixation training",
+        "motion discrimination training"
+      ]
+    }
+  },
+  "rat-auditory-clicks-nose-poke": {
+    "aliases": [
+      "rat Poisson clicks task",
+      "rat click accumulation task"
+    ],
+    "apparatus": [
+      "behavioral chamber",
+      "auditory speakers",
+      "nose-poke ports",
+      "water delivery"
+    ],
+    "choice": {
+      "action_mapping": "Nose-poke port identity maps to the chosen side.",
+      "alternatives": [
+        "left",
+        "right"
+      ],
+      "choice_type": "2afc",
+      "response_modalities": [
+        "nose-poke"
+      ]
+    },
+    "curation_status": "data-linked",
+    "dataset_ids": [
+      "dataset.brody-lab-poisson-clicks-2009-2024"
+    ],
+    "description": "Rats initiate trials and accumulate left and right auditory click evidence before reporting the side with more clicks using nose-poke response ports. Correct choices are rewarded and errors can be followed by timeout or error feedback.\n",
+    "expected_analyses": [
+      "psychometric curve by click count difference",
+      "chronometric curve by evidence strength",
+      "temporal weighting or evidence-kernel analysis",
+      "accumulation model fit"
+    ],
+    "family_id": "family.auditory-click-accumulation",
+    "feedback": {
+      "feedback_type": "mixed",
+      "penalty": "Error feedback or timeout for incorrect side choices.",
+      "reward": "Water reward for correct side choices."
+    },
+    "id": "protocol.rat-auditory-clicks-nose-poke",
+    "interpretive_claims": [
+      {
+        "confidence": "high",
+        "label": "evidence accumulation",
+        "source": "ref.brunton-2013-clicks"
+      }
+    ],
+    "name": "Rat auditory clicks nose-poke task",
+    "object_type": "protocol",
+    "open_questions": [
+      "Add exact port/timing conventions from source implementations."
+    ],
+    "protocol_scope": "concrete",
+    "provenance": {
+      "created": "2026-04-24",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Rat protocol variant linked to the Brody Lab parsed Poisson Clicks archive, which covers rats trained on this task family between 2009 and 2024. It is modeled as a concrete variant of the generic Poisson clicks template protocol.\n",
+      "updated": "2026-04-24"
+    },
+    "references": [
+      {
+        "citation": "Brunton BW, Botvinick MM, Brody CD. Rats and humans can optimally accumulate evidence for decision-making. Science, 2013.\n",
+        "doi": "10.1126/science.1233912",
+        "id": "ref.brunton-2013-clicks",
+        "url": "https://www.science.org/doi/10.1126/science.1233912"
+      }
+    ],
+    "schema_version": "0.1.0",
+    "species": [
+      "rat"
+    ],
+    "stimulus": {
+      "evidence_schedule": "Left and right Poisson click trains unfold over the stimulus period; gamma or related parameters can control evidence statistics.\n",
+      "evidence_type": "pulse-train",
+      "modalities": [
+        "auditory"
+      ],
+      "units": [
+        "clicks",
+        "clicks per second"
+      ],
+      "variables": [
+        "left click count",
+        "right click count",
+        "click count difference",
+        "click timing",
+        "stimulus duration"
+      ]
+    },
+    "template_protocol_id": "protocol.poisson-clicks-evidence-accumulation",
+    "timing": [
+      {
+        "description": "Rat initiates the trial.",
+        "duration": "protocol-specific",
+        "name": "trial_initiation"
+      },
+      {
+        "description": "Auditory evidence unfolds over time.",
+        "duration": "protocol-specific",
+        "name": "click_train"
+      },
+      {
+        "description": "Rat reports the side with more clicks.",
+        "duration": "response-limited",
+        "name": "response"
+      },
+      {
+        "contingent_on": "choice correctness",
+        "duration": "outcome-dependent",
+        "name": "feedback"
+      }
+    ],
+    "training": {
+      "stages": [
+        "port shaping",
+        "side discrimination",
+        "accumulation training"
+      ]
+    }
+  }
+}

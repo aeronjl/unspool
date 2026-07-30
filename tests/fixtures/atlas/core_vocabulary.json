@@ -1,0 +1,97 @@
+{
+  "choice_types": [
+    "2afc",
+    "go-no-go",
+    "detection",
+    "discrimination",
+    "mixed",
+    "confidence-report",
+    "wagering",
+    "rating",
+    "free-response"
+  ],
+  "curation_statuses": [
+    "stub",
+    "literature-curated",
+    "schema-complete",
+    "data-linked",
+    "adapter-ready",
+    "harmonized",
+    "analysis-verified",
+    "expert-reviewed"
+  ],
+  "curve_types": [
+    "psychometric",
+    "chronometric",
+    "accuracy_by_strength",
+    "hit_rate_by_condition",
+    "rt_distribution"
+  ],
+  "evidence_types": [
+    "static",
+    "dynamic",
+    "pulse-train",
+    "stochastic-motion",
+    "staircase",
+    "adaptive",
+    "block-prior",
+    "change-detection",
+    "mixed"
+  ],
+  "extraction_methods": [
+    "harmonized-pipeline",
+    "supplement-csv",
+    "figure-trace",
+    "table-transcription"
+  ],
+  "feedback_types": [
+    "reward",
+    "punishment",
+    "timeout",
+    "auditory-feedback",
+    "visual-feedback",
+    "none",
+    "mixed"
+  ],
+  "modalities": [
+    "visual",
+    "auditory",
+    "somatosensory",
+    "vestibular",
+    "olfactory",
+    "multisensory"
+  ],
+  "response_modalities": [
+    "wheel",
+    "lever",
+    "lick",
+    "saccade",
+    "button-press",
+    "touch",
+    "nose-poke",
+    "verbal",
+    "joystick",
+    "keyboard"
+  ],
+  "source_data_levels": [
+    "raw-trial",
+    "processed-trial",
+    "processed-session",
+    "figure-source-data",
+    "aggregate-only"
+  ],
+  "species": [
+    "mouse",
+    "rat",
+    "non-human-primate",
+    "human"
+  ],
+  "stratification_dimensions": [
+    "species",
+    "response_modality",
+    "training_stage",
+    "condition",
+    "subject_id",
+    "age_group"
+  ]
+}

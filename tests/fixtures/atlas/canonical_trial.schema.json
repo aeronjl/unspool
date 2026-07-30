@@ -1,0 +1,242 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "block_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Block Id"
+    },
+    "choice": {
+      "enum": [
+        "left",
+        "right",
+        "go",
+        "withhold",
+        "no-response",
+        "unknown"
+      ],
+      "title": "Choice",
+      "type": "string"
+    },
+    "correct": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correct"
+    },
+    "dataset_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Dataset Id"
+    },
+    "evidence_strength": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evidence Strength"
+    },
+    "evidence_units": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evidence Units"
+    },
+    "feedback": {
+      "default": "unknown",
+      "enum": [
+        "reward",
+        "error",
+        "none",
+        "unknown"
+      ],
+      "title": "Feedback",
+      "type": "string"
+    },
+    "prior_context": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Prior Context"
+    },
+    "protocol_id": {
+      "title": "Protocol Id",
+      "type": "string"
+    },
+    "response_time": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Response Time"
+    },
+    "response_time_origin": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Response Time Origin"
+    },
+    "reward": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reward"
+    },
+    "reward_units": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reward Units"
+    },
+    "session_id": {
+      "title": "Session Id",
+      "type": "string"
+    },
+    "source": {
+      "additionalProperties": true,
+      "title": "Source",
+      "type": "object"
+    },
+    "stimulus_modality": {
+      "title": "Stimulus Modality",
+      "type": "string"
+    },
+    "stimulus_side": {
+      "default": "unknown",
+      "enum": [
+        "left",
+        "right",
+        "none",
+        "unknown"
+      ],
+      "title": "Stimulus Side",
+      "type": "string"
+    },
+    "stimulus_units": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Stimulus Units"
+    },
+    "stimulus_value": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Stimulus Value"
+    },
+    "subject_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Subject Id"
+    },
+    "task_variables": {
+      "additionalProperties": true,
+      "title": "Task Variables",
+      "type": "object"
+    },
+    "training_stage": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Training Stage"
+    },
+    "trial_index": {
+      "title": "Trial Index",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "protocol_id",
+    "session_id",
+    "trial_index",
+    "stimulus_modality",
+    "choice"
+  ],
+  "title": "CanonicalTrial",
+  "type": "object"
+}

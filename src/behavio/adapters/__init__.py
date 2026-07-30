@@ -27,6 +27,11 @@ Concrete wrappers around third-party model packages live in :mod:`behavio.foreig
 sits above ``behavio.models`` because a wrapped model is a model.
 """
 
+from behavio.adapters.canonical import (
+    CanonicalTrialError,
+    CanonicalTrialSource,
+    study_from_canonical_trials,
+)
 from behavio.adapters.conformance import (
     AdapterConformance,
     AdapterConformanceError,
@@ -85,6 +90,8 @@ __all__ = [
     "DEFAULT_MISSING_VALUES",
     "AdapterConformance",
     "AdapterConformanceError",
+    "CanonicalTrialError",
+    "CanonicalTrialSource",
     "CheckStatus",
     "ColumnType",
     "ConformanceCheck",
@@ -117,6 +124,7 @@ __all__ = [
     "session_order_from_appearance",
     "session_order_from_column",
     "session_order_from_explicit",
+    "study_from_canonical_trials",
     "study_from_dandi",
     "study_from_ibl_one",
     "study_from_nwbfile",

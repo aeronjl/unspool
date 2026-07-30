@@ -9,15 +9,18 @@ one. So where a maintained package already does the arithmetic, Behavio wraps it
 than reimplementing it, and puts the falsification machinery around the result.
 
 `behavio.foreign` is where those wrappers live. Each is a real
-[`BehaviourEstimator`](reference/contracts.md): it flows through `evaluate_splits`,
-`compare_models`, `run_parameter_recovery` and `describe()` unchanged, keeps its dependency
-behind its own extra, and states its licence here before you install it.
+[`BehaviourEstimator`](reference/contracts.md) — or, when the package fits by sampling, a
+real [`PosteriorBehaviourEstimator`](reference/contracts.md): it flows through
+`evaluate_splits`, `compare_models`, `run_parameter_recovery` and `describe()` unchanged,
+keeps its dependency behind its own extra, and states its licence here before you install
+it.
 
 ## Compatibility matrix
 
 | Package | Extra | Status | Licence | Commercial use | Notes |
 | --- | --- | --- | --- | --- | --- |
 | [PyDDM](https://pyddm.readthedocs.io) 0.9.x | `pyddm` | **Shipped** — `behavio.foreign.pyddm.PyDDMDriftDiffusion` | MIT | Permitted | Adaptive Navarro–Fuss first-passage density; MIT like Behavio, so installing the extra changes nothing about your obligations |
+| [Bambi](https://bambinos.github.io/bambi/) 0.17.x / 0.19.x | `bambi` | **Shipped** — `behavio.foreign.bambi.BambiRegression` | MIT | Permitted | PyMC-backed mixed-effects regression, behind the *sampled* contract. MIT, and so is every package in its transitive closure. Two series because Bambi 0.18 raised its Python floor to 3.12 — see [the Python floor](#the-python-floor) |
 | [HSSM](https://lnccbrown.github.io/HSSM/) 0.4 | — | Not wrapped | **Brown University, all rights reserved**; use granted "for any purpose other than its incorporation into a commercial product or service" | **Prohibited** | Also wants a modern jax (its CUDA extras pin `jax>=0.7.0`); see the conflict below |
 | [hBayesDM](https://github.com/CCS-Lab/hBayesDM) 1.1 | — | Not wrapped | **GPL-3.0** | Permitted, but copyleft | Linking a GPL library into a distributed work makes that work GPL |
 | [cpm-toolbox](https://github.com/DevComPsy/cpm) 0.25 | — | Not wrapped | **AGPL-3.0** | Permitted, but network copyleft | AGPL reaches hosted services, not only distributed binaries. The unrelated PyPI package named `cpm` is MIT and is not this |
@@ -70,6 +73,24 @@ the same rule that keeps NWB, DANDI and ONE optional, applied to models.
 If Behavio ever adds a wrapper whose extra conflicts with an existing one, the conflict goes
 in the table above and the two extras are documented as mutually exclusive. There is no
 version of this problem that a library can solve for its users by resolving harder.
+
+## The Python floor
+
+Behavio supports Python 3.11. Parts of this ecosystem no longer do: **Bambi 0.18 raised its
+floor to 3.12 and moved to PyMC 6**, and PyMC 6 itself requires 3.12.
+
+A marker that installs nothing below 3.12 would make `pip install 'behavio[bambi]'` a silent
+no-op on the interpreter floor this package still claims, so the `bambi` extra splits the way
+the `bayesian` and `probabilistic` extras already do:
+
+| Python | Bambi | PyMC | ArviZ |
+| --- | --- | --- | --- |
+| 3.11 | 0.17.2–0.17.x | 5.27–5.x | 0.22–1.1 |
+| ≥ 3.12 | 0.19.x | 6.x | ≥ 1.2 |
+
+The wrapper is written against both series and the accepted set is enforced on import.
+Only the 3.12 row is exercised by the default test run, because that is the interpreter this
+repository pins; a 3.11 checkout runs the same suite against the older pair.
 
 ## PyDDM
 
@@ -179,6 +200,170 @@ Differential evolution is stochastic. `seed` is a declared field, it is passed t
 it is part of the model's `signature` — two fits that differ only in seed are two different
 procedures and do not share a fingerprint. Fitting the same study twice with the same
 configuration gives bit-identical estimates.
+
+## Bambi
+
+```bash
+uv sync --extra bambi          # or: python -m pip install -e ".[bambi]"
+```
+
+```python
+from behavio import BiasOnly, compare_models, forward_session_splits
+from behavio.foreign.bambi import BambiRegression
+
+model = BambiRegression("choice ~ stimulus + (1|subject)", chains=4, draws=1000, seed=0)
+
+report = compare_models(
+    {"bambi": model, "bias": BiasOnly()},
+    study,
+    forward_session_splits(study),
+)
+```
+
+`BambiRegression` is a
+[`PosteriorBehaviourEstimator`](reference/contracts.md), not a `BehaviourEstimator`: it has
+`sample` instead of `fit`, returns a `PosteriorResult`, and declares the `point_summary`
+projection that lets a sampled model enter the frequentist machinery. Every fold is sampled,
+audited by `audit_posterior`, and projected; a fold whose posterior fails its convergence
+audit makes the whole candidate ineligible, exactly as a non-convergent optimizer does.
+
+### Why wrap it
+
+Not for the formula — Behavio has [its own](design-formulas.md). For three things Behavio does not
+have and is not going to grow:
+
+- **Crossed and nested random effects.** `behavio.compose.hierarchical` pools over exactly
+  one grouping. `(1|subject) + (1|stimulus_id)` and `(1|subject/session)` are Bambi's.
+- **Splines and other stateful basis transforms.** `bs(x, df=5)`, `scale(x)`, `center(x)`
+  are fitted on the training frame and *reused* on new rows from stored transform state,
+  which is the fold boundary `AGENTS.md` demands. The test suite verifies that
+  behaviourally: a test frame whose covariate is on a wildly different scale is not
+  recentred onto itself.
+- **A proper multi-alternative choice family.** `family="categorical"` scores a simplex over
+  declared levels, through `CategoricalPrediction`.
+
+### The formula collision
+
+`BambiRegression.formula` is **Bambi's own string, passed through verbatim.** Behavio's
+formula language does not apply to it and nothing translates between the two. The refusal is
+deliberate and it is not symmetrical:
+
+- *Downward*, a `DesignSpec` is one fixed matrix with no varying-effect representation, so
+  `(1|subject)` and `bs(x, df=5)` have no image in it. Translating Bambi's formula into
+  Behavio's would drop exactly the terms the wrapper exists for.
+- *Upward*, Behavio's `lag()` and `kernel()` are **sequence-aware**: they read trial order
+  and reset at subject and session boundaries. `formulae` has no notion of trial order, so
+  `lag(choice, 1)` has no Bambi formula that means the same thing — only a materialised
+  column that Behavio computes and a Bambi formula then names.
+
+To fit history-dependent features with this wrapper, add them to the `Study` as columns
+**inside the training fold** and name them in the Bambi formula. The wrapper will not do it
+for you, because doing it for you would mean computing them across a fold boundary.
+
+### Priors
+
+`priors={"stimulus": PriorSpec.normal(0.0, 1.0)}` — Behavio's own `PriorSpec` (`normal`,
+`half-normal`, `beta`, `uniform`), keyed by Bambi term name and translated to the
+identically parameterised `bambi.Prior`. The correspondence is published as
+`prior_correspondence()`. Everything richer is delegated to Bambi and stated rather than
+approximated:
+
+- A prior on a **group-specific** term is refused. Bambi spells one as a `Normal` whose
+  `sigma` is itself a `Prior`; a flat `PriorSpec` can only express a `Normal` with a *fixed*
+  sigma, which is not a weaker hierarchical prior but a model with no pooling at all.
+- `bambi.Prior` objects are not accepted: they are mutable and carry no JSON-safe form, so a
+  fit using one could not be written into a signature or an evidence bundle.
+
+### Where Bambi strains the contract
+
+**Bambi retains no grouping variable, so blocked LOO cannot run on its output.** A Bambi
+`InferenceData` has `posterior`, `sample_stats`, `observed_data` and `log_likelihood` and no
+`constant_data` at all, so `psis_loo(result, block="trial_subject")` has nothing to resolve
+and the only reachable estimand is leave-one-*trial*-out — the one
+[`behavio.posterior.loo`](reference/posterior.md) opens by calling wrong for a multi-subject
+design. The wrapper writes `trial_subject`, `trial_session`, `trial_in_session` and
+`trial_session_order` into `constant_data`, exactly as the first-party PyMC backend does, and
+`BLOCKING_VARIABLES` names them. It also renames Bambi's `__obs__` dimension to `trial`, so a
+Pareto-k target reads `choice[trial=17]`.
+
+**Default priors are a function of the training fold.** With `auto_scale=True` (Bambi's
+default and the wrapper's) the prior scales are computed from the data handed to
+`bambi.Model`, so each fold of a prospective evaluation fits a slightly different model and
+the signature cannot say so. `auto_scale` is a declared field, `describe()` reports the
+situation as a warning, and the *realised* prior specification is recorded on every posterior
+as `prior_specification`. Set `auto_scale=False` for one model across folds.
+
+**A random effect can only be predicted for groups the fit saw.** A splitter that holds
+subjects fixed lets `(1|subject)` predict out of fold; `(1|session)` cannot, because the test
+fold's sessions are new levels whose offsets were never estimated. The wrapper refuses by
+default, naming the unseen levels; `sample_new_groups=True` draws them from the hyperprior
+instead, which is a prior-predictive claim about a new group rather than a held-out
+prediction about a known one.
+
+**A subject-level random effect needs the cohort splitter.** `forward_session_splits` builds
+one fold *per subject*, so a `(1|subject)` model fitted inside one of them has a single group
+level and its variance is not identified. Use
+`cohort_forward_session_splits`, which keeps every subject in every fold.
+`describe()` reports the one-level case as a `single_group_level` warning before any sampler
+starts, and a fold that samples it anyway will usually fail its own R-hat gate — which is the
+gate working, not the wrapper failing.
+
+**A sampled model's parameter vector is a function of its data.** `parameter_names` and
+`posterior_parameter_labels` are study-independent properties, and for a mixed-effects model
+they cannot be: the coordinates of `1|subject`, the columns of `C(condition)` and the basis
+of `bs(x, df=5)` are facts about the data. `BambiRegression` therefore does not claim
+`GenerativePosteriorBehaviourModel`. `model.bind(design)` returns a
+`DesignBoundBambiRegression` that does — and since `run_parameter_recovery` already takes the
+design as its second argument, binding states something true rather than working around
+something false:
+
+```python
+bound = model.bind(design)
+report = run_parameter_recovery(bound, design, [truth], seed=0)
+```
+
+`bound.simulate` draws the outcome from **Bambi's own family**, by writing the supplied values
+into a one-draw posterior and calling `predict(kind="response")`. Nothing about the family's
+random variate is reimplemented, so recovery tests the inference rather than two
+implementations of one likelihood.
+
+**Bambi 0.19 cannot compute an out-of-sample log likelihood for the categorical family.**
+`compute_log_likelihood(idata, data=new_rows)` raises a PyTensor broadcast error there. The
+wrapper does not use that method at all: for a finite-support family the pointwise predictive
+density *is* the observed entry of the draw-averaged response simplex, which is one graph
+evaluation rather than two and makes `predict` and `pointwise_log_prob` the same computation.
+That the result is Bambi's own likelihood is checked, per row, against the `log_likelihood`
+group Bambi computed during sampling.
+
+### The conformance harness has no sampled entry point
+
+[`check_behaviour_estimator`](reference/data-adapters.md) is written against
+`BehaviourEstimator`: it calls `model_capabilities`, then `model.fit(study)`, then
+`model.predict(study, fit)`. A `PosteriorBehaviourEstimator` has `sample` and takes a
+`PosteriorResult` where the harness passes a `FitResult`, so **no sampled model can be run
+through the harness without an adapter**, and that includes the two leakage checks and the
+filtered/smoothed check — the ones a wrapper most needs.
+
+`tests/test_bambi_model.py` writes that adapter and runs the harness against it. Nothing is
+faked: `fit` runs the real sampler, the real convergence audit and the real `point_summary`,
+and returns a `FitResult` subclass that also carries the posterior. Every check passes, and
+exactly one is skipped for a stated reason — a bernoulli regression predicts no continuous
+outcome, so there is no density to reconcile against the choice probabilities. The adapter
+lives in the test rather than in the wrapper on purpose: the gap is in the harness.
+
+### What is not wrapped, and why it is Behavio's gap
+
+`SUPPORTED_FAMILIES` is `("bernoulli", "categorical")`. The limit is Behavio's prediction
+vocabulary, not Bambi's:
+
+- `gaussian`, `t`, `gamma`, `wald` predict a continuous outcome, and reaching
+  `DensityPrediction` from them would mean tabulating each family's density in the wrapper —
+  re-hand-rolling exactly what wrapping a maintained package is supposed to stop.
+- `poisson` and `negativebinomial` have **no shape at all**: `ModelPrediction` names nothing
+  for an unbounded count, and truncating one to a categorical simplex would be a modelling
+  decision disguised as a data structure.
+
+Both are worth fixing in the contract before they are worked around in a wrapper.
 
 ## Filtered versus smoothed
 

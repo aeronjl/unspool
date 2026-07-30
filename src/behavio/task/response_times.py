@@ -25,10 +25,27 @@ class ResponseTimeUnit(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class ResponseTimeSpec:
-    """The column and physical unit of one response-time observation."""
+    """The column, physical unit, and clock origin of one response-time observation.
+
+    ``origin`` names the event the clock started at, as the source describes it --
+    ``"response_times - stimOn_times"``, ``"seconds from evidence onset to button
+    response"``. It is deliberately free text, because the event is a fact about one
+    apparatus rather than a member of any closed set, and a controlled vocabulary that
+    forced ``"stimulus onset"`` onto a go-cue-locked measurement would be worse than
+    silence.
+
+    It is here because it is the one thing a trials table cannot carry and a downstream
+    reader cannot recover. A column called ``response_time`` may hold a decision duration,
+    a movement latency, or an absolute event timestamp; NWB has no field that distinguishes
+    them, so two files that look identical can mean different things and a pooled analysis
+    across them is not comparing like with like. A declaration made through
+    :mod:`behavio.task.ontology` must supply it; a hand-written specification may leave it
+    ``None``, which records that nobody said, rather than asserting a default.
+    """
 
     column: str = "response_time"
     unit: ResponseTimeUnit = ResponseTimeUnit.SECONDS
+    origin: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.column, str) or not self.column:
@@ -36,6 +53,10 @@ class ResponseTimeSpec:
         if self.column in REQUIRED_COLUMNS:
             raise ValueError("response-time column cannot replace a required Study column")
         object.__setattr__(self, "unit", ResponseTimeUnit(self.unit))
+        if self.origin is not None and (
+            not isinstance(self.origin, str) or not self.origin.strip()
+        ):
+            raise ValueError("response-time origin must be a non-empty string or None")
 
     def read(self, study: Study) -> ResponseTimes:
         """Validate and convert one study column to seconds."""

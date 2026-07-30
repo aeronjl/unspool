@@ -8,10 +8,11 @@ put the falsification machinery around it. This package is where those wrappers 
 
 Every wrapper here:
 
-- satisfies :class:`behavio.contracts.BehaviourEstimator` (and
-  :class:`~behavio.contracts.GenerativeBehaviourModel` when the foreign package can
-  simulate), so it flows through ``evaluate_splits``, ``compare_models``,
-  ``run_parameter_recovery`` and ``describe()`` unchanged;
+- satisfies :class:`behavio.contracts.BehaviourEstimator` -- or, when the foreign package
+  fits by sampling rather than by optimization,
+  :class:`behavio.contracts.PosteriorBehaviourEstimator` -- and the generative counterpart
+  when the package can simulate, so it flows through ``evaluate_splits``,
+  ``compare_models``, ``run_parameter_recovery`` and ``describe()`` unchanged;
 - keeps its dependency behind a per-model extra and names that extra in the error a user
   meets without it, so ``import behavio`` never requires a foreign solver;
 - maps the foreign parameter names onto Behavio's explicitly, because recovery is worthless
@@ -29,15 +30,20 @@ contracts' implementers and depends on no third-party package at all.
 Importing this package imports no wrapper. Reach a wrapper by its own module::
 
     from behavio.foreign.pyddm import PyDDMDriftDiffusion
+    from behavio.foreign.bambi import BambiRegression
 """
 
 from behavio.foreign._optional import (
+    BAMBI_EXTRA,
+    BAMBI_SERIES,
     PYDDM_EXTRA,
     PYDDM_SERIES,
     ForeignPackageUnavailableError,
 )
 
 __all__ = [
+    "BAMBI_EXTRA",
+    "BAMBI_SERIES",
     "PYDDM_EXTRA",
     "PYDDM_SERIES",
     "ForeignPackageUnavailableError",

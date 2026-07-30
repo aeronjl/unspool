@@ -213,6 +213,13 @@ Source names alone do not establish units or event semantics: for example, an NW
 `response_time` may be an absolute event timestamp rather than a decision duration. Map
 such fields to an unambiguous name before configuring a model that expects response times.
 
+Renaming makes the field unambiguous inside one analysis; it does not record *what* the
+number is, so a second reader is back where the first one started. `ResponseTimeSpec` takes
+an `origin` for exactly this — `ResponseTimeSpec(origin="response_times - stimOn_times")` —
+naming the event the clock started at. NWB has no field that carries it, which is why two
+files that look identical can mean different things; see
+[the task ontology](task-ontology.md), where a declared protocol is required to supply one.
+
 Several sessions can be assembled with `read_nwb_sessions()`. Every
 `NWBSessionSource` retains its own explicit mapping, and all resulting sessions must have
 the same columns. Input file order is preserved; chronological order remains available

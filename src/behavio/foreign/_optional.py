@@ -1,4 +1,4 @@
-"""Lazy, version-checked access to the optional PyDDM dependency.
+"""Lazy, version-checked access to the optional foreign-model dependencies.
 
 Nothing in :mod:`behavio.foreign` imports a third-party model package at module scope, for
 the same reason :mod:`behavio.plot` does not import matplotlib: ``import behavio`` and every
@@ -12,6 +12,14 @@ minimum. A wrapper's :attr:`signature` is a scientific fingerprint, and a solver
 numerics changed is not the same model even under the same parameters, so the supported
 series is written into the signature and enforced on import. Patch releases within the
 series are accepted and recorded in the fit's diagnostics, where provenance belongs.
+
+One wrapper supports *two* series rather than one. Bambi 0.17 is the last release that runs
+on Python 3.11 and it pairs with PyMC 5; Bambi 0.18 and later require Python 3.12 and PyMC 6.
+Behavio supports 3.11, so refusing the older series would make the extra a silent no-op on
+the interpreter floor the package still claims. Both are therefore accepted, and unlike
+PyDDM's the accepted set is *not* written into the model's signature -- see
+:attr:`behavio.foreign.bambi.BambiRegression.signature` for the argument, which turns on a
+sampler being an approximation to a declared target rather than being the model.
 """
 
 from __future__ import annotations
@@ -35,6 +43,27 @@ release that changed nothing scientific, and could not be computed at all withou
 
 _INSTALL_HINT: Final = (
     f"This wrapper requires PyDDM: install it with `pip install 'behavio[{PYDDM_EXTRA}]'`."
+)
+
+BAMBI_EXTRA: Final = "bambi"
+"""Name of the optional dependency group that installs Bambi."""
+
+BAMBI_SERIES: Final = ("0.17", "0.18", "0.19")
+"""The Bambi minor series this wrapper is written and tested against.
+
+Pinned as ``bambi>=0.17.2,<0.18`` below Python 3.12 and ``bambi>=0.19,<0.20`` at or above
+it, because Bambi 0.18 raised its own floor to 3.12 and moved to PyMC 6. ``0.18`` is
+accepted here but is not installed by either pin: it is the same API as ``0.19`` and
+refusing an environment that already has it would be pedantry rather than a safeguard.
+
+Unlike :data:`PYDDM_SERIES` this does *not* appear in the wrapper's signature. See
+:attr:`behavio.foreign.bambi.BambiRegression.signature`.
+"""
+
+_BAMBI_INSTALL_HINT: Final = (
+    f"This wrapper requires Bambi: install it with `pip install 'behavio[{BAMBI_EXTRA}]'`. "
+    "On Python 3.11 that installs Bambi 0.17.x with PyMC 5; on 3.12 and newer it installs "
+    "Bambi 0.19.x with PyMC 6."
 )
 
 
@@ -70,6 +99,31 @@ def pyddm_version() -> str:
     return str(getattr(require_pyddm(), "__version__", "unknown"))
 
 
+def require_bambi() -> Any:
+    """Return the imported ``bambi`` module, or explain how to install a usable one."""
+
+    try:
+        bambi = importlib.import_module("bambi")
+    except ImportError as error:
+        raise ForeignPackageUnavailableError(_BAMBI_INSTALL_HINT) from error
+    series = _series(bambi)
+    if series is not None and series not in BAMBI_SERIES:
+        raise ForeignPackageUnavailableError(
+            f"Behavio's Bambi wrapper is written against Bambi {', '.join(BAMBI_SERIES)} and "
+            f"found {getattr(bambi, '__version__', 'an unknown version')}. A different series "
+            "may build a different model from the same formula -- Bambi's default priors are "
+            "part of its release, not of the formula -- so it is refused rather than used "
+            f"silently: `pip install 'behavio[{BAMBI_EXTRA}]'` installs a supported one."
+        )
+    return bambi
+
+
+def bambi_version() -> str:
+    """Return the exact installed Bambi version, for a posterior's provenance record."""
+
+    return str(getattr(require_bambi(), "__version__", "unknown"))
+
+
 def _series(module: Any) -> str | None:
     raw = str(getattr(module, "__version__", ""))
     parts: list[str] = []
@@ -82,9 +136,13 @@ def _series(module: Any) -> str | None:
 
 
 __all__ = [
+    "BAMBI_EXTRA",
+    "BAMBI_SERIES",
     "PYDDM_EXTRA",
     "PYDDM_SERIES",
     "ForeignPackageUnavailableError",
+    "bambi_version",
     "pyddm_version",
+    "require_bambi",
     "require_pyddm",
 ]

@@ -1,0 +1,523 @@
+{
+  "$defs": {
+    "ChoiceSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "action_mapping": {
+          "title": "Action Mapping",
+          "type": "string"
+        },
+        "alternatives": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Alternatives",
+          "type": "array"
+        },
+        "choice_type": {
+          "title": "Choice Type",
+          "type": "string"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        },
+        "response_modalities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Response Modalities",
+          "type": "array"
+        }
+      },
+      "required": [
+        "choice_type",
+        "alternatives",
+        "response_modalities",
+        "action_mapping"
+      ],
+      "title": "ChoiceSpec",
+      "type": "object"
+    },
+    "FeedbackSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "feedback_type": {
+          "title": "Feedback Type",
+          "type": "string"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        },
+        "penalty": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Penalty"
+        },
+        "reward": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reward"
+        }
+      },
+      "required": [
+        "feedback_type"
+      ],
+      "title": "FeedbackSpec",
+      "type": "object"
+    },
+    "InterpretationClaim": {
+      "additionalProperties": false,
+      "properties": {
+        "caveat": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caveat"
+        },
+        "confidence": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Confidence",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "source",
+        "confidence"
+      ],
+      "title": "InterpretationClaim",
+      "type": "object"
+    },
+    "Phase": {
+      "additionalProperties": false,
+      "properties": {
+        "contingent_on": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Contingent On"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "duration": {
+          "title": "Duration",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "duration"
+      ],
+      "title": "Phase",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "created": {
+          "format": "date",
+          "title": "Created",
+          "type": "string"
+        },
+        "curators": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Curators",
+          "type": "array"
+        },
+        "source_notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Notes"
+        },
+        "updated": {
+          "format": "date",
+          "title": "Updated",
+          "type": "string"
+        }
+      },
+      "required": [
+        "created",
+        "updated"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "Reference": {
+      "additionalProperties": false,
+      "properties": {
+        "citation": {
+          "title": "Citation",
+          "type": "string"
+        },
+        "doi": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Doi"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        }
+      },
+      "required": [
+        "id",
+        "citation"
+      ],
+      "title": "Reference",
+      "type": "object"
+    },
+    "StimulusSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_schedule": {
+          "title": "Evidence Schedule",
+          "type": "string"
+        },
+        "evidence_type": {
+          "title": "Evidence Type",
+          "type": "string"
+        },
+        "modalities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Modalities",
+          "type": "array"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        },
+        "units": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Units",
+          "type": "array"
+        },
+        "variables": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Variables",
+          "type": "array"
+        }
+      },
+      "required": [
+        "modalities",
+        "variables",
+        "evidence_type",
+        "evidence_schedule"
+      ],
+      "title": "StimulusSpec",
+      "type": "object"
+    },
+    "TrainingSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        },
+        "stages": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Stages",
+          "type": "array"
+        }
+      },
+      "title": "TrainingSpec",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "aliases": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Aliases",
+      "type": "array"
+    },
+    "apparatus": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Apparatus",
+      "type": "array"
+    },
+    "choice": {
+      "$ref": "#/$defs/ChoiceSpec"
+    },
+    "curation_status": {
+      "title": "Curation Status",
+      "type": "string"
+    },
+    "dataset_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Dataset Ids",
+      "type": "array"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "expected_analyses": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Expected Analyses",
+      "type": "array"
+    },
+    "family_id": {
+      "title": "Family Id",
+      "type": "string"
+    },
+    "feedback": {
+      "$ref": "#/$defs/FeedbackSpec"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "implementation_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Implementation Ids",
+      "type": "array"
+    },
+    "interpretive_claims": {
+      "items": {
+        "$ref": "#/$defs/InterpretationClaim"
+      },
+      "title": "Interpretive Claims",
+      "type": "array"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "object_type": {
+      "const": "protocol",
+      "title": "Object Type",
+      "type": "string"
+    },
+    "open_questions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Open Questions",
+      "type": "array"
+    },
+    "protocol_scope": {
+      "default": "concrete",
+      "enum": [
+        "template",
+        "concrete"
+      ],
+      "title": "Protocol Scope",
+      "type": "string"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "references": {
+      "items": {
+        "$ref": "#/$defs/Reference"
+      },
+      "title": "References",
+      "type": "array"
+    },
+    "schema_version": {
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "software": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Software",
+      "type": "array"
+    },
+    "species": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Species",
+      "type": "array"
+    },
+    "stimulus": {
+      "$ref": "#/$defs/StimulusSpec"
+    },
+    "template_protocol_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Template Protocol Id"
+    },
+    "timing": {
+      "items": {
+        "$ref": "#/$defs/Phase"
+      },
+      "title": "Timing",
+      "type": "array"
+    },
+    "training": {
+      "$ref": "#/$defs/TrainingSpec"
+    }
+  },
+  "required": [
+    "object_type",
+    "schema_version",
+    "id",
+    "family_id",
+    "name",
+    "description",
+    "species",
+    "curation_status",
+    "stimulus",
+    "choice",
+    "timing",
+    "feedback",
+    "references",
+    "provenance"
+  ],
+  "title": "Protocol",
+  "type": "object"
+}

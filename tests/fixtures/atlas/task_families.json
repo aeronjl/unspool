@@ -1,0 +1,409 @@
+{
+  "audiovisual-spatial-decision": {
+    "aliases": [
+      "audiovisual localization decision",
+      "multisensory spatial choice"
+    ],
+    "canonical_variables": [
+      "visual contrast",
+      "auditory azimuth",
+      "cue congruence",
+      "modality condition"
+    ],
+    "common_choice_types": [
+      "2afc",
+      "discrimination"
+    ],
+    "common_response_modalities": [
+      "wheel",
+      "lick",
+      "button-press"
+    ],
+    "curation_status": "literature-curated",
+    "description": "Sensory-guided tasks in which visual and auditory cues specify spatial alternatives, either alone or together, and the subject reports the inferred side or location. The family keeps modality, spatial location, cue reliability, and cue conflict as operational variables rather than treating multisensory integration as a single latent construct.\n",
+    "id": "family.audiovisual-spatial-decision",
+    "modalities": [
+      "visual",
+      "auditory",
+      "multisensory"
+    ],
+    "name": "Audiovisual spatial decision",
+    "notes": "Future harmonization should encode modality-specific evidence values and cue congruence explicitly so additive and interaction models can be compared.\n",
+    "object_type": "task_family",
+    "provenance": {
+      "created": "2026-04-29",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Added during the dataset coverage expansion to represent open audiovisual decision datasets that remain sensory-guided but are not reducible to a unisensory contrast, motion, or click-count axis.\n",
+      "updated": "2026-04-29"
+    },
+    "references": [
+      {
+        "citation": "Coen P, Sit TPH, Wells MJ, Carandini M, Harris KD. Mouse frontal cortex mediates additive multisensory decisions. Neuron, 2023.\n",
+        "doi": "10.1016/j.neuron.2023.05.008",
+        "id": "ref.coen-2023-audiovisual-decisions",
+        "url": "https://www.cell.com/neuron/fulltext/S0896-6273(23)00381-1"
+      }
+    ],
+    "schema_version": "0.1.0"
+  },
+  "auditory-click-accumulation": {
+    "aliases": [
+      "Poisson clicks",
+      "auditory clicks task"
+    ],
+    "canonical_variables": [
+      "click count difference",
+      "click rate",
+      "evidence duration"
+    ],
+    "common_choice_types": [
+      "2afc",
+      "discrimination"
+    ],
+    "common_response_modalities": [
+      "nose-poke",
+      "lever",
+      "button-press"
+    ],
+    "curation_status": "literature-curated",
+    "description": "Dynamic auditory evidence-accumulation tasks in which subjects compare temporally distributed click trains or pulse counts across alternatives.\n",
+    "id": "family.auditory-click-accumulation",
+    "modalities": [
+      "auditory"
+    ],
+    "name": "Auditory click evidence accumulation",
+    "object_type": "task_family",
+    "provenance": {
+      "created": "2026-04-24",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Initial seed family for the MVP.",
+      "updated": "2026-04-24"
+    },
+    "references": [
+      {
+        "citation": "Brunton BW, Botvinick MM, Brody CD. Rats and humans can optimally accumulate evidence for decision-making. Science, 2013.\n",
+        "doi": "10.1126/science.1233912",
+        "id": "ref.brunton-2013-clicks",
+        "url": "https://www.science.org/doi/10.1126/science.1233912"
+      }
+    ],
+    "schema_version": "0.1.0"
+  },
+  "random-dot-motion": {
+    "aliases": [
+      "random dot kinematogram",
+      "RDM",
+      "motion coherence discrimination"
+    ],
+    "canonical_variables": [
+      "motion coherence",
+      "motion direction",
+      "stimulus duration"
+    ],
+    "common_choice_types": [
+      "2afc",
+      "discrimination"
+    ],
+    "common_response_modalities": [
+      "saccade",
+      "button-press",
+      "lever"
+    ],
+    "curation_status": "literature-curated",
+    "description": "Tasks in which subjects judge the direction or category of motion in a stochastic dot display, often with motion coherence controlling sensory evidence strength.\n",
+    "id": "family.random-dot-motion",
+    "modalities": [
+      "visual"
+    ],
+    "name": "Random-dot motion discrimination",
+    "object_type": "task_family",
+    "provenance": {
+      "created": "2026-04-24",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Initial seed family for the MVP.",
+      "updated": "2026-04-24"
+    },
+    "references": [
+      {
+        "citation": "Britten KH, Shadlen MN, Newsome WT, Movshon JA. The analysis of visual motion: a comparison of neuronal and psychophysical performance. Journal of Neuroscience, 1992.\n",
+        "id": "ref.britten-1992-motion",
+        "url": "https://www.jneurosci.org/content/12/12/4745"
+      }
+    ],
+    "schema_version": "0.1.0"
+  },
+  "visual-2afc-contrast": {
+    "aliases": [
+      "visual contrast discrimination",
+      "visual contrast 2AFC",
+      "mouse visual contrast decision",
+      "contrast psychophysics"
+    ],
+    "canonical_variables": [
+      "contrast",
+      "stimulus side",
+      "response option set",
+      "prior probability",
+      "reward value",
+      "recent outcome history"
+    ],
+    "common_choice_types": [
+      "2afc",
+      "discrimination",
+      "detection",
+      "free-response",
+      "go-no-go"
+    ],
+    "common_response_modalities": [
+      "wheel",
+      "nose-poke",
+      "lick",
+      "saccade",
+      "button-press"
+    ],
+    "curation_status": "literature-curated",
+    "description": "Sensory-guided visual contrast tasks in which subjects use contrast, contrast lateralization, or contrast differences to choose between alternatives. The family intentionally covers multiple operational variants: port-based freely moving 2AFC, head-fixed wheel 2AFC, wheel-based unforced choices with explicit no-go/no-turn outcomes, reward-value block variants, and contrast go/no-go boundary cases. Those response formats must be preserved separately from cognitive interpretations such as confidence, bias, or sensory evidence accumulation.\n",
+    "id": "family.visual-2afc-contrast",
+    "modalities": [
+      "visual"
+    ],
+    "name": "Visual contrast discrimination",
+    "notes": "Depth work for this family should be a variant census, not a flat bibliography. The first deep-pass paper map now covers classic port-based mouse contrast detection, Burgess/Steinmetz wheel forced and unforced tasks, reward-value/confidence wheel variants, go/no-go lick contrast variants, temporal-regularity wheel variants, IBL standardized behavior, IBL Brainwide Map companion analyses, and the current human prior-cue contrast slice. Adjacent lever-release visual change-detection contrast-threshold papers remain a boundary case until the atlas adds explicit cross-family links or a contrast-detection subfamily. The real-trial family summary now pools available IBL, IBL Brainwide Map, Fritsche temporal-regularities, Steinmetz, and Zatka-Haas canonical outputs while preserving strict 2AFC, no-response, and unforced withhold distinctions. The current family report includes 10 additional Brainwide Map ephysChoiceWorld sessions, giving the strict 2AFC wheel side repeated sessions across MFD_05, MFD_08, NR_0029, NR_0031, and PL050. The Fritsche source adds 269,168 strict-wheel trials across 17 subjects, 665 sessions, and Neutral/Repeating/Alternating stimulus-sequence environments. The unforced wheel side now includes all 39 extracted Steinmetz sessions across 10 subjects, plus the Zatka-Haas higher-power table. Zatka-Haas contributes a descriptive perturbation layer with matched non-laser comparisons by laser target and signed contrast, surfaced in the family report as a compact region-effect CSV and SVG. The family report also has protocol-normalized choice curves that separate strict 2AFC wheel rows from unforced wheel rows before plotting right-choice, withhold, and no-response rates, plus source-, session-, and subject-balanced curves so larger trial tables and repeated sessions do not dominate the family-level descriptive estimate. Session-balanced curves use canonical session ids, including the 34 original sessions inside the Zatka-Haas higher-power table; subject-balanced curves use dataset-qualified canonical subject ids before averaging response-format bins.\n",
+    "object_type": "task_family",
+    "provenance": {
+      "created": "2026-04-24",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Initial seed family for the MVP. Expanded after dataset coverage review to include lateralized visual contrast datasets with explicit no-go/no-turn outcomes, while preserving the operational distinction in concrete protocol records. Deepened with a first-pass notable-paper census covering port-based, wheel-based, reward-value, go/no-go, IBL, and human prior-cue variants.\n",
+      "updated": "2026-04-30"
+    },
+    "references": [
+      {
+        "citation": "Busse L, Ayaz A, Dhruv NT, Katzner S, Saleem AB, Scholvinck ML, Zaharia AD, Carandini M. The detection of visual contrast in the behaving mouse. Journal of Neuroscience, 2011.\n",
+        "doi": "10.1523/JNEUROSCI.6689-10.2011",
+        "id": "ref.busse-2011-detection-visual-contrast",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/21813694/"
+      },
+      {
+        "citation": "Burgess CP et al. High-Yield Methods for Accurate Two-Alternative Visual Psychophysics in Head-Fixed Mice. Cell Reports, 2017.\n",
+        "doi": "10.1016/j.celrep.2017.08.047",
+        "id": "ref.burgess-2017-high-yield-visual-psychophysics",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5603732/"
+      },
+      {
+        "citation": "Pho GN, Goard MJ, Woodson J, Crawford B, Sur M. Task-dependent representations of stimulus and choice in mouse parietal cortex. Nature Communications, 2018.\n",
+        "doi": "10.1038/s41467-018-05012-y",
+        "id": "ref.pho-2018-task-dependent-parietal",
+        "url": "https://www.nature.com/articles/s41467-018-05012-y"
+      },
+      {
+        "citation": "The International Brain Laboratory et al. Standardized and reproducible measurement of decision-making in mice. eLife, 2021.\n",
+        "doi": "10.7554/eLife.63711",
+        "id": "ref.ibl-2021-standardized",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8137147/"
+      },
+      {
+        "citation": "Steinmetz NA, Zatka-Haas P, Carandini M, Harris KD. Distributed coding of choice, action and engagement across the mouse brain. Nature, 2019.\n",
+        "doi": "10.1038/s41586-019-1787-x",
+        "id": "ref.steinmetz-2019-distributed-coding",
+        "url": "https://www.nature.com/articles/s41586-019-1787-x"
+      },
+      {
+        "citation": "Lak A et al. Reinforcement biases subsequent perceptual decisions when confidence is low, a widespread behavioral phenomenon. eLife, 2020.\n",
+        "doi": "10.7554/eLife.49834",
+        "id": "ref.lak-2020-reinforcement-biases-confidence",
+        "url": "https://elifesciences.org/articles/49834"
+      },
+      {
+        "citation": "Lak A et al. Dopaminergic and prefrontal basis of learning from sensory confidence and reward value. Neuron, 2020.\n",
+        "doi": "10.1016/j.neuron.2019.11.018",
+        "id": "ref.lak-2020-dopaminergic-prefrontal",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31859030/"
+      },
+      {
+        "citation": "Fritsche M, Majumdar A, Strickland L, Liebana Garcia S, Bogacz R, Lak A. Temporal regularities shape perceptual decisions and striatal dopamine signals. Nature Communications, 2024.\n",
+        "doi": "10.1038/s41467-024-51393-8",
+        "id": "ref.fritsche-2024-temporal-regularities",
+        "url": "https://www.nature.com/articles/s41467-024-51393-8"
+      },
+      {
+        "citation": "Zatka-Haas P, Steinmetz NA, Carandini M, Harris KD. Sensory coding and the causal impact of mouse cortex in a visual decision. eLife, 2021.\n",
+        "doi": "10.7554/eLife.63163",
+        "id": "ref.zatka-haas-2021-sensory-coding-causal-impact",
+        "url": "https://elifesciences.org/articles/63163"
+      },
+      {
+        "citation": "The International Brain Laboratory et al. A brain-wide map of neural activity during complex behaviour. Nature, 2025.\n",
+        "doi": "10.1038/s41586-025-09235-0",
+        "id": "ref.ibl-2025-brainwide-map",
+        "url": "https://www.nature.com/articles/s41586-025-09235-0"
+      },
+      {
+        "citation": "The International Brain Laboratory et al. Brain-wide representations of prior information in mouse decision-making. Nature, 2025.\n",
+        "doi": "10.1038/s41586-025-09226-1",
+        "id": "ref.ibl-2025-prior-map",
+        "url": "https://www.nature.com/articles/s41586-025-09226-1"
+      },
+      {
+        "citation": "Walsh K, McGovern DP, Dully J, Kelly SP, O'Connell RG. Prior probability cues bias sensory encoding with increasing task exposure. eLife, 2024.\n",
+        "doi": "10.7554/eLife.91135.3",
+        "id": "ref.walsh-2024-prior-cue",
+        "url": "https://elifesciences.org/articles/91135"
+      }
+    ],
+    "schema_version": "0.1.0"
+  },
+  "visual-change-detection": {
+    "aliases": [
+      "visual change detection",
+      "image change detection"
+    ],
+    "canonical_variables": [
+      "pre-change stimulus identity",
+      "change stimulus identity",
+      "inter-flash interval",
+      "change time within trial"
+    ],
+    "common_choice_types": [
+      "go-no-go",
+      "detection"
+    ],
+    "common_response_modalities": [
+      "lick",
+      "lever",
+      "button-press"
+    ],
+    "curation_status": "literature-curated",
+    "description": "Sensory-guided go/no-go tasks in which subjects monitor a stream of repeated visual stimuli and report a discrete change event. The operational evidence is a categorical transition between stimuli rather than a scalar variable, so this family is distinct from 2AFC contrast or motion discrimination even when the stimuli themselves are visual.\n",
+    "id": "family.visual-change-detection",
+    "modalities": [
+      "visual"
+    ],
+    "name": "Visual change detection (go/no-go)",
+    "notes": "Change-detection tasks share machinery with detection but the canonical evidence is a categorical transition rather than a present/absent stimulus, so both choice types are listed. Family stays focused on visual change detection; auditory deviance-detection variants would be a sibling family.\n",
+    "object_type": "task_family",
+    "provenance": {
+      "created": "2026-04-27",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Initial family record introduced to give the atlas a non-2AFC visual task backed by Allen Brain Observatory Visual Behavior open data.\n",
+      "updated": "2026-04-27"
+    },
+    "references": [
+      {
+        "citation": "Garrett, M. E. et al. Stimulus novelty uncovers coding diversity in visual cortical circuits. bioRxiv, 2023.\n",
+        "doi": "10.1101/2023.02.14.528085",
+        "id": "ref.garrett-2023-visual-behavior",
+        "url": "https://www.biorxiv.org/content/10.1101/2023.02.14.528085v1"
+      },
+      {
+        "citation": "Groblewski, P. A. et al. Characterization of learning, motivation, and visual perception in five transgenic mouse lines expressing GCaMP in distinct cell populations. Frontiers in Behavioral Neuroscience, 2020.\n",
+        "doi": "10.3389/fnbeh.2020.00104",
+        "id": "ref.groblewski-2020-vbo",
+        "url": "https://www.frontiersin.org/articles/10.3389/fnbeh.2020.00104/full"
+      }
+    ],
+    "schema_version": "0.1.0"
+  },
+  "visual-pulse-evidence-accumulation": {
+    "aliases": [
+      "visual flash accumulation",
+      "visual rate discrimination"
+    ],
+    "canonical_variables": [
+      "flash rate",
+      "pulse timing",
+      "pulse brightness",
+      "stimulus duration"
+    ],
+    "common_choice_types": [
+      "2afc",
+      "discrimination"
+    ],
+    "common_response_modalities": [
+      "nose-poke",
+      "lick",
+      "wheel"
+    ],
+    "curation_status": "literature-curated",
+    "description": "Sensory-guided tasks in which subjects accumulate temporally distributed visual pulses, flashes, or momentary samples and report which stimulus class generated the sequence. This family is the visual analogue of auditory click accumulation, but the operational variables include flash rate, pulse timing, and brightness rather than acoustic click count.\n",
+    "id": "family.visual-pulse-evidence-accumulation",
+    "modalities": [
+      "visual"
+    ],
+    "name": "Visual pulse evidence accumulation",
+    "notes": "Preserve flash timing and brightness as operational variables; do not collapse the task to a single cognitive label such as accumulation until the trial table supports temporal-kernel or accumulation-model analyses.\n",
+    "object_type": "task_family",
+    "provenance": {
+      "created": "2026-04-29",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Added during the dataset coverage expansion so dynamic visual accumulation datasets can be represented without forcing them into static contrast or auditory-click families.\n",
+      "updated": "2026-04-29"
+    },
+    "references": [
+      {
+        "citation": "Odoemene O, Pisupati S, Nguyen H, Churchland AK. Visual evidence accumulation guides decision-making in unrestrained mice. Journal of Neuroscience, 2018.\n",
+        "doi": "10.1523/JNEUROSCI.3478-17.2018",
+        "id": "ref.odoemene-2018-visual-accumulation",
+        "url": "https://www.jneurosci.org/content/38/47/10143"
+      }
+    ],
+    "schema_version": "0.1.0"
+  },
+  "whisker-object-discrimination": {
+    "aliases": [
+      "tactile object recognition",
+      "whisker shape discrimination"
+    ],
+    "canonical_variables": [
+      "object shape",
+      "object presence",
+      "object position",
+      "whisker contact"
+    ],
+    "common_choice_types": [
+      "2afc",
+      "detection",
+      "discrimination"
+    ],
+    "common_response_modalities": [
+      "lick"
+    ],
+    "curation_status": "literature-curated",
+    "description": "Somatosensory decision tasks in which rodents actively sample an object or pole with their whiskers and report object identity, presence, or location. The canonical operational variables include object geometry, object position, touch timing, and contact kinematics.\n",
+    "id": "family.whisker-object-discrimination",
+    "modalities": [
+      "somatosensory"
+    ],
+    "name": "Whisker object discrimination",
+    "notes": "Tactile object datasets require trial-level links between behavior, high-speed whisker video, and neural events; canonical trials should retain object geometry and contact measurements as task variables.\n",
+    "object_type": "task_family",
+    "provenance": {
+      "created": "2026-04-29",
+      "curators": [
+        "behavtaskatlas"
+      ],
+      "source_notes": "Added during the dataset coverage expansion to broaden the MVP beyond visual and auditory examples while staying within sensory-guided decision-making tasks.\n",
+      "updated": "2026-04-29"
+    },
+    "references": [
+      {
+        "citation": "Rodgers CC. A detailed behavioral, videographic, and neural dataset on object recognition in mice. Scientific Data, 2022.\n",
+        "doi": "10.1038/s41597-022-01728-1",
+        "id": "ref.rodgers-2022-object-recognition",
+        "url": "https://www.nature.com/articles/s41597-022-01728-1"
+      }
+    ],
+    "schema_version": "0.1.0"
+  }
+}

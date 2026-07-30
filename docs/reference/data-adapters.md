@@ -22,6 +22,14 @@ author needs live where what they describe lives: `SequenceLayout` beside
       show_root_heading: false
       show_source: false
 
+## Canonical trials
+
+::: behavio.adapters.canonical
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
 ## Adapter conformance
 
 ::: behavio.adapters.conformance
