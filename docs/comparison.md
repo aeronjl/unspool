@@ -47,8 +47,8 @@ serialized report; see the [estimator contract](estimator-contract.md).
 
 For each candidate, the report retains:
 
-- every `FoldEvaluation`, including its full fitted result and pointwise scores;
-- one normalized fit audit per fold;
+- every `FoldEvaluation`, including its full fitted result, pointwise scores, stable fold
+  `identifier`, and normalized fit `audit`;
 - log loss and Brier score for every aggregation unit;
 - equal-unit and trial-pooled summaries;
 - a percentile bootstrap interval over aggregation units; and
@@ -64,9 +64,49 @@ preserves within-subject dependence across sessions and forecasting origins. Its
 still requires the declared units to be a defensible independent sampling level. It does
 not represent hyperparameter, landmark, cohort-selection, or model-class uncertainty.
 
-`PairedModelComparison.left_minus_right` is positive when the right-hand candidate has
-lower log loss. `bootstrap_probability_positive` is a descriptive fraction of bootstrap
-draws, not a posterior model probability or a calibrated frequentist p-value.
+`PairedComparison.left_minus_right` is positive when the right-hand candidate has lower log
+loss. `bootstrap_probability_positive` is a descriptive fraction of bootstrap draws, not a
+posterior model probability or a calibrated frequentist p-value.
+
+## Many candidates means many simultaneous tests
+
+`K` candidates produce `K(K-1)/2` pairwise contrasts, all read against the same interval
+level. At five candidates that is ten simultaneous tests, so roughly one of them excludes
+zero *by construction* even when every candidate predicts identically well. Reading each
+interval on its own therefore names a leader far more often than the stated 5% suggests.
+
+The family is explicit. `report.family` is a `ComparisonFamily` and is always present,
+whether or not anything separates:
+
+```python
+family = report.family
+print(family.n_comparisons, family.n_separated, family.expected_separated)
+print(family.excess_probability, family.n_decisive)
+```
+
+- `n_separated` counts contrasts whose **unadjusted** interval excludes zero;
+- `expected_separated` is `n_comparisons x (1 - interval_level)`, the chance yield;
+- `excess_probability` is the exact binomial probability of at least that many separations
+  under no difference anywhere. Contrasts that share a candidate are not independent, so it
+  is a guide to whether the pattern is remarkable rather than a test;
+- `n_decisive` counts contrasts surviving the declared multiplicity adjustment.
+
+`ComparisonMultiplicity.BENJAMINI_HOCHBERG` is the default and controls the false-discovery
+rate across the family; `BONFERRONI` controls the family-wise error rate; `NONE` restores
+the per-contrast reading. The family error rate defaults to `1 - confidence_level`, so no
+second threshold is introduced behind the caller's back. Nothing about an individual
+contrast changes: `left_minus_right`, `bootstrap_probability_positive` and
+`two_sided_probability` are unadjusted and fully retained, and adjustment only *adds*
+`adjusted_probability` and `decisive`. A single contrast is never adjusted.
+
+`PairedComparison.decisive` is the member a winner rule should read, and
+`PairedComparison.favours` names the candidate a decisive contrast puts ahead. A correction
+can only take separations away, never add one, so a corrected reading refuses to name a
+winner strictly more often than an uncorrected one — which is the direction this package
+errs in deliberately. `ProspectiveComparisonReport.winner` is unaffected: it has always
+been the lowest point estimate among audit-eligible candidates and remains descriptive.
+`behavio.runner`'s `INTERVAL_EXCLUDES_ZERO` policy reads `decisive`, and records the family
+it read on `Ranking.family` and in `Ranking.reason`.
 
 ## Serialization and fitted evidence
 

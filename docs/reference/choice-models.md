@@ -45,9 +45,10 @@ first matched alternatives for more elaborate latent or mechanistic accounts.
 
 ## Combinators: smoothness and hierarchy
 
-The smooth, hierarchical, and hierarchical-smooth GLMs are not classes. They are
-[`smooth()` and `hierarchical()`](../composing-models.md) applied to the model above, and
-the contract a family implements to be composable is
+The smooth, hierarchical, and hierarchical-smooth GLMs are not classes, and neither are
+their multinomial counterparts. They are
+[`smooth()` and `hierarchical()`](../composing-models.md) applied to the model above or to
+`MultinomialLogit`, and the contract a family implements to be composable is
 `behavio.contracts.compose.PenalisedLinearEstimator`.
 
 ::: behavio.contracts.compose

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any
 
@@ -21,7 +21,12 @@ from behavio.contracts.compose import (
     expand_group_design,
     expand_group_penalty,
     group_blocks,
+    information_matrix,
     joint_parameter_names,
+    linear_predictor,
+    parameter_gradient,
+    require_penalised_linear,
+    validate_predictor_shape,
 )
 from behavio.contracts.estimator import (
     FitDiagnostics,
@@ -69,18 +74,7 @@ def hierarchical(
     explicitly; :meth:`HierarchicalFitResult.group_was_fitted` says which is which.
     """
 
-    if not isinstance(model, PenalisedLinearEstimator):
-        raise TypeError(
-            "hierarchical() needs a model satisfying behavio.contracts.compose."
-            "PenalisedLinearEstimator; "
-            f"{type(model).__name__} does not"
-        )
-    penalty = model.penalty_matrix()
-    if penalty.shape != (len(model.parameter_names),) * 2:
-        raise TypeError(
-            f"{type(model).__name__} declares {len(model.parameter_names)} parameters but a "
-            f"{penalty.shape} penalty, so its estimated coordinate is not the one it reports"
-        )
+    require_penalised_linear(model, combinator="hierarchical")
     effects = VaryingEffects.declare(
         model.parameter_names,
         over=over,
@@ -336,6 +330,23 @@ class HierarchicalModel(Describable):
         return tuple(getattr(self.model, "coefficient_names", self.model.parameter_names))
 
     @property
+    def categories(self) -> tuple[Any, ...]:
+        """The wrapped model's outcome coordinate, when it scores a categorical outcome.
+
+        Absent, and raising :class:`AttributeError` rather than returning ``None``, when
+        the wrapped model has none: that is what keeps ``hierarchical(glm)`` from
+        structurally satisfying
+        :class:`~behavio.contracts.estimator.CategoricalBehaviourEstimator`.
+        """
+
+        return tuple(self.model.categories)
+
+    def outcome_codes(self, study: Study) -> NDArray[np.int64]:
+        """Return the wrapped model's observed category codes."""
+
+        return self.model.outcome_codes(study)
+
+    @property
     def scored_columns(self) -> tuple[str, ...]:
         return tuple(self.model.scored_columns)
 
@@ -392,11 +403,14 @@ class HierarchicalModel(Describable):
             raise ModelDataError(
                 f"hierarchical fitting requires at least two {self.grouping} groups"
             )
-        design_matrix = self.model.design_matrix(study)
+        design_matrix = validate_predictor_shape(self.model, self.model.design_matrix(study))
         outcomes = self.model.outcomes(study)
+        offsets = self.model.predictor_offsets(study)
         if self.estimate_scale:
-            return self._fit_estimated_scale(study, blocks, design_matrix, outcomes)
-        return self._fit_fixed_scale(study, blocks, design_matrix, outcomes, self._scales())
+            return self._fit_estimated_scale(study, blocks, design_matrix, outcomes, offsets)
+        return self._fit_fixed_scale(
+            study, blocks, design_matrix, outcomes, offsets, self._scales()
+        )
 
     def _fit_fixed_scale(
         self,
@@ -404,6 +418,7 @@ class HierarchicalModel(Describable):
         blocks: GroupBlocks,
         design_matrix: NDArray[np.float64],
         outcomes: NDArray[np.float64],
+        offsets: NDArray[np.float64] | None,
         scales: NDArray[np.float64],
     ) -> HierarchicalFitResult:
         columns = self._columns()
@@ -422,6 +437,8 @@ class HierarchicalModel(Describable):
                     self.model.group_penalty(columns, scales),
                 ),
                 likelihood=self.model.likelihood,
+                offsets=offsets,
+                derived_estimates=_effective_parameters(n_parameters, columns, blocks.n_groups),
             ),
             model_name=self.model_name,
             model_signature=self.signature,
@@ -431,13 +448,7 @@ class HierarchicalModel(Describable):
         group_standard_errors = joint_fit.standard_errors[n_parameters:].reshape(
             blocks.n_groups, width
         )
-        effective = population[columns][None, :] + deviations
-        threshold = self.model.boundary_threshold
-        diagnostics = replace(
-            joint_fit.diagnostics,
-            boundary_estimate=joint_fit.diagnostics.boundary_estimate
-            or bool(np.any(np.abs(effective) >= threshold)),
-        )
+        diagnostics = joint_fit.diagnostics
         return HierarchicalFitResult(
             model_name=self.model_name,
             model_signature=self.signature,
@@ -461,6 +472,7 @@ class HierarchicalModel(Describable):
         blocks: GroupBlocks,
         design_matrix: NDArray[np.float64],
         outcomes: NDArray[np.float64],
+        offsets: NDArray[np.float64] | None,
     ) -> HierarchicalFitResult:
         columns = self._columns()
         n_parameters = len(self.parameter_names)
@@ -469,7 +481,11 @@ class HierarchicalModel(Describable):
         penalty = self.model.penalty_matrix()
         likelihood = self.model.likelihood
         blocked = tuple(
-            (design_matrix[blocks.row_block == block], outcomes[blocks.row_block == block])
+            (
+                design_matrix[blocks.row_block == block],
+                outcomes[blocks.row_block == block],
+                None if offsets is None else offsets[blocks.row_block == block],
+            )
             for block in range(blocks.n_groups)
         )
         population_fit = self.model.fit_penalised(
@@ -479,6 +495,7 @@ class HierarchicalModel(Describable):
                 outcomes=outcomes,
                 penalty_matrix=penalty,
                 likelihood=likelihood,
+                offsets=offsets,
             ),
             model_name=self.model_name,
             model_signature=self.signature,
@@ -550,11 +567,17 @@ class HierarchicalModel(Describable):
             upper - scale <= boundary_tolerance and gradient[-1] < 0
         ):
             gradient[-1] = 0.0
-        effective = population[columns][None, :] + found.deviations
-        threshold = self.model.boundary_threshold
         message = str(outer_fit.message)
         if not found.all_group_modes_converged:
             message = f"{message}; at least one conditional group mode did not converge"
+        # Whether a coefficient is large enough to report is the wrapped model's
+        # convention, and the only way to ask it is to let it fit: this path writes its own
+        # objective, so unlike the fixed-scale path it never handed the model a problem to
+        # solve. One joint solve at the settled scale, against a Laplace profile that has
+        # already run an inner optimisation per group per outer step, is the cheap half.
+        coefficients_at_boundary = self._fit_fixed_scale(
+            study, blocks, design_matrix, outcomes, offsets, scales
+        ).diagnostics.boundary_estimate
         diagnostics = FitDiagnostics(
             converged=bool(outer_fit.success and found.all_group_modes_converged),
             optimizer=optimizer,
@@ -564,9 +587,7 @@ class HierarchicalModel(Describable):
             objective=float(found.objective),
             gradient_norm=float(np.linalg.norm(gradient)),
             hessian_condition=float(np.linalg.cond(hessian)),
-            boundary_estimate=at_boundary
-            or bool(np.any(np.abs(population) >= threshold))
-            or bool(np.any(np.abs(effective) >= threshold)),
+            boundary_estimate=at_boundary or bool(coefficients_at_boundary),
         )
         group_standard_errors = np.sqrt(
             np.maximum(np.diagonal(found.conditional_covariances, axis1=1, axis2=2), 0.0)
@@ -607,8 +628,15 @@ class HierarchicalModel(Describable):
         hierarchical_fit = self._validated_fit(fit)
         design_matrix = self.model.design_matrix(study)
         coefficients = self._row_parameters(study, hierarchical_fit)
-        linear_predictor = np.einsum("ij,ij->i", design_matrix, coefficients)
-        return self.model.likelihood.prediction(linear_predictor, mode=prediction_mode)
+        predictor = (
+            np.einsum("ij,ij->i", design_matrix, coefficients)
+            if design_matrix.ndim == 2
+            else np.einsum("rcp,rp->rc", design_matrix, coefficients, optimize=True)
+        )
+        offsets = self.model.predictor_offsets(study)
+        if offsets is not None:
+            predictor = predictor + offsets
+        return self.model.likelihood.prediction(predictor, mode=prediction_mode)
 
     def pointwise_log_prob(
         self,
@@ -764,7 +792,9 @@ class _LaplaceProfile:
 
 
 def _laplace_profile(
-    blocked: tuple[tuple[NDArray[np.float64], NDArray[np.float64]], ...],
+    blocked: tuple[
+        tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64] | None], ...
+    ],
     population: NDArray[np.float64],
     *,
     columns: NDArray[np.intp],
@@ -781,6 +811,10 @@ def _laplace_profile(
     an observed information matrix. That is the whole reason
     :class:`~behavio.contracts.compose.LinearPredictorLikelihood` is a separate protocol
     rather than an implementation detail of the estimator.
+
+    Everything shape-specific reaches it through the three contractions in
+    :mod:`behavio.contracts.compose`, so a per-category predictor is profiled by this same
+    function: a group's rows are a group's rows whatever each of them predicts.
     """
 
     width = len(columns)
@@ -793,8 +827,8 @@ def _laplace_profile(
     objective = 0.5 * float(population @ population_penalty @ population)
     all_converged = True
 
-    for index, (block_design, block_outcomes) in enumerate(blocked):
-        restricted = block_design[:, columns]
+    for index, (block_design, block_outcomes, block_offsets) in enumerate(blocked):
+        restricted = block_design[..., columns]
 
         def conditional(
             deviation: NDArray[np.float64],
@@ -802,14 +836,18 @@ def _laplace_profile(
             columns_: NDArray[np.intp] = columns,
             restricted_: NDArray[np.float64] = restricted,
             observed: NDArray[np.float64] = block_outcomes,
+            block_offsets_: NDArray[np.float64] | None = block_offsets,
         ) -> tuple[float, NDArray[np.float64]]:
             offset = np.zeros(n_parameters, dtype=np.float64)
             offset[columns_] = deviation
             value, gradient = likelihood.value_and_gradient(
-                design @ (population + offset), observed
+                linear_predictor(design, population + offset, block_offsets_), observed
             )
             value += 0.5 * float(deviation @ group_penalty @ deviation)
-            return value, restricted_.T @ gradient + group_penalty @ deviation
+            return (
+                value,
+                parameter_gradient(restricted_, gradient) + group_penalty @ deviation,
+            )
 
         mode = minimize(
             conditional,
@@ -821,8 +859,10 @@ def _laplace_profile(
         deviation = np.asarray(mode.x, dtype=np.float64)
         offset = np.zeros(n_parameters, dtype=np.float64)
         offset[columns] = deviation
-        weights = likelihood.curvature(block_design @ (population + offset))
-        conditional_hessian = restricted.T @ (weights[:, None] * restricted) + group_penalty
+        weights = likelihood.curvature(
+            linear_predictor(block_design, population + offset, block_offsets)
+        )
+        conditional_hessian = information_matrix(restricted, weights) + group_penalty
         hessian_sign, log_determinant = np.linalg.slogdet(conditional_hessian)
         if hessian_sign <= 0:
             return _LaplaceProfile(
@@ -844,6 +884,27 @@ def _laplace_profile(
         conditional_covariances=conditional_covariances,
         all_group_modes_converged=all_converged,
     )
+
+
+def _effective_parameters(
+    n_parameters: int, columns: NDArray[np.intp], n_groups: int
+) -> Callable[[NDArray[np.float64]], NDArray[np.float64]]:
+    """Return the map from a joint estimate to each group's population-plus-deviation.
+
+    The quantity a hierarchical fit has to report a boundary on is not a coordinate of the
+    vector the optimizer returns -- the joint coordinate holds a population value and a
+    deviation from it, and neither of them is the number an animal's behaviour is generated
+    by. This names it as a function of that vector so the wrapped model, which owns the
+    convention for what "at a boundary" means, can apply it without a combinator ever
+    quoting a threshold.
+    """
+
+    def effective(joint: NDArray[np.float64]) -> NDArray[np.float64]:
+        population = joint[:n_parameters]
+        deviations = joint[n_parameters:].reshape(n_groups, len(columns))
+        return np.asarray(population[columns][None, :] + deviations, dtype=np.float64)
+
+    return effective
 
 
 def _numerical_gradient(

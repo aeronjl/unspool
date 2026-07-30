@@ -46,8 +46,9 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.stats import binom
 
+from behavio._internal import multiplicity as _multiplicity
+from behavio._internal.multiplicity import adjust_probabilities, excess_probability
 from behavio.contracts.audit import AuditSeverity
 from behavio.contracts.discrepancy import (
     PredictiveDiscrepancy,
@@ -162,11 +163,16 @@ class PredictiveMultiplicity(StrEnum):
     spurious issues grows linearly with the family size. ``BENJAMINI_HOCHBERG`` controls
     the false-discovery rate across the family at ``family_discovery_rate``.
     ``BONFERRONI`` controls the family-wise error rate at the same level.
+
+    The member values are shared with
+    :class:`~behavio.comparison.ComparisonMultiplicity` through
+    :mod:`behavio._internal.multiplicity`, which also owns the step-up itself, so the two
+    families the package evaluates cannot drift apart in either spelling or arithmetic.
     """
 
-    NONE = "none"
-    BENJAMINI_HOCHBERG = "benjamini-hochberg"
-    BONFERRONI = "bonferroni"
+    NONE = _multiplicity.NONE
+    BENJAMINI_HOCHBERG = _multiplicity.BENJAMINI_HOCHBERG
+    BONFERRONI = _multiplicity.BONFERRONI
 
 
 @dataclass(frozen=True, slots=True)
@@ -584,19 +590,15 @@ def _family(
     extreme = probabilities < alpha
     n_extreme = int(np.count_nonzero(extreme))
     expected = float(n_checks * alpha)
-    excess = 1.0 if n_extreme == 0 else float(binom.sf(n_extreme - 1, n_checks, alpha))
-    if n_checks == 1 or policy.multiplicity is PredictiveMultiplicity.NONE:
-        threshold = alpha
-        flagged = extreme
-    elif policy.multiplicity is PredictiveMultiplicity.BONFERRONI:
-        threshold = rate / n_checks
-        flagged = probabilities < threshold
-    else:
-        ordered = np.sort(probabilities)
-        ranks = np.arange(1, n_checks + 1)
-        surviving = ordered <= rate * ranks / n_checks
-        threshold = float(ordered[surviving][-1]) if bool(np.any(surviving)) else 0.0
-        flagged = probabilities <= threshold if bool(np.any(surviving)) else np.zeros_like(extreme)
+    excess = excess_probability(n_extreme, n_checks, alpha)
+    threshold, adjusted = adjust_probabilities(
+        probabilities,
+        multiplicity=policy.multiplicity.value,
+        error_rate=rate,
+        unadjusted_threshold=alpha,
+    )
+    unadjusted = n_checks == 1 or policy.multiplicity is PredictiveMultiplicity.NONE
+    flagged = extreme if unadjusted else adjusted <= rate
     family = PredictiveFamily(
         n_checks=n_checks,
         n_groups=n_groups,

@@ -133,6 +133,16 @@ The two outcomes are kept apart deliberately:
   imported. These are retained rather than treated as satisfied, and a bounded report
   discloses them in an *Unverified declarations* table.
 
+Identity is resolved through an [`EstimatorRegistry`](../extensions.md#local-registration),
+defaulting to the package's built-in allowlist, and never by importing the declared string.
+A registered implementation is therefore always decidable: the registration declares the
+class its factory produces, so the supplied object either is an instance of it or is not.
+Combinator registrations expose the model they wrap, so a candidate declared as
+`behavio.compose.hierarchical` with `base.`-prefixed settings has its wrapped model checked
+too. Only a name no registry knows falls back to the import-free class-name comparison, and
+only that fallback can report *unverifiable* for an implementation. Pass `registry=` to
+`verify_candidate_declarations` to make your own models decidable on the same terms.
+
 ## The declared score is executable, not descriptive
 
 The common runner currently supports equal-unit paired comparison with log loss,
@@ -147,6 +157,29 @@ Nested procedures may deliberately use a different aggregation unit or proper sc
 training-only selection than for the final outer estimand. The runner keeps those two
 contracts separate: inner candidate evidence uses `selection`, while untouched outer
 performance uses `comparison`.
+
+## One fold loop, and how many contrasts read it
+
+The runner does not implement fitting, prediction, or scoring. It adapts each compiled fold
+to the [`ValidationFold`](../reference/contracts.md) contract and calls
+`behavio.evaluation.evaluate_splits`, the same primitive `compare_models` calls, with
+`FoldFailurePolicy.RETAIN`. Retaining a fold failure rather than raising on it is the one
+thing a protocol run needs that an interactive call does not, and it is now a declared
+option on the shared loop instead of a second implementation of it. A number produced under
+a frozen protocol therefore equals the number `compare_models` produces from the same models
+and folds, bit for bit.
+
+`WinnerPolicy.INTERVAL_EXCLUDES_ZERO` reads the whole family of contrasts, not one at a
+time. `K` eligible candidates produce `K(K-1)/2` simultaneous readings of the same interval
+level, so a leader compared against four rivals has four chances to clear a threshold stated
+for one. The winner rule therefore requires each contrast to survive a Benjamini-Hochberg
+adjustment across the family at `1 - interval_level` — the rate the protocol already
+declared, now controlled family-wise rather than per contrast. `Ranking.family` records the
+family size, how many contrasts separated before adjustment, how many were expected to by
+chance, the exact binomial probability of at least that many, and how many survived; and
+`Ranking.reason` states all of it in prose. Every per-contrast interval and probability
+remains unadjusted and fully retained. Correction can only remove a separation, never add
+one, so this makes `UNRESOLVED` strictly more likely than the uncorrected rule did.
 
 ## Start from a complete study
 

@@ -1,4 +1,26 @@
-"""Common execution of model candidates under an audited protocol plan."""
+"""Common execution of model candidates under an audited protocol plan.
+
+One execution path
+------------------
+This module used to re-implement the entire fit-predict-score loop that
+:func:`behavio.evaluation.evaluate_splits` already performed, and re-derive the same
+statistics under different type names. The two implementations had *opposite failure
+semantics*: ``evaluate_splits`` raised on a bad fold while the runner caught and retained
+it, so ``model_recovery`` and ``protocol_recovery`` behaved differently on identical
+inputs for reasons no user could predict.
+
+There is now one loop. :func:`_run_candidate_folds` adapts each
+:class:`~behavio.compiler.CompiledFold` to the
+:class:`~behavio.contracts.fold.ValidationFold` contract and calls ``evaluate_splits``
+with :attr:`~behavio.evaluation.FoldFailurePolicy.RETAIN`; retaining rather than raising
+is now a declared option on the shared primitive rather than a second implementation.
+Everything below the fold loop -- pointwise projection, equal-unit scoring, calibration,
+ranking -- consumes the shared :class:`~behavio.evaluation.FoldEvaluation`.
+
+The paired comparison, its bootstrap interval, and its simultaneous-inference family come
+from :mod:`behavio.comparison`, so a number computed here equals the number computed by
+:func:`~behavio.comparison.compare_models` bit for bit.
+"""
 
 from __future__ import annotations
 
@@ -6,23 +28,38 @@ import hashlib
 import json
 import math
 import sys
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass, fields, is_dataclass
 from enum import StrEnum
 from functools import partial
+from itertools import chain
 from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
-from behavio.comparison import BootstrapInterval
+from behavio.comparison import (
+    BootstrapInterval,
+    ComparisonFamily,
+    ComparisonMultiplicity,
+    PairedComparison,
+    bootstrap_interval,
+    paired_comparisons,
+)
 from behavio.compiler import CompiledProtocol
-from behavio.diagnostics import FitAudit, FitAuditStatus, audit_fit
+from behavio.diagnostics import FitAuditStatus
+from behavio.evaluation import (
+    CandidateDeclarationError,
+    FoldEvaluation,
+    FoldFailure,
+    FoldFailurePolicy,
+    FoldStage,
+    SplitEvaluation,
+    evaluate_splits,
+)
 from behavio.models import (
     BehaviourEstimator,
-    CategoricalBehaviourEstimator,
     CategoricalPrediction,
-    FitResult,
-    Prediction,
     PredictionMode,
 )
 from behavio.protocol import (
@@ -31,18 +68,21 @@ from behavio.protocol import (
     ScoreMetric,
     WinnerPolicy,
 )
+from behavio.registry import BASE_SETTING, EstimatorRegistry, builtin_estimator_registry
+
+EVALUATION_REPORT_SCHEMA = "behavio.evaluation-report/2"
+"""Version 2 collapsed the runner's private per-fold, paired-comparison and bootstrap
+types onto the shared ones in :mod:`behavio.comparison` and
+:mod:`behavio.evaluation`. Against version 1 a report gains ``ranking.family`` and the
+per-contrast ``two_sided_probability``, ``adjusted_probability`` and ``decisive`` members,
+and a retained failure no longer repeats the candidate name that already keys it."""
+
+NESTED_EVALUATION_REPORT_SCHEMA = "behavio.nested-evaluation-report/2"
+"""Version 2 carries the same collapse through the nested selection record."""
 
 
 class ProtocolRunError(RuntimeError):
     """Raised when an unaudited plan or mismatched candidate registry is executed."""
-
-
-class RunStage(StrEnum):
-    """Stable stage at which one retained candidate failure occurred."""
-
-    FIT = "fit"
-    PREDICT = "predict"
-    SCORE = "score"
 
 
 class RankingStatus(StrEnum):
@@ -124,20 +164,6 @@ class CandidateVerification:
             "verified": self.verified,
             "findings": [item.to_dict() for item in self.findings],
         }
-
-
-@dataclass(frozen=True, slots=True)
-class RunFailure:
-    """One fold-stage failure retained without aborting other candidates."""
-
-    candidate: str
-    fold: str
-    stage: RunStage
-    exception_type: str
-    message: str
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "stage", RunStage(self.stage))
 
 
 @dataclass(frozen=True, slots=True)
@@ -252,51 +278,41 @@ class CalibrationSummary:
                 raise ValueError("calibration summaries must be finite values in [0, 1]")
 
 
-@dataclass(frozen=True, slots=True)
-class FoldRun:
-    """Successful fit, numerical audit, and pointwise predictions for one fold."""
+def fold_to_dict(
+    evaluation: FoldEvaluation,
+    predictions: Sequence[PointwisePrediction],
+    *,
+    retain_predictions: bool = True,
+) -> dict[str, Any]:
+    """Serialize one shared :class:`~behavio.evaluation.FoldEvaluation` for an artifact.
 
-    fold: str
-    fit: FitResult
-    audit: FitAudit
-    predictions: tuple[PointwisePrediction, ...]
+    The runner used to own a second per-fold record, ``FoldRun``, whose only job over and
+    above ``FoldEvaluation`` was to be JSON-portable. That is a serialization concern, not
+    a second concept, so it is a function here rather than a type.
+    """
 
-    def __post_init__(self) -> None:
-        if not self.predictions:
-            raise ValueError("a successful fold run must retain pointwise predictions")
-
-    def to_dict(self, *, retain_predictions: bool = True) -> dict[str, Any]:
-        """Return a safe fit summary, optionally with pointwise predictive evidence."""
-
-        result: dict[str, Any] = {
-            "fold": self.fold,
-            "fit": {
-                "model_name": self.fit.model_name,
-                "model_signature": self.fit.model_signature,
-                "n_observations": self.fit.n_observations,
-                "parameters": {
-                    name: float(value)
-                    for name, value in zip(
-                        self.fit.parameter_names,
-                        self.fit.estimates,
-                        strict=True,
-                    )
-                },
-                "standard_errors": {
-                    name: float(value)
-                    for name, value in zip(
-                        self.fit.parameter_names,
-                        self.fit.standard_errors,
-                        strict=True,
-                    )
-                },
+    fit = evaluation.fit
+    result: dict[str, Any] = {
+        "fold": evaluation.identifier,
+        "fit": {
+            "model_name": fit.model_name,
+            "model_signature": fit.model_signature,
+            "n_observations": fit.n_observations,
+            "parameters": {
+                name: float(value)
+                for name, value in zip(fit.parameter_names, fit.estimates, strict=True)
             },
-            "audit": self.audit.to_dict(),
-            "n_predictions": len(self.predictions),
-        }
-        if retain_predictions:
-            result["predictions"] = [_json_safe(item.to_dict()) for item in self.predictions]
-        return result
+            "standard_errors": {
+                name: float(value)
+                for name, value in zip(fit.parameter_names, fit.standard_errors, strict=True)
+            },
+        },
+        "audit": evaluation.fit_audit.to_dict(),
+        "n_predictions": len(predictions),
+    }
+    if retain_predictions:
+        result["predictions"] = [_json_safe(item.to_dict()) for item in predictions]
+    return result
 
 
 @dataclass(frozen=True, slots=True)
@@ -354,48 +370,41 @@ class ScoreSummary:
 
 
 @dataclass(frozen=True, slots=True)
-class ProtocolPairedComparison:
-    """Paired equal-unit difference under the protocol's declared score."""
-
-    left_model: str
-    right_model: str
-    metric: ScoreMetric
-    left_minus_right: BootstrapInterval
-    bootstrap_probability_positive: float
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "metric", ScoreMetric(self.metric))
-        if not self.left_model or not self.right_model or self.left_model == self.right_model:
-            raise ValueError("paired comparison requires two distinct named models")
-        if not 0 <= self.bootstrap_probability_positive <= 1:
-            raise ValueError("bootstrap probability must lie in [0, 1]")
-
-    def to_dict(self) -> dict[str, Any]:
-        """Return an explicit lower-is-better comparison direction."""
-
-        return {
-            "left_model": self.left_model,
-            "right_model": self.right_model,
-            "metric": self.metric.value,
-            "direction": (
-                f"left {self.metric.value} minus right {self.metric.value}; positive favors right"
-            ),
-            "left_minus_right": self.left_minus_right.to_dict(),
-            "bootstrap_probability_positive": self.bootstrap_probability_positive,
-        }
-
-
-@dataclass(frozen=True, slots=True)
 class CandidateRun:
     """All successful folds, failures, scores, uncertainty, and calibration for a candidate."""
 
     name: str
     model_signature: str
-    folds: tuple[FoldRun, ...]
-    failures: tuple[RunFailure, ...]
+    folds: tuple[FoldEvaluation, ...]
+    failures: tuple[FoldFailure, ...]
+    fold_predictions: tuple[tuple[PointwisePrediction, ...], ...]
     unit_scores: tuple[UnitScore, ...]
     score: ScoreSummary | None
     calibration: CalibrationSummary
+    declaration_failure: FoldFailure | None = None
+    """Why this candidate never entered the fold loop, when it did not.
+
+    An object that does not satisfy the estimator contract, or that does not support the
+    prediction mode the plan needs, fails before any fold is attempted. That is a finding
+    about the candidate, so the run keeps going -- but it is *not* a per-fold finding, and
+    manufacturing one ``FoldFailure`` per fold would archive an assertion that N folds were
+    attempted when none were. ``fold`` on this record names the candidate, not a fold.
+    """
+
+    def __post_init__(self) -> None:
+        if len(self.fold_predictions) != len(self.folds):
+            raise ValueError("a candidate run must retain one pointwise group per scored fold")
+        for fold, points in zip(self.folds, self.fold_predictions, strict=True):
+            if len(points) != len(fold.pointwise_log_probability):
+                raise ValueError("a scored fold must retain one pointwise record per scored row")
+        if self.declaration_failure is not None and self.folds:
+            raise ValueError("a candidate that failed its declaration cannot have scored folds")
+
+    @property
+    def predictions(self) -> tuple[PointwisePrediction, ...]:
+        """Every scored-row record in fold order, flattened."""
+
+        return tuple(chain.from_iterable(self.fold_predictions))
 
     @property
     def eligible(self) -> bool:
@@ -404,17 +413,18 @@ class CandidateRun:
         return (
             bool(self.folds)
             and not self.failures
+            and self.declaration_failure is None
             and self.score is not None
-            and all(fold.audit.status != FitAuditStatus.FAIL for fold in self.folds)
+            and all(fold.fit_audit.status != FitAuditStatus.FAIL for fold in self.folds)
         )
 
     @property
     def audit_status(self) -> FitAuditStatus:
         """Worst numerical status, treating execution failure as failed audit evidence."""
 
-        if self.failures or not self.folds:
+        if self.failures or self.declaration_failure is not None or not self.folds:
             return FitAuditStatus.FAIL
-        statuses = {fold.audit.status for fold in self.folds}
+        statuses = {fold.fit_audit.status for fold in self.folds}
         if FitAuditStatus.FAIL in statuses:
             return FitAuditStatus.FAIL
         if FitAuditStatus.WARNING in statuses:
@@ -478,8 +488,14 @@ class CandidateRun:
             "model_signature": self.model_signature,
             "eligible": self.eligible,
             "audit_status": self.audit_status.value,
-            "folds": [fold.to_dict(retain_predictions=retain_predictions) for fold in self.folds],
-            "failures": [_json_safe(asdict(failure)) for failure in self.failures],
+            "folds": [
+                fold_to_dict(fold, points, retain_predictions=retain_predictions)
+                for fold, points in zip(self.folds, self.fold_predictions, strict=True)
+            ],
+            "failures": [failure.to_dict() for failure in self.failures],
+            "declaration_failure": (
+                None if self.declaration_failure is None else self.declaration_failure.to_dict()
+            ),
             "unit_scores": [_json_safe(asdict(score)) for score in self.unit_scores],
             "score": self.score.to_dict() if self.score else None,
             "pooled_log_loss": self.pooled_log_loss,
@@ -502,17 +518,36 @@ class CandidateRun:
 
 @dataclass(frozen=True, slots=True)
 class Ranking:
-    """Declared winner policy applied without resolving overlapping evidence by fiat."""
+    """Declared winner policy applied without resolving overlapping evidence by fiat.
+
+    ``family`` records the simultaneous family the winner rule was read against. It is
+    retained whether or not a winner was named, so a reader can always see how many
+    contrasts were examined to produce the verdict.
+    """
 
     status: RankingStatus
     winner: str | None
     eligible_candidates: tuple[str, ...]
     reason: str
+    family: ComparisonFamily
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "status", RankingStatus(self.status))
         if (self.status == RankingStatus.RESOLVED) != (self.winner is not None):
             raise ValueError("ranking winner must exist exactly when status is resolved")
+        if not isinstance(self.family, ComparisonFamily):
+            raise TypeError("ranking family must be a ComparisonFamily")
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return the verdict beside the family it was read against."""
+
+        return {
+            "status": self.status.value,
+            "winner": self.winner,
+            "eligible_candidates": list(self.eligible_candidates),
+            "reason": self.reason,
+            "family": self.family.to_dict(),
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -523,7 +558,7 @@ class EvaluationReport:
     protocol_fingerprint: str
     execution_plan_fingerprint: str
     candidates: tuple[CandidateRun, ...]
-    paired_comparisons: tuple[ProtocolPairedComparison, ...]
+    paired_comparisons: tuple[PairedComparison, ...]
     ranking: Ranking
 
     @property
@@ -544,7 +579,7 @@ class EvaluationReport:
                 for candidate in self.candidates
             },
             "paired_comparisons": [comparison.to_dict() for comparison in self.paired_comparisons],
-            "ranking": _json_safe(asdict(self.ranking)),
+            "ranking": self.ranking.to_dict(),
         }
 
     def canonical_json(self) -> str:
@@ -582,7 +617,7 @@ class ProtocolRun:
 
 
 @dataclass(frozen=True, slots=True)
-class NestedFoldRun:
+class NestedFold:
     """Training-only inner comparison and selected outer evaluation for one fold."""
 
     outer_fold: str
@@ -624,7 +659,7 @@ class NestedEvaluationReport:
     protocol_fingerprint: str
     execution_plan_fingerprint: str
     candidate_names: tuple[str, ...]
-    folds: tuple[NestedFoldRun, ...]
+    folds: tuple[NestedFold, ...]
     unit_scores: tuple[UnitScore, ...]
     score: ScoreSummary | None
     calibration: CalibrationSummary
@@ -769,31 +804,42 @@ class NestedProtocolRun:
 def verify_candidate_declarations(
     protocol: Any,
     models: Mapping[str, BehaviourEstimator],
+    *,
+    registry: EstimatorRegistry | None = None,
 ) -> tuple[CandidateVerification, ...]:
     """Compare each supplied estimator against the candidate declaration frozen for it.
 
     A frozen protocol is only worth its fingerprint if the object that ran is the object
     it declared. This checks the two things a :class:`~behavio.protocol.CandidateSpec`
     fixes -- ``implementation`` and ``hyperparameters`` -- against the estimator handed to
-    the runner, using only that object: the import path of its type, and, because every
-    model in the package is a frozen dataclass, its own field values.
+    the runner.
 
-    Identity is resolved without importing the declared string. A frozen protocol is data,
-    and importing a module path out of it would turn a declaration into code execution --
-    which is exactly why :mod:`behavio.cli` resolves implementations through a fixed
-    allowlist. Only modules the process has already imported are consulted, so the check
-    can prove a contradiction but never manufacture one out of an unread module.
+    ``registry`` is the allowlist the declaration is resolved through, defaulting to
+    :func:`~behavio.registry.builtin_estimator_registry`. It is what makes the check
+    *decidable*: a registered implementation declares the class it produces, so the
+    supplied object either is an instance of it or is not, and a combinator registration
+    additionally exposes the model it wraps, so ``base.``-prefixed settings are checked
+    against the wrapped model rather than reported as fields that do not exist. Pass a
+    registry containing your own registrations to have an extension model verified too.
+
+    A declaration the registry does not know still falls back to the registry-free check,
+    which resolves identity without importing the declared string: a frozen protocol is
+    data, and importing a module path out of it would turn a declaration into code
+    execution. Only modules the process has already imported are consulted, so that
+    fallback can prove a contradiction but never manufacture one out of an unread module,
+    and it reports ``unverifiable`` where it genuinely cannot tell.
 
     Findings are returned rather than raised, so the complete comparison is available to a
     caller that wants to record it; :func:`run_protocol` refuses to execute a plan when any
     finding is :attr:`DeclarationCheck.CONTRADICTED`.
     """
 
+    allowlist = builtin_estimator_registry() if registry is None else registry
     verifications: list[CandidateVerification] = []
     for candidate in protocol.candidates:
         model = models[candidate.name]
-        findings = [_verify_implementation(candidate, model)]
-        findings.extend(_verify_hyperparameters(candidate, model))
+        findings = [_verify_implementation(candidate, model, allowlist)]
+        findings.extend(_verify_hyperparameters(candidate, model, allowlist))
         verifications.append(
             CandidateVerification(
                 candidate=candidate.name,
@@ -807,7 +853,9 @@ def verify_candidate_declarations(
     return tuple(verifications)
 
 
-def _verify_implementation(candidate: Any, model: Any) -> DeclarationFinding:
+def _verify_implementation(
+    candidate: Any, model: Any, registry: EstimatorRegistry
+) -> DeclarationFinding:
     declared = candidate.implementation
     model_type = type(model)
     observed = _implementation_path(model_type)
@@ -818,6 +866,16 @@ def _verify_implementation(candidate: Any, model: Any) -> DeclarationFinding:
         declared=declared,
         observed=observed,
     )
+    resolved = registry.verify(declared, model)
+    if resolved is not None:
+        return finding(
+            status=DeclarationCheck.VERIFIED if resolved else DeclarationCheck.CONTRADICTED,
+            detail=(
+                "the registry resolves the declared implementation to this class"
+                if resolved
+                else "the registry resolves the declared implementation to a different class"
+            ),
+        )
     if declared in _implementation_aliases(model_type):
         return finding(
             status=DeclarationCheck.VERIFIED,
@@ -844,11 +902,10 @@ def _verify_implementation(candidate: Any, model: Any) -> DeclarationFinding:
     )
 
 
-def _verify_hyperparameters(candidate: Any, model: Any) -> tuple[DeclarationFinding, ...]:
-    declarable = is_dataclass(model) and not isinstance(model, type)
-    observed_fields = (
-        {field.name: getattr(model, field.name) for field in fields(model)} if declarable else {}
-    )
+def _verify_hyperparameters(
+    candidate: Any, model: Any, registry: EstimatorRegistry
+) -> tuple[DeclarationFinding, ...]:
+    base = registry.base_of(candidate.implementation, model)
     findings: list[DeclarationFinding] = []
     for setting in candidate.hyperparameters:
         finding = partial(
@@ -857,48 +914,98 @@ def _verify_hyperparameters(candidate: Any, model: Any) -> tuple[DeclarationFind
             subject=f"hyperparameter:{setting.name}",
             declared=repr(setting.value),
         )
-        if not declarable:
-            findings.append(
-                finding(
-                    status=DeclarationCheck.UNVERIFIABLE,
-                    observed="",
-                    detail="the supplied object is not a dataclass with declared fields",
-                )
-            )
+        if setting.name == BASE_SETTING:
+            findings.append(_verify_base_reference(finding, setting, base, registry))
             continue
-        if setting.name not in observed_fields:
-            findings.append(
-                finding(
-                    status=DeclarationCheck.UNVERIFIABLE,
-                    observed="",
-                    detail="the supplied object has no field of that name",
-                )
-            )
-            continue
-        observed = observed_fields[setting.name]
-        comparable, normalized = _comparable_value(observed)
-        if not comparable:
-            findings.append(
-                finding(
-                    status=DeclarationCheck.UNVERIFIABLE,
-                    observed=repr(observed),
-                    detail="the observed field value is not a comparable JSON scalar or tuple",
-                )
-            )
-            continue
-        agrees = _values_agree(setting.value, normalized)
-        findings.append(
-            finding(
-                status=DeclarationCheck.VERIFIED if agrees else DeclarationCheck.CONTRADICTED,
-                observed=repr(normalized),
-                detail=(
-                    "the field value matches the frozen declaration"
-                    if agrees
-                    else "the field value differs from the frozen declaration"
-                ),
-            )
+        target, name = (
+            (base, setting.name[len(BASE_SETTING) + 1 :])
+            if setting.name.startswith(f"{BASE_SETTING}.")
+            else (model, setting.name)
         )
+        if target is None:
+            findings.append(
+                finding(
+                    status=DeclarationCheck.UNVERIFIABLE,
+                    observed="",
+                    detail=(
+                        "the declaration configures a wrapped model, but the registry does "
+                        "not know this implementation to be a combinator"
+                    ),
+                )
+            )
+            continue
+        findings.append(_verify_field(finding, target, name, setting.value))
     return tuple(findings)
+
+
+def _verify_base_reference(
+    finding: Callable[..., DeclarationFinding],
+    setting: Any,
+    base: Any,
+    registry: EstimatorRegistry,
+) -> DeclarationFinding:
+    """Decide the ``base`` setting, which names an implementation rather than a value."""
+
+    if base is None:
+        return finding(
+            status=DeclarationCheck.UNVERIFIABLE,
+            observed="",
+            detail="the registry does not know this implementation to be a combinator",
+        )
+    observed = _implementation_path(type(base))
+    resolved = registry.verify(setting.value, base) if isinstance(setting.value, str) else None
+    if resolved is None:
+        return finding(
+            status=DeclarationCheck.UNVERIFIABLE,
+            observed=observed,
+            detail="the declared base implementation is not in the registry",
+        )
+    return finding(
+        status=DeclarationCheck.VERIFIED if resolved else DeclarationCheck.CONTRADICTED,
+        observed=observed,
+        detail=(
+            "the wrapped model is an instance of the declared base implementation"
+            if resolved
+            else "the wrapped model is not an instance of the declared base implementation"
+        ),
+    )
+
+
+def _verify_field(
+    finding: Callable[..., DeclarationFinding], model: Any, name: str, value: Any
+) -> DeclarationFinding:
+    """Decide one declared setting against one field of the object that holds it."""
+
+    if not (is_dataclass(model) and not isinstance(model, type)):
+        return finding(
+            status=DeclarationCheck.UNVERIFIABLE,
+            observed="",
+            detail="the supplied object is not a dataclass with declared fields",
+        )
+    if not any(field.name == name for field in fields(model)):
+        return finding(
+            status=DeclarationCheck.UNVERIFIABLE,
+            observed="",
+            detail="the supplied object has no field of that name",
+        )
+    observed = getattr(model, name)
+    comparable, normalized = _comparable_value(observed)
+    if not comparable:
+        return finding(
+            status=DeclarationCheck.UNVERIFIABLE,
+            observed=repr(observed),
+            detail="the observed field value is not a comparable JSON scalar or tuple",
+        )
+    agrees = _values_agree(value, normalized)
+    return finding(
+        status=DeclarationCheck.VERIFIED if agrees else DeclarationCheck.CONTRADICTED,
+        observed=repr(normalized),
+        detail=(
+            "the field value matches the frozen declaration"
+            if agrees
+            else "the field value differs from the frozen declaration"
+        ),
+    )
 
 
 def _implementation_path(model_type: type[Any]) -> str:
@@ -1010,15 +1117,16 @@ def run_protocol(
         )
         for candidate_name in declared_names
     )
-    comparisons = _paired_comparisons(candidate_runs, protocol.comparison)
+    comparisons, family = _paired_comparisons(candidate_runs, protocol.comparison)
     ranking = _rank(
         candidate_runs,
         comparisons,
+        family,
         protocol.comparison.winner_policy,
         protocol.comparison.metric,
     )
     report = EvaluationReport(
-        schema_version="behavio.evaluation-report/1",
+        schema_version=EVALUATION_REPORT_SCHEMA,
         protocol_fingerprint=protocol.fingerprint,
         execution_plan_fingerprint=compiled.plan.fingerprint,
         candidates=candidate_runs,
@@ -1058,7 +1166,7 @@ def run_nested_protocol(
     )
     outcome_column = protocol.candidates[0].scored_columns[0]
     study = compiled.materialized.study
-    fold_runs: list[NestedFoldRun] = []
+    fold_runs: list[NestedFold] = []
     for outer_index, outer in enumerate(compiled.plan.folds):
         inner_results = tuple(
             _run_candidate_folds(
@@ -1078,7 +1186,7 @@ def run_nested_protocol(
         eligible = tuple(candidate for candidate in inner_results if candidate.eligible)
         if not eligible:
             fold_runs.append(
-                NestedFoldRun(
+                NestedFold(
                     outer.identifier,
                     None,
                     inner_results,
@@ -1103,13 +1211,12 @@ def run_nested_protocol(
             interval_level=protocol.comparison.interval_level,
             metric=protocol.comparison.metric,
         )
-        fold_runs.append(NestedFoldRun(outer.identifier, selected, inner_results, outer_result))
+        fold_runs.append(NestedFold(outer.identifier, selected, inner_results, outer_result))
     predictions = tuple(
         point
         for fold in fold_runs
         if fold.outer_result is not None
-        for outer_fold in fold.outer_result.folds
-        for point in outer_fold.predictions
+        for point in fold.outer_result.predictions
     )
     unit_scores = _unit_scores(predictions, study, outcome_column)
     score = (
@@ -1127,7 +1234,7 @@ def run_nested_protocol(
         else None
     )
     report = NestedEvaluationReport(
-        "behavio.nested-evaluation-report/1",
+        NESTED_EVALUATION_REPORT_SCHEMA,
         protocol.fingerprint,
         compiled.plan.fingerprint,
         selection.candidate_names,
@@ -1178,101 +1285,51 @@ def _run_candidate_folds(
     interval_level: float,
     metric: ScoreMetric,
 ) -> CandidateRun:
-    folds: list[FoldRun] = []
-    failures: list[RunFailure] = []
-    for fold in plan_folds:
-        training = study.take(fold.fit_rows)
-        try:
-            fit = model.fit(training)
-            _validate_fit(model, fit, len(training))
-        except Exception as error:  # candidate failures are scientific evidence
-            failures.append(_failure(name, fold.identifier, RunStage.FIT, error))
-            continue
-        prediction_rows = (*fold.prediction_context_rows, *fold.scored_rows)
-        prediction_study = study.take(prediction_rows)
-        try:
-            prediction = model.predict(
-                prediction_study,
-                fit,
-                mode=PredictionMode.FILTERED,
-            )
-            if not isinstance(prediction, (Prediction, CategoricalPrediction)):
-                raise TypeError("model.predict must return Prediction or CategoricalPrediction")
-            if prediction.n_observations != len(prediction_study):
-                raise ValueError("prediction length differs from compiled prediction rows")
-        except Exception as error:
-            failures.append(_failure(name, fold.identifier, RunStage.PREDICT, error))
-            continue
-        try:
-            scores = np.asarray(
-                model.pointwise_log_prob(
-                    prediction_study,
-                    fit,
-                    mode=PredictionMode.FILTERED,
-                ),
-                dtype=np.float64,
-            )
-            if scores.shape != (len(prediction_study),) or not np.all(np.isfinite(scores)):
-                raise ValueError("pointwise scores must be one finite value per prediction row")
-            offset = len(fold.prediction_context_rows)
-            target = slice(offset, None)
-            if isinstance(prediction, CategoricalPrediction):
-                if not isinstance(model, CategoricalBehaviourEstimator):
-                    raise TypeError(
-                        "categorical predictions require categories and outcome_codes()"
-                    )
-                if tuple(model.categories) != prediction.categories:
-                    raise ValueError("model and prediction category coordinates differ")
-                codes = np.asarray(model.outcome_codes(prediction_study), dtype=np.int64)
-                if codes.shape != (len(prediction_study),):
-                    raise ValueError("outcome_codes must return one code per prediction row")
-                pointwise = tuple(
-                    PointwisePrediction(
-                        row=row,
-                        probability=None,
-                        linear_predictor=None,
-                        log_probability=float(log_probability),
-                        aggregation_unit=_identifier(study[aggregation_column][row]),
-                        category_probabilities=tuple(float(value) for value in probabilities),
-                        categories=tuple(_identifier(value) for value in prediction.categories),
-                        observed_category_index=int(code),
-                    )
-                    for row, probabilities, code, log_probability in zip(
-                        fold.scored_rows,
-                        prediction.probability[target],
-                        codes[target],
-                        scores[target],
-                        strict=True,
-                    )
-                )
-            else:
-                pointwise = tuple(
-                    PointwisePrediction(
-                        row=row,
-                        probability=float(probability),
-                        linear_predictor=float(linear_predictor),
-                        log_probability=float(log_probability),
-                        aggregation_unit=_identifier(study[aggregation_column][row]),
-                    )
-                    for row, probability, linear_predictor, log_probability in zip(
-                        fold.scored_rows,
-                        prediction.probability[target],
-                        prediction.linear_predictor[target],
-                        scores[target],
-                        strict=True,
-                    )
-                )
-        except Exception as error:
-            failures.append(_failure(name, fold.identifier, RunStage.SCORE, error))
-            continue
-        folds.append(FoldRun(fold.identifier, fit, audit_fit(fit), pointwise))
+    """Evaluate one candidate over compiled folds, retaining rather than raising failures.
 
-    all_predictions = tuple(point for fold in folds for point in fold.predictions)
-    unit_scores = _unit_scores(all_predictions, study, outcome_column)
+    This is the whole of the runner's former fold loop. It adapts each compiled fold to the
+    :class:`~behavio.contracts.fold.ValidationFold` contract, hands the work to
+    :func:`~behavio.evaluation.evaluate_splits`, and projects the result into the portable
+    records a protocol artifact needs.
+    """
+
+    splits = tuple(_compiled_fold_split(fold) for fold in plan_folds)
+    declaration_failure: FoldFailure | None = None
+    try:
+        evaluated = evaluate_splits(
+            model,
+            study,
+            splits,
+            mode=PredictionMode.FILTERED,
+            # A compiled plan's leakage gate is the pre-fit protocol audit, which checks the
+            # exact row sets rather than trusting a splitter's self-description; the
+            # fold-level `prospective` flag would be a weaker second opinion about the same
+            # question.
+            require_prospective=False,
+            on_failure=FoldFailurePolicy.RETAIN,
+        )
+    except CandidateDeclarationError as error:
+        # `evaluate_splits` raises this under either fold policy, because it describes
+        # something no fold could survive. For an interactive caller that is their own
+        # mistake and should stop the call. Under a frozen protocol it is a finding about
+        # *this* candidate, and erasing the other candidates' evidence over it would make
+        # the run less informative than the failure it is reporting. It is recorded once,
+        # against the candidate, rather than fabricated once per fold that never ran.
+        evaluated = SplitEvaluation((), (), FoldFailurePolicy.RETAIN)
+        declaration_failure = FoldFailure(
+            fold=name,
+            stage=FoldStage.FIT,
+            exception_type=type(error).__name__,
+            message=str(error),
+        )
+    units = study[aggregation_column]
+    fold_predictions = tuple(_pointwise_predictions(evaluation, units) for evaluation in evaluated)
+    predictions = tuple(chain.from_iterable(fold_predictions))
+    unit_scores = _unit_scores(predictions, study, outcome_column)
     score = (
         _score_summary(
             unit_scores,
-            all_predictions,
+            predictions,
             study,
             outcome_column,
             metric=metric,
@@ -1283,29 +1340,117 @@ def _run_candidate_folds(
         if unit_scores
         else None
     )
-    calibration = _calibration(all_predictions, study, outcome_column)
     return CandidateRun(
         name=name,
         model_signature=model.signature,
-        folds=tuple(folds),
-        failures=tuple(failures),
+        folds=tuple(evaluated),
+        failures=evaluated.failures,
+        fold_predictions=fold_predictions,
         unit_scores=unit_scores,
         score=score,
-        calibration=calibration,
+        calibration=_calibration(predictions, study, outcome_column),
+        declaration_failure=declaration_failure,
     )
 
 
-def _validate_fit(model: BehaviourEstimator, fit: Any, n_observations: int) -> None:
-    if not isinstance(fit, FitResult):
-        raise TypeError("model.fit must return FitResult")
-    if fit.model_name != model.model_name or fit.model_signature != model.signature:
-        raise ValueError("fit identity differs from the declared model")
-    if fit.n_observations != n_observations:
-        raise ValueError("fit n_observations differs from the compiled fitting rows")
+@dataclass(frozen=True, slots=True)
+class _CompiledFoldSplit:
+    """A compiled protocol fold seen through the :class:`ValidationFold` contract.
+
+    The compiler speaks of ``fit_rows``, ``prediction_context_rows`` and ``scored_rows``;
+    the fold contract speaks of ``train_indices``, ``prediction_context_indices`` and
+    ``test_indices``. They are the same three row sets under two vocabularies, and this
+    adapter is the whole of the translation. ``identifier`` is carried through so a
+    retained failure and a serialized fold both name the compiled fold rather than a
+    position.
+    """
+
+    identifier: str
+    train_indices: NDArray[np.intp]
+    prediction_context_indices: NDArray[np.intp]
+    test_indices: NDArray[np.intp]
+
+    @property
+    def scheme(self) -> str:
+        return "compiled-protocol-fold"
+
+    @property
+    def prospective(self) -> bool:
+        """Refuse the question rather than answer it wrongly.
+
+        A compiled fold is a set of row positions; whether the split that produced them
+        protected a forecast horizon is a property of the *splitter*, which the compiler
+        does not carry through. ``_run_candidate_folds`` passes ``require_prospective=False``
+        precisely because the plan's pre-fit leakage audit is the stronger gate, so nothing
+        on the runner's path reads this. Returning ``True`` anyway would put a fabricated
+        claim into any provenance record that later learned to serialize a fold.
+        """
+
+        raise NotImplementedError(
+            "a compiled protocol fold does not carry its splitter's prospective flag; the "
+            "execution plan's pre-fit leakage audit is the gate that applies to it"
+        )
 
 
-def _failure(candidate: str, fold: str, stage: RunStage, error: Exception) -> RunFailure:
-    return RunFailure(candidate, fold, stage, type(error).__name__, str(error))
+def _compiled_fold_split(fold: Any) -> _CompiledFoldSplit:
+    return _CompiledFoldSplit(
+        identifier=fold.identifier,
+        train_indices=np.asarray(fold.fit_rows, dtype=np.intp),
+        prediction_context_indices=np.asarray(fold.prediction_context_rows, dtype=np.intp),
+        test_indices=np.asarray(fold.scored_rows, dtype=np.intp),
+    )
+
+
+def _pointwise_predictions(
+    evaluation: FoldEvaluation,
+    units: Any,
+) -> tuple[PointwisePrediction, ...]:
+    """Project one shared fold evaluation into portable scored-row records.
+
+    ``units`` is the already-resolved aggregation column. ``Study.__getitem__`` builds a
+    fresh read-only view per call, so looking it up per scored row would allocate one view
+    per trial.
+    """
+
+    rows = tuple(int(row) for row in evaluation.split.test_indices)
+    prediction = evaluation.prediction
+    scores = evaluation.pointwise_log_probability
+    if isinstance(prediction, CategoricalPrediction):
+        codes = evaluation.outcome_codes
+        if codes is None:  # pragma: no cover - established by FoldEvaluation
+            raise ProtocolRunError("a categorical fold must retain observed outcome codes")
+        categories = tuple(_identifier(value) for value in prediction.categories)
+        return tuple(
+            PointwisePrediction(
+                row=row,
+                probability=None,
+                linear_predictor=None,
+                log_probability=float(log_probability),
+                aggregation_unit=_identifier(units[row]),
+                category_probabilities=tuple(float(value) for value in probabilities),
+                categories=categories,
+                observed_category_index=int(code),
+            )
+            for row, probabilities, code, log_probability in zip(
+                rows, prediction.probability, codes, scores, strict=True
+            )
+        )
+    return tuple(
+        PointwisePrediction(
+            row=row,
+            probability=float(probability),
+            linear_predictor=float(linear_predictor),
+            log_probability=float(log_probability),
+            aggregation_unit=_identifier(units[row]),
+        )
+        for row, probability, linear_predictor, log_probability in zip(
+            rows,
+            prediction.probability,
+            prediction.linear_predictor,
+            scores,
+            strict=True,
+        )
+    )
 
 
 def _unit_scores(
@@ -1356,11 +1501,11 @@ def _score_summary(
         pooled = float(np.mean(brier))
     else:
         pooled = -float(np.mean([point.log_probability for point in predictions]))
-    interval = _bootstrap_interval(
+    interval = bootstrap_interval(
         values,
-        repetitions=repetitions,
+        resamples=repetitions,
         seed=seed,
-        confidence=confidence,
+        confidence_level=confidence,
     )
     return ScoreSummary(metric, pooled, float(np.mean(values)), interval)
 
@@ -1435,77 +1580,35 @@ def _point_brier(point: PointwisePrediction, study: Any, outcome_column: str) ->
 
 def _paired_comparisons(
     candidate_runs: tuple[CandidateRun, ...], comparison: Any
-) -> tuple[ProtocolPairedComparison, ...]:
+) -> tuple[tuple[PairedComparison, ...], ComparisonFamily]:
+    """Compare every eligible pair through the one shared paired-bootstrap implementation.
+
+    The family-level error rate is ``1 - interval_level``: the rate the protocol already
+    declared, now controlled across the whole family of contrasts instead of one contrast
+    at a time. No new threshold is introduced.
+    """
+
     eligible = tuple(candidate for candidate in candidate_runs if candidate.eligible)
-    results: list[ProtocolPairedComparison] = []
-    for left_index, left in enumerate(eligible):
-        left_scores = {
-            _identifier_key(score.unit): _unit_score_value(score, comparison.metric)
-            for score in left.unit_scores
-        }
-        for right in eligible[left_index + 1 :]:
-            right_scores = {
+    return paired_comparisons(
+        {
+            candidate.name: {
                 _identifier_key(score.unit): _unit_score_value(score, comparison.metric)
-                for score in right.unit_scores
+                for score in candidate.unit_scores
             }
-            common = tuple(key for key in left_scores if key in right_scores)
-            differences = [left_scores[key] - right_scores[key] for key in common]
-            if not differences:
-                continue
-            interval, probability = _paired_interval(
-                differences,
-                repetitions=comparison.bootstrap_repetitions,
-                seed=comparison.seed,
-                confidence=comparison.interval_level,
-            )
-            results.append(
-                ProtocolPairedComparison(
-                    left.name,
-                    right.name,
-                    comparison.metric,
-                    interval,
-                    probability,
-                )
-            )
-    return tuple(results)
-
-
-def _bootstrap_interval(
-    values: Sequence[float], *, repetitions: int, seed: int, confidence: float
-) -> BootstrapInterval:
-    array = np.asarray(values, dtype=np.float64)
-    rng = np.random.default_rng(seed)
-    draws = np.mean(rng.choice(array, size=(repetitions, len(array)), replace=True), axis=1)
-    tail = round((1 - confidence) / 2, 15)
-    return BootstrapInterval(
-        estimate=float(np.mean(array)),
-        lower=float(np.quantile(draws, tail)),
-        upper=float(np.quantile(draws, 1 - tail)),
-        confidence_level=confidence,
-    )
-
-
-def _paired_interval(
-    differences: Sequence[float], *, repetitions: int, seed: int, confidence: float
-) -> tuple[BootstrapInterval, float]:
-    array = np.asarray(differences, dtype=np.float64)
-    rng = np.random.default_rng(seed)
-    draws = np.mean(rng.choice(array, size=(repetitions, len(array)), replace=True), axis=1)
-    tail = round((1 - confidence) / 2, 15)
-    return (
-        BootstrapInterval(
-            estimate=float(np.mean(array)),
-            lower=float(np.quantile(draws, tail)),
-            upper=float(np.quantile(draws, 1 - tail)),
-            confidence_level=confidence,
-        ),
-        float(np.mean(draws > 0)),
+            for candidate in eligible
+        },
+        metric=comparison.metric,
+        resamples=comparison.bootstrap_repetitions,
+        seed=comparison.seed,
+        confidence_level=comparison.interval_level,
+        multiplicity=ComparisonMultiplicity.BENJAMINI_HOCHBERG,
     )
 
 
 def _rank(
     candidates: tuple[CandidateRun, ...],
-    comparisons: tuple[ProtocolPairedComparison, ...],
+    comparisons: tuple[PairedComparison, ...],
+    family: ComparisonFamily,
     policy: WinnerPolicy,
     metric: ScoreMetric,
 ) -> Ranking:
@@ -1517,6 +1620,7 @@ def _rank(
             None,
             (),
             "every candidate failed execution or numerical audit",
+            family,
         )
     if policy == WinnerPolicy.NO_AUTOMATIC_WINNER:
         return Ranking(
@@ -1524,6 +1628,7 @@ def _rank(
             None,
             names,
             "the protocol forbids automatic winner selection",
+            family,
         )
     best = min(
         eligible,
@@ -1535,45 +1640,49 @@ def _rank(
             best,
             names,
             "winner follows the frozen lowest-point-estimate policy",
+            family,
         )
-    decisive = True
-    for other in names:
-        if other == best:
-            continue
-        difference = _comparison_direction(comparisons, best, other)
-        if difference is None or difference.upper >= 0:
-            decisive = False
-            break
-    if decisive:
+    undecided = tuple(
+        other
+        for other in names
+        if other != best and not _decisively_favours(comparisons, best, other)
+    )
+    if not undecided:
         return Ranking(
             RankingStatus.RESOLVED,
             best,
             names,
-            "the best candidate improves on every eligible competitor with intervals below zero",
+            (
+                f"the best candidate improves on every eligible competitor across all "
+                f"{family.n_comparisons} simultaneous contrasts after "
+                f"{family.multiplicity.value} adjustment at "
+                f"{family.family_error_rate:.3g}"
+            ),
+            family,
         )
     return Ranking(
         RankingStatus.UNRESOLVED,
         None,
         names,
-        "at least one paired interval does not exclude equal predictive performance",
+        (
+            f"{len(undecided)} of {len(names) - 1} contrasts against the leading candidate "
+            f"do not exclude equal predictive performance across the family of "
+            f"{family.n_comparisons} simultaneous contrasts "
+            f"({family.n_decisive} decisive after {family.multiplicity.value} adjustment "
+            f"at {family.family_error_rate:.3g}; {family.n_separated} separated before it)"
+        ),
+        family,
     )
 
 
-def _comparison_direction(
-    comparisons: tuple[ProtocolPairedComparison, ...], left: str, right: str
-) -> BootstrapInterval | None:
+def _decisively_favours(comparisons: tuple[PairedComparison, ...], winner: str, other: str) -> bool:
+    """Whether a family-adjusted contrast puts ``winner`` strictly ahead of ``other``."""
+
     for comparison in comparisons:
-        interval = comparison.left_minus_right
-        if comparison.left_model == left and comparison.right_model == right:
-            return interval
-        if comparison.left_model == right and comparison.right_model == left:
-            return BootstrapInterval(
-                estimate=-interval.estimate,
-                lower=-interval.upper,
-                upper=-interval.lower,
-                confidence_level=interval.confidence_level,
-            )
-    return None
+        pair = (comparison.left_model, comparison.right_model)
+        if pair in ((winner, other), (other, winner)):
+            return comparison.favours == winner
+    return False
 
 
 def _candidate_score(candidate: CandidateRun, metric: ScoreMetric) -> float:

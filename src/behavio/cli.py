@@ -20,20 +20,14 @@ from behavio.adapters.table import (
     session_order_from_column,
 )
 from behavio.compiler import compile_execution_plan, materialize_protocol
-from behavio.compose import hierarchical, smooth
 from behavio.evidence import (
     compare_evidence_bundles,
     read_evidence_bundle,
     replay_evidence_bundle,
 )
-from behavio.models import (
-    BernoulliGLMHMM,
-    BernoulliHistoryGLM,
-    BinaryQLearning,
-    WienerDriftDiffusion,
-    model_capabilities,
-)
+from behavio.models import model_capabilities
 from behavio.protocol import ProtocolState, StudyProtocol, protocol_from_json
+from behavio.registry import EstimatorRegistry, RegistryError, builtin_estimator_registry
 from behavio.runner import run_nested_protocol, run_protocol
 from behavio.study import Study
 from behavio.validation import (
@@ -46,23 +40,6 @@ from behavio.validation import (
     within_session_rolling_splits,
 )
 
-_MODELS: dict[str, Callable[..., Any]] = {
-    "behavio.models.BernoulliHistoryGLM": BernoulliHistoryGLM,
-    "behavio.models.BernoulliGLMHMM": BernoulliGLMHMM,
-    "behavio.models.BinaryQLearning": BinaryQLearning,
-    "behavio.models.WienerDriftDiffusion": WienerDriftDiffusion,
-    "behavio.compose.smooth": smooth,
-    "behavio.compose.hierarchical": hierarchical,
-}
-_BASE_SETTING = "base"
-"""The hyperparameter naming the model a combinator candidate wraps.
-
-A protocol candidate is one implementation name and a flat list of scalar settings, which
-cannot spell a nested constructor call. It can spell a *reference*: ``base`` names another
-built-in implementation and every setting prefixed ``base.`` configures it, recursively. That
-is what lets a frozen protocol declare ``hierarchical(smooth(BernoulliHistoryGLM(...)))``
-without the registry regrowing one entry per composition.
-"""
 _SPLITTERS: dict[str, Callable[..., tuple[Any, ...]]] = {
     "behavio.validation.forward_session_splits": forward_session_splits,
     "behavio.validation.cohort_forward_session_splits": cohort_forward_session_splits,
@@ -386,45 +363,28 @@ def _read_study_json(path: Path) -> Study:
     return Study.from_columns(value["columns"])
 
 
-def _instantiate_models(protocol: StudyProtocol) -> dict[str, Any]:
+def _instantiate_models(
+    protocol: StudyProtocol, registry: EstimatorRegistry | None = None
+) -> dict[str, Any]:
+    """Resolve every declared candidate through the estimator registry.
+
+    The command line used to carry its own hard-coded implementation dict while
+    :class:`~behavio.registry.EstimatorRegistry` was documented as *the* extension point
+    and referenced nowhere. There is now one allowlist, and it is the documented one.
+    """
+
+    allowlist = builtin_estimator_registry() if registry is None else registry
     models: dict[str, Any] = {}
     for candidate in protocol.candidates:
-        model_type = _MODELS.get(candidate.implementation)
-        if model_type is None:
-            raise CLIError(
-                f"candidate implementation is not in the built-in registry: "
-                f"{candidate.implementation!r}"
-            )
         try:
-            models[candidate.name] = _build_model(model_type, _settings(candidate.hyperparameters))
-        except CLIError:
-            raise
+            models[candidate.name] = allowlist.create(
+                candidate.implementation, _settings(candidate.hyperparameters)
+            )
+        except RegistryError as error:
+            raise CLIError(str(error)) from error
         except Exception as error:
             raise CLIError(f"cannot instantiate candidate {candidate.name!r}: {error}") from error
     return models
-
-
-def _build_model(factory: Callable[..., Any], settings: dict[str, Any]) -> Any:
-    """Construct one candidate, resolving a ``base`` reference into a wrapped model first."""
-
-    prefix = f"{_BASE_SETTING}."
-    nested = {
-        name[len(prefix) :]: value for name, value in settings.items() if name.startswith(prefix)
-    }
-    direct = {
-        name: value
-        for name, value in settings.items()
-        if name != _BASE_SETTING and not name.startswith(prefix)
-    }
-    if _BASE_SETTING not in settings:
-        if nested:
-            raise CLIError(f"{_BASE_SETTING}.* settings need a {_BASE_SETTING} implementation")
-        return factory(**direct)
-    reference = settings[_BASE_SETTING]
-    base_factory = _MODELS.get(reference) if isinstance(reference, str) else None
-    if base_factory is None:
-        raise CLIError(f"candidate base is not in the built-in registry: {reference!r}")
-    return factory(_build_model(base_factory, nested), **direct)
 
 
 def _settings(settings: tuple[Any, ...]) -> dict[str, Any]:

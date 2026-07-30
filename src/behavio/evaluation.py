@@ -21,13 +21,31 @@ The failing fold's score is still computed and still reported. Silently dropping
 would break the invariant that every candidate is scored over identical aggregation units,
 which is the only reason a matched comparison is interpretable at all; the honest
 alternative is to keep the number and mark it unusable, which is what happens here.
+
+Raising versus retaining
+------------------------
+A fold can also fail outright -- the optimizer throws, ``predict`` returns the wrong
+length, a score is not finite. There used to be two answers to that in this package:
+:func:`evaluate_splits` raised, and ``behavio.runner`` re-implemented the whole loop so it
+could catch and retain the failure as evidence. Identical inputs therefore behaved
+differently depending on which entry point a caller reached, for reasons no user could
+predict.
+
+There is now one loop and one explicit declaration, :class:`FoldFailurePolicy`.
+``RAISE`` aborts on the first bad fold and is the default, because an interactive caller
+who did not ask for partial results should not silently receive them. ``RETAIN`` records a
+:class:`FoldFailure` and continues, which is what a frozen protocol needs: a candidate
+that could not be fitted is a finding about that candidate, not a reason to abandon the
+other candidates. Both return the same :class:`SplitEvaluation`, whose ``failures`` are
+empty under ``RAISE`` by construction.
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
-from typing import Any
+from enum import StrEnum
+from typing import Any, overload
 
 import numpy as np
 from numpy.typing import NDArray
@@ -40,6 +58,7 @@ from behavio.contracts.posterior import (
     any_model_capabilities,
     is_posterior_estimator,
 )
+from behavio.diagnostics import FitAudit, audit_fit
 from behavio.models.base import (
     CategoricalBehaviourEstimator,
     CategoricalPrediction,
@@ -123,12 +142,82 @@ class PosteriorFoldEvidence:
         }
 
 
+class CandidateDeclarationError(ValueError):
+    """Raised when a candidate could not have completed any fold.
+
+    These are the checks :func:`evaluate_splits` makes *before* the loop: the object does
+    not satisfy an estimator contract, it does not support the requested prediction mode,
+    the study lacks a column it scores, or a posterior policy was handed to a frequentist
+    model. They are raised under either :class:`FoldFailurePolicy`, because retaining the
+    same finding once per fold would archive an assertion that those folds were attempted.
+
+    Naming the class is what lets a caller that must not abort -- ``behavio.runner``, which
+    owes the other candidates their evidence -- catch exactly this and record it once
+    against the candidate, without also swallowing a genuine per-fold failure.
+    """
+
+
+class FoldStage(StrEnum):
+    """Stable stage at which one fold failed.
+
+    The three stages are exactly the three things :func:`evaluate_splits` asks a model to
+    do, so a retained failure always names which contract the candidate could not meet.
+    """
+
+    FIT = "fit"
+    PREDICT = "predict"
+    SCORE = "score"
+
+
+class FoldFailurePolicy(StrEnum):
+    """What :func:`evaluate_splits` does when one fold cannot be completed.
+
+    ``RAISE`` is the default: an interactive caller asked for an evaluation, and a partial
+    one that silently omits folds is not the thing they asked for. ``RETAIN`` records the
+    failure and continues, which is what a frozen protocol needs so that one broken
+    candidate does not erase the evidence about the others.
+    """
+
+    RAISE = "raise"
+    RETAIN = "retain"
+
+
+@dataclass(frozen=True, slots=True)
+class FoldFailure:
+    """One fold-stage failure retained instead of aborting the remaining folds."""
+
+    fold: str
+    stage: FoldStage
+    exception_type: str
+    message: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "stage", FoldStage(self.stage))
+        if not self.fold or not self.exception_type:
+            raise ValueError("a retained fold failure must name its fold and exception type")
+
+    def to_dict(self) -> dict[str, str]:
+        """Return a portable record with no traceback and no live exception."""
+
+        return {
+            "fold": self.fold,
+            "stage": self.stage.value,
+            "exception_type": self.exception_type,
+            "message": self.message,
+        }
+
+
 @dataclass(frozen=True, slots=True)
 class FoldEvaluation:
     """Fit, prediction, and pointwise score for one validation fold.
 
     ``posterior`` is ``None`` for an optimizer fit and carries the sampling evidence when
     the fold was scored from a posterior, so the two are never confused for one another.
+
+    ``identifier`` is the fold's stable name. A compiled protocol fold supplies its own;
+    anything else is numbered in the order it was evaluated. ``audit`` is the fold fit's
+    normalized numerical audit, computed once here rather than recomputed by every layer
+    that needs to know whether the fold is usable.
     """
 
     split: ValidationFold
@@ -137,6 +226,8 @@ class FoldEvaluation:
     pointwise_log_probability: NDArray[np.float64]
     outcome_codes: NDArray[np.int64] | None = None
     posterior: PosteriorFoldEvidence | None = None
+    identifier: str = ""
+    audit: FitAudit | None = None
 
     def __post_init__(self) -> None:
         scores = protected_array(self.pointwise_log_probability, dtype=np.float64)
@@ -162,7 +253,25 @@ class FoldEvaluation:
                 raise TypeError("posterior must be a PosteriorFoldEvidence")
             if self.fit.diagnostics.converged is not evidence.converged:
                 raise ValueError("projected fit convergence must equal the posterior audit verdict")
+        if self.audit is None:
+            object.__setattr__(self, "audit", audit_fit(self.fit))
+        elif not isinstance(self.audit, FitAudit):
+            raise TypeError("audit must be a FitAudit")
+        if not isinstance(self.identifier, str):
+            raise TypeError("fold identifier must be a string")
         object.__setattr__(self, "pointwise_log_probability", scores)
+
+    @property
+    def fit_audit(self) -> FitAudit:
+        """The fold fit's normalized audit, narrowed to non-optional for type checkers.
+
+        ``__post_init__`` always fills ``audit``, so this never recomputes; the field stays
+        optional only so a caller can construct a fold without auditing it first.
+        """
+
+        if self.audit is None:  # pragma: no cover - established in __post_init__
+            raise ValueError("the fold audit was not established")
+        return self.audit
 
     @property
     def from_posterior(self) -> bool:
@@ -183,6 +292,55 @@ class FoldEvaluation:
         return float(np.sum(self.pointwise_log_probability))
 
 
+@dataclass(frozen=True, slots=True)
+class SplitEvaluation(Sequence[FoldEvaluation]):
+    """Every fold one candidate completed, and every fold it did not.
+
+    This is a :class:`~collections.abc.Sequence` of the successful
+    :class:`FoldEvaluation` values, so ``for fold in result``, ``result[0]``,
+    ``len(result)`` and ``tuple(result)`` all address the completed folds exactly as the
+    old ``tuple`` return did. ``failures`` is the new part, and it is empty by
+    construction whenever ``policy`` is :attr:`FoldFailurePolicy.RAISE`.
+    """
+
+    evaluations: tuple[FoldEvaluation, ...]
+    failures: tuple[FoldFailure, ...] = ()
+    policy: FoldFailurePolicy = FoldFailurePolicy.RAISE
+
+    def __post_init__(self) -> None:
+        evaluations = tuple(self.evaluations)
+        failures = tuple(self.failures)
+        policy = FoldFailurePolicy(self.policy)
+        if policy is FoldFailurePolicy.RAISE and failures:
+            raise ValueError("a raising evaluation cannot retain fold failures")
+        object.__setattr__(self, "evaluations", evaluations)
+        object.__setattr__(self, "failures", failures)
+        object.__setattr__(self, "policy", policy)
+
+    def __len__(self) -> int:
+        return len(self.evaluations)
+
+    @overload
+    def __getitem__(self, index: int) -> FoldEvaluation: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> tuple[FoldEvaluation, ...]: ...
+
+    def __getitem__(self, index: int | slice) -> FoldEvaluation | tuple[FoldEvaluation, ...]:
+        return self.evaluations[index]
+
+    def __iter__(self) -> Iterator[FoldEvaluation]:
+        # The Sequence mixin would synthesize this from __getitem__ with an index counter;
+        # delegating to the tuple is both faster and what every caller actually wants.
+        return iter(self.evaluations)
+
+    @property
+    def complete(self) -> bool:
+        """Whether every requested fold produced an evaluation."""
+
+        return not self.failures and bool(self.evaluations)
+
+
 def evaluate_splits(
     model: AnyBehaviourEstimator,
     study: Study,
@@ -191,7 +349,8 @@ def evaluate_splits(
     mode: PredictionMode = PredictionMode.FILTERED,
     require_prospective: bool = True,
     posterior_policy: PosteriorFoldPolicy | None = None,
-) -> tuple[FoldEvaluation, ...]:
+    on_failure: FoldFailurePolicy = FoldFailurePolicy.RAISE,
+) -> SplitEvaluation:
     """Fit or sample and score a model independently within each supplied fold.
 
     Prospective folds are required by default. Passing a non-prospective splitter therefore
@@ -205,6 +364,13 @@ def evaluate_splits(
     (see :func:`~behavio.contracts.posterior.posterior_log_predictive_density`).
     ``posterior_policy`` applies only to sampled models and is rejected for a frequentist
     one rather than silently ignored.
+
+    ``on_failure`` declares what happens when a fold cannot be completed. It governs only
+    failures *of the candidate* -- an optimizer that throws, a prediction of the wrong
+    length, a non-finite score. Declaration errors that no fold could survive, such as a
+    prediction mode the model does not support or a study missing a scored column, are
+    raised under either policy, because retaining the same finding once per fold would
+    describe the caller's mistake as evidence about the model.
     """
 
     sampled = is_posterior_estimator(model)
@@ -212,23 +378,28 @@ def evaluate_splits(
         if not isinstance(posterior_policy, PosteriorFoldPolicy):
             raise TypeError("posterior_policy must be a PosteriorFoldPolicy")
         if not sampled:
-            raise ValueError(
+            raise CandidateDeclarationError(
                 "posterior_policy applies only to a PosteriorBehaviourEstimator; "
                 f"model {model.model_name!r} is fitted by optimization"
             )
     policy = PosteriorFoldPolicy() if posterior_policy is None else posterior_policy
-    capabilities = any_model_capabilities(model)
+    failure_policy = FoldFailurePolicy(on_failure)
+    try:
+        capabilities = any_model_capabilities(model)
+    except (TypeError, ValueError) as error:
+        raise CandidateDeclarationError(str(error)) from error
     prediction_mode = PredictionMode(mode)
     if prediction_mode not in capabilities.prediction_modes:
-        raise ValueError(
+        raise CandidateDeclarationError(
             f"model {model.model_name!r} does not support {prediction_mode.value!r} predictions"
         )
     missing = set(capabilities.scored_columns) - set(study.columns)
     if missing:
-        raise ValueError(f"study is missing scored model columns: {sorted(missing)}")
+        raise CandidateDeclarationError(f"study is missing scored model columns: {sorted(missing)}")
 
     evaluations: list[FoldEvaluation] = []
-    for split in splits:
+    failures: list[FoldFailure] = []
+    for position, split in enumerate(splits):
         if require_prospective and not split.prospective:
             raise ValueError(
                 f"split scheme {split.scheme!r} is not prospective; "
@@ -241,62 +412,137 @@ def evaluate_splits(
             len(study),
             "prediction_context_indices",
         )
-        training = study.take(split.train_indices)
-        evidence: PosteriorFoldEvidence | None = None
-        if sampled:
-            fit, evidence = _sampled_fold_fit(model, training, policy)
-            context: Any = evidence.posterior
-        else:
-            fit = model.fit(training)
-            context = fit
-        if not isinstance(fit, FitResult):
-            raise TypeError("model.fit must return a FitResult")
-        if fit.model_name != model.model_name or fit.model_signature != model.signature:
-            raise ValueError("fit result does not match the fitted estimator")
-        if fit.n_observations != len(training):
-            raise ValueError("fit result n_observations must equal the training-study length")
-        prediction_rows = np.concatenate((split.prediction_context_indices, split.test_indices))
-        prediction_study = study.take(prediction_rows)
-        full_prediction = model.predict(prediction_study, context, mode=prediction_mode)
-        if not isinstance(full_prediction, (Prediction, CategoricalPrediction)):
-            raise TypeError("model.predict must return Prediction or CategoricalPrediction")
-        if full_prediction.n_observations != len(prediction_study):
-            raise ValueError("model.predict must return one prediction per row")
-        full_codes: NDArray[np.int64] | None = None
-        if isinstance(full_prediction, CategoricalPrediction):
-            if not isinstance(model, CategoricalBehaviourEstimator):
-                raise TypeError(
-                    "categorical predictions require categories and outcome_codes() on the model"
-                )
-            if tuple(model.categories) != full_prediction.categories:
-                raise ValueError("model and prediction category coordinates differ")
-            full_codes = np.asarray(model.outcome_codes(prediction_study), dtype=np.int64)
-            if full_codes.shape != (len(prediction_study),):
-                raise ValueError("outcome_codes must return one code per prediction row")
-        full_scores = np.asarray(
-            model.pointwise_log_prob(prediction_study, context, mode=prediction_mode),
-            dtype=np.float64,
-        )
-        if full_scores.shape != (len(prediction_study),):
-            raise ValueError("pointwise_log_prob must return one score per prediction row")
-        target = np.arange(
-            len(split.prediction_context_indices),
-            len(prediction_rows),
-            dtype=np.intp,
-        )
-        prediction = full_prediction.take(target)
-        scores = full_scores[target]
-        evaluations.append(
-            FoldEvaluation(
-                split=split,
-                fit=fit,
-                prediction=prediction,
-                pointwise_log_probability=scores,
-                outcome_codes=None if full_codes is None else full_codes[target],
-                posterior=evidence,
+        identifier = str(getattr(split, "identifier", "") or f"fold-{position:04d}")
+        stage = FoldStage.FIT
+        try:
+            training = study.take(split.train_indices)
+            fit, evidence, context = _fold_fit(model, training, policy, sampled=sampled)
+            stage = FoldStage.PREDICT
+            prediction_study, full_prediction, full_codes = _fold_prediction(
+                model,
+                study,
+                split,
+                context,
+                prediction_mode,
             )
-        )
-    return tuple(evaluations)
+            stage = FoldStage.SCORE
+            evaluations.append(
+                _fold_evaluation(
+                    model,
+                    split,
+                    identifier,
+                    fit,
+                    evidence,
+                    context,
+                    prediction_study,
+                    full_prediction,
+                    full_codes,
+                    prediction_mode,
+                )
+            )
+        except Exception as error:  # a candidate's failure is evidence about that candidate
+            if failure_policy is FoldFailurePolicy.RAISE:
+                raise
+            failures.append(
+                FoldFailure(
+                    fold=identifier,
+                    stage=stage,
+                    exception_type=type(error).__name__,
+                    message=str(error),
+                )
+            )
+    return SplitEvaluation(tuple(evaluations), tuple(failures), failure_policy)
+
+
+def _fold_fit(
+    model: AnyBehaviourEstimator,
+    training: Study,
+    policy: PosteriorFoldPolicy,
+    *,
+    sampled: bool,
+) -> tuple[FitResult, PosteriorFoldEvidence | None, Any]:
+    """Fit or sample one training fold and check the result against the estimator."""
+
+    evidence: PosteriorFoldEvidence | None = None
+    if sampled:
+        fit, evidence = _sampled_fold_fit(model, training, policy)  # type: ignore[arg-type]
+        context: Any = evidence.posterior
+    else:
+        fit = model.fit(training)
+        context = fit
+    if not isinstance(fit, FitResult):
+        raise TypeError("model.fit must return a FitResult")
+    if fit.model_name != model.model_name or fit.model_signature != model.signature:
+        raise ValueError("fit result does not match the fitted estimator")
+    if fit.n_observations != len(training):
+        raise ValueError("fit result n_observations must equal the training-study length")
+    return fit, evidence, context
+
+
+def _fold_prediction(
+    model: AnyBehaviourEstimator,
+    study: Study,
+    split: ValidationFold,
+    context: Any,
+    prediction_mode: PredictionMode,
+) -> tuple[Study, ModelPrediction, NDArray[np.int64] | None]:
+    """Predict over context and test rows together and check shape and coordinates."""
+
+    prediction_rows = np.concatenate((split.prediction_context_indices, split.test_indices))
+    prediction_study = study.take(prediction_rows)
+    full_prediction = model.predict(prediction_study, context, mode=prediction_mode)
+    if not isinstance(full_prediction, (Prediction, CategoricalPrediction)):
+        raise TypeError("model.predict must return Prediction or CategoricalPrediction")
+    if full_prediction.n_observations != len(prediction_study):
+        raise ValueError("model.predict must return one prediction per row")
+    full_codes: NDArray[np.int64] | None = None
+    if isinstance(full_prediction, CategoricalPrediction):
+        if not isinstance(model, CategoricalBehaviourEstimator):
+            raise TypeError(
+                "categorical predictions require categories and outcome_codes() on the model"
+            )
+        if tuple(model.categories) != full_prediction.categories:
+            raise ValueError("model and prediction category coordinates differ")
+        full_codes = np.asarray(model.outcome_codes(prediction_study), dtype=np.int64)
+        if full_codes.shape != (len(prediction_study),):
+            raise ValueError("outcome_codes must return one code per prediction row")
+    return prediction_study, full_prediction, full_codes
+
+
+def _fold_evaluation(
+    model: AnyBehaviourEstimator,
+    split: ValidationFold,
+    identifier: str,
+    fit: FitResult,
+    evidence: PosteriorFoldEvidence | None,
+    context: Any,
+    prediction_study: Study,
+    full_prediction: ModelPrediction,
+    full_codes: NDArray[np.int64] | None,
+    prediction_mode: PredictionMode,
+) -> FoldEvaluation:
+    """Score the prediction rows and keep only the scored ones."""
+
+    full_scores = np.asarray(
+        model.pointwise_log_prob(prediction_study, context, mode=prediction_mode),
+        dtype=np.float64,
+    )
+    if full_scores.shape != (len(prediction_study),):
+        raise ValueError("pointwise_log_prob must return one score per prediction row")
+    target = np.arange(
+        len(split.prediction_context_indices),
+        len(prediction_study),
+        dtype=np.intp,
+    )
+    return FoldEvaluation(
+        split=split,
+        fit=fit,
+        prediction=full_prediction.take(target),
+        pointwise_log_probability=full_scores[target],
+        outcome_codes=None if full_codes is None else full_codes[target],
+        posterior=evidence,
+        identifier=identifier,
+    )
 
 
 def _sampled_fold_fit(

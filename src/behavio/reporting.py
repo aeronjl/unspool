@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
 
+from behavio.comparison import ComparisonFamily
 from behavio.protocol import ProtocolState, ProtocolValidationError
 from behavio.protocol_recovery import ExactRecoveryRun
 from behavio.runner import NestedProtocolRun, ProtocolRun
@@ -340,13 +341,21 @@ def _render_flat_performance(lines: list[str], evaluation: ProtocolRun, comparis
         )
     lines.extend(["", "### Paired comparisons", ""])
     if report.paired_comparisons:
-        lines.extend([f"| Contrast | Difference in {score_label} | Interval |", "|---|---:|---:|"])
+        lines.extend(
+            [
+                f"| Contrast | Difference in {score_label} | Interval | Adjusted p | Decisive |",
+                "|---|---:|---:|---:|---|",
+            ]
+        )
         for paired in report.paired_comparisons:
             interval = paired.left_minus_right
             lines.append(
                 f"| {_cell(paired.left_model)} minus {_cell(paired.right_model)} | "
-                f"{interval.estimate:.6f} | [{interval.lower:.6f}, {interval.upper:.6f}] |"
+                f"{interval.estimate:.6f} | [{interval.lower:.6f}, {interval.upper:.6f}] | "
+                f"{paired.adjusted_probability:.6f} | "
+                f"{'yes' if paired.decisive else 'no'} |"
             )
+        _render_comparison_family(lines, report.ranking.family)
     else:
         lines.append("No paired comparison had two audit-eligible candidates with common units.")
     lines.extend(["", "### Ranking decision", ""])
@@ -357,6 +366,38 @@ def _render_flat_performance(lines: list[str], evaluation: ProtocolRun, comparis
             f"**Resolved under `{comparison.winner_policy.value}`:** "
             f"`{report.ranking.winner}`. {report.ranking.reason}"
         )
+
+
+def _render_comparison_family(lines: list[str], family: ComparisonFamily) -> None:
+    """State how many contrasts the winner rule read, and how many chance alone supplies.
+
+    A reader who sees one interval excluding zero cannot tell whether it was the only test
+    or the luckiest of ten. Printing the family size beside the decision is the difference
+    between a result and a selected result.
+    """
+
+    if family.n_comparisons == 0:
+        return
+    scope = (
+        "That single contrast was the whole family"
+        if family.n_comparisons == 1
+        else (
+            f"Those {family.n_comparisons} contrasts were read simultaneously over "
+            f"{family.n_candidates} eligible candidates"
+        )
+    )
+    lines.extend(
+        [
+            "",
+            f"{scope}. {family.n_separated} of {family.n_comparisons} excluded zero before "
+            f"adjustment, where {family.expected_separated:.2f} are expected by chance at "
+            f"the declared {family.interval_level:.0%} interval level "
+            f"(exact binomial probability of at least that many: "
+            f"{family.excess_probability:.4f}). "
+            f"{family.n_decisive} survived {family.multiplicity.value} adjustment at "
+            f"{family.family_error_rate:.3g}. Every interval above is unadjusted.",
+        ]
+    )
 
 
 def _render_nested_performance(lines: list[str], evaluation: NestedProtocolRun) -> None:

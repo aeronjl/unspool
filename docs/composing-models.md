@@ -30,6 +30,24 @@ Each returns an ordinary estimator, so `fit_model`, `evaluate_splits`, `compare_
 `nested_select_model`, `run_parameter_recovery`, `run_model_recovery` and `describe()` work
 on the result without knowing it was composed.
 
+The same two verbs apply to `MultinomialLogit`, so a task with three or more actions gets
+drifting, per-subject and per-subject-drifting choice models without a line of new
+modelling code:
+
+```python
+from behavio import ChoiceSpec, DesignSpec, MultinomialLogit, NumericTerm
+
+actions = MultinomialLogit(
+    choice=ChoiceSpec(options=("left", "right", "up"), available_options_column="available"),
+    design=DesignSpec((NumericTerm("stimulus"),)),
+    l2=0.05,
+)
+
+drifting_actions = smooth(actions, over="session_order", knots=(0.0, 4.0))
+pooled_actions = hierarchical(actions, over="subject", scale=0.4)
+both_actions = hierarchical(drifting_actions, over="subject", scale=0.4)
+```
+
 ## What each combinator does to the model
 
 `smooth(model, over=..., knots=..., smoothness=...)` replaces every parameter of `model`
@@ -120,12 +138,72 @@ Naming is mechanical and stable, and it is part of the promise:
 | `smooth(base, over="session_order", knots=(0, 4))` | `intercept[session_order=0]`, `intercept[session_order=4]`, `stimulus[session_order=0]`, ... |
 | `hierarchical(base, over="subject")` | `intercept`, `stimulus`, `choice_lag_1` |
 | `hierarchical(smooth(base, ...), over="subject")` | the smooth names, unchanged |
+| `MultinomialLogit(...)` | `category['right']::intercept`, `category['right']::stimulus`, `category['up']::intercept`, ... |
+| `smooth(actions, over="session_order", knots=(0, 4))` | `category['right']::intercept[session_order=0]`, ... |
+| `hierarchical(actions, over="subject")` | the multinomial names, unchanged |
 
 `smooth()` qualifies each name with its clock and knot, in coefficient-major, knot-minor
 order. `hierarchical()` changes no name at all: the coordinate it reports is the
 *population* one, so a hierarchical model simulates from the same named parameters as the
 model it wraps and a recovery study can compare them directly. Group deviations are not
 parameters of that coordinate; they are read off the fit by group label.
+
+A multinomial coefficient is already per-category, and the qualifiers compose with that
+rather than replacing it, because per-category structure lives in the *name* and only the
+*predictor* is per-category. Naming one category's coefficients in a `hierarchical()` call
+does not need `repr` quoting written into a string literal:
+
+```python
+per_category = hierarchical(
+    actions, over="subject", parameters=actions.category_parameter_names("up")
+)
+per_category.varying_parameters
+# ("category['up']::intercept", "category['up']::stimulus")
+```
+
+## Models with more than one number per row
+
+A Bernoulli GLM predicts one number per trial. A multinomial logit predicts one per
+category, and it is no less a penalised linear model for it: the coefficients still enter
+linearly and the penalty is still quadratic. What is wider is the *shape* of the linear
+predictor, which `predictor_cells` declares.
+
+| Model | `predictor_cells` | `design_matrix(study).shape` |
+| --- | --- | --- |
+| `BernoulliHistoryGLM(...)` | `()` | `(rows, parameters)` |
+| `MultinomialLogit(options=("left", "right", "up"))` | `("category['left']", "category['right']", "category['up']")` | `(rows, 3, parameters)` |
+
+`()` is the scalar case, and every array a scalar-predictor model exchanges with a
+combinator has exactly the shape it always had -- which is why the fits the deleted
+hand-written classes published are still reproduced bit for bit. Nothing about hierarchy or
+smoothness is per-family, so nothing about them turned out to be per-shape either:
+grouping partitions *rows*, and a cell axis sits between the row axis and the coordinate
+axis it never touches, so `expand_group_design` copies a group's block across every cell of
+a row and `expand_group_penalty` -- which lives entirely on the coordinate -- did not change
+at all.
+
+### Availability is a modelling statement, not a broadcast
+
+A task with per-trial choice sets offers some categories on some trials. That reaches the
+likelihood through `predictor_offsets`, an additive term on the linear predictor that no
+parameter multiplies, with `-inf` marking a cell outside the support of a row. A combinator
+carries offsets through untouched, and the consequences follow from the arithmetic rather
+than from a special case:
+
+- A trial that did not offer a category contributes zero probability, zero gradient and
+  zero curvature to that category's coefficients, at population level and at group level
+  alike.
+- A subject who was **never** offered a category has no likelihood curvature at all on that
+  category's deviation. The joint fit leaves that deviation at exactly zero and reports its
+  standard error as exactly the prior standard deviation -- the honest answer for a
+  quantity the data cannot speak to. Nothing is imputed and nothing is quietly pooled.
+- The *population* coefficients for that category stay identified by the subjects who were
+  offered it.
+
+Omissions behave the same way in reverse. With `include_omission=True` the omission
+category is always available, because it represents failure to emit any action rather than
+an offered action, so a lapse rate can be let vary by subject or follow a path in session
+time like any other coefficient.
 
 ## Reading a hierarchical fit
 
@@ -193,16 +271,17 @@ dropping the declaration. See [design formulas](design-formulas.md).
 
 A model is composable if it satisfies
 `behavio.contracts.compose.PenalisedLinearEstimator`: its likelihood must see a study only
-through a **quadratically penalised linear predictor**. Every generalized linear family in
-Behavio is one of those. The drift-diffusion families are not, and neither is the GLM-HMM,
-whose likelihood is a mixture over latent states; both are refused rather than silently
-mis-composed.
+through a **quadratically penalised linear predictor**, and its row scores must be
+independent given that predictor. Every generalized linear family in Behavio is one of
+those, `MultinomialLogit` included. The drift-diffusion families are not, and neither is
+the GLM-HMM; both are refused rather than silently mis-composed.
 
 Five things a combinator needs, and the members that carry each:
 
 | Ingredient | Members |
 | --- | --- |
-| A penalised objective to add to | `design_matrix`, `penalty_matrix`, `outcomes`, `likelihood`, `fit_penalised` |
+| A penalised objective to add to | `design_matrix`, `predictor_offsets`, `penalty_matrix`, `outcomes`, `likelihood`, `fit_penalised` |
+| How wide one row's prediction is | `predictor_cells` |
 | Which parameters may vary, and over what | `parameter_names`, plus the `VaryingEffects` declaration |
 | A per-group block structure | `group_penalty` on the model, `group_blocks` on the study |
 | A way to expand and contract the parameter vector | `expand_group_design`, `expand_group_penalty`, `simulate_rows` |
@@ -216,7 +295,40 @@ varies them by clock value, and the recursion over generated history is the same
 
 `LinearPredictorLikelihood` is separate from the estimator so that a combinator can write a
 *new* objective -- the Laplace profile over a group scale, for instance -- without knowing
-which family it is profiling.
+which family it is profiling. Three shape-aware contractions in
+`behavio.contracts.compose` -- `linear_predictor`, `parameter_gradient` and
+`information_matrix` -- are the only places that know whether a row predicts one number or
+several, so a family author writes neither branch.
+
+There is no `boundary_threshold` on the contract. A hierarchical fit has to know whether
+*population plus deviation* is at a boundary, and that number is not a coordinate of the
+vector the optimizer returns; rather than making the combinator ask for a threshold, the
+combinator supplies the quantity as `PenalisedDesign.derived_estimates`, a function of the
+solution, and the model's own solver applies its own convention to it. Every number in a
+fit's diagnostics is produced by the model that owns the convention behind it.
+
+### Declining the contract
+
+Structural typing answers "does this object have these members", which is not the question
+being asked. `BernoulliGLMHMM` subclasses the Bernoulli GLM for its per-state emissions, so
+it *inherits* every member above and would satisfy any widening of them -- a
+`(rows, states)` linear predictor is exactly what its emissions produce. What it cannot
+honour is the half of the contract that is not a shape: a penalised linear model's log
+likelihood is a sum of independent row scores, and a GLM-HMM's is a forward recursion in
+which each row depends on every row before it, so profiling out a group deviation one block
+at a time would optimise something that is not this model's likelihood.
+
+No arrangement of members can be inspected to discover that, so a model in that position
+declares it in a sentence:
+
+```python
+BernoulliGLMHMM(covariates=("stimulus",)).penalised_linear_refusal
+# 'a GLM-HMM is a latent-state mixture, not a penalised linear model: ...'
+```
+
+`require_penalised_linear` -- the single check both combinators run -- reads the declaration
+before it runs the structural test that would say yes, and reports the sentence in the
+`TypeError`.
 
 To make a new family composable, implement those members. See
 [extensions](extensions.md).

@@ -94,7 +94,8 @@ See the [session-reset Q-learning guide](q-learning.md).
 `MultinomialLogit` supplies the categorical reference likelihood. It consumes the shared
 `ChoiceSpec` coordinate, respects trial-specific action availability, optionally retains
 omissions as an additional category, and passes full probability vectors through the same
-prospective comparison, protocol, and recovery machinery. See the
+prospective comparison, protocol, and recovery machinery. It is also composable, so
+`smooth()` and `hierarchical()` supply its drifting and per-subject forms. See the
 [multinomial and omission-aware choice guide](multinomial.md).
 
 `WienerDriftDiffusion` supplies the first joint choice/response-time family. Covariates

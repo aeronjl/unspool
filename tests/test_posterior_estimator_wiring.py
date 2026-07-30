@@ -810,6 +810,17 @@ def test_every_maximum_likelihood_report_is_byte_identical_to_the_pre_wiring_out
     deleted ones, every one of them ``"convergence": "converged"``. No estimate, score,
     interval, standard error or study digest moved, which is exactly what this fixture
     exists to establish -- so the pin was recomputed rather than the assertion loosened.
+
+    It was regenerated a second time by the execution-stack collapse, which made the
+    protocol runner and ``compare_models`` share one paired comparison, one bootstrap and
+    one simultaneous-inference family. The regenerated file differs by fifty-four inserted
+    lines and six deleted ones. Three deletions are ``right_model`` re-emitted with a
+    trailing comma because keys follow it; the other three are ``direction``, whose wording
+    became metric-parameterized (``left log-loss minus right log-loss`` for the same
+    quantity that ``left log loss minus right log loss`` described). Everything inserted is
+    new: ``metric``, ``two_sided_probability``, ``adjusted_probability``, ``decisive``, and
+    the ``simultaneous_family`` record. Every retained value was compared key by key
+    against its predecessor and none of them moved.
     """
 
     expected = GOLDEN.read_text(encoding="utf-8")

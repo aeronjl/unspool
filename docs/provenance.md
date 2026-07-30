@@ -16,9 +16,10 @@ written by `behavio.evidence.capture_environment` at the moment the bundle is bu
     "behavio": "0.1.0", "numpy": "2.3.5", "scipy": "1.18.0",
     "arviz": "1.2.0", "arviz-stats": "1.2.0", "pymc": "6.1.0",
     "pytensor": "3.2.3", "pybads": "not installed",
-    "h5py": "3.16.0", "one-api": "not installed", "pandas": "3.0.5",
-    "pynwb": "not installed", "remfile": "not installed",
-    "tables": "not installed", "xarray": "2026.7.0"
+    "h5py": "3.16.0", "matplotlib": "3.11.1", "one-api": "not installed",
+    "pandas": "3.0.5", "pyarrow": "25.0.0", "pynwb": "not installed",
+    "remfile": "not installed", "tables": "not installed",
+    "xarray": "2026.7.0"
   },
   "source_control": {
     "system": "git",
@@ -31,14 +32,17 @@ written by `behavio.evidence.capture_environment` at the moment the bundle is bu
 
 Three properties are deliberate.
 
-**Absence is recorded, not omitted.** Every optional distribution the package can use —
-the posterior stack (`arviz`, `arviz-stats`, `pymc`, `pytensor`), the optimization backend
-(`pybads`), and the data adapters (`h5py`, `one-api`, `pandas`, `pynwb`, `remfile`,
-`tables`, `xarray`) — appears in `packages` whether or not it was installed. A missing key
-cannot be told apart from a reader that forgot to look, whereas `"arviz": "not installed"`
-is a positive claim about the run that produced the numbers. These are exactly the
-libraries whose versions change results, so a bundle that named only `numpy` and `scipy`
-would omit the parts most likely to explain a numerical difference.
+**Absence is recorded, not omitted.** Every extra declared in `pyproject.toml` appears in
+`packages` whether or not it was installed — the posterior stack (`arviz`, `arviz-stats`,
+`pymc`, `pytensor`), the optimization backend (`pybads`), the data adapters (`h5py`,
+`one-api`, `pandas`, `pyarrow`, `pynwb`, `remfile`, `tables`, `xarray`), and the renderer
+(`matplotlib`). A missing key cannot be told apart from a reader that forgot to look,
+whereas `"arviz": "not installed"` is a positive claim about the run that produced the
+numbers. These are exactly the libraries whose versions change results, so a bundle that
+named only `numpy` and `scipy` would omit the parts most likely to explain a numerical
+difference. `matplotlib` earns its place for a reason worth stating: figure bytes are
+archived files, so they are content-addressed into the `bundle_id`, and a renderer upgrade
+changes the identity of a bundle whose science did not move.
 
 **A dirty tree says so.** `source_control` records the exact `HEAD` commit of the working
 tree the bundle was built from, and whether that tree had uncommitted changes. A directory
@@ -70,16 +74,25 @@ than a result.
 
 `run_protocol` and `run_nested_protocol` therefore verify every supplied estimator against
 its frozen declaration before the first fit and refuse the run on a contradiction. The
-check uses only the object it was handed: the import path of its type, including public
-paths that already re-export it, and — because every model in the package is a frozen
-dataclass — its own field values. The declared string is never imported, so a frozen
-protocol stays data rather than becoming a code-execution surface.
+declared string is never imported, so a frozen protocol stays data rather than becoming a
+code-execution surface. Resolution goes instead through an
+[`EstimatorRegistry`](extensions.md#local-registration), the same allowlist the command
+line builds candidates from.
 
-Declarations that cannot be checked are recorded rather than assumed. A setting with no
-matching field, a value that is not a comparable JSON scalar, an estimator that is not a
-dataclass, or a declared module the process never imported all produce an *unverifiable*
-finding, which a bounded report discloses in its own table. A fully verified study emits
-no such table and keeps a byte-identical report.
+That registry is what makes the check *decidable*. A registration declares the class its
+factory produces, so a declared implementation the registry knows is either verified or
+contradicted — never shrugged at. A combinator registration additionally exposes the model
+it wraps, so a candidate declared as `behavio.compose.hierarchical` with `base` and
+`base.`-prefixed settings has its wrapped model checked too, rather than reporting every
+`base.*` setting as a field that does not exist. Pass `registry=` to
+`verify_candidate_declarations` to have your own registrations checked on the same terms.
+
+Declarations the registry cannot speak to fall back to an import-free comparison of class
+names against already-imported modules, and what that cannot decide is recorded rather
+than assumed. A setting with no matching field, a value that is not a comparable JSON
+scalar, an estimator that is not a dataclass, or a declared module the process never
+imported all produce an *unverifiable* finding, which a bounded report discloses in its own
+table. A fully verified study emits no such table and keeps a byte-identical report.
 
 The same principle covers the data: an `ObservationSpec` declares a measurement type and a
 permitted value set, and `materialize_protocol` refuses a cohort that does not satisfy

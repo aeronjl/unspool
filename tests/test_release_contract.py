@@ -25,6 +25,10 @@ GOLDEN_PATH = {
     "run_protocol",
     "build_evidence_bundle",
     "EstimatorRegistry",
+    # The registry is only an extension point if a caller can obtain the one the package
+    # itself runs through and add to it. Pinning the constructor without the builtin would
+    # pin an empty allowlist nothing resolves against.
+    "builtin_estimator_registry",
     "export_fit",
 }
 
@@ -190,6 +194,26 @@ DATA_SOURCE_AND_VERIFICATION_SURFACE = {
     "verify_candidate_declarations",
 }
 
+#: One fold loop, one paired contrast, one bootstrap, one simultaneous family. These names
+#: are pinned because the collapse of the two execution stacks is only real if the shared
+#: pieces are the public ones: a caller who wants the protocol runner's semantics from the
+#: interactive path, or vice versa, must be able to name the option that differs
+#: (``FoldFailurePolicy``) and the record that makes a ranking readable
+#: (``ComparisonFamily``) without reaching into a private module. ``PairedComparison`` is
+#: pinned because both reports carry it and ``decisive`` is the member a winner rule reads.
+SHARED_EXECUTION_SURFACE = {
+    "evaluate_splits",
+    "FoldEvaluation",
+    "FoldFailure",
+    "FoldFailurePolicy",
+    "FoldStage",
+    "SplitEvaluation",
+    "PairedComparison",
+    "ComparisonFamily",
+    "ComparisonMultiplicity",
+    "bootstrap_interval",
+}
+
 #: The bridge from continuously observed behaviour to trial-level ``Study`` columns. This is a
 #: headline capability with a small closed API: declare when the trials happened
 #: (``TrialTiming``), declare the window to summarise (``TrialWindow``), reduce a covariate or an
@@ -254,6 +278,7 @@ def test_completed_release_surface_is_public_and_explicit() -> None:
         | DATA_SOURCE_AND_VERIFICATION_SURFACE
         | OBSERVED_BEHAVIOUR_SURFACE
         | MODEL_EXTENSION_SURFACE
+        | SHARED_EXECUTION_SURFACE
     )
 
     assert promised <= set(behavio.__all__)

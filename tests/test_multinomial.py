@@ -177,7 +177,7 @@ def test_protocol_runner_serializes_categorical_rows_and_scores_brier() -> None:
         {"static": model, "smooth": replace(model, l2=1.0)},
     )
 
-    point = run.report.candidates[0].folds[0].predictions[0]
+    point = run.report.candidates[0].predictions[0]
     assert point.is_categorical
     assert point.categories == (0, 1)
     assert point.observed_category_index in (0, 1)

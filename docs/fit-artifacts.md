@@ -51,26 +51,33 @@ Labelled posterior and predictive groups use the separate
 An extension can expose models without modifying Behavio core:
 
 ```python
-from behavio import EstimatorRegistry
-from my_package import make_model
+from behavio import builtin_estimator_registry
+from my_package import MyModel
 
-registry = EstimatorRegistry()
+registry = builtin_estimator_registry()
 registry.add(
-    "my-behaviour-model",
-    make_model,
+    "my_package.MyModel",
+    MyModel,
     provider="my-package",
     version="1.2.0",
+    produces=MyModel,
+    model_name="my-behaviour-model",
 )
 
-model = registry.create("my-behaviour-model", {"n_states": 3})
+model = registry.create("my_package.MyModel", {"n_states": 3})
 print(registry.manifest())
 ```
 
-Each factory receives a read-only configuration mapping. Its result is checked against
-the public `BehaviourEstimator` contract, and its `model_name` must match the registered
-name. Duplicate registration and silent identity drift are errors.
+Each factory receives the declared settings as keyword arguments. Its result is checked
+against the declared `produces` class and, when `model_name` is declared, against that
+stable name too. Duplicate registration and silent identity drift are errors.
 
-Registries are deliberately instance-scoped rather than process-global. A workflow must
-choose the exact implementations in scope, and `manifest()` records their provider and
-version without serializing arbitrary callables. This prevents an import in one notebook
-cell from invisibly changing a later scientific run.
+The registration name is the string a frozen protocol declares as its `implementation`,
+and this registry is the allowlist a protocol run resolves through — the same one
+`builtin_estimator_registry()` fills with the package's own models. Registries are
+deliberately instance-scoped rather than process-global. A workflow must choose the exact
+implementations in scope, and `manifest()` records their provider and version without
+serializing arbitrary callables. This prevents an import in one notebook cell from
+invisibly changing a later scientific run. See
+[local registration](extensions.md#local-registration) for combinators and for what
+declaring `produces` buys at declaration-verification time.

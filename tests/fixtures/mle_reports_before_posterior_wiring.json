@@ -369,8 +369,10 @@
     "outcome_column": "choice",
     "pairwise_log_loss_differences": {
       "glm_minus_bias": {
+        "adjusted_probability": 0.03076923076923077,
         "bootstrap_probability_positive": 0.0,
-        "direction": "left log loss minus right log loss; positive favors right",
+        "decisive": true,
+        "direction": "left log-loss minus right log-loss; positive favors right",
         "left_minus_right": {
           "confidence_level": 0.95,
           "estimate": -0.11303324626576067,
@@ -378,12 +380,26 @@
           "upper": -0.11118306821406643
         },
         "left_model": "glm",
-        "right_model": "bias"
+        "metric": "log-loss",
+        "right_model": "bias",
+        "two_sided_probability": 0.03076923076923077
       }
     },
     "scored_columns": [
       "choice"
     ],
+    "simultaneous_family": {
+      "adjusted_threshold": 0.050000000000000044,
+      "excess_probability": 0.050000000000000044,
+      "expected_separated": 0.050000000000000044,
+      "family_error_rate": 0.050000000000000044,
+      "interval_level": 0.95,
+      "multiplicity": "benjamini-hochberg",
+      "n_candidates": 2,
+      "n_comparisons": 1,
+      "n_decisive": 1,
+      "n_separated": 1
+    },
     "winner_by_unit_balanced_log_loss": "glm",
     "winner_policy": "lowest unit-balanced log loss among non-failed audits"
   },
@@ -700,8 +716,10 @@
           "outcome_column": "choice",
           "pairwise_log_loss_differences": {
             "glm_minus_bias": {
+              "adjusted_probability": 0.11764705882352941,
               "bootstrap_probability_positive": 0.0,
-              "direction": "left log loss minus right log loss; positive favors right",
+              "decisive": true,
+              "direction": "left log-loss minus right log-loss; positive favors right",
               "left_minus_right": {
                 "confidence_level": 0.95,
                 "estimate": -0.24627813576271396,
@@ -709,12 +727,26 @@
                 "upper": -0.24627813576271396
               },
               "left_model": "glm",
-              "right_model": "bias"
+              "metric": "log-loss",
+              "right_model": "bias",
+              "two_sided_probability": 0.11764705882352941
             }
           },
           "scored_columns": [
             "choice"
           ],
+          "simultaneous_family": {
+            "adjusted_threshold": 0.050000000000000044,
+            "excess_probability": 0.050000000000000044,
+            "expected_separated": 0.050000000000000044,
+            "family_error_rate": 0.050000000000000044,
+            "interval_level": 0.95,
+            "multiplicity": "benjamini-hochberg",
+            "n_candidates": 2,
+            "n_comparisons": 1,
+            "n_decisive": 1,
+            "n_separated": 1
+          },
           "winner_by_unit_balanced_log_loss": "glm",
           "winner_policy": "lowest unit-balanced log loss among non-failed audits"
         },
@@ -987,8 +1019,10 @@
           "outcome_column": "choice",
           "pairwise_log_loss_differences": {
             "glm_minus_bias": {
+              "adjusted_probability": 0.11764705882352941,
               "bootstrap_probability_positive": 0.0,
-              "direction": "left log loss minus right log loss; positive favors right",
+              "decisive": true,
+              "direction": "left log-loss minus right log-loss; positive favors right",
               "left_minus_right": {
                 "confidence_level": 0.95,
                 "estimate": -0.06483985701910155,
@@ -996,12 +1030,26 @@
                 "upper": -0.06483985701910155
               },
               "left_model": "glm",
-              "right_model": "bias"
+              "metric": "log-loss",
+              "right_model": "bias",
+              "two_sided_probability": 0.11764705882352941
             }
           },
           "scored_columns": [
             "choice"
           ],
+          "simultaneous_family": {
+            "adjusted_threshold": 0.050000000000000044,
+            "excess_probability": 0.050000000000000044,
+            "expected_separated": 0.050000000000000044,
+            "family_error_rate": 0.050000000000000044,
+            "interval_level": 0.95,
+            "multiplicity": "benjamini-hochberg",
+            "n_candidates": 2,
+            "n_comparisons": 1,
+            "n_decisive": 1,
+            "n_separated": 1
+          },
           "winner_by_unit_balanced_log_loss": "glm",
           "winner_policy": "lowest unit-balanced log loss among non-failed audits"
         },

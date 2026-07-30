@@ -14,6 +14,9 @@ from behavio.compose.trajectory import CoefficientTrajectory
 from behavio.contracts.compose import (
     PenalisedDesign,
     PenalisedLinearEstimator,
+    linear_predictor,
+    require_penalised_linear,
+    validate_predictor_shape,
 )
 from behavio.contracts.estimator import (
     FitResult,
@@ -65,18 +68,7 @@ def smooth(
             "population coordinate while fitting a joint one whose width depends on how "
             "many groups the study has, so it cannot be expanded again from outside"
         )
-    if not isinstance(model, PenalisedLinearEstimator):
-        raise TypeError(
-            "smooth() needs a model satisfying behavio.contracts.compose."
-            "PenalisedLinearEstimator; "
-            f"{type(model).__name__} does not"
-        )
-    penalty = model.penalty_matrix()
-    if penalty.shape != (len(model.parameter_names),) * 2:
-        raise TypeError(
-            f"{type(model).__name__} declares {len(model.parameter_names)} parameters but a "
-            f"{penalty.shape} penalty, so its estimated coordinate is not the one it reports"
-        )
+    require_penalised_linear(model, combinator="smooth")
     return SmoothModel(
         model=model,
         clock=over,
@@ -188,8 +180,26 @@ class SmoothModel(Describable):
         return self.model.likelihood
 
     @property
-    def boundary_threshold(self) -> float:
-        return float(self.model.boundary_threshold)
+    def predictor_cells(self) -> tuple[str, ...]:
+        """The wrapped model's cells: a path in clock time is not a new cell."""
+
+        return tuple(self.model.predictor_cells)
+
+    @property
+    def categories(self) -> tuple[Any, ...]:
+        """The wrapped model's outcome coordinate, when it scores a categorical outcome.
+
+        Absent, and raising :class:`AttributeError` rather than returning ``None``, when
+        the wrapped model has none: that is what keeps ``smooth(glm)`` from structurally
+        satisfying :class:`~behavio.contracts.estimator.CategoricalBehaviourEstimator`.
+        """
+
+        return tuple(self.model.categories)
+
+    def outcome_codes(self, study: Study) -> NDArray[np.int64]:
+        """Return the wrapped model's observed category codes."""
+
+        return self.model.outcome_codes(study)
 
     # -- the penalised problem ---------------------------------------------------------
 
@@ -198,12 +208,26 @@ class SmoothModel(Describable):
 
         return self.model.outcomes(study)
 
+    def predictor_offsets(self, study: Study) -> NDArray[np.float64] | None:
+        """Return the wrapped model's offsets unchanged.
+
+        An offset is a term on the linear predictor that no parameter multiplies, so
+        letting a parameter follow a path in clock time cannot touch it: an option that
+        was not offered on a trial is not offered on that trial at any point of the path.
+        """
+
+        return self.model.predictor_offsets(study)
+
     def design_matrix(self, study: Study) -> NDArray[np.float64]:
         """Return the wrapped design multiplied row-wise by the temporal basis."""
 
-        features = self.model.design_matrix(study)
+        features = validate_predictor_shape(self.model, self.model.design_matrix(study))
         basis = self.time_basis(study)
-        return np.einsum("ij,ik->ijk", features, basis).reshape(len(study), -1)
+        if features.ndim == 2:
+            return np.einsum("ij,ik->ijk", features, basis).reshape(len(study), -1)
+        return np.einsum("icj,ik->icjk", features, basis, optimize=True).reshape(
+            len(study), features.shape[1], -1
+        )
 
     def penalty_matrix(self) -> NDArray[np.float64]:
         """Return the wrapped penalty lifted onto knots plus the roughness penalty."""
@@ -307,6 +331,7 @@ class SmoothModel(Describable):
                 outcomes=self.outcomes(study),
                 penalty_matrix=self.penalty_matrix(),
                 likelihood=self.likelihood,
+                offsets=self.predictor_offsets(study),
             ),
             model_name=self.model_name,
             model_signature=self.signature,
@@ -324,8 +349,10 @@ class SmoothModel(Describable):
         self._validate_study_scope(study)
         prediction_mode = self._prediction_mode(mode)
         self._validate_fit(fit)
-        linear_predictor = self.design_matrix(study) @ fit.estimates
-        return self.likelihood.prediction(linear_predictor, mode=prediction_mode)
+        predictor = linear_predictor(
+            self.design_matrix(study), fit.estimates, self.predictor_offsets(study)
+        )
+        return self.likelihood.prediction(predictor, mode=prediction_mode)
 
     def pointwise_log_prob(
         self,

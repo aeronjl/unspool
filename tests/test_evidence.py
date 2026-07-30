@@ -57,8 +57,31 @@ from behavio.runner import run_nested_protocol
 #: study digest changed, so the constants were recomputed rather than the check relaxed.
 #: Previously: bundle ``dac213700d892e96f7394c9015cbd5b92fd46f86bd8def03bf78caa234474437``,
 #: zip ``d248c6da5e21ff2079975487f68236d2c84fa3aa01b972ea728af977c7fd77b9``.
-SCHEMA_1_BUNDLE_ID = "294a26f658c331e22218fd00531cd35a2f0ddd66268086eb20fb7c672e715418"
-SCHEMA_1_ZIP_SHA256 = "7155e4957ce5cd007751d278ae62be88f22af18cd1906687cf53282b6d14d609"
+#:
+#: Recomputed a second time by the execution-stack collapse, which bumped the evaluation
+#: report to ``behavio.evaluation-report/2``. The eighteen archived files were diffed one
+#: by one against the ones the previous constants describe. Two differ in content and four
+#: differ only downstream of them.
+#:
+#: ``comparison/evaluation.json`` gains the schema version, the additive
+#: ``two_sided_probability``, ``adjusted_probability`` and ``decisive`` members on the
+#: paired comparison, a ``declaration_failure`` slot that is ``null`` for a candidate that
+#: entered the fold loop, and the new ``ranking.family`` record. ``report/report.md`` gains two
+#: columns in its paired-comparison table and one paragraph stating the family size, which
+#: is the whole point of recording a family: a reader who sees one interval excluding zero
+#: cannot otherwise tell whether it was the only test or the luckiest of ten.
+#: ``protocol/protocol.json``, ``report/report.json`` and ``reproduction/replay.json``
+#: differ only in the evaluation and report fingerprints they quote, which are the content
+#: addresses of the two files that changed.
+#:
+#: Twelve files -- the cohort manifest, the execution plan, every fold, every pointwise
+#: prediction, every fit audit, the environment record, the figure and the recovery report
+#: -- are byte-identical. No estimate, score, interval or study digest moved, so the
+#: constants were recomputed rather than the check relaxed.
+#: Previously: bundle ``294a26f658c331e22218fd00531cd35a2f0ddd66268086eb20fb7c672e715418``,
+#: zip ``7155e4957ce5cd007751d278ae62be88f22af18cd1906687cf53282b6d14d609``.
+SCHEMA_1_BUNDLE_ID = "f32d7b629b44f96e4070a6d21708d0c3dacbe62b5cdf906d7f06cea01b580089"
+SCHEMA_1_ZIP_SHA256 = "d39f4d919eb1ee682b606dad8a69dd0d11ce8a8b9adfbce8d39d54a2af41c09f"
 
 
 def reported():
@@ -348,6 +371,10 @@ def test_environment_records_absent_optional_dependencies_and_the_working_tree()
     assert captured["packages"]["behavio"]
     for optional in ("arviz", "arviz-stats", "pymc", "pytensor", "pybads"):
         assert optional in captured["packages"]
+    # matplotlib renders every archived figure and pyarrow reads the one binary input
+    # container the package accepts, so both change bundle bytes and both are recorded.
+    for renderer_or_reader in ("matplotlib", "pyarrow"):
+        assert renderer_or_reader in captured["packages"]
     assert captured == capture_environment(root=".")
     source_control = captured["source_control"]
     assert source_control["system"] == "git"

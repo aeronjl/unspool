@@ -40,10 +40,18 @@ changes if you do not:
 `PenalisedLinearEstimator` is the widest of the optional surfaces and the one with the
 largest payoff, because implementing it is what makes hierarchy and time-variation *derive*
 rather than be written twice more. Its five ingredients, and which member carries each, are
-documented in [composing models](composing-models.md#the-contract). It is genuinely
-restricted: a likelihood that does not see the study through one linear predictor per row --
-a drift-diffusion density, a mixture over latent states -- cannot satisfy it, and the
-combinators refuse such models rather than composing them wrongly.
+documented in [composing models](composing-models.md#the-contract). A family whose row
+predicts several numbers rather than one -- a multinomial's per-category logits -- declares
+them as `predictor_cells` and is composable on the same terms; a family with per-trial
+support restrictions declares them as `-inf` in `predictor_offsets`.
+
+It is genuinely restricted, in two ways rather than one. A likelihood that does not see the
+study through a *linear* predictor cannot satisfy it -- a drift-diffusion density composes
+its predictors through a Wiener first-passage time, not a link function. And a likelihood
+whose row scores are not independent given the predictor cannot satisfy it either, however
+its members are shaped: a mixture over latent states scores row *r* through a recursion
+over every row before it. The second kind cannot be detected structurally, so a model in
+that position declares `penalised_linear_refusal` and the combinators report the reason.
 
 `required_task_columns` used to appear in that table, behind a separate
 `TaskColumnEstimator` protocol. It is now a member of `BehaviourEstimator` itself and the
@@ -189,27 +197,78 @@ fields are the interoperability floor, not a demand to discard evidence.
 
 ## Local registration
 
-Use `EstimatorRegistry` when a protocol or command line needs to create models from
-explicit JSON-like configuration:
+`EstimatorRegistry` is how a declared `implementation` string becomes an object. A frozen
+protocol names each candidate by string, and turning that string into a model is the one
+place where data becomes code — so it goes through an explicit allowlist rather than
+through `importlib`. `builtin_estimator_registry()` returns the allowlist the `behavio`
+command line resolves through; register into a copy of it to add your own:
 
 ```python
-from behavio import EstimatorRegistry
+from behavio import builtin_estimator_registry
 
-registry = EstimatorRegistry()
+registry = builtin_estimator_registry()
 registry.add(
-    "my-external-model",
-    lambda config: MyExternalModel(**dict(config)),
+    "mylab.models.ExternalModel",
+    MyExternalModel,
     provider="my-behaviour-package",
     version="2.1.0",
+    produces=MyExternalModel,
 )
 
-model = registry.create("my-external-model", {"history_lags": 2})
+model = registry.create("mylab.models.ExternalModel", {"history_lags": 2})
 manifest = registry.manifest()
 ```
 
-The factory's `model_name` must equal its registration name. Registries are instance-scoped,
-reject replacement, and serialize provider/version metadata without serializing executable
-factories. Extension packages should not mutate a process-global registry at import time.
+The registration name is the string protocols declare; for the package's own models that is
+their public import path (`behavio.models.BernoulliHistoryGLM`). Registries are
+instance-scoped, reject replacement, and serialize provider/version metadata without
+serializing executable factories. Extension packages should not mutate a process-global
+registry at import time.
+
+### Declare what your factory produces
+
+`produces` is optional but worth supplying, because it is what lets
+`verify_candidate_declarations` decide rather than shrug. Before a protocol run, Behavio
+checks each supplied estimator against the frozen declaration; a registered implementation
+is verified or contradicted by `isinstance`, while an unregistered one can only be compared
+by class name against already-imported modules and is often recorded as *unverifiable*.
+`model_name` pins the stable name the factory's output must report, which catches a factory
+whose identity has drifted from the registration it was made under.
+
+```python
+from behavio.runner import run_protocol, verify_candidate_declarations
+
+verification = verify_candidate_declarations(protocol, models, registry=registry)
+assert all(item.verified for item in verification)
+run = run_protocol(compiled, models)
+```
+
+### Combinators and composed candidates
+
+A protocol candidate is one implementation name and a flat list of scalar settings, which
+cannot spell a nested constructor call. It can spell a *reference*: `base` names another
+registered implementation, and every setting prefixed `base.` configures it, recursively.
+That is how a frozen protocol declares `hierarchical(smooth(BernoulliHistoryGLM(...)))`
+without the registry growing one entry per composition:
+
+```python
+model = registry.create(
+    "behavio.compose.hierarchical",
+    {
+        "base": "behavio.compose.smooth",
+        "base.base": "behavio.models.BernoulliHistoryGLM",
+        "base.base.covariates": ("stimulus",),
+        "base.over": "session_order",
+        "base.knots": (0.0, 4.0, 8.0),
+        "over": "subject",
+    },
+)
+```
+
+Register a combinator of your own with `base_attribute="..."` naming the attribute your
+object exposes its wrapped model under (both built-ins use `"model"`). The declaration check
+then verifies `base.`-prefixed settings against the wrapped model rather than reporting them
+as fields that do not exist.
 
 ## Optimization backends
 

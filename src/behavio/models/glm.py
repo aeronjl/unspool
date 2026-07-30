@@ -202,10 +202,15 @@ class BernoulliHistoryGLM(Describable):
         return BERNOULLI
 
     @property
-    def boundary_threshold(self) -> float:
-        """The coefficient magnitude reported as a boundary estimate."""
+    def predictor_cells(self) -> tuple[str, ...]:
+        """A binary choice is one number per row, so this family declares no cells."""
 
-        return self.coefficient_warning_threshold
+        return ()
+
+    def predictor_offsets(self, study: Study) -> None:
+        """Return ``None``: nothing is added to this model's linear predictor."""
+
+        return None
 
     def simulate(
         self,
@@ -302,6 +307,8 @@ class BernoulliHistoryGLM(Describable):
             max_iterations=self.max_iterations,
             tolerance=self.tolerance,
             coefficient_warning_threshold=self.coefficient_warning_threshold,
+            offsets=design.offsets,
+            derived_estimates=design.derived_estimates,
         )
 
     def penalty_matrix(self) -> NDArray[np.float64]:

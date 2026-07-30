@@ -26,7 +26,7 @@ its inferential or design coverage remains deliberately narrow.
 | Hierarchical smooth drift diffusion | **Experimental** | Plug-in population prediction and bounded variance-component estimation. |
 | Threshold learning landmarks | **Experimental** | Fold-fitted plug-in bootstrap; unresolved draws remain visible. |
 | Cross-lab trajectory geometry | **Experimental** | Fixed empirical labs, no population-of-labs generalization. |
-| Multinomial and omission-aware choice models | **Experimental** | Treatment-coded softmax regression supports finite JSON-scalar labels, trial availability, retained omissions, prospective scoring, and recovery; categorical calibration remains planned. |
+| Multinomial and omission-aware choice models | **Experimental** | Treatment-coded softmax regression supports finite JSON-scalar labels, trial availability, retained omissions, prospective scoring, and recovery, and composes with `smooth()` and `hierarchical()`; categorical calibration remains planned. |
 | Context-bound common fit artifacts and estimator registry | **Experimental** | Deterministic JSON binds task, data identity, version, parameters, and audits; it is intentionally not a lossless posterior format. |
 | ArviZ/xarray posterior and predictive interchange | **Supported** | Immutable labelled groups preserve model, backend, dimension, and parameter-space provenance across both representations. |
 | PyMC posterior inference for the hierarchical history GLM | **Experimental** | NUTS covers the fixed-scale hierarchical Bernoulli history model with labelled likelihood, predictive, and diagnostic groups. |

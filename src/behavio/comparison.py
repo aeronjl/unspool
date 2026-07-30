@@ -12,31 +12,53 @@ convergence audit on any fold reports ``FAIL`` from
 optimizer fit already is. ``ProspectiveModelResult.to_dict`` gains a ``posterior_folds``
 entry only when a candidate actually was sampled, so a maximum-likelihood report is
 byte-identical to what it was before sampled candidates existed.
+
+Simultaneous inference
+----------------------
+``K`` candidates produce ``K(K-1)/2`` pairwise contrasts, all read against the same
+interval level. At five candidates that is ten simultaneous tests, so roughly one of them
+excludes zero *by construction* even when every candidate predicts identically well; the
+uncorrected reading therefore names a winner about four times in ten under a true null.
+
+:class:`ComparisonFamily` makes the family explicit and is always present, whether or not
+anything separates: it records the family size, how many contrasts separate at the
+declared interval level, how many were expected to by chance, and the exact binomial
+probability of seeing at least that many. Which contrasts count as *decisive* is then
+decided by a declared multiplicity adjustment (:class:`ComparisonMultiplicity`,
+Benjamini-Hochberg by default) applied to the two-sided bootstrap probabilities. Every
+per-contrast interval and probability remains unadjusted and fully retained; adjustment
+adds :attr:`PairedComparison.adjusted_probability` and
+:attr:`PairedComparison.decisive` beside them. A single contrast is never adjusted, so a
+two-candidate comparison behaves exactly as it did.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Mapping
-from dataclasses import dataclass
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from dataclasses import dataclass, replace
+from enum import StrEnum
 from types import MappingProxyType
 from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
+from behavio._internal import multiplicity as _multiplicity
 from behavio._internal.arrays import protected_array
+from behavio._internal.multiplicity import adjust_probabilities, excess_probability
 from behavio.contracts.posterior import (
     AnyBehaviourEstimator,
     any_model_capabilities,
     is_posterior_estimator,
 )
-from behavio.diagnostics import FitAudit, FitAuditStatus, audit_fit
+from behavio.diagnostics import FitAudit, FitAuditStatus
 from behavio.evaluation import FoldEvaluation, PosteriorFoldPolicy, evaluate_splits
 from behavio.models.base import (
     BehaviourEstimator,
     CategoricalPrediction,
     PredictionMode,
 )
+from behavio.protocol import ScoreMetric
 from behavio.study import Study
 from behavio.validation import (
     CohortValidationSplit,
@@ -76,6 +98,138 @@ class BootstrapInterval:
             "confidence_level": self.confidence_level,
         }
 
+    @property
+    def excludes_zero(self) -> bool:
+        """Whether the whole interval lies strictly on one side of zero."""
+
+        return self.upper < 0 or self.lower > 0
+
+
+def bootstrap_unit_draws(n_units: int, *, resamples: int, seed: int) -> NDArray[np.intp]:
+    """Return the one resampling-index matrix every candidate and contrast shares.
+
+    Drawing unit *indices* once, rather than resampling each candidate's scores
+    independently, is what makes the comparison matched: candidate A and candidate B are
+    always averaged over the same bootstrap cohort, so their difference is a paired
+    difference rather than the difference of two independently noisy means.
+
+    The matrix depends only on ``(n_units, resamples, seed)``, so a caller that recomputes
+    it later gets the identical draws. That is why the protocol runner can call
+    :func:`bootstrap_interval` once per candidate and still obtain matched intervals.
+    """
+
+    if n_units < 1:
+        raise ValueError("bootstrap resampling requires at least one aggregation unit")
+    _require_positive_integer(resamples, "resamples")
+    _require_nonnegative_integer(seed, "seed")
+    return np.asarray(
+        np.random.default_rng(seed).integers(0, n_units, size=(resamples, n_units)),
+        dtype=np.intp,
+    )
+
+
+def bootstrap_interval(
+    values: Sequence[float] | NDArray[np.float64],
+    *,
+    resamples: int,
+    seed: int,
+    confidence_level: float,
+) -> BootstrapInterval:
+    """Percentile-bootstrap interval for the equal-unit mean of ``values``.
+
+    This is the package's only bootstrap interval. Both the interactive comparison and the
+    protocol runner call it, so a number computed through one entry point equals the
+    number computed through the other bit for bit.
+    """
+
+    observed = np.asarray(values, dtype=np.float64)
+    if observed.ndim != 1:
+        raise ValueError("bootstrap values must be one-dimensional")
+    draws = bootstrap_unit_draws(len(observed), resamples=resamples, seed=seed)
+    return _bootstrap_interval(observed, np.mean(observed[draws], axis=1), confidence_level)
+
+
+class ComparisonMultiplicity(StrEnum):
+    """How one comparison turns many simultaneous contrasts into decisive ones.
+
+    ``NONE`` restores the per-comparison reading: every contrast whose unadjusted interval
+    excludes zero is decisive, and the expected number of spurious separations grows with
+    the family size. ``BENJAMINI_HOCHBERG`` controls the false-discovery rate across the
+    family at ``family_error_rate``. ``BONFERRONI`` controls the family-wise error rate at
+    the same level.
+
+    The member values are shared with
+    :class:`~behavio.posterior_predictive.PredictiveMultiplicity` through
+    :mod:`behavio._internal.multiplicity`, which also owns the step-up itself, so the two
+    families the package evaluates cannot drift apart in either spelling or arithmetic.
+    """
+
+    NONE = _multiplicity.NONE
+    BENJAMINI_HOCHBERG = _multiplicity.BENJAMINI_HOCHBERG
+    BONFERRONI = _multiplicity.BONFERRONI
+
+
+@dataclass(frozen=True, slots=True)
+class ComparisonFamily:
+    """The simultaneous family of pairwise contrasts evaluated in one comparison.
+
+    Retained whether or not anything separates, so a reader can always compare the number
+    of contrasts that excluded zero with the number expected there by chance alone.
+    ``excess_probability`` is the exact binomial probability of at least ``n_separated``
+    separations among ``n_comparisons`` independent contrasts at per-contrast error rate
+    ``1 - interval_level``; contrasts sharing candidates are not independent, so it is a
+    guide to whether the pattern is remarkable, not a test.
+    """
+
+    n_candidates: int
+    n_comparisons: int
+    interval_level: float
+    multiplicity: ComparisonMultiplicity
+    family_error_rate: float
+    n_separated: int
+    expected_separated: float
+    excess_probability: float
+    adjusted_threshold: float
+    n_decisive: int
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "multiplicity", ComparisonMultiplicity(self.multiplicity))
+        if self.n_candidates < 0 or self.n_comparisons < 0:
+            raise ValueError("comparison family counts must be non-negative")
+        if not 0 <= self.n_separated <= self.n_comparisons:
+            raise ValueError("separated contrasts must lie inside the family")
+        if not 0 <= self.n_decisive <= self.n_comparisons:
+            raise ValueError("decisive contrasts must lie inside the family")
+        if not 0 < self.interval_level < 1:
+            raise ValueError("interval_level must lie strictly between zero and one")
+        if not 0 < self.family_error_rate < 1:
+            raise ValueError("family_error_rate must lie strictly between zero and one")
+        for value in (self.expected_separated, self.excess_probability, self.adjusted_threshold):
+            if not np.isfinite(value) or value < 0:
+                raise ValueError("comparison family rates must be finite and non-negative")
+
+    @property
+    def corrected(self) -> bool:
+        """Whether an adjustment actually applies to this family."""
+
+        return self.multiplicity is not ComparisonMultiplicity.NONE and self.n_comparisons > 1
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return the family size and its chance yield as a JSON-safe record."""
+
+        return {
+            "n_candidates": self.n_candidates,
+            "n_comparisons": self.n_comparisons,
+            "interval_level": self.interval_level,
+            "multiplicity": self.multiplicity.value,
+            "family_error_rate": self.family_error_rate,
+            "n_separated": self.n_separated,
+            "expected_separated": self.expected_separated,
+            "excess_probability": self.excess_probability,
+            "adjusted_threshold": self.adjusted_threshold,
+            "n_decisive": self.n_decisive,
+        }
+
 
 @dataclass(frozen=True, slots=True)
 class ProspectiveModelResult:
@@ -90,7 +244,6 @@ class ProspectiveModelResult:
     pooled_log_loss: float
     pooled_brier_score: float
     unit_balanced_log_loss_interval: BootstrapInterval
-    audits: tuple[FitAudit, ...]
 
     def __post_init__(self) -> None:
         if not isinstance(self.name, str) or not self.name:
@@ -101,7 +254,6 @@ class ProspectiveModelResult:
         units = _validated_identifiers(self.aggregation_units, "aggregation_units")
         losses = protected_array(self.unit_log_losses, dtype=np.float64)
         brier = protected_array(self.unit_brier_scores, dtype=np.float64)
-        audits = tuple(self.audits)
         if not evaluations:
             raise ValueError("model results must contain at least one fold evaluation")
         if losses.shape != (len(units),) or brier.shape != losses.shape:
@@ -110,8 +262,6 @@ class ProspectiveModelResult:
             raise ValueError("unit scores must be finite")
         if np.any(losses < 0) or np.any((brier < 0) | (brier > 1)):
             raise ValueError("unit log losses and Brier scores are outside their valid ranges")
-        if len(audits) != len(evaluations):
-            raise ValueError("every fold evaluation must retain one fit audit")
         if not np.isfinite(self.pooled_log_loss) or self.pooled_log_loss < 0:
             raise ValueError("pooled_log_loss must be finite and non-negative")
         if not np.isfinite(self.pooled_brier_score) or not 0 <= self.pooled_brier_score <= 1:
@@ -127,7 +277,12 @@ class ProspectiveModelResult:
         object.__setattr__(self, "aggregation_units", units)
         object.__setattr__(self, "unit_log_losses", losses)
         object.__setattr__(self, "unit_brier_scores", brier)
-        object.__setattr__(self, "audits", audits)
+
+    @property
+    def audits(self) -> tuple[FitAudit, ...]:
+        """Each fold fit's normalized audit, computed once by ``evaluate_splits``."""
+
+        return tuple(evaluation.fit_audit for evaluation in self.evaluations)
 
     @property
     def unit_balanced_log_loss(self) -> float:
@@ -213,33 +368,180 @@ class ProspectiveModelResult:
 
 
 @dataclass(frozen=True, slots=True)
-class PairedModelComparison:
-    """Paired unit-level log-loss difference between two candidates."""
+class PairedComparison:
+    """One paired equal-unit score difference between two candidates.
+
+    ``left_minus_right`` and ``bootstrap_probability_positive`` are unadjusted and mean
+    exactly what they always meant. ``two_sided_probability`` inverts the percentile
+    bootstrap into a probability of a difference at least this extreme under no
+    difference, with the Davison-Hinkley ``+1`` correction so a finite resample can never
+    report an impossible zero. ``adjusted_probability`` is that probability after the
+    family's declared multiplicity adjustment, and ``decisive`` is the only member the
+    winner rule reads.
+    """
 
     left_model: str
     right_model: str
+    metric: ScoreMetric
     left_minus_right: BootstrapInterval
     bootstrap_probability_positive: float
+    two_sided_probability: float = 1.0
+    adjusted_probability: float = 1.0
+    decisive: bool = False
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "metric", ScoreMetric(self.metric))
         if not self.left_model or not self.right_model or self.left_model == self.right_model:
             raise ValueError("paired comparison requires two distinct named models")
-        if (
-            not np.isfinite(self.bootstrap_probability_positive)
-            or not 0 <= self.bootstrap_probability_positive <= 1
+        for value, label in (
+            (self.bootstrap_probability_positive, "bootstrap_probability_positive"),
+            (self.two_sided_probability, "two_sided_probability"),
+            (self.adjusted_probability, "adjusted_probability"),
         ):
-            raise ValueError("bootstrap_probability_positive must lie between zero and one")
+            if not np.isfinite(value) or not 0 <= value <= 1:
+                raise ValueError(f"{label} must lie between zero and one")
+        if not isinstance(self.decisive, bool):
+            raise TypeError("decisive must be boolean")
+
+    @property
+    def favours(self) -> str | None:
+        """The named candidate this contrast decisively favours, or ``None``."""
+
+        if not self.decisive:
+            return None
+        return self.left_model if self.left_minus_right.estimate < 0 else self.right_model
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-safe representation with an explicit difference direction."""
 
+        metric = self.metric.value
         return {
             "left_model": self.left_model,
             "right_model": self.right_model,
-            "direction": "left log loss minus right log loss; positive favors right",
+            "metric": metric,
+            "direction": f"left {metric} minus right {metric}; positive favors right",
             "left_minus_right": self.left_minus_right.to_dict(),
             "bootstrap_probability_positive": self.bootstrap_probability_positive,
+            "two_sided_probability": self.two_sided_probability,
+            "adjusted_probability": self.adjusted_probability,
+            "decisive": self.decisive,
         }
+
+
+def paired_comparisons(
+    unit_scores: Mapping[str, Mapping[Any, float]],
+    *,
+    metric: ScoreMetric,
+    resamples: int,
+    seed: int,
+    confidence_level: float,
+    multiplicity: ComparisonMultiplicity = ComparisonMultiplicity.BENJAMINI_HOCHBERG,
+    family_error_rate: float | None = None,
+) -> tuple[tuple[PairedComparison, ...], ComparisonFamily]:
+    """Compare every unordered pair of candidates and size the resulting family.
+
+    ``unit_scores`` maps each candidate name, in the order the caller declared, to that
+    candidate's per-aggregation-unit score keyed by unit. A pair is compared over the units
+    both candidates scored, in the left candidate's order; a pair with no common unit is
+    skipped and does not enter the family.
+
+    ``family_error_rate`` defaults to ``1 - confidence_level``, so the family-level rate is
+    the rate the caller already declared rather than a second threshold introduced behind
+    their back. Nothing about the per-contrast interval changes.
+    """
+
+    metric = ScoreMetric(metric)
+    adjustment = ComparisonMultiplicity(multiplicity)
+    rate = (1.0 - confidence_level) if family_error_rate is None else family_error_rate
+    names = tuple(unit_scores)
+    # Every pair over the same number of common units shares one index matrix. Rebuilding
+    # it per contrast is pure waste: `bootstrap_unit_draws` is a deterministic function of
+    # `(n_units, resamples, seed)`, and in the common case where all candidates cover
+    # identical units there is exactly one matrix for the whole family.
+    draws_for: dict[int, NDArray[np.intp]] = {}
+    unadjusted: list[PairedComparison] = []
+    for left_index, left in enumerate(names):
+        left_scores = unit_scores[left]
+        for right in names[left_index + 1 :]:
+            right_scores = unit_scores[right]
+            common = tuple(key for key in left_scores if key in right_scores)
+            if not common:
+                continue
+            differences = np.asarray(
+                [left_scores[key] - right_scores[key] for key in common],
+                dtype=np.float64,
+            )
+            if len(differences) not in draws_for:
+                draws_for[len(differences)] = bootstrap_unit_draws(
+                    len(differences), resamples=resamples, seed=seed
+                )
+            draws = np.mean(differences[draws_for[len(differences)]], axis=1)
+            n_positive = int(np.count_nonzero(draws > 0))
+            n_negative = int(np.count_nonzero(draws < 0))
+            unadjusted.append(
+                PairedComparison(
+                    left_model=left,
+                    right_model=right,
+                    metric=metric,
+                    left_minus_right=_bootstrap_interval(differences, draws, confidence_level),
+                    bootstrap_probability_positive=n_positive / len(draws),
+                    # Davison and Hinkley's (1997) +1 correction: a percentile bootstrap
+                    # over B draws cannot resolve a probability below 1/(B+1), and
+                    # reporting an exact zero would claim a certainty the resample never
+                    # established.
+                    two_sided_probability=min(
+                        1.0, 2.0 * (min(n_positive, n_negative) + 1) / (len(draws) + 1)
+                    ),
+                )
+            )
+
+    probabilities = np.asarray(
+        [item.two_sided_probability for item in unadjusted], dtype=np.float64
+    )
+    separated = np.asarray([item.left_minus_right.excludes_zero for item in unadjusted], dtype=bool)
+    per_contrast = 1.0 - confidence_level
+    threshold, adjusted = adjust_probabilities(
+        probabilities,
+        multiplicity=adjustment,
+        error_rate=rate,
+        unadjusted_threshold=per_contrast,
+    )
+    # A contrast must both survive the adjustment and have an unadjusted interval that
+    # excludes zero. The second condition is what keeps adjustment from ever *adding* a
+    # decisive contrast: correction can only take separations away.
+    #
+    # An unadjusted family reads the interval and nothing else. It must not additionally
+    # consult the inverted probability, because the two can disagree at small resample
+    # counts: with B draws the two-sided probability cannot fall below 2/(B+1), so at
+    # B = 16 it is pinned at 0.118 while the 95% percentile interval can still exclude
+    # zero. Correcting is a decision about *multiplicity*; it must not smuggle in a second,
+    # stricter reading of a single contrast.
+    corrected = len(unadjusted) > 1 and adjustment is not ComparisonMultiplicity.NONE
+    decisive = separated & (adjusted <= rate) if corrected else separated
+    n_separated = int(np.count_nonzero(separated))
+    family = ComparisonFamily(
+        n_candidates=len(names),
+        n_comparisons=len(unadjusted),
+        interval_level=confidence_level,
+        multiplicity=adjustment,
+        family_error_rate=rate,
+        n_separated=n_separated,
+        expected_separated=float(len(unadjusted) * per_contrast),
+        excess_probability=excess_probability(n_separated, len(unadjusted), per_contrast),
+        adjusted_threshold=float(threshold),
+        n_decisive=int(np.count_nonzero(decisive)),
+    )
+    comparisons = tuple(
+        replace(
+            comparison,
+            adjusted_probability=float(adjusted_probability),
+            decisive=bool(is_decisive),
+        )
+        for comparison, adjusted_probability, is_decisive in zip(
+            unadjusted, adjusted, decisive, strict=True
+        )
+    )
+    return comparisons, family
 
 
 @dataclass(frozen=True, slots=True)
@@ -251,10 +553,11 @@ class ProspectiveComparisonReport:
     scored_columns: tuple[str, ...]
     splits: tuple[ValidationFold, ...]
     model_results: tuple[ProspectiveModelResult, ...]
-    pairwise_comparisons: tuple[PairedModelComparison, ...]
+    pairwise_comparisons: tuple[PairedComparison, ...]
     bootstrap_resamples: int
     bootstrap_seed: int
     confidence_level: float
+    family: ComparisonFamily
 
     def __post_init__(self) -> None:
         if not self.aggregation_column or not self.outcome_column:
@@ -315,6 +618,10 @@ class ProspectiveComparisonReport:
                 raise ValueError("pairwise estimate must equal the matched model difference")
             if comparison.left_minus_right.confidence_level != self.confidence_level:
                 raise ValueError("pairwise confidence levels must match the report")
+        if not isinstance(self.family, ComparisonFamily):
+            raise TypeError("family must be a ComparisonFamily")
+        if self.family.n_comparisons != len(comparisons):
+            raise ValueError("the comparison family must size the retained contrasts")
         object.__setattr__(self, "splits", splits)
         object.__setattr__(self, "scored_columns", scored_columns)
         object.__setattr__(self, "model_results", results)
@@ -360,7 +667,13 @@ class ProspectiveComparisonReport:
                 return result
         raise KeyError(f"unknown comparison model: {name!r}")
 
-    def comparison_for(self, left: str, right: str) -> PairedModelComparison:
+    @property
+    def decisive_comparisons(self) -> tuple[PairedComparison, ...]:
+        """Contrasts that survive the declared multiplicity adjustment."""
+
+        return tuple(comparison for comparison in self.pairwise_comparisons if comparison.decisive)
+
+    def comparison_for(self, left: str, right: str) -> PairedComparison:
         """Return the stored comparison in its original declared direction."""
 
         for comparison in self.pairwise_comparisons:
@@ -386,6 +699,7 @@ class ProspectiveComparisonReport:
             "eligible_model_order": list(self.eligible_model_order),
             "winner_policy": "lowest unit-balanced log loss among non-failed audits",
             "winner_by_unit_balanced_log_loss": self.winner,
+            "simultaneous_family": self.family.to_dict(),
             "folds": [_split_provenance(split) for split in self.splits],
             "models": {result.name: result.to_dict() for result in self.model_results},
             "pairwise_log_loss_differences": {
@@ -421,7 +735,7 @@ class NestedSelectionFold:
         payload: dict[str, Any] = {
             "outer_fold": _split_provenance(self.outer_split),
             "selected_model": self.selected_model,
-            "selected_fit_audit": audit_fit(self.outer_evaluation.fit).to_dict(),
+            "selected_fit_audit": self.outer_evaluation.fit_audit.to_dict(),
             "outer_mean_log_loss": self.outer_evaluation.mean_log_loss,
             "inner_comparison": self.inner_report.to_dict(),
         }
@@ -524,7 +838,7 @@ class NestedProspectiveSelectionReport:
     def audit_status(self) -> FitAuditStatus:
         """Worst normalized status among the selected outer-fold fits."""
 
-        statuses = {audit_fit(fold.outer_evaluation.fit).status for fold in self.folds}
+        statuses = {fold.outer_evaluation.fit_audit.status for fold in self.folds}
         if FitAuditStatus.FAIL in statuses:
             return FitAuditStatus.FAIL
         if FitAuditStatus.WARNING in statuses:
@@ -591,6 +905,8 @@ def compare_models(
     bootstrap_seed: int = 0,
     confidence_level: float = 0.95,
     posterior_policy: PosteriorFoldPolicy | None = None,
+    multiplicity: ComparisonMultiplicity = ComparisonMultiplicity.BENJAMINI_HOCHBERG,
+    family_error_rate: float | None = None,
 ) -> ProspectiveComparisonReport:
     """Compare frequentist and sampled candidates on common folds with equal unit weights.
 
@@ -598,6 +914,11 @@ def compare_models(
     Point-estimate ties are resolved by the insertion order of ``models``.
     ``posterior_policy`` declares the projection centre and convergence thresholds applied
     to every sampled candidate; it is ignored by candidates fitted by optimization.
+
+    ``multiplicity`` and ``family_error_rate`` govern which pairwise contrasts are marked
+    :attr:`PairedComparison.decisive` once more than one contrast exists; they never change
+    an interval, a probability, or :attr:`ProspectiveComparisonReport.winner`, which has
+    always been the lowest point estimate among audit-eligible candidates.
     """
 
     candidates = _validated_models(models)
@@ -644,16 +965,9 @@ def compare_models(
     if any(aggregate.units != reference_units for aggregate in aggregates.values()):
         raise ValueError("all candidate evaluations must cover identical aggregation units")
 
-    generator = np.random.default_rng(bootstrap_seed)
-    draws = generator.integers(
-        0,
-        len(reference_units),
-        size=(bootstrap_resamples, len(reference_units)),
-    )
     model_results: list[ProspectiveModelResult] = []
     for name, model in candidates.items():
         aggregate = aggregates[name]
-        bootstrap_means = np.mean(aggregate.unit_log_losses[draws], axis=1)
         model_results.append(
             ProspectiveModelResult(
                 name=name,
@@ -664,43 +978,38 @@ def compare_models(
                 unit_brier_scores=aggregate.unit_brier_scores,
                 pooled_log_loss=aggregate.pooled_log_loss,
                 pooled_brier_score=aggregate.pooled_brier_score,
-                unit_balanced_log_loss_interval=_bootstrap_interval(
+                unit_balanced_log_loss_interval=bootstrap_interval(
                     aggregate.unit_log_losses,
-                    bootstrap_means,
-                    confidence_level,
+                    resamples=bootstrap_resamples,
+                    seed=bootstrap_seed,
+                    confidence_level=confidence_level,
                 ),
-                audits=tuple(audit_fit(evaluation.fit) for evaluation in evaluations[name]),
             )
         )
 
-    pairwise: list[PairedModelComparison] = []
-    names = tuple(candidates)
-    for left_index, left in enumerate(names):
-        for right in names[left_index + 1 :]:
-            difference = aggregates[left].unit_log_losses - aggregates[right].unit_log_losses
-            bootstrap_difference = np.mean(difference[draws], axis=1)
-            pairwise.append(
-                PairedModelComparison(
-                    left_model=left,
-                    right_model=right,
-                    left_minus_right=_bootstrap_interval(
-                        difference,
-                        bootstrap_difference,
-                        confidence_level,
-                    ),
-                    bootstrap_probability_positive=float(np.mean(bootstrap_difference > 0)),
-                )
-            )
+    pairwise, family = paired_comparisons(
+        {
+            name: dict(zip(reference_units, aggregates[name].unit_log_losses, strict=True))
+            for name in candidates
+        },
+        metric=ScoreMetric.LOG_LOSS,
+        resamples=bootstrap_resamples,
+        seed=bootstrap_seed,
+        confidence_level=confidence_level,
+        multiplicity=multiplicity,
+        family_error_rate=family_error_rate,
+    )
     return ProspectiveComparisonReport(
         aggregation_column=aggregation_column,
         outcome_column=outcome_column,
         scored_columns=scored_columns,
         splits=folds,
         model_results=tuple(model_results),
-        pairwise_comparisons=tuple(pairwise),
+        pairwise_comparisons=pairwise,
         bootstrap_resamples=bootstrap_resamples,
         bootstrap_seed=bootstrap_seed,
         confidence_level=confidence_level,
+        family=family,
     )
 
 
@@ -798,13 +1107,6 @@ def nested_select_model(
         aggregation_column=aggregation_column,
         outcome_column=outcome_column,
     )
-    generator = np.random.default_rng(bootstrap_seed)
-    draws = generator.integers(
-        0,
-        len(aggregate.units),
-        size=(bootstrap_resamples, len(aggregate.units)),
-    )
-    bootstrap_means = np.mean(aggregate.unit_log_losses[draws], axis=1)
     return NestedProspectiveSelectionReport(
         aggregation_column=aggregation_column,
         outcome_column=outcome_column,
@@ -816,10 +1118,11 @@ def nested_select_model(
         unit_brier_scores=aggregate.unit_brier_scores,
         pooled_log_loss=aggregate.pooled_log_loss,
         pooled_brier_score=aggregate.pooled_brier_score,
-        unit_balanced_log_loss_interval=_bootstrap_interval(
+        unit_balanced_log_loss_interval=bootstrap_interval(
             aggregate.unit_log_losses,
-            bootstrap_means,
-            confidence_level,
+            resamples=bootstrap_resamples,
+            seed=bootstrap_seed,
+            confidence_level=confidence_level,
         ),
         bootstrap_resamples=bootstrap_resamples,
         bootstrap_seed=bootstrap_seed,

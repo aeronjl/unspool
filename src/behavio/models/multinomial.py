@@ -1,4 +1,13 @@
-"""Reference multinomial and omission-aware choice likelihoods."""
+"""Reference multinomial and omission-aware choice likelihoods.
+
+:class:`MultinomialLogit` is a penalised linear model whose linear predictor is one number
+per *category* rather than one number per row, which is the whole of what stopped it being
+composable. Declaring :attr:`~MultinomialLogit.predictor_cells` and building a
+``(rows, categories, parameters)`` design is all it takes for
+:func:`behavio.compose.smooth` and :func:`behavio.compose.hierarchical` to apply, so a
+drifting multinomial, a hierarchical multinomial and a hierarchical drifting multinomial
+are expressions rather than three more classes in this file.
+"""
 
 from __future__ import annotations
 
@@ -8,10 +17,15 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.optimize import minimize
 from scipy.special import logsumexp
 
 from behavio._internal.arrays import protected_array
+from behavio.contracts.compose import (
+    PenalisedDesign,
+    linear_predictor,
+    ridge_group_draw,
+    ridge_group_penalty,
+)
 from behavio.design import (
     DesignSpec,
     HistoryKernelTerm,
@@ -19,9 +33,10 @@ from behavio.design import (
     InteractionTerm,
 )
 from behavio.models._kernels.introspection import Describable
+from behavio.models._kernels.multinomial import MultinomialLikelihood
+from behavio.models._kernels.penalised import fit_penalised_linear
 from behavio.models.base import (
     CategoricalPrediction,
-    FitDiagnostics,
     FitResult,
     ModelDataError,
     PredictionMode,
@@ -39,6 +54,25 @@ class MultinomialLogit(Describable):
     :class:`~behavio.task.ChoiceSpec` into one additional modeled category. Trial-specific
     unavailable actions receive exactly zero probability; the omission category remains
     available because it represents failure to emit any valid action.
+
+    Composability
+    -------------
+    This model satisfies :class:`behavio.contracts.compose.PenalisedLinearEstimator`, so
+    ``smooth(model)``, ``hierarchical(model)`` and ``hierarchical(smooth(model))`` are all
+    available and none of them is a class. The parameter coordinate is unchanged by that:
+    a coefficient is still ``category['right']::stimulus``, a smoothed one is
+    ``category['right']::stimulus[session_order=0]``, and a hierarchical fit reports the
+    population coordinate with the group deviations read off
+    :class:`~behavio.compose.HierarchicalFitResult` by group label. Per-category structure
+    was always in the *name*; only the *predictor* had to be widened.
+
+    Availability under composition is a modelling statement and not a broadcasting one. An
+    unavailable category reaches the likelihood as ``-inf`` in its cell, which contributes
+    zero probability, zero gradient and zero curvature, so a trial on which a category was
+    not offered carries no information about that category's coefficients at any level. A
+    group that was never offered a category therefore gets a deviation of exactly zero for
+    it, with the prior standard deviation as its standard error -- the honest answer, and
+    not one anything here had to be written to produce.
     """
 
     choice: ChoiceSpec
@@ -161,11 +195,45 @@ class MultinomialLogit(Describable):
 
     @property
     def parameter_names(self) -> tuple[str, ...]:
-        return tuple(
-            f"category[{self.categories[category]!r}]::{feature}"
-            for category in self.estimated_category_indices
-            for feature in self.design.feature_names
-        )
+        return self._parameter_names(self.design.feature_names)
+
+    @property
+    def coefficient_names(self) -> tuple[str, ...]:
+        """The estimated coordinate, under the name every composable family uses for it."""
+
+        return self.parameter_names
+
+    @property
+    def predictor_cells(self) -> tuple[str, ...]:
+        """One cell per modeled category, reference category included.
+
+        The reference category is a cell with no parameters rather than an absent one: its
+        logit is fixed at zero, and a fixed zero is still a number a row's softmax has to
+        normalise over. Naming it here keeps the cell coordinate the same length as
+        :attr:`categories`, which is what makes a prediction readable.
+        """
+
+        return tuple(f"category[{category!r}]" for category in self.categories)
+
+    @property
+    def likelihood(self) -> MultinomialLikelihood:
+        """The observation model this estimator's per-category logits feed."""
+
+        return MultinomialLikelihood(self.categories)
+
+    def category_parameter_names(self, category: Any) -> tuple[str, ...]:
+        """Return the parameter names belonging to one modeled category.
+
+        ``hierarchical(model, parameters=model.category_parameter_names("up"))`` is how a
+        single category is let vary by group without anyone writing ``repr`` quoting into a
+        string literal. The reference category has no parameters and returns ``()``.
+        """
+
+        key = _label_key(_scalar(category))
+        if key not in {_label_key(value) for value in self.categories}:
+            raise ValueError(f"{category!r} is not a modeled category of this model")
+        prefix = f"category[{_scalar(category)!r}]::"
+        return tuple(name for name in self.parameter_names if name.startswith(prefix))
 
     def outcome_codes(self, study: Study) -> NDArray[np.int64]:
         data = self._choice_data(study)
@@ -178,76 +246,128 @@ class MultinomialLogit(Describable):
             codes[data.omitted] = len(self.categories) - 1
         return protected_array(codes, dtype=np.int64)
 
-    def fit(self, study: Study) -> FitResult:
-        matrix = self.design.build(study)
-        parameter_names = self._parameter_names(matrix.names)
-        outcomes = self.outcome_codes(study)
+    # -- the penalised problem ---------------------------------------------------------
+
+    def outcomes(self, study: Study) -> NDArray[np.float64]:
+        """Return the observed category of each row, as the contract's float vector.
+
+        A code is an index, not a quantity, and it is carried as a float only because one
+        outcome vector serves every family. :class:`~behavio.models._kernels.multinomial.\
+MultinomialLikelihood` checks that what it is handed is integral before it indexes with it.
+        """
+
+        return np.asarray(self.outcome_codes(study), dtype=np.float64)
+
+    def design_matrix(self, study: Study) -> NDArray[np.float64]:
+        """Return the ``(rows, categories, parameters)`` design of this treatment coding.
+
+        Each estimated category owns a contiguous block of the coordinate and sees the
+        design only in its own cell; the reference category's cell is all zeros, which is
+        the treatment coding written as a tensor rather than as a reshape. Building it
+        densely costs a factor of ``categories`` in memory over the ``(rows, features)``
+        matrix and a private reshape, and buys the property that every combinator, every
+        expansion and every solver in the package is the one the binary families use.
+        """
+
+        features = self.design.build(study).values
+        n_features = features.shape[1]
+        design = np.zeros(
+            (len(study), len(self.categories), len(self.estimated_category_indices) * n_features),
+            dtype=np.float64,
+        )
+        for block, category in enumerate(self.estimated_category_indices):
+            design[:, category, block * n_features : (block + 1) * n_features] = features
+        return design
+
+    def predictor_offsets(self, study: Study) -> NDArray[np.float64] | None:
+        """Return ``-inf`` in the cell of every category a row did not offer.
+
+        This is the only route by which per-trial availability reaches the likelihood, and
+        it is deliberately not a mask the likelihood is given: an offset is carried through
+        every combinator untouched, so a group deviation or a smooth path on a category
+        that was unavailable simply receives no data on that trial rather than receiving
+        broadcast nonsense.
+        """
+
         available = self._availability(study)
-        n_categories = len(self.categories)
-        n_features = matrix.values.shape[1]
-        estimated = self.estimated_category_indices
-        penalty = np.asarray([name != "intercept" for name in matrix.names], dtype=np.float64)
+        if bool(np.all(available)):
+            return None
+        offsets = np.zeros(available.shape, dtype=np.float64)
+        offsets[~available] = -np.inf
+        return offsets
 
-        def objective(vector: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
-            coefficients = vector.reshape(len(estimated), n_features)
-            logits = np.zeros((len(study), n_categories), dtype=np.float64)
-            logits[:, estimated] = matrix.values @ coefficients.T
-            logits[~available] = -np.inf
-            normalizer = logsumexp(logits, axis=1)
-            loss = -float(np.sum(logits[np.arange(len(study)), outcomes] - normalizer))
-            probabilities = np.exp(logits - normalizer[:, None])
-            residual = probabilities
-            residual[np.arange(len(study)), outcomes] -= 1.0
-            gradient = residual[:, estimated].T @ matrix.values
-            if self.l2:
-                loss += 0.5 * self.l2 * float(np.sum((coefficients * penalty) ** 2))
-                gradient += self.l2 * coefficients * penalty
-            return loss, gradient.ravel()
+    def penalty_matrix(self) -> NDArray[np.float64]:
+        """Return the ridge on every non-intercept coefficient of every category."""
 
-        start = np.zeros(len(parameter_names), dtype=np.float64)
-        result = minimize(
-            objective,
-            start,
-            method="L-BFGS-B",
-            jac=True,
-            options={
-                "maxiter": self.max_iterations,
-                "ftol": self.tolerance,
-                "gtol": self.tolerance,
-            },
+        feature_penalty = np.asarray(
+            [self.l2 * (name != "intercept") for name in self.design.feature_names],
+            dtype=np.float64,
         )
-        estimates = np.asarray(result.x, dtype=np.float64)
-        _, gradient = objective(estimates)
-        hessian = self._hessian(
-            matrix.values,
-            available,
-            estimates.reshape(len(estimated), n_features),
-            penalty,
-        )
-        condition = float(np.linalg.cond(hessian))
-        covariance = np.linalg.pinv(hessian, hermitian=True)
-        standard_errors = np.sqrt(np.maximum(np.diag(covariance), 0.0))
-        return FitResult(
+        return np.diag(np.tile(feature_penalty, len(self.estimated_category_indices)))
+
+    def group_penalty(
+        self, columns: NDArray[np.intp], scales: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Return the isotropic Gaussian prior on one group's coefficient deviations.
+
+        A multinomial coefficient is an exchangeable number and not a sample of a
+        structured object -- the per-category structure lives in which coefficient it is,
+        not inside it -- so the deviation prior is the ordinary ridge.
+        """
+
+        return ridge_group_penalty(scales)
+
+    def draw_group_deviations(
+        self,
+        columns: NDArray[np.intp],
+        scales: NDArray[np.float64],
+        *,
+        groups: int,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Draw independent Gaussian coefficient deviations for each group."""
+
+        return ridge_group_draw(scales, groups=groups, generator=generator)
+
+    def fit(self, study: Study) -> FitResult:
+        """Fit the penalized softmax likelihood with deterministic L-BFGS-B."""
+
+        return self.fit_penalised(
+            PenalisedDesign(
+                parameter_names=self.parameter_names,
+                design_matrix=self.design_matrix(study),
+                outcomes=self.outcomes(study),
+                penalty_matrix=self.penalty_matrix(),
+                likelihood=self.likelihood,
+                offsets=self.predictor_offsets(study),
+            ),
             model_name=self.model_name,
             model_signature=self.signature,
-            parameter_names=parameter_names,
-            estimates=estimates,
-            standard_errors=standard_errors,
-            covariance=covariance,
-            n_observations=len(study),
-            diagnostics=FitDiagnostics(
-                converged=bool(result.success),
-                optimizer="L-BFGS-B (analytic softmax gradient)",
-                status=int(result.status),
-                message=str(result.message),
-                n_iterations=int(result.nit),
-                objective=float(result.fun),
-                gradient_norm=float(np.linalg.norm(gradient)),
-                hessian_condition=condition,
-                boundary_estimate=bool(
-                    np.any(np.abs(estimates) >= self.coefficient_warning_threshold)
-                ),
-            ),
+        )
+
+    def fit_penalised(
+        self,
+        design: PenalisedDesign,
+        *,
+        model_name: str,
+        model_signature: str,
+    ) -> FitResult:
+        """Solve any penalised softmax problem on this model's optimizer settings."""
+
+        return fit_penalised_linear(
+            model_name=model_name,
+            model_signature=model_signature,
+            parameter_names=design.parameter_names,
+            design_matrix=design.design_matrix,
+            outcomes=design.outcomes,
+            penalty_matrix=design.penalty_matrix,
+            likelihood=design.likelihood,
+            max_iterations=self.max_iterations,
+            tolerance=self.tolerance,
+            coefficient_warning_threshold=self.coefficient_warning_threshold,
+            offsets=design.offsets,
+            derived_estimates=design.derived_estimates,
+            optimizer="L-BFGS-B (analytic softmax gradient)",
         )
 
     def predict(
@@ -258,11 +378,11 @@ class MultinomialLogit(Describable):
         mode: PredictionMode = PredictionMode.FILTERED,
     ) -> CategoricalPrediction:
         prediction_mode = self._prediction_mode(mode)
-        matrix = self.design.build(study)
-        self._validate_fit(fit, matrix.names)
-        logits = self._logits(matrix.values, fit.estimates, self._availability(study))
-        probability = np.exp(logits - logsumexp(logits, axis=1)[:, None])
-        return CategoricalPrediction(probability, logits, self.categories, prediction_mode)
+        self._validate_fit(fit)
+        logits = linear_predictor(
+            self.design_matrix(study), fit.estimates, self.predictor_offsets(study)
+        )
+        return self.likelihood.prediction(logits, mode=prediction_mode)
 
     def pointwise_log_prob(
         self,
@@ -272,10 +392,7 @@ class MultinomialLogit(Describable):
         mode: PredictionMode = PredictionMode.FILTERED,
     ) -> NDArray[np.float64]:
         prediction = self.predict(study, fit, mode=mode)
-        outcomes = self.outcome_codes(study)
-        scores = prediction.linear_predictor[np.arange(len(study)), outcomes]
-        scores -= logsumexp(prediction.linear_predictor, axis=1)
-        return protected_array(scores, dtype=np.float64)
+        return self.likelihood.pointwise_log_prob(prediction.linear_predictor, self.outcomes(study))
 
     def simulate(
         self,
@@ -284,12 +401,7 @@ class MultinomialLogit(Describable):
         *,
         seed: int | np.random.Generator,
     ) -> Study:
-        if any(_uses_outcome_history(term, self.choice.column) for term in self.design.terms):
-            raise ModelDataError(
-                "multinomial simulation currently requires outcome-independent design terms"
-            )
-        matrix = self.design.build(design)
-        names = self._parameter_names(matrix.names)
+        names = self.parameter_names
         if set(parameters) != set(names):
             raise ValueError("parameters must match the model and built design exactly")
         try:
@@ -298,7 +410,35 @@ class MultinomialLogit(Describable):
             raise ValueError("parameters must contain finite numeric values") from None
         if not np.all(np.isfinite(estimates)):
             raise ValueError("parameters must contain finite numeric values")
-        logits = self._logits(matrix.values, estimates, self._availability(design))
+        rows = np.broadcast_to(estimates, (len(design), len(estimates)))
+        return self.simulate_rows(design, rows, seed=seed)
+
+    def simulate_rows(
+        self,
+        design: Study,
+        coefficients: NDArray[np.float64],
+        *,
+        seed: int | np.random.Generator,
+    ) -> Study:
+        """Generate choices given one coefficient vector per row.
+
+        Constant coefficients are the ordinary case, coefficients that differ by group are
+        what :func:`behavio.compose.hierarchical` hands down, and coefficients that differ
+        by clock value are what :func:`behavio.compose.smooth` hands down. Availability is
+        read from the design study, never from an outcome column, so an unavailable action
+        is impossible during simulation rather than merely unlikely.
+        """
+
+        if any(_uses_outcome_history(term, self.choice.column) for term in self.design.terms):
+            raise ModelDataError(
+                "multinomial simulation currently requires outcome-independent design terms"
+            )
+        values = np.asarray(coefficients, dtype=np.float64)
+        if values.shape != (len(design), len(self.parameter_names)):
+            raise ValueError("simulate_rows needs one coefficient per parameter per study row")
+        logits = np.einsum(
+            "rcp,rp->rc", self.design_matrix(design), values, optimize=True
+        ) + np.where(self._availability(design), 0.0, -np.inf)
         probability = np.exp(logits - logsumexp(logits, axis=1)[:, None])
         generator = seed if isinstance(seed, np.random.Generator) else np.random.default_rng(seed)
         codes = np.asarray(
@@ -332,45 +472,11 @@ class MultinomialLogit(Describable):
             for feature in feature_names
         )
 
-    def _logits(
-        self,
-        matrix: NDArray[np.float64],
-        estimates: NDArray[np.float64],
-        available: NDArray[np.bool_],
-    ) -> NDArray[np.float64]:
-        coefficients = estimates.reshape(len(self.estimated_category_indices), matrix.shape[1])
-        logits = np.zeros((len(matrix), len(self.categories)), dtype=np.float64)
-        logits[:, self.estimated_category_indices] = matrix @ coefficients.T
-        logits[~available] = -np.inf
-        return logits
-
-    def _hessian(
-        self,
-        matrix: NDArray[np.float64],
-        available: NDArray[np.bool_],
-        coefficients: NDArray[np.float64],
-        penalty: NDArray[np.float64],
-    ) -> NDArray[np.float64]:
-        logits = np.zeros((len(matrix), len(self.categories)), dtype=np.float64)
-        logits[:, self.estimated_category_indices] = matrix @ coefficients.T
-        logits[~available] = -np.inf
-        probability = np.exp(logits - logsumexp(logits, axis=1)[:, None])
-        selected = probability[:, self.estimated_category_indices]
-        size = coefficients.size
-        hessian = np.zeros((size, size), dtype=np.float64)
-        for row, values in enumerate(selected):
-            category_covariance = np.diag(values) - np.outer(values, values)
-            feature_outer = np.outer(matrix[row], matrix[row])
-            hessian += np.kron(category_covariance, feature_outer)
-        if self.l2:
-            hessian += np.diag(np.tile(self.l2 * penalty, len(self.estimated_category_indices)))
-        return hessian
-
-    def _validate_fit(self, fit: FitResult, feature_names: tuple[str, ...]) -> None:
+    def _validate_fit(self, fit: FitResult) -> None:
         if (
             fit.model_name != self.model_name
             or fit.model_signature != self.signature
-            or fit.parameter_names != self._parameter_names(feature_names)
+            or fit.parameter_names != self.parameter_names
         ):
             raise ValueError("fit result was produced by a different model specification")
 

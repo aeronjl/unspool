@@ -87,6 +87,61 @@ If omissions occur while `include_omission=False`, fitting and scoring fail with
 `ModelDataError`. They are never silently dropped. A missing value is considered an
 omission only if the task explicitly sets `missing_is_omission=True`.
 
+## Drift and between-animal variation
+
+`MultinomialLogit` satisfies
+[`PenalisedLinearEstimator`](composing-models.md#the-contract), so the two combinators
+apply to it and there is no smooth, hierarchical or hierarchical-smooth multinomial *class*
+to reach for:
+
+```python
+from behavio.compose import hierarchical, smooth
+
+drifting = smooth(model, over="session_order", knots=(0.0, 4.0), smoothness=1.0)
+pooled = hierarchical(model, over="subject", scale=0.4)
+both = hierarchical(drifting, over="subject", scale=0.4)
+```
+
+What made this possible is one widening of the composition contract rather than a second
+contract for categorical models. A multinomial's linear predictor is one number per
+category instead of one per row, which it declares as `predictor_cells`; its design is
+correspondingly `(trials, categories, parameters)`. Everything else -- the parameter
+coordinate, the penalty, the group expansion -- is the same object the binary families use.
+
+Parameter names compose mechanically, because the per-category structure was always in the
+name:
+
+| Model | A parameter |
+| --- | --- |
+| `model` | `category['right']::signed_contrast` |
+| `smooth(model, over="session_order", knots=(0, 4))` | `category['right']::signed_contrast[session_order=0]` |
+| `hierarchical(model, over="subject")` | `category['right']::signed_contrast` (the population coordinate, unchanged) |
+
+Letting a single category vary by subject does not require writing `repr` quoting into a
+string literal:
+
+```python
+hierarchical(model, over="subject", parameters=model.category_parameter_names("wait"))
+```
+
+### Availability and omissions under composition
+
+Availability reaches the likelihood as a `-inf` offset on the unavailable category's cell,
+and a combinator carries offsets through untouched. Two consequences worth stating, because
+both are modelling answers and not broadcasting accidents:
+
+* A trial that did not offer a category contributes **nothing** to that category's
+  coefficients -- zero probability, zero gradient, zero curvature -- at population level and
+  at group level alike.
+* A subject who was never offered a category gets a deviation of exactly zero on that
+  category's coefficients, with the prior standard deviation as its standard error. The
+  population coefficients for that category remain identified by the subjects who *were*
+  offered it.
+
+The omission category is always available, so with `include_omission=True` a lapse rate is
+an ordinary coefficient: it can vary by subject, or follow a path in session time, on the
+same terms as a stimulus sensitivity.
+
 ## Common evaluation and recovery
 
 Categorical predictions participate in `evaluate_splits()`, `compare_models()`, the
@@ -106,7 +161,8 @@ ordinary selected-category log probability.
 
 ## Interpretation and current boundary
 
-This is a conditional choice baseline, not a learning model. Design terms may include
+This is a conditional choice baseline on its own, though `smooth()` makes its coefficients
+non-stationary and `hierarchical()` makes them animal-specific. Design terms may include
 fixed numeric, categorical, history, kernel, and interaction features for fitting and
 filtered prediction. Recursive simulation currently rejects terms that use the choice
 outcome's own history, because precomputing those features from an observed choice column

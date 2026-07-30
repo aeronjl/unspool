@@ -38,14 +38,17 @@ ACCEPTED_BUNDLE_SCHEMA_VERSIONS = (BUNDLE_SCHEMA_VERSION, *SUPERSEDED_BUNDLE_SCH
 #: source tree rather than an installed distribution.
 REQUIRED_PACKAGES = ("behavio", "numpy", "scipy")
 #: Optional distributions whose presence and version can change a recorded number: the
-#: posterior stack, its numerical backends, and the data-source adapters. Each is recorded
-#: whether or not it was installed.
+#: posterior stack, its numerical backends, the data-source adapters, and the renderer
+#: whose bytes are content-addressed into every archived figure. Each is recorded whether
+#: or not it was installed. Every extra declared in ``pyproject.toml`` appears here.
 OPTIONAL_PACKAGES = (
     "arviz",
     "arviz-stats",
     "h5py",
+    "matplotlib",
     "one-api",
     "pandas",
+    "pyarrow",
     "pybads",
     "pymc",
     "pynwb",
@@ -60,6 +63,7 @@ MISSING_PACKAGE_VERSION = "not installed"
 #: the ``unspool`` to ``behavio`` rename are byte-identical apart from this name, and are
 #: content-addressed, so they are recognised rather than restamped.
 _NESTED_EVALUATION_SCHEMAS = (
+    "behavio.nested-evaluation-report/2",
     "behavio.nested-evaluation-report/1",
     "unspool.nested-evaluation-report/1",
 )
@@ -795,32 +799,33 @@ def _bundle_loo_estimands(bundle: EvidenceBundle) -> tuple[str, ...]:
     return tuple(sorted(str(estimand) for estimand in grouped))
 
 
+def _candidate_predictions(candidate: Any) -> dict[str, Any]:
+    return {
+        fold.identifier: [asdict(point) for point in points]
+        for fold, points in zip(candidate.folds, candidate.fold_predictions, strict=True)
+    }
+
+
+def _candidate_audits(candidate: Any) -> dict[str, Any]:
+    return {
+        "failures": [failure.to_dict() for failure in candidate.failures],
+        "folds": {fold.identifier: fold.fit_audit.to_dict() for fold in candidate.folds},
+    }
+
+
 def _evaluation_predictions(report: Any) -> dict[str, Any]:
     if hasattr(report, "candidates"):
         return {
-            candidate.name: {
-                fold.fold: [asdict(point) for point in fold.predictions] for fold in candidate.folds
-            }
-            for candidate in report.candidates
+            candidate.name: _candidate_predictions(candidate) for candidate in report.candidates
         }
     return {
         fold.outer_fold: {
             "selected_candidate": fold.selected_candidate,
             "inner": {
-                candidate.name: {
-                    inner_fold.fold: [asdict(point) for point in inner_fold.predictions]
-                    for inner_fold in candidate.folds
-                }
+                candidate.name: _candidate_predictions(candidate)
                 for candidate in fold.inner_candidates
             },
-            "outer": (
-                {
-                    outer_fold.fold: [asdict(point) for point in outer_fold.predictions]
-                    for outer_fold in fold.outer_result.folds
-                }
-                if fold.outer_result
-                else None
-            ),
+            "outer": (_candidate_predictions(fold.outer_result) if fold.outer_result else None),
         }
         for fold in report.folds
     }
@@ -828,38 +833,15 @@ def _evaluation_predictions(report: Any) -> dict[str, Any]:
 
 def _evaluation_audits(report: Any) -> dict[str, Any]:
     if hasattr(report, "candidates"):
-        return {
-            candidate.name: {
-                "failures": [asdict(failure) for failure in candidate.failures],
-                "folds": {fold.fold: fold.audit.to_dict() for fold in candidate.folds},
-            }
-            for candidate in report.candidates
-        }
+        return {candidate.name: _candidate_audits(candidate) for candidate in report.candidates}
     return {
         fold.outer_fold: {
             "selected_candidate": fold.selected_candidate,
             "selection_failure": fold.selection_failure,
             "inner": {
-                candidate.name: {
-                    "failures": [asdict(failure) for failure in candidate.failures],
-                    "folds": {
-                        inner_fold.fold: inner_fold.audit.to_dict()
-                        for inner_fold in candidate.folds
-                    },
-                }
-                for candidate in fold.inner_candidates
+                candidate.name: _candidate_audits(candidate) for candidate in fold.inner_candidates
             },
-            "outer": (
-                {
-                    "failures": [asdict(failure) for failure in fold.outer_result.failures],
-                    "folds": {
-                        outer_fold.fold: outer_fold.audit.to_dict()
-                        for outer_fold in fold.outer_result.folds
-                    },
-                }
-                if fold.outer_result
-                else None
-            ),
+            "outer": (_candidate_audits(fold.outer_result) if fold.outer_result else None),
         }
         for fold in report.folds
     }

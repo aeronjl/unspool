@@ -13,17 +13,17 @@ combinator can write an objective over it without importing anything about GLMs.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.optimize import minimize
 from scipy.special import expit
 
 from behavio._internal.arrays import protected_array
-from behavio.contracts.audit import FitDiagnostics
 from behavio.contracts.estimator import FitResult, ModelPrediction, Prediction, PredictionMode
+from behavio.models._kernels.penalised import fit_penalised_linear
 from behavio.study import Study
 
 
@@ -81,52 +81,30 @@ def fit_bernoulli(
     max_iterations: int,
     tolerance: float,
     coefficient_warning_threshold: float,
+    offsets: NDArray[np.float64] | None = None,
+    derived_estimates: Callable[[NDArray[np.float64]], NDArray[np.float64]] | None = None,
 ) -> FitResult:
-    """Fit a quadratically penalized Bernoulli likelihood with deterministic L-BFGS-B."""
+    """Fit a quadratically penalized Bernoulli likelihood with deterministic L-BFGS-B.
 
-    def objective(coefficients: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
-        linear_predictor = design_matrix @ coefficients
-        loss = np.logaddexp(0.0, linear_predictor).sum() - outcomes @ linear_predictor
-        loss += 0.5 * float(coefficients @ penalty_matrix @ coefficients)
-        gradient = design_matrix.T @ (expit(linear_predictor) - outcomes)
-        gradient += penalty_matrix @ coefficients
-        return float(loss), np.asarray(gradient, dtype=np.float64)
+    The arithmetic moved to :func:`~behavio.models._kernels.penalised.fit_penalised_linear`
+    once a second family needed it. What is left here is the choice of likelihood, which is
+    all that was ever Bernoulli about it -- and the operations are performed in the same
+    order on the same doubles, so fits published before the move are reproduced exactly.
+    """
 
-    result = minimize(
-        objective,
-        np.zeros(len(parameter_names), dtype=np.float64),
-        method="L-BFGS-B",
-        jac=True,
-        options={"maxiter": max_iterations, "ftol": tolerance, "gtol": tolerance},
-    )
-    estimates = np.asarray(result.x, dtype=np.float64)
-    probabilities = expit(design_matrix @ estimates)
-    weights = probabilities * (1.0 - probabilities)
-    hessian = design_matrix.T @ (weights[:, None] * design_matrix) + penalty_matrix
-    condition = float(np.linalg.cond(hessian))
-    covariance = np.linalg.pinv(hessian, hermitian=True)
-    standard_errors = np.sqrt(np.maximum(np.diag(covariance), 0.0))
-    _, gradient = objective(estimates)
-    diagnostics = FitDiagnostics(
-        converged=bool(result.success),
-        optimizer="L-BFGS-B",
-        status=int(result.status),
-        message=str(result.message),
-        n_iterations=int(result.nit),
-        objective=float(result.fun),
-        gradient_norm=float(np.linalg.norm(gradient)),
-        hessian_condition=condition,
-        boundary_estimate=bool(np.any(np.abs(estimates) >= coefficient_warning_threshold)),
-    )
-    return FitResult(
+    return fit_penalised_linear(
         model_name=model_name,
         model_signature=model_signature,
         parameter_names=parameter_names,
-        estimates=estimates,
-        standard_errors=standard_errors,
-        covariance=covariance,
-        n_observations=len(outcomes),
-        diagnostics=diagnostics,
+        design_matrix=design_matrix,
+        outcomes=outcomes,
+        penalty_matrix=penalty_matrix,
+        likelihood=BERNOULLI,
+        max_iterations=max_iterations,
+        tolerance=tolerance,
+        coefficient_warning_threshold=coefficient_warning_threshold,
+        offsets=offsets,
+        derived_estimates=derived_estimates,
     )
 
 

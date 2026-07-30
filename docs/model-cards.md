@@ -15,7 +15,7 @@ performance rankings. “Supported” refers to the evidence boundary in the
 | Binary RL | Binary choice | Recursive values and policy traces | Complete pooling | history, bias, lapse, reward schedule |
 | Psychometric family | Binary choice | None; a fixed threshold, width, guess and lapse | Complete pooling | link choice, threshold convention, lapse versus slope |
 | Signal detection | Yes/no, rating, or response + confidence | None; fixed sensitivity and criteria | Complete pooling | extreme-rate corrections, equal versus unequal variance, meta-d' constraints |
-| Multinomial logit | Categorical choice | Static coefficients | Complete pooling | availability, omissions, coding |
+| Multinomial logit | Categorical choice | Static or smooth per-category coefficients | Complete or partial pooling | availability, omissions, coding |
 | Wiener DDM | Choice + response time | Within-decision accumulation; optionally smooth across-trial parameters | Single subject or partial pooling | contaminants, RT origin, scale trade-offs |
 
 Every family exposes filtered prediction and pointwise scoring. Generative families also
@@ -239,12 +239,16 @@ availability or omission semantics in `TaskSpec`.
 
 **Predicts:** a filtered trial-by-category probability matrix.
 
-**Parameters:** treatment-coded category-specific coefficients.
+**Parameters:** treatment-coded category-specific coefficients. `smooth()` gives each of
+them a path in clock time and `hierarchical()` lets each of them vary by subject, so
+drifting, pooled and drifting-pooled multinomials are expressions rather than classes; see
+[composing models](composing-models.md).
 
-**Evidence:** task validation, prospective scoring, simulation, and recovery tests.
+**Evidence:** task validation, prospective scoring, simulation, and recovery tests, for the
+static model and for all three composed cells.
 
-**Does not establish:** sequential value learning or latent regimes. Current categorical
-calibration and hierarchical extensions remain limited.
+**Does not establish:** sequential value learning or latent regimes. Categorical
+calibration summaries remain limited.
 
 [Detailed assumptions](multinomial.md)
 

@@ -233,20 +233,31 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
             f"stickiness={self.stickiness}{self._design_signature}]"
         )
 
-    def penalty_matrix(self) -> NDArray[np.float64]:
-        """Refuse the penalised-linear contract this family inherits but cannot honour.
+    @property
+    def penalised_linear_refusal(self) -> str:
+        """Decline the penalised-linear contract this family inherits but cannot honour.
 
         :class:`BernoulliGLMHMM` extends :class:`BernoulliHistoryGLM` for its per-state
-        emissions, which means it inherits the members
-        :class:`behavio.contracts.compose.PenalisedLinearEstimator` asks for while its own
-        likelihood is a mixture over latent states rather than one linear predictor. A
-        combinator would build a coherent-looking and entirely wrong model, so the
-        inherited member says no instead.
+        emissions, which means it inherits every member
+        :class:`behavio.contracts.compose.PenalisedLinearEstimator` asks for, and would
+        satisfy any widening of them: a ``(rows, states)`` linear predictor is exactly what
+        the emissions produce. What it cannot honour is the part of that contract which is
+        not a shape. A penalised linear model's log likelihood is a sum of independent row
+        scores ``f(eta_r, y_r)``; a GLM-HMM's is a forward recursion in which row ``r``'s
+        contribution depends on every row before it, so profiling out a group deviation
+        one block at a time -- which is what :func:`behavio.compose.hierarchical` does --
+        would optimise a quantity that is not the model's likelihood.
+
+        No arrangement of members can be inspected to discover that, which is why this is
+        a sentence rather than a signature. :func:`behavio.contracts.compose.\
+require_penalised_linear` reads it before it runs the structural test that would say yes.
         """
 
-        raise TypeError(
-            "a GLM-HMM is a latent-state mixture, not a penalised linear model, so "
-            "smooth() and hierarchical() cannot be applied to it directly"
+        return (
+            "a GLM-HMM is a latent-state mixture, not a penalised linear model: its row "
+            "scores come from a forward recursion over the whole session rather than from "
+            "one linear predictor per row, so the per-group profiles a combinator writes "
+            "would not be profiles of this likelihood"
         )
 
     @property

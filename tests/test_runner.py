@@ -12,7 +12,8 @@ from test_compiler import (
 
 from behavio.compiler import compile_execution_plan, materialize_protocol
 from behavio.compose import smooth
-from behavio.models import BernoulliHistoryGLM
+from behavio.evaluation import FoldStage
+from behavio.models import BernoulliHistoryGLM, PredictionMode
 from behavio.protocol import (
     CandidateSpec,
     ProtocolState,
@@ -24,7 +25,6 @@ from behavio.runner import (
     DeclarationCheck,
     ProtocolRunError,
     RankingStatus,
-    RunStage,
     run_nested_protocol,
     run_protocol,
     verify_candidate_declarations,
@@ -68,13 +68,13 @@ def test_runner_retains_fits_predictions_scores_calibration_and_comparisons() ->
     for candidate in run.report.candidates:
         assert candidate.eligible
         assert len(candidate.folds) == 1
-        assert len(candidate.folds[0].predictions) == 4
+        assert len(candidate.fold_predictions[0]) == 4
         assert len(candidate.unit_scores) == 2
         assert candidate.pooled_log_loss is not None
         assert candidate.unit_balanced_log_loss_interval is not None
         assert candidate.calibration.available
         assert candidate.calibration.n_observations == 4
-        assert len(candidate.folds[0].audit.issues) >= 0
+        assert len(candidate.folds[0].fit_audit.issues) >= 0
     serialized = run.report.canonical_json()
     assert '"predictions"' in serialized
     assert '"covariance"' not in serialized
@@ -145,11 +145,34 @@ def test_identical_candidates_retain_an_unresolved_ranking() -> None:
 
 
 class FailingFitModel:
+    """A complete estimator whose optimizer always throws.
+
+    It satisfies the whole ``BehaviourEstimator`` contract deliberately: the thing under
+    test is that a *fold* failure is retained, not that a malformed object is rejected,
+    and those are different findings.
+    """
+
     model_name = "deliberate-failure"
     signature = "deliberate-failure[v1]"
+    scored_columns = ("choice",)
+    required_task_columns = ()
+    supported_prediction_modes = (PredictionMode.FILTERED,)
 
     def fit(self, study):
         raise RuntimeError(f"deliberate failure for {len(study)} rows")
+
+    def predict(self, study, fit, *, mode=PredictionMode.FILTERED):  # pragma: no cover
+        raise RuntimeError("unreachable: fit always fails first")
+
+    def pointwise_log_prob(self, study, fit, *, mode=PredictionMode.FILTERED):
+        raise RuntimeError("unreachable: fit always fails first")  # pragma: no cover
+
+
+class NotAnEstimator:
+    """An object that does not satisfy the estimator contract at all."""
+
+    model_name = "not-an-estimator"
+    signature = "not-an-estimator[v1]"
 
 
 def test_candidate_failure_is_retained_while_other_candidate_completes() -> None:
@@ -175,7 +198,7 @@ def test_candidate_failure_is_retained_while_other_candidate_completes() -> None
     assert not failed.eligible
     assert failed.folds == ()
     assert len(failed.failures) == 1
-    assert failed.failures[0].stage == RunStage.FIT
+    assert failed.failures[0].stage == FoldStage.FIT
     assert failed.failures[0].exception_type == "RuntimeError"
     assert "deliberate failure" in failed.failures[0].message
     assert completed.eligible
@@ -226,7 +249,7 @@ def test_nested_runner_selects_inside_training_then_scores_untouched_outer_rows(
     assert tuple(candidate.name for candidate in fold.inner_candidates) == ("static", "smooth")
     assert all(candidate.eligible for candidate in fold.inner_candidates)
     assert fold.outer_result is not None
-    assert len(fold.outer_result.folds[0].predictions) == 4
+    assert len(fold.outer_result.fold_predictions[0]) == 4
     assert len(run.report.unit_scores) == 2
     assert sum(run.report.selection_counts.values()) == 1
 

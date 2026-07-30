@@ -9,6 +9,34 @@ the ones whose likelihood sees a study only through a **quadratically penalised 
 predictor**. Every generalized linear family in Behavio is one of those; the drift-diffusion
 families are not, and the contract says so by refusing them rather than by pretending.
 
+Cells: how wide one row's linear predictor is
+---------------------------------------------
+A Bernoulli GLM gives each row one number. A multinomial logit gives each row one number
+per category, and its likelihood is no less linear for it: what changed is the *shape* of
+what the design produces, not the fact that a quadratic penalty is applied to coefficients
+that enter linearly. :attr:`PenalisedLinearEstimator.predictor_cells` names that shape.
+``()`` is the scalar case and every array keeps the shape it always had; a non-empty tuple
+names one **cell** per column of a ``(rows, cells)`` linear predictor, produced by a
+``(rows, cells, parameters)`` design.
+
+The alternative was a second contract for categorical models, which would have recreated
+the variant explosion this package exists to remove: the multinomial's per-category
+structure is expressed in its *parameter names* already, and it needed the *predictor* to
+be widened, not the coordinate. Nothing about hierarchy or smoothness is per-family, so
+nothing about them is per-shape either: :func:`expand_group_design` gained one ellipsis
+and :func:`expand_group_penalty` gained nothing at all.
+
+Support: which cells exist on which rows
+----------------------------------------
+:meth:`PenalisedLinearEstimator.predictor_offsets` is the one thing a likelihood may read
+from a study that is not the design and not the outcome. It is an additive term on the
+linear predictor that no parameter multiplies, and ``-inf`` in it declares a cell **outside
+the support** on that row -- a task option that was not offered on that trial. Availability
+has to reach the likelihood somehow, and an offset is the representation that makes it
+family-independent: a combinator carries offsets through untouched, so a group deviation on
+an unavailable category contributes exactly zero gradient and zero curvature and is left to
+its prior, which is the modelling answer as well as the arithmetic one.
+
 Five ingredients, and which member carries each
 -----------------------------------------------
 
@@ -16,11 +44,12 @@ Five ingredients, and which member carries each
     :meth:`PenalisedLinearEstimator.design_matrix`,
     :meth:`~PenalisedLinearEstimator.penalty_matrix`,
     :meth:`~PenalisedLinearEstimator.outcomes`,
+    :meth:`~PenalisedLinearEstimator.predictor_offsets`,
     :attr:`~PenalisedLinearEstimator.likelihood` and
-    :meth:`~PenalisedLinearEstimator.fit_penalised`. The first four *are* the objective
-    -- ``likelihood(X @ theta, y) + 0.5 theta' P theta`` -- and the last is the model's own
-    solver, so that a composed fit is bit-for-bit the fit the model would have run itself
-    on the expanded problem rather than a re-implementation of it.
+    :meth:`~PenalisedLinearEstimator.fit_penalised`. The first five *are* the objective
+    -- ``likelihood(X @ theta + offset, y) + 0.5 theta' P theta`` -- and the last is the
+    model's own solver, so that a composed fit is bit-for-bit the fit the model would have
+    run itself on the expanded problem rather than a re-implementation of it.
 
 *A declaration of which parameters may vary and over what.*
     :class:`VaryingEffects`, resolved against
@@ -60,12 +89,24 @@ number of groups in the study, and an outer combinator cannot expand a coordinat
 width it does not know until it sees the data. The refusal is a real restriction and is
 documented as one; it is not a limitation of this contract so much as a statement that
 "which parameters vary by group" is the last question to ask about a model, not the first.
+
+Saying no to the contract
+-------------------------
+Structural typing answers "does this object have these members", which is not the question.
+:class:`~behavio.models.BernoulliGLMHMM` subclasses a GLM for its per-state emissions and so
+*inherits* every member below, while its likelihood is a mixture over latent states: its row
+scores do not factorise as ``f(eta_r, y_r)``, and no arrangement of members can be inspected
+to discover that. A model in that position declares ``penalised_linear_refusal``, a sentence
+saying why the mathematics says no, and :func:`require_penalised_linear` -- the single check
+both combinators run -- reports it. The declaration is part of this contract's vocabulary
+rather than an exception raised from inside a numerical member that a combinator happened
+to call.
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
 import numpy as np
@@ -89,8 +130,13 @@ __all__ = [
     "expand_group_design",
     "expand_group_penalty",
     "group_blocks",
+    "information_matrix",
     "joint_parameter_names",
+    "linear_predictor",
+    "parameter_gradient",
+    "require_penalised_linear",
     "ridge_group_penalty",
+    "validate_predictor_shape",
 ]
 
 
@@ -101,13 +147,21 @@ __all__ = [
 
 @runtime_checkable
 class LinearPredictorLikelihood(Protocol):
-    """A likelihood that reads a study only through one linear predictor per row.
+    """A likelihood that reads a study only through the linear predictor of each row.
 
     Separating this from the estimator is what lets a combinator write a *new* objective --
     the Laplace profile over a group scale, for instance -- without knowing which family it
     is profiling. The four members are the four things any such objective needs: a point
     prediction, a pointwise score, a value with its gradient in the linear predictor, and
     the curvature that turns a design matrix into an observed information matrix.
+
+    A row's linear predictor is one number for a scalar-predictor family and one number per
+    cell for a family that declares :attr:`PenalisedLinearEstimator.predictor_cells`, so
+    ``linear_predictor`` is ``(rows,)`` or ``(rows, cells)`` and every member follows it:
+    :meth:`value_and_gradient` returns a gradient of the same shape, and :meth:`curvature`
+    returns ``(rows,)`` second derivatives or ``(rows, cells, cells)`` Hessian blocks.
+    :func:`parameter_gradient` and :func:`information_matrix` are the two shape-aware
+    contractions that carry either back to the parameter coordinate.
     """
 
     def prediction(
@@ -140,11 +194,25 @@ class LinearPredictorLikelihood(Protocol):
 
 @dataclass(frozen=True, slots=True)
 class PenalisedDesign:
-    """One model's fit reduced to the four things a combinator can rewrite.
+    """One model's fit reduced to the pieces a combinator can rewrite.
 
     A combinator builds a wider :class:`PenalisedDesign` from a narrower one and hands it
     back to :meth:`PenalisedLinearEstimator.fit_penalised`, so the arithmetic that solves
     the expanded problem is the model's own.
+
+    ``design_matrix`` is ``(rows, parameters)`` for a scalar predictor and
+    ``(rows, cells, parameters)`` for a per-cell one. ``offsets`` matches the linear
+    predictor's shape and may contain ``-inf`` to place a cell outside the support of a
+    row.
+
+    ``derived_estimates`` is where reporting policy that the joint coordinate cannot
+    express is handed back to the model. A hierarchical fit has to know whether
+    *population plus deviation* is at a boundary, and that number is not a coordinate of
+    the vector the optimizer returns; the combinator supplies it as a function of that
+    vector and the model's own solver applies its own boundary convention to the result.
+    This is why the contract itself no longer carries a ``boundary_threshold``: every
+    number in a :class:`~behavio.contracts.estimator.FitDiagnostics` is now produced by
+    the model that owns the convention behind it.
     """
 
     parameter_names: tuple[str, ...]
@@ -152,6 +220,10 @@ class PenalisedDesign:
     outcomes: NDArray[np.float64]
     penalty_matrix: NDArray[np.float64]
     likelihood: LinearPredictorLikelihood
+    offsets: NDArray[np.float64] | None = None
+    derived_estimates: Callable[[NDArray[np.float64]], NDArray[np.float64]] | None = field(
+        default=None, compare=False
+    )
 
     def __post_init__(self) -> None:
         names = tuple(self.parameter_names)
@@ -160,24 +232,103 @@ class PenalisedDesign:
         penalty = np.asarray(self.penalty_matrix, dtype=np.float64)
         if not names or len(set(names)) != len(names):
             raise ValueError("penalised design parameter names must be non-empty and unique")
-        if design.ndim != 2 or design.shape[1] != len(names):
+        if design.ndim not in (2, 3) or design.shape[-1] != len(names):
             raise ValueError("the design matrix must have one column per parameter")
+        if design.ndim == 3 and design.shape[1] < 1:
+            raise ValueError("a per-cell design needs at least one predictor cell")
         if outcomes.ndim != 1 or outcomes.shape[0] != design.shape[0]:
             raise ValueError("outcomes must have one value per design row")
         if penalty.shape != (len(names), len(names)):
             raise ValueError("the penalty must be square with one row per parameter")
         if not isinstance(self.likelihood, LinearPredictorLikelihood):
             raise TypeError("likelihood must satisfy LinearPredictorLikelihood")
+        if self.derived_estimates is not None and not callable(self.derived_estimates):
+            raise TypeError("derived_estimates must be a function of the estimate vector")
         object.__setattr__(self, "parameter_names", names)
         object.__setattr__(self, "design_matrix", design)
         object.__setattr__(self, "outcomes", outcomes)
         object.__setattr__(self, "penalty_matrix", penalty)
+        if self.offsets is None:
+            return
+        offsets = np.asarray(self.offsets, dtype=np.float64)
+        if offsets.shape != self.predictor_shape:
+            raise ValueError("offsets must have the shape of the linear predictor")
+        if np.any(np.isnan(offsets)) or np.any(np.isposinf(offsets)):
+            raise ValueError("offsets may contain finite values or -inf")
+        object.__setattr__(self, "offsets", offsets)
 
     @property
     def n_observations(self) -> int:
         """The number of scored rows."""
 
         return int(self.design_matrix.shape[0])
+
+    @property
+    def n_cells(self) -> int | None:
+        """The width of one row's linear predictor, or ``None`` when it is a scalar."""
+
+        return None if self.design_matrix.ndim == 2 else int(self.design_matrix.shape[1])
+
+    @property
+    def predictor_shape(self) -> tuple[int, ...]:
+        """The shape of this problem's linear predictor."""
+
+        return self.design_matrix.shape[:-1]
+
+    def linear_predictor(self, coefficients: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Return this design's linear predictor at ``coefficients``, offsets included."""
+
+        return linear_predictor(self.design_matrix, coefficients, self.offsets)
+
+
+# --------------------------------------------------------------------------------------
+# The three shape-aware contractions between a coordinate and a linear predictor
+# --------------------------------------------------------------------------------------
+
+
+def linear_predictor(
+    design_matrix: NDArray[np.float64],
+    coefficients: NDArray[np.float64],
+    offsets: NDArray[np.float64] | None = None,
+) -> NDArray[np.float64]:
+    """Return ``X theta + offset``, whatever shape one row's predictor has.
+
+    The scalar branch is written as the plain matrix product it has always been rather
+    than as a one-cell case of the general one, because a fit that was published before
+    predictor cells existed must still be reproducible to the last bit.
+    """
+
+    values = (
+        design_matrix @ coefficients
+        if design_matrix.ndim == 2
+        else np.einsum("rcp,p->rc", design_matrix, coefficients)
+    )
+    return values if offsets is None else values + offsets
+
+
+def parameter_gradient(
+    design_matrix: NDArray[np.float64], gradient: NDArray[np.float64]
+) -> NDArray[np.float64]:
+    """Pull a gradient in the linear predictor back to the parameter coordinate."""
+
+    if design_matrix.ndim == 2:
+        return np.asarray(design_matrix.T @ gradient, dtype=np.float64)
+    return np.asarray(
+        np.einsum("rcp,rc->p", design_matrix, gradient, optimize=True), dtype=np.float64
+    )
+
+
+def information_matrix(
+    design_matrix: NDArray[np.float64], curvature: NDArray[np.float64]
+) -> NDArray[np.float64]:
+    """Turn per-row likelihood curvature into observed information on the coordinate."""
+
+    if design_matrix.ndim == 2:
+        return np.asarray(design_matrix.T @ (curvature[:, None] * design_matrix), dtype=np.float64)
+    return np.asarray(
+        np.einsum("rcp,rcd,rdq->pq", design_matrix, curvature, design_matrix, optimize=True),
+        dtype=np.float64,
+    )
 
 
 @runtime_checkable
@@ -195,18 +346,18 @@ class PenalisedLinearEstimator(Protocol):
         ...
 
     @property
-    def likelihood(self) -> LinearPredictorLikelihood:
-        """The observation model this estimator's linear predictor feeds."""
+    def predictor_cells(self) -> tuple[str, ...]:
+        """Names for the columns of one row's linear predictor, or ``()`` if it is scalar.
+
+        A multinomial logit names its categories here; a Bernoulli GLM declares ``()`` and
+        every array it exchanges with a combinator keeps the shape it always had. The
+        names are not parameters -- they say what the *predictor* is a predictor of.
+        """
         ...
 
     @property
-    def boundary_threshold(self) -> float:
-        """The magnitude at which one estimated coefficient is reported as at a boundary.
-
-        A combinator has to ask, because the quantity a hierarchical fit should check is
-        the *effective* parameter -- population plus deviation -- and that number exists
-        nowhere in the joint coordinate the optimizer returns.
-        """
+    def likelihood(self) -> LinearPredictorLikelihood:
+        """The observation model this estimator's linear predictor feeds."""
         ...
 
     def outcomes(self, study: Study) -> NDArray[np.float64]:
@@ -214,7 +365,20 @@ class PenalisedLinearEstimator(Protocol):
         ...
 
     def design_matrix(self, study: Study) -> NDArray[np.float64]:
-        """Return the ``(rows, parameters)`` matrix whose product is the linear predictor."""
+        """Return the array whose product with the coordinate is the linear predictor.
+
+        ``(rows, parameters)`` when :attr:`predictor_cells` is empty, and
+        ``(rows, cells, parameters)`` when it is not.
+        """
+        ...
+
+    def predictor_offsets(self, study: Study) -> NDArray[np.float64] | None:
+        """Return an additive term on the linear predictor, or ``None`` if there is none.
+
+        ``-inf`` declares a cell outside the support of a row, which is how per-trial
+        option availability reaches a likelihood without any combinator having to know
+        that availability is what it is looking at.
+        """
         ...
 
     def penalty_matrix(self) -> NDArray[np.float64]:
@@ -262,6 +426,73 @@ class PenalisedLinearEstimator(Protocol):
     ) -> NDArray[np.float64]:
         """Draw ``(groups, len(columns))`` deviations from the prior ``group_penalty`` implies."""
         ...
+
+
+def require_penalised_linear(model: Any, *, combinator: str) -> PenalisedLinearEstimator:
+    """Return ``model`` if a combinator may rewrite its penalised problem, or raise.
+
+    Three questions, in the order in which their answers are worth reading. First, does the
+    model *declare* that it is not one of these -- the ``penalised_linear_refusal``
+    attribute, an opt-out for a model that inherits every member below from a parent whose
+    likelihood it does not share. Second, does it have the members at all. Third, is the
+    coordinate it reports the coordinate it estimates, which a penalty of the wrong width
+    disproves.
+
+    The refusal is an attribute rather than a protocol member because a contract cannot
+    require a model to announce that it does not satisfy it; and it is checked before the
+    structural test because the structural test would say yes.
+    """
+
+    refusal = getattr(model, "penalised_linear_refusal", None)
+    if refusal:
+        raise TypeError(f"{combinator}() cannot be applied to {type(model).__name__}: {refusal}")
+    if not isinstance(model, PenalisedLinearEstimator):
+        raise TypeError(
+            f"{combinator}() needs a model satisfying behavio.contracts.compose."
+            f"PenalisedLinearEstimator; {type(model).__name__} does not"
+        )
+    penalty = model.penalty_matrix()
+    if penalty.shape != (len(model.parameter_names),) * 2:
+        raise TypeError(
+            f"{type(model).__name__} declares {len(model.parameter_names)} parameters but a "
+            f"{penalty.shape} penalty, so its estimated coordinate is not the one it reports"
+        )
+    cells = tuple(model.predictor_cells)
+    if any(not isinstance(cell, str) or not cell for cell in cells) or len(set(cells)) != len(
+        cells
+    ):
+        raise TypeError("predictor_cells must be unique non-empty names, or empty for a scalar")
+    if len(cells) == 1:
+        raise TypeError(
+            "a linear predictor of one cell is the scalar case: declare predictor_cells=()"
+        )
+    return model
+
+
+def validate_predictor_shape(
+    model: PenalisedLinearEstimator, design_matrix: NDArray[np.float64]
+) -> NDArray[np.float64]:
+    """Return ``design_matrix`` if it has the shape ``model.predictor_cells`` promises.
+
+    The declaration would be decorative if nothing ever read it. This is what reads it, at
+    the point where a combinator first has a study in hand, so a family whose design and
+    whose declaration disagree is caught by name rather than by a broadcasting error six
+    frames further in.
+    """
+
+    cells = tuple(model.predictor_cells)
+    expected = 3 if cells else 2
+    if design_matrix.ndim != expected:
+        raise TypeError(
+            f"{type(model).__name__} declares {len(cells)} predictor cells, so its design "
+            f"must be {expected}-dimensional; it built a {design_matrix.ndim}-dimensional one"
+        )
+    if cells and design_matrix.shape[1] != len(cells):
+        raise TypeError(
+            f"{type(model).__name__} declares predictor cells {cells} but built a design "
+            f"with {design_matrix.shape[1]} of them"
+        )
+    return design_matrix
 
 
 def ridge_group_penalty(scales: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -486,21 +717,29 @@ def expand_group_design(
     blocks: GroupBlocks,
     columns: NDArray[np.intp],
 ) -> NDArray[np.float64]:
-    """Return ``[X | one zero-padded copy of X[:, columns] per group]``.
+    """Return ``[X | one zero-padded copy of X[..., columns] per group]``.
 
     The population block keeps every column; each group block keeps only the columns whose
     parameters were declared varying, which is what makes "only the bias varies" a
     structurally smaller problem rather than a prior trick.
+
+    Widening the linear predictor cost this function one ellipsis. Grouping partitions
+    *rows*, and a cell axis sits between the row axis and the coordinate axis it never
+    touches, so a per-category design is expanded by exactly the same block copy as a
+    scalar one -- and every category of a row lands in the same group, which is the
+    statement that a subject is a subject on every cell of the trial.
     """
 
-    n_rows, n_parameters = design_matrix.shape
+    n_parameters = design_matrix.shape[-1]
     width = len(columns)
-    joint = np.zeros((n_rows, n_parameters + blocks.n_groups * width), dtype=np.float64)
-    joint[:, :n_parameters] = design_matrix
-    restricted = design_matrix[:, columns]
+    joint = np.zeros(
+        (*design_matrix.shape[:-1], n_parameters + blocks.n_groups * width), dtype=np.float64
+    )
+    joint[..., :n_parameters] = design_matrix
+    restricted = design_matrix[..., columns]
     for row, block in enumerate(blocks.row_block):
         start = n_parameters + int(block) * width
-        joint[row, start : start + width] = restricted[row]
+        joint[row, ..., start : start + width] = restricted[row]
     return joint
 
 
@@ -509,7 +748,11 @@ def expand_group_penalty(
     blocks: GroupBlocks,
     group_penalty: NDArray[np.float64],
 ) -> NDArray[np.float64]:
-    """Return the block-diagonal penalty pairing :func:`expand_group_design`."""
+    """Return the block-diagonal penalty pairing :func:`expand_group_design`.
+
+    Unchanged by predictor cells, and necessarily so: a penalty lives on the parameter
+    coordinate, which is where a cell axis is not.
+    """
 
     n_parameters = penalty_matrix.shape[0]
     width = group_penalty.shape[0]

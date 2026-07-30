@@ -81,10 +81,31 @@ identity changed, and whether the scientific decision or blocked claims differ.
 
 ## Closed registries are intentional
 
-Protocols may name only model and splitter implementations in Behavio's built-in CLI
-registry. Unknown implementations fail with a clear error. Library users may supply
-Python estimator objects directly to `run_protocol` or `run_nested_protocol`, but the
-portable JSON file never becomes a route to import and execute arbitrary code.
+Protocols may name only model implementations the estimator registry resolves, and only
+splitters in the command line's splitter allowlist. Unknown implementations fail with a
+clear error. Library users may supply Python estimator objects directly to `run_protocol`
+or `run_nested_protocol`, but the portable JSON file never becomes a route to import and
+execute arbitrary code.
+
+The model allowlist is `behavio.registry.builtin_estimator_registry()` — the same
+[`EstimatorRegistry`](../extensions.md#local-registration) the documentation offers as the
+extension point, not a second private dictionary beside it. It resolves the four built-in
+estimators and the two combinators:
+
+```text
+behavio.models.BernoulliHistoryGLM
+behavio.models.BernoulliGLMHMM
+behavio.models.BinaryQLearning
+behavio.models.WienerDriftDiffusion
+behavio.compose.smooth
+behavio.compose.hierarchical
+```
+
+A combinator candidate names the model it wraps with a `base` setting and configures it
+with `base.`-prefixed settings, recursively, so `hierarchical(smooth(...))` is expressible
+without a registry entry per composition. To run the command line over your own model,
+register it into a copy of the built-in registry and pass that registry to the Python
+entry points; the CLI itself stays closed.
 
 This division keeps the CLI safe and reproducible while leaving the estimator contract
 open to research extensions.

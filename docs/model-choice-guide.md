@@ -77,9 +77,10 @@ units, and contaminant support are part of the task contract.
 ### More than two actions or explicit omissions
 
 Use `MultinomialLogit` when the stable categorical choice set is itself the target. It can
-respect trial-specific availability and retain omissions as a modeled category. The
-current RL, GLM-HMM, and DDM reference families are binary; do not coerce a richer task
-into them merely for API convenience.
+respect trial-specific availability and retain omissions as a modeled category, and it
+composes: `smooth()` and `hierarchical()` supply drifting and per-subject versions of it
+without a new class. The current RL, GLM-HMM, and DDM reference families are binary; do not
+coerce a richer task into them merely for API convenience.
 
 ## 4. Decide whether pooling is part of the claim
 
@@ -87,7 +88,7 @@ into them merely for API convenience.
 | --- | --- | --- |
 | One subject | Non-hierarchical model | Not applicable |
 | Population-average effect | Hierarchical static or smooth GLM | Population plug-in, explicitly labelled |
-| Individual trajectories | Hierarchical smooth GLM or DDM | Evaluate represented and unseen subjects separately |
+| Individual trajectories | Hierarchical smooth GLM, multinomial, or DDM | Evaluate represented and unseen subjects separately |
 | Stable individual measure | Paired occasion estimates plus reliability analysis | Not a substitute for a joint trial-level reliability model |
 
 Independent per-subject fits can be useful descriptive objects, but they neither pool weak

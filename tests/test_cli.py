@@ -326,3 +326,95 @@ def test_invalid_protocol_returns_clean_error(tmp_path, capsys) -> None:
 
     assert status == 2
     assert "invalid protocol" in capsys.readouterr().err
+
+
+def composed_protocol():
+    """A protocol whose candidates are combinator expressions rather than plain classes.
+
+    Before the estimator registry was wired into declaration verification, this protocol
+    could be *instantiated* by the command line but could not be *run*: the verifier
+    resolved ``behavio.compose.hierarchical`` to the combinator function, saw a
+    ``HierarchicalModel`` instance, and reported a contradiction that refused the run.
+    """
+
+    protocol = executable_protocol()
+    candidates = (
+        CandidateSpec(
+            name="static",
+            implementation="behavio.models.BernoulliHistoryGLM",
+            hyperparameters=(
+                Setting("covariates", ("stimulus",)),
+                Setting("choice_lags", 0),
+                Setting("l2", 0.1),
+            ),
+            scored_columns=("choice",),
+        ),
+        CandidateSpec(
+            name="smooth",
+            implementation="behavio.compose.hierarchical",
+            hyperparameters=(
+                Setting("base", "behavio.models.BernoulliHistoryGLM"),
+                Setting("base.covariates", ("stimulus",)),
+                Setting("base.choice_lags", 0),
+                Setting("base.l2", 1.0),
+                Setting("over", "subject"),
+                Setting("scale", 0.5),
+            ),
+            scored_columns=("choice",),
+        ),
+    )
+    return replace(protocol, candidates=candidates)
+
+
+def test_execute_runs_a_composed_candidate_from_flat_settings(tmp_path, capsys) -> None:
+    protocol_path = tmp_path / "protocol.json"
+    protocol_path.write_text(composed_protocol().canonical_json(), encoding="utf-8")
+    study = source_study()
+    study_path = tmp_path / "study.json"
+    study_path.write_text(
+        json.dumps({"columns": {column: study[column].tolist() for column in study.columns}}),
+        encoding="utf-8",
+    )
+    output = tmp_path / "snapshot"
+
+    assert main(["execute", str(protocol_path), str(study_path), str(output)]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["state"] == "evaluated"
+    evaluation = json.loads((output / "evaluation.json").read_text(encoding="utf-8"))
+    assert set(evaluation["candidates"]) == {"static", "smooth"}
+    assert evaluation["candidates"]["smooth"]["model_signature"].startswith("hierarchical[")
+
+
+def test_execute_names_the_registry_when_an_implementation_is_unknown(tmp_path, capsys) -> None:
+    protocol = replace(
+        executable_protocol(),
+        candidates=(
+            CandidateSpec(
+                name="static",
+                implementation="not.a.registered.Model",
+                hyperparameters=(),
+                scored_columns=("choice",),
+            ),
+            CandidateSpec(
+                name="smooth",
+                implementation="behavio.models.BernoulliHistoryGLM",
+                hyperparameters=(Setting("covariates", ("stimulus",)),),
+                scored_columns=("choice",),
+            ),
+        ),
+    )
+    protocol_path = tmp_path / "protocol.json"
+    protocol_path.write_text(protocol.canonical_json(), encoding="utf-8")
+    study = source_study()
+    study_path = tmp_path / "study.json"
+    study_path.write_text(
+        json.dumps({"columns": {column: study[column].tolist() for column in study.columns}}),
+        encoding="utf-8",
+    )
+
+    assert main(["execute", str(protocol_path), str(study_path), str(tmp_path / "out")]) == 2
+
+    error = capsys.readouterr().err
+    assert "unknown estimator 'not.a.registered.Model'" in error
+    assert "behavio.models.BernoulliHistoryGLM" in error
