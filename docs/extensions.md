@@ -274,6 +274,29 @@ from behavio.adapters import assert_behaviour_estimator_conforms
 assert_behaviour_estimator_conforms(my_model, small_study, require_complete=True)
 ```
 
+**`check_posterior_behaviour_estimator(model, study)`** is the entry point for a sampled
+model, and it runs the *same* checks. That matters more than a symmetry: the harness drives
+`fit` and hands a `FitResult` back to `predict`, while a `PosteriorBehaviourEstimator` has
+`sample` and takes a `PosteriorResult`, so a sampled model used to reach the leakage checks
+only if its author wrote an adapter first — which withheld them from exactly the models
+most likely to fail them.
+
+```python
+from behavio.adapters import assert_posterior_behaviour_estimator_conforms
+
+assert_posterior_behaviour_estimator_conforms(my_sampler, small_study, require_complete=True)
+```
+
+Two checks are specific to the sampled contract. `samples-the-training-study` requires a
+labelled posterior belonging to this specification, whose coordinates the declared
+`posterior_parameter_labels` can reach. `projects-the-convergence-verdict-it-is-given`
+calls `point_summary` with both the honest verdict and its negation and requires the two to
+differ: a model that reports its own convergence could never be gated by the convergence
+audit, and would make its own folds eligible. Everything after that — prediction shape,
+pointwise scores, refused modes, both leakage checks, the smoothing check and the simulator
+— is the identical check body, receiving the posterior where a frequentist model receives
+its fit.
+
 ### Filtered versus smoothed is a behavioural claim
 
 `PredictionMode` is a label a model writes on its own output. Nothing structural
@@ -467,6 +490,36 @@ Three rules follow from that:
   required, validated by `posterior_parameter_columns`, and never guessed. Recovery then
   reports coverage from the posterior quantile interval and labels it
   `posterior-quantile`, so it is never averaged with Wald coverage.
+
+### Generative relative to a design
+
+`parameter_names` and `posterior_parameter_labels` are study-independent properties, and
+for a large class of real models they cannot be. How many coordinates `(1|subject)` has,
+which columns `C(condition)` yields and how many basis columns `bs(x, df=5)` implies are
+all facts about the *data*. A model in that class must not claim
+`GenerativePosteriorBehaviourModel`, because `parameter_names` would be a promise it breaks
+on the first design it meets.
+
+Implement `DesignGenerativeBehaviourModel` instead. It has one member — `bind(design)` —
+returning an object that *does* satisfy the matching generative contract:
+
+```python
+from behavio.contracts import DesignGenerativeBehaviourModel, bind_to_design
+
+assert isinstance(my_regression, DesignGenerativeBehaviourModel)
+bound = bind_to_design(my_regression, design)  # already-generative models pass through
+```
+
+`bind_to_design` is what every consumer should call: it binds a model that needs binding,
+returns an already-generative one unchanged, and checks the bound result rather than
+trusting it. `run_parameter_recovery(model, design, ...)` already receives the design, so it
+binds for you; `ModelRecoveryScenario` does not, because a scenario names its generator
+before any design exists, so bind it yourself when you build one.
+
+The capability matrix states the distinction rather than hiding it: such a model reports
+`can_simulate=False`, `can_bind_design=True` and `can_recover_parameters=True`. Recovery is
+available to it, which is the honest reading — `AGENTS.md` treats recovery as
+design-specific evidence, so a design is exactly what the model was waiting for.
 
 ## Predictive discrepancies and diagnostics
 

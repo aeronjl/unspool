@@ -66,6 +66,7 @@ from behavio.protocol.runner import (
 from behavio.protocol.schema import (
     PROTOCOL_SCHEMA_VERSION,
     AggregationWeighting,
+    CandidateInference,
     CandidateSpec,
     CohortPredicate,
     CohortSpec,
@@ -108,6 +109,7 @@ __all__ = [
     "AggregationWeighting",
     "AuditLevel",
     "CalibrationSummary",
+    "CandidateInference",
     "CandidateRun",
     "CandidateSpec",
     "CandidateVerification",

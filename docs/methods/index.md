@@ -56,6 +56,18 @@ permutation-invariant recovery.
 The binary Q-learning agent represents trial-by-trial value updating. It competes under the
 same pointwise predictive contract as the GLM and GLM-HMM families.
 
+## Value-based and economic choice
+
+`TemporalDiscounting` and `ProspectTheory` score a binary choice between two options as a
+softmax over their subjective values: a discount factor of delay for the first, a
+domain-dependent value function and Prelec probability weighting for the second. Both are
+static — they describe a fixed decision maker — but both compose with `smooth()` and
+`hierarchical()`, so a discount rate that drifts across training or differs between animals
+is available without new modelling code. Their inverse temperature trades off against the
+value function's curvature, and the designs in which that trade-off is exact are reported by
+`describe()` before the fit. See
+[economic and value-based choice](../economic-choice.md).
+
 ## Choice and response time
 
 Wiener drift-diffusion models jointly score choice and response time. Static, smooth,

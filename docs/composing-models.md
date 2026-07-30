@@ -322,10 +322,15 @@ predictor. That is the next section.
 
 ## Models whose coordinate is bounded, not linear
 
-`BinaryQLearning`, `BinaryRLAgent` and `PsychometricFunction` are the three families whose
-likelihood is not a penalised linear one and whose parameters are bounded: a learning rate
-in \((0,1)\), an inverse temperature above zero, a width above zero, a lapse rate below its
-declared maximum. All six of their `smooth()` and `hierarchical()` cells work.
+`BinaryQLearning`, `BinaryRLAgent`, `PsychometricFunction`, `TemporalDiscounting` and
+`ProspectTheory` are the families whose likelihood is not a penalised linear one and whose
+parameters are bounded: a learning rate in \((0,1)\), an inverse temperature above zero, a
+width above zero, a lapse rate below its declared maximum, a discount rate above zero. All
+ten of their `smooth()` and `hierarchical()` cells work. The last two were written *after*
+this contract existed and needed nothing added to it; see
+[economic and value-based choice](economic-choice.md), which also records the one cell that
+did not open -- `mix()`, which is gated on the penalised-linear contract rather than on row
+independence and so refuses a family whose rows are independent.
 `BernoulliGLMHMM` is a fourth model on this contract, and a partial one: its
 [hierarchical cell is open](#a-glm-hmm-which-cell-opened-and-what-still-refuses) on the
 emission coefficients, and its smooth cell is refused.

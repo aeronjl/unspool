@@ -13,8 +13,14 @@ Each `ModelRecoveryScenario` has:
 
 - a unique condition name;
 - a `truth_label` identifying the candidate family expected to win;
-- a generator satisfying `GenerativeBehaviourModel`;
+- a generator satisfying `GenerativeBehaviourModel` or
+  `GenerativePosteriorBehaviourModel`;
 - one exact, named parameter set for that generator.
+
+A scenario names its generator before any design exists, so a model that is
+[generative only relative to a design](extensions.md#generative-relative-to-a-design) must
+be bound first — `ModelRecoveryScenario(generator=model.bind(design), ...)`.
+`run_parameter_recovery` does receive the design and therefore binds for you.
 
 Candidate labels and configurations are fixed before simulation. For every scenario and
 repeat, `run_model_recovery` then:

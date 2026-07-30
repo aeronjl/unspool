@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import json
 import sys
-from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -25,7 +24,7 @@ import pytest
 from numpy.typing import NDArray
 
 from behavio import BiasOnly, Study, compare_models, forward_session_splits
-from behavio.adapters import check_behaviour_estimator
+from behavio.adapters import check_posterior_behaviour_estimator
 from behavio.adapters.conformance import CheckStatus
 from behavio.contracts.estimator import (
     BehaviourEstimator,
@@ -38,10 +37,13 @@ from behavio.contracts.estimator import (
     UnsupportedPredictionMode,
 )
 from behavio.contracts.posterior import (
+    DesignGenerativeBehaviourModel,
     GenerativePosteriorBehaviourModel,
     PosteriorBehaviourEstimator,
     PosteriorCentre,
     any_model_capabilities,
+    bind_to_design,
+    is_design_generative,
     is_posterior_estimator,
     posterior_log_predictive_density,
     posterior_parameter_columns,
@@ -60,7 +62,6 @@ from behavio.foreign.bambi import (
     SUPPORTED_FAMILIES,
     TRIAL_DIM,
     BambiRegression,
-    DesignBoundBambiRegression,
     prior_correspondence,
 )
 
@@ -177,10 +178,35 @@ def test_the_wrapper_satisfies_the_sampled_contract_and_not_the_frequentist_one(
     assert capabilities.scored_columns == ("choice",)
     assert capabilities.prediction_modes == (PredictionMode.FILTERED,)
     assert capabilities.required_task_columns == ("stimulus",)
+    assert capabilities.is_sampled
     # An unbound model is not generative, and the capability matrix says so rather than
-    # promising a recovery run that would fail on parameter_names.
+    # promising a recovery run that would fail on parameter_names. What it does promise is
+    # that a design is the only thing missing.
     assert not capabilities.can_simulate
-    assert not capabilities.can_recover_parameters
+    assert capabilities.can_bind_design
+    assert capabilities.can_recover_parameters
+
+
+def test_the_wrapper_declares_itself_generative_relative_to_a_design(
+    flat_design: Study,
+) -> None:
+    """The contract has a name for what ``bind`` means, so no consumer has to guess."""
+
+    model = flat_model()
+
+    assert isinstance(model, DesignGenerativeBehaviourModel)
+    assert is_design_generative(model)
+    assert not is_design_generative(BiasOnly())
+
+    bound = bind_to_design(model, flat_design)
+
+    assert isinstance(bound, GenerativePosteriorBehaviourModel)
+    # Binding is idempotent through the shared entry point: an already-generative model is
+    # returned unchanged rather than bound a second time to a design it already carries.
+    assert bind_to_design(bound, flat_design) is bound
+    capabilities = any_model_capabilities(bound)
+    assert capabilities.can_simulate
+    assert not capabilities.can_bind_design
 
 
 def test_the_formula_alone_answers_what_columns_the_model_reads() -> None:
@@ -542,117 +568,28 @@ def test_a_random_effect_refuses_to_predict_a_group_the_fit_never_saw(
 # --------------------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class _PosteriorBackedFit(FitResult):
-    """A projected fit that also carries the posterior it was projected from."""
-
-    posterior: PosteriorResult = None  # type: ignore[assignment]
-
-
-@dataclass(frozen=True)
-class _ConformanceShim:
-    """The adapter :func:`check_behaviour_estimator` needs, and cannot supply itself.
-
-    The harness is written against :class:`~behavio.contracts.BehaviourEstimator`: it calls
-    ``model_capabilities``, then ``model.fit(study)``, then ``model.predict(study, fit)``.
-    A :class:`~behavio.contracts.posterior.PosteriorBehaviourEstimator` has ``sample`` and
-    takes a ``PosteriorResult`` where the harness passes a ``FitResult``, so it cannot be
-    checked without something in between. This is that something, and writing it here rather
-    than hiding it inside the wrapper is the point: **the leakage and mode checks in
-    ``behavio.adapters.estimator_conformance`` have no sampled-model entry point**, and that
-    is a gap in the harness, not in Bambi.
-
-    Nothing is faked. ``fit`` runs the real sampler, the real convergence audit and the real
-    ``point_summary`` projection, and hands the harness a ``FitResult`` subclass that also
-    carries the posterior so ``predict`` and ``pointwise_log_prob`` can be given the object
-    the contract says they take.
-    """
-
-    model: DesignBoundBambiRegression
-
-    @property
-    def model_name(self) -> str:
-        return self.model.model_name
-
-    @property
-    def signature(self) -> str:
-        return self.model.signature
-
-    @property
-    def scored_columns(self) -> tuple[str, ...]:
-        return self.model.scored_columns
-
-    @property
-    def required_task_columns(self) -> tuple[str, ...]:
-        return self.model.required_task_columns
-
-    @property
-    def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
-        return self.model.supported_prediction_modes
-
-    @property
-    def parameter_names(self) -> tuple[str, ...]:
-        return self.model.parameter_names
-
-    def fit(self, study: Study) -> _PosteriorBackedFit:
-        posterior = self.model.sample(study)
-        audit = audit_posterior(posterior)
-        projected = self.model.point_summary(
-            posterior, converged=audit.status is not PosteriorAuditStatus.FAIL
-        )
-        return _PosteriorBackedFit(
-            model_name=projected.model_name,
-            model_signature=projected.model_signature,
-            parameter_names=projected.parameter_names,
-            estimates=projected.estimates,
-            standard_errors=projected.standard_errors,
-            covariance=projected.covariance,
-            n_observations=projected.n_observations,
-            diagnostics=projected.diagnostics,
-            posterior=posterior,
-        )
-
-    def predict(
-        self,
-        study: Study,
-        fit: _PosteriorBackedFit,
-        *,
-        mode: PredictionMode = PredictionMode.FILTERED,
-    ) -> ModelPrediction:
-        return self.model.predict(study, fit.posterior, mode=mode)
-
-    def pointwise_log_prob(
-        self,
-        study: Study,
-        fit: _PosteriorBackedFit,
-        *,
-        mode: PredictionMode = PredictionMode.FILTERED,
-    ) -> NDArray[np.float64]:
-        return self.model.pointwise_log_prob(study, fit.posterior, mode=mode)
-
-    def simulate(
-        self,
-        design_study: Study,
-        parameters: Mapping[str, float],
-        *,
-        seed: int | np.random.Generator,
-    ) -> Study:
-        return self.model.simulate(design_study, parameters, seed=seed)
-
-
 def test_the_conformance_harness_passes_and_names_the_one_check_it_cannot_run(
-    flat_design: Study,
     flat_study: Study,
 ) -> None:
-    shim = _ConformanceShim(flat_model(draws=200, tune=200).bind(flat_study))
+    """The sampled wrapper is checked directly, with no adapter written by its caller.
 
-    report = check_behaviour_estimator(shim, flat_study, seed=5)
+    This test used to construct a ``_ConformanceShim`` -- a ``fit``/``predict`` facade over
+    the sampler, plus a ``FitResult`` subclass carrying the posterior -- because
+    :func:`check_behaviour_estimator` had no sampled entry point and would otherwise never
+    reach the two leakage checks. That shim is gone; its absence is the evidence that the
+    gap it worked around was in the harness rather than in Bambi.
+    """
+
+    bound = flat_model(draws=200, tune=200).bind(flat_study)
+
+    report = check_posterior_behaviour_estimator(bound, flat_study, seed=5)
 
     assert report.passed, report.summary()
     executed = {check.name: check for check in report.checks}
     for name in (
         "declares-model-identity",
-        "fit-reports-the-training-study",
+        "samples-the-training-study",
+        "projects-the-convergence-verdict-it-is-given",
         "predicts-one-row-per-trial",
         "scores-one-row-per-trial",
         "refuses-undeclared-prediction-modes",
@@ -667,6 +604,101 @@ def test_the_conformance_harness_passes_and_names_the_one_check_it_cannot_run(
     skipped = {check.name for check in report.skipped}
     assert skipped == {"density-agrees-with-the-choice-prediction"}
     assert "no continuous outcome" in executed["density-agrees-with-the-choice-prediction"].detail
+
+
+def test_the_harness_checks_an_unbound_model_and_says_why_it_cannot_simulate(
+    flat_study: Study,
+    flat_posterior: PosteriorResult,
+) -> None:
+    """An unbound model is still a sampled estimator, and every non-simulator check runs."""
+
+    report = check_posterior_behaviour_estimator(
+        flat_model(), flat_study, posterior=flat_posterior, seed=5
+    )
+
+    assert report.passed, report.summary()
+    executed = {check.name: check for check in report.checks}
+    assert executed["filtered-prediction-ignores-future-rows"].status is CheckStatus.PASSED
+    simulator = executed["simulates-the-columns-it-scores"]
+    assert simulator.status is CheckStatus.SKIPPED
+    assert "generative only relative to a design" in simulator.detail
+
+
+def test_a_model_that_overrides_the_convergence_verdict_fails_the_harness(
+    flat_study: Study,
+    flat_posterior: PosteriorResult,
+) -> None:
+    """The check that a sampler cannot make its own fold eligible, shown failing.
+
+    ``evaluate_splits`` refuses a ``point_summary`` that does not record the verdict it was
+    handed, because a sampler that reports its own convergence could not be gated by the
+    convergence audit at all. The harness makes the same demand of a wrapper before any
+    fold exists.
+    """
+
+    report = check_posterior_behaviour_estimator(
+        _AlwaysConverged(flat_model()), flat_study, posterior=flat_posterior, seed=5
+    )
+
+    assert not report.passed
+    failure = next(
+        check for check in report.failures if check.name.startswith("projects-the-convergence")
+    )
+    assert "whichever verdict it is handed" in failure.detail
+
+
+@dataclass(frozen=True)
+class _AlwaysConverged:
+    """A wrapper that reports its own convergence instead of the one it is given."""
+
+    model: BambiRegression
+
+    @property
+    def model_name(self) -> str:
+        return self.model.model_name
+
+    @property
+    def signature(self) -> str:
+        return self.model.signature
+
+    @property
+    def scored_columns(self) -> tuple[str, ...]:
+        return self.model.scored_columns
+
+    @property
+    def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
+        return self.model.supported_prediction_modes
+
+    def sample(self, study: Study) -> PosteriorResult:
+        return self.model.sample(study)
+
+    def point_summary(
+        self,
+        posterior: PosteriorResult,
+        *,
+        converged: bool,
+        centre: PosteriorCentre = PosteriorCentre.MEAN,
+    ) -> FitResult:
+        del converged
+        return self.model.point_summary(posterior, converged=True, centre=centre)
+
+    def predict(
+        self,
+        study: Study,
+        posterior: PosteriorResult,
+        *,
+        mode: PredictionMode = PredictionMode.FILTERED,
+    ) -> ModelPrediction:
+        return self.model.predict(study, posterior, mode=mode)
+
+    def pointwise_log_prob(
+        self,
+        study: Study,
+        posterior: PosteriorResult,
+        *,
+        mode: PredictionMode = PredictionMode.FILTERED,
+    ) -> NDArray[np.float64]:
+        return self.model.pointwise_log_prob(study, posterior, mode=mode)
 
 
 # --------------------------------------------------------------------------------------
@@ -726,10 +758,13 @@ def test_a_bound_model_simulates_only_the_design_it_was_bound_to(flat_design: St
 
 def test_parameter_recovery_of_a_foreign_posterior_uses_quantile_coverage() -> None:
     grid = design(n_subjects=3, n_sessions=1, n_trials=70, seed=21)
-    bound = flat_model(draws=300, tune=300, seed=1).bind(grid)
+    model = flat_model(draws=300, tune=300, seed=1)
+    bound = model.bind(grid)
 
+    # ``run_parameter_recovery`` already takes the design, so the unbound model is bound
+    # here rather than by its caller; the two calls must produce the same report.
     report = run_parameter_recovery(
-        bound, grid, [{"Intercept": 0.0, "stimulus": 1.0}], repeats=1, seed=4
+        model, grid, [{"Intercept": 0.0, "stimulus": 1.0}], repeats=1, seed=4
     )
 
     assert report.parameter_names == bound.parameter_names

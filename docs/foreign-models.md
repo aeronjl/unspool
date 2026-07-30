@@ -312,15 +312,21 @@ gate working, not the wrapper failing.
 `posterior_parameter_labels` are study-independent properties, and for a mixed-effects model
 they cannot be: the coordinates of `1|subject`, the columns of `C(condition)` and the basis
 of `bs(x, df=5)` are facts about the data. `BambiRegression` therefore does not claim
-`GenerativePosteriorBehaviourModel`. `model.bind(design)` returns a
-`DesignBoundBambiRegression` that does — and since `run_parameter_recovery` already takes the
-design as its second argument, binding states something true rather than working around
-something false:
+`GenerativePosteriorBehaviourModel`. It claims
+[`DesignGenerativeBehaviourModel`](reference/contracts.md) instead — the contract's name for
+"generative relative to a design" — and `model.bind(design)` returns a
+`DesignBoundBambiRegression` that satisfies the generative contract in full. Since
+`run_parameter_recovery` already takes the design as its second argument, it binds for you,
+and binding states something true rather than working around something false:
 
 ```python
-bound = model.bind(design)
-report = run_parameter_recovery(bound, design, [truth], seed=0)
+report = run_parameter_recovery(model, design, [truth], seed=0)  # binds internally
+bound = model.bind(design)  # or bind explicitly
 ```
+
+The capability matrix says which of the two it is: `can_simulate=False`,
+`can_bind_design=True`, `can_recover_parameters=True`. This wrapper reported the gap; the
+contract now has a way to express it, so the next wrapper will not reinvent the shim.
 
 `bound.simulate` draws the outcome from **Bambi's own family**, by writing the supplied values
 into a one-draw posterior and calling `predict(kind="response")`. Nothing about the family's
@@ -335,21 +341,31 @@ evaluation rather than two and makes `predict` and `pointwise_log_prob` the same
 That the result is Bambi's own likelihood is checked, per row, against the `log_likelihood`
 group Bambi computed during sampling.
 
-### The conformance harness has no sampled entry point
+### The conformance harness, run against the sampler directly
 
+This wrapper originally reported that it could not be checked at all.
 [`check_behaviour_estimator`](reference/data-adapters.md) is written against
-`BehaviourEstimator`: it calls `model_capabilities`, then `model.fit(study)`, then
-`model.predict(study, fit)`. A `PosteriorBehaviourEstimator` has `sample` and takes a
-`PosteriorResult` where the harness passes a `FitResult`, so **no sampled model can be run
-through the harness without an adapter**, and that includes the two leakage checks and the
-filtered/smoothed check — the ones a wrapper most needs.
+`BehaviourEstimator` — `model_capabilities`, then `model.fit(study)`, then
+`model.predict(study, fit)` — while a `PosteriorBehaviourEstimator` has `sample` and takes a
+`PosteriorResult`, so reaching the two leakage checks and the filtered/smoothed check
+required the caller to write an adapter. `tests/test_bambi_model.py` wrote one, and that
+shim was the evidence that the gap was in the harness.
 
-`tests/test_bambi_model.py` writes that adapter and runs the harness against it. Nothing is
-faked: `fit` runs the real sampler, the real convergence audit and the real `point_summary`,
-and returns a `FitResult` subclass that also carries the posterior. Every check passes, and
-exactly one is skipped for a stated reason — a bernoulli regression predicts no continuous
-outcome, so there is no density to reconcile against the choice probabilities. The adapter
-lives in the test rather than in the wrapper on purpose: the gap is in the harness.
+The shim is gone. [`check_posterior_behaviour_estimator`](reference/data-adapters.md) samples,
+audits, projects and then runs the identical check bodies with the posterior in the place a
+`FitResult` occupies for an optimized model:
+
+```python
+from behavio.adapters import assert_posterior_behaviour_estimator_conforms
+
+assert_posterior_behaviour_estimator_conforms(model.bind(study), study, require_complete=True)
+```
+
+Every check passes for `BambiRegression`, and exactly one is skipped for a stated reason — a
+bernoulli regression predicts no continuous outcome, so there is no density to reconcile
+against the choice probabilities. Handing it the *unbound* model is also fine: every check
+runs except the simulator one, which is skipped saying that this model is generative only
+relative to a design.
 
 ### What is not wrapped, and why it is Behavio's gap
 
@@ -406,7 +422,9 @@ have to re-derive what every wrapper needs.
 - `behavio.adapters.check_behaviour_estimator` executes the estimator half of the
   [compatibility list](extensions.md#compatibility-tests), including the filtered/smoothed
   check above and a cross-check that an integrated `DensityPrediction` reproduces the
-  model's own choice probabilities.
+  model's own choice probabilities. Its sampled counterpart,
+  `behavio.adapters.check_posterior_behaviour_estimator`, runs the same checks against a
+  `PosteriorBehaviourEstimator`, so a sampler needs no adapter of its own.
 
 And one rule that is not a helper: **do not make the wrapped package a Behavio dependency.**
 Add an extra, name it in the error a user meets without it, and put its licence in the table

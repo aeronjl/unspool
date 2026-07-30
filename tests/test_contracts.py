@@ -17,10 +17,13 @@ from behavio._internal.arrays import protected_array
 from behavio.contracts.audit import AuditSeverity, FitAuditStatus, FitDiagnostics
 from behavio.contracts.estimator import FitResult, PredictionMode, fit_auditor
 from behavio.contracts.posterior import (
+    DesignGenerativeBehaviourModel,
     GenerativePosteriorBehaviourModel,
     PosteriorBehaviourEstimator,
     PosteriorCentre,
     any_model_capabilities,
+    bind_to_design,
+    is_design_generative,
     is_posterior_estimator,
     posterior_log_predictive_density,
     posterior_model_capabilities,
@@ -455,12 +458,116 @@ def test_a_sampled_model_satisfies_the_posterior_estimator_contract() -> None:
         prediction_modes=(PredictionMode.FILTERED,),
         can_simulate=True,
         can_recover_parameters=True,
+        is_sampled=True,
     )
 
 
 def test_posterior_model_capabilities_rejects_a_non_conforming_object() -> None:
     with pytest.raises(TypeError, match="PosteriorBehaviourEstimator"):
         posterior_model_capabilities(object())  # type: ignore[arg-type]
+
+
+class _DesignGenerativeGLM:
+    """A sampler whose parameter vector is a fact about the design, not the specification.
+
+    ``parameter_names`` and ``posterior_parameter_labels`` are deliberately absent -- how
+    many coordinates ``(1|subject)`` has is a fact about the data -- so this model must not
+    claim the generative contract; the property would be a promise it breaks on the first
+    design it meets. ``bind`` is the whole of the extra surface.
+    """
+
+    model_name = "design-generative-demo"
+    signature = "design-generative-demo[v1]"
+    scored_columns = ("choice",)
+    supported_prediction_modes = (PredictionMode.FILTERED,)
+
+    def sample(self, study: Study) -> PosteriorResult:
+        return _posterior()
+
+    def predict(
+        self,
+        study: Study,
+        posterior: PosteriorResult,
+        *,
+        mode: PredictionMode = PredictionMode.FILTERED,
+    ) -> Any:
+        raise NotImplementedError
+
+    def pointwise_log_prob(
+        self,
+        study: Study,
+        posterior: PosteriorResult,
+        *,
+        mode: PredictionMode = PredictionMode.FILTERED,
+    ) -> Any:
+        raise NotImplementedError
+
+    def point_summary(
+        self,
+        posterior: PosteriorResult,
+        *,
+        converged: bool,
+        centre: PosteriorCentre = PosteriorCentre.MEAN,
+    ) -> FitResult:
+        return posterior_point_summary(posterior, converged=converged, centre=centre)
+
+    def bind(self, design: Study) -> _SampledGLM:
+        del design
+        return _SampledGLM()
+
+
+class _EmptyBinder(_DesignGenerativeGLM):
+    def bind(self, design: Study) -> Any:
+        del design
+        return object()
+
+
+def test_a_model_can_be_generative_relative_to_a_design() -> None:
+    model = _DesignGenerativeGLM()
+    design = _study()
+
+    assert isinstance(model, PosteriorBehaviourEstimator)
+    assert not isinstance(model, GenerativePosteriorBehaviourModel)
+    assert isinstance(model, DesignGenerativeBehaviourModel)
+    assert is_design_generative(model)
+    # An already-generative model answers False even though every generative model could
+    # in principle grow a ``bind``: there is nothing left for a design to supply.
+    assert not is_design_generative(_SampledGLM())
+
+    capabilities = posterior_model_capabilities(model)
+    assert not capabilities.can_simulate
+    assert capabilities.can_bind_design
+    assert capabilities.can_recover_parameters
+
+    bound = bind_to_design(model, design)
+
+    assert isinstance(bound, GenerativePosteriorBehaviourModel)
+    assert bind_to_design(bound, design) is bound
+
+
+def test_binding_checks_its_result_rather_than_trusting_it() -> None:
+    with pytest.raises(TypeError, match="not a generative model"):
+        bind_to_design(_EmptyBinder(), _study())
+    with pytest.raises(TypeError, match="DesignGenerativeBehaviourModel"):
+        bind_to_design(object(), _study())  # type: ignore[arg-type]
+
+
+def test_a_capability_record_cannot_claim_both_kinds_of_simulation() -> None:
+    with pytest.raises(ValueError, match="either in the abstract or relative to a design"):
+        contracts.ModelCapabilities(
+            scored_columns=("choice",),
+            prediction_modes=(PredictionMode.FILTERED,),
+            can_simulate=True,
+            can_recover_parameters=True,
+            can_bind_design=True,
+        )
+    with pytest.raises(ValueError, match="parameter recovery requires simulation"):
+        contracts.ModelCapabilities(
+            scored_columns=("choice",),
+            prediction_modes=(PredictionMode.FILTERED,),
+            can_simulate=False,
+            can_recover_parameters=True,
+        )
 
 
 def test_the_declared_parameter_mapping_is_what_makes_recovery_well_defined() -> None:

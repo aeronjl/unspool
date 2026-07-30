@@ -380,6 +380,7 @@ def test_declared_model_is_verified_and_leaves_the_evaluation_untouched() -> Non
     assert static.model_name == "bernoulli-history-glm"
     assert {finding.subject for finding in static.findings} == {
         "implementation",
+        "inference",
         "hyperparameter:predictors",
         "hyperparameter:choice_lags",
         "hyperparameter:l2",
@@ -427,10 +428,18 @@ def test_verification_separates_contradiction_from_unverifiability() -> None:
     )
 
     static, smooth = verification
-    assert [finding.status for finding in static.findings] == [DeclarationCheck.UNVERIFIABLE] * 3
+    # ``inference`` is decidable with no registry and no imports, so it is verified even for
+    # a declaration whose class cannot be resolved at all.
+    assert [finding.status for finding in static.findings] == [
+        DeclarationCheck.UNVERIFIABLE,
+        DeclarationCheck.VERIFIED,
+        DeclarationCheck.UNVERIFIABLE,
+        DeclarationCheck.UNVERIFIABLE,
+    ]
     assert "not imported" in static.findings[0].detail
-    assert "not a dataclass" in static.findings[1].detail
+    assert "not a dataclass" in static.findings[2].detail
     assert [finding.status for finding in smooth.findings] == [
+        DeclarationCheck.VERIFIED,
         DeclarationCheck.VERIFIED,
         DeclarationCheck.VERIFIED,
         DeclarationCheck.CONTRADICTED,

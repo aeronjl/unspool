@@ -13,7 +13,11 @@ One module serves the *other* kind of adapter -- a wrapper around a foreign mode
 implementation -- and it names no third-party package:
 :mod:`behavio.adapters.estimator_conformance` executes the estimator half of the
 compatibility list in ``docs/extensions.md``, including the behavioural test that
-distinguishes a filtered prediction from a smoothed one.
+distinguishes a filtered prediction from a smoothed one. It has one entry point per
+estimator contract -- :func:`~behavio.adapters.check_behaviour_estimator` for a model that
+is fitted and :func:`~behavio.adapters.check_posterior_behaviour_estimator` for one that is
+sampled -- running the same behavioural checks either way, so a sampled model reaches them
+without its author writing an adapter first.
 
 Two things a wrapper author needs used to live here and no longer do, because neither was
 adapter-specific. :class:`behavio.trials.SequenceLayout` derives session boundaries and
@@ -51,7 +55,9 @@ from behavio.adapters.estimator_conformance import (
     EstimatorConformance,
     EstimatorConformanceError,
     assert_behaviour_estimator_conforms,
+    assert_posterior_behaviour_estimator_conforms,
     check_behaviour_estimator,
+    check_posterior_behaviour_estimator,
     perturb_future_rows,
 )
 from behavio.adapters.ibl_one import (
@@ -111,8 +117,10 @@ __all__ = [
     "TableSource",
     "add_study_trials",
     "assert_behaviour_estimator_conforms",
+    "assert_posterior_behaviour_estimator_conforms",
     "assert_study_adapter_conforms",
     "check_behaviour_estimator",
+    "check_posterior_behaviour_estimator",
     "check_study_adapter",
     "perturb_future_rows",
     "read_ibl_one_sessions",

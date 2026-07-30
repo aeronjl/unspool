@@ -30,10 +30,20 @@ def declared(implementation: str, **settings) -> CandidateSpec:
 
 
 def findings(candidate: CandidateSpec, model, registry=None) -> dict[str, DeclarationCheck]:
+    """Subject-to-status for everything the registry decides.
+
+    ``inference`` is asserted here and then dropped: it is decided by the contract the
+    supplied object satisfies rather than by any registry, so repeating it in every
+    expectation below would say nothing about resolution. Its own behaviour is checked in
+    ``tests/test_runner.py``.
+    """
+
     verification = verify_candidate_declarations(
         _Protocol(candidate), {"candidate": model}, registry=registry
     )[0]
-    return {finding.subject: finding.status for finding in verification.findings}
+    statuses = {finding.subject: finding.status for finding in verification.findings}
+    assert statuses.pop("inference") is DeclarationCheck.VERIFIED
+    return statuses
 
 
 def test_registry_constructs_validated_external_estimators_and_manifests_provenance() -> None:

@@ -47,8 +47,19 @@ print(capabilities.can_simulate)
 print(capabilities.can_recover_parameters)
 ```
 
+Two further flags say *how* a model is driven rather than what it scores. `is_sampled`
+distinguishes a `PosteriorBehaviourEstimator`, run through `sample` and gated by a posterior
+convergence audit, from a `BehaviourEstimator` run through `fit`; a frozen protocol declares
+the same distinction as `CandidateSpec.inference`. `can_bind_design` marks a model that is
+generative only *relative to a design* — one whose parameter vector is a fact about the
+data, such as a mixed-effects regression — and such a model reports `can_simulate=False`
+with `can_recover_parameters=True`, because a design is the only thing it was missing. See
+[generative relative to a design](extensions.md#generative-relative-to-a-design).
+`any_model_capabilities` returns this one record for either contract.
+
 Evaluation and comparison accept any valid `BehaviourEstimator`. Parameter and model
-recovery require a `GenerativeBehaviourModel` for every scenario generator.
+recovery require a `GenerativeBehaviourModel` for every scenario generator, or a
+design-generative model that `bind_to_design` can turn into one.
 
 ## Why scored columns are part of the contract
 

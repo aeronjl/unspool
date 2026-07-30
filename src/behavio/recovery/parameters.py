@@ -50,9 +50,12 @@ from behavio._internal.arrays import protected_array
 from behavio.contracts.natural import NaturalParameterisation
 from behavio.contracts.posterior import (
     AnyGenerativeBehaviourModel,
+    DesignGenerativeBehaviourModel,
     GenerativePosteriorBehaviourModel,
     PosteriorCentre,
     any_model_capabilities,
+    bind_to_design,
+    is_design_generative,
     is_posterior_estimator,
     posterior_draw_matrix,
     posterior_parameter_columns,
@@ -483,7 +486,7 @@ class ParameterRecoveryReport:
 
 
 def run_parameter_recovery(
-    model: AnyGenerativeBehaviourModel,
+    model: AnyGenerativeBehaviourModel | DesignGenerativeBehaviourModel,
     design: Study,
     parameter_sets: Sequence[Mapping[str, float]],
     *,
@@ -514,8 +517,17 @@ def run_parameter_recovery(
     projected coordinate names (``beta[coefficient='stimulus']``) are not the simulator's
     scalar parameter names. Coverage then uses the posterior quantile interval and the
     report declares :data:`POSTERIOR_QUANTILE_INTERVAL`.
+
+    A :class:`~behavio.contracts.posterior.DesignGenerativeBehaviourModel` -- one whose
+    parameter vector is a fact about the data, such as a mixed-effects regression whose
+    ``(1|subject)`` has as many coordinates as the design has subjects -- is bound to
+    ``design`` here, because ``design`` is precisely the thing it was missing. Nothing about
+    the run changes: ``parameter_sets`` name the bound model's coordinates, and the report
+    is the report of the bound model.
     """
 
+    if is_design_generative(model):
+        model = bind_to_design(model, design)
     sampled = is_posterior_estimator(model)
     if sampled:
         if not isinstance(model, GenerativePosteriorBehaviourModel):

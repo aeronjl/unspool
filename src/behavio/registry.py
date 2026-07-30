@@ -43,15 +43,15 @@ from types import MappingProxyType
 from typing import Any
 
 from behavio.compose import HierarchicalModel, SmoothModel, hierarchical, smooth
+from behavio.contracts.posterior import AnyBehaviourEstimator
 from behavio.models import (
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
     BinaryQLearning,
     WienerDriftDiffusion,
 )
-from behavio.models.base import BehaviourEstimator
 
-EstimatorFactory = Callable[..., BehaviourEstimator]
+EstimatorFactory = Callable[..., AnyBehaviourEstimator]
 
 BASE_SETTING = "base"
 """The hyperparameter naming the model a combinator candidate wraps."""
@@ -197,12 +197,18 @@ class EstimatorRegistry:
                 f"unknown estimator {name!r}; registered names are {self.names!r}"
             ) from None
 
-    def create(self, name: str, settings: Mapping[str, Any] | None = None) -> BehaviourEstimator:
+    def create(self, name: str, settings: Mapping[str, Any] | None = None) -> AnyBehaviourEstimator:
         """Create and validate an estimator from explicit JSON-like configuration.
 
         ``settings`` is the flat scalar mapping a protocol candidate declares. A ``base``
         entry naming another registered implementation is resolved first, recursively, and
         the resulting model is passed to this factory as its first positional argument.
+
+        The estimator may satisfy either contract. A registration whose factory produces a
+        :class:`~behavio.contracts.posterior.PosteriorBehaviourEstimator` is resolved
+        exactly as an optimized one is; what tells the two apart in a frozen protocol is
+        :attr:`~behavio.protocol.CandidateSpec.inference`, which the runner checks against
+        the object this returns.
         """
 
         registration = self.registration_for(name)
@@ -227,7 +233,7 @@ class EstimatorRegistry:
         self,
         registration: EstimatorRegistration,
         settings: Mapping[str, Any],
-    ) -> BehaviourEstimator:
+    ) -> AnyBehaviourEstimator:
         nested = {
             key[len(_BASE_PREFIX) :]: value
             for key, value in settings.items()

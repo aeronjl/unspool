@@ -153,6 +153,7 @@ nav:
       - Canonical binary baselines: baselines.md
       - Psychometric functions: psychometric-functions.md
       - Signal detection theory: signal-detection.md
+      - Economic and value-based choice: economic-choice.md
       - Multinomial and omissions: multinomial.md
       - Static and smooth drift: smooth-drift.md
       - Hierarchical GLM: hierarchical-glm.md

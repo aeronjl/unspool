@@ -36,6 +36,28 @@ A second, weaker check comes free. Because the fit is held fixed and only the *i
 any dependence of an early row's prediction on a late row's value is caught, including
 preprocessing fitted inside ``predict`` -- a column standardised against the test study's own
 mean is leakage of the same kind and fails the same check.
+
+A sampled model reaches the same checks
+---------------------------------------
+:func:`check_behaviour_estimator` drives ``fit`` and hands the resulting
+:class:`~behavio.contracts.FitResult` back to ``predict``.  A
+:class:`~behavio.contracts.posterior.PosteriorBehaviourEstimator` has ``sample`` and takes a
+:class:`~behavio.posterior.PosteriorResult`, so for a while no sampled model could reach the
+two leakage checks or the filtered-versus-smoothed check without its author writing an
+adapter -- which is to say, without the *caller* supplying the part of the harness that was
+missing. That is backwards, and it withheld the checks from exactly the models that most
+need them: a sampled latent-state model is where a smoothed description is most likely to be
+labelled a filtered prediction.
+
+:func:`check_posterior_behaviour_estimator` is the sampled entry point. It samples, audits
+the posterior, projects a point summary, and then runs the *same* check bodies, because
+everything after fitting depends only on two things: the object ``predict`` and
+``pointwise_log_prob`` are handed (a ``FitResult`` here, a ``PosteriorResult`` there) and the
+:class:`~behavio.contracts.FitResult` the identity check reads. Two checks are specific to
+the sampled contract and have no frequentist counterpart -- that ``sample`` returns a
+labelled posterior belonging to this specification, and that ``point_summary`` records the
+convergence verdict it was *given* rather than one of its own, which is the invariant
+``behavio.evaluate.folds`` enforces on every fold.
 """
 
 from __future__ import annotations
@@ -60,6 +82,19 @@ from behavio.contracts.estimator import (
     UnsupportedPredictionMode,
     model_capabilities,
 )
+from behavio.contracts.posterior import (
+    GenerativePosteriorBehaviourModel,
+    PosteriorCentre,
+    posterior_draw_matrix,
+    posterior_model_capabilities,
+    posterior_parameter_columns,
+)
+from behavio.posterior.diagnostics import (
+    PosteriorAuditPolicy,
+    PosteriorAuditStatus,
+    audit_posterior,
+)
+from behavio.posterior.result import PosteriorResult
 from behavio.trials import REQUIRED_COLUMNS, Study, sequence_layout
 
 _TOLERANCE = 1e-9
@@ -170,13 +205,165 @@ def check_behaviour_estimator(
             )
             return EstimatorConformance(capabilities=capabilities, checks=tuple(checks))
     checks.append(_check_fit_identity(model, study, fitted))
-    checks.append(_check_prediction_shape(model, study, fitted))
-    checks.append(_check_pointwise_scores(model, study, fitted))
-    checks.append(_check_undeclared_modes_refused(model, study, fitted, capabilities))
-    checks.extend(_check_information_set(model, study, fitted, capabilities))
-    checks.append(_check_density_agrees_with_choice(model, study, fitted))
-    checks.append(_check_simulator(model, study, capabilities, simulation_parameters, fitted, seed))
+    checks.extend(
+        _shared_checks(
+            model,
+            study,
+            capabilities,
+            context=fitted,
+            fit=fitted,
+            simulation_parameters=simulation_parameters,
+            generative_contract=GenerativeBehaviourModel,
+            seed=seed,
+        )
+    )
     return EstimatorConformance(capabilities=capabilities, checks=tuple(checks))
+
+
+def check_posterior_behaviour_estimator(
+    model: Any,
+    study: Study,
+    *,
+    posterior: PosteriorResult | None = None,
+    audit_policy: PosteriorAuditPolicy | None = None,
+    centre: PosteriorCentre = PosteriorCentre.MEAN,
+    simulation_parameters: Mapping[str, float] | None = None,
+    seed: int = 0,
+) -> EstimatorConformance:
+    """Run the conformance checks against a sampled estimator and report each observation.
+
+    The sampled counterpart of :func:`check_behaviour_estimator`, and the reason a
+    :class:`~behavio.contracts.posterior.PosteriorBehaviourEstimator` no longer needs its
+    caller to write an adapter before the leakage checks will run. Real sampling happens
+    once: ``sample`` is called, :func:`~behavio.posterior.audit_posterior` decides the
+    convergence verdict, ``point_summary`` projects it, and every subsequent check receives
+    the :class:`~behavio.posterior.PosteriorResult` -- never the projection -- exactly as
+    ``behavio.evaluate.folds`` does when it scores a fold.
+
+    Args:
+        model: The sampled estimator under test.
+        study: A small study the model can sample and predict. It should contain at least
+            two trial sequences of four or more trials each, so the leakage checks have a
+            past and a future to separate.
+        posterior: A posterior to predict and score with. Omitted, the harness calls
+            ``model.sample(study)`` once and reuses the result.
+        audit_policy: Thresholds for the convergence audit whose verdict is handed to
+            ``point_summary``. The audit's *outcome* is not a conformance verdict -- an
+            under-sampled study is not a broken contract -- but whether the model records
+            the verdict it was given is.
+        centre: Posterior central tendency the projection is asked for.
+        simulation_parameters: Parameters for the simulator check. Omitted for a generative
+            model, the harness reads the projected posterior summary through the model's own
+            ``posterior_parameter_labels``, because the projected coordinate names and the
+            simulator's scalar names are two vocabularies.
+        seed: Seed for the simulator determinism check.
+
+    Returns:
+        An :class:`EstimatorConformance` record; ``passed`` is False if any check failed.
+    """
+
+    if not isinstance(study, Study):
+        raise TypeError("study must be a Study")
+    checks: list[ConformanceCheck] = []
+    try:
+        capabilities = posterior_model_capabilities(model)
+    except (TypeError, ValueError) as error:
+        checks.append(
+            ConformanceCheck(
+                "declares-model-identity",
+                CheckStatus.FAILED,
+                f"posterior_model_capabilities() rejected the estimator: {error}",
+            )
+        )
+        return EstimatorConformance(capabilities=None, checks=tuple(checks))
+    checks.append(
+        ConformanceCheck(
+            "declares-model-identity",
+            CheckStatus.FAILED if not capabilities.prediction_modes else CheckStatus.PASSED,
+            f"{model.model_name} sampling {list(capabilities.scored_columns)} in modes "
+            f"{[mode.value for mode in capabilities.prediction_modes]}",
+        )
+    )
+
+    sampled = posterior
+    if sampled is None:
+        try:
+            sampled = model.sample(study)
+        except Exception as error:  # any failure here is a conformance failure
+            checks.append(
+                ConformanceCheck(
+                    "samples-the-training-study",
+                    CheckStatus.FAILED,
+                    f"sample() raised {type(error).__name__}: {error}",
+                )
+            )
+            return EstimatorConformance(capabilities=capabilities, checks=tuple(checks))
+    identity, verdict = _check_posterior_identity(model, sampled)
+    checks.append(identity)
+    projection, projected = _check_projected_verdict(
+        model, study, sampled, verdict, centre, audit_policy
+    )
+    checks.append(projection)
+    if projected is None:
+        return EstimatorConformance(capabilities=capabilities, checks=tuple(checks))
+    checks.extend(
+        _shared_checks(
+            model,
+            study,
+            capabilities,
+            context=sampled,
+            fit=projected,
+            simulation_parameters=(
+                _posterior_simulation_parameters(model, projected)
+                if simulation_parameters is None and capabilities.can_simulate
+                else simulation_parameters
+            ),
+            generative_contract=GenerativePosteriorBehaviourModel,
+            seed=seed,
+        )
+    )
+    return EstimatorConformance(capabilities=capabilities, checks=tuple(checks))
+
+
+def _shared_checks(
+    model: Any,
+    study: Study,
+    capabilities: ModelCapabilities,
+    *,
+    context: Any,
+    fit: FitResult,
+    simulation_parameters: Mapping[str, float] | None,
+    generative_contract: type[Any],
+    seed: int,
+) -> list[ConformanceCheck]:
+    """Every check that depends only on the object ``predict`` is handed.
+
+    ``context`` is a :class:`~behavio.contracts.FitResult` for an optimizer-fitted model and
+    a :class:`~behavio.posterior.PosteriorResult` for a sampled one; ``fit`` is the
+    :class:`FitResult` either way, because the simulator check reads its estimates. Nothing
+    below this line knows which contract it is checking, which is the point: the leakage
+    checks a sampled model most needs are the *same* checks, not sampled analogues of them.
+    """
+
+    checks = [
+        _check_prediction_shape(model, study, context),
+        _check_pointwise_scores(model, study, context),
+        _check_undeclared_modes_refused(model, study, context, capabilities),
+    ]
+    checks.extend(_check_information_set(model, study, context, capabilities))
+    checks.append(_check_density_agrees_with_choice(model, study, context))
+    checks.append(
+        _check_simulator(
+            model,
+            study,
+            capabilities,
+            simulation_parameters,
+            fit,
+            seed,
+            generative_contract,
+        )
+    )
+    return checks
 
 
 def assert_behaviour_estimator_conforms(
@@ -203,12 +390,42 @@ def assert_behaviour_estimator_conforms(
         simulation_parameters=simulation_parameters,
         seed=seed,
     )
+    _raise_on_failure(report, require_complete=require_complete)
+    return report
+
+
+def assert_posterior_behaviour_estimator_conforms(
+    model: Any,
+    study: Study,
+    *,
+    posterior: PosteriorResult | None = None,
+    audit_policy: PosteriorAuditPolicy | None = None,
+    centre: PosteriorCentre = PosteriorCentre.MEAN,
+    simulation_parameters: Mapping[str, float] | None = None,
+    seed: int = 0,
+    require_complete: bool = False,
+) -> EstimatorConformance:
+    """Run :func:`check_posterior_behaviour_estimator` and raise on any failure."""
+
+    report = check_posterior_behaviour_estimator(
+        model,
+        study,
+        posterior=posterior,
+        audit_policy=audit_policy,
+        centre=centre,
+        simulation_parameters=simulation_parameters,
+        seed=seed,
+    )
+    _raise_on_failure(report, require_complete=require_complete)
+    return report
+
+
+def _raise_on_failure(report: EstimatorConformance, *, require_complete: bool) -> None:
     incomplete = report.skipped if require_complete else ()
     if not report.passed or incomplete:
         raise EstimatorConformanceError(
             "behaviour estimator conformance failed:\n" + report.summary()
         )
-    return report
 
 
 def perturb_future_rows(study: Study, *, columns: Sequence[str]) -> tuple[Study, NDArray[np.intp]]:
@@ -298,6 +515,150 @@ def _check_fit_identity(model: Any, study: Study, fit: Any) -> ConformanceCheck:
         f"{len(fit.parameter_names)} parameters over {fit.n_observations} rows, "
         f"convergence {fit.diagnostics.convergence.value}",
     )
+
+
+def _check_posterior_identity(model: Any, posterior: Any) -> tuple[ConformanceCheck, bool]:
+    """Check the sampled counterpart of ``fit-reports-the-training-study``.
+
+    The one asymmetry worth stating: a sampled model's ``parameter_names`` are the
+    *simulator's* scalar arguments, while the projection names one column per posterior
+    coordinate, so the two tuples are not required to be equal and comparing them would be
+    wrong. What is required is that the model's declared
+    ``posterior_parameter_labels`` locate every simulator parameter inside the posterior it
+    just produced, which is what :func:`posterior_parameter_columns` decides.
+
+    The returned flag is whether the posterior converged under the audit, so the projection
+    check that follows can hand ``point_summary`` a verdict it did not choose itself.
+    """
+
+    name = "samples-the-training-study"
+    if not isinstance(posterior, PosteriorResult):
+        return (
+            ConformanceCheck(
+                name,
+                CheckStatus.FAILED,
+                f"sample() returned {type(posterior).__name__}, not a PosteriorResult",
+            ),
+            False,
+        )
+    problems = []
+    if posterior.model_name != model.model_name:
+        problems.append(f"model_name {posterior.model_name!r} != {model.model_name!r}")
+    if posterior.model_signature != model.signature:
+        problems.append("model_signature does not match the estimator's signature")
+    if not posterior.parameter_names:
+        problems.append("the posterior declares no parameters")
+    try:
+        labels, draws = posterior_draw_matrix(posterior)
+    except Exception as error:
+        return (
+            ConformanceCheck(
+                name,
+                CheckStatus.FAILED,
+                f"the posterior cannot be flattened into draws: {type(error).__name__}: {error}",
+            ),
+            False,
+        )
+    if isinstance(model, GenerativePosteriorBehaviourModel):
+        try:
+            posterior_parameter_columns(model, labels)
+        except (TypeError, ValueError) as error:
+            problems.append(f"posterior_parameter_labels do not reach this posterior: {error}")
+    if problems:
+        return ConformanceCheck(name, CheckStatus.FAILED, "; ".join(problems)), False
+    audit = audit_posterior(posterior)
+    return (
+        ConformanceCheck(
+            name,
+            CheckStatus.PASSED,
+            f"{len(labels)} posterior coordinates over {draws.shape[0]} draws from "
+            f"{posterior.inference_library}, convergence {audit.status.value}",
+        ),
+        audit.status is not PosteriorAuditStatus.FAIL,
+    )
+
+
+def _check_projected_verdict(
+    model: Any,
+    study: Study,
+    posterior: Any,
+    converged: bool,
+    centre: PosteriorCentre,
+    audit_policy: PosteriorAuditPolicy | None,
+) -> tuple[ConformanceCheck, FitResult | None]:
+    """Check that ``point_summary`` records the verdict it is handed, not one of its own.
+
+    This is the invariant :func:`behavio.evaluate.folds.evaluate_splits` enforces on every
+    sampled fold, and a model that quietly overrides it would make its own folds eligible
+    after a failed convergence audit. It is checked in *both* directions -- the honest
+    verdict, and its negation -- because a model that hard-codes ``converged=True`` passes
+    the first and fails the second.
+    """
+
+    name = "projects-the-convergence-verdict-it-is-given"
+    observations = len(study)
+    if audit_policy is not None:
+        converged = (
+            audit_posterior(posterior, policy=audit_policy).status is not PosteriorAuditStatus.FAIL
+        )
+    try:
+        projected = model.point_summary(posterior, converged=converged, centre=centre)
+        negated = model.point_summary(posterior, converged=not converged, centre=centre)
+    except Exception as error:  # surfaced as a conformance failure
+        return (
+            ConformanceCheck(
+                name, CheckStatus.FAILED, f"point_summary() raised {type(error).__name__}: {error}"
+            ),
+            None,
+        )
+    if not isinstance(projected, FitResult) or not isinstance(negated, FitResult):
+        return (
+            ConformanceCheck(
+                name,
+                CheckStatus.FAILED,
+                f"point_summary() returned {type(projected).__name__}, not a FitResult",
+            ),
+            None,
+        )
+    problems = []
+    if projected.model_name != model.model_name:
+        problems.append(f"model_name {projected.model_name!r} != {model.model_name!r}")
+    if projected.model_signature != model.signature:
+        problems.append("the projected summary does not carry the estimator's signature")
+    if projected.n_observations != observations:
+        problems.append(f"n_observations {projected.n_observations} != {observations} sampled rows")
+    if projected.diagnostics.converged is not converged:
+        problems.append(f"asked for converged={converged}, recorded {projected.diagnostics}")
+    if negated.diagnostics.converged is converged:
+        problems.append(
+            "point_summary reports the same convergence whichever verdict it is handed, so "
+            "a failed convergence audit could not make one of its folds ineligible"
+        )
+    if problems:
+        return ConformanceCheck(name, CheckStatus.FAILED, "; ".join(problems)), None
+    return (
+        ConformanceCheck(
+            name,
+            CheckStatus.PASSED,
+            f"{len(projected.parameter_names)} projected coordinates over "
+            f"{projected.n_observations} rows at the posterior {PosteriorCentre(centre).value}, "
+            f"convergence recorded as {converged} and as {not converged} when negated",
+        ),
+        projected,
+    )
+
+
+def _posterior_simulation_parameters(model: Any, fit: FitResult) -> Mapping[str, float] | None:
+    """Read the simulator's parameters out of the projection through the declared labels."""
+
+    try:
+        columns = posterior_parameter_columns(model, fit.parameter_names)
+    except (TypeError, ValueError):  # reported by the identity check, not here
+        return None
+    return {
+        name: float(fit.estimates[column])
+        for name, column in zip(model.parameter_names, columns, strict=True)
+    }
 
 
 def _check_prediction_shape(model: Any, study: Study, fit: FitResult) -> ConformanceCheck:
@@ -637,10 +998,25 @@ def _check_simulator(
     parameters: Mapping[str, float] | None,
     fit: FitResult,
     seed: int,
+    generative_contract: type[Any] = GenerativeBehaviourModel,
 ) -> ConformanceCheck:
     name = "simulates-the-columns-it-scores"
-    if not capabilities.can_simulate or not isinstance(model, GenerativeBehaviourModel):
+    if not capabilities.can_simulate or not isinstance(model, generative_contract):
+        if capabilities.can_bind_design:
+            return ConformanceCheck(
+                name,
+                CheckStatus.SKIPPED,
+                "the model is generative only relative to a design; check bind(design) "
+                "instead, which returns the generative model this study would recover",
+            )
         return ConformanceCheck(name, CheckStatus.SKIPPED, "the model declares no simulator")
+    if parameters is None and capabilities.is_sampled:
+        return ConformanceCheck(
+            name,
+            CheckStatus.FAILED,
+            "the projected posterior summary could not be read through the model's declared "
+            "posterior_parameter_labels, so there is no truth to simulate from",
+        )
     values = dict(fit.parameters) if parameters is None else dict(parameters)
     if set(values) != set(model.parameter_names):
         return ConformanceCheck(
@@ -703,6 +1079,8 @@ __all__ = [
     "EstimatorConformance",
     "EstimatorConformanceError",
     "assert_behaviour_estimator_conforms",
+    "assert_posterior_behaviour_estimator_conforms",
     "check_behaviour_estimator",
+    "check_posterior_behaviour_estimator",
     "perturb_future_rows",
 ]

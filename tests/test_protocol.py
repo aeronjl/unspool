@@ -394,7 +394,7 @@ def test_allowed_values_may_declare_missing_observations_explicitly() -> None:
 def test_the_declared_multiplicity_defaults_to_the_adjustment_the_runner_applied() -> None:
     protocol = example_protocol()
 
-    assert protocol.schema_version == "behavio.study-protocol/2"
+    assert protocol.schema_version == PROTOCOL_SCHEMA_VERSION
     assert protocol.comparison.multiplicity is ComparisonMultiplicity.BENJAMINI_HOCHBERG
 
 
@@ -425,8 +425,10 @@ def test_a_version_one_payload_still_loads_and_keeps_its_own_fingerprint() -> No
 
     protocol = example_protocol().freeze()
     recorded = json.loads(protocol.canonical_json())
-    # Exactly what a protocol frozen before the member existed looks like on disk.
+    # Exactly what a protocol frozen before either member existed looks like on disk.
     del recorded["comparison"]["multiplicity"]
+    for candidate in recorded["candidates"]:
+        del candidate["inference"]
     recorded["schema_version"] = "behavio.study-protocol/1"
     recorded["lifecycle"][0]["artifact_fingerprint"] = _legacy_fingerprint(recorded)
 

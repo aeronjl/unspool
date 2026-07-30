@@ -177,6 +177,75 @@ AnyBehaviourEstimator = BehaviourEstimator | PosteriorBehaviourEstimator
 AnyGenerativeBehaviourModel = GenerativeBehaviourModel | GenerativePosteriorBehaviourModel
 
 
+@runtime_checkable
+class DesignGenerativeBehaviourModel(Protocol):
+    """A model that is generative **relative to a design** rather than in the abstract.
+
+    ``parameter_names`` and ``posterior_parameter_labels`` are study-independent
+    properties, and for a large class of real models they cannot be: how many coordinates
+    ``(1|subject)`` has, which columns ``C(condition)`` yields and how many basis columns
+    ``bs(x, df=5)`` implies are facts about the *data*. Such a model cannot honestly claim
+    :class:`GenerativePosteriorBehaviourModel` or
+    :class:`~behavio.contracts.estimator.GenerativeBehaviourModel`, and declaring one
+    anyway would make ``parameter_names`` a promise it breaks on the first design it meets.
+
+    ``bind(design)`` supplies the missing fact and returns a model that *does* satisfy the
+    matching generative contract. The distinction is not a workaround: ``AGENTS.md``
+    already treats recovery as design-specific evidence, and
+    :func:`behavio.recovery.run_parameter_recovery` already takes the design as its second
+    argument, so a bound recovery model states something true about what is being recovered.
+
+    :func:`bind_to_design` is the one call every consumer should make; it binds a model
+    that needs it, passes through one that does not, and refuses anything else.
+    """
+
+    def bind(self, design: Study) -> AnyGenerativeBehaviourModel: ...
+
+
+def is_design_generative(model: object) -> bool:
+    """Whether ``model`` becomes generative only once it is bound to a design.
+
+    A model that is *already* generative answers False even if it also has a ``bind``
+    method: it names its parameters without a design, so there is nothing to supply.
+    """
+
+    if isinstance(model, (GenerativeBehaviourModel, GenerativePosteriorBehaviourModel)):
+        return False
+    return isinstance(model, DesignGenerativeBehaviourModel)
+
+
+def bind_to_design(
+    model: AnyGenerativeBehaviourModel | DesignGenerativeBehaviourModel,
+    design: Study,
+) -> AnyGenerativeBehaviourModel:
+    """Return a generative model for ``design``, binding one that needs it.
+
+    An already-generative model is returned unchanged, so a caller never has to ask which
+    kind it holds. A :class:`DesignGenerativeBehaviourModel` is bound, and the result is
+    checked against the generative contracts rather than trusted: a ``bind`` that returns
+    something without ``parameter_names`` would otherwise fail much later, inside a
+    recovery run, with a message about the wrong object.
+    """
+
+    if isinstance(model, (GenerativeBehaviourModel, GenerativePosteriorBehaviourModel)):
+        return model
+    if not isinstance(model, DesignGenerativeBehaviourModel):
+        raise TypeError(
+            "model must satisfy GenerativeBehaviourModel, "
+            "GenerativePosteriorBehaviourModel, or DesignGenerativeBehaviourModel"
+        )
+    if not isinstance(design, Study):
+        raise TypeError("design must be a Study")
+    bound = model.bind(design)
+    if not isinstance(bound, (GenerativeBehaviourModel, GenerativePosteriorBehaviourModel)):
+        raise TypeError(
+            f"{type(model).__name__}.bind(design) returned {type(bound).__name__}, which is "
+            "not a generative model; binding exists to supply parameter_names and a "
+            "simulator, so a bound object that has neither states nothing"
+        )
+    return bound
+
+
 def is_posterior_estimator(model: object) -> bool:
     """Whether ``model`` should be driven through ``sample`` rather than ``fit``.
 
@@ -203,6 +272,7 @@ def posterior_model_capabilities(model: PosteriorBehaviourEstimator) -> ModelCap
         raise TypeError("model must satisfy the PosteriorBehaviourEstimator contract")
     validate_model_identity(model)
     generative = isinstance(model, GenerativePosteriorBehaviourModel)
+    bindable = not generative and isinstance(model, DesignGenerativeBehaviourModel)
     if generative:
         validate_parameter_names(model.parameter_names)
         _validated_parameter_labels(model)
@@ -210,8 +280,10 @@ def posterior_model_capabilities(model: PosteriorBehaviourEstimator) -> ModelCap
         scored_columns=tuple(model.scored_columns),
         prediction_modes=tuple(model.supported_prediction_modes),
         can_simulate=generative,
-        can_recover_parameters=generative,
+        can_recover_parameters=generative or bindable,
         required_task_columns=model_task_columns(model),
+        is_sampled=True,
+        can_bind_design=bindable,
     )
 
 

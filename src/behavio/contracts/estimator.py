@@ -79,6 +79,24 @@ class ModelCapabilities:
     the *empty* declaration can be written by omission; the declaration itself is not
     optional, because :class:`BehaviourEstimator` requires it. A model that reads nothing
     but its scored column answers ``()``, which is an answer, not a refusal to answer.
+
+    ``is_sampled`` says which of the two estimator contracts produced this record: an
+    optimizer-fitted :class:`BehaviourEstimator` or a
+    :class:`~behavio.contracts.posterior.PosteriorBehaviourEstimator`. It is a capability
+    rather than a detail because it decides *how a candidate is driven* -- ``fit`` versus
+    ``sample``, a :class:`FitResult` versus a
+    :class:`~behavio.posterior.PosteriorResult`, an optimizer audit versus a convergence
+    audit -- and a frozen protocol declares it per candidate.
+
+    ``can_bind_design`` says the model is generative **relative to a design**: it cannot
+    name its scalar parameters in the abstract, but ``bind(design)`` returns a model that
+    can. A mixed-effects parameter vector is the standard case -- how many coordinates
+    ``(1|subject)`` has and which columns ``C(condition)`` yields are facts about the data,
+    not about the specification -- so such a model reports ``can_simulate=False`` and
+    ``can_bind_design=True``. Recovery is still available to it, which is why
+    ``can_recover_parameters`` may be true without ``can_simulate``; ``AGENTS.md`` already
+    treats recovery as design-specific evidence, so a design is exactly what such a model
+    was waiting for.
     """
 
     scored_columns: tuple[str, ...]
@@ -86,6 +104,8 @@ class ModelCapabilities:
     can_simulate: bool
     can_recover_parameters: bool
     required_task_columns: tuple[str, ...] = ()
+    is_sampled: bool = False
+    can_bind_design: bool = False
 
     def __post_init__(self) -> None:
         if isinstance(self.scored_columns, str):
@@ -99,12 +119,27 @@ class ModelCapabilities:
             raise ValueError("scored_columns must contain non-empty strings")
         if not modes or len(set(modes)) != len(modes):
             raise ValueError("prediction_modes must be non-empty and unique")
-        if not isinstance(self.can_simulate, bool) or not isinstance(
-            self.can_recover_parameters, bool
+        if not all(
+            isinstance(flag, bool)
+            for flag in (
+                self.can_simulate,
+                self.can_recover_parameters,
+                self.is_sampled,
+                self.can_bind_design,
+            )
         ):
             raise ValueError("capability flags must be boolean")
-        if self.can_recover_parameters and not self.can_simulate:
-            raise ValueError("parameter recovery requires simulation")
+        if self.can_recover_parameters and not (self.can_simulate or self.can_bind_design):
+            raise ValueError(
+                "parameter recovery requires simulation, either directly or after binding "
+                "the model to a design"
+            )
+        if self.can_simulate and self.can_bind_design:
+            raise ValueError(
+                "a model is generative either in the abstract or relative to a design, not "
+                "both; binding a model that already names its parameters would give one "
+                "simulator two vocabularies"
+            )
         overlap = sorted(set(required) & set(columns))
         if overlap:
             raise ValueError(f"required_task_columns must not repeat a scored column: {overlap}")
@@ -897,15 +932,30 @@ def model_capabilities(model: BehaviourEstimator) -> ModelCapabilities:
         raise TypeError("model must satisfy the BehaviourEstimator contract")
     validate_model_identity(model)
     generative = isinstance(model, GenerativeBehaviourModel)
+    bindable = not generative and _binds_a_design(model)
     if generative:
         validate_parameter_names(model.parameter_names)
     return ModelCapabilities(
         scored_columns=tuple(model.scored_columns),
         prediction_modes=tuple(model.supported_prediction_modes),
         can_simulate=generative,
-        can_recover_parameters=generative,
+        can_recover_parameters=generative or bindable,
         required_task_columns=model_task_columns(model),
+        can_bind_design=bindable,
     )
+
+
+def _binds_a_design(model: Any) -> bool:
+    """Whether the model is generative only relative to a design.
+
+    The protocol itself is :class:`behavio.contracts.posterior.DesignGenerativeBehaviourModel`,
+    which cannot be named here: this module is the one ``behavio.contracts.posterior``
+    imports. A ``bind`` method is exactly the structural claim that protocol makes, so it is
+    read directly, and the *result* is checked against the generative contracts by
+    :func:`behavio.contracts.posterior.bind_to_design` rather than assumed here.
+    """
+
+    return callable(getattr(model, "bind", None))
 
 
 def model_task_columns(model: Any) -> tuple[str, ...]:

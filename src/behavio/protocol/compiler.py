@@ -14,6 +14,7 @@ import numpy as np
 
 from behavio.models import ModelCapabilities
 from behavio.protocol.schema import (
+    CandidateInference,
     ObservationDataType,
     ObservationSpec,
     PredicateOperator,
@@ -665,12 +666,26 @@ def _audit_protocol_capabilities(
                     candidate=candidate.name,
                 )
             )
-        if protocol.recovery and not declared.can_simulate:
+        observed_inference = (
+            CandidateInference.SAMPLED if declared.is_sampled else CandidateInference.OPTIMIZED
+        )
+        if observed_inference is not candidate.inference:
+            issues.append(
+                ProtocolAuditIssue(
+                    AuditLevel.ERROR,
+                    "inference-mismatch",
+                    f"protocol declares {candidate.inference.value!r} inference and the "
+                    f"runtime is {observed_inference.value!r}",
+                    candidate=candidate.name,
+                )
+            )
+        if protocol.recovery and not (declared.can_simulate or declared.can_bind_design):
             issues.append(
                 ProtocolAuditIssue(
                     AuditLevel.ERROR,
                     "recovery-capability-missing",
-                    "declared exact-design recovery requires a generative candidate",
+                    "declared exact-design recovery requires a candidate that can simulate, "
+                    "either directly or once bound to the design",
                     candidate=candidate.name,
                 )
             )

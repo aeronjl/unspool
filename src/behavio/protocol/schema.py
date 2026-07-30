@@ -29,7 +29,7 @@ from behavio._internal.scoring import ComparisonMultiplicity, ScoreMetric
 from behavio.task.ontology import TaskProtocol
 from behavio.task.vocabulary import ObservationDataType, ObservationRole
 
-PROTOCOL_SCHEMA_VERSION = "behavio.study-protocol/2"
+PROTOCOL_SCHEMA_VERSION = "behavio.study-protocol/3"
 
 #: Schema names this format has been published under, newest first. The package was
 #: distributed as ``unspool`` up to and including 0.1.0, and a frozen protocol is
@@ -45,11 +45,27 @@ PROTOCOL_SCHEMA_VERSION = "behavio.study-protocol/2"
 #: recorded fingerprint, because its declaration genuinely gained a member. That is the
 #: honest reading: the adjustment always decided the winner, and version 1 simply did not
 #: say so.
-SUPERSEDED_PROTOCOL_SCHEMA_VERSIONS = ("behavio.study-protocol/1", "unspool.study-protocol/1")
+#:
+#: Version 3 adds :attr:`CandidateSpec.inference`, which says whether a candidate is fitted
+#: by optimization or sampled. Every protocol recorded before it declared candidates that
+#: could only be optimized, because the runner could only run those, so
+#: :func:`protocol_from_dict` supplies :attr:`CandidateInference.OPTIMIZED` and the payload
+#: is serialized back without the member. Unlike the multiplicity bump nothing is thereby
+#: left unsaid -- a version-2 protocol has exactly one possible value -- so a reconstructed
+#: version-2 protocol keeps its recorded fingerprint.
+SUPERSEDED_PROTOCOL_SCHEMA_VERSIONS = (
+    "behavio.study-protocol/2",
+    "behavio.study-protocol/1",
+    "unspool.study-protocol/1",
+)
 ACCEPTED_PROTOCOL_SCHEMA_VERSIONS = (PROTOCOL_SCHEMA_VERSION, *SUPERSEDED_PROTOCOL_SCHEMA_VERSIONS)
 
 #: Schema names published before :attr:`ComparisonSpec.multiplicity` existed.
 PRE_MULTIPLICITY_PROTOCOL_SCHEMA_VERSIONS = ("behavio.study-protocol/1", "unspool.study-protocol/1")
+
+#: Schema names published before :attr:`CandidateSpec.inference` existed. Every one of them
+#: can express an optimized candidate and none of them can express a sampled one.
+PRE_INFERENCE_PROTOCOL_SCHEMA_VERSIONS = SUPERSEDED_PROTOCOL_SCHEMA_VERSIONS
 
 # ``ObservationRole`` and ``ObservationDataType`` are defined in
 # :mod:`behavio.task.vocabulary` and imported above under their original names, so
@@ -124,6 +140,30 @@ class PredictionInformation(StrEnum):
 
     FILTERED = "filtered"
     SMOOTHED_DESCRIPTION = "smoothed-description"
+
+
+class CandidateInference(StrEnum):
+    """How a declared candidate is fitted, and therefore what gates its eligibility.
+
+    ``OPTIMIZED`` is a :class:`~behavio.contracts.BehaviourEstimator`: the runner calls
+    ``fit``, receives a :class:`~behavio.contracts.FitResult`, and
+    :class:`~behavio.diagnostics.FitAuditStatus` decides whether the fold is usable.
+
+    ``SAMPLED`` is a :class:`~behavio.contracts.posterior.PosteriorBehaviourEstimator`: the
+    runner calls ``sample``, receives a :class:`~behavio.posterior.PosteriorResult`, and the
+    posterior convergence audit -- not an optimizer's exit status -- decides the same
+    question, through the projected summary's ``converged`` flag.
+
+    The distinction is frozen with the rest of the design rather than discovered from the
+    object handed to the runner, for the reason every other member of a candidate
+    declaration is: it is checked against the supplied estimator by
+    :func:`~behavio.protocol.runner.verify_candidate_declarations`, and a run whose
+    candidate turned out to be inferred a different way is not evidence about the protocol
+    that was frozen.
+    """
+
+    OPTIMIZED = "optimized"
+    SAMPLED = "sampled"
 
 
 class AggregationWeighting(StrEnum):
@@ -443,6 +483,7 @@ class CandidateSpec:
     prediction_information: PredictionInformation = PredictionInformation.FILTERED
     supports_unseen_subjects: bool = False
     supports_unseen_groups: bool = False
+    inference: CandidateInference = CandidateInference.OPTIMIZED
 
     def __post_init__(self) -> None:
         _name(self.name, "candidate name")
@@ -452,6 +493,7 @@ class CandidateSpec:
         object.__setattr__(
             self, "prediction_information", PredictionInformation(self.prediction_information)
         )
+        object.__setattr__(self, "inference", CandidateInference(self.inference))
         if not isinstance(self.supports_unseen_subjects, bool) or not isinstance(
             self.supports_unseen_groups, bool
         ):
@@ -681,6 +723,19 @@ class StudyProtocol:
                 f"runner applied; record this protocol under {PROTOCOL_SCHEMA_VERSION!r} to "
                 f"declare a different one"
             )
+        if self.schema_version in PRE_INFERENCE_PROTOCOL_SCHEMA_VERSIONS:
+            sampled = [
+                candidate.name
+                for candidate in self.candidates
+                if candidate.inference is not CandidateInference.OPTIMIZED
+            ]
+            if sampled:
+                raise ProtocolValidationError(
+                    f"schema_version {self.schema_version!r} predates the candidate inference "
+                    f"declaration and can only carry optimized candidates; record this "
+                    f"protocol under {PROTOCOL_SCHEMA_VERSION!r} to declare {sampled!r} as "
+                    f"sampled"
+                )
         object.__setattr__(self, "state", ProtocolState(self.state))
         for field_name in ("units", "observations", "clocks", "estimands", "candidates"):
             if not getattr(self, field_name):
@@ -698,17 +753,21 @@ class StudyProtocol:
         """Return a standards-compliant JSON value with stable field names.
 
         A protocol recorded under a schema version that predates
-        :attr:`ComparisonSpec.multiplicity` is serialized without it. A frozen protocol is
-        content-addressed, so writing a member its author never declared into the payload
-        would change the identity of a declaration nobody amended -- and every lifecycle
-        event that recorded the old fingerprint would stop verifying. The omission is safe
-        because :meth:`__post_init__` refuses any such protocol whose adjustment differs
-        from the one its era applied, so nothing distinguishable is ever dropped.
+        :attr:`ComparisonSpec.multiplicity` or :attr:`CandidateSpec.inference` is serialized
+        without it. A frozen protocol is content-addressed, so writing a member its author
+        never declared into the payload would change the identity of a declaration nobody
+        amended -- and every lifecycle event that recorded the old fingerprint would stop
+        verifying. The omission is safe in both cases because :meth:`__post_init__` refuses
+        any such protocol whose value differs from the only one its era could express, so
+        nothing distinguishable is ever dropped.
         """
 
         value = json_ready(asdict(self))
         if self.schema_version in PRE_MULTIPLICITY_PROTOCOL_SCHEMA_VERSIONS:
             value["comparison"].pop("multiplicity")
+        if self.schema_version in PRE_INFERENCE_PROTOCOL_SCHEMA_VERSIONS:
+            for candidate in value["candidates"]:
+                candidate.pop("inference")
         if scientific_only:
             value.pop("state")
             value.pop("lifecycle")
@@ -1062,10 +1121,7 @@ def protocol_from_dict(value: dict[str, Any]) -> StudyProtocol:
         )
 
     def many(name: str, cls: type[Any]) -> tuple[Any, ...]:
-        raw = value[name]
-        if not isinstance(raw, list):
-            raise ProtocolValidationError(f"protocol field {name!r} must be an array")
-        return tuple(_construct(cls, item) for item in raw)
+        return tuple(_construct(cls, item) for item in _array(value[name], name))
 
     return StudyProtocol(
         identifier=value["identifier"],
@@ -1080,7 +1136,10 @@ def protocol_from_dict(value: dict[str, Any]) -> StudyProtocol:
         estimands=many("estimands", EstimandSpec),
         transforms=many("transforms", TransformSpec),
         validation=_construct(ValidationSpec, value["validation"]),
-        candidates=many("candidates", CandidateSpec),
+        candidates=tuple(
+            _candidate_from_payload(item, value["schema_version"])
+            for item in _array(value["candidates"], "candidates")
+        ),
         comparison=_comparison_from_payload(value["comparison"], value["schema_version"]),
         recovery=many("recovery", RecoverySpec),
         reporting=_construct(ReportingSpec, value["reporting"]),
@@ -1094,6 +1153,27 @@ def protocol_from_dict(value: dict[str, Any]) -> StudyProtocol:
         state=value["state"],
         lifecycle=many("lifecycle", LifecycleEvent),
     )
+
+
+def _array(raw: Any, name: str) -> list[Any]:
+    if not isinstance(raw, list):
+        raise ProtocolValidationError(f"protocol field {name!r} must be an array")
+    return raw
+
+
+def _candidate_from_payload(payload: Any, schema_version: Any) -> CandidateSpec:
+    """Construct a candidate declaration, supplying the inference its schema predates."""
+
+    if schema_version in PRE_INFERENCE_PROTOCOL_SCHEMA_VERSIONS:
+        if not isinstance(payload, dict):
+            raise ProtocolValidationError("CandidateSpec must be a JSON object")
+        if "inference" in payload:
+            raise ProtocolValidationError(
+                f"schema_version {schema_version!r} predates the candidate inference "
+                "declaration, so a payload recorded under it must not carry one"
+            )
+        payload = {**payload, "inference": CandidateInference.OPTIMIZED.value}
+    return _construct(CandidateSpec, payload)
 
 
 def _comparison_from_payload(payload: Any, schema_version: Any) -> ComparisonSpec:

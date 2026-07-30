@@ -20,6 +20,22 @@ ranking -- consumes the shared :class:`~behavio.evaluate.folds.FoldEvaluation`.
 The paired comparison, its bootstrap interval, and its simultaneous-inference family come
 from :mod:`behavio.compare.models`, so a number computed here equals the number computed by
 :func:`~behavio.compare.models.compare_models` bit for bit.
+
+Sampled candidates
+------------------
+A candidate declares which of the two estimator contracts it satisfies, as
+:attr:`~behavio.protocol.CandidateSpec.inference`. A ``sampled`` candidate is driven through
+``sample`` rather than ``fit``, and every difference that follows is already implemented one
+layer down: :func:`~behavio.evaluate.folds.evaluate_splits` samples the fold, audits the
+posterior with :func:`~behavio.posterior.audit_posterior`, and projects it to a
+:class:`~behavio.contracts.FitResult` whose ``converged`` flag *is* the convergence verdict.
+A failed convergence audit therefore earns the projected fit an
+``optimizer_nonconvergence`` issue, which makes the fold's
+:class:`~behavio.diagnostics.FitAudit` ``FAIL``, which makes
+:attr:`CandidateRun.eligible` false and removes the candidate from ranking -- the same route
+by which an optimizer that did not converge is removed. Nothing about eligibility is
+special-cased for a sampler; only the evidence behind the verdict differs, and that evidence
+is retained per fold so a reader can see which it was.
 """
 
 from __future__ import annotations
@@ -46,6 +62,7 @@ from behavio.compare.models import (
     bootstrap_interval,
     paired_comparisons,
 )
+from behavio.contracts.posterior import AnyBehaviourEstimator, is_posterior_estimator
 from behavio.diagnostics import FitAuditStatus
 from behavio.evaluate.folds import (
     CandidateDeclarationError,
@@ -53,17 +70,19 @@ from behavio.evaluate.folds import (
     FoldFailure,
     FoldFailurePolicy,
     FoldStage,
+    PosteriorFoldEvidence,
+    PosteriorFoldPolicy,
     SplitEvaluation,
     evaluate_splits,
 )
 from behavio.models import (
-    BehaviourEstimator,
     CategoricalPrediction,
     DensityPrediction,
     PredictionMode,
 )
 from behavio.protocol.compiler import CompiledProtocol
 from behavio.protocol.schema import (
+    CandidateInference,
     ProtocolState,
     ProtocolValidationError,
     ScoreMetric,
@@ -290,6 +309,12 @@ def fold_to_dict(
     The runner used to own a second per-fold record, ``FoldRun``, whose only job over and
     above ``FoldEvaluation`` was to be JSON-portable. That is a serialization concern, not
     a second concept, so it is a function here rather than a type.
+
+    ``posterior`` appears only for a fold that was sampled, and carries the convergence
+    audit that decided the projected fit's ``converged`` flag. Without it a sampled
+    candidate's archive would record that a fold failed its numerical audit without
+    recording *why*, and a bundle built from the run would have no convergence evidence to
+    put in its ``posterior/`` slot.
     """
 
     fit = evaluation.fit
@@ -311,6 +336,8 @@ def fold_to_dict(
         "audit": evaluation.fit_audit.to_dict(),
         "n_predictions": len(predictions),
     }
+    if evaluation.posterior is not None:
+        result["posterior"] = _json_safe(evaluation.posterior.to_dict())
     if retain_predictions:
         result["predictions"] = [_json_safe(item.to_dict()) for item in predictions]
     return result
@@ -406,6 +433,21 @@ class CandidateRun:
         """Every scored-row record in fold order, flattened."""
 
         return tuple(chain.from_iterable(self.fold_predictions))
+
+    @property
+    def posterior_folds(self) -> tuple[tuple[str, PosteriorFoldEvidence], ...]:
+        """Sampling evidence for every fold that was sampled, keyed by fold identifier.
+
+        Empty for an optimized candidate, which is how a reader tells the two apart without
+        consulting the declaration. The convergence audits are what a caller archives in an
+        evidence bundle's ``posterior/convergence.json`` slot; the identifier is included
+        because a bundle keys that slot by label and a fold name is the only label a run
+        already has.
+        """
+
+        return tuple(
+            (fold.identifier, fold.posterior) for fold in self.folds if fold.posterior is not None
+        )
 
     @property
     def eligible(self) -> bool:
@@ -804,16 +846,24 @@ class NestedProtocolRun:
 
 def verify_candidate_declarations(
     protocol: Any,
-    models: Mapping[str, BehaviourEstimator],
+    models: Mapping[str, AnyBehaviourEstimator],
     *,
     registry: EstimatorRegistry | None = None,
 ) -> tuple[CandidateVerification, ...]:
     """Compare each supplied estimator against the candidate declaration frozen for it.
 
     A frozen protocol is only worth its fingerprint if the object that ran is the object
-    it declared. This checks the two things a :class:`~behavio.protocol.CandidateSpec`
-    fixes -- ``implementation`` and ``hyperparameters`` -- against the estimator handed to
-    the runner.
+    it declared. This checks the three things a :class:`~behavio.protocol.CandidateSpec`
+    fixes -- ``implementation``, ``hyperparameters`` and ``inference`` -- against the
+    estimator handed to the runner.
+
+    ``inference`` is the one declaration that is *always* decidable, with no registry and
+    no imports: which of the two estimator contracts an object satisfies is a fact about
+    the object, read by
+    :func:`~behavio.contracts.posterior.is_posterior_estimator`. It is checked because a
+    protocol that declared a sampled candidate and was handed an optimized one would run
+    perfectly and produce evidence about a different design -- one with no convergence
+    audit anywhere in it.
 
     ``registry`` is the allowlist the declaration is resolved through, defaulting to
     :func:`~behavio.registry.builtin_estimator_registry`. It is what makes the check
@@ -840,6 +890,7 @@ def verify_candidate_declarations(
     for candidate in protocol.candidates:
         model = models[candidate.name]
         findings = [_verify_implementation(candidate, model, allowlist)]
+        findings.append(_verify_inference(candidate, model))
         findings.extend(_verify_hyperparameters(candidate, model, allowlist))
         verifications.append(
             CandidateVerification(
@@ -899,6 +950,32 @@ def _verify_implementation(
         detail=(
             "the class name agrees but the declared module is not imported, and a frozen "
             "declaration is never imported to resolve it"
+        ),
+    )
+
+
+def _verify_inference(candidate: Any, model: Any) -> DeclarationFinding:
+    """Decide the declared inference against the contract the supplied object satisfies."""
+
+    observed = (
+        CandidateInference.SAMPLED
+        if is_posterior_estimator(model)
+        else CandidateInference.OPTIMIZED
+    )
+    agrees = observed is candidate.inference
+    return DeclarationFinding(
+        candidate=candidate.name,
+        subject="inference",
+        status=DeclarationCheck.VERIFIED if agrees else DeclarationCheck.CONTRADICTED,
+        declared=candidate.inference.value,
+        observed=observed.value,
+        detail=(
+            "the supplied object satisfies the declared estimator contract"
+            if agrees
+            else (
+                "the supplied object satisfies the other estimator contract, so this run "
+                "would gate eligibility on evidence the protocol did not declare"
+            )
         ),
     )
 
@@ -1080,14 +1157,22 @@ def _refuse_contradictions(verifications: tuple[CandidateVerification, ...]) -> 
 
 def run_protocol(
     compiled: CompiledProtocol,
-    models: Mapping[str, BehaviourEstimator],
+    models: Mapping[str, AnyBehaviourEstimator],
+    *,
+    posterior_policy: PosteriorFoldPolicy | None = None,
 ) -> ProtocolRun:
-    """Fit, predict, score, audit, compare, and rank every declared candidate.
+    """Fit or sample, predict, score, audit, compare, and rank every declared candidate.
 
     Candidate-fold failures are retained and execution continues.  Only an audited plan
     may run, and the exact candidate registry must match the frozen declaration -- by name,
-    by declared implementation, and by declared hyperparameter, as
+    by declared implementation, by declared inference, and by declared hyperparameter, as
     :func:`verify_candidate_declarations` checks before any fit begins.
+
+    ``posterior_policy`` declares the projection centre and the convergence thresholds
+    applied to every candidate the protocol declares as ``sampled``; it is forwarded only to
+    those, exactly as :func:`behavio.compare.compare_models` forwards it, and the package
+    default applies when it is omitted. It is a keyword rather than a positional so an
+    existing purely optimized call is unchanged.
     """
 
     if not compiled.plan.audit.passed or compiled.protocol.state != ProtocolState.AUDITED:
@@ -1115,6 +1200,7 @@ def run_protocol(
             compiled,
             aggregation_column,
             outcome_column,
+            posterior_policy=posterior_policy,
         )
         for candidate_name in declared_names
     )
@@ -1144,9 +1230,17 @@ def run_protocol(
 
 def run_nested_protocol(
     compiled: CompiledProtocol,
-    models: Mapping[str, BehaviourEstimator],
+    models: Mapping[str, AnyBehaviourEstimator],
+    *,
+    posterior_policy: PosteriorFoldPolicy | None = None,
 ) -> NestedProtocolRun:
-    """Select candidates inside every outer training study and score untouched rows."""
+    """Select candidates inside every outer training study and score untouched rows.
+
+    ``posterior_policy`` governs the sampled candidates exactly as it does in
+    :func:`run_protocol`, and applies to the inner selection folds and the untouched outer
+    fold alike: a candidate selected inside a training study on evidence that would not
+    survive its own convergence gate is not a selection anyone should honour.
+    """
 
     if not compiled.plan.audit.passed or compiled.protocol.state != ProtocolState.AUDITED:
         raise ProtocolRunError("only an audited execution plan may run")
@@ -1181,6 +1275,7 @@ def run_nested_protocol(
                 bootstrap_seed=selection.seed + outer_index + 1,
                 interval_level=protocol.comparison.interval_level,
                 metric=selection.metric,
+                posterior_policy=posterior_policy,
             )
             for name in selection.candidate_names
         )
@@ -1211,6 +1306,7 @@ def run_nested_protocol(
             bootstrap_seed=protocol.comparison.seed + outer_index,
             interval_level=protocol.comparison.interval_level,
             metric=protocol.comparison.metric,
+            posterior_policy=posterior_policy,
         )
         fold_runs.append(NestedFold(outer.identifier, selected, inner_results, outer_result))
     predictions = tuple(
@@ -1253,10 +1349,12 @@ def run_nested_protocol(
 
 def _run_candidate(
     name: str,
-    model: BehaviourEstimator,
+    model: AnyBehaviourEstimator,
     compiled: CompiledProtocol,
     aggregation_column: str,
     outcome_column: str,
+    *,
+    posterior_policy: PosteriorFoldPolicy | None,
 ) -> CandidateRun:
     comparison = compiled.protocol.comparison
     return _run_candidate_folds(
@@ -1270,12 +1368,13 @@ def _run_candidate(
         bootstrap_seed=comparison.seed,
         interval_level=comparison.interval_level,
         metric=comparison.metric,
+        posterior_policy=posterior_policy,
     )
 
 
 def _run_candidate_folds(
     name: str,
-    model: BehaviourEstimator,
+    model: AnyBehaviourEstimator,
     study: Any,
     plan_folds: Sequence[Any],
     aggregation_column: str,
@@ -1285,6 +1384,7 @@ def _run_candidate_folds(
     bootstrap_seed: int,
     interval_level: float,
     metric: ScoreMetric,
+    posterior_policy: PosteriorFoldPolicy | None = None,
 ) -> CandidateRun:
     """Evaluate one candidate over compiled folds, retaining rather than raising failures.
 
@@ -1292,6 +1392,12 @@ def _run_candidate_folds(
     :class:`~behavio.contracts.fold.EvaluationFold` contract, hands the work to
     :func:`~behavio.evaluate.folds.evaluate_splits`, and projects the result into the portable
     records a protocol artifact needs.
+
+    ``evaluate_splits`` dispatches on the contract the candidate satisfies, so a sampled one
+    is sampled, audited and projected without a second loop here. The posterior policy is
+    forwarded only to a sampled candidate, because handing one to an optimized model is a
+    declaration error rather than a no-op and would fail every fold of an innocent
+    candidate.
     """
 
     splits = tuple(_compiled_fold_split(fold) for fold in plan_folds)
@@ -1307,6 +1413,7 @@ def _run_candidate_folds(
             # fold-level `prospective` flag would be a weaker second opinion about the same
             # question.
             require_prospective=False,
+            posterior_policy=posterior_policy if is_posterior_estimator(model) else None,
             on_failure=FoldFailurePolicy.RETAIN,
         )
     except CandidateDeclarationError as error:

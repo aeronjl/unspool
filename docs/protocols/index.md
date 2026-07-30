@@ -98,10 +98,10 @@ when you want to review the complete set first.
 
 ## The model that ran is the model that was declared
 
-A `CandidateSpec` fixes an `implementation` and its `hyperparameters` before any data is
-seen. `run_protocol` and `run_nested_protocol` verify the estimator you supply against that
-declaration before the first fit, so an evidence bundle records what happened rather than
-what was claimed:
+A `CandidateSpec` fixes an `implementation`, its `hyperparameters` and its `inference`
+before any data is seen. `run_protocol` and `run_nested_protocol` verify the estimator you
+supply against that declaration before the first fit, so an evidence bundle records what
+happened rather than what was claimed:
 
 ```python
 from behavio import verify_candidate_declarations
@@ -139,6 +139,70 @@ Combinator registrations expose the model they wrap, so a candidate declared as
 too. Only a name no registry knows falls back to the import-free class-name comparison, and
 only that fallback can report *unverifiable* for an implementation. Pass `registry=` to
 `verify_candidate_declarations` to make your own models decidable on the same terms.
+
+## A sampled candidate is declared, not discovered
+
+`CandidateSpec.inference` says which estimator contract a candidate satisfies:
+`optimized` for a `BehaviourEstimator`, driven through `fit`, or `sampled` for a
+`PosteriorBehaviourEstimator`, driven through `sample`. It decides which evidence gates the
+candidate's eligibility, so it is frozen with the rest of the design:
+
+```python
+from behavio.protocol import CandidateInference, CandidateSpec
+
+CandidateSpec(
+    name="hierarchical-bayes",
+    implementation="mylab.models.PooledLogit",
+    hyperparameters=(Setting("prior_scale", 1.0),),
+    scored_columns=("choice",),
+    inference=CandidateInference.SAMPLED,
+)
+```
+
+`inference` is the one declaration that is always decidable, with no registry and no
+imports: which contract an object satisfies is a fact about the object. A protocol that
+declares a sampled candidate and is handed an optimized one is *contradicted* and the run
+is refused, because the run would otherwise be evidence about a different design — one with
+no convergence audit anywhere in it. The pre-fit protocol audit catches the same mismatch
+earlier still, from the capability matrix alone, as an `inference-mismatch` finding.
+
+Nothing about eligibility is special-cased for a sampler. `evaluate_splits` samples the
+fold, calls `audit_posterior` on the result, and projects it to a `FitResult` whose
+`converged` flag *is* the convergence verdict; a failed audit therefore earns the projected
+fit an `optimizer_nonconvergence` issue, which makes the fold's `FitAudit` fail, which makes
+the candidate ineligible for ranking — the same route by which a non-convergent optimizer is
+removed. The failing fold's score is still computed and still reported, so every candidate
+keeps identical aggregation units.
+
+Each sampled fold retains its convergence audit, both on `CandidateRun.posterior_folds` and
+in the serialized report, so a reader can see which evidence produced the verdict — and so
+an evidence bundle has something to put in its `posterior/convergence.json` slot:
+
+```python
+from behavio.report import PosteriorEvidence, build_evidence_bundle
+
+candidate = run.report.candidates[0]
+bundle = build_evidence_bundle(
+    reported,
+    figures=figures,
+    environment=environment,
+    posterior=PosteriorEvidence(
+        convergence={
+            f"{candidate.name}/{fold}": evidence.audit
+            for fold, evidence in candidate.posterior_folds
+        }
+    ),
+)
+```
+
+`run_protocol(..., posterior_policy=...)` declares the projection centre and the convergence
+thresholds, exactly as `compare_models` does, and forwards them only to the sampled
+candidates. The realised policy is recorded on every sampled fold, so a run under a stricter
+gate is distinguishable from one under the default.
+
+Adding the member moved the schema to `behavio.study-protocol/3`; version 2 payloads still
+load, keep their fingerprints, and are read as declaring `optimized` throughout — see
+[serialization and schema versions](lifecycle.md#serialization-and-schema-versions).
 
 ## The declared score is executable, not descriptive
 
@@ -206,9 +270,10 @@ winner strictly more often; `Ranking.reason` then says so in as many words rathe
 reporting an adjustment that did not run. There is no separate family error rate to
 declare: it is `1 - interval_level`, the rate the protocol already fixed.
 
-Adding the member moved the schema to `behavio.study-protocol/2`. Protocols recorded under
-version 1 still load, keep their fingerprints, and are read as declaring Benjamini-Hochberg
-— see [serialization and schema versions](lifecycle.md#serialization-and-schema-versions).
+Adding the member moved the schema to `behavio.study-protocol/2`, and it has since moved
+again. Protocols recorded under version 1 still load, keep their fingerprints, and are read
+as declaring Benjamini-Hochberg — see
+[serialization and schema versions](lifecycle.md#serialization-and-schema-versions).
 
 ## Start from a complete study
 

@@ -14,6 +14,8 @@ performance rankings. “Supported” refers to the evidence boundary in the
 | GLM-HMM | Binary choice | Discrete recurrent states | Complete pooling | smooth drift, history, state count |
 | Binary RL | Binary choice | Recursive values and policy traces | Complete pooling | history, bias, lapse, reward schedule |
 | Psychometric family | Binary choice | None; a fixed threshold, width, guess and lapse | Complete pooling | link choice, threshold convention, lapse versus slope |
+| Temporal discounting | Binary choice between two delayed amounts | None by default; a smooth or per-subject discount rate is a combinator away | Complete or partial pooling | discount function, delay and amount units, rate versus choice noise |
+| Prospect theory | Binary choice between two prospects | None by default; smooth and partially pooled cells are combinator expressions | Complete or partial pooling | curvature versus inverse temperature, weighting form, loss aversion without mixed gambles |
 | Signal detection | Yes/no, rating, or response + confidence | None; fixed sensitivity and criteria | Complete pooling | extreme-rate corrections, equal versus unequal variance, meta-d' constraints |
 | Multinomial logit | Categorical choice | Static or smooth per-category coefficients | Complete or partial pooling | availability, omissions, coding |
 | Wiener DDM | Choice + response time | Within-decision accumulation; parameters fixed across trials | Complete or partial pooling | contaminants, RT origin, scale trade-offs |
@@ -192,6 +194,69 @@ declared stimulus coordinate under a declared threshold convention; the Weibull'
 stimulus-independent errors of every origin and is not evidence for any one of them.
 
 [Detailed assumptions](psychometric-functions.md)
+
+## Temporal discounting
+
+**Class:** `TemporalDiscounting`
+
+**Use when:** the trial is a choice between a smaller-sooner and a larger-later amount and
+the reportable quantity is a discount rate.
+
+**Requires:** a binary outcome, two amount columns, two non-negative delay columns, and a
+declared `value_scale` giving the unit the amounts are in.
+
+**Predicts:** a filtered binary choice probability, one per trial, as a softmax over the two
+options' discounted values.
+
+**Parameters:** `discount_rate_log` and `inverse_temperature_log`, both logarithms of
+strictly positive quantities, reported as `discount_rate` and `inverse_temperature` with
+delta-method standard errors. Mazur's hyperbola and the exponential are separate declared
+discount functions and their rates are not interchangeable.
+
+**Evidence:** the closed-form indifference point asserted for both discount functions at
+three inverse temperatures, an analytic gradient checked against central differences,
+deterministic multistart seeded from the design's own indifference rates with every restart
+retained, and design-specific recovery. `smooth()` and `hierarchical()` compose over it.
+
+**Does not establish:** impulsivity as a trait. A discount rate changes with the delay unit,
+the discount function, the amounts used, and whether `value_scale` let the inverse
+temperature absorb the amount scale. A design whose two delays are equal on every trial
+cannot identify the rate at all, and says so before the fit.
+
+[Detailed assumptions](economic-choice.md)
+
+## Prospect theory
+
+**Class:** `ProspectTheory`
+
+**Use when:** the trial is a choice between two prospects and the reportable quantities are
+value-function curvature, loss aversion, and probability weighting.
+
+**Requires:** a binary outcome, one outcome and one probability column per option, optional
+complementary-outcome columns for genuinely two-outcome prospects, and a declared
+`value_scale`.
+
+**Predicts:** a filtered binary choice probability as a softmax over two cumulative
+prospect-theory valuations.
+
+**Parameters:** logarithms of the gain exponent, loss exponent, loss aversion, Prelec
+curvature, Prelec elevation, and the inverse temperature. Any of the loss exponent, loss
+aversion, and weighting elevation may be declared fixed and then leaves the coordinate.
+Exponents are not capped at one, because a convex value function is an empirical finding
+rather than a modelling error.
+
+**Evidence:** the fourfold pattern of risk attitudes asserted twice — from Tversky and
+Kahneman's declared medians with no fitting, and from parameters recovered out of simulated
+choices — a weighting function checked for monotonicity, anchoring, and its \(1/e\) fixed
+point, an analytic gradient checked against central differences, and six-parameter recovery
+on a titration design. `smooth()` and `hierarchical()` compose over it.
+
+**Does not establish:** loss aversion from a design without a gain-against-loss trial, where
+\(\lambda\) is the inverse temperature under another name; or a value-function curvature
+from a design with one outcome magnitude, where the same is true of the exponent. Both are
+reported as `describe()` findings before the fit. Ambiguity is not modelled.
+
+[Detailed assumptions](economic-choice.md)
 
 ## Signal detection theory
 

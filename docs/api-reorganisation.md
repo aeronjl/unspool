@@ -180,7 +180,7 @@ declared contract", which is what the word means in Python everywhere else.
 exception, and the reason is not taste. They are not splitter mechanics: they are a
 protocol's frozen *declaration* that the study will be validated in a stated geometry —
 the scientific sense of the word. They are also serialised field names in
-`behavio.study-protocol/2`, a published, content-addressed schema. Renaming them would
+the published, content-addressed `behavio.study-protocol` schema. Renaming them would
 require a schema version bump plus a second reader for every protocol ever recorded, which
 is more legacy machinery than the clarity would buy.
 
@@ -230,9 +230,9 @@ been ZIP bundles.
 
 It was exported bare from the root while its three siblings —
 `BUNDLE_SCHEMA_VERSION`, `FIT_ARTIFACT_SCHEMA` and `PARAMETER_SPACE_SCHEMA` — were all
-prefixed. The **value** of the constant is unchanged: `behavio.study-protocol/2` is a
-published wire identifier, and renaming the Python name it is bound to must not restamp
-recorded protocols.
+prefixed. The **value** of the constant was unchanged by the rename: the
+`behavio.study-protocol/N` string is a published wire identifier, and renaming the Python
+name it is bound to must not restamp recorded protocols.
 
 ## `covariates` became `predictors`
 

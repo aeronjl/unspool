@@ -331,6 +331,12 @@ The roadmap is organized by scientific contracts rather than by model count.
   numerical audits, failures, and unresolved decisions.
 - **Implemented:** make model, parameter, and outcome-derived-feature recovery first-class
   claim gates executed through the identical compiled design.
+- **Implemented:** let a frozen protocol declare that a candidate is *sampled* rather than
+  optimized, verify that declaration against the object handed to the runner, and gate a
+  sampled candidate's eligibility on its per-fold posterior convergence audit exactly as a
+  failed numerical audit gates an optimized one — so the frozen declaration, the recovery
+  gates, the bounded report and the content-addressed bundle are available to a Bayesian
+  model without a second execution path.
 - **Implemented:** produce deterministic content-addressed evidence bundles with protocol,
   amendment, environment, source, cohort, plan, fold, audit, comparison, prediction,
   recovery, figure, report, replay, and bundle-comparison evidence, without raw-data

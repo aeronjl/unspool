@@ -120,8 +120,31 @@ from behavio.report.evidence_bundles import (
 #: study digest changed.
 #: Previously: bundle ``4ca817aadce37f3be74a835c5438773ef873a0ed1f810ec008db52cbb0286763``,
 #: zip ``c271ac752e9f02ee9152d17a0ef3442e3d5a6c27d5a496768cacc7cd85329986``.
-SCHEMA_1_BUNDLE_ID = "e78bf57f155820d75368db6d800358e1b8e19760757af2a93c53d55a46670140"
-SCHEMA_1_ZIP_SHA256 = "032b9257c65bfa86060f5bbfd1a1ddf45c252f355ee9f703542d3d9e4cba9c0e"
+#:
+#: Recomputed a sixth time by ``behavio.study-protocol/3``, which adds
+#: ``CandidateSpec.inference``: a candidate is fitted by optimization or sampled, that
+#: decides which audit gates its eligibility, and a frozen protocol that could not say
+#: which had no way to declare a Bayesian candidate at all. The seventeen archived files
+#: were diffed one by one against the ones the previous constants describe. Exactly **one**
+#: differs in content:
+#:
+#: ``protocol/protocol.json`` gains one line per candidate, ``"inference": "optimized"``,
+#: and its ``schema_version`` moves from ``behavio.study-protocol/2`` to ``/3``. Both
+#: candidates in this fixture are optimized, which is what every protocol recorded before
+#: the member existed necessarily was, so the declaration gained a member and the design did
+#: not change.
+#:
+#: Seven more -- the cohort manifest, the execution plan, the evaluation, the recovery
+#: report, ``report/report.json``, ``report/report.md`` and ``reproduction/replay.json`` --
+#: differ **only** in the fingerprints they quote, all of which chain off the protocol
+#: fingerprint, plus the schema version ``report/report.md`` prints on its provenance line.
+#: Nine are byte-identical, including every fold, every pointwise prediction, every fit
+#: audit, the protocol audit and the figure. No estimate, score, interval or study digest
+#: moved.
+#: Previously: bundle ``e78bf57f155820d75368db6d800358e1b8e19760757af2a93c53d55a46670140``,
+#: zip ``032b9257c65bfa86060f5bbfd1a1ddf45c252f355ee9f703542d3d9e4cba9c0e``.
+SCHEMA_1_BUNDLE_ID = "40bdb667115ce9ce6b15a7d7791ee6fb5c09187d87e14c42f10c7795917d3743"
+SCHEMA_1_ZIP_SHA256 = "956b9b10f011d1666223395fc488ec001cf928880fd82c19c0e75af39c31d55f"
 
 
 def reported():

@@ -35,6 +35,14 @@ first matched alternatives for more elaborate latent or mechanistic accounts.
       show_root_heading: false
       show_source: false
 
+## Economic and value-based choice
+
+::: behavio.models.economic
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
 ## Bernoulli history GLM
 
 ::: behavio.models.glm
