@@ -132,14 +132,23 @@ def emissions_of(model: BernoulliGLMHMM, vector: np.ndarray) -> np.ndarray:
 
 
 def test_a_glm_hmm_still_declines_a_mixture() -> None:
+    """Widening ``mix()`` to row objectives did not open this cell, and could not have.
+
+    ``mix()`` is now gated on row independence rather than on a linear predictor, which is
+    exactly the thing a forward recursion does not have. The sentence it reports is the
+    model's own ``independent_rows_refusal`` and it is a modelling statement: a lapse on a
+    GLM-HMM is a lapse on the emission, inside the recursion.
+    """
+
     model = switching_model()
 
     with pytest.raises(TypeError) as error:
         mix(model, UniformChoiceGuess())
 
     message = str(error.value)
-    assert "not a penalised linear model" in message
+    assert "rows are not independent" in message
     assert "inside that recursion" in message
+    assert "absorb the state switching" in message
 
 
 def test_a_glm_hmm_declines_a_path_in_clock_time() -> None:

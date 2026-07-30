@@ -229,9 +229,12 @@ of its values produced which part of the trace. Smoothing over a within-session 
 raises rather than averaging. See
 [composing models](composing-models.md#models-whose-coordinate-is-bounded-not-linear).
 
-`mix()` still refuses both agents, and that is a statement about the model: a lapse belongs
-on the policy, inside the recursion, where it mixes the emitted action while leaving the
-value update to see the action that was taken.
+`mix()` refuses both agents, and that is a statement about the model rather than a limit of
+the combinator: `mix()` is gated on row independence, and a value trace every earlier trial
+wrote to leaves no per-row density to average. A lapse belongs on the policy, inside the
+recursion, where it mixes the emitted action while leaving the value update to see the action
+that was taken. Each agent says so in `independent_rows_refusal`, and that sentence is what
+the `TypeError` carries.
 
 ## Current boundary
 

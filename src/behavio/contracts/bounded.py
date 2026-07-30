@@ -385,10 +385,13 @@ def require_composable(model: Any, *, combinator: str) -> str:
     to which solver -- and everything a combinator does on either side of that is the same
     code operating on the same coordinate.
 
-    ``mix()`` deliberately does *not* call this. A mixture combines two densities *given a
-    linear predictor*, so it is a penalised-linear operation and stays one; a value-updating
-    agent's lapse belongs on its policy, inside the recursion, where it can mix the emitted
-    action while leaving the value update to see the action that was taken.
+    ``mix()`` runs :func:`~behavio.contracts.mixture.require_mixable` instead, which asks the
+    same routing question and one more: a mixture is an average of two densities of *one
+    row's* outcome, so it needs the rows to be independent, which is exactly what
+    :attr:`RowObjective.row_blocks` reports. Both routes are open to it; what is closed is a
+    likelihood that recurses, and a value-updating agent's lapse belongs on its policy,
+    inside that recursion, where it can mix the emitted action while leaving the value update
+    to see the action that was taken.
     """
 
     if uses_row_coefficients(model):

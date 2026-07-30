@@ -12,12 +12,18 @@ from numpy.typing import NDArray
 from scipy.special import expit
 
 from behavio._internal.arrays import protected_array
+from behavio.contracts.bounded import (
+    BOUNDED_COORDINATE,
+    BoundedCoordinateEstimator,
+    RowCoefficientDesign,
+    RowObjective,
+    validated_row_coefficients,
+)
 from behavio.contracts.compose import (
     LinearPredictorLikelihood,
     PenalisedDesign,
     PenalisedLinearEstimator,
     linear_predictor,
-    require_penalised_linear,
     validate_predictor_shape,
 )
 from behavio.contracts.estimator import (
@@ -34,6 +40,8 @@ from behavio.contracts.mixture import (
     MixtureComponent,
     mixture_logit,
     mixture_weight,
+    require_independent_rows,
+    require_mixable,
     require_mixture_component,
     validate_weight_bounds,
 )
@@ -44,6 +52,7 @@ from behavio.trials import Study
 __all__ = [
     "MixtureLikelihood",
     "MixtureModel",
+    "MixtureRowModel",
     "MixtureSimulation",
     "mix",
 ]
@@ -60,12 +69,12 @@ place the weight at 0.13 %, 2.4 % and 14.6 % of the trials.
 
 
 def mix(
-    model: PenalisedLinearEstimator,
+    model: PenalisedLinearEstimator | BoundedCoordinateEstimator,
     component: MixtureComponent,
     *,
     weight_bounds: tuple[float, float] = (0.0, 0.25),
     n_restarts: int = 3,
-) -> MixtureModel:
+) -> MixtureModel | MixtureRowModel:
     """Return ``model`` mixed with ``component``, estimating the mixing weight.
 
     Each row's density becomes ``(1 - w) * model + w * component``, with ``w`` estimated as
@@ -75,6 +84,14 @@ def mix(
     carry; ``(0.0, 0.25)`` says a mixture may account for at most a quarter of the trials.
     Everything about the component is declared and nothing about it is estimated, so a
     mixture adds exactly one parameter whatever it is mixed with.
+
+    The condition is **row independence** and nothing else, so both estimator contracts are
+    open: a model whose likelihood reads a study through a penalised linear predictor is
+    mixed by adding one cell to that predictor, and a model whose likelihood is a
+    :class:`~behavio.contracts.bounded.RowObjective` with one block per row is mixed by
+    adding one column to the row coordinate. What is refused is a likelihood that recurses,
+    and the refusal is the model's own sentence -- see
+    :func:`~behavio.contracts.mixture.require_mixable`.
 
     ``mix`` is the **innermost** combinator. ``smooth(mix(model))`` is a mixed model whose
     parameters -- the weight among them, if it is named -- follow paths;
@@ -106,9 +123,10 @@ def mix(
             "on a weight, which is a reparameterisation of a three-way mixture and not one "
             "anybody reports. Declare the combined process as a single component"
         )
-    require_penalised_linear(model, combinator="mix")
+    route = require_mixable(model, combinator="mix")
     require_mixture_component(component, model, combinator="mix")
-    return MixtureModel(
+    build = MixtureRowModel if route == BOUNDED_COORDINATE else MixtureModel
+    return build(
         model=model,
         component=component,
         weight_bounds=tuple(weight_bounds),
@@ -190,22 +208,9 @@ class MixtureLikelihood:
 
         cells = np.asarray(linear_predictor, dtype=np.float64)
         model_prediction = self.model_likelihood.prediction(self.model_cells(cells), mode=mode)
-        probability = np.asarray(model_prediction.probability, dtype=np.float64)
-        weight = self.weights(cells)
-        component = cells[:, self.density_cell + 1 :]
-        if probability.ndim == 1:
-            blended = (1.0 - weight) * probability + weight * component[:, 0]
-            floor = float(np.finfo(np.float64).tiny)
-            clipped = np.clip(blended, floor, 1.0 - float(np.finfo(np.float64).eps))
-            return replace(
-                model_prediction,
-                probability=blended,
-                linear_predictor=np.log(clipped) - np.log1p(-clipped),
-            )
-        blended = (1.0 - weight)[:, None] * probability + weight[:, None] * component
-        with np.errstate(divide="ignore"):
-            logits = np.log(blended)
-        return replace(model_prediction, probability=blended, linear_predictor=logits)
+        return blended_prediction(
+            model_prediction, self.weights(cells), cells[:, self.density_cell + 1 :]
+        )
 
     def pointwise_log_prob(
         self, linear_predictor: NDArray[np.float64], outcomes: NDArray[np.float64]
@@ -333,40 +338,11 @@ class MixtureLikelihood:
             self.model_likelihood.pointwise_log_prob(self.model_cells(cells), observed),
             dtype=np.float64,
         )
-        component_density = cells[:, self.density_cell]
-        logit = cells[:, self.logit_cell]
-        lower_bound, upper_bound = self.weight_bounds
-        relative = expit(logit)
-        weight = lower_bound + (upper_bound - lower_bound) * relative
-        slope = (upper_bound - lower_bound) * relative * (1.0 - relative)
-        bend = slope * (1.0 - 2.0 * relative)
-        with np.errstate(divide="ignore", invalid="ignore"):
-            positive = weight > 0.0
-            log_weight = np.where(positive, np.log(np.where(positive, weight, 1.0)), -np.inf)
-            log_complement = np.log1p(-weight)
-            model_term = log_complement + model_density
-            component_term = log_weight + component_density
-            raw = np.logaddexp(model_term, component_term)
-            usable = np.isfinite(raw)
-            floored = np.where(usable, raw, LOG_DENSITY_FLOOR)
-            upper = np.where(
-                usable & np.isfinite(component_density),
-                np.exp(np.minimum(component_density - floored, 700.0)),
-                0.0,
-            )
-            lower = np.where(
-                usable & np.isfinite(model_density),
-                np.exp(np.minimum(model_density - floored, 700.0)),
-                0.0,
-            )
-        return _MixtureParts(
-            log_density=floored,
-            responsibility=weight * upper,
-            model_responsibility=(1.0 - weight) * lower,
-            upper=upper,
-            lower=lower,
-            weight_slope=slope,
-            weight_bend=bend,
+        return mixture_parts(
+            model_density,
+            cells[:, self.density_cell],
+            cells[:, self.logit_cell],
+            self.weight_bounds,
         )
 
 
@@ -388,6 +364,85 @@ class _MixtureParts:
     lower: NDArray[np.float64]
     weight_slope: NDArray[np.float64]
     weight_bend: NDArray[np.float64]
+
+
+def mixture_parts(
+    model_density: NDArray[np.float64],
+    component_density: NDArray[np.float64],
+    logit: NDArray[np.float64],
+    bounds: tuple[float, float],
+) -> _MixtureParts:
+    """Combine two per-row log densities at a per-row weight logit.
+
+    The whole of a mixture's arithmetic, and the reason there is one of it rather than two.
+    Three arrays of one number per row go in -- the model's log density, the component's, and
+    the coordinate the weight is a function of -- and everything a gradient or a curvature
+    needs comes out. Nothing here knows whether the logit arrived as a cell of a linear
+    predictor or as a column of a row coordinate, which is exactly the property that lets the
+    two estimator contracts share a mixture instead of each growing one.
+    """
+
+    lower_bound, upper_bound = bounds
+    relative = expit(logit)
+    weight = lower_bound + (upper_bound - lower_bound) * relative
+    slope = (upper_bound - lower_bound) * relative * (1.0 - relative)
+    bend = slope * (1.0 - 2.0 * relative)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        positive = weight > 0.0
+        log_weight = np.where(positive, np.log(np.where(positive, weight, 1.0)), -np.inf)
+        log_complement = np.log1p(-weight)
+        model_term = log_complement + model_density
+        component_term = log_weight + component_density
+        raw = np.logaddexp(model_term, component_term)
+        usable = np.isfinite(raw)
+        floored = np.where(usable, raw, LOG_DENSITY_FLOOR)
+        upper = np.where(
+            usable & np.isfinite(component_density),
+            np.exp(np.minimum(component_density - floored, 700.0)),
+            0.0,
+        )
+        lower = np.where(
+            usable & np.isfinite(model_density),
+            np.exp(np.minimum(model_density - floored, 700.0)),
+            0.0,
+        )
+    return _MixtureParts(
+        log_density=floored,
+        responsibility=weight * upper,
+        model_responsibility=(1.0 - weight) * lower,
+        upper=upper,
+        lower=lower,
+        weight_slope=slope,
+        weight_bend=bend,
+    )
+
+
+def blended_prediction(
+    model_prediction: ModelPrediction,
+    weight: NDArray[np.float64],
+    component: NDArray[np.float64],
+) -> ModelPrediction:
+    """Return the weighted average of two point predictions, keeping the model's own type.
+
+    A mixture's predicted probability is an average of two probabilities, which is the one
+    quantity of a mixture that is not a density and therefore not a function of the two log
+    densities :func:`mixture_parts` combines. It is written once here for the same reason.
+    """
+
+    probability = np.asarray(model_prediction.probability, dtype=np.float64)
+    if probability.ndim == 1:
+        blended = (1.0 - weight) * probability + weight * component[:, 0]
+        floor = float(np.finfo(np.float64).tiny)
+        clipped = np.clip(blended, floor, 1.0 - float(np.finfo(np.float64).eps))
+        return replace(
+            model_prediction,
+            probability=blended,
+            linear_predictor=np.log(clipped) - np.log1p(-clipped),
+        )
+    blended = (1.0 - weight)[:, None] * probability + weight[:, None] * component
+    with np.errstate(divide="ignore"):
+        logits = np.log(blended)
+    return replace(model_prediction, probability=blended, linear_predictor=logits)
 
 
 # --------------------------------------------------------------------------------------
@@ -418,28 +473,43 @@ class MixtureSimulation:
 
 
 # --------------------------------------------------------------------------------------
-# The combinator
+# Everything a mixture is, whichever contract it reaches the model's density through
 # --------------------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class MixtureModel(Describable):
-    """A model whose observations may instead have come from a declared simpler process.
+class _MixedModel(Describable):
+    """The two-thirds of a mixture that does not depend on how the density is reached.
 
-    Parameter naming is stable and mechanical: the wrapped model keeps every name it had
-    and one coordinate is appended, :data:`~behavio.contracts.mixture.MIXTURE_LOGIT`. The
-    reported coordinate replaces that logit with the component's own
-    :attr:`~behavio.contracts.mixture.MixtureComponent.weight_name` -- ``lapse_rate`` for a
-    guessing process, ``contaminant_rate`` for a distribution over response times -- and a
-    fit carries it as a derived quantity with a delta-method standard error.
+    Naming, the declared weight range, the component's own log density, the penalty, the
+    box, the restarts, the group prior, the simulator and the reported coordinate are the
+    same statements whether the weight arrived as a cell of a linear predictor or as a column
+    of a row coordinate. Only the objective differs, which is the same division
+    :class:`~behavio.contracts.compose.PenalisedLinearEstimator` and
+    :class:`~behavio.contracts.bounded.BoundedCoordinateEstimator` already make.
+
+    A mixin rather than a dataclass base: both subclasses declare the same four fields, and
+    a frozen slotted dataclass inheriting fields from another one is a subtlety that buys
+    nothing here. ``__slots__`` is empty for the reason :class:`Describable`'s is.
     """
 
-    model: PenalisedLinearEstimator
-    component: MixtureComponent
-    weight_bounds: tuple[float, float] = (0.0, 0.25)
-    n_restarts: int = 3
+    __slots__ = ()
 
-    def __post_init__(self) -> None:
+    model: Any
+    component: MixtureComponent
+    weight_bounds: tuple[float, float]
+    n_restarts: int
+
+    def _validate_mixture(self) -> tuple[float, float]:
+        """Return the validated weight range, refusing a coordinate the weight would shadow.
+
+        A component's ``weight_name`` is checked against the wrapped model's **reported**
+        names as well as its estimated ones, because the reported coordinate is what a
+        mixture appends to and two ``lapse_rate`` entries are not a coordinate. That is the
+        refusal :class:`~behavio.models.PsychometricFunction` gets, and it is the right one:
+        a curve that already estimates a lapse inside its link has nothing left for a
+        symmetric mixture weight to be identified against.
+        """
+
         bounds = validate_weight_bounds(self.weight_bounds)
         if (
             isinstance(self.n_restarts, bool)
@@ -450,12 +520,13 @@ class MixtureModel(Describable):
         inner = tuple(self.model.parameter_names)
         if MIXTURE_LOGIT in inner:
             raise ValueError(f"the wrapped model already has a parameter named {MIXTURE_LOGIT!r}")
-        if self.component.weight_name in inner:
+        reported = (*inner, *getattr(self.model, "natural_names", ()))
+        if self.component.weight_name in reported:
             raise ValueError(
                 f"the wrapped model already has a parameter named "
                 f"{self.component.weight_name!r}, which is what this component calls its weight"
             )
-        object.__setattr__(self, "weight_bounds", bounds)
+        return bounds
 
     # -- identity ---------------------------------------------------------------------
 
@@ -493,12 +564,6 @@ class MixtureModel(Describable):
         return self.parameter_names
 
     @property
-    def natural_names(self) -> tuple[str, ...]:
-        """The reported coordinate: the wrapped names plus the weight on its own scale."""
-
-        return (*self.model.parameter_names, self.component.weight_name)
-
-    @property
     def scored_columns(self) -> tuple[str, ...]:
         return tuple(self.model.scored_columns)
 
@@ -531,99 +596,23 @@ class MixtureModel(Describable):
 
         return tuple(self.model.categories)
 
-    def outcome_codes(self, study: Study) -> NDArray[np.int64]:
-        """Return the wrapped model's observed category codes."""
-
-        return self.model.outcome_codes(study)
-
-    # -- the shape of a mixed problem ---------------------------------------------------
-
-    @property
-    def n_model_cells(self) -> int:
-        """How many cells the wrapped model's own linear predictor occupies."""
-
-        return max(1, len(self.model.predictor_cells))
-
-    @property
-    def scalar_model(self) -> bool:
-        """Whether the wrapped model's predictor is one number per row."""
-
-        return not self.model.predictor_cells
-
-    @property
-    def predictor_cells(self) -> tuple[str, ...]:
-        """The wrapped cells, then the weight, then what the component contributes."""
-
-        model_cells = tuple(self.model.predictor_cells) or ("linear_predictor",)
-        prediction = tuple(
-            f"component_probability[{index}]" for index in range(self.component.prediction_width)
-        )
-        return (*model_cells, "mixture_weight", "component_log_density", *prediction)
-
     @property
     def outcome_channels(self) -> tuple[str, ...]:
         """The wrapped model's channels: a mixture cannot change what is observed."""
 
         return tuple(self.model.outcome_channels)
 
-    @property
-    def likelihood(self) -> MixtureLikelihood:
-        """The two-component observation model this estimator's cells feed."""
+    def outcome_codes(self, study: Study) -> NDArray[np.int64]:
+        """Return the wrapped model's observed category codes."""
 
-        return MixtureLikelihood(
-            model_likelihood=self.model.likelihood,
-            n_model_cells=self.n_model_cells,
-            scalar_model=self.scalar_model,
-            prediction_width=self.component.prediction_width,
-            weight_bounds=self.weight_bounds,
-        )
+        return self.model.outcome_codes(study)
 
     def outcomes(self, study: Study) -> NDArray[np.float64]:
         """Return the wrapped model's scored observation, unchanged."""
 
         return self.model.outcomes(study)
 
-    def design_matrix(self, study: Study) -> NDArray[np.float64]:
-        """Return the wrapped design in its own cells, plus one intercept for the weight."""
-
-        features = validate_predictor_shape(self.model, self.model.design_matrix(study))
-        n_parameters = len(self.model.parameter_names)
-        design = np.zeros(
-            (len(study), len(self.predictor_cells), n_parameters + 1), dtype=np.float64
-        )
-        if self.scalar_model:
-            design[:, 0, :n_parameters] = features
-        else:
-            design[:, : self.n_model_cells, :n_parameters] = features
-        design[:, self.n_model_cells, n_parameters] = 1.0
-        return design
-
-    def predictor_offsets(self, study: Study) -> NDArray[np.float64]:
-        """Return the wrapped offsets, plus what the component contributes per row.
-
-        Two of the offsets are unusual and deliberately so. The component's log density is
-        a function of the observation as well as of the trial, which is wider than an
-        offset had needed to be; and its predicted probability is not a term of any
-        likelihood at all, only of a prediction. Both travel here because the linear
-        predictor is the one per-row channel every combinator preserves -- an outer
-        combinator slices it by group and multiplies it by a temporal basis without ever
-        having to know that either of these is what it is carrying.
-        """
-
-        offsets = np.zeros((len(study), len(self.predictor_cells)), dtype=np.float64)
-        inner = self.model.predictor_offsets(study)
-        if inner is not None:
-            values = np.asarray(inner, dtype=np.float64)
-            if self.scalar_model:
-                offsets[:, 0] = values
-            else:
-                offsets[:, : self.n_model_cells] = values
-        offsets[:, self.n_model_cells + 1] = self.component_log_density(study)
-        probability = np.asarray(self.component.prediction_probability(study), dtype=np.float64)
-        offsets[:, self.n_model_cells + 2 :] = probability.reshape(
-            len(study), self.component.prediction_width
-        )
-        return offsets
+    # -- what the component contributes, and what the weight costs ----------------------
 
     def component_log_density(self, study: Study) -> NDArray[np.float64]:
         """Return the component's log density of each observed outcome.
@@ -667,7 +656,8 @@ class MixtureModel(Describable):
         its own and the coordinate it stops at is what
         :data:`~behavio.contracts.mixture.MIXTURE_LOGIT_BOUND` is compared against. A model
         whose own solver needs a box gets one for the logit too, because a box with one
-        infinite entry is not a box.
+        infinite entry is not a box. A bounded-coordinate model always needs one, so on that
+        route the second branch is the only one taken.
         """
 
         box = self.model.coordinate_box(study)
@@ -691,19 +681,6 @@ class MixtureModel(Describable):
         if name == MIXTURE_LOGIT:
             return (MIXTURE_LOGIT,)
         return tuple(self.model.group_parameter_expansion(name))
-
-    def fit_penalised(
-        self,
-        design: PenalisedDesign,
-        *,
-        model_name: str,
-        model_signature: str,
-    ) -> FitResult:
-        """Solve a mixed penalised problem with the wrapped model's own optimizer settings."""
-
-        return self.model.fit_penalised(
-            design, model_name=model_name, model_signature=model_signature
-        )
 
     def group_penalty(
         self, columns: NDArray[np.intp], scales: NDArray[np.float64]
@@ -753,6 +730,8 @@ class MixtureModel(Describable):
             )
         return np.asarray(np.hstack(blocks), dtype=np.float64)
 
+    # -- simulation ---------------------------------------------------------------------
+
     def simulate_rows(
         self,
         design: Study,
@@ -791,6 +770,276 @@ class MixtureModel(Describable):
                 raise ValueError(f"a component may only write scored columns, not {column!r}")
             columns[column][rows] = drawn
         return MixtureSimulation(study=Study(columns), from_component=from_component)
+
+    def simulate(
+        self,
+        design: Study,
+        parameters: Mapping[str, float],
+        *,
+        seed: int | np.random.Generator,
+    ) -> Study:
+        """Generate observations without exposing which process produced each of them."""
+
+        return self.simulate_with_component(design, parameters, seed=seed).study
+
+    def simulate_with_component(
+        self,
+        design: Study,
+        parameters: Mapping[str, float],
+        *,
+        seed: int | np.random.Generator,
+    ) -> MixtureSimulation:
+        """Generate observations and retain the unobserved process indicator separately."""
+
+        values = self.parameter_vector(parameters)
+        rows = np.broadcast_to(values, (len(design), len(values)))
+        return self.simulate_rows_with_component(design, rows, seed=seed)
+
+    # -- the reported weight -------------------------------------------------------------
+
+    def weight(self, fit: FitResult) -> float:
+        """Return the fitted mixing weight on its own scale."""
+
+        self._validate_fit(fit)
+        return float(self.to_natural(fit.estimates)[self.component.weight_name])
+
+    def parameters_from_weight(
+        self, parameters: Mapping[str, float], weight: float
+    ) -> Mapping[str, float]:
+        """Pack wrapped parameters and a natural weight onto the estimated coordinate."""
+
+        return self.from_natural({**dict(parameters), self.component.weight_name: float(weight)})
+
+    def parameter_vector(self, parameters: Mapping[str, float]) -> NDArray[np.float64]:
+        """Validate a named parameter mapping and return it in model order."""
+
+        expected = set(self.parameter_names)
+        observed = set(parameters)
+        if observed != expected:
+            raise ValueError(
+                "parameters must match the model exactly; "
+                f"missing={sorted(expected - observed)}, extra={sorted(observed - expected)}"
+            )
+        values = np.asarray([parameters[name] for name in self.parameter_names], dtype=np.float64)
+        if not np.all(np.isfinite(values)):
+            raise ValueError("parameters must be finite")
+        return values
+
+    def to_natural(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> Mapping[str, float]:  # pragma: no cover - each route declares its own
+        raise NotImplementedError
+
+    def from_natural(
+        self, natural: Mapping[str, float]
+    ) -> Mapping[str, float]:  # pragma: no cover - each route declares its own
+        raise NotImplementedError
+
+    # -- what is wrong with fitting this here -------------------------------------------
+
+    def wrapped_findings(self, study: Study) -> tuple[ModelFinding, ...]:
+        """Forward whatever the wrapped model has to say about this study.
+
+        A combinator that reports only its own findings swallows the wrapped model's, which
+        is the same defect ``smooth()`` records in its own ``additional_findings``. A
+        discounting model's ``unidentified_discount_rate`` is not less true for the model
+        having been mixed with a lapse.
+        """
+
+        declared = getattr(self.model, "additional_findings", None)
+        return () if declared is None else tuple(declared(study))
+
+    def unreachable_component_finding(self, study: Study) -> tuple[ModelFinding, ...]:
+        """Report a component that gives zero density to everything that was observed.
+
+        A component that could not have produced any observation cannot have been
+        responsible for one, so the weight is identified only through its cost and will rest
+        on the floor of its declared range. The statement is about the component and the
+        outcomes and about nothing else, so it means the same thing on both routes and is
+        computed the same way on both.
+        """
+
+        if any(column not in study.columns for column in self.scored_columns):
+            return ()
+        try:
+            density = self.component_log_density(study)
+        except (ModelDataError, ValueError):
+            return ()
+        if not len(density) or np.any(np.isfinite(density)):
+            return ()
+        return (
+            ModelFinding(
+                code="unreachable_mixture_component",
+                severity=WARNING,
+                message=(
+                    f"{self.component.signature} gives zero density to every observed "
+                    f"outcome, so {self.component.weight_name} can only be estimated at "
+                    "the floor of its declared range"
+                ),
+            ),
+        )
+
+    # -- internals ---------------------------------------------------------------------
+
+    def _natural_input(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> NDArray[np.float64]:
+        try:
+            vector = np.asarray(estimates, dtype=np.float64)
+        except (TypeError, ValueError):
+            raise ValueError("estimates must contain finite numeric values") from None
+        width = len(self.parameter_names)
+        if vector.shape != (width,) or not np.all(np.isfinite(vector)):
+            raise ValueError(f"estimates must contain {width} finite values")
+        return vector
+
+    def _validate_fit(self, fit: FitResult) -> None:
+        if fit.model_signature != self.signature or fit.parameter_names != self.parameter_names:
+            raise ValueError("fit result was produced by a different model specification")
+
+    def _prediction_mode(self, mode: PredictionMode) -> PredictionMode:
+        prediction_mode = PredictionMode(mode)
+        if prediction_mode not in self.supported_prediction_modes:
+            raise UnsupportedPredictionMode(
+                f"{self.model_name} does not support {prediction_mode.value!r} prediction"
+            )
+        return prediction_mode
+
+
+# --------------------------------------------------------------------------------------
+# The combinator, over a linear predictor
+# --------------------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class MixtureModel(_MixedModel):
+    """A model whose observations may instead have come from a declared simpler process.
+
+    Parameter naming is stable and mechanical: the wrapped model keeps every name it had
+    and one coordinate is appended, :data:`~behavio.contracts.mixture.MIXTURE_LOGIT`. The
+    reported coordinate replaces that logit with the component's own
+    :attr:`~behavio.contracts.mixture.MixtureComponent.weight_name` -- ``lapse_rate`` for a
+    guessing process, ``contaminant_rate`` for a distribution over response times -- and a
+    fit carries it as a derived quantity with a delta-method standard error.
+
+    This is the penalised-linear route. A model whose likelihood is a
+    :class:`~behavio.contracts.bounded.RowObjective` is mixed by :class:`MixtureRowModel`
+    instead, and the two differ in one thing: where the weight is carried.
+    """
+
+    model: PenalisedLinearEstimator
+    component: MixtureComponent
+    weight_bounds: tuple[float, float] = (0.0, 0.25)
+    n_restarts: int = 3
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "weight_bounds", self._validate_mixture())
+
+    # -- identity ---------------------------------------------------------------------
+
+    @property
+    def natural_names(self) -> tuple[str, ...]:
+        """The reported coordinate: the wrapped names plus the weight on its own scale.
+
+        The wrapped names verbatim, because
+        :class:`~behavio.contracts.compose.PenalisedLinearEstimator` declares that its
+        ``parameter_names`` is "the coordinate the model is estimated, reported and simulated
+        in". The bounded-coordinate contract declares the opposite, which is why
+        :class:`MixtureRowModel` delegates instead.
+        """
+
+        return (*self.model.parameter_names, self.component.weight_name)
+
+    # -- the shape of a mixed problem ---------------------------------------------------
+
+    @property
+    def n_model_cells(self) -> int:
+        """How many cells the wrapped model's own linear predictor occupies."""
+
+        return max(1, len(self.model.predictor_cells))
+
+    @property
+    def scalar_model(self) -> bool:
+        """Whether the wrapped model's predictor is one number per row."""
+
+        return not self.model.predictor_cells
+
+    @property
+    def predictor_cells(self) -> tuple[str, ...]:
+        """The wrapped cells, then the weight, then what the component contributes."""
+
+        model_cells = tuple(self.model.predictor_cells) or ("linear_predictor",)
+        prediction = tuple(
+            f"component_probability[{index}]" for index in range(self.component.prediction_width)
+        )
+        return (*model_cells, "mixture_weight", "component_log_density", *prediction)
+
+    @property
+    def likelihood(self) -> MixtureLikelihood:
+        """The two-component observation model this estimator's cells feed."""
+
+        return MixtureLikelihood(
+            model_likelihood=self.model.likelihood,
+            n_model_cells=self.n_model_cells,
+            scalar_model=self.scalar_model,
+            prediction_width=self.component.prediction_width,
+            weight_bounds=self.weight_bounds,
+        )
+
+    def design_matrix(self, study: Study) -> NDArray[np.float64]:
+        """Return the wrapped design in its own cells, plus one intercept for the weight."""
+
+        features = validate_predictor_shape(self.model, self.model.design_matrix(study))
+        n_parameters = len(self.model.parameter_names)
+        design = np.zeros(
+            (len(study), len(self.predictor_cells), n_parameters + 1), dtype=np.float64
+        )
+        if self.scalar_model:
+            design[:, 0, :n_parameters] = features
+        else:
+            design[:, : self.n_model_cells, :n_parameters] = features
+        design[:, self.n_model_cells, n_parameters] = 1.0
+        return design
+
+    def predictor_offsets(self, study: Study) -> NDArray[np.float64]:
+        """Return the wrapped offsets, plus what the component contributes per row.
+
+        Two of the offsets are unusual and deliberately so. The component's log density is
+        a function of the observation as well as of the trial, which is wider than an
+        offset had needed to be; and its predicted probability is not a term of any
+        likelihood at all, only of a prediction. Both travel here because the linear
+        predictor is the one per-row channel every combinator preserves -- an outer
+        combinator slices it by group and multiplies it by a temporal basis without ever
+        having to know that either of these is what it is carrying.
+        """
+
+        offsets = np.zeros((len(study), len(self.predictor_cells)), dtype=np.float64)
+        inner = self.model.predictor_offsets(study)
+        if inner is not None:
+            values = np.asarray(inner, dtype=np.float64)
+            if self.scalar_model:
+                offsets[:, 0] = values
+            else:
+                offsets[:, : self.n_model_cells] = values
+        offsets[:, self.n_model_cells + 1] = self.component_log_density(study)
+        probability = np.asarray(self.component.prediction_probability(study), dtype=np.float64)
+        offsets[:, self.n_model_cells + 2 :] = probability.reshape(
+            len(study), self.component.prediction_width
+        )
+        return offsets
+
+    def fit_penalised(
+        self,
+        design: PenalisedDesign,
+        *,
+        model_name: str,
+        model_signature: str,
+    ) -> FitResult:
+        """Solve a mixed penalised problem with the wrapped model's own optimizer settings."""
+
+        return self.model.fit_penalised(
+            design, model_name=model_name, model_signature=model_signature
+        )
 
     # -- the estimator contract --------------------------------------------------------
 
@@ -875,30 +1124,6 @@ class MixtureModel(Describable):
             dtype=np.float64,
         )
 
-    def simulate(
-        self,
-        design: Study,
-        parameters: Mapping[str, float],
-        *,
-        seed: int | np.random.Generator,
-    ) -> Study:
-        """Generate observations without exposing which process produced each of them."""
-
-        return self.simulate_with_component(design, parameters, seed=seed).study
-
-    def simulate_with_component(
-        self,
-        design: Study,
-        parameters: Mapping[str, float],
-        *,
-        seed: int | np.random.Generator,
-    ) -> MixtureSimulation:
-        """Generate observations and retain the unobserved process indicator separately."""
-
-        values = self.parameter_vector(parameters)
-        rows = np.broadcast_to(values, (len(design), len(values)))
-        return self.simulate_rows_with_component(design, rows, seed=seed)
-
     # -- the reported coordinate --------------------------------------------------------
 
     def to_natural(
@@ -937,34 +1162,6 @@ class MixtureModel(Describable):
         jacobian[-1, -1] = (upper - lower) * relative * (1.0 - relative)
         return jacobian
 
-    def weight(self, fit: FitResult) -> float:
-        """Return the fitted mixing weight on its own scale."""
-
-        self._validate_fit(fit)
-        return float(self.to_natural(fit.estimates)[self.component.weight_name])
-
-    def parameters_from_weight(
-        self, parameters: Mapping[str, float], weight: float
-    ) -> Mapping[str, float]:
-        """Pack wrapped parameters and a natural weight onto the estimated coordinate."""
-
-        return self.from_natural({**dict(parameters), self.component.weight_name: float(weight)})
-
-    def parameter_vector(self, parameters: Mapping[str, float]) -> NDArray[np.float64]:
-        """Validate a named parameter mapping and return it in model order."""
-
-        expected = set(self.parameter_names)
-        observed = set(parameters)
-        if observed != expected:
-            raise ValueError(
-                "parameters must match the model exactly; "
-                f"missing={sorted(expected - observed)}, extra={sorted(observed - expected)}"
-            )
-        values = np.asarray([parameters[name] for name in self.parameter_names], dtype=np.float64)
-        if not np.all(np.isfinite(values)):
-            raise ValueError("parameters must be finite")
-        return values
-
     # -- what is wrong with fitting this here -------------------------------------------
 
     def additional_findings(self, study: Study) -> tuple[ModelFinding, ...]:
@@ -976,18 +1173,20 @@ class MixtureModel(Describable):
         version of itself mixed with more guessing. That is the classic trade-off between a
         lapse rate and a shallow slope taken to its limit, and at the limit it is exact
         rather than merely awkward -- which is why it is worth reporting before a fit
-        returns a confident number for both.
+        returns a confident number for both. On this route the question is *exact*: a design
+        matrix that does not distinguish two rows gives them the same prediction at every
+        coordinate, not merely at the ones a search would visit.
 
-        The second failure is the mirror image: a component that gives zero density to
-        every observation cannot have produced any of them, so the weight is identified
-        only through its cost and will rest on the floor of its declared range.
+        The second failure is the mirror image, and it is
+        :meth:`~_MixedModel.unreachable_component_finding`: a component that gives zero
+        density to every observation cannot have produced any of them.
         """
 
-        findings: list[ModelFinding] = []
         try:
             design = np.asarray(self.model.design_matrix(study), dtype=np.float64)
         except (ModelDataError, ValueError):
             return ()
+        findings: list[ModelFinding] = []
         if len(study) and not _varies_across_rows(design):
             findings.append(
                 ModelFinding(
@@ -1000,47 +1199,404 @@ class MixtureModel(Describable):
                     ),
                 )
             )
-        if all(column in study.columns for column in self.scored_columns):
-            density = self.component_log_density(study)
-            if len(density) and not np.any(np.isfinite(density)):
-                findings.append(
-                    ModelFinding(
-                        code="unreachable_mixture_component",
-                        severity=WARNING,
-                        message=(
-                            f"{self.component.signature} gives zero density to every observed "
-                            f"outcome, so {self.component.weight_name} can only be estimated at "
-                            "the floor of its declared range"
-                        ),
-                    )
+        findings.extend(self.unreachable_component_finding(study))
+        return (*findings, *self.wrapped_findings(study))
+
+
+# --------------------------------------------------------------------------------------
+# The combinator, over a row objective
+# --------------------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class MixtureRowModel(_MixedModel):
+    """A mixture over a model whose likelihood is one density per row, not one predictor.
+
+    Everything :class:`MixtureModel` says about naming, the declared weight range and the
+    reported weight holds here word for word. What differs is the channel the weight travels
+    down, and it differs because there is no linear predictor to put a cell on.
+
+    On the penalised-linear route the mixture logit is a **cell of the linear predictor**,
+    which is what makes a mixture survive being sliced by group or multiplied by a temporal
+    basis: an outer combinator rewrites the coordinate and the predictor follows. A row
+    objective has no predictor, but it has the thing the predictor was standing in for --
+    **one coordinate vector per row** -- so the mixture logit is one extra *column* of it.
+    That is the same property in the other contract's vocabulary, and it is why
+    ``hierarchical(mix(model), parameters=("mixture_logit",))`` is a per-subject lapse rate
+    and ``smooth(mix(model), parameters=("mixture_logit",))`` is a drifting one, with no
+    combinator changed and none of them aware that a mixture is what they are widening.
+
+    The component's log density has nowhere to ride, because there is no offset either. It
+    does not need one: it is a function of the study and of the observed outcome and of no
+    parameter at all, so :class:`_MixtureRowObjective` computes it once when the objective is
+    built. An offset was always the *representation* of "a per-row term no parameter
+    multiplies"; here that term is simply held.
+    """
+
+    model: BoundedCoordinateEstimator
+    component: MixtureComponent
+    weight_bounds: tuple[float, float] = (0.0, 0.25)
+    n_restarts: int = 3
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "weight_bounds", self._validate_mixture())
+
+    # -- the shape of a mixed problem ---------------------------------------------------
+
+    @property
+    def n_model_parameters(self) -> int:
+        """How many columns of a row's coordinate belong to the wrapped model."""
+
+        return len(self.model.parameter_names)
+
+    def row_objective(self, study: Study) -> _MixtureRowObjective:
+        """Return this study's mixed negative log likelihood, in one coordinate per row.
+
+        The row-independence check is here rather than in :func:`mix` because this is the
+        first point at which a study exists, and ``row_blocks`` is a statement about a study.
+        A model that declared nothing and turns out to recurse is refused here.
+        """
+
+        inner = self.model.row_objective(study)
+        require_independent_rows(inner, model_name=self.model.model_name, combinator="mix")
+        return _MixtureRowObjective(
+            model=self,
+            study=study,
+            inner=inner,
+            component_density=self.component_log_density(study),
+        )
+
+    def fit_rows(
+        self,
+        design: RowCoefficientDesign,
+        *,
+        model_name: str,
+        model_signature: str,
+    ) -> FitResult:
+        """Solve a mixed row-coefficient problem with the wrapped model's own solver."""
+
+        return self.model.fit_rows(design, model_name=model_name, model_signature=model_signature)
+
+    def predict_rows(
+        self,
+        study: Study,
+        coefficients: NDArray[np.float64],
+        *,
+        mode: PredictionMode,
+    ) -> ModelPrediction:
+        """Return the weighted average of the two processes' predictions, per row."""
+
+        values = self._row_coordinates(study, coefficients)
+        width = self.n_model_parameters
+        model_prediction = self.model.predict_rows(study, values[:, :width], mode=mode)
+        probability = np.asarray(
+            self.component.prediction_probability(study), dtype=np.float64
+        ).reshape(len(study), self.component.prediction_width)
+        return blended_prediction(
+            model_prediction, mixture_weight(values[:, width], self.weight_bounds), probability
+        )
+
+    def pointwise_log_prob_rows(
+        self, study: Study, coefficients: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Return the mixed log density of each observation, per row coordinate."""
+
+        return self._row_parts(study, self._row_coordinates(study, coefficients)).log_density
+
+    # -- the estimator contract --------------------------------------------------------
+
+    def fit(self, study: Study) -> FitResult:
+        """Fit the wrapped model and the mixing weight jointly, on the model's own solver."""
+
+        objective = self.row_objective(study)
+        result = self.fit_rows(
+            RowCoefficientDesign(
+                parameter_names=self.parameter_names,
+                objective=objective,
+                expand=lambda joint: np.tile(joint, (objective.n_rows, 1)),
+                contract=lambda gradient: np.asarray(gradient, dtype=np.float64).sum(axis=0),
+                penalty_matrix=self.penalty_matrix(),
+                box=self.coordinate_box(study),
+                initial_points=self.initial_points(study),
+            ),
+            model_name=self.model_name,
+            model_signature=self.signature,
+        )
+        return replace(
+            result,
+            derived=(
+                *result.derived,
+                *natural_quantities(self, result.estimates, result.covariance),
+            ),
+            diagnostics=replace(
+                result.diagnostics,
+                boundary_estimate=bool(
+                    result.diagnostics.boundary_estimate
+                    or abs(float(result.estimates[-1])) >= MIXTURE_LOGIT_BOUND
+                ),
+            ),
+        )
+
+    def predict(
+        self,
+        study: Study,
+        fit: FitResult,
+        *,
+        mode: PredictionMode = PredictionMode.FILTERED,
+    ) -> ModelPrediction:
+        """Return the weighted average of the model's and the component's predictions."""
+
+        prediction_mode = self._prediction_mode(mode)
+        self._validate_fit(fit)
+        return self.predict_rows(study, self._fitted_rows(study, fit), mode=prediction_mode)
+
+    def pointwise_log_prob(
+        self,
+        study: Study,
+        fit: FitResult,
+        *,
+        mode: PredictionMode = PredictionMode.FILTERED,
+    ) -> NDArray[np.float64]:
+        """Score each observation under the fitted mixture."""
+
+        self._prediction_mode(mode)
+        self._validate_fit(fit)
+        return self.pointwise_log_prob_rows(study, self._fitted_rows(study, fit))
+
+    def component_responsibility(self, study: Study, fit: FitResult) -> NDArray[np.float64]:
+        """Return the fitted posterior probability that each row came from the component.
+
+        A mixture assigns responsibility, not membership: an implausible choice is *evidence
+        for* a lapse, not a lapse.
+        """
+
+        self._validate_fit(fit)
+        parts = self._row_parts(study, self._fitted_rows(study, fit))
+        return protected_array(parts.responsibility, dtype=np.float64)
+
+    # -- the reported coordinate --------------------------------------------------------
+
+    @property
+    def natural_names(self) -> tuple[str, ...]:
+        """The wrapped model's *reported* names, plus the weight on its own scale.
+
+        Delegated rather than copied, and that is the one place the two routes genuinely
+        disagree. A bounded-coordinate model's ``parameter_names`` is by contract an
+        unconstrained transform of what it reports -- ``discount_rate_log``, not
+        ``discount_rate`` -- so appending a weight to the *estimated* names would report a
+        logarithm under the name of the thing it is the logarithm of.
+        """
+
+        return (*self._wrapped_natural_names, self.component.weight_name)
+
+    def to_natural(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> Mapping[str, float]:
+        """Map the wrapped coordinate through its own transform and the logit through ours."""
+
+        values = self._natural_input(estimates)
+        declared = getattr(self.model, "to_natural", None)
+        inner = (
+            dict(declared(values[:-1]))
+            if declared is not None
+            else dict(zip(self.model.parameter_names, values[:-1].tolist(), strict=True))
+        )
+        inner[self.component.weight_name] = float(
+            mixture_weight(float(values[-1]), self.weight_bounds)
+        )
+        return MappingProxyType(inner)
+
+    def from_natural(self, natural: Mapping[str, float]) -> Mapping[str, float]:
+        """Encode a complete natural mapping onto the estimated coordinate."""
+
+        if not isinstance(natural, Mapping) or set(natural) != set(self.natural_names):
+            raise ValueError("natural parameters must match the model exactly")
+        wrapped = {name: natural[name] for name in natural if name != self.component.weight_name}
+        declared = getattr(self.model, "from_natural", None)
+        values = (
+            dict(declared(wrapped))
+            if declared is not None
+            else {name: float(value) for name, value in wrapped.items()}
+        )
+        values[MIXTURE_LOGIT] = mixture_logit(
+            natural[self.component.weight_name], self.weight_bounds
+        )
+        return MappingProxyType(values)
+
+    def natural_jacobian(
+        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> NDArray[np.float64]:
+        """Return the wrapped model's own Jacobian block, with the weight's below it."""
+
+        values = self._natural_input(estimates)
+        declared = getattr(self.model, "natural_jacobian", None)
+        block = (
+            np.asarray(declared(values[:-1]), dtype=np.float64)
+            if declared is not None
+            else np.eye(len(values) - 1, dtype=np.float64)
+        )
+        jacobian = np.zeros((block.shape[0] + 1, len(values)), dtype=np.float64)
+        jacobian[: block.shape[0], : block.shape[1]] = block
+        lower, upper = self.weight_bounds
+        relative = float(expit(values[-1]))
+        jacobian[-1, -1] = (upper - lower) * relative * (1.0 - relative)
+        return jacobian
+
+    # -- what is wrong with fitting this here -------------------------------------------
+
+    def additional_findings(self, study: Study) -> tuple[ModelFinding, ...]:
+        """Report the mixture hazards this route can see, and no more than it can see.
+
+        ``unreachable_mixture_component`` carries over exactly: it is a statement about the
+        component and the observed outcomes, and neither of those knows which contract the
+        model satisfies.
+
+        ``unidentified_mixture`` carries over in **meaning** and not in proof. On the
+        penalised route it is read off the design matrix, so "the model predicts the same
+        thing on every row" holds at every coordinate. There is no design matrix here, and
+        the model's prediction is a nonlinear function of the coordinate, so what is checked
+        instead is the prediction at each of the deterministic restarts the model's own
+        solver would use. A design that does not distinguish two rows gives them the same
+        prediction at every one of those, so the hazard is still caught; a coordinate at
+        which a varying design happens to look flat would be reported without being
+        degenerate, which is why the message says where it looked.
+        """
+
+        findings = list(self.unreachable_component_finding(study))
+        try:
+            starts = self.model.initial_points(study)
+        except (ModelDataError, ValueError):
+            return (*findings, *self.wrapped_findings(study))
+        if len(study) and starts and self._prediction_is_flat_at(study, starts):
+            findings.append(
+                ModelFinding(
+                    code="unidentified_mixture",
+                    severity=WARNING,
+                    message=(
+                        f"{self.component.weight_name} is not identified by this design: at "
+                        f"every coordinate {self.model.model_name} would start its own search "
+                        "from, it predicts the same thing on every row, so any weight can be "
+                        "traded against the model's own parameters without changing the fit"
+                    ),
                 )
-        return tuple(findings)
+            )
+        return (*findings, *self.wrapped_findings(study))
 
     # -- internals ---------------------------------------------------------------------
 
-    def _natural_input(
-        self, estimates: Sequence[float] | NDArray[np.floating[Any]]
+    @property
+    def _wrapped_natural_names(self) -> tuple[str, ...]:
+        return tuple(getattr(self.model, "natural_names", None) or self.model.parameter_names)
+
+    def _fitted_rows(self, study: Study, fit: FitResult) -> NDArray[np.float64]:
+        """Repeat one fitted coordinate over the study's rows."""
+
+        return np.tile(np.asarray(fit.estimates, dtype=np.float64), (len(study), 1))
+
+    def _row_coordinates(
+        self, study: Study, coefficients: NDArray[np.float64]
     ) -> NDArray[np.float64]:
-        try:
-            vector = np.asarray(estimates, dtype=np.float64)
-        except (TypeError, ValueError):
-            raise ValueError("estimates must contain finite numeric values") from None
-        width = len(self.parameter_names)
-        if vector.shape != (width,) or not np.all(np.isfinite(vector)):
-            raise ValueError(f"estimates must contain {width} finite values")
-        return vector
+        return validated_row_coefficients(
+            coefficients,
+            n_rows=len(study),
+            n_parameters=len(self.parameter_names),
+            what="row coefficients",
+        )
 
-    def _validate_fit(self, fit: FitResult) -> None:
-        if fit.model_signature != self.signature or fit.parameter_names != self.parameter_names:
-            raise ValueError("fit result was produced by a different model specification")
+    def _row_parts(self, study: Study, values: NDArray[np.float64]) -> _MixtureParts:
+        width = self.n_model_parameters
+        model_density = np.asarray(
+            self.model.pointwise_log_prob_rows(study, values[:, :width]), dtype=np.float64
+        )
+        return mixture_parts(
+            model_density,
+            self.component_log_density(study),
+            values[:, width],
+            self.weight_bounds,
+        )
 
-    def _prediction_mode(self, mode: PredictionMode) -> PredictionMode:
-        prediction_mode = PredictionMode(mode)
-        if prediction_mode not in self.supported_prediction_modes:
-            raise UnsupportedPredictionMode(
-                f"{self.model_name} does not support {prediction_mode.value!r} prediction"
-            )
-        return prediction_mode
+    def _prediction_is_flat_at(self, study: Study, starts: tuple[NDArray[np.float64], ...]) -> bool:
+        for point in starts:
+            rows = np.tile(np.asarray(point, dtype=np.float64), (len(study), 1))
+            try:
+                prediction = self.model.predict_rows(
+                    study, rows, mode=self.supported_prediction_modes[0]
+                )
+            except (ModelDataError, ValueError, UnsupportedPredictionMode, IndexError):
+                return False
+            probability = np.asarray(prediction.probability, dtype=np.float64)
+            if _varies_across_rows(probability.reshape(len(study), -1)):
+                return False
+        return True
+
+
+@dataclass(frozen=True, slots=True)
+class _MixtureRowObjective:
+    """Two densities per row, combined by a weight that is one column of the coordinate.
+
+    The row-objective twin of :class:`MixtureLikelihood`, and one member narrower because a
+    :class:`~behavio.contracts.bounded.RowObjective` is one member wide: a solver on this
+    route differences the curvature it needs out of the analytic gradient, so there is no
+    second derivative to write.
+
+    Two evaluations of the wrapped model go into one of these. ``pointwise_log_prob_rows``
+    supplies the per-row log density the average is taken over, and ``value_and_gradient``
+    supplies the per-row gradient the responsibility scales -- and the second is a per-row
+    gradient rather than a block one precisely because :func:`mix` admits only models whose
+    rows are their own blocks.
+    """
+
+    model: MixtureRowModel
+    study: Study
+    inner: RowObjective
+    component_density: NDArray[np.float64]
+
+    @property
+    def n_rows(self) -> int:
+        """The number of scored rows."""
+
+        return int(self.inner.n_rows)
+
+    @property
+    def n_parameters(self) -> int:
+        """The width of one row's mixed coordinate."""
+
+        return len(self.model.parameter_names)
+
+    @property
+    def row_blocks(self) -> NDArray[np.intp]:
+        """Every row is its own block, which :func:`mix` refused to proceed without."""
+
+        return np.arange(self.n_rows, dtype=np.intp)
+
+    def value_and_gradient(self, rows: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
+        """Return the mixed negative log likelihood and its gradient in the mixed rows.
+
+        Analytic throughout, and the same two lines the penalised route's gradient is: the
+        wrapped model's own gradient scaled by the posterior probability that the row came
+        from the model, and the weight's own derivative through the logit. Neither is a
+        finite difference, and a mixture of two differentiable densities has no reason to
+        become one.
+        """
+
+        values = validated_row_coefficients(
+            rows, n_rows=self.n_rows, n_parameters=self.n_parameters, what="row coordinates"
+        )
+        width = self.model.n_model_parameters
+        inner_rows = values[:, :width]
+        model_density = np.asarray(
+            self.model.model.pointwise_log_prob_rows(self.study, inner_rows), dtype=np.float64
+        )
+        _, inner_gradient = self.inner.value_and_gradient(inner_rows)
+        parts = mixture_parts(
+            model_density, self.component_density, values[:, width], self.model.weight_bounds
+        )
+        gradient = np.zeros_like(values)
+        gradient[:, :width] = parts.model_responsibility[:, None] * np.asarray(
+            inner_gradient, dtype=np.float64
+        )
+        gradient[:, width] = -(parts.upper - parts.lower) * parts.weight_slope
+        return float(-np.sum(parts.log_density)), gradient
 
 
 def _varies_across_rows(design: NDArray[np.float64]) -> bool:

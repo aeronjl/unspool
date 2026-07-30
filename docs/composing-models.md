@@ -71,8 +71,11 @@ columns per group; the penalty gains one Gaussian block per group.
 
 `mix(model, component, weight_bounds=...)` replaces each row's density with a weighted
 average of the model's and a declared simpler process's, and adds exactly one parameter --
-the weight. The design gains one intercept column and the linear predictor gains cells the
-component fills.
+the weight. For a model composed through a linear predictor the design gains one intercept
+column and the predictor gains cells the component fills; for a model composed through a row
+objective the row coordinate gains one column and the component's log density is held beside
+the objective. Which of the two happens is decided by the model's contract and by nothing
+else.
 
 ## Order matters, and only one order is accepted
 
@@ -271,6 +274,25 @@ the wrong unit looks like.
 Neither is an error, because both are modelling decisions only their author can judge --
 the same standing as a knot placed outside the data's support.
 
+**On the row-objective route, one of the two carries over exactly and one does not.**
+`unreachable_mixture_component` is a statement about the component and the observed
+outcomes; neither of those knows which contract the model satisfies, so it is the same
+statement computed by the same code.
+
+`unidentified_mixture` carries over in meaning but not in proof. On the penalised route it is
+read off the design matrix, so "the model predicts the same thing on every row" holds at
+*every* coordinate and the finding is exact. There is no design matrix on the row route, and
+the prediction is a nonlinear function of the coordinate, so what is checked instead is the
+prediction at each of the deterministic restarts the model's own solver would use. A design
+that does not distinguish two rows is still caught -- a constant design gives a constant
+prediction wherever it is evaluated -- but a varying design that happens to look flat at all
+of those coordinates would be reported without being degenerate. The message says where it
+looked, so the difference is legible in the report rather than only here.
+
+The wrapped model's own findings are forwarded on both routes: a discounting design that
+cannot identify a discount rate says so whether or not the model has been mixed with a
+lapse.
+
 ## What a component must expose
 
 `behavio.contracts.mixture.MixtureComponent`, which sits beside `PenalisedLinearEstimator`
@@ -288,37 +310,88 @@ The refusal is a method rather than an inspection because structural typing answ
 this object have these members", which is not the question: a uniform guess over three
 categories and a multinomial over four have identical member sets and cannot be mixed.
 
-Everything the mixed likelihood needs arrives through the **linear predictor**. The wrapped
-model's cells come first, then the mixture logit -- the only new cell a parameter multiplies
--- then the component's log density and its predicted probability, carried as *offsets*:
-terms no parameter multiplies. That is the channel per-trial option availability already
-travels down, widened by one observation, and it is why a mixture survives being sliced by
-group or multiplied by a temporal basis without either outer combinator knowing what it is
-carrying.
+A component must be able to score the model's observation, so a mixable model exposes
+`outcomes(study)` -- the array in its own outcome coordinate. `PenalisedLinearEstimator`
+declares that member already; a bounded-coordinate family that wants to be mixed declares
+the same member under the same name.
+
+### Where the weight rides
+
+For a model composed through a linear predictor, everything the mixed likelihood needs
+arrives through that predictor. The wrapped model's cells come first, then the mixture logit
+-- the only new cell a parameter multiplies -- then the component's log density and its
+predicted probability, carried as *offsets*: terms no parameter multiplies. That is the
+channel per-trial option availability already travels down, widened by one observation, and
+it is why a mixture survives being sliced by group or multiplied by a temporal basis without
+either outer combinator knowing what it is carrying.
+
+For a model composed through a `RowObjective` there is no predictor to add a cell to. What
+that predictor was standing in for is still there, though: **one coordinate vector per row**,
+which is exactly the representation both hierarchy and smoothness collapse to. So the
+mixture logit becomes one extra *column* of the row coordinate, and the property is the same
+one -- an outer combinator rewrites the coordinate and the weight follows it.
+
+```python
+from behavio import TemporalDiscounting  # a family with no design matrix at all
+
+impulsive = mix(TemporalDiscounting(), UniformChoiceGuess(), weight_bounds=(0.0, 0.3))
+
+per_animal_lapse = hierarchical(impulsive, over="subject", parameters=("mixture_logit",))
+drifting_lapse = smooth(
+    impulsive, over="session_order", knots=(0.0, 5.0), parameters=("mixture_logit",)
+)
+```
+
+The component's log density does not need an offset on this route because it does not need a
+channel at all: it is a function of the study and of the observed outcome and of no
+parameter, so the row objective computes it once and holds it. An offset was always the
+*representation* of "a per-row term no parameter multiplies", not the thing itself.
+
+The gradient stays analytic on both routes and is the same two terms: the wrapped model's own
+gradient scaled by the posterior probability that the row came from the model -- the
+responsibility an EM step would compute, here simply the derivative -- and the weight's
+derivative through its logit. Neither is a finite difference; a mixture of two differentiable
+densities has no reason to become one.
+
+One thing differs and it is contractual. On the penalised route the reported coordinate is
+the wrapped model's `parameter_names` verbatim, because that contract declares its
+coordinate to be "the one the model is estimated, reported and simulated in". On the row
+route the reported coordinate is the wrapped model's `natural_names`, because the
+bounded-coordinate contract declares the opposite -- `discount_rate_log` is estimated and
+`discount_rate` is reported, and appending a weight to the first would report a logarithm
+under the name of the thing it is the logarithm of.
 
 ## Models that decline a mixture
 
-`mix()` runs `require_penalised_linear`, so a model whose likelihood is not a sum of
-independent row scores is refused by name:
+`mix()` runs `require_mixable`, which asks one question: are this model's rows independent?
+That is the condition a mixture actually needs -- an average of two densities of *one row's*
+outcome -- and it is not the same question as "does this model have a linear predictor". A
+model whose likelihood recurses declares so in a sentence, `independent_rows_refusal`, and
+that sentence is what the `TypeError` reports:
 
 ```python
 mix(BinaryRLAgent(), UniformChoiceGuess())
 # TypeError: mix() cannot be applied to BinaryRLAgent: a value-updating agent is a
-# recursion over trials, not a penalised linear model ...
+# recursion over trials, so there is no per-row density for a mixture to average ...
 ```
 
 `SoftmaxPolicy(maximum_lapse=...)` therefore stays where it is, and that is a statement
-about the model rather than a leftover. `mix()` mixes two densities *given a linear
-predictor*, and a value-updating agent has none: a trial's choice probability is a function
-of a value trace every earlier trial in the session wrote to. The policy lapse is also in
-the right place scientifically -- it mixes the *action* the agent emits while leaving the
-value update to see the action that was actually taken, which is what makes the learned
-trace on a lapse trial the trace the animal's own choice produced. A mixture applied from
-outside the recursion could not express that, because from outside there is no recursion to
-reach into.
+about the model rather than a leftover. A trial's choice probability is a function of a value
+trace every earlier trial in the session wrote to, so there is no per-row density to average.
+The policy lapse is also in the right place scientifically -- it mixes the *action* the agent
+emits while leaving the value update to see the action that was actually taken, which is what
+makes the learned trace on a lapse trial the trace the animal's own choice produced. A
+mixture applied from outside the recursion could not express that, because from outside there
+is no recursion to reach into.
 
-The same agent is nonetheless smoothed and pooled, because neither of those needs a linear
-predictor. That is the next section.
+The declaration is eager, so that `mix()` fails at the call rather than at the fit. The exact
+form of the same question is `RowObjective.row_blocks`, which only a study can answer, and
+`require_independent_rows` asks it as soon as one exists: a model that declared nothing and
+turns out to score its rows in blocks is refused there instead.
+
+The same agent is nonetheless smoothed and pooled, because neither of those needs a row to
+have its own density -- only a coordinate constant within each block. That is the next
+section.
 
 ## Models whose coordinate is bounded, not linear
 
@@ -328,9 +401,9 @@ parameters are bounded: a learning rate in \((0,1)\), an inverse temperature abo
 width above zero, a lapse rate below its declared maximum, a discount rate above zero. All
 ten of their `smooth()` and `hierarchical()` cells work. The last two were written *after*
 this contract existed and needed nothing added to it; see
-[economic and value-based choice](economic-choice.md), which also records the one cell that
-did not open -- `mix()`, which is gated on the penalised-linear contract rather than on row
-independence and so refuses a family whose rows are independent.
+[economic and value-based choice](economic-choice.md), where `mix()` also works, because a
+mixture is gated on row independence and a value-based trial's rows are independent.
+The two agents are the families where it does not, and there the refusal is the recursion.
 `BernoulliGLMHMM` is a fourth model on this contract, and a partial one: its
 [hierarchical cell is open](#a-glm-hmm-which-cell-opened-and-what-still-refuses) on the
 emission coefficients, and its smooth cell is refused.
@@ -539,6 +612,7 @@ Naming is mechanical and stable, and it is part of the promise:
 | `hierarchical(base, over="subject")` | `intercept`, `stimulus`, `choice_lag_1` |
 | `hierarchical(smooth(base, ...), over="subject")` | the smooth names, unchanged |
 | `mix(base, UniformChoiceGuess())` | the base names, plus `mixture_logit` |
+| `mix(TemporalDiscounting(), UniformChoiceGuess())` | `discount_rate_log`, `inverse_temperature_log`, plus `mixture_logit` |
 | `smooth(mix(base, ...), over="session_order", knots=(0, 4))` | the smooth names, plus `mixture_logit[session_order=0]`, ... |
 | `MultinomialLogit(...)` | `category['right']::intercept`, `category['right']::stimulus`, `category['up']::intercept`, ... |
 | `smooth(actions, over="session_order", knots=(0, 4))` | `category['right']::intercept[session_order=0]`, ... |
@@ -576,6 +650,11 @@ predictor, which `predictor_cells` declares.
 | `MultinomialLogit(options=("left", "right", "up"))` | `("category['left']", "category['right']", "category['up']")` | `(rows, 3, parameters)` |
 | `WienerDriftDiffusion(...)` | `("drift", "boundary", "starting_bias", "nondecision_time")` | `(rows, 4, parameters)` |
 | `mix(BernoulliHistoryGLM(...), UniformChoiceGuess())` | `("linear_predictor", "mixture_weight", "component_log_density", "component_probability[0]")` | `(rows, 4, parameters + 1)` |
+
+A mixture over a row objective has no row in that table at all: it declares no
+`predictor_cells` and builds no design matrix, because there is no predictor for cells to be
+cells of. Its weight is a column of the `(rows, parameters)` coordinate instead, and the
+component's contribution is held beside the objective rather than carried down a channel.
 
 `()` is the scalar case, and every array a scalar-predictor model exchanges with a
 combinator has exactly the shape it always had -- which is why the fits the deleted
@@ -691,8 +770,10 @@ sibling contract instead, and only on the parameters that can carry a Gaussian.
 
 `behavio.contracts.bounded.BoundedCoordinateEstimator` is the second, described
 [above](#models-whose-coordinate-is-bounded-not-linear): eight of the same members, and
-`row_objective` in place of `design_matrix` + `likelihood`. `mix()` deliberately runs only
-the first check, because a mixture averages two densities *given* a linear predictor.
+`row_objective` in place of `design_matrix` + `likelihood`. `mix()` runs
+`behavio.contracts.mixture.require_mixable` instead, which routes on the same question and
+adds one of its own -- a mixture averages two densities of *one row's* outcome, so it needs
+the rows to be independent, and `row_blocks` is where a model says whether they are.
 
 Five things a combinator needs, and the members that carry each:
 
@@ -745,16 +826,23 @@ BernoulliGLMHMM(predictors=("stimulus",)).penalised_linear_refusal
 
 `require_penalised_linear` reads the declaration before it runs the structural test that
 would say yes, and reports the sentence in the `TypeError`. `BinaryRLAgent` declares one
-too, and it is still true -- there is no linear predictor to widen, which is why `mix()`
-refuses it -- but a *recursion* is not the same obstacle as a *latent-state mixture*: the
-agent's parameters are still one vector per session, so it composes through the
-bounded-coordinate contract.
+too, and it is still true -- there is no linear predictor to widen -- but a *recursion* is
+not the same obstacle as a *latent-state mixture*: the agent's parameters are still one
+vector per session, so it composes through the bounded-coordinate contract.
 
-`mix()` is the only combinator still gated on that declaration alone, and for a GLM-HMM the
-refusal is a modelling statement as much as an arithmetic one. A lapse on a GLM-HMM is a
-lapse on the *emission*, inside the recursion. Averaged in from outside, over the marginal
-one-step-ahead prediction, the weight would be free to absorb the state switching it is
-supposed to be distinguished from -- which is the opposite of what a lapse competitor is for.
+`mix()` reads a **second** declaration, `independent_rows_refusal`, and both of these models
+make one. That separation is the point: the penalised-linear refusal is about a predictor and
+the mixture refusal is about a row, and only the second is what closes a mixture. For a
+GLM-HMM the second is a modelling statement as much as an arithmetic one. A lapse on a
+GLM-HMM is a lapse on the *emission*, inside the recursion. Averaged in from outside, over
+the marginal one-step-ahead prediction, the weight would be free to absorb the state
+switching it is supposed to be distinguished from -- which is the opposite of what a lapse
+competitor is for.
+
+```python
+BernoulliGLMHMM(predictors=("stimulus",)).independent_rows_refusal
+# 'a GLM-HMM is a latent-state mixture whose rows are not independent: ...'
+```
 
 The other two cells are covered next.
 

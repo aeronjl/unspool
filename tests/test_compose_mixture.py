@@ -6,10 +6,22 @@ drift-diffusion model needed a constructor slot on that one family. What is test
 that all of them are the same expression, that the one weight it adds is estimated and
 recovered rather than declared, that the orders it composes in are the ones that mean
 something, and that a mixture the design cannot identify says so before it is fitted.
+
+``mix()`` reaches a model through either estimator contract, because the condition it
+imposes is **row independence** and not the presence of a linear predictor. The
+bounded-coordinate half of that claim is tested on the family that provoked it, in
+``tests/test_economic.py``; what is tested here is the other half -- that opening the second
+route left the first one alone. ``tests/fixtures/penalised_mixture_reference.json`` holds a
+psychometric lapse and a drift-diffusion contaminant fitted at commit ``6c4521c``, the commit
+immediately before the rewrite, and every number in it is asserted **exactly**. A tolerance
+would have passed a mixture that had quietly become a different arithmetic; equality will not.
 """
 
 from __future__ import annotations
 
+import json
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -23,6 +35,8 @@ from behavio import (
     BinaryRLAgent,
     ChoiceSpec,
     MultinomialLogit,
+    Psychometric,
+    PsychometricFunction,
     Study,
     UniformCategoryGuess,
     UniformChoiceGuess,
@@ -34,18 +48,26 @@ from behavio import (
     mix,
     run_parameter_recovery,
 )
-from behavio.compose import MixtureModel, hierarchical, smooth
+from behavio.compose import MixtureModel, MixtureRowModel, hierarchical, smooth
+from behavio.contracts.bounded import BoundedCoordinateEstimator
 from behavio.contracts.compose import PenalisedLinearEstimator
 from behavio.contracts.mixture import (
     MIXTURE_LOGIT,
     MIXTURE_LOGIT_BOUND,
     MixtureComponent,
     mixture_weight,
+    require_mixable,
 )
 from behavio.design import DesignSpec, NumericTerm
 from behavio.models import BehaviourModel
+from behavio.models.economic import TemporalDiscounting
 
 KNOTS = (0.0, 3.0)
+REFERENCE = json.loads(
+    (Path(__file__).parent / "fixtures" / "penalised_mixture_reference.json").read_text(
+        encoding="utf-8"
+    )
+)
 
 
 def design(
@@ -350,10 +372,36 @@ def test_the_full_stack_composes_in_exactly_one_order() -> None:
 
 
 def test_a_model_whose_likelihood_is_a_recursion_is_refused_by_name() -> None:
-    with pytest.raises(TypeError, match="latent-state mixture"):
+    """Row independence is the condition, and a recursion is what fails it.
+
+    Both of these compose through the same contract the economic families are mixed on, and
+    both of them satisfy every member a mixture would call. What refuses them is the sentence
+    each declares about its own likelihood, read before any member is touched.
+    """
+
+    with pytest.raises(TypeError, match="rows are not independent"):
         mix(BernoulliGLMHMM(predictors=("stimulus",)), UniformChoiceGuess())
     with pytest.raises(TypeError, match="recursion over trials"):
         mix(BinaryRLAgent(), UniformChoiceGuess())
+    # The refusal is a declaration and not an inspection: both models pass the structural
+    # test for the contract a mixture would have reached them through.
+    assert isinstance(BinaryRLAgent(), BoundedCoordinateEstimator)
+    assert isinstance(BernoulliGLMHMM(predictors=("stimulus",)), BoundedCoordinateEstimator)
+
+
+def test_a_curve_that_already_estimates_a_lapse_is_refused_by_the_name_it_collides_with() -> None:
+    """``PsychometricFunction`` is row-independent, so the gate lets it through -- and then
+    the coordinate does not.
+
+    Two rates estimated inside the link plus a symmetric mixture weight is an exactly
+    non-identified model: raising ``guess_rate`` and ``lapse_rate`` together reproduces any
+    weight. The refusal that catches it is the one that is actually true -- this model
+    already reports a ``lapse_rate`` -- rather than a complaint about a missing member.
+    """
+
+    assert require_mixable(PsychometricFunction(), combinator="mix") == "bounded-coordinate"
+    with pytest.raises(ValueError, match="already has a parameter named 'lapse_rate'"):
+        mix(PsychometricFunction(), UniformChoiceGuess())
 
 
 def test_a_component_that_cannot_score_the_outcome_says_why() -> None:
@@ -408,6 +456,126 @@ def test_a_mixture_a_design_cannot_identify_reports_a_finding() -> None:
     assert "unidentified_mixture" not in [
         finding.code for finding in lapsing_glm().describe(study).findings
     ]
+
+
+@dataclass(frozen=True, slots=True)
+class ImpossibleGuess:
+    """A guess whose support contains nothing, so it can never have produced a trial.
+
+    Written here rather than shipped because it is not a process anybody models; it is the
+    shape of a declaration made in the wrong unit, which is what the finding it provokes is
+    for. A contaminant window in milliseconds on a study recorded in seconds is the real
+    version, and it is already tested on the penalised route.
+    """
+
+    outcome: str = "choice"
+
+    @property
+    def component_name(self) -> str:
+        return "impossible"
+
+    @property
+    def signature(self) -> str:
+        return "impossible-guess[]"
+
+    @property
+    def weight_name(self) -> str:
+        return "impossible_rate"
+
+    @property
+    def scored_columns(self) -> tuple[str, ...]:
+        return (self.outcome,)
+
+    @property
+    def outcome_channels(self) -> tuple[str, ...]:
+        return ()
+
+    @property
+    def prediction_width(self) -> int:
+        return 1
+
+    def mixture_refusal(self, model: Any) -> str | None:
+        del model
+        return None
+
+    def pointwise_log_density(self, study: Study, outcomes: np.ndarray) -> np.ndarray:
+        del study
+        return np.full(len(outcomes), -np.inf, dtype=np.float64)
+
+    def prediction_probability(self, study: Study) -> np.ndarray:
+        return np.full(len(study), 0.5, dtype=np.float64)
+
+    def simulate_outcomes(
+        self, study: Study, rows: np.ndarray, *, generator: np.random.Generator
+    ) -> dict[str, np.ndarray]:
+        del study, generator
+        return {self.outcome: np.zeros(len(rows), dtype=np.int8)}
+
+
+def discount_study(*, constant: bool, n_sessions: int = 2) -> Study:
+    """A discounting design that either titrates or repeats one trial, plus observed choices."""
+
+    ratios = (0.2, 0.5, 0.8) if not constant else (0.5,)
+    delays = (7.0, 30.0, 365.0) if not constant else (30.0,)
+    rows = [(ratio, delay) for _ in range(n_sessions * 20) for ratio in ratios for delay in delays]
+    return Study(
+        {
+            "subject": ["a"] * len(rows),
+            "session": ["a-s0"] * len(rows),
+            "session_order": [0] * len(rows),
+            "trial": list(range(len(rows))),
+            "sooner_amount": [100.0 * ratio for ratio, _ in rows],
+            "sooner_delay": [0.0] * len(rows),
+            "later_amount": [100.0] * len(rows),
+            "later_delay": [delay for _, delay in rows],
+            "choice": np.random.default_rng(3).integers(0, 2, len(rows)).astype(np.int8),
+        }
+    )
+
+
+def test_the_row_route_reports_the_identifiability_findings_that_mean_the_same_thing() -> None:
+    """Which of the two findings carried over, and the sense in which the other one did.
+
+    ``unreachable_mixture_component`` is a statement about the component and the observed
+    outcomes, so it is the same statement on both routes and is computed by the same code.
+
+    ``unidentified_mixture`` is not read off a design matrix here, because there is not one.
+    It is read off the model's prediction at each of the deterministic restarts the model's
+    own solver would use, so a design that does not distinguish two rows is still caught --
+    a constant design gives a constant prediction at every coordinate -- while a design that
+    does is not reported.
+    """
+
+    model = TemporalDiscounting(value_scale=100.0)
+    lapsing = mix(model, UniformChoiceGuess(), weight_bounds=(0.0, 0.3))
+    degenerate = lapsing.describe(discount_study(constant=True)).findings
+    usable = lapsing.describe(discount_study(constant=False)).findings
+
+    assert "unidentified_mixture" in [finding.code for finding in degenerate]
+    assert "unidentified_mixture" not in [finding.code for finding in usable]
+    assert all(finding.severity == "warning" for finding in (*degenerate, *usable))
+    # A component whose support excludes every observation is unreachable on this route too,
+    # and it is reported by the same code, because it is the same statement.
+    unreachable = mix(model, ImpossibleGuess(), weight_bounds=(0.0, 0.3))
+    codes = [
+        finding.code for finding in unreachable.describe(discount_study(constant=False)).findings
+    ]
+    assert "unreachable_mixture_component" in codes
+
+
+def test_the_row_route_forwards_the_wrapped_model_s_own_findings() -> None:
+    """A mixture must not swallow what the model it wraps had to say about the study."""
+
+    lapsing = mix(TemporalDiscounting(value_scale=100.0), UniformChoiceGuess())
+    columns = {
+        name: discount_study(constant=False)[name]
+        for name in discount_study(constant=False).columns
+    }
+    columns["later_delay"] = np.zeros(len(columns["trial"]))
+
+    codes = [finding.code for finding in lapsing.describe(Study(columns)).findings]
+
+    assert "unidentified_discount_rate" in codes
 
 
 def test_a_component_that_could_not_have_produced_anything_reports_a_finding() -> None:
@@ -494,3 +662,100 @@ def test_a_mixed_model_is_an_ordinary_estimator_to_everything_downstream() -> No
     assert len(evaluations) == 1
     assert np.all(np.isfinite(evaluations[0].pointwise_log_probability))
     assert set(comparison.model_order) == {"lapsing", "plain"}
+
+
+# --------------------------------------------------------------------------------------
+# The route a model is mixed on, and the proof the old one did not move
+# --------------------------------------------------------------------------------------
+
+
+def test_which_mixture_a_model_gets_follows_from_its_contract_and_nothing_else() -> None:
+    penalised = mix(glm(), UniformChoiceGuess())
+    rows = mix(TemporalDiscounting(), UniformChoiceGuess(), weight_bounds=(0.0, 0.3))
+
+    assert isinstance(penalised, MixtureModel)
+    assert isinstance(penalised, PenalisedLinearEstimator)
+    assert isinstance(rows, MixtureRowModel)
+    assert isinstance(rows, BoundedCoordinateEstimator)
+    # The discriminator every combinator uses: a mixed row model has no ``likelihood``, so
+    # nothing downstream mistakes it for a penalised one.
+    assert not hasattr(rows, "likelihood")
+    assert hasattr(rows, "row_objective")
+    # Both spell the estimated coordinate the same way, which is what makes them one idea.
+    assert penalised.parameter_names[-1] == rows.parameter_names[-1] == MIXTURE_LOGIT
+    assert penalised.mixture_component is not None and rows.mixture_component is not None
+
+
+def reference_design(n_trials: int, *, seed: int) -> Study:
+    """The design the pinned reference fits were produced on, rebuilt exactly."""
+
+    generator = np.random.default_rng(seed)
+    return Study(
+        {
+            "subject": ["m0"] * n_trials,
+            "session": [index // 100 for index in range(n_trials)],
+            "session_order": [index // 100 for index in range(n_trials)],
+            "trial": list(range(n_trials)),
+            "stimulus": generator.normal(size=n_trials),
+        }
+    )
+
+
+def reference_case(name: str) -> tuple[Any, Study, dict[str, Any]]:
+    """Rebuild one pinned case: the model, its study and the numbers it must reproduce."""
+
+    record = REFERENCE[name]
+    if name == "psychometric_lapse":
+        model: Any = mix(Psychometric(), UniformChoiceGuess(), weight_bounds=(0.0, 0.3))
+    else:
+        model = mix(
+            WienerDriftDiffusion(
+                predictors=("stimulus",),
+                nondecision_time_bounds=(0.1, 0.6),
+                n_restarts=2,
+                simulation_time_step=0.001,
+            ),
+            UniformResponseGuess(time_bounds=(0.05, 3.0)),
+            n_restarts=2,
+        )
+    study = model.simulate(
+        reference_design(record["design_rows"], seed=record["design_seed"]),
+        dict(record["truth"]),
+        seed=record["simulate_seed"],
+    )
+    return model, study, record
+
+
+@pytest.mark.parametrize("name", ["psychometric_lapse", "drift_diffusion_contaminant"])
+def test_the_penalised_route_reproduces_its_pinned_fits_to_the_last_bit(name: str) -> None:
+    """Equality, not a tolerance: the two mixtures that existed before are the same objects.
+
+    ``mix()`` grew a second route and a shared base class, and both of those are the kind of
+    change that can move a fit by an ulp and be argued about afterwards. This asserts that
+    neither moved anything at all -- the estimates, their standard errors, the whole
+    covariance, the objective, the per-row scores, the responsibilities and the reported
+    weight are ``==`` to the numbers the previous implementation produced.
+    """
+
+    model, study, record = reference_case(name)
+
+    fit = model.fit(study)
+    scores = model.pointwise_log_prob(study, fit)
+    responsibility = model.component_responsibility(study, fit)
+    probability = np.asarray(model.predict(study, fit).probability).reshape(-1)
+
+    assert model.signature == record["signature"]
+    assert list(fit.parameter_names) == record["parameter_names"]
+    assert list(np.asarray(fit.estimates)) == record["estimates"]
+    assert list(np.asarray(fit.standard_errors)) == record["standard_errors"]
+    assert [list(row) for row in np.asarray(fit.covariance)] == record["covariance"]
+    assert fit.diagnostics.objective == record["objective"]
+    assert fit.diagnostics.gradient_norm == record["gradient_norm"]
+    assert fit.diagnostics.boundary_estimate == record["boundary_estimate"]
+    assert float(np.sum(scores)) == record["log_probability_sum"]
+    assert list(scores[:20]) == record["pointwise_log_probability_head"]
+    assert list(responsibility[:20]) == record["responsibility_head"]
+    assert list(probability[:20]) == record["probability_head"]
+    for quantity, (value, error) in record["derived"].items():
+        assert fit.derived_quantities[quantity].value == value
+        assert fit.derived_quantities[quantity].standard_error == error

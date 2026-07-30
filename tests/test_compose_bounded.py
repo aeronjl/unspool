@@ -38,6 +38,7 @@ from behavio.contracts.bounded import (
     BoundedCoordinateEstimator,
     require_composable,
 )
+from behavio.contracts.mixture import require_independent_rows
 from behavio.evaluate import cohort_forward_session_splits, forward_session_splits
 from behavio.models import ModelDataError
 from behavio.models.rl import SoftmaxPolicy
@@ -135,10 +136,40 @@ def test_a_bounded_model_declares_a_finite_box_on_the_transformed_coordinate() -
 
 
 def test_mix_still_refuses_a_value_updating_agent() -> None:
-    """Widening composition did not widen mixture: a mixture needs a linear predictor."""
+    """Widening the mixture to row objectives did not widen it to recursions.
+
+    ``mix()`` is gated on row independence rather than on a linear predictor, so this cell is
+    closed by the agent's own ``independent_rows_refusal`` -- a sentence about the value
+    trace, not about a missing member -- and it would stay closed if every member a mixture
+    calls were added tomorrow.
+    """
 
     with pytest.raises(TypeError, match="recursion over trials"):
         mix(BinaryRLAgent(), UniformChoiceGuess())
+    with pytest.raises(TypeError, match="recursion over trials"):
+        mix(q_agent(), UniformChoiceGuess())
+
+
+def test_the_row_block_check_is_exact_once_a_study_exists() -> None:
+    """The declaration is eager; ``row_blocks`` is the same question asked exactly.
+
+    A model that declared nothing and turns out to recurse must not be mixed on the strength
+    of having the members, so the condition is re-asked against the study. The agent's own
+    row objective is the honest instance of a coarser blocking: one block per session.
+    """
+
+    study = q_agent().simulate(
+        bandit_design(["a"], n_sessions=2, trials=20),
+        q_agent().parameters_from_components(
+            learning_rate=0.3, inverse_temperature=3.0, choice_bias=0.0, perseveration=0.0
+        ),
+        seed=4,
+    )
+    objective = q_agent().row_objective(study)
+
+    assert len(np.unique(objective.row_blocks)) < objective.n_rows
+    with pytest.raises(ValueError, match="one density per row"):
+        require_independent_rows(objective, model_name="binary-q-learning", combinator="mix")
 
 
 # --------------------------------------------------------------------------------------

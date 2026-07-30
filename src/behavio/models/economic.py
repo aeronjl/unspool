@@ -436,7 +436,7 @@ class _ValueBasedChoice(Describable):
 
     @property
     def penalised_linear_refusal(self) -> str:
-        """Why ``mix()`` and the penalised-linear route cannot be applied to this family.
+        """Why the penalised-linear route cannot be applied to this family.
 
         Declared rather than left to structural typing, following the precedent
         :class:`~behavio.models.rl.BinaryRLAgent` and
@@ -446,13 +446,13 @@ class _ValueBasedChoice(Describable):
 
         The obstacle here is **not** the one the agents have. A value-based trial's rows *are*
         independent -- that is why ``smooth(model, over="trial")`` is admissible for this
-        family and an error for a Q-learning agent. What is missing is a **linear predictor**:
-        the utility is a power law and a hyperbola in the parameters, so there is no design
-        matrix a combinator could widen and no linear predictor a mixture could average two
-        densities over. A lapse on a discounting or prospect-theory model is a perfectly
-        well-defined thing to want, and :func:`~behavio.compose.mix` cannot express it,
-        because ``mix()`` is gated on the penalised-linear contract rather than on row
-        independence. See ``docs/economic-choice.md``.
+        family and an error for a Q-learning agent, and it is why
+        :func:`~behavio.compose.mix` is admissible too. What is missing is only a **linear
+        predictor**: the utility is a power law and a hyperbola in the parameters, so there
+        is no design matrix a combinator could widen. All three combinators reach this family
+        through :class:`~behavio.contracts.bounded.BoundedCoordinateEstimator` instead, the
+        mixture by putting its weight in one extra column of the row coordinate rather than
+        in one extra cell of a predictor. See ``docs/economic-choice.md``.
         """
 
         return (
@@ -461,6 +461,17 @@ class _ValueBasedChoice(Describable):
             "independent, so it composes through "
             "behavio.contracts.bounded.BoundedCoordinateEstimator instead"
         )
+
+    @property
+    def outcome_channels(self) -> tuple[str, ...]:
+        """One observed number per row -- a choice -- so the scalar case, spelled out.
+
+        Declared rather than left absent because a mixture component is checked against it:
+        a process that writes a joint choice and latency is not a mixture of one observation
+        with a family that observes a choice.
+        """
+
+        return ()
 
     # -- what a family supplies ----------------------------------------------------------
 
@@ -763,6 +774,17 @@ class _ValueBasedChoice(Describable):
     # ``parameter_names`` is already the unconstrained coordinate -- six logarithms and a
     # seventh -- so hierarchy and smoothness need nothing added to it. See
     # ``behavio.contracts.bounded``.
+
+    def outcomes(self, study: Study) -> NDArray[np.float64]:
+        """Return the observed choice of each row, validated, on this model's coordinate.
+
+        The member :class:`~behavio.contracts.compose.PenalisedLinearEstimator` declares
+        under the same name and with the same meaning, and the array a
+        :class:`~behavio.contracts.mixture.MixtureComponent` is asked to score. Public
+        because a mixture is written against a contract rather than against this class.
+        """
+
+        return self._outcomes(study)
 
     def row_objective(self, study: Study) -> _ValueChoiceRowObjective:
         """Return this study's negative log likelihood in one coordinate per row."""

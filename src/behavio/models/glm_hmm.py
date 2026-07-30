@@ -348,15 +348,14 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         scores ``f(eta_r, y_r)``; a GLM-HMM's is a forward recursion in which row ``r``'s
         contribution depends on every row before it.
 
-        That is a refusal of the **penalised-linear** contract and of ``mix()``, which is
-        the only combinator that still runs
-        :func:`~behavio.contracts.compose.require_penalised_linear` on its own. It is not a
-        refusal of hierarchy: row independence is what
+        That is a refusal of the **penalised-linear** contract. It is not a refusal of
+        hierarchy: row independence is what
         :attr:`~behavio.contracts.bounded.RowObjective.row_blocks` exists to relax, and a
         GLM-HMM's recursion runs over one subject's session, which lies inside a subject.
         ``hierarchical(model, over="subject", parameters=<emission coefficients>)`` therefore
         composes through :class:`~behavio.contracts.bounded.BoundedCoordinateEstimator`;
-        what it may vary is limited by :meth:`varying_parameter_refusal`.
+        what it may vary is limited by :meth:`varying_parameter_refusal`. ``mix()`` is
+        refused separately and for its own reason, by :attr:`independent_rows_refusal`.
 
         No arrangement of members can be inspected to discover any of that, which is why
         this is a sentence rather than a signature.
@@ -365,12 +364,34 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         return (
             "a GLM-HMM is a latent-state mixture, not a penalised linear model: its row "
             "scores come from a forward recursion over a whole session rather than from "
-            "one linear predictor per row, and a lapse on a GLM-HMM is a lapse on the "
-            "state's emission, inside that recursion, not a second density averaged with "
-            "the marginal one from outside it. Mixing from outside would let the weight "
-            "absorb the state switching it is supposed to be distinguished from. Compose "
-            "hierarchy through behavio.contracts.bounded.BoundedCoordinateEstimator "
-            "instead, which is written against the blocks a recursion runs over"
+            "one linear predictor per row. Compose hierarchy through "
+            "behavio.contracts.bounded.BoundedCoordinateEstimator instead, which is "
+            "written against the blocks a recursion runs over"
+        )
+
+    @property
+    def independent_rows_refusal(self) -> str:
+        """Why a mixture may not be applied to this model, on either contract.
+
+        ``mix()`` is gated on row independence rather than on a linear predictor, so
+        widening the combinator did not open this cell and could not have. A GLM-HMM's row
+        scores come out of a forward recursion over a whole session, so there is no per-row
+        density for a second one to be averaged with.
+
+        The refusal is a modelling statement as much as an arithmetic one. A lapse on a
+        GLM-HMM is a lapse on the *emission*, inside the recursion. Averaged in from outside,
+        over the marginal one-step-ahead prediction, the weight would be free to absorb the
+        state switching it is supposed to be distinguished from -- which is the opposite of
+        what a lapse competitor is for.
+        """
+
+        return (
+            "a GLM-HMM is a latent-state mixture whose rows are not independent: its row "
+            "scores come from a forward recursion over a whole session rather than from "
+            "one density per row, and a lapse on a GLM-HMM is a lapse on the state's "
+            "emission, inside that recursion, not a second density averaged with the "
+            "marginal one from outside it. Mixing from outside would let the weight absorb "
+            "the state switching it is supposed to be distinguished from"
         )
 
     def varying_parameter_refusal(

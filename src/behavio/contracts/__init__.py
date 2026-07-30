@@ -135,6 +135,8 @@ from behavio.contracts.mixture import (
     MixtureComponent,
     mixture_logit,
     mixture_weight,
+    require_independent_rows,
+    require_mixable,
     require_mixture_component,
     validate_weight_bounds,
 )
@@ -255,6 +257,8 @@ __all__ = [
     "register_fit_auditor",
     "require_bounded_coordinate",
     "require_composable",
+    "require_independent_rows",
+    "require_mixable",
     "require_mixture_component",
     "require_penalised_linear",
     "ridge_group_draw",

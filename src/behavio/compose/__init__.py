@@ -57,6 +57,7 @@ from behavio.compose.hierarchy import (
 from behavio.compose.mixture import (
     MixtureLikelihood,
     MixtureModel,
+    MixtureRowModel,
     MixtureSimulation,
     mix,
 )
@@ -70,6 +71,7 @@ __all__ = [
     "HierarchicalSimulation",
     "MixtureLikelihood",
     "MixtureModel",
+    "MixtureRowModel",
     "MixtureSimulation",
     "SmoothModel",
     "UniformCategoryGuess",

@@ -233,6 +233,27 @@ class BinaryQLearning:
         return "binary-q-learning"
 
     @property
+    def independent_rows_refusal(self) -> str:
+        """Why a mixture may not be applied to this agent, on either estimator contract.
+
+        ``smooth()`` and ``hierarchical()`` compose it through
+        :class:`~behavio.contracts.bounded.BoundedCoordinateEstimator`, because neither of
+        them needs a row to have its own density -- only a coordinate that is constant within
+        each block the recursion runs over. ``mix()`` does need one, and it is not there: a
+        trial's choice probability is a function of the value trace every earlier trial in
+        the session wrote to, so the mixture that would be a lapse belongs on the emitted
+        action, inside that recursion, where the value update still sees the action that was
+        taken.
+        """
+
+        return (
+            "a value-updating agent is a recursion over trials, so there is no per-row "
+            "density for a mixture to average: a trial's choice probability depends on the "
+            "value trace every earlier trial in the session wrote to. A lapse belongs on "
+            "the policy that emits the action, inside that recursion"
+        )
+
+    @property
     def signature(self) -> str:
         environment = ",".join(self.reward_probability_columns)
         return (

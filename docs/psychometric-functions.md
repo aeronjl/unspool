@@ -25,6 +25,12 @@ units, and a declared link \(F\).
     [composing models](composing-models.md#mix-a-simpler-process-alongside-the-model) for
     why that line falls where it does.
 
+    `mix(PsychometricFunction(), UniformChoiceGuess())` is therefore refused, and the
+    sentence names the collision rather than a missing member: this curve already reports a
+    `lapse_rate`. That refusal is exact and not conservative -- raising \(\gamma\) and
+    \(\lambda\) together reproduces any symmetric mixture weight, so the three would not be
+    jointly identified.
+
 ## Links
 
 | `PsychometricLink` | Core | Stimulus scale |

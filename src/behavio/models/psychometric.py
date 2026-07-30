@@ -799,6 +799,20 @@ class PsychometricFunction:
     # bounded-logit rates -- which is exactly what hierarchy needs a Gaussian deviation to
     # live on. See ``behavio.contracts.bounded``.
 
+    def outcomes(self, study: Study) -> NDArray[np.float64]:
+        """Return the observed response of each row, validated, on this model's coordinate.
+
+        The member :class:`~behavio.contracts.compose.PenalisedLinearEstimator` declares
+        under the same name and with the same meaning. It is what a
+        :class:`~behavio.contracts.mixture.MixtureComponent` would be asked to score, and
+        having it is what makes ``mix(PsychometricFunction(), UniformChoiceGuess())`` fail
+        on the sentence that is actually true -- this curve already reports a ``lapse_rate``,
+        estimated inside its link where the shape of a curve belongs -- rather than on a
+        missing attribute.
+        """
+
+        return self._outcomes(study)
+
     def row_objective(self, study: Study) -> _PsychometricRowObjective:
         """Return this study's negative log likelihood in one coordinate per row."""
 

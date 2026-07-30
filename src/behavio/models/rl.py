@@ -488,13 +488,13 @@ class BinaryRLAgent:
 
     @property
     def penalised_linear_refusal(self) -> str:
-        """Why ``mix()`` may not rewrite this model's problem.
+        """Why this model is not composed through a design matrix and a linear predictor.
 
         ``smooth()`` and ``hierarchical()`` compose this agent anyway, through
         :class:`~behavio.contracts.bounded.BoundedCoordinateEstimator`: neither of them needs
-        a linear predictor, only one unconstrained coordinate vector per row. ``mix()`` does
-        need one -- it averages two densities *given* a predictor -- so it reads this
-        sentence and refuses, which is also the right answer scientifically.
+        a linear predictor, only one unconstrained coordinate vector per row. What refuses
+        ``mix()`` is :attr:`independent_rows_refusal`, which is a different sentence about a
+        different obstacle -- the recursion, not the absence of a predictor.
         """
 
         return (
@@ -504,6 +504,30 @@ class BinaryRLAgent:
             "and there is no linear predictor for a combinator to widen. Its lapse is "
             "declared on the policy, where it mixes the emitted action while leaving the "
             "value update to see the action that was taken"
+        )
+
+    @property
+    def independent_rows_refusal(self) -> str:
+        """Why a mixture may not be applied to this model, whichever contract it composes on.
+
+        ``mix()`` is gated on row independence rather than on a linear predictor, so this is
+        the declaration it reads. The obstacle is the recursion itself, and it survives the
+        combinator being widened because it was never arithmetic in the first place.
+
+        The lapse is in the right place scientifically. A policy lapse mixes the *action*
+        the agent emits while leaving the value update to see the action that was actually
+        taken, which is what makes the learned trace on a lapse trial the trace the animal's
+        own choice produced. A mixture applied from outside the recursion could not express
+        that, because from outside there is no recursion to reach into -- and the weight
+        would be free to absorb learning it is supposed to be distinguished from.
+        """
+
+        return (
+            "a value-updating agent is a recursion over trials, so there is no per-row "
+            "density for a mixture to average: a trial's choice probability depends on the "
+            "value trace every earlier trial in the session wrote to. Its lapse is declared "
+            "on the policy, where it mixes the emitted action while leaving the value "
+            "update to see the action that was taken"
         )
 
     @property

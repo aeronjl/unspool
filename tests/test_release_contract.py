@@ -66,11 +66,13 @@ MODEL_CATALOGUE = {
 #: headline capability of the model layer: eleven hand-written variant classes across two axes
 #: plus three unrelated hard-coded mixtures became three functions over an ordinary estimator,
 #: so what a user is promised is the *set of verbs*, not a grid of nouns. ``SmoothModel``,
-#: ``HierarchicalModel`` and ``MixtureModel`` are pinned because they are what the verbs return
-#: and therefore what a caller annotates; ``HierarchicalFitResult`` because a hierarchical fit's
-#: group deviations are read off it by name and no other type carries them. The three
-#: components are pinned because ``mix`` is useless without one and there is no way to write
-#: your own without first seeing these.
+#: ``HierarchicalModel``, ``MixtureModel`` and ``MixtureRowModel`` are pinned because they are
+#: what the verbs return and therefore what a caller annotates -- ``mix`` returns the first of
+#: the two mixtures for a model composed through a linear predictor and the second for one
+#: composed through a row objective, so a caller who annotates one has to be able to name both;
+#: ``HierarchicalFitResult`` because a hierarchical fit's group deviations are read off it by
+#: name and no other type carries them. The three components are pinned because ``mix`` is
+#: useless without one and there is no way to write your own without first seeing these.
 #:
 #: Deliberately unpinned, and therefore reached at ``behavio.compose.<name>``:
 #: ``HierarchicalSimulation``, ``MixtureSimulation`` and ``CoefficientTrajectory`` (records you
@@ -88,6 +90,7 @@ COMBINATOR_SURFACE = {
     "HierarchicalModel",
     "HierarchicalFitResult",
     "MixtureModel",
+    "MixtureRowModel",
     "UniformChoiceGuess",
     "UniformCategoryGuess",
     "UniformResponseGuess",

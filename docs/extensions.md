@@ -19,6 +19,7 @@ re-export them, so older imports keep working.
 | A fitted predictive model | `BehaviourEstimator` | prospective evaluation and matched comparison |
 | A model that can also simulate | `GenerativeBehaviourModel` | parameter and model recovery |
 | A model whose likelihood is a quadratically penalised linear predictor | `PenalisedLinearEstimator` | `smooth()`, `hierarchical()` and `mix()` apply to it, so the time-variation, population and mixture cells of your family exist without being written |
+| A model scored from one unconstrained coordinate vector per row | `BoundedCoordinateEstimator` | the same three cells, through `row_objective` rather than a design matrix; `mix()` needs `row_blocks` to be one block per row and `outcomes(study)` alongside |
 | A simpler process a model could be mixed with | `MixtureComponent` | `mix()` accepts it against any composable family, so one lapse or contaminant serves every model that scores the same observation |
 | A natural/optimizer parameter description | `ParameterSpaceProvider` | portable transforms, bounds, priors, and backend adapters |
 | An optimizer | `OptimizationBackend` | identical deterministic problems with complete attempt records |
@@ -52,7 +53,13 @@ its predictors through a Wiener first-passage time, not a link function. And a l
 whose row scores are not independent given the predictor cannot satisfy it either, however
 its members are shaped: a mixture over latent states scores row *r* through a recursion
 over every row before it. The second kind cannot be detected structurally, so a model in
-that position declares `penalised_linear_refusal` and `mix()` reports the reason.
+that position declares `penalised_linear_refusal`, and `smooth()` and `hierarchical()`
+report the reason before routing it to the sibling contract instead.
+
+`mix()` reads a different declaration, `independent_rows_refusal`, because it imposes a
+different condition: a mixture averages two densities of *one row's* outcome, so it needs the
+rows to be independent and does not care whether they reach it through a predictor. A model
+of the second kind declares both sentences and they say different things.
 
 `BoundedCoordinateEstimator` is its sibling, for a model in the second position that still
 wants hierarchy and time-variation. It shares eight members with

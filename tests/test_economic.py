@@ -12,10 +12,11 @@ medians, where no fitting is involved at all, and once from parameters recovered
 simulated choices. And the **analytic gradient** of both likelihoods is checked against a
 central difference, because a wrong gradient converges to a wrong answer quietly.
 
-The rest of the file is the composition claim: that ``smooth()`` and ``hierarchical()`` work
-on a family written after they existed, without either combinator being touched, and that
-``mix()`` does not -- for a reason that is worth a test of its own, because it is not the
-reason a reinforcement-learning agent declines one.
+The rest of the file is the composition claim: that all three of ``smooth()``,
+``hierarchical()`` and ``mix()`` work on a family written after they existed, without any of
+them being touched. The mixture is the one worth a section of its own: it reaches this family
+through a row objective rather than a linear predictor, so its weight is a column of the row
+coordinate, and the two outer combinators vary that column exactly as they vary any other.
 """
 
 from __future__ import annotations
@@ -28,11 +29,14 @@ import pytest
 
 from behavio import Study, compare_models, evaluate_splits, run_parameter_recovery
 from behavio.compose import UniformChoiceGuess, hierarchical, mix, smooth
+from behavio.compose.mixture import MixtureRowModel
 from behavio.contracts.bounded import (
     BOUNDED_COORDINATE,
     BoundedCoordinateEstimator,
+    RowCoefficientDesign,
     require_composable,
 )
+from behavio.contracts.mixture import MIXTURE_LOGIT
 from behavio.evaluate import cohort_forward_session_splits
 from behavio.models import BernoulliHistoryGLM, ModelDataError
 from behavio.models.economic import (
@@ -606,19 +610,242 @@ def test_a_within_session_clock_is_admissible_here_and_is_not_for_an_agent() -> 
     assert len(fit.estimates) == 3
 
 
-def test_mix_refuses_the_family_and_says_why_in_its_own_words() -> None:
-    """The one cell that does not open, and the sentence that explains it.
+def test_a_lapse_on_a_discounting_model_recovers_the_rate_and_the_weight() -> None:
+    """The cell that opened, and the reason it could: these rows are independent.
 
-    ``mix()`` is gated on ``require_penalised_linear`` rather than on row independence, so a
-    row-independent bounded-coordinate family is refused for a reason that is about the
-    absence of a *linear predictor*, not about a recursion. Nothing was changed to make this
-    message appear; the model declares ``penalised_linear_refusal``, exactly as the GLM-HMM
-    and the reinforcement-learning agent do.
+    ``mix()`` is gated on row independence rather than on a linear predictor, so a family
+    with no design matrix at all is mixed by putting the weight in one extra column of the
+    row coordinate. Nothing in this module was written for it -- the model declares
+    ``row_objective``, ``pointwise_log_prob_rows``, ``predict_rows`` and ``outcomes``, and
+    that is the whole of what a mixture asks for.
     """
 
-    for model in (discounter(), prospect()):
-        with pytest.raises(TypeError, match="no design matrix and no linear predictor"):
-            mix(model, UniformChoiceGuess())
+    model = discounter()
+    lapsing = mix(model, UniformChoiceGuess(), weight_bounds=(0.0, 0.3))
+    truth = lapsing.from_natural(
+        {"discount_rate": 0.02, "inverse_temperature": 8.0, "lapse_rate": 0.12}
+    )
+    simulation = lapsing.simulate_with_component(
+        discount_design(["a"], sessions=40), truth, seed=11
+    )
+
+    fit = lapsing.fit(simulation.study)
+    recovered = lapsing.to_natural(fit.estimates)
+
+    assert isinstance(lapsing, MixtureRowModel)
+    assert lapsing.parameter_names == (
+        "discount_rate_log",
+        "inverse_temperature_log",
+        MIXTURE_LOGIT,
+    )
+    # The reported coordinate is the *model's* reported coordinate, not its logarithms.
+    assert lapsing.natural_names == ("discount_rate", "inverse_temperature", "lapse_rate")
+    assert recovered["lapse_rate"] == pytest.approx(0.12, abs=0.05)
+    assert recovered["discount_rate"] == pytest.approx(0.02, rel=0.4)
+    assert fit.derived_quantities["lapse_rate"].standard_error > 0
+    assert fit.diagnostics.converged
+    # A responsibility is a posterior probability, and the trials the component actually
+    # produced carry more of it than the ones the model did.
+    responsibility = lapsing.component_responsibility(simulation.study, fit)
+    assert np.all((responsibility >= 0) & (responsibility <= 1))
+    assert np.mean(responsibility[simulation.from_component]) > np.mean(
+        responsibility[~simulation.from_component]
+    )
+
+
+def test_a_lapse_on_prospect_theory_recovers_alongside_six_utility_parameters() -> None:
+    model = ProspectTheory(value_scale=100.0, fixed_weighting_elevation=1.0)
+    lapsing = mix(model, UniformChoiceGuess(), weight_bounds=(0.0, 0.3))
+    truth = lapsing.from_natural(
+        {
+            "gain_exponent": 0.85,
+            "loss_exponent": 0.9,
+            "loss_aversion": 2.0,
+            "weighting_curvature": 0.7,
+            "inverse_temperature": 8.0,
+            "lapse_rate": 0.1,
+        }
+    )
+    study = lapsing.simulate(risk_design(["a"], sessions=12), truth, seed=17)
+
+    fit = lapsing.fit(study)
+    recovered = lapsing.to_natural(fit.estimates)
+
+    assert lapsing.parameter_names[-1] == MIXTURE_LOGIT
+    assert recovered["lapse_rate"] == pytest.approx(0.1, abs=0.06)
+    assert recovered["gain_exponent"] == pytest.approx(0.85, abs=0.25)
+    assert fit.diagnostics.converged
+
+
+def test_the_mixed_gradient_matches_a_central_difference() -> None:
+    """A mixture of two differentiable densities is differentiable, and stays analytic.
+
+    The mixture's own two terms are the wrapped gradient scaled by the posterior probability
+    that a row came from the model, and the weight's derivative through its logit. Neither
+    is a finite difference, so both are checked against one -- on the joint coordinate the
+    solver actually searches, and on the per-row coordinate an outer combinator hands down.
+    """
+
+    model = discounter()
+    lapsing = mix(model, UniformChoiceGuess(), weight_bounds=(0.0, 0.3))
+    study = lapsing.simulate(
+        discount_design(["a"], sessions=2),
+        lapsing.from_natural(
+            {"discount_rate": 0.02, "inverse_temperature": 8.0, "lapse_rate": 0.1}
+        ),
+        seed=0,
+    )
+    objective = lapsing.row_objective(study)
+    joint = np.asarray([np.log(0.031), np.log(5.5), -1.3])
+
+    shared = RowCoefficientDesign(
+        parameter_names=lapsing.parameter_names,
+        objective=objective,
+        expand=lambda vector: np.tile(vector, (objective.n_rows, 1)),
+        contract=lambda gradient: np.asarray(gradient, dtype=np.float64).sum(axis=0),
+        penalty_matrix=lapsing.penalty_matrix(),
+    )
+    _, gradient = shared.value_and_gradient(joint)
+    steps = np.eye(len(joint)) * 1e-6
+    numeric = np.asarray(
+        [
+            (
+                shared.value_and_gradient(joint + step)[0]
+                - shared.value_and_gradient(joint - step)[0]
+            )
+            / 2e-6
+            for step in steps
+        ]
+    )
+
+    assert gradient == pytest.approx(numeric, abs=1e-6)
+
+    # Row by row: perturbing one row's coordinate moves only that row's density.
+    rows = np.tile(joint, (objective.n_rows, 1))
+    rows += np.random.default_rng(4).normal(scale=0.2, size=rows.shape)
+    _, row_gradient = objective.value_and_gradient(rows)
+    for index, column in ((0, 0), (3, 1), (7, 2), (objective.n_rows - 1, 2)):
+        step = np.zeros_like(rows)
+        step[index, column] = 1e-6
+        difference = (
+            objective.value_and_gradient(rows + step)[0]
+            - objective.value_and_gradient(rows - step)[0]
+        ) / 2e-6
+        assert row_gradient[index, column] == pytest.approx(difference, abs=1e-6)
+
+
+def test_the_mixture_weight_varies_by_subject_and_follows_a_path() -> None:
+    """``hierarchical(mix(...))`` and ``smooth(mix(...))``, on a family with no predictor.
+
+    This is the property the linear-predictor route got from the mixture logit being a
+    *cell*: an outer combinator rewrites the coordinate and the weight follows it. Here the
+    logit is a *column of the row coordinate* instead, and neither combinator was changed.
+    """
+
+    model = discounter()
+    lapsing = mix(model, UniformChoiceGuess(), weight_bounds=(0.0, 0.4))
+    truth = dict(
+        lapsing.from_natural(
+            {"discount_rate": 0.02, "inverse_temperature": 8.0, "lapse_rate": 0.12}
+        )
+    )
+
+    pooled = hierarchical(
+        lapsing, over="subject", parameters=(MIXTURE_LOGIT,), scale=0.6, estimate_scale=False
+    )
+    pooled_fit = pooled.fit(
+        pooled.simulate(discount_design(["a", "b", "c"], sessions=8), truth, seed=23)
+    )
+
+    drifting = smooth(
+        lapsing,
+        over="session_order",
+        knots=(0.0, 5.0),
+        parameters=(MIXTURE_LOGIT,),
+        smoothness=1.0,
+    )
+    drifting_study = drifting.simulate(
+        discount_design(["a"], sessions=6),
+        drifting.parameters_from_paths(
+            {
+                "discount_rate_log": float(truth["discount_rate_log"]),
+                "inverse_temperature_log": float(truth["inverse_temperature_log"]),
+                MIXTURE_LOGIT: [-3.0, 0.0],
+            }
+        ),
+        seed=29,
+    )
+    drifting_fit = drifting.fit(drifting_study)
+
+    assert pooled_fit.varying_parameters == (MIXTURE_LOGIT,)
+    assert pooled_fit.group_deviations.shape == (3, 1)
+    assert np.all(np.isfinite(pooled_fit.group_deviations))
+    assert drifting.parameter_names[-2:] == (
+        f"{MIXTURE_LOGIT}[session_order=0]",
+        f"{MIXTURE_LOGIT}[session_order=5]",
+    )
+    assert np.all(np.isfinite(drifting_fit.estimates))
+    assert drifting_fit.estimates[-2] < drifting_fit.estimates[-1]
+
+
+def test_the_full_stack_composes_over_a_row_objective_too() -> None:
+    """``hierarchical(smooth(mix(model)))``, on a family with no linear predictor at all.
+
+    Every prefix of the stack is a model on this route as it is on the other one, and the
+    weight is free to be the thing that varies by subject while the discount rate is the
+    thing that follows a path.
+    """
+
+    lapsing = mix(discounter(), UniformChoiceGuess(), weight_bounds=(0.0, 0.4))
+    stack = hierarchical(
+        smooth(lapsing, over="session_order", knots=(0.0, 5.0), parameters=("discount_rate_log",)),
+        over="subject",
+        parameters=(MIXTURE_LOGIT,),
+        scale=0.5,
+        estimate_scale=False,
+    )
+    truth = dict(
+        stack.model.parameters_from_paths(
+            {
+                "discount_rate_log": [float(np.log(0.01)), float(np.log(0.05))],
+                "inverse_temperature_log": float(np.log(8.0)),
+                MIXTURE_LOGIT: -2.0,
+            }
+        )
+    )
+    study = stack.simulate(discount_design(["a", "b", "c"], sessions=6), truth, seed=31)
+
+    fit = stack.fit(study)
+
+    assert stack.parameter_names[-1] == MIXTURE_LOGIT
+    assert fit.varying_parameters == (MIXTURE_LOGIT,)
+    assert fit.group_deviations.shape == (3, 1)
+    assert np.all(np.isfinite(fit.estimates))
+    assert np.all(np.isfinite(stack.pointwise_log_prob(study, fit)))
+
+
+def test_a_mixed_value_based_model_is_an_ordinary_estimator_downstream() -> None:
+    lapsing = mix(discounter(), UniformChoiceGuess(), weight_bounds=(0.0, 0.3))
+    truths = [
+        dict(
+            lapsing.from_natural(
+                {"discount_rate": rate, "inverse_temperature": 8.0, "lapse_rate": 0.1}
+            )
+        )
+        for rate in (0.01, 0.05)
+    ]
+    design = discount_design(["a"], sessions=20)
+
+    report = run_parameter_recovery(lapsing, design, truths, seed=5)
+    study = lapsing.simulate(discount_design(["a"], sessions=6), truths[0], seed=1)
+    splits = cohort_forward_session_splits(study, min_train_sessions=4)
+    evaluations = evaluate_splits(lapsing, study, splits)
+    comparison = compare_models({"lapsing": lapsing, "plain": discounter()}, study, splits)
+
+    assert report.parameter_names == lapsing.parameter_names
+    assert report.audit_failure_rate == 0.0
+    assert np.all(np.isfinite(evaluations[0].pointwise_log_probability))
+    assert set(comparison.model_order) == {"lapsing", "plain"}
 
 
 # --------------------------------------------------------------------------------------

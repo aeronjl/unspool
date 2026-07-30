@@ -71,10 +71,11 @@ error. Deterministic restarts are what `n_restarts` buys: a mixture likelihood i
 convex in the weight and the model's parameters jointly, so a lapse parameter could
 otherwise silently absorb poor local optimization.
 
-The same call puts a lapse on any composable model. `mix(BernoulliHistoryGLM(...), ...)`,
-`mix(MultinomialLogit(...), UniformCategoryGuess(...))` and
-`mix(WienerDriftDiffusion(...), UniformResponseGuess(...))` are the same idea on three
-families that could not express it before.
+The same call puts a lapse on any composable model whose rows are independent.
+`mix(BernoulliHistoryGLM(...), ...)`, `mix(MultinomialLogit(...), UniformCategoryGuess(...))`
+and `mix(WienerDriftDiffusion(...), UniformResponseGuess(...))` are the same idea on three
+families that could not express it before, and `mix(TemporalDiscounting(), ...)` is the same
+idea again on a family with no linear predictor at all.
 
 A lapse mixture is still only one account of asymptotic errors. It should be compared with
 stimulus nonlinearities, history, contaminants, state mixtures, and task-specific motor or

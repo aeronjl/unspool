@@ -276,28 +276,58 @@ Admissible is not the same as estimable. Two knots over a within-session counter
 of within-session drift and can be fitted; a knot per trial is not, and the roughness penalty
 is the only thing standing between those two, exactly as for any other smooth model.
 
-### `mix()` refuses, and the reason is not the agents' reason
+### A lapse is `mix()`, and it works here for the reason it refuses the agents
 
 ```python
-mix(TemporalDiscounting(), UniformChoiceGuess())
-# TypeError: mix() cannot be applied to TemporalDiscounting: a value-based choice model
-# applies a nonlinear utility to each option before the softmax, so it has no design matrix
-# and no linear predictor; its rows are independent, so it composes through
-# behavio.contracts.bounded.BoundedCoordinateEstimator instead
+from behavio.compose import UniformChoiceGuess, hierarchical, mix, smooth
+
+impulsive_with_lapses = mix(
+    TemporalDiscounting(value_scale=100.0), UniformChoiceGuess(), weight_bounds=(0.0, 0.3)
+)
+
+fit = impulsive_with_lapses.fit(study)
+impulsive_with_lapses.to_natural(fit.estimates)
+# {'discount_rate': ..., 'inverse_temperature': ..., 'lapse_rate': ...}
 ```
 
 A reinforcement-learning agent declines a mixture because a lapse belongs *inside* its
 recursion, where it can mix the emitted action while leaving the value update to see the
 action that was taken. That argument does not apply here: these rows are independent, and a
-lapse on a discounting model is a perfectly ordinary thing to want — the same lapse a
-psychometric curve estimates.
+lapse on a discounting model is an ordinary thing to want — the same lapse a psychometric
+curve estimates.
 
-What blocks it is arithmetic in the combinator rather than science in the model.
-`mix()` averages two densities *given a linear predictor* and is gated on
-`require_penalised_linear`; a value-based model's utility is a power law and a hyperbola in
-its parameters, so there is no linear predictor to average over. Until a mixture is expressed
-over a row objective rather than a linear predictor, a lapse on these families has to be
-declared in the model, and this module does not yet declare one.
+`mix()` is gated on exactly that: **row independence**, which `row_blocks` reports, and not
+on the presence of a linear predictor. This family has no linear predictor and no design
+matrix, so the weight is not a cell of a predictor here — it is one extra column of the row
+coordinate, `mixture_logit`, appended to the six logarithms. That is the same channel in the
+other contract's vocabulary, so it composes with everything:
+
+```python
+per_animal_lapse = hierarchical(
+    impulsive_with_lapses, over="subject", parameters=("mixture_logit",), scale=0.6
+)
+drifting_lapse = smooth(
+    impulsive_with_lapses,
+    over="session_order",
+    knots=(0.0, 5.0),
+    parameters=("mixture_logit",),
+)
+```
+
+The reported coordinate is this family's own: `discount_rate`, not `discount_rate_log`, with
+`lapse_rate` beside it. The mixture delegates to the model's `to_natural` rather than copying
+its estimated names, because a bounded-coordinate model's coordinate is by contract a
+transform of what it reports.
+
+The gradient stays analytic. A mixture of two densities differentiates to the wrapped model's
+own gradient scaled by the posterior probability that the row came from the model, plus the
+weight's derivative through its logit; `tests/test_economic.py` checks both against central
+differences, on the joint coordinate the solver searches and on the per-row coordinate an
+outer combinator hands down.
+
+One identifiability finding carries over exactly and one carries over in meaning only. See
+[composing models](composing-models.md#identifiability-is-reported-before-the-fit-not-after-it)
+for which is which and why.
 
 ## Ambiguity is not implemented, and here is what it would cost
 

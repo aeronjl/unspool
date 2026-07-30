@@ -81,6 +81,45 @@ The five things a mixture needs from a component
     shape of answer ``penalised_linear_refusal`` gives in
     :mod:`behavio.contracts.compose`, and for the same reason.
 
+Which models may be mixed
+-------------------------
+A mixture is an arithmetic statement about **one row at a time**: row :math:`r`'s density is
+an average of two densities of row :math:`r`'s outcome. It is well defined exactly when the
+model's rows are independent, and it is *not* well defined when they are not -- a value trace
+that every earlier trial wrote to has no per-row density to average, and a lapse on such a
+model belongs on the emitted action, inside the recursion, where the value update still sees
+the action that was taken.
+
+Row independence is therefore the condition, and it is the only condition.
+:func:`require_mixable` is what checks it, and it deliberately does **not** ask which of the
+two estimator contracts a model satisfies. A penalised linear model is row-independent by
+construction -- that is half of what
+:class:`~behavio.contracts.compose.PenalisedLinearEstimator` means -- and a
+:class:`~behavio.contracts.bounded.BoundedCoordinateEstimator` says so per study through
+:attr:`~behavio.contracts.bounded.RowObjective.row_blocks`, which is ``arange(n_rows)`` for a
+family whose trials are scored independently and something coarser for one that recurses. A
+model that knows in advance that it recurses declares
+``independent_rows_refusal``, a sentence, for the same reason
+``penalised_linear_refusal`` is a sentence: no arrangement of members reveals it, and the
+answer a reader wants is a fact about the model rather than about a missing attribute.
+:func:`require_independent_rows` is the exact form of the same question, asked once a study
+is in hand.
+
+The two contracts differ in *how* the mixture reaches the density, not in whether it may.
+On the penalised-linear route the weight is one cell of the linear predictor and the
+component's log density rides in as an offset. On the bounded-coordinate route there is no
+predictor to add a cell to, so the weight is one extra **column of the row coordinate** and
+the component's log density is precomputed per row. Both are per-row channels that every
+outer combinator already preserves, which is what keeps ``hierarchical(smooth(mix(model)))``
+composing with the weight itself free to vary by group or follow a path.
+
+A mixable model must also expose ``outcomes(study)``, the observation on its own outcome
+coordinate, because that is the array
+:meth:`MixtureComponent.pointwise_log_density` scores.
+:class:`~behavio.contracts.compose.PenalisedLinearEstimator` declares it already; a
+bounded-coordinate family that wants to be mixed declares the same member under the same
+name.
+
 Where the weight lives
 ----------------------
 The weight is **estimated**; its ceiling is **declared**. ``mix(model, component,
@@ -114,6 +153,14 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.special import expit, logit
 
+from behavio.contracts.bounded import (
+    BOUNDED_COORDINATE,
+    PENALISED_LINEAR,
+    RowObjective,
+    require_bounded_coordinate,
+    uses_row_coefficients,
+)
+from behavio.contracts.compose import require_penalised_linear
 from behavio.trials import Study
 
 __all__ = [
@@ -122,6 +169,8 @@ __all__ = [
     "MixtureComponent",
     "mixture_logit",
     "mixture_weight",
+    "require_independent_rows",
+    "require_mixable",
     "require_mixture_component",
     "validate_weight_bounds",
 ]
@@ -205,6 +254,64 @@ class MixtureComponent(Protocol):
     ) -> Mapping[str, NDArray[Any]]:
         """Return replacement scored-column values for the rows drawn from this process."""
         ...
+
+
+def require_mixable(model: Any, *, combinator: str) -> str:
+    """Return which contract a mixture reaches ``model``'s density through, or raise.
+
+    The twin of :func:`~behavio.contracts.bounded.require_composable`, and the same shape of
+    answer: a route rather than a model, because the two routes differ only in where the
+    weight is carried and everything on either side of that is one implementation.
+
+    Four questions, in the order in which their answers are worth reading. Does the model
+    *declare* that its rows are not independent -- ``independent_rows_refusal``, the sentence
+    a recursion writes. Which of the two estimator contracts it composes through. Does it
+    satisfy that contract. And does it expose the observation a component has to score.
+
+    The first question is asked before the others because it is the only one whose answer is
+    a modelling statement. A value-updating agent and a GLM-HMM both *have* every member a
+    mixture would call; what they do not have is a per-row density to average, and the
+    sentence says so in the terms the model is written in.
+    """
+
+    refusal = getattr(model, "independent_rows_refusal", None)
+    if refusal:
+        raise TypeError(f"{combinator}() cannot be applied to {type(model).__name__}: {refusal}")
+    if not uses_row_coefficients(model):
+        require_penalised_linear(model, combinator=combinator)
+        return PENALISED_LINEAR
+    require_bounded_coordinate(model, combinator=combinator)
+    if not callable(getattr(model, "outcomes", None)):
+        raise TypeError(
+            f"{combinator}() needs the observation a component scores: "
+            f"{type(model).__name__} composes through behavio.contracts.bounded."
+            "BoundedCoordinateEstimator but does not declare outcomes(study), the member "
+            "that returns the scored observation on the model's own outcome coordinate"
+        )
+    return BOUNDED_COORDINATE
+
+
+def require_independent_rows(objective: RowObjective, *, model_name: str, combinator: str) -> None:
+    """Raise unless every row of ``objective`` is its own block.
+
+    The exact form of the question :func:`require_mixable` can only ask by declaration. A
+    mixture averages two densities of *one row's* outcome, so it is defined precisely when
+    the coordinate may differ from row to row -- which is what
+    :attr:`~behavio.contracts.bounded.RowObjective.row_blocks` reports, and which only a
+    study can settle. A model that declared nothing and turns out to recurse is caught here
+    rather than producing a number by scoring a block's coordinate at one of its rows.
+    """
+
+    blocks = np.asarray(objective.row_blocks, dtype=np.intp)
+    n_rows = int(objective.n_rows)
+    if len(blocks) == n_rows and np.array_equal(blocks, np.arange(n_rows, dtype=np.intp)):
+        return
+    raise ValueError(
+        f"{combinator}() needs one density per row, and {model_name} scores its rows in "
+        "blocks its likelihood recurses over: a mixture of two densities is a statement "
+        "about one row's outcome, and inside a recursion there is no such row to make it "
+        "about. Declare the second process where the recursion emits its observation"
+    )
 
 
 def require_mixture_component(component: Any, model: Any, *, combinator: str) -> MixtureComponent:
