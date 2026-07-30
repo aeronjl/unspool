@@ -13,6 +13,9 @@ performance rankings. “Supported” refers to the evidence boundary in the
 | Smooth history GLM | Binary choice | Smooth coefficient paths | Complete or partial pooling | GLM-HMM, RL, clock choice |
 | GLM-HMM | Binary choice | Discrete recurrent states | Complete pooling | smooth drift, history, state count |
 | Binary RL | Binary choice | Recursive values and policy traces | Complete pooling | history, bias, lapse, reward schedule |
+| Normative belief updating | Binary response to an exogenous observation | Recursive belief written by the task, not by the response | Complete or partial pooling | volatility versus coupling, response rule, observation versus response column |
+| Scalar timing | A reproduced duration, or a binary long/short report | None by default; a drifting or per-subject clock is a combinator away | Complete or partial pooling | decision rule, target range, clock rate versus response bias |
+| Patch leaving | A patch residence time, possibly right-censored | None by default | Complete or partial pooling | one patch type, undeclared censoring, threshold versus the theorem |
 | Psychometric family | Binary choice | None; a fixed threshold, width, guess and lapse | Complete pooling | link choice, threshold convention, lapse versus slope |
 | Temporal discounting | Binary choice between two delayed amounts | None by default; a smooth or per-subject discount rate is a combinator away | Complete or partial pooling | discount function, delay and amount units, rate versus choice noise |
 | Prospect theory | Binary choice between two prospects | None by default; smooth and partially pooled cells are combinator expressions | Complete or partial pooling | curvature versus inverse temperature, weighting form, loss aversion without mixed gambles |
@@ -164,6 +167,52 @@ recovery, and prospective competition with static and smooth choice models.
 reset boundary, or parameter identifiability under an uninformative reward schedule.
 
 [Detailed assumptions](q-learning.md)
+
+## Normative belief updating
+
+**Classes:** `BetaBernoulliObserver`, `HierarchicalGaussianFilter`
+
+**Use when:** the claim concerns a belief an observer holds about a changing world, formed
+from what the **task** did rather than from what the subject chose, and read out through a
+declared response rule.
+
+**Requires:** an `observation` column of binary task outcomes and a binary response column,
+which are different columns; preserved trial order with subject/session reset blocks; a
+declared `BeliefResponse` component. The filter additionally declares its initial variances
+and initial meta-belief, and a three-level filter declares or estimates a volatility coupling
+and a meta-volatility.
+
+**Predicts:** a filtered one-step-ahead binary response probability, formed from a belief
+that has seen observations strictly before the trial and has never seen the response.
+
+**Parameters:** the observer estimates `retention_logit` with an optional `prior_mean_logit`
+and `prior_strength_log`; the filter estimates `tonic_volatility` and, at three levels,
+`meta_volatility` and `volatility_coupling_log`, with `initial_belief` declarable. Response
+parameters are the component's own — `inverse_temperature_log` with an optional
+`choice_bias`, or `decision_noise_log`. A declared parameter leaves the model entirely and
+its value enters the signature.
+
+**Evidence:** clean-room implementation validated against four closed forms rather than
+against another package — the exact static Beta-Bernoulli posterior mean asserted bitwise,
+the leaky observer's closed-form asymptotic learning rate, the constant-volatility
+Rescorla-Wagner reduction asserted to twelve decimal places, and a zero coupling making a
+three-level filter's first two levels identical to a two-level filter's; a gradient exact in
+the response coordinate and in the chain rule, checked against central differences;
+deterministic multistart with every restart retained; the estimator conformance harness; and
+design-specific recovery that includes an **asserted failure** for the third level's
+volatility beside successful recovery of the two parameters the same study can see. All three
+combinators compose, `mix()` included.
+
+**Does not establish:** that a subject tracked volatility. On every reversal design tested,
+displacing the third level's tonic volatility by a factor of \(e\) moves the whole belief
+vector by under 0.1 in norm over 480 trials, so a number reported for it comes from the
+restart and the box rather than from the data; `describe()` names it before the fit and a
+two-level filter is the honest model for such a design. Nor a "learning rate": a tonic
+volatility is a log step variance, and only where the belief is stationary does it reduce to
+a rate. Agreement with another implementation is not validation, because published
+implementations disagree about the update equations and all of them converge.
+
+[Detailed assumptions](normative-belief.md)
 
 ## Parametric psychometric functions
 
@@ -374,6 +423,89 @@ decisions across the study, not time within a decision.
 
 [Session-varying DDM](smooth-ddm.md) · [Partially pooled DDM](hierarchical-smooth-ddm.md) ·
 [Composing models](composing-models.md)
+
+## Scalar timing
+
+**Classes:** `DurationReproduction`, `TemporalBisection`
+
+**Use when:** the reportable quantity is a clock rate and a Weber fraction, from a reproduced
+duration or from a binary report of which trained anchor a probe was more like.
+
+**Requires:** `DurationReproduction` needs a strictly positive target column and a strictly
+positive reproduction column. `TemporalBisection` needs declared anchors \(S < L\) — a fact
+about the training procedure, never learned — a strictly positive probe column, a binary
+report, and a declared `BisectionRule`.
+
+**Predicts:** a `DensityPrediction` over the reproduced duration, tabulated on one shared
+geometric grid, or a filtered binary report probability. `pointwise_log_prob` is the analytic
+log density in both cases, so a fold's score never depends on the grid resolution.
+
+**Parameters:** `clock_rate_log` and `weber_fraction_log`, both logarithms of strictly
+positive quantities, reported as `clock_rate` and `weber_fraction`. Reproduction adds an
+optional `central_tendency_log` — Vierordt's exponent, fixed at one by default. Bisection
+reports `bisection_point` as a derived quantity whose description names the rule that
+produced it. The two gain-free paradigms share one memory, so a study that runs both can ask
+whether one Weber fraction describes them.
+
+**Evidence:** the coefficient-of-variation identity and its exact inverse; the scalar property
+asserted on simulated reproductions, on their regression against the target, and on the
+tabulated density itself; Church and Deluty's geometric-mean bisection point with no fitting
+anywhere in the assertion; the exact reparameterisation between the two decision rules, whose
+clock rates differ by the ratio of their comparison durations and whose fits agree about
+everything else; analytic gradients checked against central differences; design-specific
+recovery of the clock rate, the Weber fraction and the exponent, and of one Weber fraction
+across both paradigms; the estimator conformance harness; and hierarchical, smooth and mixed
+recovery over the composed models.
+
+**Does not establish:** a scalar clock. A Weber fraction from a narrow target range is not
+evidence of one — the scalar property is a claim about how variability changes *with*
+duration, and `describe()` reports `narrow_target_range` before the fit. A bisection point is
+unreadable without its rule, which is why the rule is in the signature and why one anchor
+pair cannot test it. A bisection clock rate is the clock and any response bias together, and
+a central-tendency exponent is not estimable from bisection at all.
+
+[Detailed assumptions](scalar-timing.md)
+
+## Patch leaving
+
+**Class:** `PatchLeaving`
+
+**Use when:** the observation is a patch residence time and the reportable quantity is the
+intake rate at which the animal gives up.
+
+**Requires:** a patch yield column, a patch decay column, and a strictly positive residence
+time, with a declared gain function. `travel_time_column` is optional and changes no
+likelihood. `censoring_time_column` is optional and changes the likelihood a great deal: it
+names the longest residence each row could have shown.
+
+**Predicts:** a `DensityPrediction` of the **leaving time** on every row, censored or not,
+because that is what the model claims about the row.
+
+**Parameters:** `giving_up_rate_log` and `decision_noise_log`, reported as `giving_up_rate` —
+in the study's own intake units per time — and `decision_noise`, a Weber fraction on that
+rate. A declared travel time adds `marginal_value_rate`, `optimal_residence_time` and
+`overstaying_ratio` as derived quantities: Charnov's prediction and the fitted animal's
+departure from it.
+
+**Evidence:** the hyperbolic optimum \(\sqrt{h\tau}\) to machine precision and the exponential
+optimum against Charnov's implicit equation, both checked against a brute-force maximisation
+of the long-run rate rather than against the root finder itself; a nearly noiseless forager
+simulating the theorem's residence time; the predicted density integrating to one and
+agreeing with the simulator; an analytic gradient checked against central differences with and
+without censoring; a censored row scored against an independently written survival
+probability; the upward bias from ignoring censoring measured rather than asserted; recovery
+from a censored study; the estimator conformance harness; and hierarchical and smooth recovery
+over a censored likelihood.
+
+**Does not establish:** the marginal value theorem. A giving-up rate from a single patch type
+is a residence time wearing a rate's units — with one patch type, "leave when the rate falls
+to a threshold" and "leave after a fixed time" are the same model, and `describe()` reports
+`unidentified_leaving_rule` before the fit. Nor optimal foraging: the model deliberately does
+not constrain its threshold to \(R^{*}\), which is what lets `overstaying_ratio` measure the
+distance. A censored row scored by the returned density rather than by `pointwise_log_prob`
+is misscored, and `heavy_censoring` reports the share affected.
+
+[Detailed assumptions](patch-leaving.md)
 
 ## Card-level release rule
 

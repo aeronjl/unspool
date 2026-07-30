@@ -20,6 +20,12 @@ the interpreter floor the package still claims. Both are therefore accepted, and
 PyDDM's the accepted set is *not* written into the model's signature -- see
 :attr:`behavio.foreign.bambi.BambiRegression.signature` for the argument, which turns on a
 sampler being an approximation to a declared target rather than being the model.
+
+One accessor here does more than import and check, and it is stated rather than hidden:
+:func:`require_dynamax` switches jax's 64-bit mode on, process-wide, because there is no
+scoped form of that switch left in jax 0.11 and because a 32-bit forward-backward pass and a
+32-bit Hessian are not the computation the wrapper claims to perform. Nothing else in Behavio
+uses jax, so the only code affected is the caller's own.
 """
 
 from __future__ import annotations
@@ -64,6 +70,30 @@ _BAMBI_INSTALL_HINT: Final = (
     f"This wrapper requires Bambi: install it with `pip install 'behavio[{BAMBI_EXTRA}]'`. "
     "On Python 3.11 that installs Bambi 0.17.x with PyMC 5; on 3.12 and newer it installs "
     "Bambi 0.19.x with PyMC 6."
+)
+
+
+DYNAMAX_EXTRA: Final = "dynamax"
+"""Name of the optional dependency group that installs dynamax."""
+
+DYNAMAX_SERIES: Final = "1.0"
+"""The dynamax minor series this wrapper is written and tested against.
+
+Pinned as ``dynamax>=1.0,<1.1`` in ``pyproject.toml``. Like :data:`BAMBI_SERIES` and unlike
+:data:`PYDDM_SERIES` it does *not* appear in the wrapper's signature. PyDDM's series is in
+its fingerprint because a first-passage density is computed by a truncated series whose term
+selection differs between releases, so the same parameters give different numbers. Forward
+filtering and backward smoothing are exact arithmetic on an exactly specified likelihood;
+what a dynamax release can change is the *default initialisation* of EM, and
+:class:`~behavio.foreign.dynamax.DynamaxSwitchingAutoregression` puts the initialisation
+method, the restart count, the iteration count and the seed into its own signature instead.
+The exact installed version is provenance and is recorded on every fit.
+"""
+
+_DYNAMAX_INSTALL_HINT: Final = (
+    f"This wrapper requires dynamax: install it with `pip install 'behavio[{DYNAMAX_EXTRA}]'`. "
+    "It brings jax, which conflicts with any environment pinning jax<0.4.32 (pyhgf does); see "
+    "`docs/foreign-models.md`."
 )
 
 
@@ -124,6 +154,51 @@ def bambi_version() -> str:
     return str(getattr(require_bambi(), "__version__", "unknown"))
 
 
+def require_dynamax() -> Any:
+    """Return the imported ``dynamax`` module, or explain how to install a usable one.
+
+    This is also the single place jax's 64-bit mode is switched on, and it is switched on
+    **process-wide**, which is a real side effect and is stated rather than hidden. jax
+    defaults to 32-bit floats; a forward-backward pass over a thousand trials accumulates
+    log probabilities in that precision, and the observed-information Hessian this wrapper
+    differentiates out of the marginal likelihood is not meaningfully computable in it. jax
+    0.11 removed the ``enable_x64`` context manager, so there is no scoped form of the
+    switch left. Nothing else in Behavio uses jax, so the only code affected is the caller's
+    own.
+    """
+
+    try:
+        dynamax = importlib.import_module("dynamax")
+    except ImportError as error:
+        raise ForeignPackageUnavailableError(_DYNAMAX_INSTALL_HINT) from error
+    series = _series(dynamax)
+    if series is not None and series != DYNAMAX_SERIES:
+        raise ForeignPackageUnavailableError(
+            f"Behavio's dynamax wrapper is written against dynamax {DYNAMAX_SERIES}.x and "
+            f"found {getattr(dynamax, '__version__', 'an unknown version')}. A different "
+            "series may build a different model from the same declaration -- the default EM "
+            "initialisation is part of the release, not of the specification -- so it is "
+            f"refused rather than used silently: `pip install 'behavio[{DYNAMAX_EXTRA}]'` "
+            "installs a supported one."
+        )
+    jax = importlib.import_module("jax")
+    jax.config.update("jax_enable_x64", True)
+    return dynamax
+
+
+def dynamax_version() -> str:
+    """Return the exact installed dynamax version, for a fit's provenance record."""
+
+    return str(getattr(require_dynamax(), "__version__", "unknown"))
+
+
+def jax_version() -> str:
+    """Return the exact installed jax version, which is half of a dynamax fit's numerics."""
+
+    require_dynamax()
+    return str(getattr(importlib.import_module("jax"), "__version__", "unknown"))
+
+
 def _series(module: Any) -> str | None:
     raw = str(getattr(module, "__version__", ""))
     parts: list[str] = []
@@ -138,11 +213,16 @@ def _series(module: Any) -> str | None:
 __all__ = [
     "BAMBI_EXTRA",
     "BAMBI_SERIES",
+    "DYNAMAX_EXTRA",
+    "DYNAMAX_SERIES",
     "PYDDM_EXTRA",
     "PYDDM_SERIES",
     "ForeignPackageUnavailableError",
     "bambi_version",
+    "dynamax_version",
+    "jax_version",
     "pyddm_version",
     "require_bambi",
+    "require_dynamax",
     "require_pyddm",
 ]

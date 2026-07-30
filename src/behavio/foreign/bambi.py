@@ -201,8 +201,6 @@ from __future__ import annotations
 
 import importlib
 import importlib.metadata
-import logging
-import warnings
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from types import MappingProxyType
@@ -223,6 +221,7 @@ from behavio.contracts.estimator import (
 )
 from behavio.contracts.posterior import PosteriorCentre, posterior_point_summary
 from behavio.foreign._optional import bambi_version, require_bambi
+from behavio.foreign._shared import quiet_foreign_package
 from behavio.inference.parameters import PriorFamily, PriorSpec
 from behavio.models._kernels.introspection import ERROR, WARNING, Describable, ModelFinding
 from behavio.posterior.result import (
@@ -1535,31 +1534,15 @@ def _quiet_bambi() -> Any:
     every fold.
     """
 
-    return _QuietBambi()
-
-
-class _QuietBambi:
-    __slots__ = ("_catcher", "_levels")
-
-    def __enter__(self) -> None:
-        self._levels = {}
-        for name in ("bambi", "pymc", "pytensor"):
-            logger = logging.getLogger(name)
-            self._levels[name] = logger.level
-            logger.setLevel(logging.ERROR)
-        self._catcher = warnings.catch_warnings()
-        self._catcher.__enter__()
-        warnings.simplefilter("ignore", RuntimeWarning)
-        warnings.simplefilter("ignore", UserWarning)
-        warnings.simplefilter("ignore", FutureWarning)
+    return quiet_foreign_package(
+        "bambi",
+        "pymc",
+        "pytensor",
+        categories=(RuntimeWarning, UserWarning, FutureWarning),
         # PyTensor's Numba linker cannot cache a graph that closes over pointers, and says so
         # on every compile. It is a statement about a cache, not about the model.
-        warnings.filterwarnings("ignore", message="Cannot cache compiled function")
-
-    def __exit__(self, *exception: Any) -> None:
-        self._catcher.__exit__(*exception)
-        for name, level in self._levels.items():
-            logging.getLogger(name).setLevel(level)
+        messages=("Cannot cache compiled function",),
+    )
 
 
 __all__ = [

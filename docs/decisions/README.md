@@ -28,6 +28,11 @@ in Behavio will continue that sequence rather than restarting it.
 Cross-references that point at records still owned by `fipha` are absolute links
 into that repository.
 
+The inherited block ends at **SDR-0059**. **SDR-0060** is the first record originating in
+Behavio, and a new record takes the next unused number after the highest in the index below.
+A gap in the sequence means a record was moved or lost, not that a number was skipped, so
+reserving a number ahead of writing the record is not a way to avoid a collision.
+
 ## Index
 
 | Record | Status | Decision |
@@ -36,6 +41,10 @@ into that repository.
 | [SDR-0034](0034-fit-only-explicit-matched-pulse-clock-transforms.md) | Accepted | Fit only explicit matched-pulse affine clock transforms against prospective thresholds |
 | [SDR-0049](0049-make-interval-policy-order-explicit-and-auditable.md) | Accepted | Make interval-policy order an explicit, ledgered, fingerprinted part of the estimand |
 | [SDR-0059](0059-consume-movement-datasets-without-depending-on-movement.md) | Accepted | Consume `movement` poses datasets by duck typing rather than depending on `movement` |
+| [SDR-0060](0060-bisect-time-by-the-ratio-rule.md) | Accepted | Bisect time by the ratio rule, declare it in the signature, and say why one anchor pair cannot test it |
+| [SDR-0061](0061-fit-patch-leaving-as-a-hazard-not-as-the-marginal-value-theorem.md) | Accepted | Fit patch leaving as a threshold-crossing hazard and read it against the marginal value theorem rather than fitting the theorem |
+| [SDR-0062](0062-implement-normative-belief-updating-clean-room.md) | Accepted | Implement normative belief updating clean-room, with every disputed HGF convention declared and validated against a closed form |
+| [SDR-0063](0063-defer-the-log-score-only-comparison-and-the-survival-carrying-prediction.md) | Accepted | Record the log-score-only comparison and the survival-carrying prediction as shared-layer gaps rather than patching either under a model wave |
 
 ## Record structure
 

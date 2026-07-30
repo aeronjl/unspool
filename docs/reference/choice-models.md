@@ -115,3 +115,25 @@ implements to be mixable is `behavio.contracts.mixture.MixtureComponent`.
       members_order: source
       show_root_heading: false
       show_source: false
+
+## Scalar timing and patch leaving
+
+Neither of these families scores a choice, so neither belongs on a page called *observable
+choice*; they are here because the reference nav has no timing-and-foraging page yet. Both
+compose through `behavio.contracts.bounded.BoundedCoordinateEstimator` alongside the economic
+families above, and both estimate nothing but logarithms of positive quantities. The
+identifiability arguments behind them are in
+[SDR-0060](../decisions/0060-bisect-time-by-the-ratio-rule.md) and
+[SDR-0061](../decisions/0061-fit-patch-leaving-as-a-hazard-not-as-the-marginal-value-theorem.md).
+
+::: behavio.models.scalar_timing
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+::: behavio.models.patch_leaving
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false

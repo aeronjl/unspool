@@ -11,9 +11,12 @@ than reimplementing it, and puts the falsification machinery around the result.
 `behavio.foreign` is where those wrappers live. Each is a real
 [`BehaviourEstimator`](reference/contracts.md) — or, when the package fits by sampling, a
 real [`PosteriorBehaviourEstimator`](reference/contracts.md): it flows through
-`evaluate_splits`, `compare_models`, `run_parameter_recovery` and `describe()` unchanged,
-keeps its dependency behind its own extra, and states its licence here before you install
-it.
+`evaluate_splits`, `run_parameter_recovery` and `describe()` unchanged, keeps its dependency
+behind its own extra, and states its licence here before you install it. Three are shipped:
+**PyDDM** for the first-passage density, **Bambi** for mixed-effects regression behind the
+sampled contract, and **dynamax** for latent-state models of a continuous measurement. Each
+reported something the contract could not yet express, and those reports are kept on this
+page rather than smoothed over.
 
 ## Compatibility matrix
 
@@ -28,7 +31,7 @@ it.
 | [psignifit](https://github.com/wichmann-lab/python-psignifit) 4.3 | — | Not wrapped | **GPL-3.0** | Permitted, but copyleft | Behavio's own `Psychometric` covers the same ground under MIT |
 | [metadpy](https://github.com/LegrandNico/metadpy) 0.1 | — | Not wrapped | **GPL-3.0** | Permitted, but copyleft | Behavio's own `MetaSDT` covers the same ground under MIT |
 | [pyhgf](https://github.com/ilabcode/pyhgf) 0.3 | — | Not wrapped | **GPL-3.0** | Permitted, but copyleft | Pins `jax>=0.4.26,<0.4.32`; see the conflict below |
-| [dynamax](https://github.com/probml/dynamax) 1.0 | — | Not wrapped | MIT | Permitted | Unpinned jax. A smoother by default — see [filtered versus smoothed](#filtered-versus-smoothed) |
+| [dynamax](https://github.com/probml/dynamax) 1.0.x | `dynamax` | **Shipped** — `behavio.foreign.dynamax.DynamaxSwitchingAutoregression` | MIT | Permitted | Switching linear autoregression and Gaussian-emission HMM. MIT, and permissive throughout its closure — but it depends on `tfp-nightly` rather than a released TensorFlow Probability, and it brings a modern jax. See [the jax conflict](#the-jax-conflict) and [the nightly dependency](#the-nightly-dependency) |
 | [ssm](https://github.com/lindermanlab/ssm) | — | Not wrapped | MIT | Permitted | Installed from GitHub; the PyPI name `ssm` is an unrelated placeholder. A smoother by default |
 
 "Not wrapped" means exactly that: no import, no extra, no dependency. The rows are here so
@@ -64,15 +67,53 @@ intersect, so the two cannot be installed into one environment at any version of
 no resolver setting will fix it. Anything else in the ecosystem that pins jax joins the same
 fight.
 
-Behavio's answer is structural rather than diplomatic: **no wrapper's dependency is ever a
-Behavio dependency**, and each lives behind its own extra. A user who needs two conflicting
-packages runs two environments and moves `Study` tables and evidence bundles between them,
-which they can, because both are plain data. A user who needs neither pays nothing. This is
-the same rule that keeps NWB, DANDI and ONE optional, applied to models.
+**`behavio[dynamax]` is now on the modern side of that line.** dynamax declares an unpinned
+`jax`, which resolves to a current release (0.11 at the time of writing), so
+`behavio[dynamax]` and `pyhgf` cannot share an environment. dynamax and HSSM want the same
+side of the split and would resolve together; neither can be installed beside `pyhgf`. The
+extras are not declared mutually exclusive in `pyproject.toml`, because Behavio does not
+depend on `pyhgf` and cannot: this is a conflict between an extra of Behavio's and a package
+a *user* may also want, and the honest form of it is a documented statement rather than a
+resolver constraint.
+
+One further consequence of the extra is a **process-wide side effect**, and it is stated
+because it cannot be scoped: `behavio.foreign.dynamax` switches jax's 64-bit mode on the
+first time it is used. jax defaults to 32-bit floats, a forward–backward pass accumulates
+log probabilities badly in that precision over a few hundred trials, and the
+observed-information Hessian the wrapper differentiates out of the marginal likelihood is not
+meaningfully computable in it. jax 0.11 removed the `enable_x64` context manager, so there is
+no scoped form of the switch left. Nothing else in Behavio uses jax, so the only code
+affected is the caller's own.
+
+Behavio's answer to the general problem is structural rather than diplomatic: **no wrapper's
+dependency is ever a Behavio dependency**, and each lives behind its own extra. A user who
+needs two conflicting packages runs two environments and moves `Study` tables and evidence
+bundles between them, which they can, because both are plain data. A user who needs neither
+pays nothing. This is the same rule that keeps NWB, DANDI and ONE optional, applied to
+models.
 
 If Behavio ever adds a wrapper whose extra conflicts with an existing one, the conflict goes
 in the table above and the two extras are documented as mutually exclusive. There is no
 version of this problem that a library can solve for its users by resolving harder.
+
+## The nightly dependency
+
+dynamax 1.0 depends on **`tfp-nightly`**, not on a released `tensorflow-probability`. That
+is upstream's choice and it is not a licence problem — `tfp-nightly` is Apache-2.0 like the
+release — but it is a reproducibility problem worth knowing about before installing the
+extra:
+
+- a nightly is a dated build. `uv.lock` pins the exact one, so a locked checkout is
+  reproducible; an unlocked `pip install 'behavio[dynamax]'` resolves to whatever nightly is
+  current that day.
+- nightlies are not kept forever. A lock file old enough may reference a build that PyPI no
+  longer serves, and relocking is then the only option.
+
+The rest of the closure is ordinary and permissive: jax and jaxlib Apache-2.0, optax
+Apache-2.0, scikit-learn BSD-3-Clause, `jaxtyping` MIT, `fastprogress` Apache-2.0. One
+transitive edge is surprising and worth naming so nobody has to discover it in a lock diff:
+`fastprogress` pulls in `python-fasthtml`, and with it `starlette`, `uvicorn` and a small web
+stack. None of it is imported by anything Behavio calls.
 
 ## The Python floor
 
@@ -381,6 +422,224 @@ vocabulary, not Bambi's:
 
 Both are worth fixing in the contract before they are worked around in a wrapper.
 
+## dynamax
+
+```bash
+uv sync --extra dynamax          # or: python -m pip install -e ".[dynamax]"
+```
+
+```python
+from behavio import Study
+from behavio.evaluate import evaluate_splits, forward_session_splits
+from behavio.foreign.dynamax import DynamaxSwitchingAutoregression
+
+model = DynamaxSwitchingAutoregression(outcome="speed", n_states=3, num_lags=1)
+
+fit = model.fit(study)
+states = model.state_probabilities(study, fit)  # predictive, filtered and smoothed
+labels = model.most_likely_states(study, fit)  # Viterbi, and a description not a prediction
+```
+
+`DynamaxSwitchingAutoregression` describes one **continuous** `Study` column as a switch
+between latent regimes, each with its own offset, its own autoregressive coefficients and its
+own innovation variance:
+
+$$y_t = b_k + \sum_{\ell} W_{k,\ell}\, y_{t-\ell} + \varepsilon_t, \quad
+\varepsilon_t \sim \mathcal{N}(0, s_k), \quad k = z_t.$$
+
+### Why this family
+
+Behavio's only latent-state model is `BernoulliGLMHMM`: Bernoulli emissions, stationary
+transitions, a discrete observation. Nothing here described a continuous behavioural time
+series at all — running speed, pupil diameter, licking rate, a kinematic component of a pose.
+
+A Gaussian-emission HMM is the obvious on-ramp and it is *included*: `num_lags=0` is exactly
+that model. It is not what earns the wrap. The default `num_lags=1` is a **switching linear
+autoregression**, and that is the one nothing else in the package can express. Behavio
+already models history dependence in choice, through `lag()` and `kernel()` in [its own
+formula language](design-formulas.md); it already models regime switching, through the
+GLM-HMM. It has never been able to write down a *regime that is itself a dynamical system*,
+which is the standard description of continuous behaviour — a mouse that is running has a
+different autocorrelation from one that is grooming, not merely a different mean speed. A
+Gaussian HMM forced onto that data answers with extra states whose only job is to tile the
+autocorrelation.
+
+The nesting is the point of shipping both. `num_lags=0` fixes every weight at zero, its
+parameter names are a strict subset, and both are fitted by the same code through the same
+contract, so the pair is a **targeted competitor** rather than two unrelated candidates —
+which is what `AGENTS.md` demands before a latent state is interpreted.
+
+### Filtered prediction versus smoothed description
+
+This is the first model in Behavio that legitimately declares
+`PredictionMode.SMOOTHED`, and it is why the wrapper exists.
+
+| Mode | Mixing weights | What it is |
+| --- | --- | --- |
+| `FILTERED` (default) | `predicted_probs`, $p(z_t \mid y_{1:t-1})$ | the one-step-ahead predictive density $p(y_t \mid y_{1:t-1})$ |
+| `SMOOTHED` | `smoothed_probs`, $p(z_t \mid y_{1:T})$ | a description of a recorded session, conditioned on trial *t* itself and everything after it |
+
+Two consequences, both checked rather than asserted:
+
+- **The filtered scores are the likelihood, decomposed.** `sum_t log p(y_t | y_{1:t-1})` is
+  *exactly* the marginal log likelihood dynamax's own forward filter reports — the chain
+  rule, not an approximation of it. The test suite asserts the identity to 1e-8.
+- **`predicted_probs`, not `filtered_probs`.** `filtered_probs` is $p(z_t \mid y_{1:t})$,
+  which is admissible under Behavio's definition of filtering — it reads nothing after *t* —
+  but predicting $y_t$ from it conditions the prediction on the observation being predicted.
+  It would pass the conformance harness and be worthless. It is reported separately by
+  `state_probabilities()`, where it is the right answer to a different question.
+
+### What the conformance harness actually proved
+
+[`check_behaviour_estimator`](reference/data-adapters.md) relabels the second half of every
+trial sequence, holds the fit fixed, and re-predicts. Every check passes for this wrapper,
+including `smoothed-prediction-uses-future-rows` — and the same check **fails** for the same
+model on a different study, which is the more informative result:
+
+> When two states are six standard deviations apart, each observation identifies its own
+> state, the backward message carries no information, and the smoothed and filtered state
+> posteriors agree to machine precision. The harness then reports that a model claiming to
+> smooth did not measurably use the future, and it is right: *on that data* the two
+> descriptions are the same object.
+
+That is the check being falsifiable in both directions, on one model, by changing only the
+data. It also says something about how to read a `SMOOTHED` declaration: it is a claim about
+a model *and* a dataset, not about a model alone. `require_complete=True` rejects a run in
+which the perturbation was a no-op; it does not — and today cannot — distinguish "this model
+does not smooth" from "smoothing this study gains nothing".
+
+### Shape: `sequence_layout`, and why there is no padded tensor
+
+[`sequence_layout`](reference/study-and-task.md) is built from `Study.chronological_indices()`, so it
+cannot disagree with the package's own chronology, and `join(split(v)) == v` exactly.
+Everything the wrapper hands dynamax comes from `split` and everything it hands back comes
+from `join`.
+
+The round-trip invariant is necessary and **not sufficient**, and the difference matters. It
+catches a *misalignment* — a prediction concatenated in sequence order and returned as if the
+study had been sorted, which is silently wrong whenever the source table is not already
+chronological. It cannot catch a *contamination*, because a contaminated block has exactly
+the right length and joins back perfectly. Two contaminations are live here:
+
+**Autoregressive inputs must be built per sequence.** `compute_inputs` lags an array, and
+lagging the flat study would make the first trial of one session a function of the last trial
+of the previous one — across a night, or across animals. This is the concrete reason the
+autoregressive family is where the layout earns its place: for `num_lags=0` only the state
+chain resets at a boundary, and a wrapper that got it wrong would be wrong more quietly.
+
+**Padding is not safe, so there is none.** `dynamax.ssm.SSM.fit_em` vmaps its E-step over an
+`(n_sequences, num_timesteps, emission_dim)` batch and **takes no mask**, so zero-padding
+ragged sequences feeds the forward–backward pass invented observations at an invented
+emission value and returns their sufficient statistics to the M-step. Measured, in the test
+suite, on four sessions of 40, 33, 26 and 19 trials whose true state offsets are one apart:
+zero-padding moves a fitted emission offset by **0.79**, an autoregressive weight by 0.40 and
+an innovation variance by 0.13. Behavioural sessions are ragged essentially always.
+
+The wrapper therefore partitions the layout by length, vmaps dynamax's own `e_step` within
+each partition, concatenates the sufficient statistics — which are sums over time, and so
+length-independent for every component of these families — and calls dynamax's own `m_step`
+once. That is `fit_em`'s loop with its batching replaced, and on an equal-length batch the
+two agree to floating point, which the test suite asserts.
+
+### Where dynamax strains the contract
+
+**dynamax has no `fit` object, so the wrapper owns the mapping to `FitResult`.** EM is
+`initialize(key)` then parameter pytrees. Estimates, a covariance, a convergence verdict, a
+canonical state order and every diagnostic are the wrapper's.
+
+**A covariance, out of EM.** dynamax reports a parameter pytree and a log-joint trace, and no
+uncertainty. The wrapper differentiates the objective EM maximised — `log_prior(θ)` plus the
+summed marginal log likelihood — **twice, with jax**, in dynamax's own unconstrained
+coordinates, and carries the result onto the reported natural coordinates by the delta
+method with the Jacobian of the constraining map. Unconstrained coordinates are not a
+convenience: a simplex has no interior derivative in its natural coordinates, so a Hessian
+taken there is singular by construction. When the observed information is not positive
+definite — an unoccupied state, a transition probability at zero, an under-iterated run — the
+covariance is `NaN` with a message, exactly as PyDDM's wrapper does.
+
+**EM cannot fail, so "converged" had to be measured.** `fit_em` runs a fixed number of
+monotone iterations; there is no stopping rule to have fired and no status to read. The
+wrapper reports **exact stationarity**: the gradient norm of the log joint at the estimate,
+against `gradient_tolerance`. That is stronger than any optimizer flag and it is free,
+because the Hessian pass computes the gradient on the way. An under-iterated fit fails it and
+the fit's audit fails with it.
+
+**The reported covariance is singular, and that is correct.** `parameter_names` reports whole
+simplexes — `initial[k]`, `transition[j->k]` — rather than reference-category logits, so a
+reader of `transition[0->1]` is reading a transition probability rather than a contrast
+against whichever state happened to sort last. The price is a covariance that is exactly
+singular along the sum-to-one directions, which is the right variance for a quantity that
+cannot move. It is also why `hessian_condition` reports the condition number of the
+*unconstrained observed information*, the matrix actually inverted: the natural covariance's
+condition number would be an artefact of the constraint and would raise an ill-conditioning
+warning on every healthy fit.
+
+**One emission column, because Behavio has no shape for more.** dynamax's Gaussian and
+autoregressive families are multivariate, and a switching *vector* autoregression is what
+most of this literature fits. `DensityPrediction` tabulates a density over one continuous
+coordinate, so a two-dimensional emission has nothing to be returned as. Fitting and
+pointwise scoring would work unchanged; only `predict` has nowhere to go. **That is a gap in
+Behavio's prediction vocabulary**, not in dynamax, and it is the same kind of gap Bambi's
+`poisson` family reported.
+
+**`compare_models` cannot score an unlabelled density.** `compare_models` computes a Brier
+column unconditionally, and a Brier score is a scoring rule for a probability. PyDDM's
+density escapes this because it is *defective across the two boundaries*, so integrating the
+grid yields genuine choice probabilities. A switching autoregression predicts an unlabelled
+continuous density with no discrete margin at all, so `compare_models` raises
+`UnscoreableByBrier` — correctly, since there is no number to report, but it also means the
+**prospective comparison table is unreachable for every continuous-outcome model**.
+`evaluate_splits` and the log score are unaffected, and a nested comparison against
+`num_lags=0` runs through them today. This is the second gap in the contract that this
+wrapper reports rather than works around.
+
+**The predictive density is unbounded and the grid is not.** `predict` tabulates on a grid
+fixed **at fit time** — derived from the training range and the fitted variances, and
+retained on the fit as `outcome_grid` — because a grid derived from the study being predicted
+would make an early row's reported density a function of later rows, which is exactly the
+leak the conformance harness exists to catch. A held-out row outside that range loses tail
+mass, which `total_mass` reports per row rather than normalising away, and `grid_truncation`
+summarises on the fit. `pointwise_log_prob` is computed in closed form and never off the
+grid, so no score is a function of the tabulation; `grid_log_density_gap` reports how far
+the tabulation sits from the closed form on the training rows — the same number PyDDM's
+wrapper calls `interpolation_gap`, and here a property of the report rather than of the
+score.
+
+### Label switching
+
+A hidden Markov model's states are unidentified up to permutation. The package already knows
+there are two different answers and that they are not interchangeable:
+[`align_latent_states`](reference/latent-and-rl-models.md) aligns inferred posteriors against *simulated
+truth* and so cannot run on data, and the hierarchical GLM-HMM keeps labels identified
+*during* a joint fit by anchoring each group's emissions to the population's.
+
+Neither applies to a single-group EM fit of a foreign model, so this wrapper does the third
+thing, which is what `BernoulliGLMHMM` itself does for a single fit: **canonicalise
+afterwards, and report how identified the canonical order is.** States are sorted by
+increasing emission bias, ties broken by the rest of the emission row; the permutation is
+applied to the initial distribution, to *both axes* of the transition matrix and to every
+emission parameter, and is recorded as `canonical_permutation`. Because the log joint is
+exactly invariant under simultaneous relabelling, the covariance is computed *after* the
+permutation rather than permuted — no relabelling map is needed, where the GLM-HMM needs one
+because its coordinates are reference-category logits and relabelling re-references them.
+
+Canonicalisation makes an order; it does not make the order mean anything, and the fit says
+so. `label_order_gap` is the smallest distance between adjacent canonical biases and
+`label_ambiguous` is true below `label_tolerance`: two states with indistinguishable biases
+have an order decided by numerical noise, and reading "state 0" as a behaviour across two
+fits of the same animal is then exactly the confident nonsense a latent-state model invites.
+`state_occupancy` and `low_occupancy` report the other half of the same problem.
+
+### Determinism
+
+`random_seed` seeds one jax key per restart, `initialisation` and `n_restarts` and
+`em_iterations` are all declared fields in the `signature`, and nothing reads a global
+stream. Fitting the same study twice with the same configuration gives bit-identical
+estimates. The dynamax and jax *versions* are deliberately **not** in the signature — see
+`DynamaxSwitchingAutoregression.signature` for why the argument is Bambi's rather than
+PyDDM's — and are carried on the fit as provenance.
+
 ## Filtered versus smoothed
 
 `ssm.most_likely_states` and `dynamax`'s smoother are smoothed by construction: the state
@@ -404,6 +663,12 @@ assert_behaviour_estimator_conforms(my_wrapper, small_study, require_complete=Tr
 uniform for the check to execute, because a skipped leakage check is not evidence of a
 filtered prediction.
 
+The dynamax wrapper is the first model in the package that exercises this check in both
+directions, and doing so turned up its one honest limit: the check measures whether a
+*claimed* smoothed estimate moves when the future moves, and a well-identified state-space
+model on well-separated data has a smoothed estimate that does not measurably move. See
+[the dynamax section](#what-the-conformance-harness-actually-proved).
+
 ## Writing your own wrapper
 
 [Extend Behavio](extensions.md) is the contract; three helpers exist so a wrapper does not
@@ -425,6 +690,17 @@ have to re-derive what every wrapper needs.
   model's own choice probabilities. Its sampled counterpart,
   `behavio.adapters.check_posterior_behaviour_estimator`, runs the same checks against a
   `PosteriorBehaviourEstimator`, so a sampler needs no adapter of its own.
+
+Inside `behavio.foreign` there is one more, `behavio.foreign._shared`, and what is *not* in
+it is the interesting part. Three wrappers exist, and only two things were duplicated across
+them: `quiet_foreign_package`, which all three need to silence a package's own logging, and
+`ForeignCurvature`/`unknown_curvature`, which both *point-estimate* wrappers need because
+neither PyDDM nor dynamax reports an uncertainty and both must be able to decline to invent
+one. The Bambi wrapper nominated four of its own helpers for the same module on the
+reasoning that the next wrapper would want them; the next wrapper fits by expectation
+maximization, so it has no posterior groups to repair, and those four still have one user
+each. They stayed where they are. Two wraps is thin evidence for an abstraction; three is
+where you can see which candidates were real.
 
 And one rule that is not a helper: **do not make the wrapped package a Behavio dependency.**
 Add an extra, name it in the error a user meets without it, and put its licence in the table

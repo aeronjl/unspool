@@ -56,6 +56,24 @@ permutation-invariant recovery.
 The binary Q-learning agent represents trial-by-trial value updating. It competes under the
 same pointwise predictive contract as the GLM and GLM-HMM families.
 
+## Normative belief updating
+
+`behavio.models.belief.BetaBernoulliObserver` and
+`behavio.models.belief.HierarchicalGaussianFilter` describe what an observer should believe
+about a changing binary world, and read that belief out through a separately declared
+response model. The distinction that matters is which column writes the recursion: a
+reinforcement-learning agent's values are written by the action the agent took, whereas a
+normative observer's beliefs are written by the task's own observations, which are exogenous.
+Every row therefore has a density of its own, which is why a lapse mixture is well defined
+here and refused for the agents.
+
+Both are clean-room implementations validated against closed forms rather than against
+another package, because implementations of the HGF's update equations disagree with each
+other in ways a fitted number cannot reveal. The third level's tonic volatility does not
+recover from binary responses on any reversal design tested, and `describe()` measures and
+reports that before anything is fitted. See
+[normative belief updating](../normative-belief.md).
+
 ## Value-based and economic choice
 
 `TemporalDiscounting` and `ProspectTheory` score a binary choice between two options as a
@@ -73,6 +91,38 @@ value function's curvature, and the designs in which that trade-off is exact are
 Wiener drift-diffusion models jointly score choice and response time. Static, smooth,
 hierarchical, and explicit-contaminant variants share physical-unit and fit-audit
 contracts.
+
+## Scalar timing
+
+`behavio.models.scalar_timing.DurationReproduction` and
+`behavio.models.scalar_timing.TemporalBisection` are the two standard interval-timing
+paradigms over one memory: a duration is represented with noise **proportional to the
+duration itself**, which is Gibbon's (1977) scalar property and is the whole content of the
+theory. Reproduction scores a continuous duration and bisection scores a binary report, and
+both estimate the same clock rate and Weber fraction, so a study running both can ask whether
+one Weber fraction describes them. A bisection curve crosses one half at the geometric mean
+of its anchors (Church & Deluty 1977) under the declared ratio rule; the decision rule is
+part of the model's signature because a bisection point cannot be read without it. The
+designs that cannot see the scalar property — durations spanning too narrow a range — are
+reported by `describe()` before the fit.
+
+Nothing here is called an *interval*. `behavio.observed.interval_policy` curates annotation
+bouts and is unrelated; the thing an animal times is a **duration**.
+
+## Patch leaving and the marginal value theorem
+
+`behavio.models.patch_leaving.PatchLeaving` scores a **residence time**, which may be
+right-censored when a session ends while the animal is still in a patch. The observable is a
+hazard: the animal is deciding, moment by moment, whether to go, and the model estimates the
+intake rate at which it gives up together with how noisily it applies that threshold.
+
+Charnov's (1976) theorem is kept beside the model rather than inside it.
+`marginal_value_rate` and `marginal_value_residence_time` are the closed form with no fitting
+in them, and a fit that declares a travel-time column reports an `overstaying_ratio` against
+that benchmark — so the most replicated result in the foraging literature is measured rather
+than assumed. A study whose patches all deplete identically cannot test the theorem at all,
+because a rate threshold and a time threshold then predict the same residence times, and
+`describe()` says so.
 
 ## Comparison is part of the method
 

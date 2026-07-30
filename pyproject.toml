@@ -72,6 +72,14 @@ behavio = "behavio.cli:main"
 #                  Apache-2.0, pytensor BSD-3-Clause, formulae MIT, pandas BSD-3-Clause,
 #                  matplotlib PSF-based, seaborn BSD-3-Clause, sparse BSD-3-Clause,
 #                  graphviz MIT, arviz-base/-stats/-plots Apache-2.0
+#   dynamax        dynamax MIT; its closure is permissive throughout -- jax/jaxlib
+#                  Apache-2.0, optax Apache-2.0, tfp-nightly Apache-2.0, scikit-learn
+#                  BSD-3-Clause, jaxtyping MIT, fastprogress Apache-2.0. Two things about
+#                  that closure are reproducibility rather than licence facts and are
+#                  documented in `docs/foreign-models.md`: dynamax depends on `tfp-nightly`
+#                  rather than a released TensorFlow Probability, so the pinned build is a
+#                  dated nightly; and `fastprogress` transitively pulls `python-fasthtml`
+#                  and a small web stack that nothing here imports.
 [project.optional-dependencies]
 readers = [
     "h5py>=3.11",
@@ -139,6 +147,22 @@ bambi = [
     "bambi>=0.17.2,<0.18 ; python_full_version < '3.12'",
     "bambi>=0.19,<0.20 ; python_full_version >= '3.12'",
 ]
+# `behavio.foreign.dynamax` wraps dynamax's expectation-maximization fitting, its forward
+# filter and its backward smoother behind `BehaviourEstimator`, for a switching linear
+# autoregression over a continuous behavioural measurement -- a family Behavio has none of.
+# dynamax is MIT, like Behavio, and so is every package in its closure (see the block above),
+# so this extra adds no obligation. It does add two things a user should know about before
+# installing it, both documented in `docs/foreign-models.md`: a dated `tfp-nightly` build,
+# and a modern jax that cannot share an environment with anything pinning `jax<0.4.32`.
+#
+# The range is a series pin, as `pyddm`'s is, but for a different reason and with a different
+# consequence: the series is enforced on import and is *not* written into the wrapper's
+# signature, because forward-backward is exact arithmetic rather than a truncated series.
+# What a dynamax release can change is EM's default initialisation, and that is a declared
+# field of the model instead. See `DynamaxSwitchingAutoregression.signature`.
+dynamax = [
+    "dynamax>=1.0,<1.1",
+]
 
 [dependency-groups]
 dev = [
@@ -155,6 +179,13 @@ dev = [
     # without it skips cleanly.
     "bambi>=0.17.2,<0.18 ; python_full_version < '3.12'",
     "bambi>=0.19,<0.20 ; python_full_version >= '3.12'",
+    # dynamax mirrors the `dynamax` extra so the latent-state wrapper -- and with it the only
+    # model in the package that declares PredictionMode.SMOOTHED -- is exercised by the
+    # default test run rather than skipped. A filtered-versus-smoothed claim that nothing
+    # executes is exactly the claim `AGENTS.md` says must be checkable.
+    # `tests/test_dynamax_model.py` still gates on `pytest.importorskip`, so a checkout
+    # without it skips cleanly.
+    "dynamax>=1.0,<1.1",
     # h5py, pandas, tables and xarray back the reader fixtures: the
     # pinned DeepLabCut, SLEAP, Keypoint-MoSeq and BORIS writer contracts, and
     # the duck-typed `movement` poses dataset.

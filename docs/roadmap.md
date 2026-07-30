@@ -469,6 +469,26 @@ The roadmap is organized by scientific contracts rather than by model count.
   understand why each step is present, replace one component, and obtain the same standard
   evidence objects.
 
+## Known gaps in the scoring layer
+
+Two shared-layer gaps were found independently by three model waves and are recorded, with
+their proposed shapes and revisit triggers, in
+[SDR-0063](decisions/0063-defer-the-log-score-only-comparison-and-the-survival-carrying-prediction.md).
+They are deferred rather than open questions, and neither should be patched under a wave
+whose subject is one model family.
+
+- **Deferred:** a log-score-only prospective comparison. `compare_models` computes a Brier
+  column unconditionally and correctly refuses a density with no categorical margin, so it
+  cannot rank two unlabelled-density candidates against each other; `evaluate_splits`
+  reports the log score, which is defined for them. The likely shape is a declared metric
+  set on the comparison, with a candidate that cannot support a named rule refused at
+  declaration rather than at scoring time.
+- **Deferred:** a `ModelPrediction` member that can carry a censored observation. A censored
+  row's score is \(\log S(c)\) and none of the three current members can express it, so a
+  censored family's `predict()` and `pointwise_log_prob` deliberately disagree on exactly
+  those rows. Deciding between a fourth member and an observation-limit channel on
+  `DensityPrediction` wants a second censored family to look at.
+
 ## Deferred research extensions
 
 Session-varying GLM-HMM research, population-of-laboratories inference, inverse RL,

@@ -395,18 +395,66 @@ section.
 
 ## Models whose coordinate is bounded, not linear
 
-`BinaryQLearning`, `BinaryRLAgent`, `PsychometricFunction`, `TemporalDiscounting` and
-`ProspectTheory` are the families whose likelihood is not a penalised linear one and whose
-parameters are bounded: a learning rate in \((0,1)\), an inverse temperature above zero, a
-width above zero, a lapse rate below its declared maximum, a discount rate above zero. All
-ten of their `smooth()` and `hierarchical()` cells work. The last two were written *after*
-this contract existed and needed nothing added to it; see
-[economic and value-based choice](economic-choice.md), where `mix()` also works, because a
-mixture is gated on row independence and a value-based trial's rows are independent.
+`BinaryQLearning`, `BinaryRLAgent`, `PsychometricFunction`, `TemporalDiscounting`,
+`ProspectTheory`, `DurationReproduction`, `TemporalBisection` and `PatchLeaving` are the
+families whose likelihood is not a penalised linear one and whose parameters are bounded: a
+learning rate in \((0,1)\), an inverse temperature above zero, a width above zero, a lapse
+rate below its declared maximum, a discount rate above zero, a Weber fraction above zero, a
+giving-up intake rate above zero. All sixteen of their `smooth()` and `hierarchical()` cells
+work. The last five were written *after* this contract existed and needed nothing added to
+it; see [economic and value-based choice](economic-choice.md), where `mix()` also works,
+because a mixture is gated on row independence and a value-based trial's rows are independent.
 The two agents are the families where it does not, and there the refusal is the recursion.
 `BernoulliGLMHMM` is a fourth model on this contract, and a partial one: its
 [hierarchical cell is open](#a-glm-hmm-which-cell-opened-and-what-still-refuses) on the
 emission coefficients, and its smooth cell is refused.
+
+The three most recent families are the first on this contract whose **observation is not a
+choice**: `behavio.models.scalar_timing.DurationReproduction` scores a reproduced duration
+and `behavio.models.patch_leaving.PatchLeaving` scores a residence time that may be
+right-censored. Neither combinator noticed. `smooth()` and `hierarchical()` never look at an
+observation — they rewrite a coordinate and hand the model back its own row objective — so a
+per-subject Weber fraction and a patch-leaving threshold that drifts across training are
+available for no combinator code at all:
+
+```python
+from behavio.compose import hierarchical, smooth
+from behavio.models.patch_leaving import PatchLeaving
+from behavio.models.scalar_timing import DurationReproduction, TemporalBisection
+
+per_animal_weber = hierarchical(
+    DurationReproduction(), over="subject", parameters=("weber_fraction_log",), scale=0.5
+)
+drifting_threshold = smooth(
+    PatchLeaving(),
+    over="session_order",
+    knots=(0.0, 5.0),
+    parameters=("giving_up_rate_log",),
+)
+sharpening_clock = smooth(
+    TemporalBisection(), over="session_order", knots=(0.0, 5.0), parameters=("clock_rate_log",)
+)
+```
+
+### A continuous outcome needs a component, not a combinator
+
+`mix()` works on `TemporalBisection`, whose report is a binary choice, and is refused on the
+two continuous families:
+
+```python
+mix(DurationReproduction(), UniformChoiceGuess())
+# TypeError: UniformChoiceGuess writes ['choice'] but DurationReproduction scores
+# ['reproduced_duration'], so they are not a mixture of one observation
+```
+
+**That refusal is not a limit of `mix()`.** These rows are independent, the weight would ride
+in one extra column of the row coordinate exactly as it does for a discounting model, and
+`require_mixable` never reaches the arithmetic: it compares scored columns first. What is
+missing is a **component** that scores a bare duration. The three that ship write a binary
+choice, a category code, and a joint choice-and-latency; none of them writes a lone
+continuous outcome. A `UniformDurationGuess` would open both cells without either combinator
+changing, and the component contract in `behavio.contracts.mixture` is already the place to
+write it.
 
 ```python
 from behavio import BinaryQLearning, PsychometricFunction

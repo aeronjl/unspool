@@ -5,7 +5,8 @@ real [`BehaviourEstimator`](contracts.md) — or, for a package that fits by sam
 [`PosteriorBehaviourEstimator`](contracts.md) — and keeps its dependency behind its own
 extra; `import behavio` never requires one. Read
 [wrapped models](../foreign-models.md) first for the compatibility and licence matrix, the
-Python floor, the jax conflict, and the places PyDDM and Bambi strain the contract.
+Python floor, the jax conflict, the nightly dependency dynamax brings, and the places
+PyDDM, Bambi and dynamax strain the contract.
 
 ## The package
 
@@ -26,6 +27,14 @@ Python floor, the jax conflict, and the places PyDDM and Bambi strain the contra
 ## Bambi regression
 
 ::: behavio.foreign.bambi
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+## dynamax switching autoregression
+
+::: behavio.foreign.dynamax
     options:
       members_order: source
       show_root_heading: false

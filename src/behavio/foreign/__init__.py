@@ -27,15 +27,24 @@ model-specific -- the sequence/row helper, the continuous-outcome prediction typ
 estimator conformance harness -- live in :mod:`behavio.adapters`, which stays below the
 contracts' implementers and depends on no third-party package at all.
 
+What the wrappers share, they share through :mod:`behavio.foreign._shared`, and only where
+there was already a duplicate: the "quiet this package's own logging" block that all three
+contain, and the covariance-or-refusal record that both *point-estimate* wrappers need
+because neither PyDDM nor dynamax reports an uncertainty. Helpers with one user stay with
+their user.
+
 Importing this package imports no wrapper. Reach a wrapper by its own module::
 
     from behavio.foreign.pyddm import PyDDMDriftDiffusion
     from behavio.foreign.bambi import BambiRegression
+    from behavio.foreign.dynamax import DynamaxSwitchingAutoregression
 """
 
 from behavio.foreign._optional import (
     BAMBI_EXTRA,
     BAMBI_SERIES,
+    DYNAMAX_EXTRA,
+    DYNAMAX_SERIES,
     PYDDM_EXTRA,
     PYDDM_SERIES,
     ForeignPackageUnavailableError,
@@ -44,6 +53,8 @@ from behavio.foreign._optional import (
 __all__ = [
     "BAMBI_EXTRA",
     "BAMBI_SERIES",
+    "DYNAMAX_EXTRA",
+    "DYNAMAX_SERIES",
     "PYDDM_EXTRA",
     "PYDDM_SERIES",
     "ForeignPackageUnavailableError",

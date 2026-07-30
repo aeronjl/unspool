@@ -17,6 +17,9 @@ mechanism informative. Model choice comes after those commitments.
 | Binary choice | Binary baselines or Bernoulli history GLM | Joint choice/RT likelihoods |
 | More than two actions or modeled omissions | `MultinomialLogit` | Binary models after silently dropping categories |
 | Binary choice and response time | `WienerDriftDiffusion` family | Choice-only log scores |
+| A binary response to an exogenous observation sequence | `BetaBernoulliObserver` or `HierarchicalGaussianFilter` | Value-learning agents, whose recursion is written by the response rather than by the observation |
+| A reproduced duration | `DurationReproduction` | Choice likelihoods, and any score whose units are not a density on that duration |
+| A patch residence time, possibly censored | `PatchLeaving` | Models that treat a session-truncated visit as a departure |
 | A neural measurement | A companion neural model outside Behavio | A behavioural likelihood relabelled as neural evidence |
 
 The `scored_columns` contract enforces this boundary. A probability for choice and a joint
@@ -81,6 +84,58 @@ respect trial-specific availability and retain omissions as a modeled category, 
 composes: `smooth()` and `hierarchical()` supply drifting and per-subject versions of it
 without a new class. The current RL, GLM-HMM, and DDM reference families are binary; do not
 coerce a richer task into them merely for API convenience.
+
+### A belief about a changing world
+
+Use `behavio.models.belief.BetaBernoulliObserver` or
+`behavio.models.belief.HierarchicalGaussianFilter` when the claim is about what the subject
+*should* have believed given what the task showed it, and the response is a read-out of that
+belief. The task's observation and the subject's response are different columns, and keeping
+them apart is the whole distinction from a value-learning agent: the belief recursion is
+written by the observation, so every row has a density of its own and a lapse is expressible
+where it is not for a Q-learning agent.
+
+A fitted volatility is not evidence that the subject tracked volatility. On reversal designs
+the three-level filter's `meta_volatility` is not identified by binary responses at all;
+`describe()` measures the study's own belief sensitivity and reports
+`belief_insensitive_parameter` before the fit, and a two-level filter is the honest model for
+such a design. See
+[SDR-0062](decisions/0062-implement-normative-belief-updating-clean-room.md) for why this is
+a clean-room implementation and which conventions it declares.
+
+### A timed duration
+
+Use `behavio.models.scalar_timing.DurationReproduction` when the animal reproduces a target
+duration and the reportable quantity is a Weber fraction, and
+`behavio.models.scalar_timing.TemporalBisection` when it reports which of two trained anchors
+a probe was more like. Both estimate the same two parameters — a clock rate and a Weber
+fraction — from the same scalar memory, so a study that runs both can ask whether one Weber
+fraction describes them, which neither paradigm can ask alone.
+
+A fitted Weber fraction is not evidence of a scalar clock unless the design tests durations
+over a *range*: the scalar property is a claim about how variability changes with duration,
+and `describe()` reports `narrow_target_range` when the tested durations are too close
+together to see it. A bisection point is not readable without the decision rule that produced
+it, which is why the rule is in the model's signature; see
+[SDR-0060](decisions/0060-bisect-time-by-the-ratio-rule.md) for why the ratio rule is the
+default and why one anchor pair cannot test it.
+
+### Leaving a depleting patch
+
+Use `behavio.models.patch_leaving.PatchLeaving` when the observation is a residence time and
+the reportable quantity is the intake rate at which the animal gives up. Declare
+`travel_time_column` and the fit additionally reports Charnov's optimum beside the threshold
+it estimated, as an `overstaying_ratio`. Declare `censoring_time_column` whenever a session
+can end while the animal is still in a patch; such a visit is not a leaving time and is
+scored by its survival function instead.
+
+A fitted giving-up rate is not evidence for the marginal value theorem unless the patches
+*differ*. With one patch type, "leave when the intake rate falls to a threshold" and "leave
+after a fixed time" make identical predictions, and `describe()` reports
+`unidentified_leaving_rule`. See
+[SDR-0061](decisions/0061-fit-patch-leaving-as-a-hazard-not-as-the-marginal-value-theorem.md)
+for why the theorem is a benchmark this family is read against rather than the likelihood it
+fits.
 
 ## 4. Decide whether pooling is part of the claim
 

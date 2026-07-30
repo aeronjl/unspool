@@ -160,9 +160,12 @@ nav:
       - Hierarchical smooth GLM: hierarchical-smooth-glm.md
       - GLM-HMM: glm-hmm.md
       - Reinforcement learning: q-learning.md
+      - Normative belief updating: normative-belief.md
       - Drift diffusion: drift-diffusion.md
       - Session-varying drift diffusion: smooth-ddm.md
       - Partially pooled drift diffusion: hierarchical-smooth-ddm.md
+      - Scalar timing: scalar-timing.md
+      - Patch leaving: patch-leaving.md
   - Data:
       - Tabular, IBL, NWB, and DANDI: interoperability.md
       - Observed behaviour: observed-behaviour.md

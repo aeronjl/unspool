@@ -106,8 +106,6 @@ collide and ``import behavio.foreign.pyddm`` works with the extra uninstalled.
 
 from __future__ import annotations
 
-import logging
-import warnings
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from inspect import signature as _signature
@@ -132,6 +130,18 @@ from behavio.contracts.estimator import (
 )
 from behavio.design.matrix import DesignSpec
 from behavio.foreign._optional import PYDDM_SERIES, pyddm_version, require_pyddm
+from behavio.foreign._shared import (
+    ForeignCurvature as _LocalCurvature,
+)
+from behavio.foreign._shared import (
+    condition_number as _condition_number,
+)
+from behavio.foreign._shared import (
+    quiet_foreign_package,
+)
+from behavio.foreign._shared import (
+    unknown_curvature as _unknown_curvature,
+)
 from behavio.models._kernels.design import build_matrix, resolve_design, validate_design_choice
 from behavio.models._kernels.introspection import ERROR, WARNING, Describable, ModelFinding
 from behavio.task.response_times import ResponseTimeSpec
@@ -170,31 +180,6 @@ reader can check the arithmetic without opening the source.
 _LOSSES: Final = ("robust-likelihood", "likelihood")
 _FITTING_METHODS: Final = ("differential_evolution", "simplex")
 _MASS_TOLERANCE: Final = 1e-3
-
-
-@dataclass(frozen=True, slots=True)
-class _LocalCurvature:
-    """What differencing the likelihood at the reported optimum established, or did not.
-
-    ``converged`` is ``True``/``False`` when the local-optimality probe ran, and
-    :attr:`~behavio.contracts.ConvergenceStatus.UNREPORTED` when it could not run at all --
-    the one case where neither PyDDM nor this wrapper has an answer.
-    """
-
-    covariance: NDArray[np.float64]
-    standard_errors: NDArray[np.float64]
-    gradient_norm: float | None
-    converged: bool | ConvergenceStatus
-    estimated: bool
-    message: str
-
-    @property
-    def status(self) -> int | None:
-        """The integer convergence status the fit records, absent when there is no verdict."""
-
-        if isinstance(self.converged, ConvergenceStatus):
-            return None
-        return 0 if self.converged else 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -1300,49 +1285,7 @@ def _quiet_pyddm() -> Any:
     :class:`PyDDMFitResult`.
     """
 
-    return _QuietPyDDM()
-
-
-class _QuietPyDDM:
-    __slots__ = ("_catcher", "_level", "_logger")
-
-    def __enter__(self) -> None:
-        self._logger = logging.getLogger("pyddm")
-        self._level = self._logger.level
-        self._logger.setLevel(logging.ERROR)
-        self._catcher = warnings.catch_warnings()
-        self._catcher.__enter__()
-        warnings.simplefilter("ignore", RuntimeWarning)
-
-    def __exit__(self, *exception: Any) -> None:
-        self._catcher.__exit__(*exception)
-        self._logger.setLevel(self._level)
-
-
-def _unknown_curvature(
-    size: int,
-    message: str,
-    *,
-    converged: bool | ConvergenceStatus,
-    gradient_norm: float | None = None,
-) -> _LocalCurvature:
-    return _LocalCurvature(
-        covariance=protected_array(np.full((size, size), np.nan), dtype=np.float64),
-        standard_errors=protected_array(np.full(size, np.nan), dtype=np.float64),
-        gradient_norm=gradient_norm,
-        converged=converged,
-        estimated=False,
-        message=message,
-    )
-
-
-def _condition_number(covariance: NDArray[np.float64]) -> float | None:
-    if not np.all(np.isfinite(covariance)):
-        return None
-    try:
-        return float(np.linalg.cond(covariance))
-    except np.linalg.LinAlgError:  # pragma: no cover - a singular matrix is already NaN
-        return None
+    return quiet_foreign_package("pyddm")
 
 
 def _at_boundary(vector: NDArray[np.float64], bounds: Sequence[tuple[float, float]]) -> bool:
