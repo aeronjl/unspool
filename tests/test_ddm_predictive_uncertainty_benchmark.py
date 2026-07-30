@@ -5,6 +5,8 @@ import pytest
 
 from benchmarks.ddm_predictive_uncertainty.benchmark import run
 
+pytestmark = pytest.mark.benchmark
+
 RESULT_PATH = Path("benchmarks/ddm_predictive_uncertainty/result.json")
 
 

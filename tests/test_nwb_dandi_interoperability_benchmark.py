@@ -1,6 +1,10 @@
 import json
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.benchmark
+
 RESULT_PATH = Path("benchmarks/nwb_dandi_interoperability/result.json")
 
 

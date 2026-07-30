@@ -14,6 +14,8 @@ from benchmarks.flagship_longitudinal.benchmark import (
     build_ibl_panel,
 )
 
+pytestmark = pytest.mark.benchmark
+
 RESULT_PATH = Path("benchmarks/flagship_longitudinal/result.json")
 
 

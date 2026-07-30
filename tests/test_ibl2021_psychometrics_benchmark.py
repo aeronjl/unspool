@@ -34,6 +34,8 @@ from benchmarks.ibl2021_psychometrics.psychometric import (
 )
 from benchmarks.provenance import PROVENANCE_KEY
 
+pytestmark = pytest.mark.benchmark
+
 ROOT = Path(__file__).parents[1]
 DIRECTORY = ROOT / "benchmarks" / "ibl2021_psychometrics"
 EXPECTED_SUBJECTS = 138

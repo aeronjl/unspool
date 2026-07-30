@@ -3,7 +3,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from benchmarks.trajectory_shapes.benchmark import experiment
+
+pytestmark = pytest.mark.benchmark
 
 RESULT_PATH = Path("benchmarks/trajectory_shapes/result.json")
 

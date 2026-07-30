@@ -9,6 +9,8 @@ import pytest
 from benchmarks.chen2021_bandit.benchmark import contract_matches, load_study
 from benchmarks.chen2021_bandit.fetch_data import _safe_extract
 
+pytestmark = pytest.mark.benchmark
+
 ROOT = Path(__file__).parents[1]
 RESULT = ROOT / "benchmarks" / "chen2021_bandit" / "result.json"
 HEADER = ",left,right,choice,reward,state,RT,retrieval,initiation\n"

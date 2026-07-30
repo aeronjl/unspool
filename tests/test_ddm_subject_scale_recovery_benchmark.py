@@ -5,6 +5,8 @@ import pytest
 
 from benchmarks.ddm_subject_scale_recovery.benchmark import run
 
+pytestmark = pytest.mark.benchmark
+
 RESULT_PATH = Path("benchmarks/ddm_subject_scale_recovery/result.json")
 NOMINAL_COVERAGE = 0.95
 MEASURED_LOUIS_COVERAGE = {

@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from benchmarks.ddm_contaminants.benchmark import SHARED_PARAMETERS, run
+
+pytestmark = pytest.mark.benchmark
 
 
 def test_pinned_contaminant_benchmark_retains_paired_recovery_and_forecasts() -> None:

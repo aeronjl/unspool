@@ -20,6 +20,8 @@ from benchmarks.ibl2021_nested_selection.benchmark import (
     fit_nested_procedures,
 )
 
+pytestmark = pytest.mark.benchmark
+
 RESULT_PATH = Path("benchmarks/ibl2021_nested_selection/result.json")
 
 

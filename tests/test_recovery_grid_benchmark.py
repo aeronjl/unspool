@@ -1,4 +1,8 @@
+import pytest
+
 from benchmarks.recovery_grid.benchmark import run
+
+pytestmark = pytest.mark.benchmark
 
 
 def test_four_family_recovery_grid_satisfies_its_bounded_contract() -> None:

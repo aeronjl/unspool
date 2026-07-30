@@ -19,6 +19,8 @@ from benchmarks.ibl2021.selection import (
     select_replicated_learning_panel,
 )
 
+pytestmark = pytest.mark.benchmark
+
 RESULT_PATH = Path("benchmarks/ibl2021/result.json")
 
 

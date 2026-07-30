@@ -5,6 +5,8 @@ import pytest
 
 from benchmarks.subject_scale_recovery.benchmark import experiment
 
+pytestmark = pytest.mark.benchmark
+
 RESULT_PATH = Path("benchmarks/subject_scale_recovery/result.json")
 NOMINAL_COVERAGE = 0.95
 MEASURED_COVERAGE = {

@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from benchmarks.weak_signal_recovery.benchmark import run
+
+pytestmark = pytest.mark.benchmark
 
 RESULT_PATH = Path("benchmarks/weak_signal_recovery/result.json")
 

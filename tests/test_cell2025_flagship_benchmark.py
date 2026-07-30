@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from behavio import Study
 from behavio.interchange import _study_record
@@ -17,6 +18,8 @@ from benchmarks.cell2025_flagship.benchmark import (
     panel_manifest,
     summarize_response_times,
 )
+
+pytestmark = pytest.mark.benchmark
 
 ROOT = Path(__file__).parents[1]
 

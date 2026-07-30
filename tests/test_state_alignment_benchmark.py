@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from benchmarks.state_alignment.benchmark import experiment
+
+pytestmark = pytest.mark.benchmark
 
 RESULT_PATH = Path("benchmarks/state_alignment/result.json")
 

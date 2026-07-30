@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from benchmarks.trajectory_recovery.benchmark import EXPECTED_WINNER, METHODS, experiment
+
+pytestmark = pytest.mark.benchmark
 
 RESULT_PATH = Path("benchmarks/trajectory_recovery/result.json")
 

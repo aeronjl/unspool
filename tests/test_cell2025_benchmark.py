@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from benchmarks.cell2025.benchmark import (
     EXPECTED,
@@ -11,6 +12,8 @@ from benchmarks.cell2025.benchmark import (
     contract_matches,
     load_study,
 )
+
+pytestmark = pytest.mark.benchmark
 
 ROOT = Path(__file__).parents[1]
 BENCHMARK = ROOT / "benchmarks" / "cell2025"

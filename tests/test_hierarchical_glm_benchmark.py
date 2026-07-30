@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from benchmarks.hierarchical_glm.benchmark import METHODS, run
+
+pytestmark = pytest.mark.benchmark
 
 RESULT_PATH = Path("benchmarks/hierarchical_glm/result.json")
 

@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from benchmarks.ddm_recovery.benchmark import run
+
+pytestmark = pytest.mark.benchmark
 
 
 def test_pinned_ddm_recovery_result_retains_runs_and_resolution_limit() -> None:

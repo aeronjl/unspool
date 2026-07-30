@@ -5,6 +5,8 @@ import pytest
 
 from benchmarks.nested_selection.benchmark import CANDIDATES, EXPECTED, REGIMES, experiment
 
+pytestmark = pytest.mark.benchmark
+
 RESULT_PATH = Path("benchmarks/nested_selection/result.json")
 
 

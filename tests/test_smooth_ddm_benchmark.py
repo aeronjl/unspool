@@ -2,7 +2,11 @@ import json
 import math
 from pathlib import Path
 
+import pytest
+
 from benchmarks.smooth_ddm.benchmark import EXPECTED_WINNER, METHODS, experiment
+
+pytestmark = pytest.mark.benchmark
 
 
 def test_smooth_ddm_experiment_is_reproducible_and_matched() -> None:

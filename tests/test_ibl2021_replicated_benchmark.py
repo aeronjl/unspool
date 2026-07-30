@@ -3,12 +3,16 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from benchmarks.ibl2021_replicated.manifest import (
     EXPECTED_MANIFEST_SHA256,
     EXPECTED_SUBJECTS_PER_LAB,
     load_manifest,
     sources_from_manifest,
 )
+
+pytestmark = pytest.mark.benchmark
 
 RESULT_PATH = Path("benchmarks/ibl2021_replicated/result.json")
 

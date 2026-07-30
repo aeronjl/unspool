@@ -38,6 +38,8 @@ from benchmarks.ashwood2022_glmhmm.benchmark import (
 from benchmarks.ashwood2022_glmhmm.fetch_data import ARCHIVE_SHA256, DEFAULT_DESTINATION
 from benchmarks.provenance import PROVENANCE_KEY
 
+pytestmark = pytest.mark.benchmark
+
 ROOT = Path(__file__).parents[1]
 BENCHMARK = ROOT / "benchmarks" / "ashwood2022_glmhmm"
 

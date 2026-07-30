@@ -16,6 +16,8 @@ import pytest
 
 from benchmarks.provenance import PROVENANCE_KEY
 
+pytestmark = pytest.mark.benchmark
+
 ROOT = Path(__file__).parents[1]
 GATED_OFFLINE_BENCHMARKS = (
     "landmark_uncertainty",

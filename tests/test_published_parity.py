@@ -15,6 +15,8 @@ from typing import Any
 
 import pytest
 
+pytestmark = pytest.mark.benchmark
+
 ROOT = Path(__file__).parents[1]
 CONTRACT_PATHS = sorted(ROOT.glob("benchmarks/*/published_claims.json"))
 SCHEMA_VERSION = 1

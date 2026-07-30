@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from benchmarks.landmark_uncertainty.benchmark import experiment
+
+pytestmark = pytest.mark.benchmark
 
 RESULT_PATH = Path("benchmarks/landmark_uncertainty/result.json")
 

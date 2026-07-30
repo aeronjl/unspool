@@ -3,8 +3,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from benchmarks.ibl2021_decision_models.benchmark import selected_manifest_rows
 from benchmarks.ibl2021_replicated.manifest import EXPECTED_MANIFEST_SHA256
+
+pytestmark = pytest.mark.benchmark
 
 RESULT_PATH = Path("benchmarks/ibl2021_decision_models/result.json")
 

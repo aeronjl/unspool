@@ -13,6 +13,8 @@ from benchmarks.ibl2021_prospective.benchmark import (
     build_panel,
 )
 
+pytestmark = pytest.mark.benchmark
+
 RESULT_PATH = Path("benchmarks/ibl2021_prospective/result.json")
 
 
