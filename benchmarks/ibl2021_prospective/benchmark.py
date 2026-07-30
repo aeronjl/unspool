@@ -11,14 +11,14 @@ from typing import Any
 import numpy as np
 
 from behavio import (
-    HierarchicalBernoulliHistoryGLM,
-    HierarchicalSmoothBernoulliHistoryGLM,
+    BernoulliHistoryGLM,
     ProspectiveComparisonReport,
     Study,
     cohort_forward_session_splits,
     compare_models,
     leave_one_lab_out_session_forecast_splits,
 )
+from behavio.compose import hierarchical, smooth
 from benchmarks.ibl2021_replicated.benchmark import DEFAULT_CACHE, load_study
 from benchmarks.ibl2021_replicated.manifest import EXPECTED_MANIFEST_SHA256
 from benchmarks.provenance import render
@@ -237,16 +237,18 @@ def run(
 def _models() -> Mapping[str, Any]:
     common = {"covariates": ("stimulus",), "choice_lags": 1, "l2": 0.02}
     return {
-        "static_partial_pooling": HierarchicalBernoulliHistoryGLM(
-            **common,
-            subject_scale=0.4,
+        "static_partial_pooling": hierarchical(
+            BernoulliHistoryGLM(**common), over="subject", scale=0.4
         ),
-        "hierarchical_smooth_drift": HierarchicalSmoothBernoulliHistoryGLM(
-            **common,
-            knots=KNOTS,
-            smoothness=3.0,
-            subject_scale=0.4,
-            subject_smoothness=3.0,
+        "hierarchical_smooth_drift": hierarchical(
+            smooth(
+                BernoulliHistoryGLM(**common),
+                over="session_order",
+                knots=KNOTS,
+                smoothness=3.0,
+            ),
+            over="subject",
+            scale=0.4,
         ),
     }
 

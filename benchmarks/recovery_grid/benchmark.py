@@ -13,10 +13,10 @@ from behavio import (
     BernoulliHistoryGLM,
     BinaryQLearning,
     ModelRecoveryScenario,
-    SmoothBernoulliHistoryGLM,
     Study,
     run_model_recovery_grid,
 )
+from behavio.compose import SmoothModel, smooth
 from benchmarks.provenance import render
 
 N_SESSIONS = 5
@@ -69,7 +69,7 @@ def build_design(*, trials_per_session: int) -> Study:
 
 def experiment() -> tuple[
     tuple[ModelRecoveryScenario, ...],
-    dict[str, BernoulliHistoryGLM | SmoothBernoulliHistoryGLM | BernoulliGLMHMM | BinaryQLearning],
+    dict[str, BernoulliHistoryGLM | SmoothModel | BernoulliGLMHMM | BinaryQLearning],
 ]:
     """Return fixed candidate configurations and one parameter regime per family."""
 
@@ -78,12 +78,11 @@ def experiment() -> tuple[
         choice_lags=1,
         l2=0.01,
     )
-    smooth = SmoothBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=1,
-        knots=tuple(range(N_SESSIONS)),
+    drifting = smooth(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01),
+        over="session_order",
+        knots=tuple(float(order) for order in range(N_SESSIONS)),
         smoothness=5.0,
-        l2=0.01,
     )
     hidden_state = BernoulliGLMHMM(
         covariates=("stimulus",),
@@ -96,7 +95,7 @@ def experiment() -> tuple[
     q_learning = BinaryQLearning(n_restarts=2, random_seed=4)
     candidates = {
         "static": static,
-        "smooth": smooth,
+        "smooth": drifting,
         "hmm": hidden_state,
         "q-learning": q_learning,
     }
@@ -110,8 +109,8 @@ def experiment() -> tuple[
         ModelRecoveryScenario(
             name="drifting",
             truth_label="smooth",
-            generator=smooth,
-            parameters=smooth.parameters_from_paths(
+            generator=drifting,
+            parameters=drifting.parameters_from_paths(
                 {
                     "intercept": np.linspace(-0.6, 0.6, N_SESSIONS),
                     "stimulus": np.linspace(0.4, 2.0, N_SESSIONS),

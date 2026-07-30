@@ -233,6 +233,22 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
             f"stickiness={self.stickiness}{self._design_signature}]"
         )
 
+    def penalty_matrix(self) -> NDArray[np.float64]:
+        """Refuse the penalised-linear contract this family inherits but cannot honour.
+
+        :class:`BernoulliGLMHMM` extends :class:`BernoulliHistoryGLM` for its per-state
+        emissions, which means it inherits the members
+        :class:`behavio.contracts.compose.PenalisedLinearEstimator` asks for while its own
+        likelihood is a mixture over latent states rather than one linear predictor. A
+        combinator would build a coherent-looking and entirely wrong model, so the
+        inherited member says no instead.
+        """
+
+        raise TypeError(
+            "a GLM-HMM is a latent-state mixture, not a penalised linear model, so "
+            "smooth() and hierarchical() cannot be applied to it directly"
+        )
+
     @property
     def parameter_names(self) -> tuple[str, ...]:
         emissions = tuple(
@@ -372,8 +388,8 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
     def fit(self, study: Study) -> GLMHMMFitResult:
         """Fit by deterministic multi-start maximum penalized likelihood."""
 
-        outcomes = self._outcomes(study)
-        features = self._base_feature_matrix(study, outcomes)
+        outcomes = self.outcomes(study)
+        features = self.design_matrix(study)
         sessions = ordered_session_indices(study)
 
         def objective(vector: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
@@ -482,8 +498,8 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
 
         prediction_mode = self._prediction_mode(mode)
         self._validate_fit(fit)
-        outcomes = self._outcomes(study)
-        features = self._base_feature_matrix(study, outcomes)
+        outcomes = self.outcomes(study)
+        features = self.design_matrix(study)
         components = self.parameter_components(fit)
         state_probabilities = self._filtered_state_probabilities(
             features,
@@ -509,7 +525,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
     ) -> NDArray[np.float64]:
         """Score observed choices under sequential filtered predictions."""
 
-        outcomes = self._outcomes(study)
+        outcomes = self.outcomes(study)
         prediction = self.predict(study, fit, mode=mode)
         scores = outcomes * np.log(prediction.probability)
         scores += (1.0 - outcomes) * np.log1p(-prediction.probability)
@@ -523,8 +539,8 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         """Return predictive and outcome-updated state probabilities."""
 
         self._validate_fit(fit)
-        outcomes = self._outcomes(study)
-        features = self._base_feature_matrix(study, outcomes)
+        outcomes = self.outcomes(study)
+        features = self.design_matrix(study)
         return self._filtered_state_probabilities(
             features,
             outcomes,

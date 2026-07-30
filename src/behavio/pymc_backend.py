@@ -1,4 +1,12 @@
-"""Optional PyMC inference for an established hierarchical behavioural model."""
+"""Optional PyMC inference for a hierarchical penalised-linear behavioural model.
+
+This adapter used to name one class, ``HierarchicalBernoulliHistoryGLM``, and reach into two
+of its private methods for the outcome vector and the filtered feature matrix. Both are now
+members of :class:`behavio.contracts.compose.PenalisedLinearEstimator`, so the adapter
+dispatches on the contract: anything that :func:`behavio.compose.hierarchical` produced over
+a penalised linear model with a diagonal penalty can be sampled, and the two priors are read
+off the model's own penalty matrices rather than re-derived from its ``l2`` field.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +18,9 @@ from typing import Any
 
 import numpy as np
 
-from behavio.models.hierarchical_glm import HierarchicalBernoulliHistoryGLM
+from behavio.compose.hierarchy import HierarchicalModel
+from behavio.contracts.compose import group_blocks
+from behavio.models._kernels.bernoulli import BernoulliLikelihood
 from behavio.posterior import (
     PosteriorGroup,
     PosteriorResult,
@@ -31,13 +41,15 @@ class PyMCUnavailableError(ImportError):
 
 @dataclass(frozen=True, slots=True)
 class PyMCHierarchicalGLMBackend:
-    """Sample the fixed-scale hierarchical Bernoulli history GLM with PyMC NUTS.
+    """Sample a fixed-scale hierarchical penalised-linear model with PyMC NUTS.
 
-    This adapter changes inference, not behavioural semantics. It calls the model's own
-    outcome and filtered-history feature builders, validates the same :class:`TaskSpec`,
-    and uses the priors implied by the existing MAP objective: a flat intercept, flat or
-    L2-equivalent Gaussian population slopes, and Gaussian subject deviations with the
-    model's fixed ``subject_scale``.
+    This adapter changes inference, not behavioural semantics. It calls the contract's own
+    outcome and design builders, validates the same :class:`TaskSpec`, and uses the priors
+    the MAP objective already implies: a quadratic penalty *is* a Gaussian precision, so a
+    zero on the penalty diagonal is a flat prior and a positive one is a Normal with
+    standard deviation ``1 / sqrt(penalty)``. Group deviations get the same treatment from
+    :meth:`~behavio.contracts.compose.PenalisedLinearEstimator.group_penalty`, so a model
+    whose parameters vary only on some coordinates samples exactly those.
 
     ``seed`` is entropy for :class:`numpy.random.SeedSequence`, not a 32-bit sampler seed:
     it is any non-negative integer, and the adapter derives the 32-bit words PyMC needs.
@@ -95,45 +107,75 @@ class PyMCHierarchicalGLMBackend:
 
     def sample(
         self,
-        model: HierarchicalBernoulliHistoryGLM,
+        model: HierarchicalModel,
         study: Study,
         *,
         task: TaskSpec,
     ) -> PosteriorResult:
         """Return a task-validated, labelled full-posterior result."""
 
-        if not isinstance(model, HierarchicalBernoulliHistoryGLM):
-            raise TypeError("model must be a HierarchicalBernoulliHistoryGLM")
+        if not isinstance(model, HierarchicalModel):
+            raise TypeError("model must be a hierarchical() composition")
         if not isinstance(study, Study):
             raise TypeError("study must be a Study")
         if not isinstance(task, TaskSpec):
             raise TypeError("task must be a TaskSpec")
-        if model.estimate_subject_scale:
+        if model.estimate_scale:
             raise PyMCBackendError(
-                "estimate_subject_scale=True has no declared full-posterior scale prior; "
-                "use a fixed subject_scale for this adapter"
+                "estimate_scale=True has no declared full-posterior scale prior; "
+                "use a fixed scale for this adapter"
             )
+        inner = model.model
+        if not isinstance(inner.likelihood, BernoulliLikelihood):
+            raise PyMCBackendError(
+                "this adapter declares a Bernoulli observation model; "
+                f"{inner.model_name} does not use one"
+            )
+        population_precision = _diagonal_precision(inner.penalty_matrix(), "population penalty")
+        columns = model.effects.columns(inner.parameter_names)
+        deviation_precision = _diagonal_precision(
+            inner.group_penalty(columns, model.effects.ordered_scales(inner.parameter_names)),
+            "group penalty",
+        )
         task.validate_model(model)
         validation = task.validate(study)
-        subjects = tuple(_scalar(subject) for subject in study.subjects)
+        blocks = group_blocks(study, model.grouping)
+        subjects = blocks.labels
         if len(subjects) < 2:
-            raise PyMCBackendError("hierarchical sampling requires at least two subjects")
-        outcomes = model._outcomes(study)
-        features = model._base_feature_matrix(study, outcomes)
-        row_subject = _subject_indices(study, subjects)
+            raise PyMCBackendError(
+                f"hierarchical sampling requires at least two {model.grouping} groups"
+            )
+        outcomes = inner.outcomes(study)
+        features = inner.design_matrix(study)
+        row_subject = np.asarray(blocks.row_block, dtype=np.int32)
         pymc = _import_pymc()
         inference_version = importlib.metadata.version("pymc")
         sampling_seed, predictive_seed = (
             int(value) for value in np.random.SeedSequence(self.seed).generate_state(2)
         )
 
+        parameter_names = tuple(inner.parameter_names)
+        varying = model.varying_parameters
+        deviation_dim = "coefficient" if varying == parameter_names else "varying_coefficient"
+        paired = tuple(zip(parameter_names, population_precision, strict=True))
+        flat = tuple(name for name, tau in paired if tau == 0)
+        penalised = tuple(name for name, tau in paired if tau > 0)
+        if parameter_names[: len(flat)] != flat:
+            raise PyMCBackendError(
+                "this adapter puts the unpenalised parameters first, as an intercept-plus-"
+                f"slopes model does; {model.model_name} interleaves them: {parameter_names}"
+            )
+        outcome_column = inner.scored_columns[0]
+
         coords = {
             "trial": np.arange(len(study), dtype=np.int64),
-            "subject": _object_coordinate(subjects),
-            "coefficient": np.asarray(model.coefficient_names),
+            model.grouping: _object_coordinate(subjects),
+            "coefficient": np.asarray(parameter_names),
         }
-        if len(model.coefficient_names) > 1:
-            coords["regularized_coefficient"] = np.asarray(model.coefficient_names[1:])
+        if penalised:
+            coords["regularized_coefficient"] = np.asarray(penalised)
+        if deviation_dim != "coefficient":
+            coords[deviation_dim] = np.asarray(varying)
 
         with pymc.Model(coords=coords) as graph:
             design_matrix = pymc.Data(
@@ -142,25 +184,21 @@ class PyMCHierarchicalGLMBackend:
                 dims=("trial", "coefficient"),
             )
             subject_index = pymc.Data("subject_index", row_subject, dims="trial")
-            population_intercept = pymc.Flat("population_intercept")
-            if len(model.coefficient_names) > 1:
-                if model.l2 > 0:
-                    population_slope = pymc.Normal(
+            blocks = []
+            if flat:
+                blocks.append(pymc.Flat("population_intercept", shape=len(flat)))
+            if penalised:
+                blocks.append(
+                    pymc.Normal(
                         "population_slope",
                         mu=0.0,
-                        sigma=1.0 / np.sqrt(model.l2),
+                        sigma=1.0 / np.sqrt(population_precision[len(flat) :]),
                         dims="regularized_coefficient",
                     )
-                else:
-                    population_slope = pymc.Flat(
-                        "population_slope",
-                        dims="regularized_coefficient",
-                    )
-                population_values = pymc.math.concatenate(
-                    (pymc.math.stack((population_intercept,)), population_slope)
                 )
-            else:
-                population_values = pymc.math.stack((population_intercept,))
+            population_values = (
+                blocks[0] if len(blocks) == 1 else pymc.math.concatenate(tuple(blocks))
+            )
             population = pymc.Deterministic(
                 "population_coefficient",
                 population_values,
@@ -169,17 +207,17 @@ class PyMCHierarchicalGLMBackend:
             deviations = pymc.Normal(
                 "subject_deviation",
                 mu=0.0,
-                sigma=model.subject_scale,
-                dims=("subject", "coefficient"),
+                sigma=1.0 / np.sqrt(deviation_precision),
+                dims=(model.grouping, deviation_dim),
             )
             pymc.Deterministic(
                 "subject_coefficient",
-                population[None, :] + deviations,
-                dims=("subject", "coefficient"),
+                population[columns][None, :] + deviations,
+                dims=(model.grouping, deviation_dim),
             )
-            linear_predictor = pymc.math.sum(
-                design_matrix * (population + deviations[subject_index]),
-                axis=1,
+            linear_predictor = pymc.math.sum(design_matrix * population[None, :], axis=1)
+            linear_predictor = linear_predictor + pymc.math.sum(
+                design_matrix[:, columns] * deviations[subject_index], axis=1
             )
             pymc.Deterministic(
                 "choice_probability",
@@ -187,7 +225,7 @@ class PyMCHierarchicalGLMBackend:
                 dims="trial",
             )
             pymc.Bernoulli(
-                model.outcome,
+                outcome_column,
                 logit_p=linear_predictor,
                 observed=outcomes.astype(np.int8),
                 dims="trial",
@@ -212,7 +250,7 @@ class PyMCHierarchicalGLMBackend:
             inference_data = pymc.sample_posterior_predictive(
                 inference_data,
                 model=graph,
-                var_names=[model.outcome],
+                var_names=[outcome_column],
                 random_seed=predictive_seed,
                 progressbar=False,
                 extend_inferencedata=True,
@@ -226,7 +264,7 @@ class PyMCHierarchicalGLMBackend:
             inference_library_version=inference_version,
             parameter_names=("population_coefficient", "subject_deviation"),
         )
-        result = _retain_trial_identity(result, study, model.outcome)
+        result = _retain_trial_identity(result, study, outcome_column)
         attrs = {
             **dict(result.attrs),
             "backend": self.backend_name,
@@ -239,12 +277,8 @@ class PyMCHierarchicalGLMBackend:
                 "n_observed_choices": validation.n_observed_choices,
                 "n_omissions": validation.n_omissions,
             },
-            "population_prior": (
-                "flat intercept; flat slopes"
-                if model.l2 == 0
-                else f"flat intercept; Normal(0, {1.0 / np.sqrt(model.l2):.17g}) slopes"
-            ),
-            "subject_deviation_prior": f"Normal(0, {model.subject_scale:.17g})",
+            "population_prior": _prior_statement(parameter_names, population_precision),
+            "subject_deviation_prior": _prior_statement(varying, deviation_precision),
         }
         return PosteriorResult(
             model_name=result.model_name,
@@ -313,9 +347,25 @@ def _retain_trial_identity(
     )
 
 
-def _subject_indices(study: Study, subjects: tuple[Any, ...]) -> np.ndarray:
-    index = {subject: position for position, subject in enumerate(subjects)}
-    return np.asarray([index[_scalar(subject)] for subject in study["subject"]], dtype=np.int32)
+def _diagonal_precision(penalty: np.ndarray, label: str) -> np.ndarray:
+    """Read a quadratic penalty as a Gaussian precision, refusing correlated priors."""
+
+    diagonal = np.diag(penalty)
+    if not np.allclose(penalty, np.diag(diagonal), rtol=0.0, atol=0.0):
+        raise PyMCBackendError(
+            f"the {label} couples parameters, and this adapter declares independent "
+            "priors; a correlated prior needs its own declared full-posterior form"
+        )
+    if np.any(diagonal < 0):
+        raise PyMCBackendError(f"the {label} must be non-negative")
+    return np.asarray(diagonal, dtype=np.float64)
+
+
+def _prior_statement(names: tuple[Any, ...], precision: np.ndarray) -> str:
+    return "; ".join(
+        f"{name}: flat" if tau == 0 else f"{name}: Normal(0, {1.0 / np.sqrt(tau):.17g})"
+        for name, tau in zip(names, precision, strict=True)
+    )
 
 
 def _object_coordinate(values: tuple[Any, ...]) -> np.ndarray:

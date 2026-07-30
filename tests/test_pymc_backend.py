@@ -4,9 +4,9 @@ import numpy as np
 import pytest
 
 from behavio import (
+    BernoulliHistoryGLM,
     CategoryRateDiscrepancy,
     ChoiceSpec,
-    HierarchicalBernoulliHistoryGLM,
     PyMCBackendError,
     PyMCHierarchicalGLMBackend,
     PyMCUnavailableError,
@@ -15,9 +15,10 @@ from behavio import (
     TaskValidationError,
     posterior_predictive_check,
 )
+from behavio.compose import HierarchicalModel, hierarchical
 
 
-def hierarchical_study() -> tuple[HierarchicalBernoulliHistoryGLM, Study, TaskSpec]:
+def hierarchical_study() -> tuple[HierarchicalModel, Study, TaskSpec]:
     generator = np.random.default_rng(17)
     n_trials = 30
     design = Study(
@@ -29,11 +30,10 @@ def hierarchical_study() -> tuple[HierarchicalBernoulliHistoryGLM, Study, TaskSp
             "stimulus": generator.normal(size=2 * n_trials),
         }
     )
-    model = HierarchicalBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=1,
-        l2=0.25,
-        subject_scale=0.4,
+    model = hierarchical(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.25),
+        over="subject",
+        scale=0.4,
     )
     study = model.simulate(
         design,
@@ -84,11 +84,11 @@ def test_adapter_rejects_undeclared_covariates_and_empirical_bayes_scale() -> No
             model, study, task=undeclared
         )
 
-    empirical_bayes = HierarchicalBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=1,
-        subject_scale=0.4,
-        estimate_subject_scale=True,
+    empirical_bayes = hierarchical(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1),
+        over="subject",
+        scale=0.4,
+        estimate_scale=True,
     )
     with pytest.raises(PyMCBackendError, match="no declared full-posterior scale prior"):
         PyMCHierarchicalGLMBackend(draws=10, tune=10, chains=2).sample(
@@ -143,7 +143,7 @@ def test_real_pymc_fit_preserves_model_task_likelihood_and_predictive_evidence()
     )
     np.testing.assert_array_equal(
         result["posterior"]["population_coefficient"].coords["coefficient"],
-        model.coefficient_names,
+        model.parameter_names,
     )
     assert not np.any(result["sample_stats"]["diverging"].values)
     assert result.attrs["backend_config"]["draws"] == 30

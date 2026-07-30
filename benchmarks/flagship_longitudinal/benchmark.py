@@ -12,15 +12,11 @@ import numpy as np
 from behavio import (
     BernoulliHistoryGLM,
     FitResult,
-    HierarchicalBernoulliHistoryGLM,
-    HierarchicalGLMFitResult,
-    HierarchicalSmoothBernoulliHistoryGLM,
-    HierarchicalSmoothGLMFitResult,
-    SmoothBernoulliHistoryGLM,
     Study,
     cohort_forward_session_splits,
     compare_models,
 )
+from behavio.compose import HierarchicalFitResult, hierarchical, smooth
 from benchmarks.cell2025.benchmark import load_study as load_cell_study
 from benchmarks.cell2025.fetch_data import DEFAULT_DESTINATION as DEFAULT_CELL_DATA
 from benchmarks.cell2025.fetch_data import FIGSHARE_ARTICLE_DOI, MEMBER_SHA256, sha256
@@ -317,16 +313,25 @@ def _models() -> Mapping[str, Any]:
     common = {"covariates": ("stimulus",), "choice_lags": 1, "l2": 0.02}
     return {
         "complete_pooling": BernoulliHistoryGLM(**common),
-        "static_partial_pooling": HierarchicalBernoulliHistoryGLM(**common, subject_scale=0.4),
-        "shared_smooth_drift": SmoothBernoulliHistoryGLM(
-            **common, knots=KNOTS, smoothness=3.0, shared_trajectory=True
+        "static_partial_pooling": hierarchical(
+            BernoulliHistoryGLM(**common), over="subject", scale=0.4
         ),
-        "hierarchical_smooth_trajectories": HierarchicalSmoothBernoulliHistoryGLM(
-            **common,
+        "shared_smooth_drift": smooth(
+            BernoulliHistoryGLM(**common),
+            over="session_order",
             knots=KNOTS,
             smoothness=3.0,
-            subject_scale=0.4,
-            subject_smoothness=3.0,
+            shared_trajectory=True,
+        ),
+        "hierarchical_smooth_trajectories": hierarchical(
+            smooth(
+                BernoulliHistoryGLM(**common),
+                over="session_order",
+                knots=KNOTS,
+                smoothness=3.0,
+            ),
+            over="subject",
+            scale=0.4,
         ),
     }
 
@@ -337,22 +342,27 @@ def _stimulus_trajectory(method: str, fit: FitResult, subjects: tuple[Any, ...])
         population = np.repeat(stimulus, len(KNOTS))
         subject_paths = np.broadcast_to(population, (len(subjects), len(KNOTS)))
     elif method == "static_partial_pooling":
-        if not isinstance(fit, HierarchicalGLMFitResult):
+        if not isinstance(fit, HierarchicalFitResult):
             raise TypeError("static partial-pooling fit lost hierarchical estimates")
         index = fit.parameter_names.index("stimulus")
         population = np.repeat(fit.estimates[index], len(KNOTS))
-        subject_paths = np.repeat(fit.subject_coefficients[:, index, None], len(KNOTS), axis=1)
+        varying = fit.varying_parameters.index("stimulus")
+        subject_paths = np.repeat(fit.group_parameters[:, varying, None], len(KNOTS), axis=1)
     elif method == "shared_smooth_drift":
         coefficient_names = ("intercept", "stimulus", "choice_lag_1")
         index = coefficient_names.index("stimulus")
         population = fit.estimates.reshape(len(coefficient_names), len(KNOTS))[index]
         subject_paths = np.broadcast_to(population, (len(subjects), len(KNOTS)))
     else:
-        if not isinstance(fit, HierarchicalSmoothGLMFitResult):
+        if not isinstance(fit, HierarchicalFitResult):
             raise TypeError("hierarchical smooth fit lost subject trajectories")
-        index = fit.coefficient_names.index("stimulus")
-        population = fit.population_knot_values[index]
-        subject_paths = fit.subject_knot_values[:, index, :]
+        coefficient_names = ("intercept", "stimulus", "choice_lag_1")
+        index = coefficient_names.index("stimulus")
+        knots = fit.estimates.reshape(len(coefficient_names), len(KNOTS))
+        population = knots[index]
+        subject_paths = fit.group_parameters.reshape(
+            len(fit.groups), len(coefficient_names), len(KNOTS)
+        )[:, index, :]
     changes = subject_paths[:, -1] - subject_paths[:, 0]
     return {
         "clock": "aligned_session_rank",

@@ -141,7 +141,7 @@ def test_hierarchical_glm_example_exposes_population_policy(
     assert "converged: True" in output
     assert "subject scale (estimated):" in output
     assert "scale at boundary: False" in output
-    assert "unseen-subject policy: population-mean-plugin" in output
+    assert "unseen-group policy: population-plugin" in output
     assert "mouse-a fitted: True" in output
     assert "new-mouse fitted: False" in output
 
@@ -156,7 +156,7 @@ def test_hierarchical_smooth_example_exposes_individual_trajectories(
     output = capsys.readouterr().out
     assert "Partially pooled coefficient trajectories" in output
     assert "converged: True" in output
-    assert "unseen-subject policy: population-trajectory-plugin" in output
+    assert "unseen-group policy: population-plugin" in output
     assert "population stimulus:" in output
     assert "mouse-0 stimulus:" in output
     assert "new-mouse fitted: False" in output

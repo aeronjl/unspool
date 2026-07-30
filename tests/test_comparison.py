@@ -7,7 +7,6 @@ import pytest
 
 from behavio import (
     BernoulliHistoryGLM,
-    SmoothBernoulliHistoryGLM,
     Study,
     cohort_forward_session_splits,
     compare_models,
@@ -15,6 +14,7 @@ from behavio import (
     leave_one_session_out_splits,
     nested_select_model,
 )
+from behavio.compose import smooth
 
 KNOTS = (0.0, 2.0, 5.0)
 
@@ -39,14 +39,7 @@ def comparison_study() -> Study:
             columns["session_order"].extend([session] * n_trials)
             columns["stimulus"].extend(generator.normal(size=n_trials))
     design = Study(columns)
-    generator_model = SmoothBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=1,
-        knots=KNOTS,
-        smoothness=3.0,
-        l2=0.02,
-        shared_trajectory=True,
-    )
+    generator_model = _smooth_glm()
     return generator_model.simulate(
         design,
         generator_model.parameters_from_paths(
@@ -63,15 +56,18 @@ def comparison_study() -> Study:
 def candidates() -> dict[str, object]:
     return {
         "static": BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.02),
-        "smooth": SmoothBernoulliHistoryGLM(
-            covariates=("stimulus",),
-            choice_lags=1,
-            knots=KNOTS,
-            smoothness=3.0,
-            l2=0.02,
-            shared_trajectory=True,
-        ),
+        "smooth": _smooth_glm(),
     }
+
+
+def _smooth_glm():
+    return smooth(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.02),
+        over="session_order",
+        knots=KNOTS,
+        smoothness=3.0,
+        shared_trajectory=True,
+    )
 
 
 def test_comparison_retains_matched_scores_fits_audits_and_provenance() -> None:

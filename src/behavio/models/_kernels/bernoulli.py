@@ -5,10 +5,15 @@ purely because it happened to be where these two functions were first written. N
 about generalized linear models: :func:`fit_bernoulli` fits any design matrix against a
 binary outcome under a quadratic penalty, and :func:`ordered_session_indices` is a
 statement about Behavio's trial-order contract, not about any one likelihood.
+
+:data:`BERNOULLI` is the same likelihood again, exposed as the four operations
+:class:`~behavio.contracts.compose.LinearPredictorLikelihood` asks for, so that a
+combinator can write an objective over it without importing anything about GLMs.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
@@ -16,9 +21,53 @@ from numpy.typing import NDArray
 from scipy.optimize import minimize
 from scipy.special import expit
 
+from behavio._internal.arrays import protected_array
 from behavio.contracts.audit import FitDiagnostics
-from behavio.contracts.estimator import FitResult
+from behavio.contracts.estimator import FitResult, ModelPrediction, Prediction, PredictionMode
 from behavio.study import Study
+
+
+@dataclass(frozen=True, slots=True)
+class BernoulliLikelihood:
+    """The logistic likelihood seen only through one linear predictor per row."""
+
+    def prediction(
+        self, linear_predictor: NDArray[np.float64], *, mode: PredictionMode
+    ) -> ModelPrediction:
+        """Return choice probabilities alongside the linear predictor that produced them."""
+
+        return Prediction(
+            probability=expit(linear_predictor),
+            linear_predictor=linear_predictor,
+            mode=mode,
+        )
+
+    def pointwise_log_prob(
+        self, linear_predictor: NDArray[np.float64], outcomes: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Score each observed outcome without conditioning on any other row."""
+
+        scores = outcomes * -np.logaddexp(0.0, -linear_predictor)
+        scores += (1.0 - outcomes) * -np.logaddexp(0.0, linear_predictor)
+        return protected_array(scores, dtype=np.float64)
+
+    def value_and_gradient(
+        self, linear_predictor: NDArray[np.float64], outcomes: NDArray[np.float64]
+    ) -> tuple[float, NDArray[np.float64]]:
+        """Return the negative log likelihood and its gradient in the linear predictor."""
+
+        loss = np.logaddexp(0.0, linear_predictor).sum() - outcomes @ linear_predictor
+        return float(loss), np.asarray(expit(linear_predictor) - outcomes, dtype=np.float64)
+
+    def curvature(self, linear_predictor: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Return the per-row Fisher weight ``p (1 - p)``."""
+
+        probabilities = expit(linear_predictor)
+        return np.asarray(probabilities * (1.0 - probabilities), dtype=np.float64)
+
+
+BERNOULLI = BernoulliLikelihood()
+"""The single shared logistic observation model."""
 
 
 def fit_bernoulli(

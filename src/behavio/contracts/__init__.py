@@ -14,6 +14,7 @@ A sampler-backed model                           :class:`PosteriorBehaviourEstim
 A parameter description                          :class:`ParameterSpaceProvider`
 An optimizer                                     :class:`OptimizationBackend`
 A behavioural summary                            :class:`PredictiveDiscrepancy`
+A composable penalised linear model              :class:`PenalisedLinearEstimator`
 A fold-fitted temporal transform                 :class:`StudyTransform`
 A training/test partition                        :class:`ValidationFold`
 A reporting coordinate distinct from the fit     :class:`NaturalParameterisation`
@@ -76,6 +77,19 @@ from behavio.contracts.audit import (
     RestartAudit,
 )
 from behavio.contracts.backend import ObjectiveTarget, OptimizationBackend, PriorMeasure
+from behavio.contracts.compose import (
+    GroupBlocks,
+    LinearPredictorLikelihood,
+    PenalisedDesign,
+    PenalisedLinearEstimator,
+    VaryingEffects,
+    expand_group_design,
+    expand_group_penalty,
+    group_blocks,
+    joint_parameter_names,
+    ridge_group_draw,
+    ridge_group_penalty,
+)
 from behavio.contracts.discrepancy import PredictiveDiscrepancy, PredictiveTail
 from behavio.contracts.estimator import (
     BehaviourEstimator,
@@ -147,8 +161,10 @@ __all__ = [
     "FittedStudyTransform",
     "GenerativeBehaviourModel",
     "GenerativePosteriorBehaviourModel",
+    "GroupBlocks",
     "LatentStateAudit",
     "LatentStateFit",
+    "LinearPredictorLikelihood",
     "ModelCapabilities",
     "ModelDataError",
     "ModelPrediction",
@@ -157,6 +173,8 @@ __all__ = [
     "ObjectiveTarget",
     "OptimizationBackend",
     "ParameterSpaceProvider",
+    "PenalisedDesign",
+    "PenalisedLinearEstimator",
     "PosteriorBehaviourEstimator",
     "PosteriorCentre",
     "Prediction",
@@ -172,10 +190,15 @@ __all__ = [
     "TransformProvenance",
     "UnsupportedPredictionMode",
     "ValidationFold",
+    "VaryingEffects",
     "adapter_capabilities",
     "any_model_capabilities",
+    "expand_group_design",
+    "expand_group_penalty",
     "fit_auditor",
+    "group_blocks",
     "is_posterior_estimator",
+    "joint_parameter_names",
     "model_capabilities",
     "model_task_columns",
     "natural_covariance",
@@ -187,5 +210,7 @@ __all__ = [
     "posterior_point_summary",
     "posterior_summary_message",
     "register_fit_auditor",
+    "ridge_group_draw",
+    "ridge_group_penalty",
     "validate_required_task_columns",
 ]

@@ -8,7 +8,8 @@ from typing import Any
 
 import numpy as np
 
-from behavio import HierarchicalBernoulliHistoryGLM, Study
+from behavio import BernoulliHistoryGLM, Study
+from behavio.compose import HierarchicalModel, hierarchical
 from benchmarks.hierarchical_glm.benchmark import POPULATION_PARAMETERS, build_design
 from benchmarks.provenance import render
 
@@ -31,26 +32,23 @@ def experiment(*, n_subjects: int, true_scale: float, seed: int) -> dict[str, An
     study = generator.simulate(design, POPULATION_PARAMETERS, seed=seed + 1)
     train, test = _prospective_partition(study)
 
-    estimated_model = _model(
-        subject_scale=INITIAL_SCALE,
-        estimate_subject_scale=True,
-    )
+    estimated_model = _model(subject_scale=INITIAL_SCALE, estimate_scale=True)
     estimated_fit = estimated_model.fit(train)
     oracle_model = _model(subject_scale=true_scale)
     oracle_fit = oracle_model.fit(train)
 
-    interval = estimated_fit.subject_scale_confidence_interval_95
+    interval = estimated_fit.scale_confidence_interval_95
     if interval is None:
         raise AssertionError("estimated scale fit did not retain an uncertainty interval")
     estimated_prediction = estimated_model.predict(test, estimated_fit)
     oracle_prediction = oracle_model.predict(test, oracle_fit)
     outcomes = np.asarray(test["choice"], dtype=np.float64)
     return {
-        "scale_estimate": estimated_fit.subject_scale,
-        "scale_standard_error": estimated_fit.subject_scale_standard_error,
+        "scale_estimate": float(estimated_fit.scales[0]),
+        "scale_standard_error": estimated_fit.scale_standard_error,
         "interval_95": list(interval),
         "interval_covers_truth": interval[0] <= true_scale <= interval[1],
-        "scale_at_boundary": estimated_fit.subject_scale_at_boundary,
+        "scale_at_boundary": estimated_fit.scale_at_boundary,
         "fit_converged": estimated_fit.diagnostics.converged,
         "estimated_prospective_log_loss": -float(
             np.mean(estimated_model.pointwise_log_prob(test, estimated_fit))
@@ -141,15 +139,14 @@ def run(*, repetitions: int = 20, seed: int = 2741) -> dict[str, Any]:
 def _model(
     *,
     subject_scale: float,
-    estimate_subject_scale: bool = False,
-) -> HierarchicalBernoulliHistoryGLM:
-    return HierarchicalBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=1,
-        l2=0.05,
-        subject_scale=subject_scale,
-        estimate_subject_scale=estimate_subject_scale,
-        subject_scale_bounds=SCALE_BOUNDS,
+    estimate_scale: bool = False,
+) -> HierarchicalModel:
+    return hierarchical(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.05),
+        over="subject",
+        scale=subject_scale,
+        estimate_scale=estimate_scale,
+        scale_bounds=SCALE_BOUNDS,
     )
 
 

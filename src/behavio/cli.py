@@ -20,6 +20,7 @@ from behavio.adapters.table import (
     session_order_from_column,
 )
 from behavio.compiler import compile_execution_plan, materialize_protocol
+from behavio.compose import hierarchical, smooth
 from behavio.evidence import (
     compare_evidence_bundles,
     read_evidence_bundle,
@@ -29,9 +30,6 @@ from behavio.models import (
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
     BinaryQLearning,
-    HierarchicalBernoulliHistoryGLM,
-    HierarchicalSmoothBernoulliHistoryGLM,
-    SmoothBernoulliHistoryGLM,
     WienerDriftDiffusion,
     model_capabilities,
 )
@@ -48,15 +46,23 @@ from behavio.validation import (
     within_session_rolling_splits,
 )
 
-_MODELS: dict[str, type[Any]] = {
+_MODELS: dict[str, Callable[..., Any]] = {
     "behavio.models.BernoulliHistoryGLM": BernoulliHistoryGLM,
-    "behavio.models.SmoothBernoulliHistoryGLM": SmoothBernoulliHistoryGLM,
     "behavio.models.BernoulliGLMHMM": BernoulliGLMHMM,
     "behavio.models.BinaryQLearning": BinaryQLearning,
-    "behavio.models.HierarchicalBernoulliHistoryGLM": HierarchicalBernoulliHistoryGLM,
-    "behavio.models.HierarchicalSmoothBernoulliHistoryGLM": (HierarchicalSmoothBernoulliHistoryGLM),
     "behavio.models.WienerDriftDiffusion": WienerDriftDiffusion,
+    "behavio.compose.smooth": smooth,
+    "behavio.compose.hierarchical": hierarchical,
 }
+_BASE_SETTING = "base"
+"""The hyperparameter naming the model a combinator candidate wraps.
+
+A protocol candidate is one implementation name and a flat list of scalar settings, which
+cannot spell a nested constructor call. It can spell a *reference*: ``base`` names another
+built-in implementation and every setting prefixed ``base.`` configures it, recursively. That
+is what lets a frozen protocol declare ``hierarchical(smooth(BernoulliHistoryGLM(...)))``
+without the registry regrowing one entry per composition.
+"""
 _SPLITTERS: dict[str, Callable[..., tuple[Any, ...]]] = {
     "behavio.validation.forward_session_splits": forward_session_splits,
     "behavio.validation.cohort_forward_session_splits": cohort_forward_session_splits,
@@ -390,10 +396,35 @@ def _instantiate_models(protocol: StudyProtocol) -> dict[str, Any]:
                 f"{candidate.implementation!r}"
             )
         try:
-            models[candidate.name] = model_type(**_settings(candidate.hyperparameters))
+            models[candidate.name] = _build_model(model_type, _settings(candidate.hyperparameters))
+        except CLIError:
+            raise
         except Exception as error:
             raise CLIError(f"cannot instantiate candidate {candidate.name!r}: {error}") from error
     return models
+
+
+def _build_model(factory: Callable[..., Any], settings: dict[str, Any]) -> Any:
+    """Construct one candidate, resolving a ``base`` reference into a wrapped model first."""
+
+    prefix = f"{_BASE_SETTING}."
+    nested = {
+        name[len(prefix) :]: value for name, value in settings.items() if name.startswith(prefix)
+    }
+    direct = {
+        name: value
+        for name, value in settings.items()
+        if name != _BASE_SETTING and not name.startswith(prefix)
+    }
+    if _BASE_SETTING not in settings:
+        if nested:
+            raise CLIError(f"{_BASE_SETTING}.* settings need a {_BASE_SETTING} implementation")
+        return factory(**direct)
+    reference = settings[_BASE_SETTING]
+    base_factory = _MODELS.get(reference) if isinstance(reference, str) else None
+    if base_factory is None:
+        raise CLIError(f"candidate base is not in the built-in registry: {reference!r}")
+    return factory(_build_model(base_factory, nested), **direct)
 
 
 def _settings(settings: tuple[Any, ...]) -> dict[str, Any]:

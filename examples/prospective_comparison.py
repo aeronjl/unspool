@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from behavio import (
     BernoulliHistoryGLM,
-    SmoothBernoulliHistoryGLM,
     Study,
     cohort_forward_session_splits,
     compare_models,
     nested_select_model,
 )
+from behavio.compose import SmoothModel, smooth
 
 KNOTS = (0.0, 2.0, 5.0)
 
@@ -36,13 +36,12 @@ def make_study() -> Study:
     )
 
 
-def smooth_model() -> SmoothBernoulliHistoryGLM:
-    return SmoothBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=1,
+def smooth_model() -> SmoothModel:
+    return smooth(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.02),
+        over="session_order",
         knots=KNOTS,
         smoothness=3.0,
-        l2=0.02,
         shared_trajectory=True,
     )
 

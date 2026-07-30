@@ -10,13 +10,13 @@ from behavio import (
     FitDiagnostics,
     FitResult,
     PredictionMode,
-    SmoothBernoulliHistoryGLM,
     Study,
     UnsupportedPredictionMode,
     evaluate_splits,
     forward_session_splits,
     run_parameter_recovery,
 )
+from behavio.compose import smooth as make_smooth
 from behavio.models._kernels.bernoulli import ordered_session_indices
 
 
@@ -154,8 +154,8 @@ def test_pointwise_filtered_score_matches_forward_likelihood() -> None:
     parameters = clear_parameters(model)
     simulated = model.simulate(design(n_sessions=2, trials_per_session=30), parameters, seed=44)
     fit = fixed_fit(model, parameters, len(simulated))
-    outcomes = model._outcomes(simulated)
-    features = model._base_feature_matrix(simulated, outcomes)
+    outcomes = model.outcomes(simulated)
+    features = model.design_matrix(simulated)
     vector = np.asarray([parameters[name] for name in model.parameter_names])
 
     objective, _ = model._objective_gradient(
@@ -197,8 +197,8 @@ def test_analytic_likelihood_gradient_matches_finite_differences() -> None:
         },
     )
     vector = np.asarray([parameters[name] for name in model.parameter_names])
-    outcomes = model._outcomes(study)
-    features = model._base_feature_matrix(study, outcomes)
+    outcomes = model.outcomes(study)
+    features = model.design_matrix(study)
     sessions = ordered_session_indices(study)
 
     _, analytic = model._objective_gradient(vector, features, outcomes, sessions)
@@ -233,8 +233,8 @@ def test_sticky_prior_adds_declared_self_transition_pseudocounts() -> None:
     )
     plain_vector = np.asarray([parameters[name] for name in plain.parameter_names])
     sticky_vector = np.asarray([parameters[name] for name in sticky.parameter_names])
-    outcomes = plain._outcomes(study)
-    features = plain._base_feature_matrix(study, outcomes)
+    outcomes = plain.outcomes(study)
+    features = plain.design_matrix(study)
     sessions = ordered_session_indices(study)
 
     plain_loss, _ = plain._objective_gradient(plain_vector, features, outcomes, sessions)
@@ -323,11 +323,11 @@ def test_switching_truth_beats_static_and_smooth_glms_prospectively() -> None:
     )
     splits = forward_session_splits(study, min_train_sessions=5)
     static = BernoulliHistoryGLM(choice_lags=0, l2=0.01)
-    smooth = SmoothBernoulliHistoryGLM(
-        choice_lags=0,
-        knots=tuple(range(6)),
+    smooth = make_smooth(
+        BernoulliHistoryGLM(choice_lags=0, l2=0.01),
+        over="session_order",
+        knots=tuple(float(knot) for knot in range(6)),
         smoothness=10.0,
-        l2=0.01,
     )
 
     static_loss = evaluate_splits(static, study, splits)[0].mean_log_loss

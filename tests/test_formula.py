@@ -526,16 +526,25 @@ def test_a_group_term_hands_a_combinator_a_grouping_column_and_a_within_group_de
     assert group.to_design().feature_names == ("intercept", "stimulus")
 
 
-def test_using_a_group_term_is_a_loud_error_because_nothing_can_honour_it_yet() -> None:
+def test_a_design_cannot_hold_a_group_term_and_routes_to_the_combinator() -> None:
+    """A ``DesignSpec`` is one fixed matrix, so it names the call that can honour a group.
+
+    This is not the old refusal, which said the declaration could not be honoured at all.
+    ``behavio.compose.model_from_formula`` honours it; what stays refused is quietly
+    dropping it on the way into a single fixed design.
+    """
+
     formula = Formula.parse("choice ~ stimulus + (1 | subject)")
 
-    with pytest.raises(FormulaError, match="cannot be honoured yet") as error:
+    with pytest.raises(FormulaError, match="model_from_formula") as error:
         formula.to_design()
 
     assert error.value.position == 20
-    assert "no varying-effect representation" in str(error.value)
-    with pytest.raises(FormulaError, match="cannot be honoured yet"):
+    assert "nowhere to put it" in str(error.value)
+    with pytest.raises(FormulaError, match="model_from_formula"):
         formula.fit(make_study())
+
+    assert formula.fixed_design().feature_names == ("intercept", "stimulus")
 
 
 def test_a_group_term_cannot_be_nested_crossed_or_subtracted() -> None:

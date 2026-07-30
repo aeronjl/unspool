@@ -38,11 +38,7 @@ from behavio.models.ddm import (
     UniformResponseTimeContaminant,
     WienerDriftDiffusion,
 )
-from behavio.models.glm import (
-    BernoulliHistoryGLM,
-    CoefficientTrajectory,
-    SmoothBernoulliHistoryGLM,
-)
+from behavio.models.glm import BernoulliHistoryGLM
 from behavio.models.glm_hmm import (
     BernoulliGLMHMM,
     FilteredStateProbabilities,
@@ -50,21 +46,11 @@ from behavio.models.glm_hmm import (
     GLMHMMParameters,
     GLMHMMSimulation,
 )
-from behavio.models.hierarchical_glm import (
-    HierarchicalBernoulliHistoryGLM,
-    HierarchicalGLMFitResult,
-    HierarchicalGLMSimulation,
-)
 from behavio.models.hierarchical_smooth_ddm import (
     HierarchicalSmoothDriftDiffusionFitResult,
     HierarchicalSmoothDriftDiffusionSimulation,
     HierarchicalSmoothWienerDriftDiffusion,
     UnseenSubjectPosteriorPrediction,
-)
-from behavio.models.hierarchical_smooth_glm import (
-    HierarchicalSmoothBernoulliHistoryGLM,
-    HierarchicalSmoothGLMFitResult,
-    HierarchicalSmoothGLMSimulation,
 )
 from behavio.models.multinomial import MultinomialLogit
 from behavio.models.psychometric import (
@@ -128,7 +114,6 @@ __all__ = [
     "CategoricalBehaviourEstimator",
     "CategoricalPrediction",
     "ChoiceKernel",
-    "CoefficientTrajectory",
     "CorrectedRates",
     "Describable",
     "DetectionCounts",
@@ -144,14 +129,8 @@ __all__ = [
     "GLMHMMParameters",
     "GLMHMMSimulation",
     "GenerativeBehaviourModel",
-    "HierarchicalBernoulliHistoryGLM",
-    "HierarchicalGLMFitResult",
-    "HierarchicalGLMSimulation",
-    "HierarchicalSmoothBernoulliHistoryGLM",
     "HierarchicalSmoothDriftDiffusionFitResult",
     "HierarchicalSmoothDriftDiffusionSimulation",
-    "HierarchicalSmoothGLMFitResult",
-    "HierarchicalSmoothGLMSimulation",
     "HierarchicalSmoothWienerDriftDiffusion",
     "LapsePsychometric",
     "LapsePsychometricFitResult",
@@ -181,7 +160,6 @@ __all__ = [
     "RatingCounts",
     "ResetRule",
     "SignalDetectionSummary",
-    "SmoothBernoulliHistoryGLM",
     "SmoothDriftDiffusionFitResult",
     "SmoothWienerDriftDiffusion",
     "SoftmaxPolicy",

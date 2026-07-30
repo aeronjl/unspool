@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from behavio import HierarchicalSmoothBernoulliHistoryGLM, Study
+from behavio import BernoulliHistoryGLM, Study
+from behavio.compose import hierarchical, smooth
 
 
 def build_design() -> Study:
@@ -18,15 +19,13 @@ def build_design() -> Study:
 
 
 def main() -> None:
-    model = HierarchicalSmoothBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=0,
+    paths = smooth(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.02),
+        over="session_order",
         knots=(0.0, 2.0, 4.0),
         smoothness=3.0,
-        l2=0.02,
-        subject_scale=0.4,
-        subject_smoothness=3.0,
     )
+    model = hierarchical(paths, over="subject", scale=0.4)
     population_paths = {
         "intercept": [-0.3, -0.2, -0.1],
         "stimulus": [0.8, 1.0, 1.2],
@@ -36,29 +35,30 @@ def main() -> None:
     design = build_design()
     deviations = {}
     for subject in design.subjects:
-        deviations[subject] = {}
-        for coefficient in model.coefficient_names:
+        subject_paths = []
+        for _ in paths.coefficient_names:
             offset = deviation_generator.normal(0.0, 0.15)
             slope = deviation_generator.normal(0.0, 0.3)
-            deviations[subject][coefficient] = (offset + slope * centered_knots).tolist()
+            subject_paths.extend((offset + slope * centered_knots).tolist())
+        deviations[subject] = subject_paths
 
     simulation = model.simulate_with_effects(
         design,
-        model.parameters_from_paths(population_paths),
+        paths.parameters_from_paths(population_paths),
         seed=41,
-        subject_deviation_paths=deviations,
+        group_deviations=deviations,
     )
     fit = model.fit(simulation.study)
-    population = model.population_trajectory(fit)
-    subject = model.subject_trajectory(fit, "mouse-0")
+    population = paths.trajectory_from_knots(fit.estimates)
+    subject = paths.trajectory_from_knots(np.asarray(list(fit.parameters_for("mouse-0").values())))
 
     print("Partially pooled coefficient trajectories")
     print(f"converged: {fit.diagnostics.converged}")
-    print(f"unseen-subject policy: {fit.unseen_subject_policy}")
+    print(f"unseen-group policy: {fit.unseen_group_policy}")
     print(f"population stimulus: {population.values[:, 1].round(3).tolist()}")
     print(f"mouse-0 stimulus:     {subject.values[:, 1].round(3).tolist()}")
-    print(f"mouse-0 fitted: {fit.subject_was_fitted('mouse-0')}")
-    print(f"new-mouse fitted: {fit.subject_was_fitted('new-mouse')}")
+    print(f"mouse-0 fitted: {fit.group_was_fitted('mouse-0')}")
+    print(f"new-mouse fitted: {fit.group_was_fitted('new-mouse')}")
 
 
 if __name__ == "__main__":

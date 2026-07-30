@@ -18,6 +18,7 @@ re-export them, so older imports keep working.
 | A file format, archive, or data service | `StudyAdapter` | declared identity and chronology policy, plus a runnable conformance harness |
 | A fitted predictive model | `BehaviourEstimator` | prospective evaluation and matched comparison |
 | A model that can also simulate | `GenerativeBehaviourModel` | parameter and model recovery |
+| A model whose likelihood is a quadratically penalised linear predictor | `PenalisedLinearEstimator` | `smooth()` and `hierarchical()` apply to it, so the time-variation and population cells of your family exist without being written |
 | A natural/optimizer parameter description | `ParameterSpaceProvider` | portable transforms, bounds, priors, and backend adapters |
 | An optimizer | `OptimizationBackend` | identical deterministic problems with complete attempt records |
 | Posterior samples | `PosteriorResult` or ArviZ adapter | convergence audit, PPC, PSIS-LOO, SBC, and sensitivity |
@@ -35,6 +36,14 @@ changes if you do not:
 | A reporting coordinate that is not the estimated one | `NaturalParameterisation` | derived quantities with delta-method standard errors, and recovery reported in both coordinates without pooling them |
 | Numbers a scientist would publish that the optimizer never sees | `DerivedQuantity` on `FitResult.derived` | those numbers reach comparison, evidence bundles, and `export_fit` instead of being dropped |
 | A multistart optimizer whose restarts you retain | `MultistartFit` | an automatic `RestartAudit` in every fit audit |
+
+`PenalisedLinearEstimator` is the widest of the optional surfaces and the one with the
+largest payoff, because implementing it is what makes hierarchy and time-variation *derive*
+rather than be written twice more. Its five ingredients, and which member carries each, are
+documented in [composing models](composing-models.md#the-contract). It is genuinely
+restricted: a likelihood that does not see the study through one linear predictor per row --
+a drift-diffusion density, a mixture over latent states -- cannot satisfy it, and the
+combinators refuse such models rather than composing them wrongly.
 
 `required_task_columns` used to appear in that table, behind a separate
 `TaskColumnEstimator` protocol. It is now a member of `BehaviourEstimator` itself and the

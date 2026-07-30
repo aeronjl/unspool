@@ -7,10 +7,10 @@ import numpy as np
 from behavio import (
     BernoulliHistoryGLM,
     ModelRecoveryScenario,
-    SmoothBernoulliHistoryGLM,
     Study,
     run_model_recovery,
 )
+from behavio.compose import smooth as make_smooth
 
 
 def build_design(*, n_sessions: int = 10, trials_per_session: int = 120) -> Study:
@@ -30,12 +30,11 @@ def main() -> None:
         choice_lags=1,
         l2=0.01,
     )
-    smooth = SmoothBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=1,
-        knots=tuple(range(10)),
+    smooth = make_smooth(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01),
+        over="session_order",
+        knots=tuple(float(knot) for knot in range(10)),
         smoothness=10.0,
-        l2=0.01,
     )
     scenarios = [
         ModelRecoveryScenario(

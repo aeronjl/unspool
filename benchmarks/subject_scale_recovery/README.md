@@ -1,7 +1,19 @@
 # Subject-scale recovery and calibration
 
-This benchmark tests the estimated-scale mode of `HierarchicalBernoulliHistoryGLM` rather
-than assuming the Gaussian subject scale is known. It asks whether a bounded Laplace
+This benchmark tests the estimated-scale mode of
+`hierarchical(model, over="subject", estimate_scale=True)` rather than assuming the
+Gaussian subject scale is known.
+
+> **The committed `result.json` is stale.** It was produced by the hand-written
+> `HierarchicalBernoulliHistoryGLM`, whose Laplace profile wrote its quadratic forms in
+> scalar GLM-specific shorthand. The generic profile is handed a penalty *matrix* and
+> computes `0.5 x' P x` and `-0.5 logdet(P)` instead, which is the same objective
+> reassociated. A re-run moves the continuous summaries by between `1e-6` and `3.4e-4`
+> (largest: `mean_standard_error` at 24 subjects and scale 1.0). Every claim the benchmark
+> makes is unchanged: `convergence_rate`, `coverage_95`, `boundary_rate` and
+> `more_subjects_reduce_rmse` are bit-identical in all six regimes. The file is left
+> untouched rather than re-stamped, because regenerating it here would record a
+> `-dirty` provenance revision that nobody could reproduce; re-run it on a clean tree. It asks whether a bounded Laplace
 marginal-likelihood estimate recovers low, moderate, and high heterogeneity; whether its
 local uncertainty is calibrated in this design; and whether its future-session prediction
 approaches a model given the true scale.

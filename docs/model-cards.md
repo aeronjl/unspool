@@ -67,7 +67,7 @@ learning. Unmodeled smooth or discrete change can appear as history dependence.
 
 ## Smooth Bernoulli history GLM
 
-**Class:** `SmoothBernoulliHistoryGLM`
+**Expression:** `smooth(BernoulliHistoryGLM(...))`
 
 **Use when:** one or more choice coefficients may change continuously over an explicit
 learning clock.
@@ -77,8 +77,8 @@ test outcomes.
 
 **Predicts:** filtered future choice with the declared future-knot persistence rule.
 
-**Parameters:** coefficient values on fixed knots plus configured roughness and L2
-penalties.
+**Parameters:** coefficient values on fixed knots, named `coefficient[clock=knot]`, plus
+configured roughness and L2 penalties.
 
 **Evidence:** prospective and exact-design recovery benchmarks, including weak-signal
 confusions with static, GLM-HMM, and RL models.
@@ -86,12 +86,12 @@ confusions with static, GLM-HMM, and RL models.
 **Does not establish:** a biological learning rule or discrete strategy transition. A
 trajectory is conditional on clock and basis.
 
-[Detailed assumptions](smooth-drift.md)
+[Detailed assumptions](smooth-drift.md) · [Composing models](composing-models.md)
 
 ## Hierarchical static and smooth GLMs
 
-**Classes:** `HierarchicalBernoulliHistoryGLM`,
-`HierarchicalSmoothBernoulliHistoryGLM`
+**Expressions:** `hierarchical(BernoulliHistoryGLM(...), over="subject")`,
+`hierarchical(smooth(BernoulliHistoryGLM(...)), over="subject")`
 
 **Use when:** population structure and individual deviations are both part of the estimand.
 
@@ -101,8 +101,9 @@ clock and knots.
 **Predicts:** fitted deviations for represented subjects and an explicitly recorded
 population plug-in for unseen subjects.
 
-**Parameters:** population coefficients or paths, subject deviations, and fixed or bounded-
-estimated subject scales depending on configuration.
+**Parameters:** population coefficients or paths in the wrapped model's own coordinate,
+plus per-group deviations on the parameters named in `parameters=`, under fixed or
+bounded-estimated per-parameter scales.
 
 **Evidence:** pooling, subject-scale, trajectory, and prospective population benchmarks. A
 PyMC NUTS backend is available for the fixed-scale static history GLM.
@@ -111,7 +112,7 @@ PyMC NUTS backend is available for the fixed-scale static history GLM.
 every backend, or reliable person-level measurement.
 
 [Static pooling](hierarchical-glm.md) · [Smooth pooling](hierarchical-smooth-glm.md) ·
-[PyMC backend](pymc-backend.md)
+[Composing models](composing-models.md) · [PyMC backend](pymc-backend.md)
 
 ## Bernoulli GLM-HMM
 

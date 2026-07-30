@@ -1,9 +1,13 @@
 # Smooth change as a competing explanation
 
-`SmoothBernoulliHistoryGLM` is Behavio's first nonstationary reference model. It asks
-whether continuously changing coefficients predict later sessions better than one static
+`smooth(model, over=...)` is Behavio's nonstationary competitor. It asks whether
+continuously changing coefficients predict later sessions better than one static
 coefficient vector. It is a deliberately restrained competitor, not a general claim that
 learning is smooth.
+
+It is a [combinator](composing-models.md), not a class: it applies to any model satisfying
+`PenalisedLinearEstimator`, and it used to be a hand-written
+`SmoothBernoulliHistoryGLM` that only the Bernoulli history GLM could be.
 
 ## Parameterization
 
@@ -28,13 +32,13 @@ uncertainty. Those distinctions should remain visible when reporting results.
 ## The clock is part of the model
 
 ```python
-from behavio import SmoothBernoulliHistoryGLM
+from behavio import BernoulliHistoryGLM
+from behavio.compose import smooth
 
-model = SmoothBernoulliHistoryGLM(
-    covariates=("stimulus",),
-    choice_lags=1,
-    time="session_order",
-    knots=(0, 2, 4, 6, 8),
+model = smooth(
+    BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1),
+    over="session_order",
+    knots=(0.0, 2.0, 4.0, 6.0, 8.0),
     smoothness=10.0,
 )
 ```
@@ -53,8 +57,11 @@ leak, so nested validation or pre-registration is required for comparative claim
 Coefficient paths are subject-specific by default. Passing a multi-subject `Study` raises
 an error rather than assuming that equal clock values align individual learning histories.
 `shared_trajectory=True` is an explicit opt-in for a scientifically justified common path;
-it is not a substitute for the population-plus-subject paths in the
-[hierarchical smooth model](hierarchical-smooth-glm.md).
+it is not a substitute for the population-plus-subject paths of
+`hierarchical(smooth(...))`, described in
+[hierarchical smooth models](hierarchical-smooth-glm.md). Wrapping the smooth model in
+`hierarchical()` also lifts the refusal, because then between-subject variation is
+modelled rather than assumed away.
 
 ## Simulation and inspection
 

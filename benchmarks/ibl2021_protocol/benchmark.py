@@ -1,4 +1,12 @@
-"""Same-animal and held-out-lab IBL protocols with nested training-only selection."""
+"""Same-animal and held-out-lab IBL protocols with nested training-only selection.
+
+The committed ``result.json`` is **stale in its ``model_signature`` strings**. The
+hierarchical and hierarchical-smooth candidates are now
+``hierarchical(...)`` and ``hierarchical(smooth(...))`` compositions, whose signatures nest
+the wrapped model's signature instead of naming a single class. The fits themselves are
+bit-identical -- the composition reproduces the deleted classes exactly -- so only the
+recorded identity strings move, and they move on the next re-run against the real data.
+"""
 
 from __future__ import annotations
 
@@ -399,6 +407,18 @@ def numerical_parity(target: Target, run: NestedProtocolRun) -> IBLProtocolParit
     )
 
 
+def _base_settings(settings: tuple[Setting, ...], *, depth: int = 1) -> tuple[Setting, ...]:
+    """Re-key settings onto the wrapped model of a composed candidate.
+
+    A protocol candidate is one implementation name plus flat scalar settings, so a
+    composition is spelled by reference: ``base`` names the wrapped implementation and a
+    ``base.`` prefix carries its own settings, nested once per layer.
+    """
+
+    prefix = "base." * depth
+    return tuple(Setting(f"{prefix}{setting.name}", setting.value) for setting in settings)
+
+
 def _candidate_specs(*, held_out: bool) -> tuple[CandidateSpec, ...]:
     common = (
         Setting("covariates", ("stimulus",)),
@@ -408,8 +428,13 @@ def _candidate_specs(*, held_out: bool) -> tuple[CandidateSpec, ...]:
     candidates = [
         CandidateSpec(
             "static",
-            "behavio.models.HierarchicalBernoulliHistoryGLM",
-            (*common, Setting("subject_scale", 0.4)),
+            "behavio.compose.hierarchical",
+            (
+                Setting("base", "behavio.models.BernoulliHistoryGLM"),
+                *_base_settings(common),
+                Setting("over", "subject"),
+                Setting("scale", 0.4),
+            ),
             ("choice",),
             supports_unseen_subjects=held_out,
             supports_unseen_groups=held_out,
@@ -419,13 +444,16 @@ def _candidate_specs(*, held_out: bool) -> tuple[CandidateSpec, ...]:
         candidates.append(
             CandidateSpec(
                 f"drift_smoothness_{int(smoothness)}",
-                "behavio.models.HierarchicalSmoothBernoulliHistoryGLM",
+                "behavio.compose.hierarchical",
                 (
-                    *common,
-                    Setting("knots", KNOTS),
-                    Setting("smoothness", smoothness),
-                    Setting("subject_scale", 0.4),
-                    Setting("subject_smoothness", smoothness),
+                    Setting("base", "behavio.compose.smooth"),
+                    Setting("base.base", "behavio.models.BernoulliHistoryGLM"),
+                    *_base_settings(common, depth=2),
+                    Setting("base.over", "session_order"),
+                    Setting("base.knots", KNOTS),
+                    Setting("base.smoothness", smoothness),
+                    Setting("over", "subject"),
+                    Setting("scale", 0.4),
                 ),
                 ("choice",),
                 supports_unseen_subjects=held_out,

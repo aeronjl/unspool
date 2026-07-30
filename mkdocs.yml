@@ -146,6 +146,7 @@ nav:
       - Model catalog: methods/index.md
       - Capability matrix: methods/capability-matrix.md
       - Modelling contract: modelling.md
+      - Composing models: composing-models.md
       - Canonical binary baselines: baselines.md
       - Psychometric functions: psychometric-functions.md
       - Signal detection theory: signal-detection.md

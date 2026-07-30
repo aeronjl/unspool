@@ -17,19 +17,16 @@ from scipy.special import expit
 from behavio import (
     BernoulliHistoryGLM,
     DesignSpec,
-    HierarchicalBernoulliHistoryGLM,
-    HierarchicalSmoothBernoulliHistoryGLM,
-    HierarchicalSmoothGLMFitResult,
     InteractionTerm,
     ModelRecoveryReport,
     ModelRecoveryScenario,
     NumericTerm,
-    SmoothBernoulliHistoryGLM,
     Study,
     compare_models,
     historical_cohort_forecast_splits,
     run_model_recovery,
 )
+from behavio.compose import HierarchicalFitResult, HierarchicalModel, hierarchical, smooth
 from benchmarks.cell2025.benchmark import (
     calculate_session_metrics,
     load_study,
@@ -349,8 +346,10 @@ def analyze_hierarchical_path_recovery(
     if isinstance(repeats, bool) or not isinstance(repeats, int) or repeats < 1:
         raise ValueError("repeats must be a positive integer")
     model = _structural_models()["hierarchical_smooth_trajectory"]
-    if not isinstance(model, HierarchicalSmoothBernoulliHistoryGLM):
+    if not isinstance(model, HierarchicalModel):
         raise TypeError("hierarchical recovery candidate changed model family")
+    paths = model.model
+    n_coefficients = len(paths.coefficient_names)
     parameters = _hierarchical_drift_parameters(model)
     child_sequences = np.random.SeedSequence(seed).spawn(repeats)
     runs: list[dict[str, Any]] = []
@@ -358,10 +357,15 @@ def analyze_hierarchical_path_recovery(
         child_seed = int(sequence.generate_state(1, dtype=np.uint64)[0])
         simulation = model.simulate_with_effects(panel, parameters, seed=child_seed)
         fit = model.fit(simulation.study)
-        if not isinstance(fit, HierarchicalSmoothGLMFitResult):
+        if not isinstance(fit, HierarchicalFitResult):
             raise TypeError("hierarchical smooth recovery lost path estimates")
-        population_error = fit.population_knot_values - simulation.population_knot_values
-        subject_error = fit.subject_knot_values - simulation.subject_knot_values
+        shape = (len(fit.groups), n_coefficients, len(KNOTS))
+        fitted_population = fit.estimates.reshape(n_coefficients, len(KNOTS))
+        true_population = simulation.population_parameters.reshape(n_coefficients, len(KNOTS))
+        fitted_subjects = fit.group_parameters.reshape(shape)
+        true_subjects = simulation.group_parameters.reshape(shape)
+        population_error = fitted_population - true_population
+        subject_error = fitted_subjects - true_subjects
         runs.append(
             {
                 "seed": child_seed,
@@ -371,18 +375,18 @@ def analyze_hierarchical_path_recovery(
                 "subject_path_rmse": float(np.sqrt(np.mean(subject_error**2))),
                 "population_path_rmse_by_coefficient": {
                     name: float(np.sqrt(np.mean(population_error[index] ** 2)))
-                    for index, name in enumerate(model.coefficient_names)
+                    for index, name in enumerate(paths.coefficient_names)
                 },
                 "subject_path_rmse_by_coefficient": {
                     name: float(np.sqrt(np.mean(subject_error[:, index, :] ** 2)))
-                    for index, name in enumerate(model.coefficient_names)
+                    for index, name in enumerate(paths.coefficient_names)
                 },
                 "subject_path_correlation_by_coefficient": {
                     name: _safe_correlation(
-                        simulation.subject_knot_values[:, index, :],
-                        fit.subject_knot_values[:, index, :],
+                        true_subjects[:, index, :],
+                        fitted_subjects[:, index, :],
                     )
-                    for index, name in enumerate(model.coefficient_names)
+                    for index, name in enumerate(paths.coefficient_names)
                 },
             }
         )
@@ -395,7 +399,7 @@ def analyze_hierarchical_path_recovery(
             name: [
                 float(parameters[f"{name}[session_order={_format_knot(knot)}]"]) for knot in KNOTS
             ]
-            for name in model.coefficient_names
+            for name in paths.coefficient_names
         },
         "runs": runs,
         "summary": {
@@ -715,25 +719,27 @@ def _models() -> Mapping[str, Any]:
             ),
             **common,
         ),
-        "static_partial_pooling": HierarchicalBernoulliHistoryGLM(
-            covariates=psychometric,
-            subject_scale=0.4,
-            **common,
+        "static_partial_pooling": hierarchical(
+            BernoulliHistoryGLM(covariates=psychometric, **common),
+            over="subject",
+            scale=0.4,
         ),
-        "shared_smooth_trajectory": SmoothBernoulliHistoryGLM(
-            covariates=psychometric,
+        "shared_smooth_trajectory": smooth(
+            BernoulliHistoryGLM(covariates=psychometric, **common),
+            over="session_order",
             knots=KNOTS,
             smoothness=3.0,
             shared_trajectory=True,
-            **common,
         ),
-        "hierarchical_smooth_trajectory": HierarchicalSmoothBernoulliHistoryGLM(
-            covariates=psychometric,
-            knots=KNOTS,
-            smoothness=3.0,
-            subject_scale=0.4,
-            subject_smoothness=3.0,
-            **common,
+        "hierarchical_smooth_trajectory": hierarchical(
+            smooth(
+                BernoulliHistoryGLM(covariates=psychometric, **common),
+                over="session_order",
+                knots=KNOTS,
+                smoothness=3.0,
+            ),
+            over="subject",
+            scale=0.4,
         ),
     }
 
@@ -834,9 +840,9 @@ def _recovery_scenarios(
 
 
 def _hierarchical_drift_parameters(
-    model: HierarchicalSmoothBernoulliHistoryGLM,
+    model: HierarchicalModel,
 ) -> Mapping[str, float]:
-    return model.parameters_from_paths(
+    return model.model.parameters_from_paths(
         {
             "intercept": (-0.2, -0.1, 0.0, 0.1, 0.1),
             "left_contrast": (0.5, 1.5, 3.0, 4.0, 5.0),

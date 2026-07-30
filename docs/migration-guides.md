@@ -22,6 +22,46 @@ equivalent specification; introduce new longitudinal claims only in a second ste
 An inability to match pointwise predictions is a specification difference to explain, not
 a tolerance to wave away.
 
+## From the deleted GLM variant classes
+
+`SmoothBernoulliHistoryGLM`, `HierarchicalBernoulliHistoryGLM` and
+`HierarchicalSmoothBernoulliHistoryGLM` no longer exist. Each is now a
+[combinator expression](composing-models.md) over `BernoulliHistoryGLM`, and the
+replacements are bit-for-bit the same models: the fits, standard errors, covariances,
+seeded simulations and trajectories are identical, not merely close. The one exception is
+`estimate_scale=True`, whose Laplace profile was rewritten in matrix form and so moves in
+the last few digits.
+
+| Deleted | Replacement |
+| --- | --- |
+| `SmoothBernoulliHistoryGLM(covariates=c, choice_lags=k, l2=λ, time=t, knots=κ, smoothness=s, shared_trajectory=b)` | `smooth(BernoulliHistoryGLM(covariates=c, choice_lags=k, l2=λ), over=t, knots=κ, smoothness=s, shared_trajectory=b)` |
+| `HierarchicalBernoulliHistoryGLM(..., subject_scale=σ)` | `hierarchical(BernoulliHistoryGLM(...), over="subject", scale=σ)` |
+| `HierarchicalSmoothBernoulliHistoryGLM(..., smoothness=s, subject_scale=σ, subject_smoothness=g)` | `hierarchical(smooth(BernoulliHistoryGLM(...), over=t, knots=κ, smoothness=s, group_smoothness=g), over="subject", scale=σ)` |
+
+Renames on the fit and simulation records:
+
+| Deleted | Replacement |
+| --- | --- |
+| `estimate_subject_scale`, `subject_scale_bounds` | `estimate_scale`, `scale_bounds` |
+| `fit.subjects` | `fit.groups` |
+| `fit.subject_deviations` | `fit.group_deviations` |
+| `fit.subject_coefficients`, `fit.subject_knot_values` | `fit.group_parameters` (flat; reshape to `(groups, coefficients, knots)` for a smooth model) |
+| `fit.coefficients_for(subject)` | `fit.parameters_for(group)` |
+| `fit.subject_was_fitted(subject)` | `fit.group_was_fitted(group)` |
+| `fit.subject_scale`, `fit.subject_scale_standard_error` | `fit.scales` (one per varying parameter), `fit.scale_standard_error` |
+| `fit.subject_scale_confidence_interval_95` | `fit.scale_confidence_interval_95` |
+| `model.population_trajectory(fit)`, `model.subject_trajectory(fit, s)` | `paths.trajectory_from_knots(fit.estimates)` and `paths.trajectory_from_knots(values_for(s))`, where `paths` is the inner `smooth(...)` model |
+| `simulate_with_effects(..., subject_deviation_paths={s: {c: [...]}})` | `simulate_with_effects(..., group_deviations={s: [...]})`, flattened coefficient-major, knot-minor |
+| `unseen_subject_policy` | `unseen_group_policy` (`"population-plugin"` in both cases) |
+
+Two things the replacements can do that the deleted classes could not: name *which*
+parameters vary (`parameters=`) with a scale each (`parameter_scales=`), and group over any
+study column (`over="lab"`).
+
+A frozen protocol names a composed candidate by reference: `implementation` is
+`behavio.compose.hierarchical` or `behavio.compose.smooth`, a `base` setting names the
+wrapped implementation, and settings prefixed `base.` configure it, nested once per layer.
+
 ## Hand-written SciPy likelihoods
 
 | Existing element | Behavio destination |

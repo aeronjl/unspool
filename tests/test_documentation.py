@@ -46,8 +46,6 @@ MODEL_CARD_CLASSES = {
     "BinaryQLearning",
     "BinaryRLAgent",
     "EqualVarianceSDT",
-    "HierarchicalBernoulliHistoryGLM",
-    "HierarchicalSmoothBernoulliHistoryGLM",
     "HierarchicalSmoothWienerDriftDiffusion",
     "LapsePsychometric",
     "MetaSDT",
@@ -55,7 +53,6 @@ MODEL_CARD_CLASSES = {
     "Perseveration",
     "Psychometric",
     "PsychometricFunction",
-    "SmoothBernoulliHistoryGLM",
     "SmoothWienerDriftDiffusion",
     "UnequalVarianceSDT",
     "WienerDriftDiffusion",
@@ -234,11 +231,22 @@ def test_cell_figure1gi_asset_and_chapter_name_both_published_panels() -> None:
     assert "DejaVu Sans" in (ASSETS / "cell2025-strategy.svg").read_text(encoding="utf-8")
 
 
+#: The cells of the model grid that are now written as combinator expressions rather than as
+#: their own classes. A card must spell the expression, because that is what a user types.
+MODEL_CARD_EXPRESSIONS = {
+    "smooth(BernoulliHistoryGLM(...))",
+    'hierarchical(BernoulliHistoryGLM(...), over="subject")',
+    'hierarchical(smooth(BernoulliHistoryGLM(...)), over="subject")',
+}
+
+
 def test_model_cards_cover_every_first_party_family() -> None:
     cards = (ROOT / "docs" / "model-cards.md").read_text()
 
     for name in MODEL_CARD_CLASSES:
         assert f"`{name}`" in cards
+    for expression in MODEL_CARD_EXPRESSIONS:
+        assert f"`{expression}`" in cards
 
 
 def test_first_analysis_is_executable(tmp_path: Path) -> None:

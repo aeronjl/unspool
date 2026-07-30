@@ -1,4 +1,12 @@
-"""Compile and execute the Cell 2025 flagship through the 0.20 protocol workflow."""
+"""Compile and execute the Cell 2025 flagship through the 0.20 protocol workflow.
+
+The committed ``result.json`` is **stale in its ``model_signature`` strings**. The
+hierarchical and hierarchical-smooth candidates are now
+``hierarchical(...)`` and ``hierarchical(smooth(...))`` compositions, whose signatures nest
+the wrapped model's signature instead of naming a single class. The fits themselves are
+bit-identical -- the composition reproduces the deleted classes exactly -- so only the
+recorded identity strings move, and they move on the next re-run against the real data.
+"""
 
 from __future__ import annotations
 
@@ -99,6 +107,18 @@ class CellProtocolParity:
         return all(value is not False for value in values)
 
 
+def _base_settings(settings: tuple[Setting, ...], *, depth: int = 1) -> tuple[Setting, ...]:
+    """Re-key settings onto the wrapped model of a composed candidate.
+
+    A protocol candidate is one implementation name plus flat scalar settings, so a
+    composition is spelled by reference: ``base`` names the wrapped implementation and a
+    ``base.`` prefix carries its own settings, nested once per layer.
+    """
+
+    prefix = "base." * depth
+    return tuple(Setting(f"{prefix}{setting.name}", setting.value) for setting in settings)
+
+
 def build_protocol() -> StudyProtocol:
     """Return the complete draft protocol for the Cell behavioural forecast."""
 
@@ -143,36 +163,43 @@ def build_protocol() -> StudyProtocol:
         ),
         CandidateSpec(
             "static_partial_pooling",
-            "behavio.models.HierarchicalBernoulliHistoryGLM",
+            "behavio.compose.hierarchical",
             (
-                Setting("covariates", psychometric),
-                Setting("subject_scale", 0.4),
-                *common,
+                Setting("base", "behavio.models.BernoulliHistoryGLM"),
+                Setting("base.covariates", psychometric),
+                Setting("over", "subject"),
+                Setting("scale", 0.4),
+                *_base_settings(common),
             ),
             ("choice",),
         ),
         CandidateSpec(
             "shared_smooth_trajectory",
-            "behavio.models.SmoothBernoulliHistoryGLM",
+            "behavio.compose.smooth",
             (
-                Setting("covariates", psychometric),
+                Setting("base", "behavio.models.BernoulliHistoryGLM"),
+                Setting("base.covariates", psychometric),
+                Setting("over", "session_order"),
                 Setting("knots", KNOTS),
                 Setting("smoothness", 3.0),
                 Setting("shared_trajectory", True),
-                *common,
+                *_base_settings(common),
             ),
             ("choice",),
         ),
         CandidateSpec(
             "hierarchical_smooth_trajectory",
-            "behavio.models.HierarchicalSmoothBernoulliHistoryGLM",
+            "behavio.compose.hierarchical",
             (
-                Setting("covariates", psychometric),
-                Setting("knots", KNOTS),
-                Setting("smoothness", 3.0),
-                Setting("subject_scale", 0.4),
-                Setting("subject_smoothness", 3.0),
-                *common,
+                Setting("base", "behavio.compose.smooth"),
+                Setting("base.base", "behavio.models.BernoulliHistoryGLM"),
+                Setting("base.base.covariates", psychometric),
+                Setting("base.over", "session_order"),
+                Setting("base.knots", KNOTS),
+                Setting("base.smoothness", 3.0),
+                Setting("over", "subject"),
+                Setting("scale", 0.4),
+                *_base_settings(common, depth=2),
             ),
             ("choice",),
         ),

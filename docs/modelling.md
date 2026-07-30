@@ -63,21 +63,22 @@ The coefficients are static across subjects and sessions. That restriction is th
 scientific role, not a claim about learning. It provides a stationary account that smooth
 drift and discrete-state models must outperform under prospective evaluation.
 
-The first such competitor, `SmoothBernoulliHistoryGLM`, represents each coefficient on an
+The first such competitor, `smooth(model, over=...)`, represents each parameter on an
 explicit fixed-knot time basis with a random-walk roughness penalty. Its assumptions,
 subject-alignment safeguards, and prospective use are detailed in
 [Smooth change as a competing explanation](smooth-drift.md).
 
-`HierarchicalBernoulliHistoryGLM` supplies the first constrained population model. It
-jointly estimates population coefficients and Gaussian-penalized subject deviations with
-a subject scale fixed before fitting. Seen subjects use their fitted deviations; unseen
-subjects use an explicitly recorded population-mean plug-in. See the
-[partial-pooling guide](hierarchical-glm.md).
+`hierarchical(model, over="subject")` supplies the constrained population model. It
+jointly estimates population parameters and Gaussian-penalized group deviations with the
+scales fixed before fitting, and it takes a declaration of *which* parameters vary. Seen
+subjects use their fitted deviations; unseen subjects use an explicitly recorded
+population plug-in. See the [partial-pooling guide](hierarchical-glm.md).
 
-`HierarchicalSmoothBernoulliHistoryGLM` combines those two axes: a fixed-knot population
-trajectory plus shrunken, smooth subject-deviation trajectories. Its shared-clock
-assumption, penalty structure, unseen-subject policy, and factorial recovery evidence are
-detailed in [Partially pooled trajectories](hierarchical-smooth-glm.md).
+The two axes compose: `hierarchical(smooth(model), over="subject")` is a fixed-knot
+population trajectory plus shrunken, smooth subject-deviation trajectories. Its
+shared-clock assumption, penalty structure, unseen-subject policy, and factorial recovery
+evidence are detailed in [Partially pooled trajectories](hierarchical-smooth-glm.md), and
+the combinators themselves in [Composing models](composing-models.md).
 
 `BernoulliGLMHMM` supplies the first discrete switching competitor: state-specific
 Bernoulli GLM emissions, a stationary learned transition matrix, session-reset initial

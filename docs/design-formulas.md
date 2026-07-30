@@ -180,21 +180,36 @@ group.grouping  # 'subject'
 group.to_design().feature_names  # ('intercept', 'stimulus')
 ```
 
-Nothing consumes one yet. A `DesignSpec` is a single fixed matrix and has no
-varying-effect representation, so *using* a formula that contains a group term is a loud
-error rather than a silent drop:
+`model_from_formula` honours it, by handing exactly those two things --- the grouping
+column and the within-group design --- to
+[`hierarchical()`](composing-models.md):
+
+```python
+from behavio import BernoulliHistoryGLM, model_from_formula
+
+model = model_from_formula(
+    "choice ~ stimulus + (1 + stimulus | subject)",
+    BernoulliHistoryGLM(),
+    scale=0.4,
+)
+model.varying_parameters  # ('intercept', 'stimulus')
+```
+
+A `DesignSpec` is still a single fixed matrix with no varying-effect representation, so
+building one from a formula that declares a group term routes you to the combinator rather
+than quietly dropping the declaration:
 
 ```text
-FormulaError: the group term (1 | subject) is parsed but cannot be honoured yet: a
-DesignSpec is one fixed matrix and has no varying-effect representation. Drop it, or keep
-the parsed Formula and hand Formula.groups to a hierarchical combinator at position 20
+FormulaError: the group term (1 | subject) declares an effect that varies by 'subject',
+and a DesignSpec is one fixed matrix with nowhere to put it. Call
+behavio.compose.model_from_formula(formula, model) to build the hierarchical model this
+formula describes, or Formula.fixed_design() for the fixed part alone at position 20
   choice ~ stimulus + (1|subject)
                       ^
 ```
 
-The declaration survives parsing so that the combinator which will honour it can be
-written against a stable type. A combinator needs two things and both are already there:
-the grouping column, and the within-group design `GroupTerm.to_design()` returns.
+`Formula.fixed_design()` is the deliberate way to keep only the fixed half, and is what
+`model_from_formula` uses once it has read `Formula.groups`.
 
 ## Round-tripping
 

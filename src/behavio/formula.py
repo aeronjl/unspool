@@ -36,9 +36,13 @@ study in the call. :meth:`Formula.to_design` refuses them by construction rather
 silently reading the whole study, which is the same information boundary
 :func:`behavio.transforms.fit_transform_split` enforces for clocks.
 
-Group terms such as ``(1|subject)`` parse into :class:`GroupTerm` but cannot yet be built:
-``DesignSpec`` has no varying-effect representation. They are retained, not dropped, and
-using one is a loud error.
+Group terms such as ``(1|subject)`` parse into :class:`GroupTerm` and are honoured by
+:func:`behavio.compose.model_from_formula`, which hands the grouping column and the
+within-group design to :func:`behavio.compose.hierarchical`. They are still not part of a
+:class:`~behavio.design.DesignSpec`, which is one fixed matrix with no varying-effect
+representation, so :meth:`Formula.to_design` and :meth:`Formula.fit` route a formula that
+declares one to the combinator rather than silently dropping it.
+:meth:`Formula.fixed_design` is the accessor that deliberately keeps only the fixed part.
 """
 
 from __future__ import annotations
@@ -575,12 +579,11 @@ class InteractionFormulaTerm(FormulaTerm):
 class GroupTerm:
     """A parsed ``(expression | grouping)`` varying-effect declaration.
 
-    Nothing in Behavio consumes one yet: ``DesignSpec`` describes a single fixed matrix and
-    has no representation for effects that vary by group. The declaration is therefore
-    parsed into this structured form and refused at use, so that the combinator that will
-    honour it -- ``.hierarchical()`` -- can be written against a stable type rather than
-    against a string. A combinator needs exactly two things, and both are here: the
-    grouping column, and the within-group design that :meth:`to_design` returns.
+    ``DesignSpec`` describes a single fixed matrix and has no representation for effects
+    that vary by group, so this declaration is not a design term; it is an argument to
+    :func:`behavio.compose.hierarchical`, which needs exactly two things and finds both
+    here: the grouping column, and the within-group design that :meth:`to_design` returns.
+    :func:`behavio.compose.model_from_formula` performs that hand-off.
     """
 
     grouping: str
@@ -745,14 +748,41 @@ class Formula:
         self.validate(study)
         return self._build(study)
 
-    def _build(self, study: Study | None) -> DesignSpec:
-        if self.groups:
+    def fixed_design(self, study: Study | None = None) -> DesignSpec:
+        """Return the fixed part of this formula, deliberately without its group terms.
+
+        This is the accessor :func:`behavio.compose.model_from_formula` uses: it has
+        already read :attr:`groups` and is about to honour them, so dropping them here is a
+        split rather than a loss. Nothing else should call it -- a caller that wanted the
+        whole formula and got this would be fitting a model the formula does not describe,
+        which is why :meth:`to_design` refuses instead of quietly returning it.
+        """
+
+        if study is None:
+            dependent = self.data_dependent_terms
+            if dependent:
+                term = dependent[0]
+                raise FormulaError(
+                    f"{term.render()} estimates its coordinate from study rows, so it "
+                    "cannot be built without naming a training fold",
+                    source=self.source,
+                    position=term.position,
+                )
+            return self._build(None, groups="ignore")
+        if not isinstance(study, Study):
+            raise TypeError("study must be a Study")
+        self.validate(study)
+        return self._build(study, groups="ignore")
+
+    def _build(self, study: Study | None, *, groups: str = "reject") -> DesignSpec:
+        if self.groups and groups == "reject":
             group = self.groups[0]
             raise FormulaError(
-                f"the group term {group.render()} is parsed but cannot be honoured yet: a "
-                "DesignSpec is one fixed matrix and has no varying-effect representation. "
-                "Drop it, or keep the parsed Formula and hand Formula.groups to a "
-                "hierarchical combinator",
+                f"the group term {group.render()} declares an effect that varies by "
+                f"{group.grouping!r}, and a DesignSpec is one fixed matrix with nowhere to "
+                "put it. Call behavio.compose.model_from_formula(formula, model) to build "
+                "the hierarchical model this formula describes, or Formula.fixed_design() "
+                "for the fixed part alone",
                 source=self.source,
                 position=group.position,
             )

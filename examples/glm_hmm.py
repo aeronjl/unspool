@@ -7,11 +7,11 @@ import numpy as np
 from behavio import (
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
-    SmoothBernoulliHistoryGLM,
     Study,
     evaluate_splits,
     forward_session_splits,
 )
+from behavio.compose import smooth as make_smooth
 
 
 def build_design(*, n_sessions: int = 6, trials_per_session: int = 100) -> Study:
@@ -53,11 +53,11 @@ def main() -> None:
 
     splits = forward_session_splits(simulation.study, min_train_sessions=5)
     static = BernoulliHistoryGLM(choice_lags=0, l2=0.01)
-    smooth = SmoothBernoulliHistoryGLM(
-        choice_lags=0,
-        knots=tuple(range(6)),
+    smooth = make_smooth(
+        BernoulliHistoryGLM(choice_lags=0, l2=0.01),
+        over="session_order",
+        knots=tuple(float(knot) for knot in range(6)),
         smoothness=10.0,
-        l2=0.01,
     )
     print("\nProspective competing explanations")
     for label, candidate in (("static", static), ("smooth", smooth), ("GLM-HMM", model)):

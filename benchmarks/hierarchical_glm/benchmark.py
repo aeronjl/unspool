@@ -8,7 +8,8 @@ from typing import Any
 
 import numpy as np
 
-from behavio import BernoulliHistoryGLM, HierarchicalBernoulliHistoryGLM, Study
+from behavio import BernoulliHistoryGLM, Study
+from behavio.compose import hierarchical
 from benchmarks.provenance import render
 
 POPULATION_PARAMETERS = {
@@ -57,19 +58,10 @@ def build_design(
 def experiment(*, subject_scale: float, seed: int) -> dict[str, dict[str, Any]]:
     """Run one matched prospective comparison at a fixed generative scale."""
 
-    hierarchical = HierarchicalBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=1,
-        l2=0.05,
-        subject_scale=subject_scale,
-    )
-    static = BernoulliHistoryGLM(
-        covariates=hierarchical.covariates,
-        choice_lags=hierarchical.choice_lags,
-        l2=hierarchical.l2,
-    )
+    static = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.05)
+    pooled = hierarchical(static, over="subject", scale=subject_scale)
     design = build_design(seed=seed)
-    simulation = hierarchical.simulate_with_effects(
+    simulation = pooled.simulate_with_effects(
         design,
         POPULATION_PARAMETERS,
         seed=seed + 1,
@@ -78,16 +70,16 @@ def experiment(*, subject_scale: float, seed: int) -> dict[str, dict[str, Any]]:
     test_indices = np.flatnonzero(simulation.study["session_order"] == 3)
     train = simulation.study.take(train_indices)
     test = simulation.study.take(test_indices)
-    truth = simulation.subject_coefficients
+    truth = simulation.group_parameters
 
     complete_fit = static.fit(train)
     complete_coefficients = np.broadcast_to(complete_fit.estimates, truth.shape)
-    partial_fit = hierarchical.fit(train)
+    partial_fit = pooled.fit(train)
 
     independent_coefficients: list[np.ndarray[Any, np.dtype[np.float64]]] = []
     independent_log_probabilities: list[np.ndarray[Any, np.dtype[np.float64]]] = []
     independent_converged = True
-    for subject in simulation.subjects:
+    for subject in simulation.groups:
         subject_train = _subject_study(train, subject)
         subject_test = _subject_study(test, subject)
         subject_fit = static.fit(subject_train)
@@ -98,12 +90,12 @@ def experiment(*, subject_scale: float, seed: int) -> dict[str, dict[str, Any]]:
     coefficients = {
         "complete_pooling": complete_coefficients,
         "independent": np.vstack(independent_coefficients),
-        "partial_pooling": partial_fit.subject_coefficients,
+        "partial_pooling": partial_fit.group_parameters,
     }
     mean_log_losses = {
         "complete_pooling": -float(np.mean(static.pointwise_log_prob(test, complete_fit))),
         "independent": -float(np.mean(np.concatenate(independent_log_probabilities))),
-        "partial_pooling": -float(np.mean(hierarchical.pointwise_log_prob(test, partial_fit))),
+        "partial_pooling": -float(np.mean(pooled.pointwise_log_prob(test, partial_fit))),
     }
     convergence = {
         "complete_pooling": complete_fit.diagnostics.converged,

@@ -5,11 +5,11 @@ from __future__ import annotations
 from behavio import (
     BernoulliHistoryGLM,
     BinaryQLearning,
-    SmoothBernoulliHistoryGLM,
     Study,
     evaluate_splits,
     forward_session_splits,
 )
+from behavio.compose import smooth as make_smooth
 
 
 def build_design(*, n_sessions: int = 8, trials_per_session: int = 120) -> Study:
@@ -57,11 +57,11 @@ def main() -> None:
 
     splits = forward_session_splits(study, min_train_sessions=7)
     static = BernoulliHistoryGLM(choice_lags=1, l2=0.01)
-    smooth = SmoothBernoulliHistoryGLM(
-        choice_lags=1,
-        knots=tuple(range(8)),
+    smooth = make_smooth(
+        BernoulliHistoryGLM(choice_lags=1, l2=0.01),
+        over="session_order",
+        knots=tuple(float(knot) for knot in range(8)),
         smoothness=10.0,
-        l2=0.01,
     )
     print("\nProspective competing explanations")
     for label, candidate in (("static", static), ("smooth", smooth), ("Q-learning", model)):

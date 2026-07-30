@@ -5,12 +5,13 @@ from behavio import (
     BernoulliHistoryGLM,
     FitAuditStatus,
     ModelRecoveryScenario,
-    SmoothBernoulliHistoryGLM,
     Study,
     historical_cohort_forecast_splits,
     run_model_recovery,
     run_model_recovery_grid,
 )
+from behavio.compose import SmoothModel
+from behavio.compose import smooth as make_smooth
 
 
 def recovery_design(*, n_sessions: int = 10, n_trials: int = 120) -> Study:
@@ -63,19 +64,18 @@ def historical_recovery_design() -> Study:
 
 def competing_models(n_sessions: int = 10):
     static = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01)
-    smooth = SmoothBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=1,
-        knots=tuple(range(n_sessions)),
+    smooth = make_smooth(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01),
+        over="session_order",
+        knots=tuple(float(knot) for knot in range(n_sessions)),
         smoothness=10.0,
-        l2=0.01,
     )
     return static, smooth
 
 
 def recovery_scenarios(
     static: BernoulliHistoryGLM,
-    smooth: SmoothBernoulliHistoryGLM,
+    smooth: SmoothModel,
 ) -> tuple[ModelRecoveryScenario, ModelRecoveryScenario]:
     n_knots = len(smooth.knots)
     return (

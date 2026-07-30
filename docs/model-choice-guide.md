@@ -48,9 +48,9 @@ estimated together. These models are scientific controls, not disposable prelimi
 
 ### Smooth change across learning
 
-Use `SmoothBernoulliHistoryGLM` when a coefficient is expected to vary continuously over a
-declared clock. Use `HierarchicalSmoothBernoulliHistoryGLM` when individual paths should
-deviate from a shared population path. Knots and clocks must be defined without future
+Use `smooth(model, over=...)` when a coefficient is expected to vary continuously over a
+declared clock. Wrap that in `hierarchical(..., over="subject")` when individual paths
+should deviate from a shared population path. Knots and clocks must be defined without future
 outcomes; more flexible smoothness belongs inside nested training-only selection.
 
 ### Discrete latent regimes

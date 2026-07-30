@@ -1,8 +1,16 @@
 # PyMC hierarchical GLM backend
 
-Behavio's first full-posterior adapter samples the existing
-`HierarchicalBernoulliHistoryGLM` with PyMC's established NUTS implementation. It is a
+Behavio's full-posterior adapter samples a `hierarchical(...)` composition over a
+penalised linear Bernoulli model with PyMC's established NUTS implementation. It is a
 narrow interoperability reference, not a new sampler or a second behavioural model.
+
+The adapter dispatches on
+[`PenalisedLinearEstimator`](composing-models.md#the-contract) rather than on one class
+name, and reads both priors off the model's own penalty matrices: a quadratic penalty *is*
+a Gaussian precision, so a zero on the penalty diagonal is a flat prior and a positive one
+is `Normal(0, 1/sqrt(penalty))`. A penalty that couples parameters -- a smooth model's
+roughness, for instance -- is refused rather than approximated, because a correlated prior
+needs its own declared full-posterior form.
 
 The adapter reuses the model's own binary-outcome validation and filtered-history design
 matrix. It also requires the same `TaskSpec` used by the deterministic golden path, so an
@@ -10,23 +18,23 @@ undeclared covariate or mismatched scored observation fails before PyMC is impor
 
 ```python
 from behavio import (
+    BernoulliHistoryGLM,
     ChoiceSpec,
-    HierarchicalBernoulliHistoryGLM,
     PyMCHierarchicalGLMBackend,
     TaskSpec,
     audit_posterior,
     psis_loo,
 )
+from behavio.compose import hierarchical
 
 task = TaskSpec(
     choice=ChoiceSpec(options=(0, 1)),
     predictors=("stimulus",),
 )
-model = HierarchicalBernoulliHistoryGLM(
-    covariates=("stimulus",),
-    choice_lags=1,
-    l2=0.25,
-    subject_scale=0.5,
+model = hierarchical(
+    BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.25),
+    over="subject",
+    scale=0.5,
 )
 backend = PyMCHierarchicalGLMBackend(
     draws=1_000,
@@ -80,7 +88,7 @@ propriety under complete or quasi-complete separation. For routine use, declare 
 `l2` unless a flat-slope analysis is scientifically required, and treat finite sampler
 output as insufficient evidence of a proper posterior.
 
-`estimate_subject_scale=True` is rejected. The empirical-Bayes MAP path defines bounded
+`estimate_scale=True` is rejected. The empirical-Bayes MAP path defines bounded
 Laplace marginal-likelihood estimation, not a prior on the scale. Sampling it as if those
 bounds implied a Bayesian prior would change the model while pretending only the backend
 changed. A later varying-scale model must declare and recover its prior explicitly.

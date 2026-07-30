@@ -10,11 +10,9 @@ import numpy as np
 
 from behavio import (
     BernoulliHistoryGLM,
-    HierarchicalBernoulliHistoryGLM,
-    HierarchicalSmoothBernoulliHistoryGLM,
-    SmoothBernoulliHistoryGLM,
     Study,
 )
+from behavio.compose import HierarchicalModel, hierarchical, smooth
 from benchmarks.provenance import render
 
 KNOTS = (0.0, 2.0, 4.0)
@@ -75,35 +73,44 @@ def experiment(*, regime: str, seed: int) -> dict[str, dict[str, Any]]:
         raise ValueError(f"unknown regime {regime!r}")
     design = build_design(seed=seed)
     hierarchical_smooth = _hierarchical_smooth_model()
+    paths_model = hierarchical_smooth.model
     population_paths, subject_deviations = _truth(regime, design.subjects, seed=seed + 1)
     simulation = hierarchical_smooth.simulate_with_effects(
         design,
-        hierarchical_smooth.parameters_from_paths(population_paths),
+        paths_model.parameters_from_paths(population_paths),
         seed=seed + 2,
-        subject_deviation_paths=subject_deviations,
+        group_deviations={
+            subject: [
+                value
+                for coefficient in paths_model.coefficient_names
+                for value in deviation[coefficient]
+            ]
+            for subject, deviation in subject_deviations.items()
+        },
     )
     train_indices = np.flatnonzero(simulation.study["session_order"] < 4)
     test_indices = np.flatnonzero(simulation.study["session_order"] == 4)
     train = simulation.study.take(train_indices)
     test = simulation.study.take(test_indices)
-    truth = simulation.subject_knot_values
+    truth = simulation.group_parameters.reshape(len(simulation.groups), 2, len(KNOTS))
 
     complete = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.02)
     complete_fit = complete.fit(train)
     complete_paths = np.broadcast_to(complete_fit.estimates[None, :, None], truth.shape)
 
-    static_partial = HierarchicalBernoulliHistoryGLM(
-        covariates=("stimulus",), choice_lags=0, l2=0.02, subject_scale=0.4
+    static_partial = hierarchical(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.02),
+        over="subject",
+        scale=0.4,
     )
     static_fit = static_partial.fit(train)
-    static_paths = np.broadcast_to(static_fit.subject_coefficients[:, :, None], truth.shape)
+    static_paths = np.broadcast_to(static_fit.group_parameters[:, :, None], truth.shape)
 
-    shared_smooth = SmoothBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=0,
+    shared_smooth = smooth(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.02),
+        over="session_order",
         knots=KNOTS,
         smoothness=3.0,
-        l2=0.02,
         shared_trajectory=True,
     )
     shared_fit = shared_smooth.fit(train)
@@ -114,15 +121,14 @@ def experiment(*, regime: str, seed: int) -> dict[str, dict[str, Any]]:
     independent_paths: list[np.ndarray[Any, np.dtype[np.float64]]] = []
     independent_scores: list[np.ndarray[Any, np.dtype[np.float64]]] = []
     independent_converged = True
-    for subject in simulation.subjects:
+    for subject in simulation.groups:
         subject_train = _subject_study(train, subject)
         subject_test = _subject_study(test, subject)
-        independent = SmoothBernoulliHistoryGLM(
-            covariates=("stimulus",),
-            choice_lags=0,
+        independent = smooth(
+            BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.02),
+            over="session_order",
             knots=KNOTS,
             smoothness=3.0,
-            l2=0.02,
         )
         independent_fit = independent.fit(subject_train)
         independent_paths.append(independent_fit.estimates.reshape(2, 3))
@@ -134,7 +140,9 @@ def experiment(*, regime: str, seed: int) -> dict[str, dict[str, Any]]:
         "static_partial_pooling": static_paths,
         "shared_smooth": shared_paths,
         "independent_smooth": np.stack(independent_paths),
-        "hierarchical_smooth": hierarchical_fit.subject_knot_values,
+        "hierarchical_smooth": hierarchical_fit.group_parameters.reshape(
+            len(hierarchical_fit.groups), 2, len(KNOTS)
+        ),
     }
     log_losses = {
         "complete_pooling": -float(np.mean(complete.pointwise_log_prob(test, complete_fit))),
@@ -257,15 +265,16 @@ def _truth(
     return population, deviations
 
 
-def _hierarchical_smooth_model() -> HierarchicalSmoothBernoulliHistoryGLM:
-    return HierarchicalSmoothBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=0,
-        knots=KNOTS,
-        smoothness=3.0,
-        l2=0.02,
-        subject_scale=0.4,
-        subject_smoothness=3.0,
+def _hierarchical_smooth_model() -> HierarchicalModel:
+    return hierarchical(
+        smooth(
+            BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.02),
+            over="session_order",
+            knots=KNOTS,
+            smoothness=3.0,
+        ),
+        over="subject",
+        scale=0.4,
     )
 
 

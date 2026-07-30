@@ -83,16 +83,24 @@ def test_flagship_panel_merges_paper_days_but_preserves_source_provenance() -> N
     assert len(set(panel["session"][first_day])) == 1
 
 
+def _base(model):
+    """Unwrap a composed candidate down to the model the combinators were applied to."""
+
+    while hasattr(model, "model"):
+        model = model.model
+    return model
+
+
 def test_flagship_candidates_match_the_frozen_contract() -> None:
     models = _models()
 
     assert tuple(models) == MODEL_ORDER
-    assert all(model.choice_lags == 0 for model in models.values())
-    assert models["pooled_psychometric"].covariates == (
+    assert all(_base(model).choice_lags == 0 for model in models.values())
+    assert _base(models["pooled_psychometric"]).covariates == (
         "left_contrast",
         "right_contrast",
     )
-    assert models["early_bias_forecast"].covariates[-3:] == (
+    assert _base(models["early_bias_forecast"]).covariates[-3:] == (
         "early_bias_forecast_phase",
         "early_bias_forecast_left_contrast",
         "early_bias_forecast_right_contrast",

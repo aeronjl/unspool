@@ -36,9 +36,6 @@ MODEL_CATALOGUE = {
     "Perseveration",
     "WinStayLoseShift",
     "BernoulliHistoryGLM",
-    "SmoothBernoulliHistoryGLM",
-    "HierarchicalBernoulliHistoryGLM",
-    "HierarchicalSmoothBernoulliHistoryGLM",
     "BernoulliGLMHMM",
     "BinaryQLearning",
     "BinaryRLAgent",
@@ -49,6 +46,29 @@ MODEL_CATALOGUE = {
     "EqualVarianceSDT",
     "UnequalVarianceSDT",
     "MetaSDT",
+}
+
+#: The two combinators and the one call that turns a formula into a model. This is the
+#: headline capability of the model layer: eleven hand-written variant classes across two axes
+#: became two functions over an ordinary estimator, so what a user is promised is the *pair of
+#: verbs*, not a grid of nouns. ``SmoothModel`` and ``HierarchicalModel`` are pinned because
+#: they are what the verbs return and therefore what a caller annotates; ``HierarchicalFitResult``
+#: because a hierarchical fit's group deviations are read off it by name and no other type
+#: carries them.
+#:
+#: Deliberately unpinned, though all remain importable from ``behavio``:
+#: ``HierarchicalSimulation`` and ``CoefficientTrajectory`` (records you read back off a call,
+#: free to gain fields, in the same class as ``PsychometricSummary``), and the whole of
+#: ``behavio.contracts.compose`` -- ``PenalisedLinearEstimator`` and its neighbours are the
+#: surface a *model author* implements to become composable, and it is reached through
+#: ``behavio.contracts`` alongside the other extension protocols rather than from the top level.
+COMBINATOR_SURFACE = {
+    "smooth",
+    "hierarchical",
+    "model_from_formula",
+    "SmoothModel",
+    "HierarchicalModel",
+    "HierarchicalFitResult",
 }
 
 #: The closed-form detection-theory summaries. These are pinned for the same reason as the

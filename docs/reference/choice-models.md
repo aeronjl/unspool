@@ -35,7 +35,7 @@ first matched alternatives for more elaborate latent or mechanistic accounts.
       show_root_heading: false
       show_source: false
 
-## Static and smooth GLMs
+## Bernoulli history GLM
 
 ::: behavio.models.glm
     options:
@@ -43,15 +43,38 @@ first matched alternatives for more elaborate latent or mechanistic accounts.
       show_root_heading: false
       show_source: false
 
-## Hierarchical GLMs
+## Combinators: smoothness and hierarchy
 
-::: behavio.models.hierarchical_glm
+The smooth, hierarchical, and hierarchical-smooth GLMs are not classes. They are
+[`smooth()` and `hierarchical()`](../composing-models.md) applied to the model above, and
+the contract a family implements to be composable is
+`behavio.contracts.compose.PenalisedLinearEstimator`.
+
+::: behavio.contracts.compose
     options:
       members_order: source
       show_root_heading: false
       show_source: false
 
-::: behavio.models.hierarchical_smooth_glm
+::: behavio.compose.smoothness
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+::: behavio.compose.hierarchy
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+::: behavio.compose.formula
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+::: behavio.compose.trajectory
     options:
       members_order: source
       show_root_heading: false

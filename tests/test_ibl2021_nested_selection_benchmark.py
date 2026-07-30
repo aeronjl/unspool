@@ -7,12 +7,13 @@ import numpy as np
 import pytest
 
 from behavio import (
-    HierarchicalSmoothBernoulliHistoryGLM,
+    BernoulliHistoryGLM,
     Study,
     cohort_forward_session_splits,
     leave_one_lab_out_session_forecast_splits,
     nested_select_model,
 )
+from behavio.compose import hierarchical, smooth
 from benchmarks.ibl2021_nested_selection.benchmark import (
     CANDIDATES,
     _candidates,
@@ -59,18 +60,19 @@ def _panel() -> Study:
             ),
         }
     )
-    generator = HierarchicalSmoothBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=1,
-        knots=(0.0, 2.0, 5.0),
-        smoothness=3.0,
-        l2=0.02,
-        subject_scale=0.4,
-        subject_smoothness=3.0,
+    generator = hierarchical(
+        smooth(
+            BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.02),
+            over="session_order",
+            knots=(0.0, 2.0, 5.0),
+            smoothness=3.0,
+        ),
+        over="subject",
+        scale=0.4,
     )
     return generator.simulate(
         design,
-        generator.parameters_from_paths(
+        generator.model.parameters_from_paths(
             {
                 "intercept": [-0.3, -0.1, 0.2],
                 "stimulus": [0.4, 1.0, 1.8],

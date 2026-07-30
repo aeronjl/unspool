@@ -14,7 +14,6 @@ from behavio import (
     ModelDataError,
     PredictionMode,
     RewardSpec,
-    SmoothBernoulliHistoryGLM,
     Study,
     TaskSpec,
     UnsupportedPredictionMode,
@@ -24,6 +23,7 @@ from behavio import (
     run_parameter_recovery,
     within_session_rolling_splits,
 )
+from behavio.compose import smooth as make_smooth
 from behavio.models._kernels.bernoulli import ordered_session_indices
 
 
@@ -270,11 +270,11 @@ def test_reward_learning_beats_static_and_smooth_glms_prospectively() -> None:
     study = model.simulate(volatile_design(), agent_parameters(model), seed=9)
     splits = forward_session_splits(study, min_train_sessions=7)
     static = BernoulliHistoryGLM(choice_lags=1, l2=0.01)
-    smooth = SmoothBernoulliHistoryGLM(
-        choice_lags=1,
-        knots=tuple(range(8)),
+    smooth = make_smooth(
+        BernoulliHistoryGLM(choice_lags=1, l2=0.01),
+        over="session_order",
+        knots=tuple(float(knot) for knot in range(8)),
         smoothness=10.0,
-        l2=0.01,
     )
 
     static_loss = evaluate_splits(static, study, splits)[0].mean_log_loss

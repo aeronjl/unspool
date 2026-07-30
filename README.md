@@ -180,10 +180,12 @@ Lab holdout rejects any subject assigned to more than one lab rather than permit
 cross-fold leakage.
 
 The executable catalogue begins with named bias-only, psychometric, lapse-psychometric,
-perseveration, and win-stay/lose-shift baselines. It also includes a static Bernoulli GLM,
-a smoothly time-varying
-competitor with fixed temporal knots, a static partial-pooling Bernoulli GLM, a partially
-pooled smooth trajectory model, a fixed-transition Bernoulli GLM-HMM, and a compact
+perseveration, and win-stay/lose-shift baselines. It also includes a static Bernoulli GLM
+and two combinators over it -- `smooth(model, over=...)` for coefficients on fixed temporal
+knots and `hierarchical(model, over="subject", parameters=...)` for parameters that vary by
+group -- which compose, so the smooth, partially pooled, and partially pooled smooth
+trajectory models are expressions rather than four more classes. It also includes
+a fixed-transition Bernoulli GLM-HMM, and a compact
 session-reset binary Q-learning agent plus a composable successor with asymmetric
 learning, forgetting, choice kernels, lapse-softmax policies, and explicit reset columns,
 plus a fixed-parameter Wiener drift-diffusion model
@@ -198,6 +200,7 @@ normalized audit without discarding its model-specific evidence. See the
 [estimator and plugin contract](docs/estimator-contract.md),
 [prospective comparison guide](docs/comparison.md),
 [cross-lab trajectory-shape guide](docs/trajectory-shapes.md),
+[combinator guide](docs/composing-models.md),
 [smooth-drift guide](docs/smooth-drift.md),
 [partial-pooling guide](docs/hierarchical-glm.md),
 [partially pooled trajectory guide](docs/hierarchical-smooth-glm.md),

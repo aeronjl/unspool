@@ -13,14 +13,14 @@ from typing import Any
 import numpy as np
 
 from behavio import (
-    HierarchicalBernoulliHistoryGLM,
-    HierarchicalSmoothBernoulliHistoryGLM,
+    BernoulliHistoryGLM,
     NestedProspectiveSelectionReport,
     Study,
     cohort_forward_session_splits,
     leave_one_lab_out_session_forecast_splits,
     nested_select_model,
 )
+from behavio.compose import hierarchical, smooth
 from benchmarks.ibl2021_prospective.benchmark import (
     TRAIN_SESSION_COUNT,
     build_panel,
@@ -207,18 +207,18 @@ def run(
 def _candidates() -> Mapping[str, Any]:
     common = {"covariates": ("stimulus",), "choice_lags": 1, "l2": 0.02}
     candidates: dict[str, Any] = {
-        "static": HierarchicalBernoulliHistoryGLM(
-            **common,
-            subject_scale=0.4,
-        )
+        "static": hierarchical(BernoulliHistoryGLM(**common), over="subject", scale=0.4)
     }
     for smoothness in (1.0, 3.0, 9.0):
-        candidates[f"drift_smoothness_{int(smoothness)}"] = HierarchicalSmoothBernoulliHistoryGLM(
-            **common,
-            knots=KNOTS,
-            smoothness=smoothness,
-            subject_scale=0.4,
-            subject_smoothness=smoothness,
+        candidates[f"drift_smoothness_{int(smoothness)}"] = hierarchical(
+            smooth(
+                BernoulliHistoryGLM(**common),
+                over="session_order",
+                knots=KNOTS,
+                smoothness=smoothness,
+            ),
+            over="subject",
+            scale=0.4,
         )
     return candidates
 

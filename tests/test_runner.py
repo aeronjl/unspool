@@ -11,7 +11,8 @@ from test_compiler import (
 )
 
 from behavio.compiler import compile_execution_plan, materialize_protocol
-from behavio.models import BernoulliHistoryGLM, SmoothBernoulliHistoryGLM
+from behavio.compose import smooth
+from behavio.models import BernoulliHistoryGLM
 from behavio.protocol import (
     CandidateSpec,
     ProtocolState,
@@ -352,10 +353,9 @@ def test_declared_model_is_verified_and_leaves_the_evaluation_untouched() -> Non
 
 def test_a_contradicting_implementation_refuses_to_produce_evidence() -> None:
     models = candidate_models()
-    models["smooth"] = SmoothBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=0,
-        l2=1.0,
+    models["smooth"] = smooth(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=1.0),
+        over="session_order",
     )
 
     with pytest.raises(ProtocolRunError, match="contradict the frozen candidate declaration"):

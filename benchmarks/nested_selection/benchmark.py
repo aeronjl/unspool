@@ -10,12 +10,12 @@ import numpy as np
 
 from behavio import (
     BernoulliHistoryGLM,
-    SmoothBernoulliHistoryGLM,
     Study,
     cohort_forward_session_splits,
     compare_models,
     nested_select_model,
 )
+from behavio.compose import SmoothModel, smooth
 from benchmarks.provenance import render
 
 KNOTS = (0.0, 3.0, 6.0)
@@ -198,13 +198,12 @@ def run(*, repetitions: int = 20, seed: int = 84_221) -> dict[str, Any]:
     }
 
 
-def _generator_model() -> SmoothBernoulliHistoryGLM:
-    return SmoothBernoulliHistoryGLM(
-        covariates=("stimulus",),
-        choice_lags=1,
+def _generator_model() -> SmoothModel:
+    return smooth(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.02),
+        over="session_order",
         knots=KNOTS,
         smoothness=3.0,
-        l2=0.02,
         shared_trajectory=True,
     )
 

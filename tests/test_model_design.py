@@ -9,18 +9,16 @@ from behavio import (
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
     DesignSpec,
-    HierarchicalBernoulliHistoryGLM,
-    HierarchicalSmoothBernoulliHistoryGLM,
     HierarchicalSmoothWienerDriftDiffusion,
     HistoryKernelTerm,
     HistoryTerm,
     InteractionTerm,
     NumericTerm,
-    SmoothBernoulliHistoryGLM,
     SmoothWienerDriftDiffusion,
     Study,
     WienerDriftDiffusion,
 )
+from behavio.compose import smooth
 from behavio.models._kernels.design import covariate_design, outcome_history_term
 from behavio.models.base import ModelDataError
 
@@ -76,9 +74,8 @@ def test_a_design_built_glm_and_a_covariate_built_glm_agree_exactly() -> None:
         "choice_lag_2",
     )
 
-    outcomes = np.asarray(study["choice"], dtype=np.float64)
-    left = shorthand._design_matrix(study, outcomes)
-    right = written_out._design_matrix(study, outcomes)
+    left = shorthand.design_matrix(study)
+    right = written_out.design_matrix(study)
     assert np.array_equal(left, right)
 
     shorthand_fit = shorthand.fit(study)
@@ -90,9 +87,8 @@ def test_a_design_built_glm_and_a_covariate_built_glm_agree_exactly() -> None:
 def test_the_shorthand_history_term_reproduces_the_hand_built_history_column() -> None:
     study = panel()
     model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=2)
-    outcomes = np.asarray(study["choice"], dtype=np.float64)
 
-    built = model._design_matrix(study, outcomes)
+    built = model.design_matrix(study)
     term = outcome_history_term("choice", 2)
     assert term.feature_names == ("choice_lag_1", "choice_lag_2")
     assert np.array_equal(built[:, 2:], term.build(study).values)
@@ -237,14 +233,15 @@ def test_a_history_kernel_can_replace_a_lag_tuple_without_new_columns() -> None:
 
 
 def test_a_smooth_glm_built_from_a_design_names_its_knots_the_same_way() -> None:
-    shorthand = SmoothBernoulliHistoryGLM(
-        covariates=("stimulus",), knots=(0.0, 2.0), choice_lags=0, shared_trajectory=True
-    )
-    written_out = SmoothBernoulliHistoryGLM(
+    shorthand = smooth(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0),
         knots=(0.0, 2.0),
-        choice_lags=0,
         shared_trajectory=True,
-        design=covariate_design(("stimulus",)),
+    )
+    written_out = smooth(
+        BernoulliHistoryGLM(choice_lags=0, design=covariate_design(("stimulus",))),
+        knots=(0.0, 2.0),
+        shared_trajectory=True,
     )
 
     assert shorthand.parameter_names == written_out.parameter_names
@@ -276,10 +273,9 @@ def test_a_mistyped_covariate_is_found_before_fit_instead_of_inside_it() -> None
 
 def test_knots_outside_the_observed_clock_are_reported_rather_than_ignored() -> None:
     study = panel()
-    model = SmoothBernoulliHistoryGLM(
-        covariates=("stimulus",),
+    model = smooth(
+        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0),
         knots=(0.0, 2.0, 40.0),
-        choice_lags=0,
         shared_trajectory=True,
     )
 
@@ -361,9 +357,6 @@ def test_describe_names_the_required_task_columns_from_the_capability_contract()
 
 ALL_COVARIATE_MODELS = (
     BernoulliHistoryGLM,
-    SmoothBernoulliHistoryGLM,
-    HierarchicalBernoulliHistoryGLM,
-    HierarchicalSmoothBernoulliHistoryGLM,
     BernoulliGLMHMM,
     WienerDriftDiffusion,
     SmoothWienerDriftDiffusion,
@@ -416,7 +409,6 @@ def test_a_formula_built_design_drives_a_model_like_a_hand_built_one() -> None:
 
 def test_a_formula_lag_term_reproduces_the_choice_lags_shorthand_when_effect_coded() -> None:
     study = panel()
-    outcomes = np.asarray(study["choice"], dtype=np.float64)
     shorthand = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1)
     parsed = BernoulliHistoryGLM(
         design=DesignSpec.from_formula('choice ~ stimulus + lag(choice, 1, coding="effect")'),
@@ -424,9 +416,7 @@ def test_a_formula_lag_term_reproduces_the_choice_lags_shorthand_when_effect_cod
     )
 
     assert parsed.parameter_names == shorthand.parameter_names
-    assert np.array_equal(
-        parsed._design_matrix(study, outcomes), shorthand._design_matrix(study, outcomes)
-    )
+    assert np.array_equal(parsed.design_matrix(study), shorthand.design_matrix(study))
 
 
 def test_a_default_formula_lag_is_the_glm_shorthand_rather_than_a_lookalike() -> None:
@@ -444,22 +434,18 @@ def test_a_default_formula_lag_is_the_glm_shorthand_rather_than_a_lookalike() ->
     """
 
     study = panel()
-    outcomes = np.asarray(study["choice"], dtype=np.float64)
     parsed = BernoulliHistoryGLM(
         design=DesignSpec.from_formula("choice ~ stimulus + lag(choice, 1)"), choice_lags=0
     )
     shorthand = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1)
 
     assert parsed.parameter_names == shorthand.parameter_names
-    assert np.array_equal(
-        parsed._design_matrix(study, outcomes), shorthand._design_matrix(study, outcomes)
-    )
-    assert set(np.unique(parsed._design_matrix(study, outcomes)[:, 2])) == {-1.0, 0.0, 1.0}
+    assert np.array_equal(parsed.design_matrix(study), shorthand.design_matrix(study))
+    assert set(np.unique(parsed.design_matrix(study)[:, 2])) == {-1.0, 0.0, 1.0}
 
 
 def test_an_identity_coded_formula_lag_is_still_one_keyword_away() -> None:
     study = panel()
-    outcomes = np.asarray(study["choice"], dtype=np.float64)
     identity = BernoulliHistoryGLM(
         design=DesignSpec.from_formula("choice ~ stimulus + lag(choice, 1, coding='identity')"),
         choice_lags=0,
@@ -469,7 +455,7 @@ def test_an_identity_coded_formula_lag_is_still_one_keyword_away() -> None:
         identity.parameter_names
         == BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1).parameter_names
     )
-    assert set(np.unique(identity._design_matrix(study, outcomes)[:, 2])) == {0.0, 1.0}
+    assert set(np.unique(identity.design_matrix(study)[:, 2])) == {0.0, 1.0}
 
 
 def test_a_formula_built_ddm_keeps_the_drift_prefix() -> None:
