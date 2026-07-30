@@ -189,7 +189,9 @@ def test_protocol_runner_serializes_categorical_rows_and_scores_brier() -> None:
     protocol = frozen_small_protocol(multinomial_candidates())
     protocol = replace(
         protocol,
-        comparison=replace(protocol.comparison, metric=ScoreMetric.BRIER),
+        comparison=replace(
+            protocol.comparison, metric=ScoreMetric.BRIER, metrics=(ScoreMetric.BRIER,)
+        ),
         state=ProtocolState.DRAFT,
         lifecycle=(),
     ).freeze()

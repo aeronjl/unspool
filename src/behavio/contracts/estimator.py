@@ -23,6 +23,12 @@ import numpy as np
 from numpy.typing import NDArray
 
 from behavio._internal.arrays import protected_array
+from behavio._internal.scoring import (
+    LOG_SCORE_METRICS,
+    PROBABILITY_SCORE_METRICS,
+    ScoreMetric,
+    validated_score_metrics,
+)
 from behavio.contracts.audit import FitAudit, FitAuditPolicy, FitDiagnostics
 from behavio.trials import Study
 
@@ -97,6 +103,17 @@ class ModelCapabilities:
     ``can_recover_parameters`` may be true without ``can_simulate``; ``AGENTS.md`` already
     treats recovery as design-specific evidence, so a design is exactly what such a model
     was waiting for.
+
+    ``score_metrics`` names the proper scoring rules this candidate can be scored under, and
+    it is what a comparison reads when a caller declares which rules its table carries. The
+    log score is always present: ``pointwise_log_prob`` is the joint log density of the whole
+    scored observation and is defined for every prediction the contract admits. The Brier
+    score is present only when the prediction carries a *probability* -- a binary or
+    categorical prediction, or a defective density whose categories integrate to genuine
+    choice probabilities. A model that predicts an unlabelled density over a continuous
+    outcome declares :data:`~behavio._internal.scoring.LOG_SCORE_METRICS` alone, which is how
+    a comparison refuses a Brier column for it at declaration rather than discovering the
+    refusal after every fold has been fitted.
     """
 
     scored_columns: tuple[str, ...]
@@ -106,6 +123,7 @@ class ModelCapabilities:
     required_task_columns: tuple[str, ...] = ()
     is_sampled: bool = False
     can_bind_design: bool = False
+    score_metrics: tuple[ScoreMetric, ...] = PROBABILITY_SCORE_METRICS
 
     def __post_init__(self) -> None:
         if isinstance(self.scored_columns, str):
@@ -143,9 +161,17 @@ class ModelCapabilities:
         overlap = sorted(set(required) & set(columns))
         if overlap:
             raise ValueError(f"required_task_columns must not repeat a scored column: {overlap}")
+        metrics = validated_score_metrics(self.score_metrics, label="score_metrics")
+        missing_log = [metric for metric in LOG_SCORE_METRICS if metric not in metrics]
+        if missing_log:
+            raise ValueError(
+                "every estimator supports the log score, which is the joint log density of "
+                f"its scored observation; score_metrics omits {missing_log!r}"
+            )
         object.__setattr__(self, "scored_columns", columns)
         object.__setattr__(self, "prediction_modes", modes)
         object.__setattr__(self, "required_task_columns", required)
+        object.__setattr__(self, "score_metrics", metrics)
 
 
 @dataclass(frozen=True, slots=True)
@@ -942,7 +968,46 @@ def model_capabilities(model: BehaviourEstimator) -> ModelCapabilities:
         can_recover_parameters=generative or bindable,
         required_task_columns=model_task_columns(model),
         can_bind_design=bindable,
+        score_metrics=model_score_metrics(model),
     )
+
+
+def model_score_metrics(model: Any) -> tuple[ScoreMetric, ...]:
+    """Return the proper scoring rules a candidate declares it can be scored under.
+
+    A model may declare ``supported_score_metrics`` itself, exactly as it declares
+    ``required_task_columns``, and a wrapper that changes what its component predicts is
+    expected to. Otherwise the answer is *derived from the prediction contract the model
+    already satisfies*, so no existing family had to be edited to gain the declaration and
+    none can forget to keep it in step with what it predicts:
+
+    - a model that names a ``density_outcome`` and no ``categories`` predicts an unlabelled
+      density over a continuous outcome. It has no discrete margin, so the Brier score is
+      undefined for it and it declares :data:`LOG_SCORE_METRICS` alone;
+    - everything else -- a binary probability, a categorical simplex, or a defective density
+      whose categories carry genuine choice probabilities -- declares
+      :data:`PROBABILITY_SCORE_METRICS`.
+
+    The members are read structurally rather than through :func:`isinstance` because
+    :class:`DensityBehaviourEstimator` is rooted in :class:`BehaviourEstimator`, which a
+    sampled candidate does not satisfy while declaring the very same members.
+
+    This is a declaration, not a proof. A candidate whose declaration is more generous than
+    its prediction is still refused, one layer later, by
+    :func:`behavio.compare.models._brier_scoreable_margin`; the declaration exists so that
+    the ordinary case is refused before any fold is fitted.
+    """
+
+    declared = getattr(model, "supported_score_metrics", None)
+    if declared is not None:
+        return validated_score_metrics(declared, label="supported_score_metrics")
+    predicts_density = isinstance(getattr(model, "density_outcome", None), str) and callable(
+        getattr(model, "predict_density", None)
+    )
+    has_discrete_margin = getattr(model, "categories", None) is not None
+    if predicts_density and not has_discrete_margin:
+        return LOG_SCORE_METRICS
+    return PROBABILITY_SCORE_METRICS
 
 
 def _binds_a_design(model: Any) -> bool:

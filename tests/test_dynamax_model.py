@@ -29,7 +29,7 @@ from typing import Any
 import numpy as np
 import pytest
 
-from behavio import Study, compare_models, forward_session_splits
+from behavio import ScoreMetric, Study, compare_models, forward_session_splits
 from behavio.adapters import check_behaviour_estimator
 from behavio.adapters.conformance import CheckStatus
 from behavio.adapters.estimator_conformance import perturb_future_rows
@@ -671,28 +671,72 @@ def test_the_wrapper_flows_through_prospective_folds_against_its_own_nested_null
     )
 
 
-def test_compare_models_cannot_score_an_unlabelled_density_and_says_so(study: Study) -> None:
-    """A finding about Behavio, not about dynamax, and the one place the wrapper stops.
+def test_a_declared_brier_column_is_refused_for_an_unlabelled_density(study: Study) -> None:
+    """A finding about Behavio, not about dynamax, and still refused -- but earlier.
 
-    ``compare_models`` computes a Brier column unconditionally, and a Brier score is a
-    scoring rule for a probability. PyDDM's density escapes this because it is *defective
-    across the two boundaries*, so integrating the grid yields genuine choice probabilities.
-    A switching autoregression predicts an unlabelled continuous density with no discrete
-    margin at all, so there is no number to report and the comparison refuses rather than
-    inventing one -- which is right, and also means the prospective comparison table is
-    unreachable for every continuous-outcome model. ``evaluate_splits`` and the log score are
-    not affected; see the test above. Reported in ``docs/foreign-models.md``.
+    The default comparison table carries a Brier column, and a Brier score is a scoring rule
+    for a probability. PyDDM's density escapes this because it is *defective across the two
+    boundaries*, so integrating the grid yields genuine choice probabilities. A switching
+    autoregression predicts an unlabelled continuous density with no discrete margin at all,
+    so there is no number to report. The wrapper declares as much through its capabilities,
+    so the refusal arrives before any fold is fitted and names the candidate and the rule.
     """
 
     from behavio.compare.models import UnscoreableByBrier
 
-    with pytest.raises(UnscoreableByBrier, match="no categorical margin"):
+    with pytest.raises(UnscoreableByBrier, match="no categorical margin") as refusal:
         compare_models(
             {"switching-ar": _fold_models()[0]},
             study,
             forward_session_splits(study),
             outcome_column="speed",
         )
+    assert "'switching-ar'" in str(refusal.value) and "'brier'" in str(refusal.value)
+
+
+def test_a_switching_autoregression_is_ranked_against_its_null_on_the_log_score(
+    study: Study,
+) -> None:
+    """The third continuous-outcome family, in the comparison table SDR-0063 unlocked.
+
+    A wrapped foreign model reaches the declared log-score table on exactly the same terms
+    as a first-party family: it declares that its prediction carries no discrete margin, the
+    caller declares the rule that does not need one, and the contest runs. The
+    autoregression is ranked against its own lag-free null, which is a falsifiable claim
+    about the same rows rather than a table with one row in it.
+
+    Which of the two wins is deliberately not asserted. This table weights every session
+    equally where the test above sums pooled log probability, and the winner is read among
+    *audit-eligible* candidates only -- an EM fit that did not converge in a fold is
+    excluded however low its score, which is the same rule that governs every other family.
+    What is asserted is that the verdict is the table's own: the lowest equal-unit log loss
+    among eligible candidates, with the contrast as the matched difference.
+    """
+
+    autoregressive, plain = _fold_models()
+
+    report = compare_models(
+        {"switching-ar": autoregressive, "switching-null": plain},
+        study,
+        forward_session_splits(study),
+        outcome_column="speed",
+        aggregation_column="session",
+        bootstrap_resamples=64,
+        metrics=(ScoreMetric.LOG_LOSS,),
+    )
+
+    assert report.ranked_by is ScoreMetric.LOG_LOSS
+    assert report.to_dict()["declared_metrics"] == ["log-loss"]
+    assert report.winner == min(
+        report.eligible_model_order,
+        key=lambda name: report.result_for(name).unit_balanced_log_loss,
+    )
+    contrast = report.comparison_for("switching-ar", "switching-null")
+    assert contrast.metric is ScoreMetric.LOG_LOSS
+    assert contrast.left_minus_right.estimate == pytest.approx(
+        report.result_for("switching-ar").unit_balanced_log_loss
+        - report.result_for("switching-null").unit_balanced_log_loss
+    )
 
 
 def test_parameter_recovery_runs_end_to_end(truth: dict[str, float]) -> None:

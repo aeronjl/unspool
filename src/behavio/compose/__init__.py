@@ -44,6 +44,7 @@ expose to be mixed with one is :class:`behavio.contracts.mixture.MixtureComponen
 from behavio.compose.components import (
     UniformCategoryGuess,
     UniformChoiceGuess,
+    UniformDurationGuess,
     UniformResponseGuess,
 )
 from behavio.compose.formula import model_from_formula
@@ -76,6 +77,7 @@ __all__ = [
     "SmoothModel",
     "UniformCategoryGuess",
     "UniformChoiceGuess",
+    "UniformDurationGuess",
     "UniformResponseGuess",
     "UnseenGroupPrediction",
     "hierarchical",

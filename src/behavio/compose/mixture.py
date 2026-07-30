@@ -28,6 +28,7 @@ from behavio.contracts.compose import (
 )
 from behavio.contracts.estimator import (
     LOG_DENSITY_FLOOR,
+    DensityPrediction,
     FitResult,
     ModelDataError,
     ModelPrediction,
@@ -54,6 +55,7 @@ __all__ = [
     "MixtureModel",
     "MixtureRowModel",
     "MixtureSimulation",
+    "blended_density",
     "mix",
 ]
 
@@ -429,6 +431,12 @@ def blended_prediction(
     densities :func:`mixture_parts` combines. It is written once here for the same reason.
     """
 
+    if isinstance(model_prediction, DensityPrediction):
+        raise TypeError(
+            "a tabulated density is averaged by blended_density(), not here: a component's "
+            "contribution to a continuous prediction is a density on the model's own grid "
+            "rather than one number per row"
+        )
     probability = np.asarray(model_prediction.probability, dtype=np.float64)
     if probability.ndim == 1:
         blended = (1.0 - weight) * probability + weight * component[:, 0]
@@ -443,6 +451,56 @@ def blended_prediction(
     with np.errstate(divide="ignore"):
         logits = np.log(blended)
     return replace(model_prediction, probability=blended, linear_predictor=logits)
+
+
+def blended_density(
+    model_prediction: DensityPrediction,
+    weight: NDArray[np.float64],
+    component: NDArray[np.float64],
+) -> DensityPrediction:
+    """Return the weighted average of two densities tabulated on one shared grid.
+
+    The continuous twin of :func:`blended_prediction`, and the reason it is a second function
+    rather than a branch inside the first: a probability prediction is one number per row and
+    a component supplies it without knowing what the model predicted, while a density is
+    tabulated on a grid the *model* chose, so a component's half has to be evaluated after
+    the model's prediction exists rather than before it.
+
+    Nothing about the arithmetic is new -- :math:`(1 - \\omega) f_{\\text{model}} + \\omega
+    f_{\\text{comp}}` at every grid point is the same statement
+    :class:`MixtureLikelihood` makes at every observation. Two densities each integrating to
+    at most one average to at most one, so the mixed tabulation carries whatever truncation
+    the model's own grid had and no more, which is what
+    :attr:`~behavio.contracts.estimator.DensityPrediction.total_mass` goes on reporting.
+    """
+
+    if model_prediction.is_defective:
+        raise ValueError(
+            "a mixture over a density split across categories needs a component that writes "
+            "the same categories, which is a joint observation rather than a bare continuous "
+            "one; declare a component that scores both channels"
+        )
+    density = np.asarray(model_prediction.density, dtype=np.float64)
+    values = np.asarray(component, dtype=np.float64)
+    if values.shape != density.shape:
+        raise ValueError("a component's density must be tabulated on the model's own grid")
+    if not np.all(np.isfinite(values)) or np.any(values < 0.0):
+        raise ValueError("a component's density must be finite and non-negative")
+    mixed = (1.0 - weight)[:, None] * density + weight[:, None] * values
+    return replace(model_prediction, density=mixed)
+
+
+def prediction_values(prediction: ModelPrediction) -> NDArray[np.float64]:
+    """Return whatever a prediction says about a row, for the one question asked of it.
+
+    Only ever asked "does this differ between two rows", which a probability, a simplex and a
+    tabulated density each answer in their own numbers. Written once so that a mixture's
+    identifiability check does not have to grow a branch per prediction type.
+    """
+
+    if isinstance(prediction, DensityPrediction):
+        return np.asarray(prediction.density, dtype=np.float64)
+    return np.asarray(prediction.probability, dtype=np.float64)
 
 
 # --------------------------------------------------------------------------------------
@@ -602,6 +660,25 @@ class _MixedModel(Describable):
 
         return tuple(self.model.outcome_channels)
 
+    @property
+    def score_metrics(self) -> tuple[Any, ...]:
+        """The wrapped model's scoring rules, when it declares any.
+
+        Forwarded rather than restated because mixing does not change what kind of prediction
+        a model makes: a mixture over a family that predicts an unlabelled density over a
+        continuous outcome still has no discrete margin for a probability scoring rule to
+        read. Absent when the wrapped model declares nothing, so that a consumer's default
+        stays the default.
+        """
+
+        declared = getattr(self.model, "score_metrics", None)
+        if declared is None:
+            raise AttributeError(
+                f"{type(self.model).__name__} declares no score_metrics, so a mixture over "
+                "it declares none either"
+            )
+        return tuple(declared)
+
     def outcome_codes(self, study: Study) -> NDArray[np.int64]:
         """Return the wrapped model's observed category codes."""
 
@@ -633,6 +710,41 @@ class _MixedModel(Describable):
         if np.any(np.isnan(density)) or np.any(np.isposinf(density)):
             raise ValueError("component log densities must be finite or -inf")
         return density
+
+    def component_density_on_grid(
+        self, study: Study, grid: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Return the component's density at every point of the model's own outcome grid.
+
+        A continuous prediction is a tabulation, so a mixture's predicted density needs the
+        component's density at values *nobody observed*. No new member is asked for: a
+        component's :meth:`~behavio.contracts.mixture.MixtureComponent.pointwise_log_density`
+        is already a function of the study and of an outcome per row, so evaluating it with
+        one grid point broadcast across the rows is exactly the question, asked once per grid
+        point. That is why the loop is over the grid rather than over the rows -- the grid is
+        a few hundred points and the rows may be a few hundred thousand.
+
+        The component sees each grid point as the outcome it would be asked about, which is
+        what makes a censoring-aware component answer with a density here and with a survival
+        probability where the observation actually sat on a limit.
+        """
+
+        points = np.asarray(grid, dtype=np.float64)
+        n_rows = len(study)
+        log_density = np.empty((n_rows, points.size), dtype=np.float64)
+        for index, value in enumerate(points):
+            column = np.asarray(
+                self.component.pointwise_log_density(
+                    study, np.full(n_rows, float(value), dtype=np.float64)
+                ),
+                dtype=np.float64,
+            )
+            if column.shape != (n_rows,):
+                raise ValueError("a component must return one log density per study row")
+            log_density[:, index] = column
+        if np.any(np.isnan(log_density)) or np.any(np.isposinf(log_density)):
+            raise ValueError("component log densities must be finite or -inf")
+        return np.asarray(np.exp(log_density), dtype=np.float64)
 
     def penalty_matrix(self) -> NDArray[np.float64]:
         """Return the wrapped penalty with an unpenalised row and column for the weight.
@@ -1284,17 +1396,30 @@ class MixtureRowModel(_MixedModel):
         *,
         mode: PredictionMode,
     ) -> ModelPrediction:
-        """Return the weighted average of the two processes' predictions, per row."""
+        """Return the weighted average of the two processes' predictions, per row.
+
+        Two shapes of prediction and therefore two averages. A model that predicts a
+        probability is blended against the one number the component predicts; a model that
+        predicts a **tabulated density** -- which is what a family whose outcome is a
+        duration returns -- is blended against the component's density on that model's own
+        grid. Both are the same weighted average of what the two processes say about a row;
+        they differ only in how many numbers a row's prediction is.
+        """
 
         values = self._row_coordinates(study, coefficients)
         width = self.n_model_parameters
         model_prediction = self.model.predict_rows(study, values[:, :width], mode=mode)
+        weight = mixture_weight(values[:, width], self.weight_bounds)
+        if isinstance(model_prediction, DensityPrediction):
+            return blended_density(
+                model_prediction,
+                weight,
+                self.component_density_on_grid(study, model_prediction.grid),
+            )
         probability = np.asarray(
             self.component.prediction_probability(study), dtype=np.float64
         ).reshape(len(study), self.component.prediction_width)
-        return blended_prediction(
-            model_prediction, mixture_weight(values[:, width], self.weight_bounds), probability
-        )
+        return blended_prediction(model_prediction, weight, probability)
 
     def pointwise_log_prob_rows(
         self, study: Study, coefficients: NDArray[np.float64]
@@ -1349,6 +1474,47 @@ class MixtureRowModel(_MixedModel):
         prediction_mode = self._prediction_mode(mode)
         self._validate_fit(fit)
         return self.predict_rows(study, self._fitted_rows(study, fit), mode=prediction_mode)
+
+    @property
+    def density_outcome(self) -> str:
+        """The continuous column a mixed density prediction tabulates, when there is one.
+
+        Raises rather than returning a placeholder when the wrapped model predicts no
+        continuous outcome, because that is what makes ``isinstance(model,
+        DensityBehaviourEstimator)`` answer the question it is asked: a mixture over a
+        logistic GLM has no density to name, and saying so by absence is how every other
+        model on that protocol says it.
+        """
+
+        declared = getattr(self.model, "density_outcome", None)
+        if declared is None:
+            raise AttributeError(
+                f"{type(self.model).__name__} predicts no continuous outcome, so a mixture "
+                "over it tabulates no density either"
+            )
+        return str(declared)
+
+    def predict_density(
+        self,
+        study: Study,
+        fit: FitResult,
+        *,
+        mode: PredictionMode = PredictionMode.FILTERED,
+    ) -> DensityPrediction:
+        """Return the mixed predictive density, which is what ``predict`` already returns.
+
+        One object rather than two tabulations, exactly as the wrapped families arrange it:
+        there are no two halves of a mixed prediction to disagree with one another.
+        """
+
+        declared = self.density_outcome
+        prediction = self.predict(study, fit, mode=mode)
+        if not isinstance(prediction, DensityPrediction) or prediction.outcome != declared:
+            raise TypeError(
+                f"{self.model.model_name} declares a density over {declared!r} but predicted "
+                f"a {type(prediction).__name__}"
+            )
+        return prediction
 
     def pointwise_log_prob(
         self,
@@ -1524,8 +1690,8 @@ class MixtureRowModel(_MixedModel):
                 )
             except (ModelDataError, ValueError, UnsupportedPredictionMode, IndexError):
                 return False
-            probability = np.asarray(prediction.probability, dtype=np.float64)
-            if _varies_across_rows(probability.reshape(len(study), -1)):
+            values = prediction_values(prediction)
+            if _varies_across_rows(values.reshape(len(study), -1)):
                 return False
         return True
 

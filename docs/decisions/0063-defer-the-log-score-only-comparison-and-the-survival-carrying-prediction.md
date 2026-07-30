@@ -1,7 +1,8 @@
 # SDR-0063: Record two continuous-outcome scoring gaps rather than patching them under a model wave
 
-- **Status:** Accepted
-- **Date:** 2026-07-30
+- **Status:** Accepted. **Gap one is resolved**; see [Resolution of gap one](#resolution-of-gap-one).
+  Gap two remains deferred on its original reasoning.
+- **Date:** 2026-07-30 (gap one resolved 2026-07-30)
 - **Related decisions:** [SDR-0061](0061-fit-patch-leaving-as-a-hazard-not-as-the-marginal-value-theorem.md),
   [SDR-0062](0062-implement-normative-belief-updating-clean-room.md)
 
@@ -64,7 +65,8 @@ one model family gets its design decided by that family's convenience.
 Until they are fixed:
 
 - a continuous-outcome model is compared through `evaluate_splits`, whose log score is
-  defined for it, and not through `compare_models`;
+  defined for it, and not through `compare_models` *(gap one; superseded — see
+  [Resolution of gap one](#resolution-of-gap-one))*;
 - a censored family's likelihood is read through `pointwise_log_prob`, never by scoring the
   density `predict()` returns. Every family with censoring must say so in its own docstring
   and report the share of rows affected as a `describe()` finding, as `PatchLeaving` does.
@@ -84,6 +86,59 @@ or an explicit observation-limit channel on `DensityPrediction`. The second is s
 the first is more honest; deciding between them wants a second censored family to look at,
 which is the same trigger [SDR-0061](0061-fit-patch-leaving-as-a-hazard-not-as-the-marginal-value-theorem.md)
 already names for its kernel boundary.
+
+## Resolution of gap one
+
+Built as recorded above, in the shape this record proposed rather than in one of the shapes
+it rejected. The declared metric set exists on both execution paths and consists of four
+pieces:
+
+**`compare_models(..., metrics=...)` and `nested_select_model(..., metrics=...)`.** An
+ordered, duplicate-free declaration of the rules the table carries, defaulting to
+`DEFAULT_COMPARISON_METRICS = (ScoreMetric.LOG_LOSS, ScoreMetric.BRIER)`. **The first rule
+ranks**: it is what `ProspectiveComparisonReport.winner`, every `PairedComparison` and the
+bootstrap interval are read on, and `ProspectiveComparisonReport.ranked_by` names it.
+`metrics=(ScoreMetric.LOG_LOSS,)` is the log-score-only table this record was written about.
+`ScoreMetric.JOINT_LOG_LOSS` is refused there rather than accepted as a synonym: this
+comparison's log column *is* the joint log density of every scored column, and carrying both
+names would put one quantity in a table twice under two headings.
+
+**A candidate declares what it supports.** `ModelCapabilities.score_metrics` is derived by
+`model_score_metrics` from the prediction contract a model already satisfies — a model that
+names a `density_outcome` and no `categories` has no discrete margin, so it declares the log
+score and not the Brier score — and can be overridden by a model that declares
+`supported_score_metrics` itself. No existing family had to be edited to gain the
+declaration. `refuse_undeclarable_candidate` raises `UnscoreableByBrier` naming the candidate
+and the rule **before any fold is fitted**; the scoring-time refusal in
+`_brier_scoreable_margin` remains as the backstop for a declaration more generous than its
+prediction.
+
+**The default table is unchanged.** `ProspectiveComparisonReport.to_dict` writes the same
+keys under the same names, and adds `declared_metrics` only when the declaration is not the
+default pair. The pinned fixture `tests/fixtures/mle_reports_before_posterior_wiring.json` —
+which predates all of this — still matches byte for byte, which is what establishes that a
+caller who declares nothing gets what they always got, refusal included.
+
+**A frozen protocol declares it too.** `ComparisonSpec.metrics` is the table and
+`ComparisonSpec.metric` remains the rule the verdict is read on, which must be one of them
+and which defaults to being the only one. Every declared rule earns a `ScoreSummary` in
+`CandidateRun.scores`, verdict rule first; a candidate that cannot support one is refused at
+declaration and the refusal is retained as its `declaration_failure`. `Ranking` gained
+`metric`, and every `Ranking.reason` — including the two that name no winner — says which
+rule was read, because a comparison that could not separate its candidates on the log score
+has not shown them indistinguishable on the Brier score. The member moved the schema to
+`behavio.study-protocol/4`; a version-3 or earlier payload is read as declaring `(metric,)`,
+serialized back without the member, and **keeps its recorded fingerprint**, exactly as the
+`CandidateSpec.inference` bump did.
+
+The acceptance evidence is that the three continuous-outcome families this record named are
+now rankable: `tests/test_scalar_timing.py`, `tests/test_patch_leaving.py` and
+`tests/test_dynamax_model.py` each rank two candidates of their own kind under a declared log
+score, in place of the tests that previously asserted the refusal and nothing else.
+
+Gap two is untouched. `PatchLeaving` still scores a censored row through
+`pointwise_log_prob` and still disagrees with `DensityPrediction.observed_log_density` there,
+for the reasons below, and deciding its shape still wants a second censored family.
 
 ## Consequences
 
@@ -126,8 +181,9 @@ is how a shared layer stops being shared.
 
 ## Revisit trigger
 
-- A second continuous-outcome family needs a prospective comparison table, which makes the
-  metric declaration a design with two users rather than one.
+- ~~A second continuous-outcome family needs a prospective comparison table, which makes the
+  metric declaration a design with two users rather than one.~~ **Fired**, with three users
+  rather than two: see [Resolution of gap one](#resolution-of-gap-one).
 - A censored response-time model is written, which is the same trigger
   [SDR-0061](0061-fit-patch-leaving-as-a-hazard-not-as-the-marginal-value-theorem.md) names
   and which would decide between the two shapes gap two could take.

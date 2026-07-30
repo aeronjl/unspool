@@ -29,9 +29,10 @@ drag in the estimator stack, can both reach them without a cycle.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any
+from typing import Any, Final
 
 import numpy as np
 from numpy.typing import NDArray
@@ -55,6 +56,43 @@ class ScoreMetric(StrEnum):
     LOG_LOSS = "log-loss"
     BRIER = "brier"
     JOINT_LOG_LOSS = "joint-log-loss"
+
+
+LOG_SCORE_METRICS: Final = (ScoreMetric.LOG_LOSS, ScoreMetric.JOINT_LOG_LOSS)
+"""The two spellings of the one log score, which every admissible prediction supports.
+
+``pointwise_log_prob`` is the joint log density of the whole scored observation, so both
+names describe the same number; a protocol calls it ``joint-log-loss`` when a candidate
+scores more than one observed column and ``log-loss`` when it scores one. Neither depends on
+the prediction carrying a probability, which is why a candidate that predicts an unlabelled
+density supports these and only these.
+"""
+
+PROBABILITY_SCORE_METRICS: Final = (*LOG_SCORE_METRICS, ScoreMetric.BRIER)
+"""Every rule a prediction with a discrete margin can carry.
+
+The Brier score is the member that separates the two sets: it is a squared distance to an
+indicator, so it needs a probability, and a prediction with no discrete margin has none.
+"""
+
+
+def validated_score_metrics(
+    metrics: Iterable[ScoreMetric | str], *, label: str
+) -> tuple[ScoreMetric, ...]:
+    """Return a declared metric set as an ordered, duplicate-free tuple.
+
+    Declaration order is preserved rather than sorted, because every caller that declares
+    more than one rule also declares which of them ranks: the first.
+    """
+
+    if isinstance(metrics, (str, ScoreMetric)):
+        raise TypeError(f"{label} must be a sequence of scoring rules, not one rule")
+    values = tuple(ScoreMetric(metric) for metric in metrics)
+    if not values:
+        raise ValueError(f"{label} must name at least one scoring rule")
+    if len(set(values)) != len(values):
+        raise ValueError(f"{label} must not name the same scoring rule twice")
+    return values
 
 
 class ComparisonMultiplicity(StrEnum):

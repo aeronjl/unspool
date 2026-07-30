@@ -44,7 +44,7 @@ reserving a number ahead of writing the record is not a way to avoid a collision
 | [SDR-0060](0060-bisect-time-by-the-ratio-rule.md) | Accepted | Bisect time by the ratio rule, declare it in the signature, and say why one anchor pair cannot test it |
 | [SDR-0061](0061-fit-patch-leaving-as-a-hazard-not-as-the-marginal-value-theorem.md) | Accepted | Fit patch leaving as a threshold-crossing hazard and read it against the marginal value theorem rather than fitting the theorem |
 | [SDR-0062](0062-implement-normative-belief-updating-clean-room.md) | Accepted | Implement normative belief updating clean-room, with every disputed HGF convention declared and validated against a closed form |
-| [SDR-0063](0063-defer-the-log-score-only-comparison-and-the-survival-carrying-prediction.md) | Accepted | Record the log-score-only comparison and the survival-carrying prediction as shared-layer gaps rather than patching either under a model wave |
+| [SDR-0063](0063-defer-the-log-score-only-comparison-and-the-survival-carrying-prediction.md) | Accepted | Record the log-score-only comparison and the survival-carrying prediction as shared-layer gaps rather than patching either under a model wave; the first is now resolved by a declared metric set, the second remains deferred |
 
 ## Record structure
 

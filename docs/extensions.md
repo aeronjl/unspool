@@ -268,8 +268,11 @@ Two metrics, two meanings. The **log score is joint** and is what a comparison r
 together. The **Brier score is a scoring rule for a probability, and a density is not one**,
 so `compare_models` scores the density's *discrete margin* — the integrated per-category
 mass, which is exactly what a choice-only competitor is scored on, and which says nothing
-about the latency half. A density with no categorical margin has no probability at all, and
-the comparison raises `UnscoreableByBrier` rather than reporting a number.
+about the latency half. A density with no categorical margin has no probability at all, so a
+model that predicts one declares `score_metrics` without the Brier score and a table that
+declares a Brier column refuses it by name — before any fold is fitted — rather than
+reporting a number. Such a model is compared under `metrics=(ScoreMetric.LOG_LOSS,)`; see
+[declaring which rules the table carries](comparison.md#declaring-which-rules-the-table-carries).
 
 **`check_behaviour_estimator(model, study)`** executes the nine-item list below. Its
 headline check is the one the contract could not previously make: see

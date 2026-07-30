@@ -283,12 +283,36 @@ psychometric curve and unlike a reinforcement-learning agent. Admissible is not 
 knot per trial is not a model of anything, and the roughness penalty is the only thing
 standing between the two.
 
-**`mix()` reaches bisection and not reproduction**, and the obstacle is a component rather
-than a combinator. A bisection report is a binary choice, so `UniformChoiceGuess` mixes with
-it. A reproduction's observation is a **bare duration**, and no shipped mixture component
-scores one: `UniformChoiceGuess` writes a binary choice and `UniformResponseGuess` writes a
-joint choice and latency, and `require_mixable` refuses both by comparing scored columns
-before any arithmetic happens. `mix()` itself is untouched and would work.
+**`mix()` reaches both paradigms, through two different components.** A bisection report is a
+binary choice, so `UniformChoiceGuess` mixes with it. A reproduction's observation is a
+**bare duration**, which is what `UniformDurationGuess` scores — the component the two
+continuous families needed, and the only thing that was ever missing: `mix()` itself is
+unchanged.
+
+```python
+from behavio.compose import UniformDurationGuess, mix
+
+contaminated = mix(
+    DurationReproduction(),
+    UniformDurationGuess(duration_bounds=(0.05, 8.0), outcome="reproduced_duration"),
+    weight_bounds=(0.0, 0.25),
+)
+contaminated.natural_names
+# ("clock_rate", "weber_fraction", "contaminant_rate")
+```
+
+`duration_bounds` is **declared, and is in the outcome column's own units**. A uniform over a
+duration does not exist until an interval is named; unlike `UniformResponseGuess`, which
+takes seconds because a drift-diffusion model declares a `ResponseTimeSpec`, this family
+hands back its column verbatim, so a study recorded in milliseconds needs bounds in
+milliseconds. The interval is in the composed model's signature, so a reported
+`contaminant_rate` cannot be read without it.
+
+The weight is the share of trials on which the subject did not time anything. It is
+identified by the *shape* of the reproduction distribution, so the design findings above
+carry over unchanged: a single target duration makes every row's predicted density identical,
+and a wider clock with less contamination then predicts exactly what a narrower one with more
+does. `describe()` reports that as `unidentified_mixture` alongside `narrow_target_range`.
 
 Neither family has a linear predictor — one puts a parameter in the *scale* of a density, the
 other divides a linear term by an estimated memory width — so neither takes the
@@ -300,13 +324,30 @@ leaving it to structural typing.
 `evaluate_splits` works for both. `compare_models` ranks a bisection model against any other
 choice model, because a bisection report is a binary outcome with a discrete margin.
 
-**It cannot rank two reproduction candidates against each other.** `compare_models` reports a
-Brier score beside the log score, a Brier score needs a discrete margin, and an unlabelled
-density has none, so it raises `UnscoreableByBrier` rather than inventing a number. The log
-score *is* defined, and `evaluate_splits` reports it; what is missing is a way to ask
-`compare_models` for that half alone. That gap is in the comparison layer rather than in this
-family and is recorded in
-[SDR-0063](decisions/0063-defer-the-log-score-only-comparison-and-the-survival-carrying-prediction.md).
+**Two reproduction candidates are ranked on a declared log score.** The default table carries
+a Brier column beside the log score, a Brier score needs a discrete margin, and an unlabelled
+density has none — so a reproduction candidate is refused that column by name, from its own
+declared `score_metrics`, before anything is fitted. Declaring the rule that *is* defined for
+it gives the table back:
+
+```python
+report = compare_models(
+    {
+        "scalar": DurationReproduction(),
+        "vierordt": DurationReproduction(fixed_central_tendency=None),
+    },
+    study,
+    splits,
+    outcome_column="reproduced_duration",
+    metrics=(ScoreMetric.LOG_LOSS,),
+)
+```
+
+The log score is the joint log density of the reproduction, so it may be **negative** where a
+log loss over probabilities cannot be. See
+[declaring which rules the table carries](comparison.md#declaring-which-rules-the-table-carries)
+and [SDR-0063](decisions/0063-defer-the-log-score-only-comparison-and-the-survival-carrying-prediction.md),
+which recorded this gap before it was closed.
 
 ## What a fitted Weber fraction does not establish
 

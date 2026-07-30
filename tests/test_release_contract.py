@@ -269,6 +269,13 @@ SHARED_EXECUTION_SURFACE = {
     "ComparisonFamily",
     "ComparisonMultiplicity",
     "bootstrap_interval",
+    # ``compare_models(metrics=...)`` cannot be written without naming the rules, and the
+    # declaration decides both what the table carries and which rule ranks it. The refusals
+    # it can raise -- ``UnscoreableByBrier``, ``UndeclaredMetric`` -- stay unpinned at
+    # ``behavio.compare``: their bases, ``ValueError`` and ``LookupError``, are what a caller
+    # catches, and ``DEFAULT_COMPARISON_METRICS`` names a default that applies without being
+    # named.
+    "ScoreMetric",
 }
 
 #: The bridge from continuously observed behaviour to trial-level ``Study`` columns. This is a

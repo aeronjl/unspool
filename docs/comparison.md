@@ -43,13 +43,60 @@ joint choice/response-time density. The binary `outcome_column` used for probabi
 Brier scores must be one of those scored columns. Both declarations are retained in the
 serialized report; see the [estimator contract](estimator-contract.md).
 
+## Declaring which rules the table carries
+
+`metrics` names the scoring rules the table carries, in order, and **the first one ranks**:
+it is the rule `winner`, every paired contrast and the bootstrap interval are read on. The
+default is `(ScoreMetric.LOG_LOSS, ScoreMetric.BRIER)`, which is the table this function has
+always produced.
+
+```python
+from behavio import ScoreMetric, compare_models
+
+report = compare_models(
+    {"scalar": reproduction, "vierordt": free_reproduction},
+    study,
+    splits,
+    outcome_column="reproduced_duration",
+    metrics=(ScoreMetric.LOG_LOSS,),
+)
+report.ranked_by  # ScoreMetric.LOG_LOSS
+report.metrics  # (ScoreMetric.LOG_LOSS,)
+```
+
+Why this is a declaration rather than a switch:
+
+- **A candidate that cannot support a declared rule is refused, by name, at declaration.**
+  Every estimator publishes `ModelCapabilities.score_metrics`, derived from the prediction
+  contract it satisfies: a model that predicts an unlabelled density over a continuous
+  outcome carries the log score and not the Brier score, because a Brier score is a squared
+  distance to an indicator and a residence time has no discrete margin. Declaring a Brier
+  column for such a candidate raises `UnscoreableByBrier` (from `behavio.compare`), naming
+  the candidate and the rule, **before any fold is fitted** — it is never dropped from the
+  table, because a comparison that silently dropped a column would be a different table
+  under the same name.
+- **The record says which rule decided.** The serialized winner key, the winner policy line
+  and the pairwise block are all spelled with the ranking rule, and a table that declares
+  anything other than the default also writes `declared_metrics`. A winner on the log score
+  and a winner on the Brier score are different claims.
+- **A rule the table never declared has no column.** Asking a result for one raises
+  `UndeclaredMetric` rather than answering `None`, which would make an undeclared column
+  indistinguishable from a missing value.
+
+The log-score-only table is what makes the continuous-outcome families —
+[reproduced durations](scalar-timing.md), [patch residence times](patch-leaving.md), a
+[wrapped switching autoregression](foreign-models.md) — rankable against candidates of their
+own kind. Their log loss is a log *density* and may be negative; that is a property of the
+observation, not a defect in the score.
+
 ## Aggregation and uncertainty
 
 For each candidate, the report retains:
 
 - every `FoldEvaluation`, including its full fitted result, pointwise scores, stable fold
   `identifier`, and normalized fit `audit`;
-- log loss and Brier score for every aggregation unit;
+- one column per declared rule — log loss and Brier score by default — for every
+  aggregation unit;
 - equal-unit and trial-pooled summaries;
 - a percentile bootstrap interval over aggregation units; and
 - paired unit-level log-loss differences for every unordered candidate pair.

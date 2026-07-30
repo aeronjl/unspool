@@ -207,11 +207,48 @@ per_animal = hierarchical(model, over="subject", parameters=("giving_up_rate_log
 drifting = smooth(model, over="session_order", knots=(0.0, 5.0), parameters=("giving_up_rate_log",))
 ```
 
-**`mix()` does not reach this family, and the obstacle is a component rather than a
-combinator.** A residence time is a bare duration, and no shipped mixture component scores
-one: `UniformChoiceGuess` writes a binary choice and `UniformResponseGuess` writes a joint
-choice and latency. `require_mixable` refuses both by comparing scored columns before any
-arithmetic happens.
+**`mix()` reaches this family through `UniformDurationGuess`**, the component that scores a
+bare duration. `mix()` itself is unchanged; a component that writes a residence time is all
+that was ever missing.
+
+```python
+from behavio.compose import UniformDurationGuess, mix
+
+contaminated = mix(
+    PatchLeaving(censoring_time_column="observation_limit"),
+    UniformDurationGuess(
+        duration_bounds=(0.0, 3.0),
+        outcome="residence_time",
+        censoring_time_column="observation_limit",
+    ),
+    weight_bounds=(0.0, 0.4),
+)
+contaminated.natural_names
+# ("giving_up_rate", "decision_noise", "contaminant_rate")
+```
+
+**The component declares the censoring column too, and it must be the model's.** A mixture
+averages what each process says about the observation that was actually made, and on a
+censored row that observation is "the visit outlasted \(c\)". So the component contributes
+the probability *its* duration exceeds the same \(c\) rather than its density there:
+
+\[
+S_{\text{mix}}(c) = (1-\omega)\,S_{\text{model}}(c) + \omega\,S_{\text{comp}}(c).
+\]
+
+Contributing the density instead is dimensionally wrong — a density is one over time, a
+survival probability is dimensionless — so every censored row would look like a row the
+contaminant could not have produced and the weight would be dragged towards the floor of its
+declared range. On a simulated study with three visits in five censored, a censoring-blind
+component recovers less than half the weight, while `giving_up_rate` moves by under ten per
+cent. `mix()` refuses a component and a model that read different limit columns rather than
+letting the two disagree.
+
+`duration_bounds` is in the residence-time column's own units and appears in the composed
+model's signature. The identifiability findings carry over with one shift worth knowing: a
+contaminant whose declared interval lies entirely beyond every observed residence time is
+**not** reported as `unreachable_mixture_component` here, and correctly so — a process that
+always outlasts the session is exactly what a censored row is consistent with.
 
 There is no linear predictor here either — the model divides a log intake rate by an
 estimated noise and reads the result through a survival function — so nothing in it is a
@@ -223,12 +260,26 @@ it to structural typing.
 `evaluate_splits` works and reports the log score of every row, censored rows included, under
 the model's own `pointwise_log_prob`.
 
-`compare_models` **cannot rank two patch-leaving candidates against each other**. It reports a
-Brier score beside the log score, a Brier score needs a discrete margin, and a residence time
-has none, so it raises `UnscoreableByBrier` rather than inventing a number. What is missing is
-a way to ask for the log-score half alone; the refusal is correct and the gap is in the
-comparison layer. See
-[SDR-0063](decisions/0063-defer-the-log-score-only-comparison-and-the-survival-carrying-prediction.md).
+`compare_models` **ranks two patch-leaving candidates on a declared log score**. Its default
+table carries a Brier score beside the log score, a Brier score needs a discrete margin, and a
+residence time has none — so a patch-leaving candidate is refused that column by name, before
+anything is fitted, rather than being given an invented number. Declaring the rule that is
+defined for it gives the table back:
+
+```python
+report = compare_models(
+    {"hyperbolic": PatchLeaving(), "exponential": PatchLeaving(gain=GainFunction.EXPONENTIAL)},
+    study,
+    splits,
+    outcome_column="residence_time",
+    metrics=(ScoreMetric.LOG_LOSS,),
+)
+```
+
+The scores are the model's own `pointwise_log_prob`, so censored rows enter as `log S(c)` and
+not as a density. See
+[declaring which rules the table carries](comparison.md#declaring-which-rules-the-table-carries)
+and [SDR-0063](decisions/0063-defer-the-log-score-only-comparison-and-the-survival-carrying-prediction.md).
 
 The constrained model is still reachable as a *comparison*: fix `giving_up_rate` at
 `marginal_value_rate` and score it against the free fit.

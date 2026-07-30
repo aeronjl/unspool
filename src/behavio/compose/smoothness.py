@@ -26,6 +26,7 @@ from behavio.contracts.compose import (
     validate_predictor_shape,
 )
 from behavio.contracts.estimator import (
+    DensityPrediction,
     FitResult,
     ModelDataError,
     ModelPrediction,
@@ -288,6 +289,47 @@ class SmoothModel(Describable):
         """The wrapped model's channels: smoothing a parameter cannot change what is seen."""
 
         return tuple(self.model.outcome_channels)
+
+    @property
+    def density_outcome(self) -> str:
+        """The continuous column a smoothed density prediction tabulates, when there is one.
+
+        Letting a coefficient follow a path does not change what kind of prediction the
+        model makes, so this is forwarded exactly as `categories` is, and absence is how
+        a smoothed logistic GLM says it names no density.
+
+        This is load-bearing beyond the protocol it satisfies: `model_score_metrics`
+        derives a candidate's scoring rules from `density_outcome` and `categories`, so a
+        wrapper that dropped it would claim a Brier column its own predictions cannot
+        produce, and `compare_models` would admit a candidate at declaration that then
+        failed at scoring time -- the failure the declaration exists to prevent.
+        """
+
+        declared = getattr(self.model, "density_outcome", None)
+        if declared is None:
+            raise AttributeError(
+                f"{type(self.model).__name__} predicts no continuous outcome, so smoothing "
+                "it tabulates no density either"
+            )
+        return str(declared)
+
+    def predict_density(
+        self,
+        study: Study,
+        fit: FitResult,
+        *,
+        mode: PredictionMode = PredictionMode.FILTERED,
+    ) -> DensityPrediction:
+        """Return the smoothed predictive density, which is what ``predict`` returns."""
+
+        declared = self.density_outcome
+        prediction = self.predict(study, fit, prediction_mode=mode)
+        if not isinstance(prediction, DensityPrediction) or prediction.outcome != declared:
+            raise TypeError(
+                f"{self.model.model_name} declares a density over {declared!r} but predicted "
+                f"a {type(prediction).__name__}"
+            )
+        return prediction
 
     @property
     def categories(self) -> tuple[Any, ...]:

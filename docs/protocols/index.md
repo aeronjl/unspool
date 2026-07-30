@@ -275,6 +275,37 @@ again. Protocols recorded under version 1 still load, keep their fingerprints, a
 as declaring Benjamini-Hochberg — see
 [serialization and schema versions](lifecycle.md#serialization-and-schema-versions).
 
+### The table's columns are declared too
+
+`metric` is the rule the **verdict** is read on. `metrics` is the set of rules the **table
+carries**, it must contain `metric`, and it defaults to `metric` alone — which is exactly the
+one score column every runner produced before the member existed:
+
+```python
+ComparisonSpec(
+    metric=ScoreMetric.LOG_LOSS,
+    metrics=(ScoreMetric.LOG_LOSS, ScoreMetric.BRIER),
+    ...
+)
+```
+
+Every declared rule earns a `ScoreSummary` in `CandidateRun.scores`, verdict rule first, and
+`CandidateRun.score` remains that first one. A candidate that cannot support a declared rule
+never enters the fold loop: it is refused at declaration, and the refusal is retained as its
+`declaration_failure` naming the candidate and the rule, exactly as a candidate that does not
+satisfy the estimator contract is. A protocol whose candidates predict an unlabelled
+continuous outcome therefore declares the log score and nothing else. See
+[declaring which rules the table carries](../comparison.md#declaring-which-rules-the-table-carries).
+
+`Ranking` records the rule as well as the verdict — `ranking.metric`, and `ranking.reason`
+names it in prose, including when no winner was named. A comparison that could not separate
+its candidates on the log score has not shown they are indistinguishable on the Brier score,
+and the record must not read as though it had.
+
+Adding `metrics` moved the schema to `behavio.study-protocol/4`. A protocol recorded under
+version 3 or earlier is read as declaring `(metric,)`, is serialized back without the member,
+and keeps its recorded fingerprint.
+
 ## Start from a complete study
 
 The complete Cell declaration lives in

@@ -13,18 +13,35 @@ optimizer fit already is. ``ProspectiveModelResult.to_dict`` gains a ``posterior
 entry only when a candidate actually was sampled, so a maximum-likelihood report is
 byte-identical to what it was before sampled candidates existed.
 
+The declared metric set
+-----------------------
+``metrics`` names the scoring rules the table carries, in declared order, and **the first
+one ranks**: it is the rule :attr:`ProspectiveComparisonReport.winner` and every paired
+contrast are read on. The default, :data:`DEFAULT_COMPARISON_METRICS`, is log score then
+Brier score, which is the table this function has always produced.
+
+A candidate that cannot support a declared rule is refused **at declaration**, before a
+single fold is fitted, by a message naming the candidate and the rule. It is not dropped
+from the table and it is not discovered after the fitting: a comparison that silently
+dropped a column would be a different table under the same name. What a candidate supports
+is :attr:`~behavio.contracts.ModelCapabilities.score_metrics`, which every estimator
+declares through the prediction contract it already satisfies.
+
 What each metric means for a candidate that predicts a density
 --------------------------------------------------------------
 A candidate whose ``predict`` returns a
-:class:`~behavio.contracts.DensityPrediction` -- a drift diffusion, a race, a continuous
-confidence report -- is scored on the same two metrics as every other candidate, but only
-one of them is defined the same way.
+:class:`~behavio.contracts.DensityPrediction` -- a drift diffusion, a race, a reproduced
+duration, a patch residence time -- is scored on the rules that are defined for it, and
+only one of the two default rules always is.
 
-The **log score is unchanged and is the metric that ranks candidates.**
+The **log score is unchanged and is the metric that ranks candidates by default.**
 ``pointwise_log_prob`` returns the joint log density of the whole observation, so a
 response-time model's log loss and a choice-only model's log loss are both proper scores of
-whatever each one claims to predict. That is the number
-:attr:`ProspectiveComparisonReport.winner` and every paired contrast read.
+whatever each one claims to predict. It is defined for every prediction this package
+admits, which is why ``metrics=(ScoreMetric.LOG_LOSS,)`` is the declaration that makes two
+unlabelled-density candidates rankable against each other. A log loss so declared may be
+**negative**: it is a log density rather than a log probability, and a sharply peaked
+duration density exceeds one.
 
 The **Brier score is a scoring rule for a probability, and a density is not one.** For a
 *defective* density -- one split across named categories, which is what a two-boundary
@@ -33,8 +50,8 @@ those are scored exactly as a categorical candidate's are. That is deliberate: i
 only reading under which a diffusion and a logistic regression earn comparable Brier scores
 on the same rows. It also means the Brier column reads the **discrete margin only** and
 says nothing about the latency half of the prediction. For a density with no categorical
-margin there is no probability at all, and the comparison raises
-:class:`UnscoreableByBrier` rather than reporting a number; see
+margin there is no probability at all, and declaring a Brier column for such a candidate
+raises :class:`UnscoreableByBrier` rather than reporting a number; see
 :func:`_brier_scoreable_margin` for the full argument.
 
 Simultaneous inference
@@ -69,7 +86,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Final
 
 import numpy as np
 from numpy.typing import NDArray
@@ -82,7 +99,9 @@ from behavio._internal.scoring import (
     ScoreMetric,
     adjust_probabilities,
     excess_probability,
+    validated_score_metrics,
 )
+from behavio.contracts.estimator import ModelCapabilities
 from behavio.contracts.posterior import (
     AnyBehaviourEstimator,
     any_model_capabilities,
@@ -110,6 +129,126 @@ from behavio.models.base import (
     PredictionMode,
 )
 from behavio.trials import Study
+
+DEFAULT_COMPARISON_METRICS: Final = (ScoreMetric.LOG_LOSS, ScoreMetric.BRIER)
+"""The rules a comparison table carries when the caller declares nothing.
+
+This is the table :func:`compare_models` has always produced, declared rather than assumed:
+the log score, which ranks, and the Brier score beside it as a deliberately narrower
+reading of the discrete margin. A caller who names nothing gets exactly this, including its
+refusal to invent a Brier column for a prediction that carries no probability.
+"""
+
+
+@dataclass(frozen=True, slots=True)
+class _MetricVocabulary:
+    """The serialized names and the prose one scoring rule is reported under."""
+
+    unit_key: str
+    balanced_key: str
+    pooled_key: str
+    interval_key: str
+    phrase: str
+    bounded: bool
+
+
+#: How each supported rule appears in a record. The log-score entries reproduce the key
+#: names the report carried before the metric set was declarable, which is why a default
+#: comparison serializes byte for byte as it did.
+_METRIC_VOCABULARY: Final = {
+    ScoreMetric.LOG_LOSS: _MetricVocabulary(
+        unit_key="log_loss",
+        balanced_key="unit_balanced_log_loss",
+        pooled_key="pooled_log_loss",
+        interval_key="unit_balanced_log_loss_interval",
+        phrase="log loss",
+        bounded=False,
+    ),
+    ScoreMetric.BRIER: _MetricVocabulary(
+        unit_key="brier_score",
+        balanced_key="unit_balanced_brier_score",
+        pooled_key="pooled_brier_score",
+        interval_key="unit_balanced_brier_interval",
+        phrase="brier score",
+        bounded=True,
+    ),
+}
+
+
+class UndeclaredMetric(LookupError):
+    """Raised when a comparison record is asked for a rule its table never carried.
+
+    A table that did not declare a rule holds no column for it, and answering with ``None``
+    would make an absent column indistinguishable from one whose value happened to be
+    missing. The declaration is on the record as ``metrics``.
+    """
+
+
+def _declared(record: Any, metric: ScoreMetric) -> ScoreMetric:
+    """Return one rule after checking the record's table actually carries its column."""
+
+    requested = ScoreMetric(metric)
+    if requested not in record.unit_scores:
+        raise UndeclaredMetric(
+            f"this comparison declares "
+            f"{[declared.value for declared in record.metrics]!r} and carries no "
+            f"{requested.value!r} column"
+        )
+    return requested
+
+
+def declared_comparison_metrics(
+    metrics: Iterable[ScoreMetric | str],
+) -> tuple[ScoreMetric, ...]:
+    """Validate a declared metric set for a prospective comparison table.
+
+    The first rule ranks. :attr:`~behavio._internal.scoring.ScoreMetric.JOINT_LOG_LOSS` is
+    refused rather than accepted as a synonym: this comparison's log column is *already* the
+    joint log density of every scored column, so carrying both names would put one quantity
+    in a table twice under two headings.
+    """
+
+    declared = validated_score_metrics(metrics, label="comparison metrics")
+    unsupported = [metric for metric in declared if metric not in _METRIC_VOCABULARY]
+    if unsupported:
+        raise ValueError(
+            f"a prospective comparison table carries {sorted(_METRIC_VOCABULARY)!r}; "
+            f"{[metric.value for metric in unsupported]!r} cannot be one of its columns. "
+            "The log column already scores the complete observation every candidate "
+            "declares, so it is declared as 'log-loss' however many columns that is"
+        )
+    return declared
+
+
+def refuse_undeclarable_candidate(
+    name: str,
+    capabilities: ModelCapabilities,
+    metrics: tuple[ScoreMetric, ...],
+) -> None:
+    """Refuse a candidate that cannot support a declared rule, before anything is fitted.
+
+    The refusal names the candidate and the rule, because both are needed to act on it: one
+    says which candidate to drop or which declaration to narrow, the other says which
+    column made it impossible.
+
+    The Brier score is the only rule a candidate can fail to support -- the log score is
+    defined for every prediction the contract admits, and
+    :class:`~behavio.contracts.ModelCapabilities` refuses a capability record that denies it
+    -- so the refusal states the argument for that rule rather than a generic one.
+    """
+
+    missing = tuple(metric for metric in metrics if metric not in capabilities.score_metrics)
+    if not missing:
+        return
+    raise UnscoreableByBrier(
+        f"candidate {name!r} declares that its prediction over "
+        f"{list(capabilities.scored_columns)!r} carries no categorical margin, so it cannot "
+        f"carry the declared {[metric.value for metric in missing]!r} column: a Brier score "
+        "is a scoring rule for a probability, not for a density, and there is no number to "
+        "report. Declare metrics=(ScoreMetric.LOG_LOSS,) to compare on the log score alone, "
+        "which is the joint log density of the observation and is defined for this "
+        "prediction"
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -193,17 +332,21 @@ def bootstrap_interval(
 
 @dataclass(frozen=True, slots=True)
 class ProspectiveModelResult:
-    """Fold fits and scores for one candidate under a shared comparison design."""
+    """Fold fits and declared scores for one candidate under a shared comparison design.
+
+    ``unit_scores`` and ``pooled_scores`` carry one column per declared rule, in the order
+    the comparison declared them, and the first of those rules is the one this candidate is
+    ranked on. A rule the table never declared has no column at all, and asking for one
+    raises :class:`UndeclaredMetric` rather than answering with a number-shaped hole.
+    """
 
     name: str
     model_signature: str
     evaluations: tuple[FoldEvaluation, ...]
     aggregation_units: tuple[Any, ...]
-    unit_log_losses: NDArray[np.float64]
-    unit_brier_scores: NDArray[np.float64]
-    pooled_log_loss: float
-    pooled_brier_score: float
-    unit_balanced_log_loss_interval: BootstrapInterval
+    unit_scores: Mapping[ScoreMetric, NDArray[np.float64]]
+    pooled_scores: Mapping[ScoreMetric, float]
+    ranking_interval: BootstrapInterval
 
     def __post_init__(self) -> None:
         if not isinstance(self.name, str) or not self.name:
@@ -212,31 +355,69 @@ class ProspectiveModelResult:
             raise ValueError("model signature must be a non-empty string")
         evaluations = tuple(self.evaluations)
         units = _validated_identifiers(self.aggregation_units, "aggregation_units")
-        losses = protected_array(self.unit_log_losses, dtype=np.float64)
-        brier = protected_array(self.unit_brier_scores, dtype=np.float64)
         if not evaluations:
             raise ValueError("model results must contain at least one fold evaluation")
-        if losses.shape != (len(units),) or brier.shape != losses.shape:
-            raise ValueError("unit scores must contain one value per aggregation unit")
-        if not np.all(np.isfinite(losses)) or not np.all(np.isfinite(brier)):
-            raise ValueError("unit scores must be finite")
-        if np.any(losses < 0) or np.any((brier < 0) | (brier > 1)):
-            raise ValueError("unit log losses and Brier scores are outside their valid ranges")
-        if not np.isfinite(self.pooled_log_loss) or self.pooled_log_loss < 0:
-            raise ValueError("pooled_log_loss must be finite and non-negative")
-        if not np.isfinite(self.pooled_brier_score) or not 0 <= self.pooled_brier_score <= 1:
-            raise ValueError("pooled_brier_score must lie between zero and one")
+        metrics = declared_comparison_metrics(self.unit_scores)
+        if tuple(self.pooled_scores) != metrics:
+            raise ValueError("pooled scores must cover the declared metrics in declared order")
+        unit_scores = {
+            metric: protected_array(self.unit_scores[metric], dtype=np.float64)
+            for metric in metrics
+        }
+        pooled_scores = {metric: float(self.pooled_scores[metric]) for metric in metrics}
+        for metric in metrics:
+            values = unit_scores[metric]
+            pooled = pooled_scores[metric]
+            if values.shape != (len(units),):
+                raise ValueError("unit scores must contain one value per aggregation unit")
+            if not np.all(np.isfinite(values)) or not np.isfinite(pooled):
+                raise ValueError("unit scores must be finite")
+            if _METRIC_VOCABULARY[metric].bounded and (
+                np.any((values < 0) | (values > 1)) or not 0 <= pooled <= 1
+            ):
+                raise ValueError(f"{metric.value} scores must lie between zero and one")
         if not np.isclose(
-            self.unit_balanced_log_loss_interval.estimate,
-            float(np.mean(losses)),
+            self.ranking_interval.estimate,
+            float(np.mean(unit_scores[metrics[0]])),
             rtol=1e-12,
             atol=1e-15,
         ):
-            raise ValueError("log-loss interval estimate must equal the unit-balanced mean")
+            raise ValueError("ranking interval estimate must equal the unit-balanced mean")
         object.__setattr__(self, "evaluations", evaluations)
         object.__setattr__(self, "aggregation_units", units)
-        object.__setattr__(self, "unit_log_losses", losses)
-        object.__setattr__(self, "unit_brier_scores", brier)
+        # A plain dict rather than a mapping proxy: this record crosses a process
+        # boundary whenever a nested selection runs its outer folds in parallel, and a
+        # mapping proxy cannot be pickled. The columns themselves are read-only arrays and
+        # the record is frozen, so the copy taken here is what the immutability rests on.
+        object.__setattr__(self, "unit_scores", unit_scores)
+        object.__setattr__(self, "pooled_scores", pooled_scores)
+
+    @property
+    def metrics(self) -> tuple[ScoreMetric, ...]:
+        """The declared scoring rules this candidate's columns carry, in declared order."""
+
+        return tuple(self.unit_scores)
+
+    @property
+    def ranked_by(self) -> ScoreMetric:
+        """The declared rule this candidate is ranked on."""
+
+        return self.metrics[0]
+
+    def unit_score(self, metric: ScoreMetric) -> NDArray[np.float64]:
+        """Return one declared column of per-aggregation-unit scores."""
+
+        return self.unit_scores[_declared(self, metric)]
+
+    def unit_balanced_score(self, metric: ScoreMetric) -> float:
+        """Return one declared column's mean after weighting every unit equally."""
+
+        return float(np.mean(self.unit_score(metric)))
+
+    def pooled_score(self, metric: ScoreMetric) -> float:
+        """Return one declared column's trial-pooled mean."""
+
+        return self.pooled_scores[_declared(self, metric)]
 
     @property
     def audits(self) -> tuple[FitAudit, ...]:
@@ -245,16 +426,60 @@ class ProspectiveModelResult:
         return tuple(evaluation.fit_audit for evaluation in self.evaluations)
 
     @property
+    def unit_log_losses(self) -> NDArray[np.float64]:
+        """Per-unit log loss, when the table declared the log score."""
+
+        return self.unit_score(ScoreMetric.LOG_LOSS)
+
+    @property
+    def unit_brier_scores(self) -> NDArray[np.float64]:
+        """Per-unit Brier score, when the table declared it."""
+
+        return self.unit_score(ScoreMetric.BRIER)
+
+    @property
+    def pooled_log_loss(self) -> float:
+        """Trial-pooled log loss, when the table declared the log score."""
+
+        return self.pooled_score(ScoreMetric.LOG_LOSS)
+
+    @property
+    def pooled_brier_score(self) -> float:
+        """Trial-pooled Brier score, when the table declared it."""
+
+        return self.pooled_score(ScoreMetric.BRIER)
+
+    @property
     def unit_balanced_log_loss(self) -> float:
         """Mean log loss after weighting every aggregation unit equally."""
 
-        return float(np.mean(self.unit_log_losses))
+        return self.unit_balanced_score(ScoreMetric.LOG_LOSS)
 
     @property
     def unit_balanced_brier_score(self) -> float:
         """Mean Brier score after weighting every aggregation unit equally."""
 
-        return float(np.mean(self.unit_brier_scores))
+        return self.unit_balanced_score(ScoreMetric.BRIER)
+
+    @property
+    def unit_balanced_log_loss_interval(self) -> BootstrapInterval:
+        """The ranking interval, when the candidate was ranked on the log score."""
+
+        return self._ranking_interval_for(ScoreMetric.LOG_LOSS)
+
+    @property
+    def unit_balanced_brier_interval(self) -> BootstrapInterval:
+        """The ranking interval, when the candidate was ranked on the Brier score."""
+
+        return self._ranking_interval_for(ScoreMetric.BRIER)
+
+    def _ranking_interval_for(self, metric: ScoreMetric) -> BootstrapInterval:
+        if self.ranked_by is not metric:
+            raise UndeclaredMetric(
+                f"this comparison ranks on {self.ranked_by.value!r} and bootstraps that "
+                f"column only; it holds no {metric.value!r} interval"
+            )
+        return self.ranking_interval
 
     @property
     def audit_status(self) -> FitAuditStatus:
@@ -284,7 +509,12 @@ class ProspectiveModelResult:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        """Return scores and audits without expanding fitted covariance arrays.
+        """Return declared scores and audits without expanding fitted covariance arrays.
+
+        Every declared rule contributes its own keys, under the names that rule has always
+        been recorded under, so a table declaring the default pair serializes exactly as it
+        did before the declaration existed and one declaring the log score alone simply has
+        no Brier keys.
 
         ``posterior_folds`` appears only when at least one fold was projected from
         posterior draws; an optimizer-only candidate keeps its original record exactly.
@@ -300,21 +530,24 @@ class ProspectiveModelResult:
             "unit_scores": [
                 {
                     "unit": _json_value(unit),
-                    "log_loss": float(log_loss),
-                    "brier_score": float(brier),
+                    **{
+                        _METRIC_VOCABULARY[metric].unit_key: float(
+                            self.unit_scores[metric][position]
+                        )
+                        for metric in self.metrics
+                    },
                 }
-                for unit, log_loss, brier in zip(
-                    self.aggregation_units,
-                    self.unit_log_losses,
-                    self.unit_brier_scores,
-                    strict=True,
-                )
+                for position, unit in enumerate(self.aggregation_units)
             ],
-            "unit_balanced_log_loss": self.unit_balanced_log_loss,
-            "unit_balanced_brier_score": self.unit_balanced_brier_score,
-            "pooled_log_loss": self.pooled_log_loss,
-            "pooled_brier_score": self.pooled_brier_score,
-            "unit_balanced_log_loss_interval": self.unit_balanced_log_loss_interval.to_dict(),
+            **{
+                _METRIC_VOCABULARY[metric].balanced_key: self.unit_balanced_score(metric)
+                for metric in self.metrics
+            },
+            **{
+                _METRIC_VOCABULARY[metric].pooled_key: self.pooled_scores[metric]
+                for metric in self.metrics
+            },
+            _METRIC_VOCABULARY[self.ranked_by].interval_key: self.ranking_interval.to_dict(),
             "fit_audits": [audit.to_dict() for audit in self.audits],
         }
         posterior_folds = self.posterior_folds
@@ -506,7 +739,13 @@ def paired_comparisons(
 
 @dataclass(frozen=True, slots=True)
 class ProspectiveComparisonReport:
-    """A matched, cluster-balanced comparison over common prospective folds."""
+    """A matched, cluster-balanced comparison over common prospective folds.
+
+    ``metrics`` is the declared metric set every candidate was scored under. Its first
+    member is the rule :attr:`winner` and every paired contrast are read on, and the record
+    says which that was: a winner chosen on the log score and a winner chosen on the Brier
+    score are different claims.
+    """
 
     aggregation_column: str
     outcome_column: str
@@ -518,6 +757,7 @@ class ProspectiveComparisonReport:
     bootstrap_seed: int
     confidence_level: float
     family: ComparisonFamily
+    metrics: tuple[ScoreMetric, ...] = DEFAULT_COMPARISON_METRICS
 
     def __post_init__(self) -> None:
         if not self.aggregation_column or not self.outcome_column:
@@ -552,6 +792,7 @@ class ProspectiveComparisonReport:
         }
         if observed_pair_names != expected_pair_names:
             raise ValueError("pairwise comparison names must follow declared model order")
+        metrics = declared_comparison_metrics(self.metrics)
         reference_units = results[0].aggregation_units
         if any(result.aggregation_units != reference_units for result in results[1:]):
             raise ValueError("all candidates must be scored over identical aggregation units")
@@ -561,14 +802,17 @@ class ProspectiveComparisonReport:
                 for evaluation, split in zip(result.evaluations, splits, strict=True)
             ):
                 raise ValueError("every candidate must retain the report's exact folds")
-            if result.unit_balanced_log_loss_interval.confidence_level != self.confidence_level:
+            if result.metrics != metrics:
+                raise ValueError("every candidate must carry the report's declared metrics")
+            if result.ranking_interval.confidence_level != self.confidence_level:
                 raise ValueError("model interval confidence levels must match the report")
         results_by_name = {result.name: result for result in results}
         for comparison in comparisons:
-            expected_difference = (
-                results_by_name[comparison.left_model].unit_balanced_log_loss
-                - results_by_name[comparison.right_model].unit_balanced_log_loss
-            )
+            if comparison.metric is not metrics[0]:
+                raise ValueError("pairwise contrasts must be read on the ranking metric")
+            expected_difference = results_by_name[comparison.left_model].unit_balanced_score(
+                metrics[0]
+            ) - results_by_name[comparison.right_model].unit_balanced_score(metrics[0])
             if not np.isclose(
                 comparison.left_minus_right.estimate,
                 expected_difference,
@@ -586,6 +830,13 @@ class ProspectiveComparisonReport:
         object.__setattr__(self, "scored_columns", scored_columns)
         object.__setattr__(self, "model_results", results)
         object.__setattr__(self, "pairwise_comparisons", comparisons)
+        object.__setattr__(self, "metrics", metrics)
+
+    @property
+    def ranked_by(self) -> ScoreMetric:
+        """The declared rule the winner and every paired contrast were read on."""
+
+        return self.metrics[0]
 
     @property
     def model_order(self) -> tuple[str, ...]:
@@ -605,7 +856,12 @@ class ProspectiveComparisonReport:
 
     @property
     def winner(self) -> str | None:
-        """Lowest-loss audit-eligible candidate, or ``None`` when every candidate fails."""
+        """Best audit-eligible candidate on the ranking rule, or ``None`` when all fail.
+
+        *Which* rule is :attr:`ranked_by`, and the serialized record names it in both the
+        winner key and the winner policy. Every rule this table can carry is a loss, so the
+        best candidate is the lowest one under any of them.
+        """
 
         eligible = tuple(
             result
@@ -616,7 +872,7 @@ class ProspectiveComparisonReport:
             return None
         return min(
             eligible,
-            key=lambda result: result.unit_balanced_log_loss,
+            key=lambda result: result.unit_balanced_score(self.ranked_by),
         ).name
 
     def result_for(self, name: str) -> ProspectiveModelResult:
@@ -642,9 +898,17 @@ class ProspectiveComparisonReport:
         raise KeyError(f"no stored comparison from {left!r} to {right!r}")
 
     def to_dict(self) -> dict[str, Any]:
-        """Return a compact JSON-safe scientific record."""
+        """Return a compact JSON-safe scientific record.
 
-        return {
+        The ranking rule names itself: the winner key, the winner policy and the pairwise
+        block are all spelled with the rule they were read on. ``declared_metrics`` appears
+        only when the table carries something other than
+        :data:`DEFAULT_COMPARISON_METRICS`, so a default comparison serializes exactly as it
+        did before the declaration existed and a narrowed one says so in as many words.
+        """
+
+        ranked = _METRIC_VOCABULARY[self.ranked_by]
+        payload: dict[str, Any] = {
             "aggregation_column": self.aggregation_column,
             "outcome_column": self.outcome_column,
             "scored_columns": list(self.scored_columns),
@@ -657,16 +921,19 @@ class ProspectiveComparisonReport:
             },
             "model_order": list(self.model_order),
             "eligible_model_order": list(self.eligible_model_order),
-            "winner_policy": "lowest unit-balanced log loss among non-failed audits",
-            "winner_by_unit_balanced_log_loss": self.winner,
+            "winner_policy": f"lowest unit-balanced {ranked.phrase} among non-failed audits",
+            f"winner_by_{ranked.balanced_key}": self.winner,
             "simultaneous_family": self.family.to_dict(),
             "folds": [_split_provenance(split) for split in self.splits],
             "models": {result.name: result.to_dict() for result in self.model_results},
-            "pairwise_log_loss_differences": {
+            f"pairwise_{ranked.unit_key}_differences": {
                 f"{comparison.left_model}_minus_{comparison.right_model}": (comparison.to_dict())
                 for comparison in self.pairwise_comparisons
             },
         }
+        if self.metrics != DEFAULT_COMPARISON_METRICS:
+            payload["declared_metrics"] = [metric.value for metric in self.metrics]
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -714,11 +981,9 @@ class NestedProspectiveSelectionReport:
     candidate_names: tuple[str, ...]
     folds: tuple[NestedSelectionFold, ...]
     aggregation_units: tuple[Any, ...]
-    unit_log_losses: NDArray[np.float64]
-    unit_brier_scores: NDArray[np.float64]
-    pooled_log_loss: float
-    pooled_brier_score: float
-    unit_balanced_log_loss_interval: BootstrapInterval
+    unit_scores: Mapping[ScoreMetric, NDArray[np.float64]]
+    pooled_scores: Mapping[ScoreMetric, float]
+    ranking_interval: BootstrapInterval
     bootstrap_resamples: int
     bootstrap_seed: int
     confidence_level: float
@@ -732,40 +997,49 @@ class NestedProspectiveSelectionReport:
             raise ValueError("outcome_column must be included in scored_columns")
         folds = tuple(self.folds)
         units = _validated_identifiers(self.aggregation_units, "aggregation_units")
-        losses = protected_array(self.unit_log_losses, dtype=np.float64)
-        brier = protected_array(self.unit_brier_scores, dtype=np.float64)
         if not candidates or len(set(candidates)) != len(candidates):
             raise ValueError("candidate_names must be non-empty and unique")
         if not folds:
             raise ValueError("nested selection requires at least one outer fold")
-        if losses.shape != (len(units),) or brier.shape != losses.shape:
-            raise ValueError("nested unit scores must align with aggregation units")
-        if not np.all(np.isfinite(losses)) or not np.all(np.isfinite(brier)):
-            raise ValueError("nested unit scores must be finite")
-        if np.any(losses < 0) or np.any((brier < 0) | (brier > 1)):
-            raise ValueError("nested unit scores are outside their valid ranges")
-        if not np.isfinite(self.pooled_log_loss) or self.pooled_log_loss < 0:
-            raise ValueError("pooled_log_loss must be finite and non-negative")
-        if not np.isfinite(self.pooled_brier_score) or not 0 <= self.pooled_brier_score <= 1:
-            raise ValueError("pooled_brier_score must lie between zero and one")
+        metrics = declared_comparison_metrics(self.unit_scores)
+        if tuple(self.pooled_scores) != metrics:
+            raise ValueError("pooled scores must cover the declared metrics in declared order")
+        unit_scores = {
+            metric: protected_array(self.unit_scores[metric], dtype=np.float64)
+            for metric in metrics
+        }
+        pooled_scores = {metric: float(self.pooled_scores[metric]) for metric in metrics}
+        for metric in metrics:
+            values = unit_scores[metric]
+            pooled = pooled_scores[metric]
+            if values.shape != (len(units),):
+                raise ValueError("nested unit scores must align with aggregation units")
+            if not np.all(np.isfinite(values)) or not np.isfinite(pooled):
+                raise ValueError("nested unit scores must be finite")
+            if _METRIC_VOCABULARY[metric].bounded and (
+                np.any((values < 0) | (values > 1)) or not 0 <= pooled <= 1
+            ):
+                raise ValueError(f"nested {metric.value} scores must lie between zero and one")
         _require_positive_integer(self.bootstrap_resamples, "bootstrap_resamples")
         _require_nonnegative_integer(self.bootstrap_seed, "bootstrap_seed")
         if not 0 < self.confidence_level < 1:
             raise ValueError("confidence_level must lie strictly between zero and one")
         if not np.isclose(
-            self.unit_balanced_log_loss_interval.estimate,
-            float(np.mean(losses)),
+            self.ranking_interval.estimate,
+            float(np.mean(unit_scores[metrics[0]])),
             rtol=1e-12,
             atol=1e-15,
         ):
-            raise ValueError("log-loss interval estimate must equal the unit-balanced mean")
-        if self.unit_balanced_log_loss_interval.confidence_level != self.confidence_level:
+            raise ValueError("ranking interval estimate must equal the unit-balanced mean")
+        if self.ranking_interval.confidence_level != self.confidence_level:
             raise ValueError("interval confidence level must match the nested report")
         for fold in folds:
             if fold.selected_model not in candidates:
                 raise ValueError("selected models must belong to candidate_names")
             if fold.inner_report.model_order != candidates:
                 raise ValueError("every inner report must preserve candidate_names order")
+            if fold.inner_report.metrics != metrics:
+                raise ValueError("every inner report must declare the nested report's metrics")
             if (
                 fold.inner_report.aggregation_column != self.aggregation_column
                 or fold.inner_report.outcome_column != self.outcome_column
@@ -776,16 +1050,81 @@ class NestedProspectiveSelectionReport:
         object.__setattr__(self, "scored_columns", scored_columns)
         object.__setattr__(self, "folds", folds)
         object.__setattr__(self, "aggregation_units", units)
-        object.__setattr__(self, "unit_log_losses", losses)
-        object.__setattr__(self, "unit_brier_scores", brier)
+        # Plain dicts for the same reason as ProspectiveModelResult: the columns are
+        # read-only arrays and the record is frozen, so the copy taken here is what the
+        # immutability rests on, and nothing here has to survive pickling as a proxy.
+        object.__setattr__(self, "unit_scores", unit_scores)
+        object.__setattr__(self, "pooled_scores", pooled_scores)
+
+    @property
+    def metrics(self) -> tuple[ScoreMetric, ...]:
+        """The declared scoring rules this outer table carries, in declared order."""
+
+        return tuple(self.unit_scores)
+
+    @property
+    def ranked_by(self) -> ScoreMetric:
+        """The declared rule every inner selection was made on."""
+
+        return self.metrics[0]
+
+    def unit_score(self, metric: ScoreMetric) -> NDArray[np.float64]:
+        """Return one declared column of per-aggregation-unit outer scores."""
+
+        return self.unit_scores[_declared(self, metric)]
+
+    def unit_balanced_score(self, metric: ScoreMetric) -> float:
+        """Return one declared column's equal-unit outer mean."""
+
+        return float(np.mean(self.unit_score(metric)))
+
+    def pooled_score(self, metric: ScoreMetric) -> float:
+        """Return one declared column's trial-pooled outer mean."""
+
+        return self.pooled_scores[_declared(self, metric)]
+
+    @property
+    def unit_log_losses(self) -> NDArray[np.float64]:
+        """Per-unit outer log loss, when the table declared the log score."""
+
+        return self.unit_score(ScoreMetric.LOG_LOSS)
+
+    @property
+    def unit_brier_scores(self) -> NDArray[np.float64]:
+        """Per-unit outer Brier score, when the table declared it."""
+
+        return self.unit_score(ScoreMetric.BRIER)
+
+    @property
+    def pooled_log_loss(self) -> float:
+        """Trial-pooled outer log loss, when the table declared the log score."""
+
+        return self.pooled_score(ScoreMetric.LOG_LOSS)
+
+    @property
+    def pooled_brier_score(self) -> float:
+        """Trial-pooled outer Brier score, when the table declared it."""
+
+        return self.pooled_score(ScoreMetric.BRIER)
 
     @property
     def unit_balanced_log_loss(self) -> float:
-        return float(np.mean(self.unit_log_losses))
+        return self.unit_balanced_score(ScoreMetric.LOG_LOSS)
 
     @property
     def unit_balanced_brier_score(self) -> float:
-        return float(np.mean(self.unit_brier_scores))
+        return self.unit_balanced_score(ScoreMetric.BRIER)
+
+    @property
+    def unit_balanced_log_loss_interval(self) -> BootstrapInterval:
+        """The ranking interval, when selection was made on the log score."""
+
+        if self.ranked_by is not ScoreMetric.LOG_LOSS:
+            raise UndeclaredMetric(
+                f"this nested selection ranks on {self.ranked_by.value!r} and bootstraps "
+                "that column only; it holds no 'log-loss' interval"
+            )
+        return self.ranking_interval
 
     @property
     def selection_counts(self) -> Mapping[str, int]:
@@ -827,21 +1166,24 @@ class NestedProspectiveSelectionReport:
             "unit_scores": [
                 {
                     "unit": _json_value(unit),
-                    "log_loss": float(log_loss),
-                    "brier_score": float(brier),
+                    **{
+                        _METRIC_VOCABULARY[metric].unit_key: float(
+                            self.unit_scores[metric][position]
+                        )
+                        for metric in self.metrics
+                    },
                 }
-                for unit, log_loss, brier in zip(
-                    self.aggregation_units,
-                    self.unit_log_losses,
-                    self.unit_brier_scores,
-                    strict=True,
-                )
+                for position, unit in enumerate(self.aggregation_units)
             ],
-            "unit_balanced_log_loss": self.unit_balanced_log_loss,
-            "unit_balanced_brier_score": self.unit_balanced_brier_score,
-            "pooled_log_loss": self.pooled_log_loss,
-            "pooled_brier_score": self.pooled_brier_score,
-            "unit_balanced_log_loss_interval": self.unit_balanced_log_loss_interval.to_dict(),
+            **{
+                _METRIC_VOCABULARY[metric].balanced_key: self.unit_balanced_score(metric)
+                for metric in self.metrics
+            },
+            **{
+                _METRIC_VOCABULARY[metric].pooled_key: self.pooled_scores[metric]
+                for metric in self.metrics
+            },
+            _METRIC_VOCABULARY[self.ranked_by].interval_key: self.ranking_interval.to_dict(),
             "bootstrap": {
                 "unit": self.aggregation_column,
                 "resamples": self.bootstrap_resamples,
@@ -850,6 +1192,11 @@ class NestedProspectiveSelectionReport:
                 "interval": "percentile",
             },
             "folds": [fold.to_dict() for fold in self.folds],
+            **(
+                {}
+                if self.metrics == DEFAULT_COMPARISON_METRICS
+                else {"declared_metrics": [metric.value for metric in self.metrics]}
+            ),
         }
 
 
@@ -916,6 +1263,7 @@ def compare_models(
     aggregation_column: str = "subject",
     outcome_column: str = "choice",
     mode: PredictionMode = PredictionMode.FILTERED,
+    metrics: Iterable[ScoreMetric | str] = DEFAULT_COMPARISON_METRICS,
     bootstrap_resamples: int = 5_000,
     bootstrap_seed: int = 0,
     confidence_level: float = 0.95,
@@ -932,10 +1280,19 @@ def compare_models(
     ``posterior_policy`` declares the projection centre and convergence thresholds applied
     to every sampled candidate; it is ignored by candidates fitted by optimization.
 
+    ``metrics`` declares which scoring rules the table carries, in order, and the first of
+    them is what the winner and every paired contrast are read on. The default is the log
+    score then the Brier score, which is the table this function has always produced.
+    ``metrics=(ScoreMetric.LOG_LOSS,)`` asks for the log-score half alone, which is what
+    makes two candidates predicting an unlabelled density -- a reproduced duration, a patch
+    residence time, a switching autoregression -- rankable against each other. A candidate
+    that cannot support a declared rule is refused here, before any fold is fitted, by a
+    message naming the candidate and the rule.
+
     ``multiplicity`` and ``family_error_rate`` govern which pairwise contrasts are marked
     :attr:`PairedComparison.decisive` once more than one contrast exists; they never change
     an interval, a probability, or :attr:`ProspectiveComparisonReport.winner`, which has
-    always been the lowest point estimate among audit-eligible candidates.
+    always been the best point estimate among audit-eligible candidates.
 
     ``workers`` evaluates candidates concurrently. Only the fold evaluation is scheduled;
     aggregation, bootstrapping and ranking stay in this process and stay in the insertion
@@ -948,6 +1305,7 @@ def compare_models(
     """
 
     candidates = _validated_models(models)
+    declared = declared_comparison_metrics(metrics)
     capabilities = {name: any_model_capabilities(model) for name, model in candidates.items()}
     scored_columns = next(iter(capabilities.values())).scored_columns
     for name, candidate_capabilities in capabilities.items():
@@ -957,6 +1315,7 @@ def compare_models(
                 f"candidate {name!r} scores {candidate_capabilities.scored_columns!r}, "
                 f"expected {scored_columns!r}"
             )
+        refuse_undeclarable_candidate(name, candidate_capabilities, declared)
     folds = tuple(splits)
     _validate_comparison_inputs(
         study,
@@ -993,6 +1352,7 @@ def compare_models(
             result,
             aggregation_column=aggregation_column,
             outcome_column=outcome_column,
+            metrics=declared,
         )
         for name, result in evaluations.items()
     }
@@ -1000,6 +1360,7 @@ def compare_models(
     if any(aggregate.units != reference_units for aggregate in aggregates.values()):
         raise ValueError("all candidate evaluations must cover identical aggregation units")
 
+    ranked_by = declared[0]
     model_results: list[ProspectiveModelResult] = []
     for name, model in candidates.items():
         aggregate = aggregates[name]
@@ -1009,12 +1370,10 @@ def compare_models(
                 model_signature=model.signature,
                 evaluations=evaluations[name],
                 aggregation_units=aggregate.units,
-                unit_log_losses=aggregate.unit_log_losses,
-                unit_brier_scores=aggregate.unit_brier_scores,
-                pooled_log_loss=aggregate.pooled_log_loss,
-                pooled_brier_score=aggregate.pooled_brier_score,
-                unit_balanced_log_loss_interval=bootstrap_interval(
-                    aggregate.unit_log_losses,
+                unit_scores=aggregate.unit_scores,
+                pooled_scores=aggregate.pooled_scores,
+                ranking_interval=bootstrap_interval(
+                    aggregate.unit_scores[ranked_by],
                     resamples=bootstrap_resamples,
                     seed=bootstrap_seed,
                     confidence_level=confidence_level,
@@ -1024,10 +1383,10 @@ def compare_models(
 
     pairwise, family = paired_comparisons(
         {
-            name: dict(zip(reference_units, aggregates[name].unit_log_losses, strict=True))
+            name: dict(zip(reference_units, aggregates[name].unit_scores[ranked_by], strict=True))
             for name in candidates
         },
-        metric=ScoreMetric.LOG_LOSS,
+        metric=ranked_by,
         resamples=bootstrap_resamples,
         seed=bootstrap_seed,
         confidence_level=confidence_level,
@@ -1045,6 +1404,7 @@ def compare_models(
         bootstrap_seed=bootstrap_seed,
         confidence_level=confidence_level,
         family=family,
+        metrics=declared,
     )
 
 
@@ -1070,6 +1430,7 @@ class _OuterFoldTask:
     bootstrap_seed: int
     confidence_level: float
     posterior_policy: PosteriorFoldPolicy | None
+    metrics: tuple[ScoreMetric, ...]
 
 
 def _run_nested_outer_fold(task: _OuterFoldTask) -> NestedSelectionFold:
@@ -1092,6 +1453,7 @@ def _run_nested_outer_fold(task: _OuterFoldTask) -> NestedSelectionFold:
         aggregation_column=task.aggregation_column,
         outcome_column=task.outcome_column,
         mode=task.mode,
+        metrics=task.metrics,
         bootstrap_resamples=task.inner_bootstrap_resamples,
         bootstrap_seed=task.bootstrap_seed + task.fold_index + 1,
         confidence_level=task.confidence_level,
@@ -1124,6 +1486,7 @@ def nested_select_model(
     aggregation_column: str = "subject",
     outcome_column: str = "choice",
     mode: PredictionMode = PredictionMode.FILTERED,
+    metrics: Iterable[ScoreMetric | str] = DEFAULT_COMPARISON_METRICS,
     bootstrap_resamples: int = 5_000,
     bootstrap_seed: int = 0,
     inner_bootstrap_resamples: int = 1_000,
@@ -1155,6 +1518,7 @@ def nested_select_model(
     """
 
     models = _validated_models(candidates)
+    declared = declared_comparison_metrics(metrics)
     capabilities = {name: any_model_capabilities(model) for name, model in models.items()}
     scored_columns = next(iter(capabilities.values())).scored_columns
     for name, candidate_capabilities in capabilities.items():
@@ -1164,6 +1528,7 @@ def nested_select_model(
                 f"candidate {name!r} scores {candidate_capabilities.scored_columns!r}, "
                 f"expected {scored_columns!r}"
             )
+        refuse_undeclarable_candidate(name, candidate_capabilities, declared)
     folds = tuple(outer_splits)
     _validate_comparison_inputs(
         study,
@@ -1199,6 +1564,7 @@ def nested_select_model(
                 bootstrap_seed=bootstrap_seed,
                 confidence_level=confidence_level,
                 posterior_policy=posterior_policy,
+                metrics=declared,
             )
             for fold_index, outer_split in enumerate(folds)
         ),
@@ -1222,6 +1588,7 @@ def nested_select_model(
         tuple(outer_evaluations),
         aggregation_column=aggregation_column,
         outcome_column=outcome_column,
+        metrics=declared,
     )
     return NestedProspectiveSelectionReport(
         aggregation_column=aggregation_column,
@@ -1230,12 +1597,10 @@ def nested_select_model(
         candidate_names=tuple(models),
         folds=tuple(selections),
         aggregation_units=aggregate.units,
-        unit_log_losses=aggregate.unit_log_losses,
-        unit_brier_scores=aggregate.unit_brier_scores,
-        pooled_log_loss=aggregate.pooled_log_loss,
-        pooled_brier_score=aggregate.pooled_brier_score,
-        unit_balanced_log_loss_interval=bootstrap_interval(
-            aggregate.unit_log_losses,
+        unit_scores=aggregate.unit_scores,
+        pooled_scores=aggregate.pooled_scores,
+        ranking_interval=bootstrap_interval(
+            aggregate.unit_scores[declared[0]],
             resamples=bootstrap_resamples,
             seed=bootstrap_seed,
             confidence_level=confidence_level,
@@ -1249,10 +1614,8 @@ def nested_select_model(
 @dataclass(frozen=True, slots=True)
 class _AggregatedScores:
     units: tuple[Any, ...]
-    unit_log_losses: NDArray[np.float64]
-    unit_brier_scores: NDArray[np.float64]
-    pooled_log_loss: float
-    pooled_brier_score: float
+    unit_scores: dict[ScoreMetric, NDArray[np.float64]]
+    pooled_scores: dict[ScoreMetric, float]
 
 
 def _aggregate_evaluations(
@@ -1261,65 +1624,74 @@ def _aggregate_evaluations(
     *,
     aggregation_column: str,
     outcome_column: str,
+    metrics: tuple[ScoreMetric, ...] = DEFAULT_COMPARISON_METRICS,
 ) -> _AggregatedScores:
-    losses_by_unit: dict[Any, list[float]] = {}
-    brier_by_unit: dict[Any, list[float]] = {}
+    """Reduce fold evaluations to one column per declared rule, over shared units.
+
+    Only the declared rules are computed. A rule that was not declared is not merely
+    dropped from the record: its pointwise value is never formed, which is what lets a
+    candidate predicting an unlabelled density be aggregated at all.
+    """
+
+    scores_by_unit: dict[ScoreMetric, dict[Any, list[float]]] = {metric: {} for metric in metrics}
     units: list[Any] = []
-    pooled_losses: list[NDArray[np.float64]] = []
-    pooled_brier: list[NDArray[np.float64]] = []
+    pooled: dict[ScoreMetric, list[NDArray[np.float64]]] = {metric: [] for metric in metrics}
     for evaluation in evaluations:
         test = study.take(evaluation.split.test_indices)
         losses = -evaluation.pointwise_log_probability
-        prediction = evaluation.prediction
-        if isinstance(prediction, DensityPrediction):
-            prediction = _brier_scoreable_margin(prediction)
-        if isinstance(prediction, CategoricalPrediction):
-            if evaluation.outcome_codes is None:
-                raise ValueError("categorical fold is missing observed outcome codes")
-            targets = np.zeros_like(prediction.probability)
-            targets[np.arange(len(targets)), evaluation.outcome_codes] = 1.0
-            # Half the multicategory squared distance preserves the familiar [0, 1]
-            # range and exactly matches the existing binary Brier convention.
-            brier = 0.5 * np.sum(
-                (prediction.probability - targets) ** 2,
-                axis=1,
-            )
-        else:
-            raw_outcomes = np.asarray(test[outcome_column])
-            try:
-                outcomes = np.asarray(raw_outcomes, dtype=np.float64)
-            except (TypeError, ValueError):
-                raise ValueError(
-                    f"outcome column {outcome_column!r} must be binary numeric"
-                ) from None
-            if not np.all(np.isfinite(outcomes)) or not np.all((outcomes == 0) | (outcomes == 1)):
-                raise ValueError(f"outcome column {outcome_column!r} must contain only 0 and 1")
-            brier = (prediction.probability - outcomes) ** 2
         if len(test) != len(losses):
             raise ValueError("fold test rows and pointwise scores must align")
-        pooled_losses.append(losses)
-        pooled_brier.append(brier)
+        pointwise = {ScoreMetric.LOG_LOSS: losses} if ScoreMetric.LOG_LOSS in metrics else {}
+        if ScoreMetric.BRIER in metrics:
+            pointwise[ScoreMetric.BRIER] = _pointwise_brier(evaluation, test, outcome_column)
+        for metric in metrics:
+            pooled[metric].append(pointwise[metric])
         for position, raw_unit in enumerate(test[aggregation_column]):
             unit = _validated_identifier(raw_unit, aggregation_column)
-            if unit not in losses_by_unit:
+            if unit not in scores_by_unit[metrics[0]]:
                 units.append(unit)
-                losses_by_unit[unit] = []
-                brier_by_unit[unit] = []
-            losses_by_unit[unit].append(float(losses[position]))
-            brier_by_unit[unit].append(float(brier[position]))
-    unit_log_losses = np.asarray(
-        [np.mean(losses_by_unit[unit]) for unit in units], dtype=np.float64
-    )
-    unit_brier_scores = np.asarray(
-        [np.mean(brier_by_unit[unit]) for unit in units], dtype=np.float64
-    )
+                for metric in metrics:
+                    scores_by_unit[metric][unit] = []
+            for metric in metrics:
+                scores_by_unit[metric][unit].append(float(pointwise[metric][position]))
     return _AggregatedScores(
         units=tuple(units),
-        unit_log_losses=unit_log_losses,
-        unit_brier_scores=unit_brier_scores,
-        pooled_log_loss=float(np.mean(np.concatenate(pooled_losses))),
-        pooled_brier_score=float(np.mean(np.concatenate(pooled_brier))),
+        unit_scores={
+            metric: np.asarray(
+                [np.mean(scores_by_unit[metric][unit]) for unit in units], dtype=np.float64
+            )
+            for metric in metrics
+        },
+        pooled_scores={
+            metric: float(np.mean(np.concatenate(pooled[metric]))) for metric in metrics
+        },
     )
+
+
+def _pointwise_brier(
+    evaluation: FoldEvaluation, test: Study, outcome_column: str
+) -> NDArray[np.float64]:
+    """Return one fold's per-row Brier score, or refuse the prediction that has none."""
+
+    prediction = evaluation.prediction
+    if isinstance(prediction, DensityPrediction):
+        prediction = _brier_scoreable_margin(prediction)
+    if isinstance(prediction, CategoricalPrediction):
+        if evaluation.outcome_codes is None:
+            raise ValueError("categorical fold is missing observed outcome codes")
+        targets = np.zeros_like(prediction.probability)
+        targets[np.arange(len(targets)), evaluation.outcome_codes] = 1.0
+        # Half the multicategory squared distance preserves the familiar [0, 1]
+        # range and exactly matches the existing binary Brier convention.
+        return np.asarray(0.5 * np.sum((prediction.probability - targets) ** 2, axis=1))
+    raw_outcomes = np.asarray(test[outcome_column])
+    try:
+        outcomes = np.asarray(raw_outcomes, dtype=np.float64)
+    except (TypeError, ValueError):
+        raise ValueError(f"outcome column {outcome_column!r} must be binary numeric") from None
+    if not np.all(np.isfinite(outcomes)) or not np.all((outcomes == 0) | (outcomes == 1)):
+        raise ValueError(f"outcome column {outcome_column!r} must contain only 0 and 1")
+    return np.asarray((prediction.probability - outcomes) ** 2)
 
 
 class UnscoreableByBrier(ValueError):
@@ -1329,6 +1701,12 @@ class UnscoreableByBrier(ValueError):
     columns or folds; they have asked a probability scoring rule to score something that is
     not a probability, and the answer is that the metric does not apply -- not a number that
     looks like one.
+
+    It is raised in two places, and the first is the one a caller should see.
+    :func:`refuse_undeclarable_candidate` raises it *at declaration*, from the candidate's
+    own :attr:`~behavio.contracts.ModelCapabilities.score_metrics`, before a single fold is
+    fitted. :func:`_brier_scoreable_margin` raises it at scoring time, which is now reachable
+    only by a candidate whose declaration was more generous than its prediction.
     """
 
 

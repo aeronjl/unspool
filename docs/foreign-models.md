@@ -583,16 +583,17 @@ pointwise scoring would work unchanged; only `predict` has nowhere to go. **That
 Behavio's prediction vocabulary**, not in dynamax, and it is the same kind of gap Bambi's
 `poisson` family reported.
 
-**`compare_models` cannot score an unlabelled density.** `compare_models` computes a Brier
-column unconditionally, and a Brier score is a scoring rule for a probability. PyDDM's
-density escapes this because it is *defective across the two boundaries*, so integrating the
-grid yields genuine choice probabilities. A switching autoregression predicts an unlabelled
-continuous density with no discrete margin at all, so `compare_models` raises
-`UnscoreableByBrier` — correctly, since there is no number to report, but it also means the
-**prospective comparison table is unreachable for every continuous-outcome model**.
-`evaluate_splits` and the log score are unaffected, and a nested comparison against
-`num_lags=0` runs through them today. This is the second gap in the contract that this
-wrapper reports rather than works around.
+**`compare_models` scores an unlabelled density on a declared log score.** The default
+comparison table carries a Brier column, and a Brier score is a scoring rule for a
+probability. PyDDM's density escapes this because it is *defective across the two
+boundaries*, so integrating the grid yields genuine choice probabilities. A switching
+autoregression predicts an unlabelled continuous density with no discrete margin at all, so
+the wrapper declares `score_metrics` without the Brier score and a table that declares one
+refuses it by name before anything is fitted. Declaring
+`metrics=(ScoreMetric.LOG_LOSS,)` ranks it against its own `num_lags=0` null through the
+shared comparison, bootstrap and simultaneous family. This was the second gap in the contract
+that this wrapper reported rather than worked around; it is closed, and the record is
+[SDR-0063](decisions/0063-defer-the-log-score-only-comparison-and-the-survival-carrying-prediction.md).
 
 **The predictive density is unbounded and the grid is not.** `predict` tabulates on a grid
 fixed **at fit time** — derived from the training range and the fitted variances, and

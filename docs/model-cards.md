@@ -494,8 +494,10 @@ simulating the theorem's residence time; the predicted density integrating to on
 agreeing with the simulator; an analytic gradient checked against central differences with and
 without censoring; a censored row scored against an independently written survival
 probability; the upward bias from ignoring censoring measured rather than asserted; recovery
-from a censored study; the estimator conformance harness; and hierarchical and smooth recovery
-over a censored likelihood.
+from a censored study; the estimator conformance harness; and hierarchical, smooth and mixed
+recovery over a censored likelihood — a mixture with `UniformDurationGuess` scores a censored
+row by the probability the contaminant *outlasts* that row's limit, and the downward bias in
+the recovered weight from scoring it by a density instead is measured rather than asserted.
 
 **Does not establish:** the marginal value theorem. A giving-up rate from a single patch type
 is a residence time wearing a rate's units — with one patch type, "leave when the rate falls

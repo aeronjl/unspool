@@ -33,7 +33,13 @@ from collections.abc import Sequence
 import numpy as np
 import pytest
 
-from behavio import Study, compare_models, evaluate_splits, run_parameter_recovery
+from behavio import (
+    ScoreMetric,
+    Study,
+    compare_models,
+    evaluate_splits,
+    run_parameter_recovery,
+)
 from behavio.adapters.estimator_conformance import assert_behaviour_estimator_conforms
 from behavio.compose import UniformChoiceGuess, hierarchical, mix, smooth
 from behavio.contracts.bounded import (
@@ -811,32 +817,67 @@ def test_the_family_flows_through_evaluate_splits() -> None:
     ) > sum(float(np.sum(evaluation.pointwise_log_probability)) for evaluation in wrong_gain)
 
 
-def test_comparing_two_density_only_candidates_is_refused_by_name() -> None:
-    """A gap in the comparison layer, asserted rather than worked around.
+def _two_gain_functions():
+    model = forager()
+    truth = model.parameters_from_components(giving_up_rate=0.4, decision_noise=0.3)
+    study = model.simulate(patch_design(["a", "b"], sessions=3), truth, seed=28)
+    return (
+        {"exponential": forager(GainFunction.EXPONENTIAL), "hyperbolic": model},
+        study,
+        cohort_forward_session_splits(study, min_train_sessions=2, horizon=1),
+    )
 
-    :func:`~behavio.compare.compare_models` reports a Brier score beside the log score, and a
-    Brier score is a scoring rule for a probability. An **unlabelled** density has no discrete
+
+def test_a_declared_brier_column_is_refused_by_name() -> None:
+    """The default comparison table still refuses, and refuses before it fits anything.
+
+    :func:`~behavio.compare.compare_models` carries a Brier column by default, and a Brier
+    score is a scoring rule for a probability. An **unlabelled** density has no discrete
     margin to score -- a two-boundary diffusion has one, a residence time does not -- so the
-    comparison refuses rather than inventing a number. The log score is defined for these
-    candidates and :func:`~behavio.evaluate.evaluate_splits` reports it; what is missing is a
-    way to ask ``compare_models`` for the log-score half alone.
+    comparison refuses rather than inventing a number. The refusal now comes from the
+    candidate's declared ``score_metrics`` rather than from the fold loop, and names the
+    candidate and the rule.
     """
 
     from behavio.compare.models import UnscoreableByBrier
 
-    model = forager()
-    truth = model.parameters_from_components(giving_up_rate=0.4, decision_noise=0.3)
-    study = model.simulate(patch_design(["a", "b"], sessions=3), truth, seed=28)
-    splits = cohort_forward_session_splits(study, min_train_sessions=2, horizon=1)
+    candidates, study, splits = _two_gain_functions()
 
-    with pytest.raises(UnscoreableByBrier, match="no categorical margin"):
+    with pytest.raises(UnscoreableByBrier, match="no categorical margin") as refusal:
         compare_models(
-            {"exponential": forager(GainFunction.EXPONENTIAL), "hyperbolic": model},
+            candidates,
             study,
             splits,
             bootstrap_resamples=10,
             outcome_column="residence_time",
         )
+    assert "'exponential'" in str(refusal.value) and "'brier'" in str(refusal.value)
+
+
+def test_two_gain_functions_are_ranked_on_a_declared_log_score() -> None:
+    """Two accounts of the same residence times, ranked -- which SDR-0063 could not do.
+
+    The log score is the joint log density of the whole observation and is defined for a
+    density with no discrete margin, so declaring it alone is what makes this comparison
+    exist. The generating gain function is the one it prefers, which is the point of running
+    a comparison rather than merely producing one.
+    """
+
+    candidates, study, splits = _two_gain_functions()
+
+    report = compare_models(
+        candidates,
+        study,
+        splits,
+        bootstrap_resamples=64,
+        outcome_column="residence_time",
+        metrics=(ScoreMetric.LOG_LOSS,),
+    )
+
+    assert report.ranked_by is ScoreMetric.LOG_LOSS
+    assert report.winner == "hyperbolic"
+    assert report.to_dict()["declared_metrics"] == ["log-loss"]
+    assert report.comparison_for("exponential", "hyperbolic").metric is ScoreMetric.LOG_LOSS
 
 
 # --------------------------------------------------------------------------------------

@@ -167,13 +167,14 @@ distribution over the scored outcome. They are one concept with different compon
 p(y_r) = (1-\omega)\,p_{\text{model}}(y_r) + \omega\,p_{\text{component}}(y_r).
 \]
 
-Three components ship, one per shape of observation:
+Four components ship, one per shape of observation:
 
 | Component | Scores | Guesses |
 | --- | --- | --- |
 | `UniformChoiceGuess(outcome=..., probability=0.5)` | one binary column | a coin |
 | `UniformCategoryGuess(choice=ChoiceSpec(...))` | a category code | uniformly over the options the trial offered |
 | `UniformResponseGuess(time_bounds=..., ...)` | a joint choice and latency | an independent coin and a uniform latency |
+| `UniformDurationGuess(duration_bounds=..., outcome=...)` | one bare duration | uniformly over a declared interval |
 
 ```python
 from behavio import (
@@ -185,6 +186,8 @@ from behavio import (
     WienerDriftDiffusion,
     mix,
 )
+from behavio.compose import UniformDurationGuess
+from behavio.models.scalar_timing import DurationReproduction
 
 lapsing_glm = mix(base, UniformChoiceGuess(), weight_bounds=(0.0, 0.2))
 lapsing_actions = mix(actions, UniformCategoryGuess(choice=actions.choice))
@@ -193,7 +196,17 @@ contaminated_ddm = mix(
     UniformResponseGuess(time_bounds=(0.05, 3.0)),
     weight_bounds=(0.0, 0.25),
 )
+contaminated_timing = mix(
+    DurationReproduction(),
+    UniformDurationGuess(duration_bounds=(0.05, 8.0), outcome="reproduced_duration"),
+    weight_bounds=(0.0, 0.25),
+)
 ```
+
+The first two need no interval declared because a coin and a set of options are finite. A
+duration is not, so `UniformDurationGuess` takes its bounds and puts them in the model's
+signature; [what that costs](#a-continuous-outcome-needed-a-component-not-a-combinator) is
+below.
 
 ### The weight is estimated; its range is declared
 
@@ -404,6 +417,8 @@ giving-up intake rate above zero. All sixteen of their `smooth()` and `hierarchi
 work. The last five were written *after* this contract existed and needed nothing added to
 it; see [economic and value-based choice](economic-choice.md), where `mix()` also works,
 because a mixture is gated on row independence and a value-based trial's rows are independent.
+The two continuous families reach it as well, through
+[a component rather than a combinator](#a-continuous-outcome-needed-a-component-not-a-combinator).
 The two agents are the families where it does not, and there the refusal is the recursion.
 `BernoulliGLMHMM` is a fourth model on this contract, and a partial one: its
 [hierarchical cell is open](#a-glm-hmm-which-cell-opened-and-what-still-refuses) on the
@@ -436,25 +451,73 @@ sharpening_clock = smooth(
 )
 ```
 
-### A continuous outcome needs a component, not a combinator
+### A continuous outcome needed a component, not a combinator
 
-`mix()` works on `TemporalBisection`, whose report is a binary choice, and is refused on the
-two continuous families:
+`mix()` used to be refused on the two continuous families, and the refusal was never a limit
+of `mix()`: their rows are independent, the weight rides in one extra column of the row
+coordinate exactly as it does for a discounting model, and `require_mixable` never reached
+the arithmetic because it compares scored columns first. What was missing was a **component**
+that scores a bare duration. `UniformDurationGuess` is it, and neither combinator changed:
 
 ```python
-mix(DurationReproduction(), UniformChoiceGuess())
-# TypeError: UniformChoiceGuess writes ['choice'] but DurationReproduction scores
-# ['reproduced_duration'], so they are not a mixture of one observation
+from behavio.compose import UniformDurationGuess, mix
+from behavio.models.patch_leaving import PatchLeaving
+from behavio.models.scalar_timing import DurationReproduction
+
+contaminated_reproduction = mix(
+    DurationReproduction(),
+    UniformDurationGuess(duration_bounds=(0.05, 8.0), outcome="reproduced_duration"),
+    weight_bounds=(0.0, 0.25),
+)
+contaminated_foraging = mix(
+    PatchLeaving(censoring_time_column="observation_limit"),
+    UniformDurationGuess(
+        duration_bounds=(0.0, 3.0),
+        outcome="residence_time",
+        censoring_time_column="observation_limit",
+    ),
+)
 ```
 
-**That refusal is not a limit of `mix()`.** These rows are independent, the weight would ride
-in one extra column of the row coordinate exactly as it does for a discounting model, and
-`require_mixable` never reaches the arithmetic: it compares scored columns first. What is
-missing is a **component** that scores a bare duration. The three that ship write a binary
-choice, a category code, and a joint choice-and-latency; none of them writes a lone
-continuous outcome. A `UniformDurationGuess` would open both cells without either combinator
-changing, and the component contract in `behavio.contracts.mixture` is already the place to
-write it.
+Three things the component has to say that a binary guess did not.
+
+**The interval is declared, in the outcome column's own units.** Uniform over two options is
+one half and there is nothing to argue about; uniform over a duration does not exist until an
+interval is named. `UniformResponseGuess` met the same question and answered it with
+`time_bounds` in canonical seconds — it can, because a drift-diffusion model declares a
+`ResponseTimeSpec` and hands components a latency in seconds whatever the column holds. A
+scalar-timing or patch-leaving model declares no unit at all and returns its column verbatim,
+so `duration_bounds` is in *that column's* units and appears in the composed model's
+signature. Reading the interval off the data instead would make the component's normalising
+constant a function of the sample, and the widest observations — the ones a contaminant
+exists to explain — would be the ones setting the density that explains them.
+
+**A censored row is scored by a survival probability, not by a density.** `PatchLeaving`
+scores a visit that was still in progress by \(\log S(c)\). A mixture averages what *each*
+process says about the observation that was actually made, so the component contributes the
+probability that its own duration exceeds the same \(c\):
+
+\[
+S_{\text{mix}}(c) = (1-\omega)\,S_{\text{model}}(c) + \omega\,S_{\text{comp}}(c).
+\]
+
+This needed nothing added to the component contract — a component is handed the study
+alongside the outcome, which is the channel per-trial option availability already travels
+down — but it does mean both processes must read the **same** limit column, and
+`mixture_refusal` says so rather than letting them disagree silently. Contributing the
+density instead is not a rounding error: a density is one over time and a survival
+probability is dimensionless, so every censored row looks like a row the contaminant could
+not have produced. On a study with three rows in five censored, a censoring-blind component
+recovers less than half the weight the study was simulated with, while the model's own
+parameters barely move — which is what makes the mistake hard to see in a fit table.
+`tests/test_compose_duration_mixture.py` measures it.
+
+**The mixed prediction is a density.** `predict()` on either family returns a
+`DensityPrediction`, so a mixture's prediction is the weighted average of two densities at
+every point of the model's own grid rather than of two probabilities. The component's half is
+obtained by asking `pointwise_log_density` about each grid point, which is a question it
+could already answer, so this needed no new member either — only a second averaging function,
+`blended_density`, beside the one that averages probabilities.
 
 ```python
 from behavio import BinaryQLearning, PsychometricFunction

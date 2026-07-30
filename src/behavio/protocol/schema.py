@@ -29,7 +29,7 @@ from behavio._internal.scoring import ComparisonMultiplicity, ScoreMetric
 from behavio.task.ontology import TaskProtocol
 from behavio.task.vocabulary import ObservationDataType, ObservationRole
 
-PROTOCOL_SCHEMA_VERSION = "behavio.study-protocol/3"
+PROTOCOL_SCHEMA_VERSION = "behavio.study-protocol/4"
 
 #: Schema names this format has been published under, newest first. The package was
 #: distributed as ``unspool`` up to and including 0.1.0, and a frozen protocol is
@@ -53,7 +53,17 @@ PROTOCOL_SCHEMA_VERSION = "behavio.study-protocol/3"
 #: is serialized back without the member. Unlike the multiplicity bump nothing is thereby
 #: left unsaid -- a version-2 protocol has exactly one possible value -- so a reconstructed
 #: version-2 protocol keeps its recorded fingerprint.
+#:
+#: Version 4 adds :attr:`ComparisonSpec.metrics`, the set of scoring rules the comparison
+#: table carries beside the ``metric`` that decides the verdict. Every protocol recorded
+#: before it reported exactly one score column -- the runner produced one
+#: :class:`~behavio.protocol.runner.ScoreSummary`, under the declared metric -- so
+#: :func:`protocol_from_dict` supplies ``(metric,)`` and the payload is serialized back
+#: without the member. As with the inference bump nothing is thereby left unsaid, because a
+#: version-3 protocol has exactly one possible value, so a reconstructed version-3 protocol
+#: keeps its recorded fingerprint.
 SUPERSEDED_PROTOCOL_SCHEMA_VERSIONS = (
+    "behavio.study-protocol/3",
     "behavio.study-protocol/2",
     "behavio.study-protocol/1",
     "unspool.study-protocol/1",
@@ -65,7 +75,15 @@ PRE_MULTIPLICITY_PROTOCOL_SCHEMA_VERSIONS = ("behavio.study-protocol/1", "unspoo
 
 #: Schema names published before :attr:`CandidateSpec.inference` existed. Every one of them
 #: can express an optimized candidate and none of them can express a sampled one.
-PRE_INFERENCE_PROTOCOL_SCHEMA_VERSIONS = SUPERSEDED_PROTOCOL_SCHEMA_VERSIONS
+PRE_INFERENCE_PROTOCOL_SCHEMA_VERSIONS = (
+    "behavio.study-protocol/2",
+    "behavio.study-protocol/1",
+    "unspool.study-protocol/1",
+)
+
+#: Schema names published before :attr:`ComparisonSpec.metrics` existed. Every one of them
+#: can express a one-column comparison table and none of them can express a wider one.
+PRE_METRIC_SET_PROTOCOL_SCHEMA_VERSIONS = SUPERSEDED_PROTOCOL_SCHEMA_VERSIONS
 
 # ``ObservationRole`` and ``ObservationDataType`` are defined in
 # :mod:`behavio.task.vocabulary` and imported above under their original names, so
@@ -516,6 +534,16 @@ class ComparisonSpec:
     :attr:`ComparisonMultiplicity.NONE` restores the uncorrected per-contrast reading and
     will name a winner strictly more often. The family error rate is not separately
     declarable: it is ``1 - interval_level``, the rate the protocol already fixed.
+
+    ``metric`` and ``metrics`` say two different things and both are frozen. ``metric`` is
+    the rule the **verdict** is read on -- the one :attr:`WinnerPolicy` ranks and every
+    paired contrast is formed under. ``metrics`` is the set of rules the **table carries**,
+    which must contain ``metric`` and defaults to it alone. Declaring a wider table is a
+    scientific commitment rather than a display choice: every candidate must be able to
+    support every declared rule, and one that cannot is refused with the rule named rather
+    than having its column quietly dropped. A protocol whose candidates predict an
+    unlabelled continuous outcome therefore declares the log score and nothing else, which is
+    what makes it runnable at all.
     """
 
     metric: ScoreMetric
@@ -529,9 +557,19 @@ class ComparisonSpec:
     winner_policy: WinnerPolicy
     multiplicity: ComparisonMultiplicity = ComparisonMultiplicity.BENJAMINI_HOCHBERG
     reference_candidate: str | None = None
+    metrics: tuple[ScoreMetric, ...] = ()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "metric", ScoreMetric(self.metric))
+        metrics = tuple(ScoreMetric(metric) for metric in self.metrics) or (self.metric,)
+        if len(set(metrics)) != len(metrics):
+            raise ProtocolValidationError("comparison metrics must not repeat a scoring rule")
+        if self.metric not in metrics:
+            raise ProtocolValidationError(
+                f"the comparison table must carry the rule the verdict is read on; "
+                f"metric={self.metric.value!r} is not among {[m.value for m in metrics]!r}"
+            )
+        object.__setattr__(self, "metrics", metrics)
         _name(self.aggregation_unit, "comparison aggregation unit")
         object.__setattr__(self, "weighting", AggregationWeighting(self.weighting))
         _name(self.interval_method, "comparison interval method")
@@ -723,6 +761,16 @@ class StudyProtocol:
                 f"runner applied; record this protocol under {PROTOCOL_SCHEMA_VERSION!r} to "
                 f"declare a different one"
             )
+        if (
+            self.schema_version in PRE_METRIC_SET_PROTOCOL_SCHEMA_VERSIONS
+            and self.comparison.metrics != (self.comparison.metric,)
+        ):
+            raise ProtocolValidationError(
+                f"schema_version {self.schema_version!r} predates the comparison metric set "
+                f"and can only carry the one column its runner reported, "
+                f"{(self.comparison.metric.value,)!r}; record this protocol under "
+                f"{PROTOCOL_SCHEMA_VERSION!r} to declare a wider table"
+            )
         if self.schema_version in PRE_INFERENCE_PROTOCOL_SCHEMA_VERSIONS:
             sampled = [
                 candidate.name
@@ -753,18 +801,21 @@ class StudyProtocol:
         """Return a standards-compliant JSON value with stable field names.
 
         A protocol recorded under a schema version that predates
-        :attr:`ComparisonSpec.multiplicity` or :attr:`CandidateSpec.inference` is serialized
-        without it. A frozen protocol is content-addressed, so writing a member its author
-        never declared into the payload would change the identity of a declaration nobody
-        amended -- and every lifecycle event that recorded the old fingerprint would stop
-        verifying. The omission is safe in both cases because :meth:`__post_init__` refuses
-        any such protocol whose value differs from the only one its era could express, so
-        nothing distinguishable is ever dropped.
+        :attr:`ComparisonSpec.multiplicity`, :attr:`CandidateSpec.inference` or
+        :attr:`ComparisonSpec.metrics` is serialized without it. A frozen protocol is
+        content-addressed, so writing a member its author never declared into the payload
+        would change the identity of a declaration nobody amended -- and every lifecycle
+        event that recorded the old fingerprint would stop verifying. The omission is safe in
+        every case because :meth:`__post_init__` refuses any such protocol whose value
+        differs from the only one its era could express, so nothing distinguishable is ever
+        dropped.
         """
 
         value = json_ready(asdict(self))
         if self.schema_version in PRE_MULTIPLICITY_PROTOCOL_SCHEMA_VERSIONS:
             value["comparison"].pop("multiplicity")
+        if self.schema_version in PRE_METRIC_SET_PROTOCOL_SCHEMA_VERSIONS:
+            value["comparison"].pop("metrics")
         if self.schema_version in PRE_INFERENCE_PROTOCOL_SCHEMA_VERSIONS:
             for candidate in value["candidates"]:
                 candidate.pop("inference")
@@ -919,7 +970,7 @@ class StudyProtocol:
                 "all candidates must score the same complete observation columns"
             )
         declared_metrics = {
-            self.comparison.metric,
+            *self.comparison.metrics,
             *((self.selection.metric,) if self.selection is not None else ()),
         }
         scored_columns = self.candidates[0].scored_columns
@@ -1188,6 +1239,16 @@ def _comparison_from_payload(payload: Any, schema_version: Any) -> ComparisonSpe
                 "declaration, so a payload recorded under it must not carry one"
             )
         payload = {**payload, "multiplicity": ComparisonMultiplicity.BENJAMINI_HOCHBERG.value}
+    if schema_version in PRE_METRIC_SET_PROTOCOL_SCHEMA_VERSIONS:
+        if not isinstance(payload, dict):
+            raise ProtocolValidationError("ComparisonSpec must be a JSON object")
+        if "metrics" in payload:
+            raise ProtocolValidationError(
+                f"schema_version {schema_version!r} predates the comparison metric set, "
+                "so a payload recorded under it must not carry one"
+            )
+        # The one column its runner reported, which is the rule it already declared.
+        payload = {**payload, "metrics": [payload["metric"]]}
     return _construct(ComparisonSpec, payload)
 
 
@@ -1230,6 +1291,7 @@ def _construct(cls: type[Any], value: Any) -> Any:
         },
         ValidationSpec: {"horizon": None, "settings": Setting},
         CandidateSpec: {"hyperparameters": Setting, "scored_columns": None},
+        ComparisonSpec: {"metrics": None},
         RecoverySpec: {
             "constrains_claims": None,
             "candidate_names": None,

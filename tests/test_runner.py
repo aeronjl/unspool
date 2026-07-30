@@ -100,6 +100,7 @@ def test_declared_brier_score_controls_summaries_comparisons_and_ranking() -> No
         comparison=replace(
             protocol.comparison,
             metric=ScoreMetric.BRIER,
+            metrics=(ScoreMetric.BRIER,),
             winner_policy=WinnerPolicy.LOWEST_POINT_ESTIMATE,
         ),
         state=ProtocolState.DRAFT,
@@ -690,3 +691,120 @@ def test_the_runner_records_the_adjustment_the_protocol_froze() -> None:
         assert run.report.ranking.family.multiplicity is multiplicity
         assert run.report.to_dict()["ranking"]["family"]["multiplicity"] == multiplicity.value
         assert run.protocol.comparison.multiplicity is multiplicity
+
+
+def compiled_two_column_protocol():
+    """A protocol whose table carries the Brier score beside the log score that ranks."""
+
+    protocol = frozen_small_protocol()
+    protocol = replace(
+        protocol,
+        comparison=replace(
+            protocol.comparison,
+            metrics=(ScoreMetric.LOG_LOSS, ScoreMetric.BRIER),
+        ),
+        state=ProtocolState.DRAFT,
+        lifecycle=(),
+    ).freeze()
+    materialized = materialize_protocol(protocol, source_study())
+    splits = cohort_forward_session_splits(materialized.study, min_train_sessions=2)
+    return compile_execution_plan(materialized, splits, capabilities=capabilities())
+
+
+def test_a_declared_metric_set_gives_every_candidate_one_summary_per_rule() -> None:
+    """The table carries what it declared, and the verdict still reads one rule.
+
+    ``score`` remains the verdict rule's summary and is the first of ``scores``; the
+    additional declared rule is a further column of the same table, not a second verdict.
+    """
+
+    run = run_protocol(compiled_two_column_protocol(), candidate_models())
+
+    for candidate in run.report.candidates:
+        assert [summary.metric for summary in candidate.scores] == [
+            ScoreMetric.LOG_LOSS,
+            ScoreMetric.BRIER,
+        ]
+        assert candidate.score is candidate.scores[0]
+        assert candidate.unit_balanced_log_loss is not None
+        assert candidate.unit_balanced_brier_score is not None
+        serialized = candidate.to_dict(retain_predictions=False)
+        assert [entry["metric"] for entry in serialized["scores"]] == ["log-loss", "brier"]
+        assert serialized["score"] == serialized["scores"][0]
+    assert run.report.ranking.metric is ScoreMetric.LOG_LOSS
+    assert run.report.paired_comparisons[0].metric is ScoreMetric.LOG_LOSS
+
+
+def test_every_ranking_reason_names_the_rule_the_verdict_was_read_on() -> None:
+    """A winner on the log score and a winner on the Brier score are different claims."""
+
+    log_scored = run_protocol(compiled_small_protocol(), candidate_models())
+    brier = replace(
+        frozen_small_protocol(),
+        comparison=replace(
+            frozen_small_protocol().comparison,
+            metric=ScoreMetric.BRIER,
+            metrics=(ScoreMetric.BRIER,),
+            winner_policy=WinnerPolicy.LOWEST_POINT_ESTIMATE,
+        ),
+        state=ProtocolState.DRAFT,
+        lifecycle=(),
+    ).freeze()
+    materialized = materialize_protocol(brier, source_study())
+    brier_run = run_protocol(
+        compile_execution_plan(
+            materialized,
+            cohort_forward_session_splits(materialized.study, min_train_sessions=2),
+            capabilities=capabilities(),
+        ),
+        candidate_models(),
+    )
+
+    assert log_scored.report.ranking.metric is ScoreMetric.LOG_LOSS
+    assert "log-loss" in log_scored.report.ranking.reason
+    assert log_scored.report.to_dict()["ranking"]["metric"] == "log-loss"
+    assert brier_run.report.ranking.metric is ScoreMetric.BRIER
+    assert "brier" in brier_run.report.ranking.reason
+    # Including when nothing was resolved: an unseparated log-score family says nothing
+    # about the Brier score, and the record must not read as though it did.
+    settings = {"predictors": ("stimulus",), "choice_lags": 0, "l2": 0.5}
+    model = BernoulliHistoryGLM(**settings)
+    unresolved = run_protocol(
+        compiled_small_protocol(
+            (declared_glm("static", **settings), declared_glm("smooth", **settings))
+        ),
+        {"static": model, "smooth": model},
+    )
+    assert unresolved.report.ranking.status is RankingStatus.UNRESOLVED
+    assert "log-loss" in unresolved.report.ranking.reason
+
+
+def test_a_candidate_that_cannot_carry_a_declared_rule_is_refused_at_declaration() -> None:
+    """The refusal is a finding about the candidate, recorded before any fold is fitted.
+
+    ``BrierlessGLM`` predicts exactly what the GLM beside it predicts, and declares that it
+    cannot be scored by a probability rule. The run keeps going -- erasing the other
+    candidate's evidence over one candidate's declaration would make the record less
+    informative than the finding it reports -- and the refused candidate is ineligible, has
+    no scored folds, and names both itself and the rule.
+    """
+
+    class BrierlessGLM(BernoulliHistoryGLM):
+        supported_score_metrics = (ScoreMetric.LOG_LOSS, ScoreMetric.JOINT_LOG_LOSS)
+
+    models = {
+        "static": BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=0.1),
+        "smooth": BrierlessGLM(predictors=("stimulus",), choice_lags=0, l2=1.0),
+    }
+
+    run = run_protocol(compiled_two_column_protocol(), models)
+
+    refused = run.report.candidates[1]
+    assert refused.name == "smooth"
+    assert not refused.eligible
+    assert refused.folds == () and refused.scores == ()
+    assert refused.declaration_failure is not None
+    message = refused.declaration_failure.message
+    assert "'smooth'" in message and "'brier'" in message
+    assert run.report.candidates[0].eligible
+    assert run.report.ranking.eligible_candidates == ("static",)

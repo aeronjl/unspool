@@ -315,7 +315,11 @@ def test_brier_scoring_requires_one_binary_outcome_column() -> None:
             protocol,
             observations=observations,
             candidates=candidates,
-            comparison=replace(protocol.comparison, metric=ScoreMetric.BRIER),
+            comparison=replace(
+                protocol.comparison,
+                metric=ScoreMetric.BRIER,
+                metrics=(ScoreMetric.BRIER,),
+            ),
         )
 
 
@@ -427,6 +431,7 @@ def test_a_version_one_payload_still_loads_and_keeps_its_own_fingerprint() -> No
     recorded = json.loads(protocol.canonical_json())
     # Exactly what a protocol frozen before either member existed looks like on disk.
     del recorded["comparison"]["multiplicity"]
+    del recorded["comparison"]["metrics"]
     for candidate in recorded["candidates"]:
         del candidate["inference"]
     recorded["schema_version"] = "behavio.study-protocol/1"
@@ -439,6 +444,75 @@ def test_a_version_one_payload_still_loads_and_keeps_its_own_fingerprint() -> No
     assert restored.fingerprint == recorded["lifecycle"][0]["artifact_fingerprint"]
     assert json.loads(restored.canonical_json()) == recorded
     assert restored.state is ProtocolState.FROZEN
+
+
+def test_a_version_three_payload_keeps_its_fingerprint_and_declares_one_score_column() -> None:
+    """Version 3 reported exactly one score column, so nothing is left unsaid by supplying it.
+
+    The metric set follows the ``CandidateSpec.inference`` precedent rather than the
+    ``multiplicity`` one: a version-3 runner produced one ``ScoreSummary``, under the metric
+    the protocol already declared, so ``(metric,)`` is the only value its era could express.
+    The member is supplied on the way in and omitted on the way out, and the declaration
+    nobody amended keeps the content address its freeze event quotes.
+    """
+
+    protocol = example_protocol().freeze()
+    recorded = json.loads(protocol.canonical_json())
+    # Exactly what a protocol frozen under version 3 looks like on disk.
+    del recorded["comparison"]["metrics"]
+    recorded["schema_version"] = "behavio.study-protocol/3"
+    recorded["lifecycle"][0]["artifact_fingerprint"] = _legacy_fingerprint(recorded)
+
+    restored = protocol_from_dict(recorded)
+
+    assert restored.schema_version == "behavio.study-protocol/3"
+    assert restored.comparison.metrics == (restored.comparison.metric,)
+    assert restored.fingerprint == recorded["lifecycle"][0]["artifact_fingerprint"]
+    assert json.loads(restored.canonical_json()) == recorded
+
+
+def test_a_superseded_schema_cannot_smuggle_in_a_metric_set_it_predates() -> None:
+    with pytest.raises(ProtocolValidationError, match="predates the comparison metric set"):
+        replace(
+            example_protocol(),
+            schema_version="behavio.study-protocol/3",
+            comparison=replace(
+                example_protocol().comparison,
+                metrics=(ScoreMetric.LOG_LOSS, ScoreMetric.BRIER),
+            ),
+        )
+    recorded = json.loads(example_protocol().canonical_json())
+    recorded["schema_version"] = "behavio.study-protocol/3"
+    with pytest.raises(ProtocolValidationError, match="predates the comparison metric set"):
+        protocol_from_dict(recorded)
+
+
+def test_a_declared_metric_set_round_trips_and_changes_the_content_address() -> None:
+    """The table's columns are a scientific commitment, so they are part of the identity."""
+
+    one_column = example_protocol()
+    two_columns = replace(
+        one_column,
+        comparison=replace(
+            one_column.comparison, metrics=(ScoreMetric.LOG_LOSS, ScoreMetric.BRIER)
+        ),
+    )
+
+    restored = protocol_from_json(two_columns.canonical_json())
+
+    assert one_column.comparison.metrics == (ScoreMetric.LOG_LOSS,)
+    assert restored.comparison.metrics == (ScoreMetric.LOG_LOSS, ScoreMetric.BRIER)
+    assert restored == two_columns
+    assert restored.fingerprint == two_columns.fingerprint
+    assert one_column.fingerprint != two_columns.fingerprint
+
+
+def test_the_verdict_rule_must_be_one_of_the_columns_the_table_carries() -> None:
+    with pytest.raises(ProtocolValidationError, match="verdict is read on"):
+        replace(
+            example_protocol(),
+            comparison=replace(example_protocol().comparison, metrics=(ScoreMetric.BRIER,)),
+        )
 
 
 def _legacy_fingerprint(recorded: dict) -> str:

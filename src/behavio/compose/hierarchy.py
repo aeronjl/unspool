@@ -40,6 +40,7 @@ from behavio.contracts.compose import (
     validate_predictor_shape,
 )
 from behavio.contracts.estimator import (
+    DensityPrediction,
     FitDiagnostics,
     FitResult,
     ModelDataError,
@@ -767,6 +768,47 @@ class HierarchicalModel(Describable):
     @property
     def coefficient_names(self) -> tuple[str, ...]:
         return tuple(getattr(self.model, "coefficient_names", self.model.parameter_names))
+
+    @property
+    def density_outcome(self) -> str:
+        """The continuous column a pooled density prediction tabulates, when there is one.
+
+        Pooling a coefficient across groups does not change what kind of prediction the
+        model makes, so this is forwarded exactly as `categories` is, and absence is how a
+        pooled logistic GLM says it names no density.
+
+        This is load-bearing beyond the protocol it satisfies: `model_score_metrics`
+        derives a candidate's scoring rules from `density_outcome` and `categories`, so a
+        wrapper that dropped it would claim a Brier column its own predictions cannot
+        produce, and `compare_models` would admit a candidate at declaration that then
+        failed at scoring time.
+        """
+
+        declared = getattr(self.model, "density_outcome", None)
+        if declared is None:
+            raise AttributeError(
+                f"{type(self.model).__name__} predicts no continuous outcome, so pooling it "
+                "tabulates no density either"
+            )
+        return str(declared)
+
+    def predict_density(
+        self,
+        study: Study,
+        fit: FitResult,
+        *,
+        mode: PredictionMode = PredictionMode.FILTERED,
+    ) -> DensityPrediction:
+        """Return the pooled predictive density, which is what ``predict`` returns."""
+
+        declared = self.density_outcome
+        prediction = self.predict(study, fit, prediction_mode=mode)
+        if not isinstance(prediction, DensityPrediction) or prediction.outcome != declared:
+            raise TypeError(
+                f"{self.model.model_name} declares a density over {declared!r} but predicted "
+                f"a {type(prediction).__name__}"
+            )
+        return prediction
 
     @property
     def categories(self) -> tuple[Any, ...]:

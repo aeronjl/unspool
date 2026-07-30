@@ -9,11 +9,13 @@ import pytest
 
 from behavio import (
     BernoulliHistoryGLM,
+    ScoreMetric,
     Study,
     cohort_forward_session_splits,
     compare_models,
     nested_select_model,
 )
+from behavio.compare import DEFAULT_COMPARISON_METRICS, UndeclaredMetric
 from behavio.compose import smooth
 from behavio.contracts import (
     BehaviourEstimator,
@@ -379,3 +381,122 @@ def test_comparison_rejects_implicit_interpolation_and_invalid_contracts() -> No
             lambda _study: (),
             bootstrap_resamples=10,
         )
+
+
+def test_declaring_the_default_metrics_is_the_comparison_that_declares_nothing() -> None:
+    """A caller who names nothing gets the table this function has always produced.
+
+    The stronger statement -- that the *serialized* default table is byte-identical to the
+    one recorded before the metric set existed -- is made by the pinned fixture in
+    ``tests/test_posterior_estimator_wiring.py``, which predates this declaration entirely.
+    """
+
+    study = comparison_study()
+    splits = cohort_forward_session_splits(study, min_train_sessions=5)
+
+    implicit = compare_models(candidates(), study, splits, bootstrap_resamples=100)
+    explicit = compare_models(
+        candidates(),
+        study,
+        splits,
+        bootstrap_resamples=100,
+        metrics=DEFAULT_COMPARISON_METRICS,
+    )
+
+    assert implicit.metrics == (ScoreMetric.LOG_LOSS, ScoreMetric.BRIER)
+    assert implicit.ranked_by is ScoreMetric.LOG_LOSS
+    assert implicit.to_dict() == explicit.to_dict()
+    # The declaration is recoverable from the record, and a default record does not carry
+    # a key that a record written before the declaration existed could not have carried.
+    assert "declared_metrics" not in implicit.to_dict()
+
+
+def test_a_brier_ranked_table_says_so_everywhere_the_verdict_appears() -> None:
+    """Declaration order is the ranking rule, and the record is spelled with it."""
+
+    study = comparison_study()
+    splits = cohort_forward_session_splits(study, min_train_sessions=5)
+
+    report = compare_models(
+        candidates(),
+        study,
+        splits,
+        bootstrap_resamples=100,
+        metrics=(ScoreMetric.BRIER, ScoreMetric.LOG_LOSS),
+    )
+
+    assert report.ranked_by is ScoreMetric.BRIER
+    assert report.winner == min(
+        report.model_order,
+        key=lambda name: report.result_for(name).unit_balanced_brier_score,
+    )
+    assert report.pairwise_comparisons[0].metric is ScoreMetric.BRIER
+    payload = report.to_dict()
+    assert payload["declared_metrics"] == ["brier", "log-loss"]
+    assert payload["winner_policy"] == "lowest unit-balanced brier score among non-failed audits"
+    assert payload["winner_by_unit_balanced_brier_score"] == report.winner
+    assert "pairwise_brier_score_differences" in payload
+    static = report.result_for("static")
+    assert static.unit_balanced_brier_interval.estimate == pytest.approx(
+        static.unit_balanced_brier_score
+    )
+    # Both columns are carried; only the ranked one is bootstrapped.
+    assert set(payload["models"]["static"]["unit_scores"][0]) == {
+        "unit",
+        "brier_score",
+        "log_loss",
+    }
+    with pytest.raises(UndeclaredMetric, match="holds no 'log-loss' interval"):
+        _ = static.unit_balanced_log_loss_interval
+
+
+def test_an_unsupported_or_malformed_metric_declaration_is_refused() -> None:
+    study = comparison_study()
+    splits = cohort_forward_session_splits(study, min_train_sessions=5)
+
+    with pytest.raises(ValueError, match="at least one scoring rule"):
+        compare_models(candidates(), study, splits, bootstrap_resamples=10, metrics=())
+    with pytest.raises(ValueError, match="same scoring rule twice"):
+        compare_models(
+            candidates(),
+            study,
+            splits,
+            bootstrap_resamples=10,
+            metrics=(ScoreMetric.LOG_LOSS, ScoreMetric.LOG_LOSS),
+        )
+    with pytest.raises(TypeError, match="not one rule"):
+        compare_models(
+            candidates(), study, splits, bootstrap_resamples=10, metrics=ScoreMetric.LOG_LOSS
+        )
+    # The log column already scores every declared column jointly, so the protocol's name
+    # for that same quantity is refused rather than admitted as a second heading.
+    with pytest.raises(ValueError, match="already scores the complete observation"):
+        compare_models(
+            candidates(),
+            study,
+            splits,
+            bootstrap_resamples=10,
+            metrics=(ScoreMetric.JOINT_LOG_LOSS,),
+        )
+
+
+def test_nested_selection_carries_its_declared_metric_through_every_inner_report() -> None:
+    study = comparison_study()
+
+    nested = nested_select_model(
+        candidates(),
+        study,
+        cohort_forward_session_splits(study, min_train_sessions=5),
+        lambda training: cohort_forward_session_splits(training, min_train_sessions=3),
+        bootstrap_resamples=100,
+        inner_bootstrap_resamples=50,
+        metrics=(ScoreMetric.LOG_LOSS,),
+        backend="thread",
+    )
+
+    assert nested.metrics == (ScoreMetric.LOG_LOSS,)
+    assert nested.ranked_by is ScoreMetric.LOG_LOSS
+    assert all(fold.inner_report.metrics == (ScoreMetric.LOG_LOSS,) for fold in nested.folds)
+    assert nested.to_dict()["declared_metrics"] == ["log-loss"]
+    with pytest.raises(UndeclaredMetric, match="carries no 'brier' column"):
+        _ = nested.pooled_brier_score

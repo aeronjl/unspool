@@ -65,6 +65,7 @@ from behavio.contracts.estimator import (
     ModelPrediction,
     PredictionMode,
     model_capabilities,
+    model_score_metrics,
     model_task_columns,
     validate_model_identity,
     validate_parameter_names,
@@ -284,6 +285,7 @@ def posterior_model_capabilities(model: PosteriorBehaviourEstimator) -> ModelCap
         required_task_columns=model_task_columns(model),
         is_sampled=True,
         can_bind_design=bindable,
+        score_metrics=model_score_metrics(model),
     )
 
 

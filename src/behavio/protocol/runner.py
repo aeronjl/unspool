@@ -59,10 +59,16 @@ from behavio.compare.models import (
     ComparisonFamily,
     ComparisonMultiplicity,
     PairedComparison,
+    UnscoreableByBrier,
     bootstrap_interval,
     paired_comparisons,
+    refuse_undeclarable_candidate,
 )
-from behavio.contracts.posterior import AnyBehaviourEstimator, is_posterior_estimator
+from behavio.contracts.posterior import (
+    AnyBehaviourEstimator,
+    any_model_capabilities,
+    is_posterior_estimator,
+)
 from behavio.diagnostics import FitAuditStatus
 from behavio.evaluate.folds import (
     CandidateDeclarationError,
@@ -407,16 +413,17 @@ class CandidateRun:
     failures: tuple[FoldFailure, ...]
     fold_predictions: tuple[tuple[PointwisePrediction, ...], ...]
     unit_scores: tuple[UnitScore, ...]
-    score: ScoreSummary | None
+    scores: tuple[ScoreSummary, ...]
     calibration: CalibrationSummary
     declaration_failure: FoldFailure | None = None
     """Why this candidate never entered the fold loop, when it did not.
 
-    An object that does not satisfy the estimator contract, or that does not support the
-    prediction mode the plan needs, fails before any fold is attempted. That is a finding
-    about the candidate, so the run keeps going -- but it is *not* a per-fold finding, and
-    manufacturing one ``FoldFailure`` per fold would archive an assertion that N folds were
-    attempted when none were. ``fold`` on this record names the candidate, not a fold.
+    An object that does not satisfy the estimator contract, that does not support the
+    prediction mode the plan needs, or that cannot carry a scoring rule the comparison
+    declared, fails before any fold is attempted. That is a finding about the candidate, so
+    the run keeps going -- but it is *not* a per-fold finding, and manufacturing one
+    ``FoldFailure`` per fold would archive an assertion that N folds were attempted when
+    none were. ``fold`` on this record names the candidate, not a fold.
     """
 
     def __post_init__(self) -> None:
@@ -427,6 +434,30 @@ class CandidateRun:
                 raise ValueError("a scored fold must retain one pointwise record per scored row")
         if self.declaration_failure is not None and self.folds:
             raise ValueError("a candidate that failed its declaration cannot have scored folds")
+        summaries = tuple(self.scores)
+        metrics = tuple(summary.metric for summary in summaries)
+        if len(set(metrics)) != len(metrics):
+            raise ValueError("a candidate run carries one summary per declared scoring rule")
+        object.__setattr__(self, "scores", summaries)
+
+    @property
+    def score(self) -> ScoreSummary | None:
+        """The summary under the rule the verdict is read on, which is declared first.
+
+        Every other declared rule is a further column of the same table and is retained in
+        ``scores``; this one is what the winner policy and every paired contrast read.
+        """
+
+        return self.scores[0] if self.scores else None
+
+    def score_for(self, metric: ScoreMetric) -> ScoreSummary | None:
+        """Return this candidate's summary under one declared rule, if it carries one."""
+
+        requested = ScoreMetric(metric)
+        for summary in self.scores:
+            if summary.metric == requested:
+                return summary
+        return None
 
     @property
     def predictions(self) -> tuple[PointwisePrediction, ...]:
@@ -475,56 +506,63 @@ class CandidateRun:
         return FitAuditStatus.PASS
 
     @property
+    def _log_summary(self) -> ScoreSummary | None:
+        """The declared log-score summary under either of its two spellings."""
+
+        for summary in self.scores:
+            if summary.metric in (ScoreMetric.LOG_LOSS, ScoreMetric.JOINT_LOG_LOSS):
+                return summary
+        return None
+
+    @property
     def unit_balanced_log_loss(self) -> float | None:
         """Mean score with each declared aggregation unit weighted equally."""
 
-        if self.score is None or self.score.metric not in (
-            ScoreMetric.LOG_LOSS,
-            ScoreMetric.JOINT_LOG_LOSS,
-        ):
-            return None
-        return self.score.unit_balanced_score
+        summary = self._log_summary
+        return None if summary is None else summary.unit_balanced_score
 
     @property
     def pooled_log_loss(self) -> float | None:
         """Pooled log loss when log score was declared."""
 
-        return self.score.pooled_score if self.unit_balanced_log_loss is not None else None
+        summary = self._log_summary
+        return None if summary is None else summary.pooled_score
 
     @property
     def unit_balanced_log_loss_interval(self) -> BootstrapInterval | None:
         """Equal-unit log-loss interval when log score was declared."""
 
-        return (
-            self.score.unit_balanced_interval if self.unit_balanced_log_loss is not None else None
-        )
+        summary = self._log_summary
+        return None if summary is None else summary.unit_balanced_interval
 
     @property
     def unit_balanced_brier_score(self) -> float | None:
         """Equal-unit Brier score when Brier scoring was declared."""
 
-        if self.score is None or self.score.metric != ScoreMetric.BRIER:
-            return None
-        return self.score.unit_balanced_score
+        summary = self.score_for(ScoreMetric.BRIER)
+        return None if summary is None else summary.unit_balanced_score
 
     @property
     def pooled_brier_score(self) -> float | None:
         """Pooled Brier score when Brier scoring was declared."""
 
-        return self.score.pooled_score if self.unit_balanced_brier_score is not None else None
+        summary = self.score_for(ScoreMetric.BRIER)
+        return None if summary is None else summary.pooled_score
 
     @property
     def unit_balanced_brier_interval(self) -> BootstrapInterval | None:
         """Equal-unit Brier interval when Brier scoring was declared."""
 
-        return (
-            self.score.unit_balanced_interval
-            if self.unit_balanced_brier_score is not None
-            else None
-        )
+        summary = self.score_for(ScoreMetric.BRIER)
+        return None if summary is None else summary.unit_balanced_interval
 
     def to_dict(self, *, retain_predictions: bool = True) -> dict[str, Any]:
-        """Return complete candidate evidence without executable serialization."""
+        """Return complete candidate evidence without executable serialization.
+
+        ``score`` is the verdict rule's summary and ``scores`` is the whole declared table,
+        verdict rule first. A comparison that declares one rule -- which is every comparison
+        recorded before the metric set was declarable -- writes the same summary in both.
+        """
 
         return {
             "name": self.name,
@@ -541,6 +579,7 @@ class CandidateRun:
             ),
             "unit_scores": [_json_safe(asdict(score)) for score in self.unit_scores],
             "score": self.score.to_dict() if self.score else None,
+            "scores": [summary.to_dict() for summary in self.scores],
             "pooled_log_loss": self.pooled_log_loss,
             "unit_balanced_log_loss": self.unit_balanced_log_loss,
             "unit_balanced_log_loss_interval": (
@@ -566,6 +605,12 @@ class Ranking:
     ``family`` records the simultaneous family the winner rule was read against. It is
     retained whether or not a winner was named, so a reader can always see how many
     contrasts were examined to produce the verdict.
+
+    ``metric`` records the *scoring rule* the verdict was read on, and ``reason`` says so in
+    prose. A candidate that wins on the log score and a candidate that wins on the Brier
+    score are two different claims -- the first is about the whole predicted observation,
+    the second about the discrete margin alone -- and a verdict that does not name its rule
+    cannot be checked against the protocol that declared it.
     """
 
     status: RankingStatus
@@ -573,22 +618,25 @@ class Ranking:
     eligible_candidates: tuple[str, ...]
     reason: str
     family: ComparisonFamily
+    metric: ScoreMetric = ScoreMetric.LOG_LOSS
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "status", RankingStatus(self.status))
+        object.__setattr__(self, "metric", ScoreMetric(self.metric))
         if (self.status == RankingStatus.RESOLVED) != (self.winner is not None):
             raise ValueError("ranking winner must exist exactly when status is resolved")
         if not isinstance(self.family, ComparisonFamily):
             raise TypeError("ranking family must be a ComparisonFamily")
 
     def to_dict(self) -> dict[str, Any]:
-        """Return the verdict beside the family it was read against."""
+        """Return the verdict beside the rule and the family it was read against."""
 
         return {
             "status": self.status.value,
             "winner": self.winner,
             "eligible_candidates": list(self.eligible_candidates),
             "reason": self.reason,
+            "metric": self.metric.value,
             "family": self.family.to_dict(),
         }
 
@@ -1274,7 +1322,7 @@ def run_nested_protocol(
                 bootstrap_repetitions=selection.bootstrap_repetitions,
                 bootstrap_seed=selection.seed + outer_index + 1,
                 interval_level=protocol.comparison.interval_level,
-                metric=selection.metric,
+                metrics=(selection.metric,),
                 posterior_policy=posterior_policy,
             )
             for name in selection.candidate_names
@@ -1305,7 +1353,7 @@ def run_nested_protocol(
             bootstrap_repetitions=protocol.comparison.bootstrap_repetitions,
             bootstrap_seed=protocol.comparison.seed + outer_index,
             interval_level=protocol.comparison.interval_level,
-            metric=protocol.comparison.metric,
+            metrics=_declared_run_metrics(protocol.comparison),
             posterior_policy=posterior_policy,
         )
         fold_runs.append(NestedFold(outer.identifier, selected, inner_results, outer_result))
@@ -1367,9 +1415,22 @@ def _run_candidate(
         bootstrap_repetitions=comparison.bootstrap_repetitions,
         bootstrap_seed=comparison.seed,
         interval_level=comparison.interval_level,
-        metric=comparison.metric,
+        metrics=_declared_run_metrics(comparison),
         posterior_policy=posterior_policy,
     )
+
+
+def _declared_run_metrics(comparison: Any) -> tuple[ScoreMetric, ...]:
+    """Return the declared metric set with the verdict rule first.
+
+    ``ComparisonSpec`` declares the table and the verdict rule separately, and the verdict
+    rule may sit anywhere in the table. The runner puts it first so that
+    ``CandidateRun.score`` -- the summary the winner policy and every paired contrast read --
+    is the first of ``CandidateRun.scores`` rather than a member found by search.
+    """
+
+    verdict = ScoreMetric(comparison.metric)
+    return (verdict, *(metric for metric in comparison.metrics if metric != verdict))
 
 
 def _run_candidate_folds(
@@ -1383,7 +1444,7 @@ def _run_candidate_folds(
     bootstrap_repetitions: int,
     bootstrap_seed: int,
     interval_level: float,
-    metric: ScoreMetric,
+    metrics: tuple[ScoreMetric, ...],
     posterior_policy: PosteriorFoldPolicy | None = None,
 ) -> CandidateRun:
     """Evaluate one candidate over compiled folds, retaining rather than raising failures.
@@ -1392,6 +1453,12 @@ def _run_candidate_folds(
     :class:`~behavio.contracts.fold.EvaluationFold` contract, hands the work to
     :func:`~behavio.evaluate.folds.evaluate_splits`, and projects the result into the portable
     records a protocol artifact needs.
+
+    ``metrics`` is the declared metric set, **verdict rule first**. One summary is produced
+    per declared rule, and a candidate whose contract cannot support one of them never
+    enters the fold loop at all: the refusal is recorded as its ``declaration_failure``,
+    naming the candidate and the rule, exactly as a candidate that does not satisfy the
+    estimator contract is.
 
     ``evaluate_splits`` dispatches on the contract the candidate satisfies, so a sampled one
     is sampled, audited and projected without a second loop here. The posterior policy is
@@ -1402,6 +1469,24 @@ def _run_candidate_folds(
 
     splits = tuple(_compiled_fold_split(fold) for fold in plan_folds)
     declaration_failure: FoldFailure | None = None
+    unsupported = _unsupported_metrics(name, model, metrics)
+    if unsupported is not None:
+        return CandidateRun(
+            name=name,
+            model_signature=model.signature,
+            folds=(),
+            failures=(),
+            fold_predictions=(),
+            unit_scores=(),
+            scores=(),
+            calibration=_calibration((), study, outcome_column),
+            declaration_failure=FoldFailure(
+                fold=name,
+                stage=FoldStage.FIT,
+                exception_type=type(unsupported).__name__,
+                message=str(unsupported),
+            ),
+        )
     try:
         evaluated = evaluate_splits(
             model,
@@ -1434,19 +1519,22 @@ def _run_candidate_folds(
     fold_predictions = tuple(_pointwise_predictions(evaluation, units) for evaluation in evaluated)
     predictions = tuple(chain.from_iterable(fold_predictions))
     unit_scores = _unit_scores(predictions, study, outcome_column)
-    score = (
-        _score_summary(
-            unit_scores,
-            predictions,
-            study,
-            outcome_column,
-            metric=metric,
-            repetitions=bootstrap_repetitions,
-            seed=bootstrap_seed,
-            confidence=interval_level,
+    scores = (
+        tuple(
+            _score_summary(
+                unit_scores,
+                predictions,
+                study,
+                outcome_column,
+                metric=metric,
+                repetitions=bootstrap_repetitions,
+                seed=bootstrap_seed,
+                confidence=interval_level,
+            )
+            for metric in metrics
         )
         if unit_scores
-        else None
+        else ()
     )
     return CandidateRun(
         name=name,
@@ -1455,10 +1543,37 @@ def _run_candidate_folds(
         failures=evaluated.failures,
         fold_predictions=fold_predictions,
         unit_scores=unit_scores,
-        score=score,
+        scores=scores,
         calibration=_calibration(predictions, study, outcome_column),
         declaration_failure=declaration_failure,
     )
+
+
+def _unsupported_metrics(
+    name: str, model: AnyBehaviourEstimator, metrics: tuple[ScoreMetric, ...]
+) -> Exception | None:
+    """Return the refusal a declared rule earns this candidate, or ``None``.
+
+    The check is :func:`behavio.compare.models.refuse_undeclarable_candidate`, so an
+    interactive comparison and a frozen protocol refuse the same candidate for the same
+    reason in the same words. Only the *handling* differs: raising stops an interactive
+    call, while a protocol run records the finding and keeps evaluating the candidates the
+    declaration does fit.
+
+    A candidate that cannot describe its capabilities at all is not refused here. That is a
+    failure of the estimator contract rather than of the metric declaration, and
+    ``evaluate_splits`` raises it with the precision the object deserves.
+    """
+
+    try:
+        capabilities = any_model_capabilities(model)
+    except (ValueError, TypeError):
+        return None
+    try:
+        refuse_undeclarable_candidate(name, capabilities, metrics)
+    except UnscoreableByBrier as error:
+        return error
+    return None
 
 
 @dataclass(frozen=True, slots=True)
@@ -1738,35 +1853,49 @@ def _rank(
     policy: WinnerPolicy,
     metric: ScoreMetric,
 ) -> Ranking:
+    """Apply the frozen winner policy, and say which scoring rule produced the verdict.
+
+    Every ``reason`` names ``metric``, including the two that name no winner: a comparison
+    that could not separate its candidates on the log score has not established that they
+    are indistinguishable on the Brier score, and the record should not read as though it
+    had.
+    """
+
     eligible = tuple(candidate for candidate in candidates if candidate.eligible)
     names = tuple(candidate.name for candidate in eligible)
+    rule = ScoreMetric(metric)
     if not eligible:
         return Ranking(
             RankingStatus.NO_ELIGIBLE_CANDIDATE,
             None,
             (),
-            "every candidate failed execution or numerical audit",
+            f"every candidate failed execution or numerical audit, so no {rule.value} "
+            "verdict was read",
             family,
+            rule,
         )
     if policy == WinnerPolicy.NO_AUTOMATIC_WINNER:
         return Ranking(
             RankingStatus.UNRESOLVED,
             None,
             names,
-            "the protocol forbids automatic winner selection",
+            f"the protocol forbids automatic winner selection on the declared {rule.value} score",
             family,
+            rule,
         )
     best = min(
         eligible,
-        key=lambda candidate: _candidate_score(candidate, metric),
+        key=lambda candidate: _candidate_score(candidate, rule),
     ).name
     if policy == WinnerPolicy.LOWEST_POINT_ESTIMATE or len(eligible) == 1:
         return Ranking(
             RankingStatus.RESOLVED,
             best,
             names,
-            "winner follows the frozen lowest-point-estimate policy",
+            f"winner follows the frozen lowest-point-estimate policy on the declared "
+            f"{rule.value} score",
             family,
+            rule,
         )
     undecided = tuple(
         other
@@ -1779,11 +1908,12 @@ def _rank(
             best,
             names,
             (
-                f"the best candidate improves on every eligible competitor across all "
-                f"{family.n_comparisons} simultaneous contrasts "
-                f"{_adjustment_phrase(family)}"
+                f"the best candidate improves on every eligible competitor on the declared "
+                f"{rule.value} score across all {family.n_comparisons} simultaneous "
+                f"contrasts {_adjustment_phrase(family)}"
             ),
             family,
+            rule,
         )
     return Ranking(
         RankingStatus.UNRESOLVED,
@@ -1791,12 +1921,13 @@ def _rank(
         names,
         (
             f"{len(undecided)} of {len(names) - 1} contrasts against the leading candidate "
-            f"do not exclude equal predictive performance across the family of "
-            f"{family.n_comparisons} simultaneous contrasts "
+            f"do not exclude equal predictive performance on the declared {rule.value} "
+            f"score across the family of {family.n_comparisons} simultaneous contrasts "
             f"({family.n_decisive} decisive {_adjustment_phrase(family)}; "
             f"{family.n_separated} separated on the unadjusted interval alone)"
         ),
         family,
+        rule,
     )
 
 

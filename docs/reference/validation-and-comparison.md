@@ -47,6 +47,20 @@ reach the same two types rather than growing copies of them.
       show_root_heading: true
       show_source: false
 
+### The declared metric set
+
+`ScoreMetric` lives beside the same arithmetic and for the same reason: a frozen protocol
+must be able to *declare* a scoring rule before any data is seen, and this module must be
+able to *apply* it without importing the protocol package back. It is re-exported from the
+top-level `behavio` namespace, because `compare_models(metrics=...)` cannot be written
+without naming a rule. `UnscoreableByBrier` and `UndeclaredMetric` stay at
+`behavio.compare`.
+
+::: behavio.compare.models.ScoreMetric
+    options:
+      show_root_heading: true
+      show_source: false
+
 ## Parameter-trajectory shapes
 
 ::: behavio.compare.parameter_trajectories

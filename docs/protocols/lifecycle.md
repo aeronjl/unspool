@@ -85,11 +85,12 @@ The current schema identifier is embedded in every protocol. Unknown schema vers
 rejected rather than guessed. Canonical JSON sorts keys, uses deterministic separators,
 and rejects non-finite or executable values, making fingerprints stable across processes.
 
-The current version is `behavio.study-protocol/3`. Three superseded names are still read:
+The current version is `behavio.study-protocol/4`. Four superseded names are still read:
 
 | Superseded name | What it lacks | How it is read |
 | --- | --- | --- |
-| `behavio.study-protocol/2` | `CandidateSpec.inference` | every candidate is read as `optimized`, which is the only kind its runner could execute |
+| `behavio.study-protocol/3` | `ComparisonSpec.metrics` | the table carries the one column its runner reported, `(metric,)` |
+| `behavio.study-protocol/2` | that, and `CandidateSpec.inference` | every candidate is read as `optimized`, which is the only kind its runner could execute |
 | `behavio.study-protocol/1` | that, and `ComparisonSpec.multiplicity` | the adjustment its runner applied unconditionally, `benjamini-hochberg`, is supplied too |
 | `unspool.study-protocol/1` | the same as version 1; the package was renamed | read as-is otherwise |
 
@@ -97,10 +98,10 @@ A protocol reconstructed from a superseded payload **keeps its recorded schema n
 its fingerprint**. A frozen protocol is content-addressed and its own freeze event quotes
 that address, so writing a member its author never declared into the payload would change
 the identity of a declaration nobody amended, and would invalidate every lifecycle event
-recorded against it. `to_dict` therefore omits `multiplicity` from a version 1 record and
-`inference` from a version 1 or 2 record, and `StudyProtocol` refuses to construct such a
-protocol carrying any value other than the one its era could express — so nothing
-distinguishable is ever dropped.
+recorded against it. `to_dict` therefore omits `multiplicity` from a version 1 record,
+`inference` from a version 1 or 2 record and `metrics` from anything before version 4, and
+`StudyProtocol` refuses to construct such a protocol carrying any value other than the one
+its era could express — so nothing distinguishable is ever dropped.
 
 `amend` stamps the current schema version on the new draft. An amendment is a new
 declaration with a new fingerprint, linked to its parent by

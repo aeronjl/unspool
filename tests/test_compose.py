@@ -455,3 +455,39 @@ def test_a_composed_model_reports_both_of_its_axes_to_describe() -> None:
     assert paths.describe().clock == "session_order"
     assert pooled.describe().clock == "session_order"
     assert pooled.describe().group == "subject"
+
+
+def test_a_composed_continuous_model_does_not_claim_a_brier_column() -> None:
+    """A wrapper must not declare a scoring rule its own predictions cannot produce.
+
+    `model_score_metrics` derives a candidate's rules from `density_outcome` and
+    `categories`, so a combinator that forgets to forward the density silently promotes an
+    unlabelled-density family to one with a discrete margin. `compare_models` would then
+    admit it at declaration and fail on it at scoring time -- which is exactly the failure
+    the declaration was built to prevent.
+    """
+
+    from behavio.contracts import model_capabilities
+    from behavio.contracts.estimator import ScoreMetric
+    from behavio.models import DurationReproduction
+
+    duration = DurationReproduction()
+    choice = BernoulliHistoryGLM(predictors=("stimulus",))
+    knots = (0.0, 2.0)
+
+    composed_duration = (
+        smooth(duration, over="session_order", knots=knots),
+        hierarchical(duration, over="subject"),
+        hierarchical(smooth(duration, over="session_order", knots=knots), over="subject"),
+    )
+    for model in (duration, *composed_duration):
+        assert ScoreMetric.BRIER not in model_capabilities(model).score_metrics
+        assert ScoreMetric.LOG_LOSS in model_capabilities(model).score_metrics
+
+    # The forwarding must be a forward, not a blanket denial: a choice model keeps its
+    # discrete margin through the same wrappers.
+    assert ScoreMetric.BRIER in model_capabilities(choice).score_metrics
+    assert (
+        ScoreMetric.BRIER
+        in model_capabilities(smooth(choice, over="session_order", knots=knots)).score_metrics
+    )

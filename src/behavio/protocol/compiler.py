@@ -716,7 +716,7 @@ def _audit_protocol_capabilities(
                 )
             )
     metrics = {
-        protocol.comparison.metric,
+        *protocol.comparison.metrics,
         *((protocol.selection.metric,) if protocol.selection is not None else ()),
     }
     if ScoreMetric.BRIER in metrics:

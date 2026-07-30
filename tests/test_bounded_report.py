@@ -150,6 +150,7 @@ def test_report_labels_the_declared_brier_score() -> None:
         comparison=replace(
             protocol.comparison,
             metric=ScoreMetric.BRIER,
+            metrics=(ScoreMetric.BRIER,),
             bootstrap_repetitions=50,
         ),
     ).freeze()

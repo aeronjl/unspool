@@ -275,7 +275,9 @@ def test_brier_scoring_rejects_non_binary_outcomes_before_fit() -> None:
     # contract admits the value and the compiler's Brier audit is what refuses the plan.
     protocol = replace(
         protocol,
-        comparison=replace(protocol.comparison, metric=ScoreMetric.BRIER),
+        comparison=replace(
+            protocol.comparison, metric=ScoreMetric.BRIER, metrics=(ScoreMetric.BRIER,)
+        ),
         observations=(
             ObservationSpec("choice", ObservationRole.OUTCOME, ObservationDataType.CATEGORICAL),
             *protocol.observations[1:],

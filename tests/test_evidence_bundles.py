@@ -143,8 +143,31 @@ from behavio.report.evidence_bundles import (
 #: moved.
 #: Previously: bundle ``e78bf57f155820d75368db6d800358e1b8e19760757af2a93c53d55a46670140``,
 #: zip ``032b9257c65bfa86060f5bbfd1a1ddf45c252f355ee9f703542d3d9e4cba9c0e``.
-SCHEMA_1_BUNDLE_ID = "40bdb667115ce9ce6b15a7d7791ee6fb5c09187d87e14c42f10c7795917d3743"
-SCHEMA_1_ZIP_SHA256 = "956b9b10f011d1666223395fc488ec001cf928880fd82c19c0e75af39c31d55f"
+#:
+#: Recomputed a seventh time by ``behavio.study-protocol/4``, which adds
+#: ``ComparisonSpec.metrics``: the set of scoring rules the comparison table carries, beside
+#: the ``metric`` the verdict is read on. The seventeen archived files were again diffed one
+#: by one. **Three** differ in content and the rest only in the fingerprints they quote:
+#:
+#: ``protocol/protocol.json`` gains three lines, ``"metrics": ["log-loss"]``, and its
+#: ``schema_version`` moves from ``/3`` to ``/4``. This fixture declares one column, which is
+#: what every protocol recorded before the member existed necessarily reported, so the
+#: declaration gained a member and the design did not change.
+#:
+#: ``comparison/evaluation.json`` gains a ``scores`` array per candidate -- the declared
+#: table, verdict rule first -- whose single entry is byte-identical to the ``score`` object
+#: already beside it, and ``ranking`` gains ``"metric": "log-loss"``. ``ranking.reason``
+#: gains the clause ``on the declared log-loss score``. Every score, interval, probability,
+#: ``decisive`` flag and family statistic is unchanged.
+#:
+#: ``report/report.md`` prints the new schema version and the same extended ranking
+#: sentence. No estimate, score, interval, audit, prediction or study digest moved: the four
+#: files that carry them -- ``audits/fits.json``, ``predictions/pointwise.json``,
+#: ``execution/folds.json`` and the figure -- are byte-identical.
+#: Previously: bundle ``40bdb667115ce9ce6b15a7d7791ee6fb5c09187d87e14c42f10c7795917d3743``,
+#: zip ``956b9b10f011d1666223395fc488ec001cf928880fd82c19c0e75af39c31d55f``.
+SCHEMA_1_BUNDLE_ID = "5df4f934ca229707b0442f2d1bc0c13076bdd2a5ee19f2b4ff71cde63c62fe4f"
+SCHEMA_1_ZIP_SHA256 = "9fbb9e5f9699ae780823739d9e202233705a6366f2900380e23e31ca034bd688"
 
 
 def reported():

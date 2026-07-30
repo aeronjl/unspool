@@ -1273,3 +1273,51 @@ def test_composite_categories_keep_the_scalar_identity_rule_inside_a_tuple() -> 
             mode=PredictionMode.FILTERED,
             category_factors=("response", "confidence"),
         )
+
+
+def test_score_metrics_are_derived_from_the_prediction_contract_a_model_satisfies() -> None:
+    """What a candidate can be scored under is a fact about what it predicts.
+
+    Nothing in the model families had to be edited to gain this declaration, which is the
+    point: a model that names a ``density_outcome`` and no ``categories`` predicts an
+    unlabelled density, has no discrete margin, and therefore carries the log score and not
+    the Brier score. Everything else -- a probability, a categorical simplex, or a defective
+    density whose categories integrate to genuine choice probabilities -- carries all three.
+    """
+
+    from behavio.contracts.estimator import (
+        LOG_SCORE_METRICS,
+        PROBABILITY_SCORE_METRICS,
+        ScoreMetric,
+        model_score_metrics,
+    )
+    from behavio.models.patch_leaving import PatchLeaving
+    from behavio.models.scalar_timing import DurationReproduction
+
+    assert model_score_metrics(BernoulliHistoryGLM(choice_lags=1)) == PROBABILITY_SCORE_METRICS
+    assert ScoreMetric.BRIER in PROBABILITY_SCORE_METRICS
+    assert model_score_metrics(DurationReproduction()) == LOG_SCORE_METRICS
+    assert model_score_metrics(PatchLeaving()) == LOG_SCORE_METRICS
+    assert any_model_capabilities(PatchLeaving()).score_metrics == LOG_SCORE_METRICS
+
+    class _DeclaresItsOwn(BernoulliHistoryGLM):
+        supported_score_metrics = LOG_SCORE_METRICS
+
+    assert model_score_metrics(_DeclaresItsOwn(choice_lags=1)) == LOG_SCORE_METRICS
+
+
+def test_every_estimator_supports_the_log_score_and_a_capability_that_denies_it_is_refused() -> (
+    None
+):
+    """The log score is the joint log density of the scored observation; nothing lacks one."""
+
+    from behavio.contracts.estimator import ScoreMetric
+
+    with pytest.raises(ValueError, match="every estimator supports the log score"):
+        contracts.ModelCapabilities(
+            scored_columns=("choice",),
+            prediction_modes=(PredictionMode.FILTERED,),
+            can_simulate=False,
+            can_recover_parameters=False,
+            score_metrics=(ScoreMetric.BRIER,),
+        )

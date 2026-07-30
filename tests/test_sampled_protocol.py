@@ -184,6 +184,7 @@ def test_a_version_two_payload_still_loads_and_keeps_its_own_fingerprint() -> No
     # Exactly what a protocol frozen under version 2 looks like on disk.
     for candidate in recorded["candidates"]:
         del candidate["inference"]
+    del recorded["comparison"]["metrics"]
     recorded["schema_version"] = "behavio.study-protocol/2"
     recorded["lifecycle"][0]["artifact_fingerprint"] = _recorded_fingerprint(recorded)
 

@@ -9,6 +9,7 @@ moving (:class:`~behavio.observed.pose.PoseTrajectory`).
 """
 
 from behavio.compare.models import (
+    DEFAULT_COMPARISON_METRICS,
     BootstrapInterval,
     ComparisonFamily,
     ComparisonMultiplicity,
@@ -17,6 +18,8 @@ from behavio.compare.models import (
     PairedComparison,
     ProspectiveComparisonReport,
     ProspectiveModelResult,
+    ScoreMetric,
+    UndeclaredMetric,
     UnscoreableByBrier,
     bootstrap_interval,
     bootstrap_unit_draws,
@@ -35,6 +38,7 @@ from behavio.compare.parameter_trajectories import (
 )
 
 __all__ = [
+    "DEFAULT_COMPARISON_METRICS",
     "BootstrapInterval",
     "ComparisonFamily",
     "ComparisonMultiplicity",
@@ -46,8 +50,10 @@ __all__ = [
     "ParameterTrajectoryPanel",
     "ProspectiveComparisonReport",
     "ProspectiveModelResult",
+    "ScoreMetric",
     "TrajectoryReplicationAudit",
     "TrajectoryShapeComparisonReport",
+    "UndeclaredMetric",
     "UnscoreableByBrier",
     "audit_trajectory_replication",
     "bootstrap_interval",

@@ -27,12 +27,14 @@ from __future__ import annotations
 
 import itertools
 from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 import pytest
 
-from behavio import Study, compare_models, evaluate_splits, run_parameter_recovery
+from behavio import ScoreMetric, Study, compare_models, evaluate_splits, run_parameter_recovery
 from behavio.adapters.estimator_conformance import assert_behaviour_estimator_conforms
+from behavio.compare import UndeclaredMetric
 from behavio.compose import UniformChoiceGuess, hierarchical, mix, smooth
 from behavio.contracts.bounded import (
     BOUNDED_COORDINATE,
@@ -890,25 +892,29 @@ def test_a_reproduction_model_is_evaluated_on_its_density() -> None:
     )
 
 
-def test_comparing_two_reproduction_candidates_is_refused_by_name() -> None:
-    """A gap in the comparison layer, asserted rather than worked around.
-
-    ``compare_models`` reports a Brier score beside the log score, and a Brier score needs a
-    discrete margin. An unlabelled density has none, so the comparison refuses instead of
-    inventing one. ``evaluate_splits`` reports the log score, which *is* defined here; what
-    is missing is a way to ask ``compare_models`` for that half alone. The same refusal
-    reaches :class:`~behavio.models.patch_leaving.PatchLeaving`.
-    """
-
-    from behavio.compare.models import UnscoreableByBrier
-
+def _two_reproduction_candidates() -> tuple[Any, Any, Any, Any]:
     model = DurationReproduction()
     free = DurationReproduction(fixed_central_tendency=None)
     truth = model.parameters_from_components(clock_rate=1.0, weber_fraction=0.18)
     study = model.simulate(reproduction_design(["a", "b"], sessions=3), truth, seed=56)
-    splits = cohort_forward_session_splits(study, min_train_sessions=2, horizon=1)
+    return model, free, study, cohort_forward_session_splits(study, min_train_sessions=2, horizon=1)
 
-    with pytest.raises(UnscoreableByBrier, match="no categorical margin"):
+
+def test_a_declared_brier_column_is_refused_by_name_before_any_fold_is_fitted() -> None:
+    """The default table still refuses, and now refuses at declaration.
+
+    ``compare_models`` carries a Brier column by default, and a Brier score needs a discrete
+    margin. An unlabelled density has none, so the comparison refuses instead of inventing
+    one -- but it refuses from the candidate's own declared
+    :attr:`~behavio.contracts.ModelCapabilities.score_metrics`, before a single fold is
+    fitted, and the message names both the candidate and the rule that made it impossible.
+    """
+
+    from behavio.compare.models import UnscoreableByBrier
+
+    model, free, study, splits = _two_reproduction_candidates()
+
+    with pytest.raises(UnscoreableByBrier, match="no categorical margin") as refusal:
         compare_models(
             {"scalar": model, "vierordt": free},
             study,
@@ -916,6 +922,50 @@ def test_comparing_two_reproduction_candidates_is_refused_by_name() -> None:
             bootstrap_resamples=10,
             outcome_column="reproduced_duration",
         )
+    assert "'scalar'" in str(refusal.value) and "'brier'" in str(refusal.value)
+
+
+def test_two_reproduction_candidates_are_ranked_on_a_declared_log_score() -> None:
+    """The comparison table these families were locked out of, now reachable.
+
+    Declaring the log score alone is what SDR-0063 called the missing half: it is the joint
+    log density of the whole observation, it is defined for a density with no discrete
+    margin, and it is what ranks the two candidates here. The report says which rule decided
+    -- in ``ranked_by``, in the winner key and in the winner policy -- because a winner on
+    the log score and a winner on the Brier score are different claims.
+    """
+
+    model, free, study, splits = _two_reproduction_candidates()
+
+    report = compare_models(
+        {"scalar": model, "vierordt": free},
+        study,
+        splits,
+        bootstrap_resamples=64,
+        outcome_column="reproduced_duration",
+        metrics=(ScoreMetric.LOG_LOSS,),
+    )
+
+    assert report.metrics == (ScoreMetric.LOG_LOSS,)
+    assert report.ranked_by is ScoreMetric.LOG_LOSS
+    assert report.winner in {"scalar", "vierordt"}
+    assert report.model_order == ("scalar", "vierordt")
+    payload = report.to_dict()
+    assert payload["declared_metrics"] == ["log-loss"]
+    assert payload["winner_policy"] == "lowest unit-balanced log loss among non-failed audits"
+    assert payload["winner_by_unit_balanced_log_loss"] == report.winner
+    assert set(payload["models"]["scalar"]["unit_scores"][0]) == {"unit", "log_loss"}
+    # A log density, not a log probability: a sharply peaked duration density can exceed
+    # one, so the column this table carries is not bounded below by zero.
+    assert np.all(np.isfinite(report.result_for("scalar").unit_log_losses))
+    with pytest.raises(UndeclaredMetric, match="carries no 'brier' column"):
+        _ = report.result_for("scalar").unit_brier_scores
+    contrast = report.comparison_for("scalar", "vierordt")
+    assert contrast.metric is ScoreMetric.LOG_LOSS
+    assert contrast.left_minus_right.estimate == pytest.approx(
+        report.result_for("scalar").unit_balanced_log_loss
+        - report.result_for("vierordt").unit_balanced_log_loss
+    )
 
 
 # --------------------------------------------------------------------------------------

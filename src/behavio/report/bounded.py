@@ -200,6 +200,16 @@ def _render_markdown(
         f"- Prediction information: `{protocol.validation.prediction_information.value}`",
         f"- Score: `{comparison.metric.value}` with `{comparison.weighting.value}` weighting "
         f"over `{comparison.aggregation_unit}`",
+        # Only when the table is wider than the verdict rule: a one-column comparison would
+        # otherwise print the same rule twice under two headings.
+        *(
+            [
+                "- Reported score columns: "
+                + ", ".join(f"`{metric.value}`" for metric in comparison.metrics)
+            ]
+            if len(comparison.metrics) > 1
+            else []
+        ),
         "",
         "### Estimands",
         "",
