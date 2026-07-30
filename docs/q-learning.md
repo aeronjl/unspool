@@ -204,12 +204,42 @@ or stationary reward schedules; choice bias and perseveration can also absorb st
 that belongs to task covariates or latent strategies. Recovery must be rerun for the actual
 reward schedule, session length, missingness, and candidate set.
 
+## Drifting and pooled agents
+
+Both agents compose. `smooth(agent, over="session_order", knots=..., parameters=...)` lets a
+named parameter follow a path across training, and
+`hierarchical(agent, over="subject", parameters=...)` gives each animal a shrunken deviation
+on the *transformed* coordinate, so a per-animal learning rate stays inside \((0,1)\) by
+construction:
+
+```python
+from behavio.compose import hierarchical, smooth
+
+sharpening = smooth(
+    agent, over="session_order", knots=(0.0, 5.0), parameters=("inverse_temperature_log",)
+)
+per_animal = hierarchical(agent, over="subject", parameters=("choice_bias",), scale=0.5)
+```
+
+Which parameters drift is a scientific choice and `parameters=` is how it is made: a
+sharpening policy and a changing learning rate are different models. The clock is part of
+that choice too, and it is restricted -- it must be constant within each reset block,
+because a value trace written by a learning rate that changed mid-session cannot say which
+of its values produced which part of the trace. Smoothing over a within-session counter
+raises rather than averaging. See
+[composing models](composing-models.md#models-whose-coordinate-is-bounded-not-linear).
+
+`mix()` still refuses both agents, and that is a statement about the model: a lapse belongs
+on the policy, inside the recursion, where it mixes the emitted action while leaving the
+value update to see the action that was taken.
+
 ## Current boundary
 
 The composable layer remains deliberately binary. It now covers symmetric or asymmetric
 chosen-value learning, unchosen forgetting, an exponential choice kernel, bounded lapse,
-and explicit reset columns. It does not yet cover counterfactual updates, Kalman or
-Bayesian learners, model-based planning, stimulus-conditioned policies, partial pooling,
-or multinomial action sets. Component-rich fits can be weakly identified even when the
+explicit reset columns, session-level drift and partial pooling by any study column. It does
+not yet cover counterfactual updates, Kalman or Bayesian learners, model-based planning,
+stimulus-conditioned policies, within-session parameter drift, or multinomial action sets.
+Component-rich fits can be weakly identified even when the
 optimizer converges; exact-design parameter and model recovery remain mandatory evidence,
 not a property conferred by composition.

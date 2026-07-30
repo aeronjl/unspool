@@ -72,7 +72,11 @@ from behavio.contracts import (
     PredictionMode,
     UnsupportedPredictionMode,
 )
+from behavio.contracts.bounded import RowCoefficientDesign, validated_row_coefficients
+from behavio.contracts.compose import ridge_group_draw, ridge_group_penalty
 from behavio.models._kernels.curvature import covariance_from_hessian, finite_difference_hessian
+from behavio.models._kernels.introspection import WARNING, ModelFinding
+from behavio.models._kernels.rowfit import solve_row_coefficients
 from behavio.trials import REQUIRED_COLUMNS, Study
 
 #: Probability floor used when a curve is evaluated at a saturated guess or lapse rate.
@@ -789,6 +793,242 @@ class PsychometricFunction:
         scores = outcomes * np.log(probability) + (1.0 - outcomes) * np.log1p(-probability)
         return protected_array(scores, dtype=np.float64)
 
+    # -- the bounded-coordinate composition contract --------------------------------------
+    #
+    # ``parameter_names`` is already the unconstrained coordinate -- a log width and two
+    # bounded-logit rates -- which is exactly what hierarchy needs a Gaussian deviation to
+    # live on. See ``behavio.contracts.bounded``.
+
+    def row_objective(self, study: Study) -> _PsychometricRowObjective:
+        """Return this study's negative log likelihood in one coordinate per row."""
+
+        return _PsychometricRowObjective(
+            model=self,
+            values=self._transform(self._stimulus(study)),
+            outcomes=self._outcomes(study),
+        )
+
+    def penalty_matrix(self) -> NDArray[np.float64]:
+        """Return the quadratic penalty on the coordinate, which is none."""
+
+        width = len(self.parameter_names)
+        return np.zeros((width, width), dtype=np.float64)
+
+    def coordinate_box(self, study: Study) -> NDArray[np.float64]:
+        """Return the finite box this model's own solver searches in."""
+
+        return np.asarray(
+            self._coordinate_bounds(self._transform(self._stimulus(study))), dtype=np.float64
+        )
+
+    def initial_points(self, study: Study) -> tuple[NDArray[np.float64], ...]:
+        """Return the deterministic restarts this model's own solver would use."""
+
+        values = self._transform(self._stimulus(study))
+        starts, _ = self._start_schedule(values, self._outcomes(study))
+        return tuple(starts)
+
+    def group_parameter_expansion(self, name: str) -> tuple[str, ...]:
+        """Return the reported parameters one declared varying name stands for."""
+
+        return (name,)
+
+    def group_penalty(
+        self, columns: NDArray[np.intp], scales: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Return the isotropic Gaussian precision on one group's deviation."""
+
+        del columns
+        return ridge_group_penalty(scales)
+
+    def draw_group_deviations(
+        self,
+        columns: NDArray[np.intp],
+        scales: NDArray[np.float64],
+        *,
+        groups: int,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Draw Gaussian deviations on the *transformed* coordinate, never the natural one.
+
+        A subject whose lapse rate is 2 % and one whose lapse rate is 6 % differ by one
+        logit unit, not by four percentage points, and only the first statement stays inside
+        ``(0, maximum_lapse)`` for every draw. This is the member that fixes that, and it is
+        the model's rather than the combinator's because only the model knows that its third
+        coordinate is a rate at all.
+        """
+
+        del columns
+        return ridge_group_draw(scales, groups=groups, generator=generator)
+
+    def fit_rows(
+        self,
+        design: RowCoefficientDesign,
+        *,
+        model_name: str,
+        model_signature: str,
+    ) -> FitResult:
+        """Solve a row-coefficient problem on this model's own optimizer settings."""
+
+        return solve_row_coefficients(
+            design,
+            model_name=model_name,
+            model_signature=model_signature,
+            optimizer="L-BFGS-B",
+            max_iterations=self.max_iterations,
+            tolerance=self.tolerance,
+            boundary=self._row_boundary,
+        )
+
+    def _row_boundary(
+        self, estimates: NDArray[np.float64], derived: NDArray[np.float64] | None
+    ) -> bool:
+        """This model's boundary convention on a composed estimate, which is the box.
+
+        Unlike the agents, this curve has no natural-scale threshold of its own: every
+        parameter it estimates is a coordinate of the box that
+        :meth:`coordinate_box` declares -- a rate logit at ``+/-12``, a threshold two spans
+        outside the tested range, a width below the resolution of the levels -- and
+        :func:`~behavio.models._kernels.rowfit.solve_row_coefficients` already reports a
+        coordinate resting on it. Saying so here is the answer, not an omission.
+        """
+
+        del estimates, derived
+        return False
+
+    def simulate_rows(
+        self,
+        design: Study,
+        coefficients: NDArray[np.float64],
+        *,
+        seed: int | np.random.Generator,
+    ) -> Study:
+        """Generate responses with one parameter vector per row."""
+
+        probability = np.clip(
+            self._row_probability(design, coefficients),
+            PROBABILITY_FLOOR,
+            1.0 - PROBABILITY_FLOOR,
+        )
+        generator = seed if isinstance(seed, np.random.Generator) else np.random.default_rng(seed)
+        columns = {name: design[name] for name in design.columns}
+        columns[self.outcome] = generator.binomial(1, probability).astype(np.int8)
+        return Study(columns)
+
+    def predict_rows(
+        self,
+        study: Study,
+        coefficients: NDArray[np.float64],
+        *,
+        mode: PredictionMode,
+    ) -> Prediction:
+        """Return the curve under one parameter vector per row."""
+
+        self._prediction_mode(mode)
+        rows = self._row_coordinates(study, coefficients)
+        values = self._transform(self._stimulus(study))
+        curve = _psychometric_curve(self, values, rows)
+        return Prediction(
+            probability=curve.probability,
+            linear_predictor=curve.standardized,
+            mode=PredictionMode.FILTERED,
+        )
+
+    def pointwise_log_prob_rows(
+        self, study: Study, coefficients: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Score each observation under one parameter vector per row."""
+
+        outcomes = self._outcomes(study)
+        probability = np.clip(
+            self._row_probability(study, coefficients), PROBABILITY_FLOOR, 1.0 - PROBABILITY_FLOOR
+        )
+        scores = outcomes * np.log(probability) + (1.0 - outcomes) * np.log1p(-probability)
+        return protected_array(scores, dtype=np.float64)
+
+    def _row_probability(
+        self, study: Study, coefficients: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        rows = self._row_coordinates(study, coefficients)
+        return _psychometric_curve(self, self._transform(self._stimulus(study)), rows).probability
+
+    def _row_coordinates(
+        self, study: Study, coefficients: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        return validated_row_coefficients(
+            coefficients,
+            n_rows=len(study),
+            n_parameters=len(self.parameter_names),
+            what="row coefficients",
+        )
+
+    # -- the hazard a bounded rate carries into a hierarchy -------------------------------
+
+    def group_deviation_findings(
+        self, study: Study, *, grouping: str, parameters: Sequence[str]
+    ) -> tuple[ModelFinding, ...]:
+        """Report groups whose guess or lapse rate the study pins to the floor of its range.
+
+        A Gaussian deviation on a logit is the right prior for a rate *in the interior*. It
+        is not a repair for a rate the data put at its bound: as the rate goes to zero its
+        logit goes to minus infinity, so the group's deviation is unbounded, its conditional
+        mode runs to the edge of the box, and the Laplace curvature there describes the box
+        rather than the likelihood. The population estimate and its shrinkage are then
+        reported with a confidence the data do not support.
+
+        The check is the identifiability statement behind that, and it is cheap and pre-fit:
+        this curve's guess rate is its value at the lowest stimulus levels and its lapse rate
+        is one minus its value at the highest, so a group with no responses of the losing
+        kind at that end has no evidence about that rate at all. Reported as a warning rather
+        than an error, on the same standing as an unsupported knot: fixing the rate at a
+        known value, or dropping it from ``parameters=``, is a modelling decision only its
+        author can make.
+        """
+
+        named = [name for name in parameters if name in ("guess_logit", "lapse_logit")]
+        if not named or self.stimulus not in study.columns or self.outcome not in study.columns:
+            return ()
+        if grouping not in study.columns:
+            return ()
+        try:
+            values = self._transform(self._stimulus(study))
+            outcomes = self._outcomes(study)
+        except ModelDataError:
+            return ()
+        if not len(values):
+            return ()
+        labels = [_scalar_label(value) for value in study[grouping]]
+        low = values <= float(np.quantile(values, 0.25))
+        high = values >= float(np.quantile(values, 0.75))
+        findings: list[ModelFinding] = []
+        for name in named:
+            tail, evidence, rate = (
+                (low, outcomes, "guess_rate")
+                if name == "guess_logit"
+                else (high, 1.0 - outcomes, "lapse_rate")
+            )
+            informed = {
+                label
+                for label, inside, count in zip(labels, tail, evidence, strict=True)
+                if inside and count
+            }
+            starved = [str(label) for label in dict.fromkeys(labels) if label not in informed]
+            if not starved:
+                continue
+            findings.append(
+                ModelFinding(
+                    code="unidentified_group_rate",
+                    severity=WARNING,
+                    message=(
+                        f"{rate} is at the floor of its range for {grouping} "
+                        f"{', '.join(starved)}: the study has no evidence of it at the "
+                        "asymptote, so a Gaussian deviation on its logit is unbounded and "
+                        "its shrinkage will be reported more confidently than the data allow"
+                    ),
+                )
+            )
+        return tuple(findings)
+
     def _objective(
         self,
         coordinate: NDArray[np.float64],
@@ -858,12 +1098,26 @@ class PsychometricFunction:
             if self.fixed_lapse_rate is None:
                 coordinate.append(float(logit(relative)))
             starts.append(np.asarray(coordinate, dtype=np.float64))
+        return starts, self._coordinate_bounds(values)
+
+    def _coordinate_bounds(self, values: NDArray[np.float64]) -> tuple[tuple[float, float], ...]:
+        """Return the finite box the estimated coordinate is searched in.
+
+        Data-derived on the location and the width -- a threshold far outside the tested
+        range and a width far below the spacing of the levels are both unidentified -- and
+        fixed at ``+/- 12`` on the rate logits, which is the logit of a rate the data cannot
+        tell from its bound.
+        """
+
+        span = float(np.max(values) - np.min(values))
+        if not np.isfinite(span) or span <= 0:
+            raise ModelDataError("a psychometric fit needs more than one stimulus level")
         bounds = [
             (float(np.min(values) - 2.0 * span), float(np.max(values) + 2.0 * span)),
             (float(np.log(span) - 8.0), float(np.log(span) + 4.0)),
         ]
         bounds.extend((-12.0, 12.0) for _ in self.parameter_names[2:])
-        return starts, tuple(bounds)
+        return tuple(bounds)
 
     @staticmethod
     def _empirical_crossing(values: NDArray[np.float64], outcomes: NDArray[np.float64]) -> float:
@@ -998,6 +1252,124 @@ class PsychometricFunction:
                 f"not {prediction_mode.value!r}"
             )
         return prediction_mode
+
+
+@dataclass(frozen=True, slots=True)
+class _RowCurve:
+    """One psychometric curve per row, with the pieces its gradient is assembled from."""
+
+    probability: NDArray[np.float64]
+    standardized: NDArray[np.float64]
+    cumulative: NDArray[np.float64]
+    density: NDArray[np.float64]
+    span: NDArray[np.float64]
+    width: NDArray[np.float64]
+    guess_slope: NDArray[np.float64]
+    lapse_slope: NDArray[np.float64]
+
+
+def _psychometric_curve(
+    model: PsychometricFunction,
+    values: NDArray[np.float64],
+    rows: NDArray[np.float64],
+) -> _RowCurve:
+    """Evaluate the curve with one coordinate per row rather than one for the study.
+
+    Written beside :meth:`PsychometricFunction._objective` rather than replacing it. The two
+    compute the same quantities and the shared-coordinate version is what every published
+    fit went through, so it keeps its own arithmetic and its own summation order to the last
+    bit; this one broadcasts where that one takes a scalar.
+    """
+
+    link = _LINKS[model.link]
+    n_rows = len(values)
+    location = rows[:, 0]
+    width = np.exp(rows[:, 1])
+    column = 2
+    rates: list[tuple[NDArray[np.float64], NDArray[np.float64]]] = []
+    for fixed, maximum in (
+        (model.fixed_guess_rate, model.maximum_guess),
+        (model.fixed_lapse_rate, model.maximum_lapse),
+    ):
+        if fixed is None:
+            relative = expit(rows[:, column])
+            rates.append((maximum * relative, maximum * relative * (1.0 - relative)))
+            column += 1
+        else:
+            rates.append((np.full(n_rows, float(fixed)), np.zeros(n_rows, dtype=np.float64)))
+    (guess, guess_slope), (lapse, lapse_slope) = rates
+    standardized = (values - location) / width + link.half
+    cumulative = link.cumulative(standardized)
+    span = 1.0 - guess - lapse
+    return _RowCurve(
+        probability=np.clip(guess + span * cumulative, PROBABILITY_FLOOR, 1.0 - PROBABILITY_FLOOR),
+        standardized=standardized,
+        cumulative=cumulative,
+        density=link.density(standardized),
+        span=span,
+        width=width,
+        guess_slope=guess_slope,
+        lapse_slope=lapse_slope,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class _PsychometricRowObjective:
+    """The curve's negative log likelihood as a function of one coordinate per row.
+
+    Every row is its own block. A psychometric response depends on that row's stimulus and
+    on nothing else that happened, so there is no recursion to keep a coordinate constant
+    over and a path may vary trial by trial if a modeller wants it to.
+    """
+
+    model: PsychometricFunction
+    values: NDArray[np.float64]
+    outcomes: NDArray[np.float64]
+
+    @property
+    def n_rows(self) -> int:
+        """The number of scored rows."""
+
+        return len(self.values)
+
+    @property
+    def n_parameters(self) -> int:
+        """The width of one row's coordinate."""
+
+        return len(self.model.parameter_names)
+
+    @property
+    def row_blocks(self) -> NDArray[np.intp]:
+        """Every row is independent, so every row is its own block."""
+
+        return np.arange(len(self.values), dtype=np.intp)
+
+    def value_and_gradient(self, rows: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
+        """Return the negative log likelihood and its gradient in the row coordinates."""
+
+        coordinates = validated_row_coefficients(
+            rows, n_rows=self.n_rows, n_parameters=self.n_parameters, what="row coordinates"
+        )
+        curve = _psychometric_curve(self.model, self.values, coordinates)
+        probability = curve.probability
+        outcomes = self.outcomes
+        loss = -float(outcomes @ np.log(probability) + (1.0 - outcomes) @ np.log1p(-probability))
+        score = (probability - outcomes) / (probability * (1.0 - probability))
+        gradient = np.zeros_like(coordinates)
+        shared = score * curve.span * curve.density
+        gradient[:, 0] = shared * (-1.0 / curve.width)
+        gradient[:, 1] = shared * -(curve.standardized - _LINKS[self.model.link].half)
+        column = 2
+        if self.model.fixed_guess_rate is None:
+            gradient[:, column] = score * (1.0 - curve.cumulative) * curve.guess_slope
+            column += 1
+        if self.model.fixed_lapse_rate is None:
+            gradient[:, column] = score * -curve.cumulative * curve.lapse_slope
+        return loss, gradient
+
+
+def _scalar_label(value: Any) -> Any:
+    return value.item() if isinstance(value, np.generic) else value
 
 
 def erf_two_gamma_probability(

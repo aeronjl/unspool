@@ -298,8 +298,8 @@ carrying.
 
 ## Models that decline a mixture
 
-`mix()` runs the same `require_penalised_linear` check the other two do, so a model whose
-likelihood is not a sum of independent row scores is refused by name:
+`mix()` runs `require_penalised_linear`, so a model whose likelihood is not a sum of
+independent row scores is refused by name:
 
 ```python
 mix(BinaryRLAgent(), UniformChoiceGuess())
@@ -316,6 +316,209 @@ value update to see the action that was actually taken, which is what makes the 
 trace on a lapse trial the trace the animal's own choice produced. A mixture applied from
 outside the recursion could not express that, because from outside there is no recursion to
 reach into.
+
+The same agent is nonetheless smoothed and pooled, because neither of those needs a linear
+predictor. That is the next section.
+
+## Models whose coordinate is bounded, not linear
+
+`BinaryQLearning`, `BinaryRLAgent` and `PsychometricFunction` are the three families whose
+likelihood is not a penalised linear one and whose parameters are bounded: a learning rate
+in \((0,1)\), an inverse temperature above zero, a width above zero, a lapse rate below its
+declared maximum. All six of their `smooth()` and `hierarchical()` cells work:
+
+```python
+from behavio import BinaryQLearning, PsychometricFunction
+from behavio.compose import hierarchical, smooth
+
+agent = BinaryQLearning()
+curve = PsychometricFunction()
+
+per_animal = hierarchical(agent, over="subject", parameters=("choice_bias",), scale=0.5)
+warming_up = smooth(
+    agent,
+    over="session_order",
+    knots=(0.0, 5.0),
+    parameters=("inverse_temperature_log",),
+)
+per_animal_curve = hierarchical(
+    curve, over="subject", parameters=("threshold", "log_width"), scale=0.4
+)
+sharpening = smooth(curve, over="session_order", knots=(0.0, 5.0), parameters=("log_width",))
+```
+
+### One combinator, two contracts, a smaller core
+
+`smooth()` and `hierarchical()` are still one function each. What is new is a *sibling*
+contract they route through, `behavio.contracts.bounded.BoundedCoordinateEstimator`, chosen
+by one check -- `require_composable` -- that both combinators run in place of
+`require_penalised_linear`.
+
+The sibling exists because the two contracts turned out to share almost everything. Eight
+members are identical -- `parameter_names`, `penalty_matrix`, `coordinate_box`,
+`initial_points`, `group_parameter_expansion`, `group_penalty`, `draw_group_deviations`,
+`simulate_rows` -- plus the model's own solver. Selecting the varying columns, widening the
+penalty and the box, naming the joint coordinate, slicing the estimate back into a
+population and one deviation per group: none of that ever looks at a likelihood, so none of
+it is duplicated.
+
+What differs is exactly one member, and the package had already named the shape of it.
+`simulate_rows` takes **one coefficient vector per row** and its docstring calls that "the
+single representation that both hierarchy and smoothness collapse to". A bounded-coordinate
+model supplies the *likelihood* counterpart:
+
+```python
+objective = agent.row_objective(study)  # a RowObjective
+value, gradient = objective.value_and_gradient(rows)  # rows is (trials, parameters)
+```
+
+A combinator's contribution is then a **linear map** from the joint coordinate it invented
+to that `(rows, parameters)` array -- population plus this row's group deviation, or a knot
+vector evaluated at this row's clock value -- so the chain rule is one contraction over
+rows. Widening the contract instead would have meant giving a Q-learning agent a
+`design_matrix` it does not have; forking the combinators would have meant two
+`hierarchical`s. Neither was necessary once the shared core was written down.
+
+### `ParameterSpace` was most of the answer, and what it was missing
+
+`ParameterSpace` already describes the transformed coordinate exactly: per-parameter
+transforms (`bounded-logit`, `log`, `identity`), natural bounds, optimizer bounds and
+priors, with `OptimizationProblem` switching to MAP when priors are present and an explicit
+`PriorMeasure` for the transform Jacobian. `BinaryQLearning` carries one.
+
+Three things it does not carry, all of which hierarchy needs:
+
+- **A prior that is not per-parameter.** `PriorSpec` is a scalar family on one natural
+  coordinate. A group deviation is a prior on the *difference* between two coordinates of a
+  joint vector, and the number of those coordinates is not known until a study is seen.
+- **A study.** Every `ParameterSpace` member is a pure function of a vector. A group
+  structure and a clock are properties of the data, and `coordinate_box(study)` is where a
+  data-derived bound (a psychometric threshold cannot be far outside the tested range) is
+  answered.
+- **A likelihood.** A parameter space says what a coordinate *means*, never how to score it.
+
+So the bridge is `BoundedCoordinateEstimator`, and where a model has a `ParameterSpace` the
+bridge is thin: `coordinate_box` is `parameter_space.optimizer_bounds` and nothing else, and
+`parameter_names` is `parameter_space.optimizer_names`, which is already the unconstrained
+coordinate. Two of the three families are not expressible as a `ParameterSpace` at all --
+`BinaryRLAgent` assembles its coordinate from swappable components and `PsychometricFunction`
+has a link-dependent location name -- so the bridge is a protocol rather than a requirement
+to own one.
+
+### Deviations are Gaussian on the transformed scale, and that is checked
+
+A learning rate of 0.1 with a Gaussian deviation of standard deviation 1.5 is a negative
+learning rate about a quarter of the time. The same deviation on its **logit** is a rate in
+\((0,1)\) every time:
+
+\[
+\alpha_g = \operatorname{logit}^{-1}\!\left(\operatorname{logit}(\alpha) + b_g\right),
+\qquad b_g \sim \mathcal{N}(0, \sigma^2).
+\]
+
+Nothing had to be added for this: `parameter_names` for all three families *is* the
+transformed coordinate -- `learning_rate_logit`, `inverse_temperature_log`, `log_width`,
+`lapse_logit` -- and the natural coordinate is reached through `NaturalParameterisation` or
+`parameter_components`, exactly as recovery already reads it. `require_composable` refuses a
+bounded-coordinate model that does not declare a finite `coordinate_box`, because a finite
+box on the transformed coordinate is the statement that a transform was applied.
+
+Reading a group's parameters back therefore goes through the model, not through arithmetic
+on the fit:
+
+```python
+fit = per_animal.fit(study)
+vector = fit.parameters_for("mouse-a")
+agent.parameter_components(vector).learning_rate  # the natural rate for that animal
+```
+
+### Smooth reinforcement learning: which parameter drifts, and how often
+
+`parameters=` says *which* parameters follow a path, and for an RL agent that is a real
+scientific choice rather than a formality:
+
+```python
+smooth(agent, over="session_order", knots=(0, 5), parameters=("inverse_temperature_log",))
+# the policy sharpens across training; the learning rate does not change
+
+smooth(agent, over="session_order", knots=(0, 5), parameters=("learning_rate_logit",))
+# the animal updates more or less aggressively; its policy noise does not change
+```
+
+The selector is sufficient for *which*. It is **not** sufficient on its own, because a
+recursion makes the *clock* part of the model in a way it is not for a GLM. A GLM's
+coefficient may drift trial by trial; a learning rate may not, because the value trace that
+a trial-varying \(\alpha\) writes cannot say which of its values produced which part of the
+trace. So the convention is declared and enforced:
+
+> **The parameters in force on trial \(r\) are the paths evaluated at trial \(r\)'s clock
+> value, and the clock must be constant within each block the model's likelihood recurses
+> over** -- for these agents, one subject's session.
+
+`session_order` satisfies that. A within-session trial counter does not, and is refused:
+
+```python
+smooth(agent, over="trial", knots=(0.0, 39.0), parameters=("learning_rate_logit",)).fit(study)
+# ModelDataError: ... a path over 'trial' is only defined if the clock is constant within
+# each block that recursion runs over; smooth over a session-level clock instead
+```
+
+The same rule applies to `hierarchical()`: `over="subject"` is admissible because a session
+lies inside a subject, and a grouping column that cuts through a session is refused rather
+than averaged over.
+
+### A rate at its bound is reported, not shrunk
+
+A Gaussian deviation on a logit is the right prior for a rate the data locate in the
+*interior* of its range. It is not a repair for a rate the data push to a bound: as a lapse
+rate goes to zero its logit goes to \(-\infty\), the group's deviation becomes unbounded, the
+conditional mode runs to the edge of the box, and the Laplace curvature there describes the
+box rather than the likelihood. Shrinkage then gets reported with a confidence the data do
+not support.
+
+Following the precedent `mix()` set for an unidentified weight, this is a `describe()`
+finding rather than a silent number. The check is the identifiability statement behind the
+hazard, and it is cheap and pre-fit: this curve's guess rate is its value at the lowest
+stimulus levels and its lapse rate is one minus its value at the highest, so a group with no
+responses of the losing kind at that end has no evidence about that rate at all.
+
+```python
+pooled = hierarchical(curve, over="subject", parameters=("lapse_logit",), scale=0.5)
+pooled.describe(study).findings
+# [warning] unidentified_group_rate: lapse_rate is at the floor of its range for subject b:
+# the study has no evidence of it at the asymptote, so a Gaussian deviation on its logit is
+# unbounded and its shrinkage will be reported more confidently than the data allow
+```
+
+A warning rather than an error, on the same standing as a knot outside the data's support:
+fixing the rate at a known value (`PsychometricFunction(fixed_lapse_rate=0.02)`) or dropping
+it from `parameters=` is a modelling decision only its author can make. After the fit the
+other half of the same hazard shows up where it always did -- a coordinate resting on its
+box sets `boundary_estimate`.
+
+### What is different about the fit
+
+The joint problem is no longer a penalised linear solve. It is a MAP fit of the population
+coordinate and every group's deviation together, by multi-start L-BFGS-B inside the widened
+box, with the analytic row gradient contracted onto the joint coordinate. The covariance is
+a numerical Hessian of that gradient, and each group's own Hessian block, inverted, is that
+group's Laplace covariance conditional on the population -- which is exactly the second
+moment `scale_estimator="laplace-em"` needs, so estimating a group scale works here too:
+
+```python
+hierarchical(
+    agent,
+    over="subject",
+    parameters=("choice_bias",),
+    scale=0.4,
+    estimate_scale=True,
+    scale_estimator="laplace-em",
+)
+```
+
+`scale_estimator="laplace-profile"` is declined for these families, by name and with the
+alternative in the message: the profile builds a per-group conditional objective out of a
+group's *design matrix*, and there is not one.
 
 ## Parameter names
 
@@ -465,14 +668,22 @@ dropping the declaration. See [design formulas](design-formulas.md).
 
 ## The contract
 
-A model is composable if it satisfies
-`behavio.contracts.compose.PenalisedLinearEstimator`: its likelihood must see a study only
-through a **quadratically penalised linear predictor**, and its row scores must be
-independent given that predictor. Every generalized linear family in Behavio is one of
+A model is composable if it satisfies one of two sibling contracts, and
+`behavio.contracts.bounded.require_composable` -- the single check `smooth()` and
+`hierarchical()` run -- says which.
+
+`behavio.contracts.compose.PenalisedLinearEstimator` is the first: its likelihood must see a
+study only through a **quadratically penalised linear predictor**, and its row scores must
+be independent given that predictor. Every generalized linear family in Behavio is one of
 those, `MultinomialLogit` included, and so is `WienerDriftDiffusion`: there is no link on
 its four predictor cells, but each of them is still a design times a coefficient block, and
 a trial's joint choice/latency density depends on the study through nothing else. The
 GLM-HMM is not, and is refused rather than silently mis-composed.
+
+`behavio.contracts.bounded.BoundedCoordinateEstimator` is the second, described
+[above](#models-whose-coordinate-is-bounded-not-linear): eight of the same members, and
+`row_objective` in place of `design_matrix` + `likelihood`. `mix()` deliberately runs only
+the first check, because a mixture averages two densities *given* a linear predictor.
 
 Five things a combinator needs, and the members that carry each:
 
@@ -524,9 +735,14 @@ BernoulliGLMHMM(predictors=("stimulus",)).penalised_linear_refusal
 # 'a GLM-HMM is a latent-state mixture, not a penalised linear model: ...'
 ```
 
-`require_penalised_linear` -- the single check all three combinators run -- reads the declaration
-before it runs the structural test that would say yes, and reports the sentence in the
-`TypeError`.
+`require_penalised_linear` reads the declaration before it runs the structural test that
+would say yes, and reports the sentence in the `TypeError`. `BinaryRLAgent` declares one
+too, and it is still true -- there is no linear predictor to widen, which is why `mix()`
+refuses it -- but a *recursion* is not the same obstacle as a *latent-state mixture*: the
+agent's parameters are still one vector per session, so it composes through the
+bounded-coordinate contract. A GLM-HMM's latent states are what make its transitions live on
+a simplex and its group deviations ill-defined without a label-alignment rule, so it is
+refused by both.
 
 To make a new family composable, implement those members. See
 [extensions](extensions.md).

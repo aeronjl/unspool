@@ -15,6 +15,7 @@ A parameter description                          :class:`ParameterSpaceProvider`
 An optimizer                                     :class:`OptimizationBackend`
 A behavioural summary                            :class:`PredictiveDiscrepancy`
 A composable penalised linear model              :class:`PenalisedLinearEstimator`
+A composable bounded-coordinate model            :class:`BoundedCoordinateEstimator`
 A simpler process a model can be mixed with      :class:`MixtureComponent`
 A fold-fitted temporal transform                 :class:`StudyTransform`
 A training/test partition                        :class:`EvaluationFold`
@@ -79,6 +80,13 @@ from behavio.contracts.audit import (
     RestartAudit,
 )
 from behavio.contracts.backend import ObjectiveTarget, OptimizationBackend, PriorMeasure
+from behavio.contracts.bounded import (
+    BoundedCoordinateEstimator,
+    RowCoefficientDesign,
+    RowObjective,
+    require_bounded_coordinate,
+    require_composable,
+)
 from behavio.contracts.compose import (
     GroupBlocks,
     LinearPredictorLikelihood,
@@ -161,6 +169,7 @@ __all__ = [
     "AuditSeverity",
     "BehaviourEstimator",
     "BehaviourModel",
+    "BoundedCoordinateEstimator",
     "CategoricalBehaviourEstimator",
     "CategoricalPrediction",
     "ConvergenceStatus",
@@ -199,6 +208,8 @@ __all__ = [
     "PredictiveTail",
     "PriorMeasure",
     "RestartAudit",
+    "RowCoefficientDesign",
+    "RowObjective",
     "SessionOrderPolicy",
     "SourceType",
     "StudyAdapter",
@@ -230,6 +241,8 @@ __all__ = [
     "posterior_point_summary",
     "posterior_summary_message",
     "register_fit_auditor",
+    "require_bounded_coordinate",
+    "require_composable",
     "require_mixture_component",
     "require_penalised_linear",
     "ridge_group_draw",

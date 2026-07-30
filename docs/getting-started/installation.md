@@ -84,6 +84,7 @@ Install only the interface used by the analysis:
 | ArviZ interchange | `uv sync --extra probabilistic` | `python -m pip install -e ".[probabilistic]"` |
 | PyMC backend | `uv sync --extra bayesian` | `python -m pip install -e ".[bayesian]"` |
 | Diagnostic figures | `uv sync --extra plots` | `python -m pip install -e ".[plots]"` |
+| PyDDM drift diffusion | `uv sync --extra pyddm` | `python -m pip install -e ".[pyddm]"` |
 
 The `plots` extra is exactly the `matplotlib>=3.9` pin used above. `import behavio` and
 `import behavio.plot` both work without it; only calling a
@@ -91,7 +92,16 @@ The `plots` extra is exactly the `matplotlib>=3.9` pin used above. `import behav
 
 These extras do not alter the canonical [`Study`](../data-contract.md) or
 [`TaskSpec`](../task-contract.md) contracts. They add a source, optimizer, result backend,
-or figure renderer at the edge of the same workflow.
+figure renderer, or wrapped solver at the edge of the same workflow.
+
+!!! info "Every extra is permissively licensed"
+
+    Behavio is MIT, and so is every package any extra installs — MIT, BSD-3-Clause,
+    Apache-2.0, or the HDF Group's BSD-style terms. `pip install behavio[...]` therefore
+    never changes your licence obligations. That is a rule rather than a coincidence: the
+    modelling ecosystem around Behavio includes non-commercial, GPL and AGPL packages, and
+    [wrapped models](../foreign-models.md) records the licence of each, the policy that
+    keeps them out of the core, and the known `jax` version conflict between two of them.
 
 ## Troubleshooting
 

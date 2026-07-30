@@ -13,6 +13,14 @@ from scipy.optimize import minimize, minimize_scalar
 from scipy.special import logsumexp
 
 from behavio._internal.arrays import protected_array
+from behavio.contracts.bounded import (
+    RowCoefficientDesign,
+    contract_group_rows,
+    expand_group_rows,
+    group_blocks_respect,
+    require_composable,
+    uses_row_coefficients,
+)
 from behavio.contracts.compose import (
     GroupBlocks,
     GroupExpansion,
@@ -28,7 +36,6 @@ from behavio.contracts.compose import (
     joint_parameter_names,
     linear_predictor,
     parameter_gradient,
-    require_penalised_linear,
     validate_predictor_shape,
 )
 from behavio.contracts.estimator import (
@@ -40,7 +47,7 @@ from behavio.contracts.estimator import (
     UnsupportedPredictionMode,
 )
 from behavio.models._kernels.curvature import relative_steps, value_difference_hessian
-from behavio.models._kernels.introspection import Describable
+from behavio.models._kernels.introspection import Describable, ModelFinding
 from behavio.trials import REQUIRED_COLUMNS, Study
 
 __all__ = [
@@ -110,7 +117,7 @@ group_parameter_expansion` is what is asked.
     instead of plugging the population in.
     """
 
-    require_penalised_linear(model, combinator="hierarchical")
+    require_composable(model, combinator="hierarchical")
     selected, scales = _resolve_declaration(model, parameters, parameter_scales)
     effects = VaryingEffects.declare(
         model.parameter_names,
@@ -617,6 +624,23 @@ class UnseenGroupPrediction:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class _JointInputs:
+    """Whichever of the two problems the wrapped model presented, read once per fit.
+
+    A scale estimator refits the joint problem a dozen times, and the wrapped model's design
+    matrix does not change between those fits. Reading it once and carrying it is why the EM
+    loop costs what one fit costs times the number of iterations rather than that plus a
+    rebuild of the design each time; carrying *either* problem in one record is what keeps
+    the loop itself free of the branch.
+    """
+
+    design_matrix: NDArray[np.float64] | None = None
+    outcomes: NDArray[np.float64] | None = None
+    offsets: NDArray[np.float64] | None = None
+    row_objective: Any | None = None
+
+
 # --------------------------------------------------------------------------------------
 # The combinator
 # --------------------------------------------------------------------------------------
@@ -802,26 +826,40 @@ class HierarchicalModel(Describable):
             raise ModelDataError(
                 f"hierarchical fitting requires at least two {self.grouping} groups"
             )
-        design_matrix = validate_predictor_shape(self.model, self.model.design_matrix(study))
-        outcomes = self.model.outcomes(study)
-        offsets = self.model.predictor_offsets(study)
+        inputs = self._joint_inputs(study, blocks)
         if self.estimate_scale and self.scale_estimator == "laplace-em":
-            return self._fit_estimated_scales_em(study, blocks, design_matrix, outcomes, offsets)
+            return self._fit_estimated_scales_em(study, blocks, inputs)
         if self.estimate_scale:
-            return self._fit_estimated_scale(study, blocks, design_matrix, outcomes, offsets)
-        return self._fit_fixed_scale(
-            study, blocks, design_matrix, outcomes, offsets, self._scales()
+            return self._fit_estimated_scale(study, blocks, inputs)
+        return self._fit_fixed_scale(study, blocks, inputs, self._scales())
+
+    def _joint_inputs(self, study: Study, blocks: GroupBlocks) -> _JointInputs:
+        """Read the wrapped model's problem once, by whichever route it composes through.
+
+        The two routes diverge here and rejoin at :meth:`_solve_joint`. Everything between
+        them -- which columns vary, how the penalty and box and starting points are widened,
+        what the joint coordinate is called, how the estimate is sliced back into a
+        population and one deviation per group -- is one implementation, because none of it
+        depends on how the likelihood reads a study.
+        """
+
+        if uses_row_coefficients(self.model):
+            objective = self.model.row_objective(study)
+            group_blocks_respect(blocks.row_block, objective.row_blocks, grouping=self.grouping)
+            return _JointInputs(row_objective=objective)
+        return _JointInputs(
+            design_matrix=validate_predictor_shape(self.model, self.model.design_matrix(study)),
+            outcomes=self.model.outcomes(study),
+            offsets=self.model.predictor_offsets(study),
         )
 
     def _joint_design(
         self,
         study: Study,
         blocks: GroupBlocks,
-        design_matrix: NDArray[np.float64],
-        outcomes: NDArray[np.float64],
-        offsets: NDArray[np.float64] | None,
+        inputs: _JointInputs,
         scales: NDArray[np.float64],
-    ) -> PenalisedDesign:
+    ) -> PenalisedDesign | RowCoefficientDesign:
         columns = self._columns()
         n_parameters = len(self.parameter_names)
         box = expand_group_box(self.model.coordinate_box(study), blocks, columns)
@@ -829,34 +867,68 @@ class HierarchicalModel(Describable):
             np.concatenate([point, np.zeros(blocks.n_groups * len(columns), dtype=np.float64)])
             for point in self.model.initial_points(study)
         )
+        names = joint_parameter_names(self.parameter_names, blocks, self.varying_parameters)
+        penalty = expand_group_penalty(
+            self.model.penalty_matrix(), blocks, self.model.group_penalty(columns, scales)
+        )
+        expansion = GroupExpansion(
+            n_population=n_parameters, n_groups=blocks.n_groups, columns=columns
+        )
+        derived = _effective_parameters(n_parameters, columns, blocks.n_groups)
+        if inputs.row_objective is not None:
+            row_block = blocks.row_block
+            return RowCoefficientDesign(
+                parameter_names=names,
+                objective=inputs.row_objective,
+                expand=lambda joint: expand_group_rows(
+                    joint,
+                    n_population=n_parameters,
+                    columns=columns,
+                    row_block=row_block,
+                    n_groups=blocks.n_groups,
+                ),
+                contract=lambda gradient: contract_group_rows(
+                    gradient,
+                    n_population=n_parameters,
+                    columns=columns,
+                    row_block=row_block,
+                    n_groups=blocks.n_groups,
+                ),
+                penalty_matrix=penalty,
+                box=box,
+                initial_points=starts,
+                expansion=expansion,
+                derived_estimates=derived,
+            )
         return PenalisedDesign(
-            parameter_names=joint_parameter_names(
-                self.parameter_names, blocks, self.varying_parameters
-            ),
-            design_matrix=expand_group_design(design_matrix, blocks, columns),
-            outcomes=outcomes,
-            penalty_matrix=expand_group_penalty(
-                self.model.penalty_matrix(),
-                blocks,
-                self.model.group_penalty(columns, scales),
-            ),
+            parameter_names=names,
+            design_matrix=expand_group_design(inputs.design_matrix, blocks, columns),
+            outcomes=inputs.outcomes,
+            penalty_matrix=penalty,
             likelihood=self.model.likelihood,
-            offsets=offsets,
+            offsets=inputs.offsets,
             box=box,
             initial_points=starts,
-            expansion=GroupExpansion(
-                n_population=n_parameters, n_groups=blocks.n_groups, columns=columns
-            ),
-            derived_estimates=_effective_parameters(n_parameters, columns, blocks.n_groups),
+            expansion=expansion,
+            derived_estimates=derived,
+        )
+
+    def _solve_joint(self, design: PenalisedDesign | RowCoefficientDesign) -> FitResult:
+        """Hand the widened problem back to the wrapped model's own solver."""
+
+        if isinstance(design, RowCoefficientDesign):
+            return self.model.fit_rows(
+                design, model_name=self.model_name, model_signature=self.signature
+            )
+        return self.model.fit_penalised(
+            design, model_name=self.model_name, model_signature=self.signature
         )
 
     def _fit_fixed_scale(
         self,
         study: Study,
         blocks: GroupBlocks,
-        design_matrix: NDArray[np.float64],
-        outcomes: NDArray[np.float64],
-        offsets: NDArray[np.float64] | None,
+        inputs: _JointInputs,
         scales: NDArray[np.float64],
         *,
         block_scales: NDArray[np.float64] | None = None,
@@ -865,11 +937,7 @@ class HierarchicalModel(Describable):
         columns = self._columns()
         width = len(columns)
         n_parameters = len(self.parameter_names)
-        joint_fit = self.model.fit_penalised(
-            self._joint_design(study, blocks, design_matrix, outcomes, offsets, scales),
-            model_name=self.model_name,
-            model_signature=self.signature,
-        )
+        joint_fit = self._solve_joint(self._joint_design(study, blocks, inputs, scales))
         population = joint_fit.estimates[:n_parameters]
         deviations = joint_fit.estimates[n_parameters:].reshape(blocks.n_groups, width)
         group_standard_errors = joint_fit.standard_errors[n_parameters:].reshape(
@@ -901,10 +969,18 @@ class HierarchicalModel(Describable):
         self,
         study: Study,
         blocks: GroupBlocks,
-        design_matrix: NDArray[np.float64],
-        outcomes: NDArray[np.float64],
-        offsets: NDArray[np.float64] | None,
+        inputs: _JointInputs,
     ) -> HierarchicalFitResult:
+        if inputs.row_objective is not None:
+            raise ModelDataError(
+                f"{type(self.model).__name__} composes through row coefficients rather than "
+                "a linear predictor, and the Laplace profile over one common multiplier "
+                "reads a group's design directly; estimate its scales with "
+                "scale_estimator='laplace-em', which reads only the joint fit"
+            )
+        design_matrix = inputs.design_matrix
+        outcomes = inputs.outcomes
+        offsets = inputs.offsets
         columns = self._columns()
         n_parameters = len(self.parameter_names)
         declared = self._scales()
@@ -1007,7 +1083,7 @@ class HierarchicalModel(Describable):
         # solve. One joint solve at the settled scale, against a Laplace profile that has
         # already run an inner optimisation per group per outer step, is the cheap half.
         coefficients_at_boundary = self._fit_fixed_scale(
-            study, blocks, design_matrix, outcomes, offsets, scales
+            study, blocks, inputs, scales
         ).diagnostics.boundary_estimate
         diagnostics = FitDiagnostics(
             converged=bool(outer_fit.success and found.all_group_modes_converged),
@@ -1059,9 +1135,7 @@ class HierarchicalModel(Describable):
         self,
         study: Study,
         blocks: GroupBlocks,
-        design_matrix: NDArray[np.float64],
-        outcomes: NDArray[np.float64],
-        offsets: NDArray[np.float64] | None,
+        inputs: _JointInputs,
     ) -> HierarchicalFitResult:
         """Alternate a joint MAP fit with a closed-form M-step, one scale per named block.
 
@@ -1083,17 +1157,8 @@ class HierarchicalModel(Describable):
         def update(
             block_scales: NDArray[np.float64],
         ) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
-            joint = self.model.fit_penalised(
-                self._joint_design(
-                    study,
-                    blocks,
-                    design_matrix,
-                    outcomes,
-                    offsets,
-                    self._broadcast_scales(block_scales),
-                ),
-                model_name=self.model_name,
-                model_signature=self.signature,
+            joint = self._solve_joint(
+                self._joint_design(study, blocks, inputs, self._broadcast_scales(block_scales))
             )
             n_parameters = len(self.parameter_names)
             width = len(self._columns())
@@ -1132,18 +1197,9 @@ class HierarchicalModel(Describable):
             scales, self.scale_bounds, tolerance=max(self.scale_tolerance, 1e-4)
         )
 
-        final = self._fit_fixed_scale(
-            study,
-            blocks,
-            design_matrix,
-            outcomes,
-            offsets,
-            self._broadcast_scales(scales),
-        )
+        final = self._fit_fixed_scale(study, blocks, inputs, self._broadcast_scales(scales))
         deviations = np.asarray(final.group_deviations, dtype=np.float64)
-        covariances = self._conditional_covariances(
-            study, blocks, design_matrix, outcomes, offsets, scales
-        )
+        covariances = self._conditional_covariances(study, blocks, inputs, scales)
         local = np.asarray(
             [
                 _scale_curvature_standard_error(
@@ -1186,9 +1242,7 @@ class HierarchicalModel(Describable):
         return self._fit_fixed_scale(
             study,
             blocks,
-            design_matrix,
-            outcomes,
-            offsets,
+            inputs,
             self._broadcast_scales(scales),
             block_scales=scales,
             estimation={
@@ -1210,17 +1264,11 @@ class HierarchicalModel(Describable):
         self,
         study: Study,
         blocks: GroupBlocks,
-        design_matrix: NDArray[np.float64],
-        outcomes: NDArray[np.float64],
-        offsets: NDArray[np.float64] | None,
+        inputs: _JointInputs,
         scales: NDArray[np.float64],
     ) -> NDArray[np.float64]:
-        joint = self.model.fit_penalised(
-            self._joint_design(
-                study, blocks, design_matrix, outcomes, offsets, self._broadcast_scales(scales)
-            ),
-            model_name=self.model_name,
-            model_signature=self.signature,
+        joint = self._solve_joint(
+            self._joint_design(study, blocks, inputs, self._broadcast_scales(scales))
         )
         covariances = getattr(joint, "conditional_group_covariances", None)
         if covariances is None:
@@ -1243,6 +1291,8 @@ class HierarchicalModel(Describable):
         prediction_mode = self._prediction_mode(mode)
         hierarchical_fit = self._validated_fit(fit)
         coefficients = self._row_parameters(study, hierarchical_fit)
+        if uses_row_coefficients(self.model):
+            return self.model.predict_rows(study, coefficients, mode=prediction_mode)
         return self.model.likelihood.prediction(
             self._row_predictor(study, coefficients), mode=prediction_mode
         )
@@ -1279,6 +1329,8 @@ class HierarchicalModel(Describable):
         self._prediction_mode(mode)
         hierarchical_fit = self._validated_fit(fit)
         coefficients = self._row_parameters(study, hierarchical_fit)
+        if uses_row_coefficients(self.model):
+            return self.model.pointwise_log_prob_rows(study, coefficients)
         return self.model.likelihood.pointwise_log_prob(
             self._row_predictor(study, coefficients), self.model.outcomes(study)
         )
@@ -1304,7 +1356,8 @@ class HierarchicalModel(Describable):
             raise ValueError("predict_new_groups requires entirely unseen groups")
         columns = self._columns()
         scales = self._broadcast_scales(np.asarray(hierarchical_fit.scales, dtype=np.float64))
-        outcomes = self.model.outcomes(study)
+        rows_route = uses_row_coefficients(self.model)
+        outcomes = None if rows_route else self.model.outcomes(study)
         generator = np.random.default_rng(seed)
         n_rows = len(study)
         probabilities = np.empty((n_draws, n_rows), dtype=np.float64)
@@ -1316,10 +1369,18 @@ class HierarchicalModel(Describable):
             )
             rows = np.tile(hierarchical_fit.estimates, (n_rows, 1))
             rows[:, columns] += deviations[draw][blocks.row_block]
-            predictor = self._row_predictor(study, rows)
-            prediction = self.model.likelihood.prediction(predictor, mode=PredictionMode.FILTERED)
+            if rows_route:
+                prediction = self.model.predict_rows(study, rows, mode=PredictionMode.FILTERED)
+                log_probabilities[draw] = self.model.pointwise_log_prob_rows(study, rows)
+            else:
+                predictor = self._row_predictor(study, rows)
+                prediction = self.model.likelihood.prediction(
+                    predictor, mode=PredictionMode.FILTERED
+                )
+                log_probabilities[draw] = self.model.likelihood.pointwise_log_prob(
+                    predictor, outcomes
+                )
             probabilities[draw] = np.asarray(prediction.probability, dtype=np.float64)
-            log_probabilities[draw] = self.model.likelihood.pointwise_log_prob(predictor, outcomes)
         log_draws = np.log(float(n_draws))
         joint = np.empty(blocks.n_groups, dtype=np.float64)
         effective_draws = np.empty(blocks.n_groups, dtype=np.float64)
@@ -1552,6 +1613,34 @@ class HierarchicalModel(Describable):
                 f"{self.model_name} does not support {prediction_mode.value!r} prediction"
             )
         return prediction_mode
+
+    # -- what is wrong with fitting this here --------------------------------------------
+
+    def additional_findings(self, study: Study) -> tuple[ModelFinding, ...]:
+        """Report what the wrapped model says, plus what a *group deviation* risks here.
+
+        The second half is the hierarchy's own mathematics and follows the precedent
+        :func:`behavio.compose.mix` set for an unidentified mixture weight. A Gaussian
+        deviation is the right prior for a parameter the data locate in the interior of its
+        range and the wrong one for a parameter they push to a bound: as a bounded rate
+        approaches zero its logit approaches minus infinity, so its group deviations become
+        unbounded, the conditional modes run to the edge of the box, and the Laplace
+        curvature there describes the box rather than the likelihood. Whether that is
+        happening is a fact about the *model's* parameters and this *study*, so it is asked
+        of the model rather than guessed at here; a model with nothing to say is described
+        exactly as it was before this hook existed.
+        """
+
+        findings: list[ModelFinding] = []
+        declared = getattr(self.model, "additional_findings", None)
+        if declared is not None:
+            findings.extend(declared(study))
+        deviations = getattr(self.model, "group_deviation_findings", None)
+        if deviations is not None:
+            findings.extend(
+                deviations(study, grouping=self.grouping, parameters=self.varying_parameters)
+            )
+        return tuple(findings)
 
 
 # --------------------------------------------------------------------------------------

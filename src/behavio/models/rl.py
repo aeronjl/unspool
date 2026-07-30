@@ -13,11 +13,18 @@ from scipy.optimize import minimize
 from scipy.special import expit, logit
 
 from behavio._internal.arrays import protected_array
+from behavio.contracts.bounded import (
+    RowCoefficientDesign,
+    block_constant_coordinates,
+    validated_row_coefficients,
+)
+from behavio.contracts.compose import ridge_group_draw, ridge_group_penalty
 from behavio.models._kernels.curvature import (
     finite_difference_gradient,
     finite_difference_hessian,
     offset_steps,
 )
+from behavio.models._kernels.rowfit import solve_row_coefficients
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -27,6 +34,15 @@ from behavio.models.base import (
     UnsupportedPredictionMode,
 )
 from behavio.trials import REQUIRED_COLUMNS, Study
+
+#: Probability floor for a composed policy, whose group deviations can saturate a softmax.
+#:
+#: A group's deviation is bounded by the *width* of the bound on the parameter it deviates
+#: from, so a composed choice bias reaches values a single-level fit's box never allowed, and
+#: there ``expit`` returns exactly one rather than one minus an epsilon. Applied only on the
+#: composed route: the single-level objective keeps the arithmetic every published fit went
+#: through, and its own box cannot reach the floor.
+COMPOSED_PROBABILITY_FLOOR = 1e-12
 
 
 class LearningRule(Protocol):
@@ -472,7 +488,14 @@ class BinaryRLAgent:
 
     @property
     def penalised_linear_refusal(self) -> str:
-        """Why no combinator may rewrite this model's problem."""
+        """Why ``mix()`` may not rewrite this model's problem.
+
+        ``smooth()`` and ``hierarchical()`` compose this agent anyway, through
+        :class:`~behavio.contracts.bounded.BoundedCoordinateEstimator`: neither of them needs
+        a linear predictor, only one unconstrained coordinate vector per row. ``mix()`` does
+        need one -- it averages two densities *given* a predictor -- so it reads this
+        sentence and refuses, which is also the right answer scientifically.
+        """
 
         return (
             "a value-updating agent is a recursion over trials, not a penalised linear "
@@ -744,6 +767,235 @@ class BinaryRLAgent:
             linear_predictor=linear_predictor,
         )
 
+    # -- the bounded-coordinate composition contract --------------------------------------
+
+    def row_objective(self, study: Study) -> _RLRowObjective:
+        """Return this study's negative log likelihood in one coordinate per row."""
+
+        groups = self._groups(study)
+        row_blocks = np.empty(len(study), dtype=np.intp)
+        for block, indices in enumerate(groups):
+            row_blocks[np.asarray(indices, dtype=np.intp)] = block
+        return _RLRowObjective(
+            model=self,
+            choices=self._choices(study),
+            rewards=self._rewards(study),
+            groups=groups,
+            row_blocks=row_blocks,
+            n_rows=len(study),
+        )
+
+    def penalty_matrix(self) -> NDArray[np.float64]:
+        """Return the quadratic penalty on the coordinate, which is none."""
+
+        width = len(self.parameter_names)
+        return np.zeros((width, width), dtype=np.float64)
+
+    def coordinate_box(self, study: Study) -> NDArray[np.float64]:
+        """Return the finite optimizer box this agent's own solver searches in."""
+
+        del study
+        return np.asarray(self._bounds(), dtype=np.float64)
+
+    def initial_points(self, study: Study) -> tuple[NDArray[np.float64], ...]:
+        """Return the deterministic restarts this agent's own solver would use."""
+
+        del study
+        return self._initial_points()
+
+    def group_parameter_expansion(self, name: str) -> tuple[str, ...]:
+        """Return the reported parameters one declared varying name stands for."""
+
+        return (name,)
+
+    def group_penalty(
+        self, columns: NDArray[np.intp], scales: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Return the isotropic Gaussian precision on one group's deviation."""
+
+        del columns
+        return ridge_group_penalty(scales)
+
+    def draw_group_deviations(
+        self,
+        columns: NDArray[np.intp],
+        scales: NDArray[np.float64],
+        *,
+        groups: int,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Draw Gaussian deviations on the *transformed* coordinate, never the natural one."""
+
+        del columns
+        return ridge_group_draw(scales, groups=groups, generator=generator)
+
+    def fit_rows(
+        self,
+        design: RowCoefficientDesign,
+        *,
+        model_name: str,
+        model_signature: str,
+    ) -> FitResult:
+        """Solve a row-coefficient problem on this agent's own optimizer settings."""
+
+        return solve_row_coefficients(
+            design,
+            model_name=model_name,
+            model_signature=model_signature,
+            optimizer="L-BFGS-B (numeric gradient)",
+            max_iterations=self.max_iterations,
+            tolerance=self.tolerance,
+            boundary=self._row_boundary,
+        )
+
+    def simulate_rows(
+        self,
+        design: Study,
+        coefficients: NDArray[np.float64],
+        *,
+        seed: int | np.random.Generator,
+    ) -> Study:
+        """Generate choices and rewards with one parameter vector per row."""
+
+        rows = validated_row_coefficients(
+            coefficients,
+            n_rows=len(design),
+            n_parameters=len(self.parameter_names),
+            what="simulate_rows",
+        )
+        environment = self._reward_probabilities(design)
+        generator = seed if isinstance(seed, np.random.Generator) else np.random.default_rng(seed)
+        choices = np.zeros(len(design), dtype=np.int8)
+        rewards = np.zeros(len(design), dtype=np.int8)
+        for indices in self._groups(design):
+            natural = self._block_natural(rows, indices)
+            values = np.full(2, self.initial_value, dtype=np.float64)
+            kernel = np.zeros(2, dtype=np.float64)
+            for index in indices:
+                probability = self.policy.probability(
+                    self._linear(values, kernel, natural), natural
+                )
+                choice = int(generator.binomial(1, probability))
+                reward = int(generator.binomial(1, environment[index, choice]))
+                choices[index] = choice
+                rewards[index] = reward
+                self._update(values, kernel, choice, reward, natural)
+        columns = {name: design[name] for name in design.columns}
+        columns[self.outcome] = choices
+        columns[self.reward] = rewards
+        return Study(columns)
+
+    def predict_rows(
+        self,
+        study: Study,
+        coefficients: NDArray[np.float64],
+        *,
+        mode: PredictionMode,
+    ) -> Prediction:
+        """Return filtered choice probabilities under one parameter vector per row."""
+
+        prediction_mode = self._prediction_mode(mode)
+        probability = self._row_probability(study, coefficients)
+        return Prediction(
+            probability=probability,
+            linear_predictor=np.asarray(logit(probability), dtype=np.float64),
+            mode=prediction_mode,
+        )
+
+    def pointwise_log_prob_rows(
+        self, study: Study, coefficients: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Score each observed choice under one parameter vector per row."""
+
+        choices = self._choices(study)
+        probability = self._row_probability(study, coefficients)
+        scores = choices * np.log(probability) + (1.0 - choices) * np.log1p(-probability)
+        return protected_array(scores, dtype=np.float64)
+
+    def _row_probability(
+        self, study: Study, coefficients: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        rows = validated_row_coefficients(
+            coefficients,
+            n_rows=len(study),
+            n_parameters=len(self.parameter_names),
+            what="row coefficients",
+        )
+        choices = self._choices(study)
+        rewards = self._rewards(study)
+        probability = np.empty(len(study), dtype=np.float64)
+        for indices in self._groups(study):
+            natural = self._block_natural(rows, indices)
+            values = np.full(2, self.initial_value, dtype=np.float64)
+            kernel = np.zeros(2, dtype=np.float64)
+            for index in indices:
+                probability[index] = self.policy.probability(
+                    self._linear(values, kernel, natural), natural
+                )
+                self._update(values, kernel, int(choices[index]), rewards[index], natural)
+        return np.clip(probability, COMPOSED_PROBABILITY_FLOOR, 1.0 - COMPOSED_PROBABILITY_FLOOR)
+
+    def _block_natural(
+        self, rows: NDArray[np.float64], indices: tuple[int, ...]
+    ) -> Mapping[str, float]:
+        """Decode the one coordinate a reset block's rows share, refusing disagreement."""
+
+        index = np.asarray(indices, dtype=np.intp)
+        block = rows[index]
+        if not np.array_equal(block, np.tile(block[0], (len(index), 1))):
+            raise ValueError(
+                "an RL agent's parameters must be constant within a reset block: a value "
+                "trace cannot say which of two parameter values produced it"
+            )
+        return self.parameter_components(dict(zip(self.parameter_names, block[0], strict=True)))
+
+    def _block_loss(
+        self,
+        vector: NDArray[np.float64],
+        indices: tuple[int, ...],
+        choices: NDArray[np.float64],
+        rewards: NDArray[np.float64],
+    ) -> float:
+        """Return one reset block's negative log likelihood at one coordinate."""
+
+        natural = self.parameter_components(dict(zip(self.parameter_names, vector, strict=True)))
+        values = np.full(2, self.initial_value, dtype=np.float64)
+        kernel = np.zeros(2, dtype=np.float64)
+        loss = 0.0
+        for index in indices:
+            probability = float(
+                np.clip(
+                    self.policy.probability(self._linear(values, kernel, natural), natural),
+                    COMPOSED_PROBABILITY_FLOOR,
+                    1.0 - COMPOSED_PROBABILITY_FLOOR,
+                )
+            )
+            choice = int(choices[index])
+            loss -= float(choice * np.log(probability) + (1 - choice) * np.log1p(-probability))
+            self._update(values, kernel, choice, rewards[index], natural)
+        return loss
+
+    def _row_boundary(
+        self,
+        estimates: NDArray[np.float64],
+        derived: NDArray[np.float64] | None,
+    ) -> bool:
+        """Apply this agent's own boundary convention to a composed estimate."""
+
+        width = len(self.parameter_names)
+        candidates = [np.asarray(estimates, dtype=np.float64)[:width]]
+        if derived is not None:
+            candidates.extend(np.atleast_2d(np.asarray(derived, dtype=np.float64)))
+        for vector in candidates:
+            if len(vector) != width:
+                continue
+            natural = self.parameter_components(
+                dict(zip(self.parameter_names, vector, strict=True))
+            )
+            if self._boundary(np.asarray(vector, dtype=np.float64), natural):
+                return True
+        return False
+
     def _linear(
         self,
         values: NDArray[np.float64],
@@ -896,6 +1148,52 @@ class BinaryRLAgent:
                 f"not {prediction_mode.value!r}"
             )
         return prediction_mode
+
+
+@dataclass(frozen=True, slots=True)
+class _RLRowObjective:
+    """The agent's negative log likelihood as a function of one coordinate per trial.
+
+    Blocked by the agent's own :class:`ResetRule`, because that is where the value trace and
+    the choice kernel start again. Within a block the gradient is differenced numerically on
+    the same ``1 + |x|`` step rule :meth:`BinaryRLAgent.fit` is pinned to: the agent is
+    assembled from components whose update rules are supplied rather than fixed, so there is
+    no analytic derivative to inherit, and differencing one block at a time costs the same
+    total work as differencing the whole study did.
+    """
+
+    model: BinaryRLAgent
+    choices: NDArray[np.float64]
+    rewards: NDArray[np.float64]
+    groups: tuple[tuple[int, ...], ...]
+    row_blocks: NDArray[np.intp]
+    n_rows: int
+
+    @property
+    def n_parameters(self) -> int:
+        """The width of one row's coordinate."""
+
+        return len(self.model.parameter_names)
+
+    def value_and_gradient(self, rows: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
+        """Return the negative log likelihood and its gradient in the row coordinates."""
+
+        values = validated_row_coefficients(
+            rows, n_rows=self.n_rows, n_parameters=self.n_parameters, what="row coordinates"
+        )
+        block_constant_coordinates(values, self.row_blocks, what="an RL agent's parameters")
+        total = 0.0
+        gradient = np.zeros_like(values)
+        for indices in self.groups:
+            index = np.asarray(indices, dtype=np.intp)
+            vector = values[index[0]]
+
+            def loss(point: NDArray[np.float64], block: tuple[int, ...] = indices) -> float:
+                return self.model._block_loss(point, block, self.choices, self.rewards)
+
+            total += loss(vector)
+            gradient[index] = _finite_gradient(loss, vector) / len(index)
+        return float(total), gradient
 
 
 def _finite_gradient(function: Any, values: NDArray[np.float64]) -> NDArray[np.float64]:

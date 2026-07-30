@@ -36,7 +36,8 @@ Everything else is public, documented, and reached at `behavio.<area>.<name>`.
 | `behavio.recovery` | parameter recovery and model recovery | [Recovery](recovery.md) | [Recovery design](../model-recovery.md) |
 | `behavio.protocol` | the frozen declaration, its compiler, its runner, exact-design recovery | [Schema](protocol.md), [execution](execution.md) | [Protocol authoring](../protocols/index.md) |
 | `behavio.report` | bounded reports, evidence bundles, fit artifacts | [Report](evidence-bundles.md) | [Evidence bundles](../protocols/evidence-bundles.md) |
-| `behavio.adapters` | CSV/TSV/Parquet tables, NWB, DANDI, IBL ONE, adapter conformance | [Data adapters](data-adapters.md) | [Interoperability](../interoperability.md) |
+| `behavio.adapters` | CSV/TSV/Parquet tables, NWB, DANDI, IBL ONE, adapter and estimator conformance, trial sequences, continuous-outcome predictions | [Data adapters](data-adapters.md) | [Interoperability](../interoperability.md) |
+| `behavio.foreign` | estimators backed by third-party model packages, each behind its own extra | [Wrapped models](foreign-models.md) | [Compatibility and licences](../foreign-models.md) |
 | `behavio.contracts` | every protocol a downstream package implements, at one address | [Extension contracts](contracts.md) | [Extend Behavio](../extensions.md) |
 | `behavio.plot` | SBC bands, Pareto-`k`, ELPD differences, predictive checks, recovery, calibration, convergence | [Plotting](plots.md) | [Figure standard](figure-standard.md) |
 | `behavio.diagnostics` | the fit audit, `audit_fit` | [Diagnostics](diagnostics.md) | [Fit diagnostics](../diagnostics.md) |

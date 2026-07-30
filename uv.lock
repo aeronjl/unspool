@@ -204,6 +204,9 @@ probabilistic = [
     { name = "arviz", version = "0.23.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "arviz", version = "1.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
+pyddm = [
+    { name = "pyddm" },
+]
 readers = [
     { name = "h5py" },
     { name = "pandas" },
@@ -217,6 +220,7 @@ dev = [
     { name = "h5py" },
     { name = "matplotlib" },
     { name = "pandas" },
+    { name = "pyddm" },
     { name = "pymc", version = "5.28.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "pymc", version = "6.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "pytest" },
@@ -243,6 +247,7 @@ requires-dist = [
     { name = "pandas", marker = "extra == 'readers'", specifier = ">=2.2" },
     { name = "pyarrow", marker = "extra == 'parquet'", specifier = ">=17" },
     { name = "pybads", marker = "extra == 'optimization'", specifier = ">=1.0.6,<2" },
+    { name = "pyddm", marker = "extra == 'pyddm'", specifier = ">=0.9,<0.10" },
     { name = "pymc", marker = "python_full_version >= '3.12' and extra == 'bayesian'", specifier = ">=6.1,<7" },
     { name = "pymc", marker = "python_full_version < '3.12' and extra == 'bayesian'", specifier = ">=5.28,<6" },
     { name = "pynwb", marker = "extra == 'dandi'", specifier = ">=3.1" },
@@ -251,7 +256,7 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.15" },
     { name = "tables", marker = "extra == 'readers'", specifier = ">=3.10" },
 ]
-provides-extras = ["readers", "nwb", "dandi", "ibl", "optimization", "probabilistic", "bayesian", "parquet", "plots"]
+provides-extras = ["readers", "nwb", "dandi", "ibl", "optimization", "probabilistic", "bayesian", "parquet", "plots", "pyddm"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -260,6 +265,7 @@ dev = [
     { name = "h5py", specifier = ">=3.11" },
     { name = "matplotlib", specifier = ">=3.9" },
     { name = "pandas", specifier = ">=2.2" },
+    { name = "pyddm", specifier = ">=0.9,<0.10" },
     { name = "pymc", marker = "python_full_version < '3.12'", specifier = ">=5.28,<6" },
     { name = "pymc", marker = "python_full_version >= '3.12'", specifier = ">=6.1,<7" },
     { name = "pytest", specifier = ">=8.4.0" },
@@ -1808,6 +1814,15 @@ wheels = [
 ]
 
 [[package]]
+name = "paranoid-scientist"
+version = "0.2.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d2/aa/9b73253f175499e56a764fe7ea6ad33a73fed59083b4e115669d8cbb0285/paranoid_scientist-0.2.3.tar.gz", hash = "sha256:074b40185a7d923373218144eaa7799b0b78b660f0975a313696caa972016929", size = 25692, upload-time = "2024-06-21T08:03:32.303Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/49/3f/1fdeaa43de9f87253731c599163a12a4756934db853674c84a1908848694/paranoid_scientist-0.2.3-py3-none-any.whl", hash = "sha256:f531b6f7ada1c88827a3c3a0781c5ba265472e2b5df7227399c6e3baf13e75dc", size = 25164, upload-time = "2024-06-21T08:03:30.41Z" },
+]
+
+[[package]]
 name = "pathspec"
 version = "1.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2105,6 +2120,46 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ac/ad/5565071e937d8e752842ac241463944c9eb14c87e2d269f2658a5bd05e98/pydantic_core-2.46.4-pp311-pypy311_pp73-musllinux_1_1_armv7l.whl", hash = "sha256:d396ec2b979760aaf3218e76c24e65bd0aca24983298653b3a9d7a45f9e47b30", size = 2310000, upload-time = "2026-05-06T13:37:56.694Z" },
     { url = "https://files.pythonhosted.org/packages/4f/c3/66883a5cec183e7fba4d024b4cbbe61851a63750ef606b0afecc46d1f2bf/pydantic_core-2.46.4-pp311-pypy311_pp73-musllinux_1_1_x86_64.whl", hash = "sha256:86e1a4418c6cd97d60c95c71164158eaf7324fae7b0923264016baa993eba6fc", size = 2361286, upload-time = "2026-05-06T13:40:05.667Z" },
     { url = "https://files.pythonhosted.org/packages/4b/2d/69abac8f838090bbecd5df894befb2c2619e7996a98ddb949db9f3b93225/pydantic_core-2.46.4-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:d51026d73fcfd93610abc7b27789c26b313920fcfb20e27462d74a7f8b06e983", size = 2193071, upload-time = "2026-05-06T13:38:08.682Z" },
+]
+
+[[package]]
+name = "pyddm"
+version = "0.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "paranoid-scientist" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ca/b8/79c9d49936872bf598eafb2791bb845ec791c77767631fa7a12a226532da/pyddm-0.9.0.tar.gz", hash = "sha256:98b971de5dcb4e490d4f72c631d9f12f9584cdabeddbb466656cf0f45fe27ffd", size = 87917, upload-time = "2025-09-28T21:57:20.386Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3b/c4/f3f03efaf6eafb27bf5fd984815a6062a508942ac4012ff9fa81efd90401/pyddm-0.9.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:0f64f48b6c32f9d1c490848abe79f21d407912025a9cdc560e87f34934c61a42", size = 104440, upload-time = "2025-09-28T21:56:23.974Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/e9/742fb3e047683f9b5a6410d319e3c97bb60fadeef295d5e72703d028f656/pyddm-0.9.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:88fb76357309399ee322226c62f81f6287f70f5d082540b81d254f9b191232a8", size = 103872, upload-time = "2025-09-28T21:56:25.303Z" },
+    { url = "https://files.pythonhosted.org/packages/71/de/3f2826ae6142fd57572695ba8a3b2d0caff601817515a578e3899b24821b/pyddm-0.9.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:aa604911a984719dfe8970068faeac3cc674dee1b83486529c716a5b05b9fe6f", size = 118712, upload-time = "2025-09-28T21:56:26.658Z" },
+    { url = "https://files.pythonhosted.org/packages/01/b6/830d86ac7f220089c2b4535aade634b175ba1140d263a8b8bcf7af61d7cb/pyddm-0.9.0-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:863254ecb3fd75f54b10699878f07710409eb2017b82172b50a0a79cf8c56f1e", size = 117411, upload-time = "2025-09-28T21:56:28.255Z" },
+    { url = "https://files.pythonhosted.org/packages/14/1f/124fe10af56ae27e2689c3f5ec7b7e088b3f1f6134cb277f99bdb1b84a9e/pyddm-0.9.0-cp311-cp311-win32.whl", hash = "sha256:2fcaf54142c97cbd49c5801470fbb3f4e20b6f4bcd33059d935f8fda0ba50035", size = 104680, upload-time = "2025-09-28T21:56:29.475Z" },
+    { url = "https://files.pythonhosted.org/packages/57/71/3f1442b4a6661fdfdf80ab83575f3a45a65dd2e231ec629a774dab86bbb9/pyddm-0.9.0-cp311-cp311-win_amd64.whl", hash = "sha256:4332ceb527b91ede4d90e0b84e48fb5da3c4cb3db8bba2e45ed27036e931719e", size = 106924, upload-time = "2025-09-28T21:56:30.604Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/7d/1c3afea29b127a6703b1245c85c9af069234beb81700951a60718658aca8/pyddm-0.9.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:084ef6722de94e4ecb33fb8c0f5a18198ad8c4a25a5eaed8db11c1e7d322b052", size = 104459, upload-time = "2025-09-28T21:56:31.744Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/2d/36bced86ae77d2fbdd95ed6339ecab0a6f8e5e427739e81c2e9ed686442d/pyddm-0.9.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:8f440ce9992d1cb5b8ca2f5ea6a47be0a89f4ecdc0e89cff061074f89cdf4215", size = 103845, upload-time = "2025-09-28T21:56:33.28Z" },
+    { url = "https://files.pythonhosted.org/packages/6f/9b/ba68b80500020153539b23075e2bbbb57d4cd3175eca4f6be4b95fcf599a/pyddm-0.9.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e4c46c0ad2a322453b25cde643c37e509c455094a5edc89471fe83d793a6efec", size = 119110, upload-time = "2025-09-28T21:56:34.81Z" },
+    { url = "https://files.pythonhosted.org/packages/49/c7/de56d34e685397b27074a3133e56efcc7162635501f04bb3c79a337b3595/pyddm-0.9.0-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:5a55ead20717de4ef90147e8df4aa6b02f19562451e8b9cc7fc8ba7da7dd5fb6", size = 117798, upload-time = "2025-09-28T21:56:36.354Z" },
+    { url = "https://files.pythonhosted.org/packages/51/57/d99051f03102c99d62ebcb8566a61479d1e55cc7746accbfe6cfbd39ff02/pyddm-0.9.0-cp312-cp312-win32.whl", hash = "sha256:88a521c1cf089236f59280bdc79d0ef190ceda180d03da9f9bdf6ae3c40ac89e", size = 104721, upload-time = "2025-09-28T21:56:37.673Z" },
+    { url = "https://files.pythonhosted.org/packages/2e/94/8a97725ae155f40ba53f032e078db25d69bade55f1e0f384b71befaa1b13/pyddm-0.9.0-cp312-cp312-win_amd64.whl", hash = "sha256:fa81539dad79b99accf58deaffff7319219be8650cd0979eec47b31653c93bc2", size = 106938, upload-time = "2025-09-28T21:56:38.812Z" },
+    { url = "https://files.pythonhosted.org/packages/72/00/28066da7778c4cfbbdd6e43d86a4c9b247758ab0223b45676d76094bf78c/pyddm-0.9.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:1d447573db3e2143389713d22bcaeaafae63dc08c778eb7247a14660be18dae6", size = 104465, upload-time = "2025-09-28T21:56:40.244Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/b7/947065de1f91623bfa9d854b08aa72c28b0404b474792840673724a5e20c/pyddm-0.9.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:52cbe3f6e0bfe3149dfa1240888821e23bf771d7779200249992e8badd9b5a33", size = 103851, upload-time = "2025-09-28T21:56:41.78Z" },
+    { url = "https://files.pythonhosted.org/packages/db/4d/09199435082b2a4dfe486205b170e28e0c38068e2f4a2b10796409a6f416/pyddm-0.9.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3298aff3d0c5dd3c4fa17ac6e4a204401e1602e284e5fe8f91d6b4dcd9f5dfe1", size = 119081, upload-time = "2025-09-28T21:56:43.414Z" },
+    { url = "https://files.pythonhosted.org/packages/28/0b/a4adf48ca4cdfee732e6d7b6de9d7dea5276695b87b4fa8c22cb99f4e29b/pyddm-0.9.0-cp313-cp313-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:ef122ffab28dc75bb467a4c67410e1ff6fcbc98081dc471651ff96c77e71e066", size = 117766, upload-time = "2025-09-28T21:56:44.648Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/a7/a5dfa5e119d52508aee54edfea431674a40e600ed9d0a019d9956cf811b3/pyddm-0.9.0-cp313-cp313-win32.whl", hash = "sha256:d4d1cc9e10a7a3092f572034ee354f9d6a2a73bdc66c6e77ebdd78827b6a48fa", size = 104722, upload-time = "2025-09-28T21:56:46.182Z" },
+    { url = "https://files.pythonhosted.org/packages/25/dd/c6072d295c4285ecc420aaa40632c202131cf3a32d75b67d997169970278/pyddm-0.9.0-cp313-cp313-win_amd64.whl", hash = "sha256:7134aa11237c2eb0d8249f58d408bb51e7a1a780340e275be4c920aa714c9bd0", size = 106940, upload-time = "2025-09-28T21:56:47.409Z" },
+    { url = "https://files.pythonhosted.org/packages/24/4b/954296644c000df8c7bcfaacbf8842b592537f2cc5d2bfce0397b1638d93/pyddm-0.9.0-cp314-cp314-macosx_10_13_x86_64.whl", hash = "sha256:0000eaff8bf2f8e163ce1219615c8328053f47bb9dc9fcdd7541b7a9dbce3846", size = 104458, upload-time = "2025-09-28T21:56:48.828Z" },
+    { url = "https://files.pythonhosted.org/packages/32/54/f6cdf9f145a97eae01c9f32ce4910c0635dfa93c23e7031e352de81d84fa/pyddm-0.9.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:e423714b79eca17270a5102d6a97d29a76e18bdf4b0364b8afc53e8175ded586", size = 103856, upload-time = "2025-09-28T21:56:50.06Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/ed/d5a71b2a6cff4981cee942a99a26530b449259a72b38626061e4505519ed/pyddm-0.9.0-cp314-cp314-manylinux1_i686.manylinux_2_28_i686.manylinux_2_5_i686.whl", hash = "sha256:6e539b344b0f7641ca7f20c3f82d134dfe16e4f9991259061d883d5371a3f079", size = 117767, upload-time = "2025-09-28T21:56:51.111Z" },
+    { url = "https://files.pythonhosted.org/packages/57/14/8c5985ab40df78bfab819971c74b5bebaa888ef22d28f980bcd3f3609e6e/pyddm-0.9.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:36b3851a6cc37f8cdab786c5dfc4cb8622684bab64b50fa21803163345ac0b21", size = 120104, upload-time = "2025-09-28T21:56:52.317Z" },
+    { url = "https://files.pythonhosted.org/packages/8f/78/322c9c781581c7ecc3de43d0f765c5952508c845ce2d39e3220e3bc178b6/pyddm-0.9.0-cp314-cp314-win32.whl", hash = "sha256:84cce256efeb6af8d24fcab427213b4cb42b0026a66438cffff405e15681a1ad", size = 105093, upload-time = "2025-09-28T21:56:53.555Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/18/887f7cddcf7d41e08dd1a669989cb1cdb0bc05bd979af27263932a1cbfde/pyddm-0.9.0-cp314-cp314-win_amd64.whl", hash = "sha256:b02be3995f22e408ceb45b588e47a0ea3009996bb8ebe94838fbd8f13564c6a6", size = 107468, upload-time = "2025-09-28T21:56:54.783Z" },
 ]
 
 [[package]]

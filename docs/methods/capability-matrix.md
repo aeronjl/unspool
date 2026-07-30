@@ -12,7 +12,7 @@ its inferential or design coverage remains deliberately narrow.
 | Forward-session, within-session, and historical-cohort prospective validation | **Supported** | Learned preprocessing must still be fitted within folds; historical-cohort claims require the declared deployment order. |
 | Complete-subject and complete-lab holdout | **Supported** | Does not by itself create population-of-labs inference. |
 | Bias-only, psychometric, perseveration, lapse, and win-stay/lose-shift baselines | **Experimental** | Complete binary generative contracts; lapse support is fixed, and outcome-conditioned histories reset explicitly. |
-| Parametric psychometric functions | **Experimental** | Five declared links with separate guess and lapse rates; thresholds are readable only against the declared link, stimulus scale, and threshold convention, and there is no hierarchical or smooth variant. |
+| Parametric psychometric functions | **Experimental** | Five declared links with separate guess and lapse rates; thresholds are readable only against the declared link, stimulus scale, and threshold convention. `smooth()` and `hierarchical()` compose over the curve through its transformed coordinate; a rate the data pin to its bound is reported as a finding rather than shrunk. |
 | Signal detection theory: yes/no, forced choice, unequal-variance ROC, and meta-d' | **Experimental** | Clean-room from the published equations; extreme-rate corrections must be declared rather than inferred, tables are pooled across subjects, and there is no hierarchical or smooth variant. |
 | Static Bernoulli history GLM | **Supported** | Choice-only likelihood with declared covariates and lags. |
 | Smooth longitudinal Bernoulli GLM | **Supported** | Fixed clock and knots; future knots are not learned from test data. |
@@ -20,8 +20,8 @@ its inferential or design coverage remains deliberately narrow.
 | Training-only nested candidate selection | **Supported** | Estimates the selection procedure, not one retrospectively named model. |
 | Parameter and model recovery | **Supported** | Evidence is specific to the simulated design and parameter regime. |
 | GLM-HMM | **Experimental** | Input-driven emissions with stationary transitions and an optional sticky self-transition prior; state interpretation requires alignment and competitors. |
-| Binary Q-learning | **Experimental** | Compact two-action, session-reset implementation. |
-| Composable binary RL | **Experimental** | Symmetric/asymmetric updates, unchosen forgetting, choice kernels, lapse-softmax policies, and explicit reset columns; rich assemblies require design-specific recovery. |
+| Binary Q-learning | **Experimental** | Compact two-action, session-reset implementation; `smooth()` and `hierarchical()` compose over it on the transformed coordinate, with the clock restricted to be constant within a reset block. |
+| Composable binary RL | **Experimental** | Symmetric/asymmetric updates, unchosen forgetting, choice kernels, lapse-softmax policies, and explicit reset columns; `smooth()` and `hierarchical()` compose over the assembled agent per reset block, and rich assemblies require design-specific recovery. |
 | Static and session-varying drift diffusion | **Experimental** | Joint choice/RT data with explicit units and fixed support assumptions; `smooth()` puts named parameters, a mixture weight included, on fixed knots. |
 | Hierarchical drift diffusion, with or without smoothing | **Experimental** | `hierarchical()` composes over the static and the session-varying model alike; plug-in population prediction and bounded variance-component estimation. |
 | Threshold learning landmarks | **Experimental** | Fold-fitted plug-in bootstrap; unresolved draws remain visible. |

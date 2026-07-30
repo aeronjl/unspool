@@ -10,10 +10,17 @@ from numpy.typing import NDArray
 from scipy.special import expit
 
 from behavio._internal.arrays import protected_array
+from behavio.contracts.bounded import (
+    RowCoefficientDesign,
+    block_constant_coordinates,
+    validated_row_coefficients,
+)
+from behavio.contracts.compose import ridge_group_draw, ridge_group_penalty
 from behavio.inference.optimize import OptimizationProblem, OptimizationRun, ScipyMultistart
 from behavio.inference.parameters import ParameterSpace, ParameterSpec, ParameterTransform
 from behavio.models._kernels.bernoulli import ordered_session_indices
 from behavio.models._kernels.curvature import finite_difference_hessian, offset_steps
+from behavio.models._kernels.rowfit import solve_row_coefficients
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -493,6 +500,219 @@ class BinaryQLearning:
             linear_predictor=linear_predictor,
         )
 
+    # -- the bounded-coordinate composition contract --------------------------------------
+    #
+    # ``parameter_names`` is already the unconstrained coordinate -- a logit learning rate
+    # and a log inverse temperature -- so hierarchy and smoothness need nothing added to it.
+    # What they need is the likelihood as a function of one such coordinate *per row*, which
+    # is the mirror image of ``simulate_rows``. See ``behavio.contracts.bounded``.
+
+    def row_objective(self, study: Study) -> _QLearningRowObjective:
+        """Return this study's negative log likelihood in one coordinate per row."""
+
+        sessions = ordered_session_indices(study)
+        row_blocks = np.empty(len(study), dtype=np.intp)
+        for block, indices in enumerate(sessions):
+            row_blocks[np.asarray(indices, dtype=np.intp)] = block
+        return _QLearningRowObjective(
+            model=self,
+            choices=self._choices(study),
+            rewards=self._rewards(study),
+            sessions=sessions,
+            row_blocks=row_blocks,
+            n_rows=len(study),
+        )
+
+    def penalty_matrix(self) -> NDArray[np.float64]:
+        """Return the quadratic penalty on the coordinate, which is none.
+
+        A Q-learning fit is a maximum-likelihood fit inside a box; whatever regularisation
+        it has comes from the box and from the transforms, not from a ridge. Composition
+        adds a group or roughness prior on top of this, which is the only place a penalty
+        on this model has ever come from.
+        """
+
+        return np.zeros((4, 4), dtype=np.float64)
+
+    def coordinate_box(self, study: Study) -> NDArray[np.float64]:
+        """Return the finite optimizer box the parameter space declares."""
+
+        del study
+        return np.asarray(
+            [bounds for bounds in self.parameter_space.optimizer_bounds], dtype=np.float64
+        )
+
+    def initial_points(self, study: Study) -> tuple[NDArray[np.float64], ...]:
+        """Return the deterministic restarts this model's own solver would use."""
+
+        del study
+        return self._initial_points()
+
+    def group_parameter_expansion(self, name: str) -> tuple[str, ...]:
+        """Return the reported parameters one declared varying name stands for."""
+
+        return (name,)
+
+    def group_penalty(
+        self, columns: NDArray[np.intp], scales: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Return the isotropic Gaussian precision on one group's deviation."""
+
+        del columns
+        return ridge_group_penalty(scales)
+
+    def draw_group_deviations(
+        self,
+        columns: NDArray[np.intp],
+        scales: NDArray[np.float64],
+        *,
+        groups: int,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Draw Gaussian deviations on the *transformed* coordinate, never the natural one."""
+
+        del columns
+        return ridge_group_draw(scales, groups=groups, generator=generator)
+
+    def fit_rows(
+        self,
+        design: RowCoefficientDesign,
+        *,
+        model_name: str,
+        model_signature: str,
+    ) -> FitResult:
+        """Solve a row-coefficient problem on this model's own optimizer settings."""
+
+        return solve_row_coefficients(
+            design,
+            model_name=model_name,
+            model_signature=model_signature,
+            optimizer="L-BFGS-B",
+            max_iterations=self.max_iterations,
+            tolerance=self.tolerance,
+            boundary=self._row_boundary,
+        )
+
+    def simulate_rows(
+        self,
+        design: Study,
+        coefficients: NDArray[np.float64],
+        *,
+        seed: int | np.random.Generator,
+    ) -> Study:
+        """Generate choices and rewards with one parameter vector per row."""
+
+        rows = validated_row_coefficients(
+            coefficients, n_rows=len(design), n_parameters=4, what="simulate_rows"
+        )
+        environment = self._reward_probabilities(design)
+        generator = seed if isinstance(seed, np.random.Generator) else np.random.default_rng(seed)
+        choices = np.zeros(len(design), dtype=np.int8)
+        rewards = np.zeros(len(design), dtype=np.int8)
+        for session_indices in ordered_session_indices(design):
+            components = _session_parameters(rows, session_indices, "simulate_rows coefficients")
+            values = np.full(2, self.initial_value, dtype=np.float64)
+            previous_choice = 0.0
+            for index in session_indices:
+                linear = (
+                    components.inverse_temperature * (values[1] - values[0])
+                    + components.choice_bias
+                    + components.perseveration * previous_choice
+                )
+                choice = int(generator.binomial(1, expit(linear)))
+                reward = int(generator.binomial(1, environment[index, choice]))
+                choices[index] = choice
+                rewards[index] = reward
+                values[choice] += components.learning_rate * (reward - values[choice])
+                previous_choice = 2.0 * choice - 1.0
+        columns = {name: design[name] for name in design.columns}
+        columns[self.outcome] = choices
+        columns[self.reward] = rewards
+        return Study(columns)
+
+    def predict_rows(
+        self,
+        study: Study,
+        coefficients: NDArray[np.float64],
+        *,
+        mode: PredictionMode,
+    ) -> Prediction:
+        """Return filtered choice probabilities under one parameter vector per row."""
+
+        prediction_mode = self._prediction_mode(mode)
+        linear = self._row_linear_predictor(study, coefficients)
+        return Prediction(probability=expit(linear), linear_predictor=linear, mode=prediction_mode)
+
+    def pointwise_log_prob_rows(
+        self, study: Study, coefficients: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Score each observed choice under one parameter vector per row."""
+
+        choices = self._choices(study)
+        linear = self._row_linear_predictor(study, coefficients)
+        scores = choices * -np.logaddexp(0.0, -linear)
+        scores += (1.0 - choices) * -np.logaddexp(0.0, linear)
+        return protected_array(scores, dtype=np.float64)
+
+    def _row_linear_predictor(
+        self, study: Study, coefficients: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        rows = validated_row_coefficients(
+            coefficients, n_rows=len(study), n_parameters=4, what="row coefficients"
+        )
+        choices = self._choices(study)
+        rewards = self._rewards(study)
+        linear = np.empty(len(study), dtype=np.float64)
+        for session_indices in ordered_session_indices(study):
+            components = _session_parameters(rows, session_indices, "row coefficients")
+            values = np.full(2, self.initial_value, dtype=np.float64)
+            previous_choice = 0.0
+            for index in session_indices:
+                linear[index] = (
+                    components.inverse_temperature * (values[1] - values[0])
+                    + components.choice_bias
+                    + components.perseveration * previous_choice
+                )
+                choice = int(choices[index])
+                values[choice] += components.learning_rate * (rewards[index] - values[choice])
+                previous_choice = 2.0 * choice - 1.0
+        return linear
+
+    def _row_boundary(
+        self,
+        estimates: NDArray[np.float64],
+        derived: NDArray[np.float64] | None,
+    ) -> bool:
+        """Apply this model's own boundary convention to a composed estimate.
+
+        The convention is the natural-scale one ``fit`` already uses. It reads the population
+        block, and each group's *population plus deviation* whenever that sum is a complete
+        coordinate -- because an animal's behaviour is generated by the sum and not by either
+        half of it. Where only some parameters vary the sum is a fragment that cannot be
+        decoded, and the generic box check in
+        :func:`~behavio.models._kernels.rowfit.solve_row_coefficients` is what covers it: a
+        deviation large enough to saturate a rate reaches the box first.
+        """
+
+        candidates = [np.asarray(estimates, dtype=np.float64)[:4]]
+        if derived is not None:
+            candidates.extend(np.atleast_2d(np.asarray(derived, dtype=np.float64)))
+        for vector in candidates:
+            if len(vector) != 4:
+                continue
+            components = _decode_parameters(vector)
+            if (
+                components.learning_rate <= self.learning_rate_warning_threshold
+                or components.learning_rate >= 1.0 - self.learning_rate_warning_threshold
+                or components.inverse_temperature
+                <= 1.0 / self.inverse_temperature_warning_threshold
+                or components.inverse_temperature >= self.inverse_temperature_warning_threshold
+                or abs(components.choice_bias) >= self.coefficient_warning_threshold
+                or abs(components.perseveration) >= self.coefficient_warning_threshold
+            ):
+                return True
+        return False
+
     def _objective_gradient(
         self,
         vector: NDArray[np.float64],
@@ -616,6 +836,65 @@ class BinaryQLearning:
                 f"not {prediction_mode.value!r}"
             )
         return prediction_mode
+
+
+@dataclass(frozen=True, slots=True)
+class _QLearningRowObjective:
+    """The agent's negative log likelihood as a function of one coordinate per trial.
+
+    Session-blocked rather than trial-separable, and the block structure is the model rather
+    than an implementation convenience: values reset at every subject/session boundary and
+    are carried forward inside one, so a parameter that changed mid-session would leave the
+    value trace unable to say which of its values produced which part of it. Within a block
+    the coordinate is one vector, and the session's own analytic gradient -- the same forward
+    recursion :meth:`BinaryQLearning.fit` differentiates -- is exact for it.
+    """
+
+    model: BinaryQLearning
+    choices: NDArray[np.float64]
+    rewards: NDArray[np.float64]
+    sessions: tuple[tuple[int, ...], ...]
+    row_blocks: NDArray[np.intp]
+    n_rows: int
+
+    @property
+    def n_parameters(self) -> int:
+        """The width of one row's coordinate."""
+
+        return 4
+
+    def value_and_gradient(self, rows: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
+        """Return the negative log likelihood and its gradient in the row coordinates."""
+
+        values = validated_row_coefficients(
+            rows, n_rows=self.n_rows, n_parameters=4, what="row coordinates"
+        )
+        block_constant_coordinates(values, self.row_blocks, what="a Q-learning agent's parameters")
+        total = 0.0
+        gradient = np.zeros_like(values)
+        for indices in self.sessions:
+            index = np.asarray(indices, dtype=np.intp)
+            value, block_gradient = self.model._objective_gradient(
+                values[index[0]], self.choices, self.rewards, (indices,)
+            )
+            total += value
+            gradient[index] = block_gradient / len(index)
+        return float(total), gradient
+
+
+def _session_parameters(
+    rows: NDArray[np.float64], indices: tuple[int, ...], what: str
+) -> QLearningParameters:
+    """Decode the one coordinate a session's rows share, refusing rows that disagree."""
+
+    index = np.asarray(indices, dtype=np.intp)
+    block = rows[index]
+    if not np.array_equal(block, np.tile(block[0], (len(index), 1))):
+        raise ValueError(
+            f"{what} must be constant within a session: a value trace cannot say which of "
+            "two parameter values produced it"
+        )
+    return _decode_parameters(block[0])
 
 
 def _decode_parameters(vector: Sequence[float]) -> QLearningParameters:

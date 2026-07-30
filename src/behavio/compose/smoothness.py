@@ -11,11 +11,17 @@ import numpy as np
 from numpy.typing import NDArray
 
 from behavio.compose.trajectory import CoefficientTrajectory
+from behavio.contracts.bounded import (
+    RowCoefficientDesign,
+    RowObjective,
+    require_composable,
+    uses_row_coefficients,
+    validated_row_coefficients,
+)
 from behavio.contracts.compose import (
     PenalisedDesign,
     PenalisedLinearEstimator,
     linear_predictor,
-    require_penalised_linear,
     validate_predictor_shape,
 )
 from behavio.contracts.estimator import (
@@ -31,7 +37,7 @@ from behavio.models._kernels.basis import (
     roughness_matrix,
     validated_knots,
 )
-from behavio.models._kernels.introspection import Describable
+from behavio.models._kernels.introspection import Describable, ModelFinding
 from behavio.trials import Study
 
 __all__ = ["SmoothModel", "smooth"]
@@ -67,6 +73,15 @@ def smooth(
     model, and it defaults to ``smoothness`` because a subject's deviation from a smooth
     population path is a path too. Setting it lower lets subjects wander more freely than
     the population does.
+
+    A model whose likelihood is not a penalised linear one is smoothed through
+    :class:`~behavio.contracts.bounded.BoundedCoordinateEstimator` instead, and the *clock*
+    then carries a restriction the linear families do not have: it must be constant within
+    each block the model's likelihood recurses over. Smoothing a Q-learning agent over
+    ``session_order`` is a per-session learning rate or policy; smoothing it over a
+    within-session trial counter is refused, because a value trace written by a learning
+    rate that changed part-way through cannot say which of its values produced which part
+    of the trace.
     """
 
     if hasattr(model, "varying_effects"):
@@ -76,7 +91,7 @@ def smooth(
             "population coordinate while fitting a joint one whose width depends on how "
             "many groups the study has, so it cannot be expanded again from outside"
         )
-    require_penalised_linear(model, combinator="smooth")
+    require_composable(model, combinator="smooth")
     available = tuple(model.parameter_names)
     if parameters is None:
         varying = available
@@ -248,6 +263,19 @@ class SmoothModel(Describable):
         return self.model.likelihood
 
     @property
+    def penalised_linear_refusal(self) -> str:
+        """The wrapped model's refusal, so ``mix()`` still reports it by name.
+
+        A smooth model has every structural member of
+        :class:`~behavio.contracts.compose.PenalisedLinearEstimator` whatever it wraps, so
+        the structural test alone would say yes for a smooth Q-learning agent and the
+        failure would surface inside an optimizer. Forwarding the sentence is the same
+        answer :class:`~behavio.models.BernoulliGLMHMM` gives, one combinator further out.
+        """
+
+        return str(getattr(self.model, "penalised_linear_refusal", "") or "")
+
+    @property
     def predictor_cells(self) -> tuple[str, ...]:
         """The wrapped model's cells: a path in clock time is not a new cell."""
 
@@ -413,6 +441,81 @@ class SmoothModel(Describable):
             design, model_name=model_name, model_signature=model_signature
         )
 
+    # -- the same problem, for a model composed through rows rather than a design ---------
+
+    def row_objective(self, study: Study) -> _SmoothRowObjective:
+        """Return the wrapped objective read through this model's temporal basis.
+
+        The only new arithmetic smoothness contributes on this route is one row-wise linear
+        map and its transpose, which is the same statement the design-matrix route makes by
+        multiplying the design by the basis. Nothing here knows what the wrapped likelihood
+        is, and the clock check is here rather than in the wrapped model because the clock
+        is this combinator's argument.
+        """
+
+        inner = self.model.row_objective(study)
+        basis = self.time_basis(study)
+        self._require_clock_constant_within_blocks(basis, inner.row_blocks)
+        return _SmoothRowObjective(model=self, inner=inner, basis=basis)
+
+    def fit_rows(
+        self,
+        design: RowCoefficientDesign,
+        *,
+        model_name: str,
+        model_signature: str,
+    ) -> FitResult:
+        """Solve a row-coefficient problem with the wrapped model's own optimizer settings."""
+
+        return self.model.fit_rows(design, model_name=model_name, model_signature=model_signature)
+
+    def predict_rows(
+        self,
+        study: Study,
+        coefficients: NDArray[np.float64],
+        *,
+        mode: PredictionMode,
+    ) -> ModelPrediction:
+        """Collapse per-row knot values onto the wrapped coordinate and delegate."""
+
+        return self.model.predict_rows(study, self.collapse_rows(study, coefficients), mode=mode)
+
+    def pointwise_log_prob_rows(
+        self, study: Study, coefficients: NDArray[np.float64]
+    ) -> NDArray[np.float64]:
+        """Collapse per-row knot values onto the wrapped coordinate and delegate."""
+
+        return self.model.pointwise_log_prob_rows(study, self.collapse_rows(study, coefficients))
+
+    def collapse_rows(self, study: Study, coefficients: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Evaluate one knot vector per row at that row's clock value.
+
+        This is the map ``simulate_rows`` has always applied before delegating; naming it
+        is what lets the likelihood, the prediction and the simulator all reach the wrapped
+        model through the same arithmetic instead of three copies of it.
+        """
+
+        values = validated_row_coefficients(
+            coefficients,
+            n_rows=len(study),
+            n_parameters=len(self.parameter_names),
+            what="row coefficients",
+        )
+        return _collapse_paths(values, self.time_basis(study), self.layout)
+
+    def _require_clock_constant_within_blocks(
+        self, basis: NDArray[np.float64], blocks: NDArray[np.intp]
+    ) -> None:
+        n_blocks = int(blocks.max()) + 1 if len(blocks) else 0
+        representative = np.zeros((n_blocks, basis.shape[1]), dtype=np.float64)
+        representative[blocks] = basis
+        if not np.array_equal(basis, representative[blocks]):
+            raise ModelDataError(
+                f"{self.model.model_name} scores its trials through a recursion, so a path "
+                f"over {self.clock!r} is only defined if the clock is constant within each "
+                "block that recursion runs over; smooth over a session-level clock instead"
+            )
+
     def group_penalty(
         self, columns: NDArray[np.intp], scales: NDArray[np.float64]
     ) -> NDArray[np.float64]:
@@ -479,11 +582,7 @@ class SmoothModel(Describable):
         values = np.asarray(coefficients, dtype=np.float64)
         if values.shape != (len(design), len(self.parameter_names)):
             raise ValueError("simulate_rows needs one knot value per parameter per study row")
-        basis = self.time_basis(design)
-        rows = np.empty((len(design), len(self.coefficient_names)), dtype=np.float64)
-        for index, (_coefficient, start, width) in enumerate(self.layout):
-            block = values[:, start : start + width]
-            rows[:, index] = block[:, 0] if width == 1 else np.einsum("ik,ik->i", block, basis)
+        rows = _collapse_paths(values, self.time_basis(design), self.layout)
         return self.model.simulate_rows(design, rows, seed=seed)
 
     # -- the estimator contract --------------------------------------------------------
@@ -492,6 +591,21 @@ class SmoothModel(Describable):
         """Fit smooth parameter paths with a time-scaled random-walk penalty."""
 
         self._validate_study_scope(study)
+        if uses_row_coefficients(self.model):
+            objective = self.row_objective(study)
+            return self.fit_rows(
+                RowCoefficientDesign(
+                    parameter_names=self.parameter_names,
+                    objective=objective,
+                    expand=lambda joint: np.tile(joint, (objective.n_rows, 1)),
+                    contract=lambda gradient: np.asarray(gradient, dtype=np.float64).sum(axis=0),
+                    penalty_matrix=self.penalty_matrix(),
+                    box=self.coordinate_box(study),
+                    initial_points=self.initial_points(study),
+                ),
+                model_name=self.model_name,
+                model_signature=self.signature,
+            )
         return self.fit_penalised(
             PenalisedDesign(
                 parameter_names=self.parameter_names,
@@ -519,7 +633,14 @@ class SmoothModel(Describable):
         self._validate_study_scope(study)
         prediction_mode = self._prediction_mode(mode)
         self._validate_fit(fit)
+        if uses_row_coefficients(self.model):
+            return self.predict_rows(study, self._fitted_rows(study, fit), mode=prediction_mode)
         return self.likelihood.prediction(self.row_predictor(study, fit), mode=prediction_mode)
+
+    def _fitted_rows(self, study: Study, fit: FitResult) -> NDArray[np.float64]:
+        """Repeat one fitted coordinate over the study's rows, ready to be collapsed."""
+
+        return np.tile(np.asarray(fit.estimates, dtype=np.float64), (len(study), 1))
 
     def row_predictor(self, study: Study, fit: FitResult) -> NDArray[np.float64]:
         """Return the linear predictor of each row under a fitted set of paths."""
@@ -546,6 +667,9 @@ class SmoothModel(Describable):
 
         self._validate_study_scope(study)
         self._prediction_mode(mode)
+        self._validate_fit(fit)
+        if uses_row_coefficients(self.model):
+            return self.pointwise_log_prob_rows(study, self._fitted_rows(study, fit))
         return self.likelihood.pointwise_log_prob(
             self.row_predictor(study, fit), self.outcomes(study)
         )
@@ -704,3 +828,102 @@ class SmoothModel(Describable):
                 f"{self.model_name} does not support {prediction_mode.value!r} prediction"
             )
         return prediction_mode
+
+    # -- what is wrong with fitting this here --------------------------------------------
+
+    def additional_findings(self, study: Study) -> tuple[ModelFinding, ...]:
+        """Forward whatever the wrapped model has to say about this study.
+
+        Smoothing adds no finding of its own -- an unsupported knot is already reported
+        generically, from ``knots`` and ``time`` -- but it must not swallow the wrapped
+        model's, which is what a combinator with no ``additional_findings`` at all does.
+        """
+
+        declared = getattr(self.model, "additional_findings", None)
+        return () if declared is None else tuple(declared(study))
+
+    def group_deviation_findings(
+        self, study: Study, *, grouping: str, parameters: Sequence[str]
+    ) -> tuple[ModelFinding, ...]:
+        """Translate knot names back to coefficients and ask the wrapped model.
+
+        ``hierarchical(smooth(psychometric))`` names its varying parameters as knots of a
+        path -- ``lapse_logit[session_order=0]`` -- and the model that knows a lapse rate is
+        bounded knows it under the name ``lapse_logit``. A path varies by group as a whole
+        path, so a coefficient is named here as soon as any of its knots is.
+        """
+
+        declared = getattr(self.model, "group_deviation_findings", None)
+        if declared is None:
+            return ()
+        named = set(parameters)
+        coefficients = [
+            coefficient
+            for coefficient, start, width in self.layout
+            if named & set(self.parameter_names[start : start + width])
+        ]
+        return tuple(declared(study, grouping=grouping, parameters=tuple(coefficients)))
+
+
+def _collapse_paths(
+    values: NDArray[np.float64],
+    basis: NDArray[np.float64],
+    layout: tuple[tuple[str, int, int], ...],
+) -> NDArray[np.float64]:
+    """Evaluate one knot vector per row at that row's clock value, coefficient by coefficient."""
+
+    rows = np.empty((len(values), len(layout)), dtype=np.float64)
+    for index, (_coefficient, start, width) in enumerate(layout):
+        block = values[:, start : start + width]
+        rows[:, index] = block[:, 0] if width == 1 else np.einsum("ik,ik->i", block, basis)
+    return rows
+
+
+@dataclass(frozen=True, slots=True)
+class _SmoothRowObjective:
+    """The wrapped objective composed with this model's temporal basis.
+
+    A path in clock time is a *linear* map from knots to the value in force on a row, so its
+    contribution to the chain rule is that map's transpose and nothing else: the wrapped
+    model never learns that its coefficients came from a path, and this class never learns
+    what the wrapped likelihood is.
+    """
+
+    model: SmoothModel
+    inner: RowObjective
+    basis: NDArray[np.float64]
+
+    @property
+    def n_rows(self) -> int:
+        """The number of scored rows."""
+
+        return int(self.inner.n_rows)
+
+    @property
+    def n_parameters(self) -> int:
+        """The width of one row's knot coordinate."""
+
+        return len(self.model.parameter_names)
+
+    @property
+    def row_blocks(self) -> NDArray[np.intp]:
+        """The wrapped model's blocks: a path cannot subdivide a recursion."""
+
+        return self.inner.row_blocks
+
+    def value_and_gradient(self, rows: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
+        """Return the wrapped negative log likelihood and its gradient in the knot rows."""
+
+        values = validated_row_coefficients(
+            rows, n_rows=self.n_rows, n_parameters=self.n_parameters, what="row coordinates"
+        )
+        value, inner_gradient = self.inner.value_and_gradient(
+            _collapse_paths(values, self.basis, self.model.layout)
+        )
+        gradient = np.zeros_like(values)
+        for index, (_coefficient, start, width) in enumerate(self.model.layout):
+            if width == 1:
+                gradient[:, start] = inner_gradient[:, index]
+            else:
+                gradient[:, start : start + width] = inner_gradient[:, index, None] * self.basis
+        return float(value), gradient

@@ -112,6 +112,33 @@ carry their own standard errors and intervals and where a consumer typed on plai
 `FitResult` can see them. Read them with `fit.derived_value("threshold")`, or ask
 `summarize()` for the whole coordinate at once.
 
+## Curves that drift, and curves per animal
+
+That unconstrained coordinate is also what makes the curve composable. A group deviation
+must be Gaussian *somewhere*, and `log_width` and `lapse_logit` are where it is honest:
+
+```python
+from behavio.compose import hierarchical, smooth
+
+sharpening = smooth(model, over="session_order", knots=(0.0, 5.0), parameters=("log_width",))
+per_animal = hierarchical(model, over="subject", parameters=("threshold", "log_width"), scale=0.4)
+```
+
+Letting a **rate** vary by group carries a hazard that a threshold does not. A lapse rate at
+the floor of its range has a logit at minus infinity, so its group deviations are unbounded
+and the Laplace curvature at the optimum describes the box rather than the likelihood.
+`describe(study)` says so before the fit, per group, whenever a subject shows no errors at
+the easiest levels:
+
+```python
+hierarchical(model, over="subject", parameters=("lapse_logit",)).describe(study).findings
+# [warning] unidentified_group_rate: lapse_rate is at the floor of its range for subject b ...
+```
+
+`fixed_lapse_rate=` remains the answer when the rate is known, and dropping the rate from
+`parameters=` remains the answer when it is not identified per animal. See
+[composing models](composing-models.md#a-rate-at-its-bound-is-reported-not-shrunk).
+
 ## Promoting the IBL benchmark model
 
 `benchmarks/ibl2021_psychometrics` contains an independent implementation of the released

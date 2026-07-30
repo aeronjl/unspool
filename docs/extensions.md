@@ -52,7 +52,16 @@ its predictors through a Wiener first-passage time, not a link function. And a l
 whose row scores are not independent given the predictor cannot satisfy it either, however
 its members are shaped: a mixture over latent states scores row *r* through a recursion
 over every row before it. The second kind cannot be detected structurally, so a model in
-that position declares `penalised_linear_refusal` and the combinators report the reason.
+that position declares `penalised_linear_refusal` and `mix()` reports the reason.
+
+`BoundedCoordinateEstimator` is its sibling, for a model in the second position that still
+wants hierarchy and time-variation. It shares eight members with
+`PenalisedLinearEstimator` and replaces `design_matrix` + `likelihood` with a single
+`row_objective(study)`: a negative log likelihood in one **unconstrained** coordinate vector
+per row. A Q-learning agent and a psychometric curve both implement it, and the coordinate
+they implement it on is the transformed one they already estimated in -- which is what makes
+a Gaussian group deviation the right prior rather than a truncated approximation of one. See
+[composing models](composing-models.md#models-whose-coordinate-is-bounded-not-linear).
 
 `MixtureComponent` is the smaller of the two composition surfaces and points the other way:
 it is what a *process* implements so that any composable model can be mixed with it. It is
@@ -203,6 +212,83 @@ If an upstream package uses sequence arrays, xarray objects, or its own sample c
 that conversion inside the adapter and test boundary resets and row restoration directly.
 Rich native results can remain available on a model-specific result subtype; the common
 fields are the interoperability floor, not a demand to discard evidence.
+
+### Three helpers so a wrapper does not re-derive them
+
+`Study` is a flat columnar table in source row order; almost nothing outside Behavio wants
+that shape. Rather than every wrapper working the conversion out for itself and getting it
+wrong differently, three pieces live in `behavio.adapters` and name no third-party package.
+
+**`sequence_layout(study)`** derives the contiguous trial sequences from the study's own
+`chronological_indices()`, splits any column into per-sequence arrays, and joins them back
+into source row order. `layout.join(layout.split(values)) == values` for every column of
+every study, which is the invariant a wrapper is most likely to break — a per-sequence array
+assembled in the wrong order still has the right length, and a prediction written back in
+sorted order still validates. It also supplies the `subj_idx`-style integer subject code a
+hierarchical package will ask for, derived from first appearance rather than invented.
+
+```python
+from behavio.adapters import sequence_layout
+
+layout = sequence_layout(study)  # or grouping="subject"
+states = [foreign.filter(block) for block in layout.column(study, "choice")]
+per_row = layout.join(states)  # back in source row order
+```
+
+**`DensityPrediction`** is the prediction type for a continuous outcome. `Prediction` is a
+probability and `CategoricalPrediction` is a simplex; neither can hold a response-time
+density, a continuous confidence report, or the finishing-time distribution of a race, so a
+wrapper around a package that predicts one used to have to discard it. A `DensityPrediction`
+carries the density on an explicit grid, optionally *defective* across named categories --
+the two boundaries of a diffusion, the accumulators of a race -- reports the mass a
+truncated grid failed to cover instead of normalising it away, and interpolates at an
+observed value so a per-trial likelihood is not a function of the solver's step size. A
+model that returns one from `predict_density()` alongside its ordinary `predict()`
+satisfies `DensityBehaviourEstimator`, and the conformance harness then checks that
+integrating the density reproduces the model's own choice probabilities.
+
+**`check_behaviour_estimator(model, study)`** executes the nine-item list below. Its
+headline check is the one the contract could not previously make: see
+[filtered versus smoothed](#filtered-versus-smoothed-is-a-behavioural-claim).
+
+```python
+from behavio.adapters import assert_behaviour_estimator_conforms
+
+assert_behaviour_estimator_conforms(my_model, small_study, require_complete=True)
+```
+
+### Filtered versus smoothed is a behavioural claim
+
+`PredictionMode` is a label a model writes on its own output. Nothing structural
+distinguishes a filtered state estimate from a smoothed one, so a wrapper around
+`ssm.most_likely_states` or a `dynamax` smoother -- both smoothed by construction -- can
+return the smoothed array, stamp it `FILTERED`, and satisfy every other check in this
+package. Behavio's scientific requirements say it must "distinguish filtered predictions
+from smoothed descriptions", and a contract that cannot detect its own violation is not a
+contract.
+
+What distinguishes them is the definition. A filtered prediction for trial *t* is a function
+of trials up to *t*, so changing trials after *t* cannot change it; a smoothed one is a
+function of the whole sequence, so changing trials after *t* generally does. The harness
+relabels the observations in the second half of every trial sequence, holds the fit fixed,
+and re-predicts. A `FILTERED` prediction or pointwise score must be unchanged on the first
+half; a `SMOOTHED` one, if the model advertises the mode, must not be. Both directions fail
+loudly, and a study too short or too uniform for the perturbation to bite is recorded as
+*skipped* rather than passed -- `require_complete=True` rejects that too, because a skipped
+leakage check is not evidence of a filtered prediction.
+
+The same check catches a second thing for free: any preprocessing fitted *inside* `predict`,
+such as a column standardised against the test study's own mean, is leakage of the same
+shape and moves the same numbers.
+
+### Wrapping a third-party model package
+
+See [wrapped models](foreign-models.md) for the compatibility and licence matrix, the known
+jax conflict, and `behavio.foreign.pyddm.PyDDMDriftDiffusion` as a worked example of every
+rule on this page. Two of them are hard: the wrapped package is never a Behavio dependency,
+only an extra; and a package whose licence is not permissive is named as such in the extra,
+in the wrapper's docstring, and in that matrix, because Behavio is MIT and its users will
+not expect otherwise.
 
 ## Local registration
 
@@ -396,6 +482,11 @@ At minimum, an extension package should test:
 7. serialization of portable manifests or results;
 8. simulation/parameter-name agreement when generative; and
 9. end-to-end prospective evaluation on a small fixture.
+
+`behavio.adapters.assert_behaviour_estimator_conforms` executes the executable part of that
+list against a small study, and adds the filtered-versus-smoothed check, the reconciliation
+of a `DensityPrediction` against the model's own choice probabilities, and the refusal of an
+undeclared prediction mode. Items 1, 7 and the serialization half of the list stay yours.
 
 A data-source adapter has its own list, and
 `behavio.adapters.conformance.assert_study_adapter_conforms` executes all six against a

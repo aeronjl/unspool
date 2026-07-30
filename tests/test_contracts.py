@@ -180,6 +180,12 @@ LAYERS: tuple[tuple[str, ...], ...] = (
         "behavio.time",
     ),
     ("behavio.models",),
+    #: Wrappers around third-party model packages. Above ``behavio.models`` because a wrapped
+    #: model is a model: it needs ``describe()``, the design algebra and the response-time
+    #: contract, all of which live at or above the model layer. The parts of a wrapper that
+    #: name no third-party package -- the sequence/row helper, the continuous-outcome
+    #: prediction type, the estimator conformance harness -- stay in ``behavio.adapters``.
+    ("behavio.foreign",),
     ("behavio.compose",),
     ("behavio.registry",),
     ("behavio.evaluate",),

@@ -174,6 +174,7 @@ nav:
       - API reorganisation: api-reorganisation.md
       - Migration guides: migration-guides.md
       - Extend Behavio: extensions.md
+      - Wrapped models, compatibility and licences: foreign-models.md
   - Reference:
       - Python API map: reference/index.md
       - behavio.trials, behavio.task: reference/study-and-task.md
@@ -193,6 +194,7 @@ nav:
           - Compiler and runner: reference/execution.md
       - behavio.report: reference/evidence-bundles.md
       - behavio.adapters: reference/data-adapters.md
+      - behavio.foreign: reference/foreign-models.md
       - behavio.contracts: reference/contracts.md
       - behavio.plot: reference/plots.md
       - Scientific figure standard: reference/figure-standard.md
