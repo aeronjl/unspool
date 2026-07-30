@@ -40,7 +40,7 @@ combinators of [Composing models](composing-models.md) applied to this model:
 from behavio import WienerDriftDiffusion
 from behavio.compose import hierarchical, smooth
 
-base = WienerDriftDiffusion(covariates=("stimulus",))
+base = WienerDriftDiffusion(predictors=("stimulus",))
 
 paths = smooth(
     base,
@@ -63,10 +63,11 @@ deviation from the population estimate, with or without an inner `smooth()`; see
 Response time is an explicit typed observation rather than an anonymous covariate:
 
 ```python
-from behavio import ResponseTimeSpec, ResponseTimeUnit, WienerDriftDiffusion
+from behavio import ResponseTimeSpec, WienerDriftDiffusion
+from behavio.task import ResponseTimeUnit
 
 model = WienerDriftDiffusion(
-    covariates=("stimulus",),
+    predictors=("stimulus",),
     response_time=ResponseTimeSpec(
         column="response_time_ms",
         unit=ResponseTimeUnit.MILLISECONDS,
@@ -110,7 +111,7 @@ itself is not discretized.
 ```python
 from behavio import WienerDriftDiffusion
 
-model = WienerDriftDiffusion(covariates=("stimulus",), n_restarts=3)
+model = WienerDriftDiffusion(predictors=("stimulus",), n_restarts=3)
 truth = model.parameters_from_components(
     drift={"drift.intercept": 0.2, "drift.stimulus": 1.2},
     boundary=1.2,
@@ -150,7 +151,7 @@ from behavio import UniformResponseGuess, WienerDriftDiffusion, mix
 
 model = mix(
     WienerDriftDiffusion(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         nondecision_time_bounds=(0.1, 0.6),
     ),
     UniformResponseGuess(time_bounds=(0.05, 3.0)),

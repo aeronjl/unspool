@@ -147,7 +147,7 @@ uv sync --extra ibl
 ```
 
 ```python
-from behavio import IBLONETrialSource, study_from_ibl_one
+from behavio.adapters import IBLONETrialSource, study_from_ibl_one
 
 study = study_from_ibl_one(
     IBLONETrialSource(
@@ -187,7 +187,7 @@ uv sync --extra nwb
 ```
 
 ```python
-from behavio import NWBSessionSource, read_nwb
+from behavio.adapters import NWBSessionSource, read_nwb
 
 study = read_nwb(
     NWBSessionSource(
@@ -225,7 +225,7 @@ file model. It also requires explicit finite `start_time` and `stop_time` column
 
 ```python
 from datetime import UTC, datetime
-from behavio import write_nwb
+from behavio.adapters import write_nwb
 
 write_nwb(
     one_session,
@@ -257,7 +257,7 @@ uv sync --extra dandi
 ```
 
 ```python
-from behavio import DANDINWBSource, study_from_dandi
+from behavio.adapters import DANDINWBSource, study_from_dandi
 
 study = study_from_dandi(
     DANDINWBSource(

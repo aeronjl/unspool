@@ -5,12 +5,12 @@ import json
 from dataclasses import replace
 
 from test_compiler import source_study
-from test_evidence import bundle
+from test_evidence_bundles import bundle
 from test_protocol import example_protocol
 
 from behavio.cli import main
-from behavio.evidence import write_evidence_bundle
-from behavio.protocol import CandidateSpec, Setting
+from behavio.protocol.schema import CandidateSpec, Setting
+from behavio.report.evidence_bundles import write_evidence_bundle
 
 
 def executable_protocol():
@@ -20,7 +20,7 @@ def executable_protocol():
             name="static",
             implementation="behavio.models.BernoulliHistoryGLM",
             hyperparameters=(
-                Setting("covariates", ("stimulus",)),
+                Setting("predictors", ("stimulus",)),
                 Setting("choice_lags", 0),
                 Setting("l2", 0.1),
             ),
@@ -30,7 +30,7 @@ def executable_protocol():
             name="smooth",
             implementation="behavio.models.BernoulliHistoryGLM",
             hyperparameters=(
-                Setting("covariates", ("stimulus",)),
+                Setting("predictors", ("stimulus",)),
                 Setting("choice_lags", 0),
                 Setting("l2", 1.0),
             ),
@@ -117,7 +117,7 @@ def test_execute_writes_reviewable_non_executable_snapshot(tmp_path, capsys) -> 
         "snapshot.json",
     }
     snapshot = json.loads((output / "snapshot.json").read_text())
-    assert snapshot["schema_version"] == "behavio.evaluation-snapshot/1"
+    assert snapshot["schema_version"] == "behavio.evaluate.folds-snapshot/1"
     assert snapshot["state"] == "evaluated"
     assert all(not path.name.endswith((".pkl", ".pickle")) for path in output.iterdir())
 
@@ -343,7 +343,7 @@ def composed_protocol():
             name="static",
             implementation="behavio.models.BernoulliHistoryGLM",
             hyperparameters=(
-                Setting("covariates", ("stimulus",)),
+                Setting("predictors", ("stimulus",)),
                 Setting("choice_lags", 0),
                 Setting("l2", 0.1),
             ),
@@ -354,7 +354,7 @@ def composed_protocol():
             implementation="behavio.compose.hierarchical",
             hyperparameters=(
                 Setting("base", "behavio.models.BernoulliHistoryGLM"),
-                Setting("base.covariates", ("stimulus",)),
+                Setting("base.predictors", ("stimulus",)),
                 Setting("base.choice_lags", 0),
                 Setting("base.l2", 1.0),
                 Setting("over", "subject"),
@@ -399,7 +399,7 @@ def test_execute_names_the_registry_when_an_implementation_is_unknown(tmp_path, 
             CandidateSpec(
                 name="smooth",
                 implementation="behavio.models.BernoulliHistoryGLM",
-                hyperparameters=(Setting("covariates", ("stimulus",)),),
+                hyperparameters=(Setting("predictors", ("stimulus",)),),
                 scored_columns=("choice",),
             ),
         ),

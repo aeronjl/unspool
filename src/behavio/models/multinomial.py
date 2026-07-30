@@ -26,7 +26,7 @@ from behavio.contracts.compose import (
     ridge_group_draw,
     ridge_group_penalty,
 )
-from behavio.design import (
+from behavio.design.matrix import (
     DesignSpec,
     HistoryKernelTerm,
     HistoryTerm,
@@ -42,8 +42,8 @@ from behavio.models.base import (
     PredictionMode,
     UnsupportedPredictionMode,
 )
-from behavio.study import REQUIRED_COLUMNS, Study
-from behavio.task import ChoiceData, ChoiceSpec, TaskValidationError
+from behavio.task.spec import ChoiceData, ChoiceSpec, TaskValidationError
+from behavio.trials import REQUIRED_COLUMNS, Study
 
 
 @dataclass(frozen=True, slots=True)

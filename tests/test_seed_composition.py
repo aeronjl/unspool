@@ -13,23 +13,23 @@ import numpy as np
 import pytest
 from test_model_recovery import competing_models, recovery_design, recovery_scenarios
 
-from behavio.inference import InferenceError, PyBADSMultistart
-from behavio.model_recovery import run_model_recovery, run_model_recovery_grid
+from behavio.inference.optimize import InferenceError, PyBADSMultistart
 from behavio.models import BernoulliHistoryGLM
-from behavio.pymc_backend import PyMCBackendError, PyMCHierarchicalGLMBackend
-from behavio.recovery import run_parameter_recovery
-from behavio.sbc import (
+from behavio.posterior.simulation_based_calibration import (
     PosteriorParameterQuantity,
     SBCSimulation,
     run_simulation_based_calibration,
 )
-from behavio.study import Study
+from behavio.pymc_backend import PyMCBackendError, PyMCHierarchicalGLMBackend
+from behavio.recovery.models import run_model_recovery, run_model_recovery_grid
+from behavio.recovery.parameters import run_parameter_recovery
+from behavio.trials import Study
 
 
 def parameter_recovery_seeds() -> tuple[int, ...]:
     """Seeds emitted by ``behavio.recovery.run_parameter_recovery``."""
 
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.1)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=0.1)
     generator = np.random.default_rng(3)
     n_trials = 60
     design = Study(
@@ -81,7 +81,9 @@ def model_recovery_seeds() -> tuple[tuple[int, ...], tuple[int, ...]]:
 
 
 def sbc_seeds() -> tuple[int, ...]:
-    """Seeds emitted by ``behavio.sbc.run_simulation_based_calibration``."""
+    """Seeds emitted by
+    ``behavio.posterior.simulation_based_calibration.run_simulation_based_calibration``.
+    """
 
     def simulator(seed: int) -> SBCSimulation:
         study = Study({"subject": ["a"], "session": ["s"], "trial": [0], "session_order": [0]})

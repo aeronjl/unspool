@@ -8,16 +8,16 @@ them.
 
 ## The panel contract
 
-`TrajectoryPanel` contains one row per independent subject and one column per position on
+`ParameterTrajectoryPanel` contains one row per independent subject and one column per position on
 an explicitly named common clock. It does not interpolate or align curves. Clock and
 landmark construction belongs upstream, where fold-safe transforms can retain how the
 alignment was learned. This is intentionally stricter than silently applying dynamic time
 warping: a shift in *when* an animal learns can itself be the scientific result.
 
 ```python
-from behavio import TrajectoryPanel, compare_trajectory_shapes
+from behavio.compare import ParameterTrajectoryPanel, compare_trajectory_shapes
 
-panel = TrajectoryPanel(
+panel = ParameterTrajectoryPanel(
     grid=aligned_sessions,
     values=subject_parameter_paths,
     subjects=subject_ids,

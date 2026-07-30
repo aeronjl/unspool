@@ -1,10 +1,10 @@
 """Convergence displays: R-hat and effective sample size against the audit's own policy.
 
-The thresholds are read from :class:`~behavio.posterior_diagnostics.PosteriorAuditPolicy`
+The thresholds are read from :class:`~behavio.posterior.diagnostics.PosteriorAuditPolicy`
 rather than hard-coded, so a figure drawn from an audit run at a stricter policy shows the
 stricter line. Targets flagged by the audit are labelled with the same
 ``variable[dim=value]`` text the issues use, so a reader can move between the figure and
-:attr:`~behavio.posterior_diagnostics.PosteriorAuditIssue.targets` without translating.
+:attr:`~behavio.posterior.diagnostics.PosteriorAuditIssue.targets` without translating.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import numpy as np
 
 from behavio.plot._axes import annotate_note, annotate_status, new_figure, resolve_axes
 from behavio.plot.style import ALERT, BLUE, INK, MUTED, figure_style
-from behavio.posterior_diagnostics import PosteriorAudit, PosteriorDiagnostic, _target_label
+from behavio.posterior.diagnostics import PosteriorAudit, PosteriorDiagnostic, _target_label
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes

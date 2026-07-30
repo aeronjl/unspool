@@ -33,7 +33,7 @@ from behavio.contracts.compose import (
     ridge_group_draw,
     ridge_group_penalty,
 )
-from behavio.design import DesignSpec
+from behavio.design.matrix import DesignSpec
 from behavio.models._kernels.arrowhead import (
     arrowhead_covariance,
     conditional_block_covariances,
@@ -65,8 +65,8 @@ from behavio.models.base import (
     PredictionMode,
     UnsupportedPredictionMode,
 )
-from behavio.response_times import ResponseTimeSpec
-from behavio.study import REQUIRED_COLUMNS, Study
+from behavio.task.response_times import ResponseTimeSpec
+from behavio.trials import REQUIRED_COLUMNS, Study
 
 EFFECTIVE_BOUND_PENALTY = 1e6
 """Quadratic price of a group whose population-plus-deviation leaves the natural box.
@@ -157,14 +157,14 @@ class DriftDiffusionFitResult(PenalisedFitResult):
 
 @dataclass(frozen=True, slots=True)
 class WienerDriftDiffusion(Describable):
-    """Fixed-parameter two-boundary Wiener diffusion with covariate-dependent drift.
+    """Fixed-parameter two-boundary Wiener diffusion with predictor-dependent drift.
 
     Diffusion variance is fixed to one. Boundary separation, relative starting bias, and
     non-decision time are shared across trials; drift is a linear function of named numeric
-    covariates. The pointwise likelihood is joint over binary choice and response time.
+    predictors. The pointwise likelihood is joint over binary choice and response time.
     """
 
-    covariates: tuple[str, ...] = ()
+    predictors: tuple[str, ...] = ()
     outcome: str = "choice"
     response_time: ResponseTimeSpec = field(default_factory=ResponseTimeSpec)
     n_restarts: int = 4
@@ -181,20 +181,20 @@ class WienerDriftDiffusion(Describable):
     design: DesignSpec | None = field(default=None, kw_only=True)
 
     def __post_init__(self) -> None:
-        covariates = tuple(self.covariates)
-        validate_design_choice(self.design, covariates)
-        if len(set(covariates)) != len(covariates):
-            raise ValueError("covariates must be unique")
-        if any(not isinstance(name, str) or not name for name in covariates):
-            raise ValueError("covariate names must be non-empty strings")
+        predictors = tuple(self.predictors)
+        validate_design_choice(self.design, predictors)
+        if len(set(predictors)) != len(predictors):
+            raise ValueError("predictors must be unique")
+        if any(not isinstance(name, str) or not name for name in predictors):
+            raise ValueError("predictor names must be non-empty strings")
         if not isinstance(self.outcome, str) or not self.outcome:
             raise ValueError("outcome must be a non-empty column name")
-        if self.outcome in REQUIRED_COLUMNS or self.outcome in covariates:
-            raise ValueError("outcome must be distinct from required and covariate columns")
+        if self.outcome in REQUIRED_COLUMNS or self.outcome in predictors:
+            raise ValueError("outcome must be distinct from required and predictor columns")
         if not isinstance(self.response_time, ResponseTimeSpec):
             raise TypeError("response_time must be a ResponseTimeSpec")
-        if self.response_time.column == self.outcome or self.response_time.column in covariates:
-            raise ValueError("response-time, outcome, and covariate columns must be distinct")
+        if self.response_time.column == self.outcome or self.response_time.column in predictors:
+            raise ValueError("response-time, outcome, and predictor columns must be distinct")
         _positive_integer(self.n_restarts, "n_restarts")
         _positive_integer(self.max_iterations, "max_iterations")
         _positive_integer(self.density_terms, "density_terms")
@@ -221,7 +221,7 @@ class WienerDriftDiffusion(Describable):
             )
         if self.simulation_time_step >= self.simulation_max_time:
             raise ValueError("simulation_time_step must be smaller than simulation_max_time")
-        object.__setattr__(self, "covariates", covariates)
+        object.__setattr__(self, "predictors", predictors)
         object.__setattr__(self, "boundary_bounds", boundary_bounds)
         object.__setattr__(self, "starting_bias_bounds", starting_bounds)
         object.__setattr__(self, "nondecision_time_bounds", nondecision_bounds)
@@ -232,11 +232,11 @@ class WienerDriftDiffusion(Describable):
 
     @property
     def signature(self) -> str:
-        covariates = ",".join(self.covariates)
+        predictors = ",".join(self.predictors)
         signature = (
             f"{self.model_name}[outcome={self.outcome};response_time="
             f"{self.response_time.column}:{self.response_time.unit.value};"
-            f"covariates={covariates};diffusion_scale=1;density_terms={self.density_terms};"
+            f"predictors={predictors};diffusion_scale=1;density_terms={self.density_terms};"
             f"simulation_dt={self.simulation_time_step}"
         )
         signature += self._design_signature
@@ -246,7 +246,7 @@ class WienerDriftDiffusion(Describable):
 
     @property
     def _design_signature(self) -> str:
-        """The design's contribution to the signature, empty for a ``covariates`` model.
+        """The design's contribution to the signature, empty for a ``predictors`` model.
 
         A signature is a scientific fingerprint, so a design has to change it. It must
         equally not change for a model constructed the old way, because those signatures
@@ -258,9 +258,9 @@ class WienerDriftDiffusion(Describable):
 
     @property
     def design_spec(self) -> DesignSpec:
-        """The design generating the drift rate, declared or implied by ``covariates``."""
+        """The design generating the drift rate, declared or implied by ``predictors``."""
 
-        return resolve_design(self.design, self.covariates)
+        return resolve_design(self.design, self.predictors)
 
     @property
     def coefficient_names(self) -> tuple[str, ...]:
@@ -268,7 +268,7 @@ class WienerDriftDiffusion(Describable):
 
         The prefix is what keeps a drift coefficient distinguishable from ``boundary`` or
         ``nondecision_time`` in a flat parameter vector, so it is applied to design feature
-        names exactly as it was applied to covariate names. ``covariates=("stimulus",)``
+        names exactly as it was applied to predictor names. ``predictors=("stimulus",)``
         therefore still yields ``drift.intercept`` and ``drift.stimulus``.
         """
 
@@ -640,7 +640,7 @@ class WienerDriftDiffusion(Describable):
         design = self.design_spec
         for name in design.required_columns:
             if name not in study.columns:
-                raise ModelDataError(f"study is missing covariate {name!r}")
+                raise ModelDataError(f"study is missing predictor {name!r}")
         return build_matrix(design, study).values
 
     def _drifts(

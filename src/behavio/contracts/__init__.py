@@ -17,7 +17,7 @@ A behavioural summary                            :class:`PredictiveDiscrepancy`
 A composable penalised linear model              :class:`PenalisedLinearEstimator`
 A simpler process a model can be mixed with      :class:`MixtureComponent`
 A fold-fitted temporal transform                 :class:`StudyTransform`
-A training/test partition                        :class:`ValidationFold`
+A training/test partition                        :class:`EvaluationFold`
 A reporting coordinate distinct from the fit     :class:`NaturalParameterisation`
 A retained multistart optimizer                  :class:`MultistartFit`
 A retained latent-state fit                      :class:`LatentStateFit`
@@ -40,13 +40,14 @@ declares ``()``.
 Layering rule
 -------------
 ``behavio.contracts`` is a runtime leaf with respect to the modules that implement these
-contracts. It imports only ``behavio._internal``, ``behavio.study``, ``behavio.clocks``
-and ``behavio.posterior`` -- none of which re-export anything from here -- so
-``behavio.models.base``, ``behavio.inference``, ``behavio.parameters``,
-``behavio.transforms``, ``behavio.validation``, ``behavio.posterior_predictive`` and
+contracts. It imports only ``behavio._internal``, ``behavio.trials`` and
+``behavio.posterior.result`` -- none of which import anything at all from inside the
+package, which is what makes them safe to name from here -- so
+``behavio.models.base``, ``behavio.inference.optimize``, ``behavio.inference.parameters``,
+``behavio.time.transforms``, ``behavio.evaluate.splits``, ``behavio.posterior.predictive`` and
 ``behavio.diagnostics`` can all import this package as thin re-export shims without a
 cycle. Two payload types that stay in their implementation modules
-(:class:`behavio.parameters.ParameterSpace` and
+(:class:`behavio.inference.parameters.ParameterSpace` and
 :class:`behavio.inference.OptimizationProblem`/``OptimizationRun``) are referenced under
 ``TYPE_CHECKING`` only.
 
@@ -118,7 +119,7 @@ from behavio.contracts.estimator import (
     register_fit_auditor,
     validate_required_task_columns,
 )
-from behavio.contracts.fold import ValidationFold
+from behavio.contracts.fold import EvaluationFold
 from behavio.contracts.mixture import (
     MixtureComponent,
     mixture_logit,
@@ -164,6 +165,7 @@ __all__ = [
     "CategoricalPrediction",
     "ConvergenceStatus",
     "DerivedQuantity",
+    "EvaluationFold",
     "FitAudit",
     "FitAuditPolicy",
     "FitAuditStatus",
@@ -203,7 +205,6 @@ __all__ = [
     "StudyTransform",
     "TransformProvenance",
     "UnsupportedPredictionMode",
-    "ValidationFold",
     "VaryingEffects",
     "adapter_capabilities",
     "any_model_capabilities",

@@ -1,11 +1,11 @@
-# Studies and tasks API
+# `behavio.trials` and `behavio.task` API
 
 Use these objects to preserve longitudinal identity and declare the meaning of observed
 trial columns before choosing a model.
 
 ## Longitudinal studies
 
-::: behavio.study
+::: behavio.trials
     options:
       members_order: source
       show_root_heading: false
@@ -13,7 +13,7 @@ trial columns before choosing a model.
 
 ## Task observations
 
-::: behavio.task
+::: behavio.task.spec
     options:
       members_order: source
       show_root_heading: false
@@ -21,7 +21,7 @@ trial columns before choosing a model.
 
 ## Response times
 
-::: behavio.response_times
+::: behavio.task.response_times
     options:
       members_order: source
       show_root_heading: false

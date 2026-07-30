@@ -8,7 +8,8 @@ folded into an arbitrary action.
 ## Fit three actions on a fixed design
 
 ```python
-from behavio import ChoiceSpec, DesignSpec, MultinomialLogit, NumericTerm
+from behavio import ChoiceSpec, MultinomialLogit
+from behavio.design import DesignSpec, NumericTerm
 
 choice = ChoiceSpec(
     column="action",

@@ -1,45 +1,46 @@
 # Python API map
 
-The reference is organized by scientific responsibility rather than as one alphabetical
-dump of the root namespace. Start with a guide or worked example when deciding what to do;
-use these pages when you need exact signatures, return types, and public attributes.
+The package is one small top-level namespace plus a named area per scientific
+responsibility, and this reference mirrors that tree. Start with a guide or a worked example
+when deciding what to do; use these pages when you need exact signatures, return types, and
+public attributes.
 
-## Core analysis
+## What lives at the top level
 
-| API area | Contains | Guide |
-| --- | --- | --- |
-| [Studies and tasks](study-and-task.md) | `Study`, `ChoiceSpec`, `TaskSpec`, response-time declarations | [Data contract](../data-contract.md) |
-| [Clocks, transforms, and design](time-and-design.md) | explicit time coordinates, fold-fitted transforms, labelled design matrices | [Clocks and transforms](../clocks-and-transforms.md) |
-| [Validation and comparison](validation-and-comparison.md) | session-, subject-, and lab-aware splitters, evaluation, paired model comparison | [Prospective validation](../validation.md) |
+`behavio` itself is a curated golden path of about a hundred names: the ones a first
+analysis cannot be written without, plus the surface the package promises to third parties.
+It is deliberately **not** a re-export of everything — see
+[API reorganisation](../api-reorganisation.md) for the boundary and the argument behind it.
 
-## Model families
+```python
+from behavio import Study, TaskSpec, ChoiceSpec, compare_models, forward_session_splits
+```
 
-| API area | Contains | Guide |
-| --- | --- | --- |
-| [Observable choice models](choice-models.md) | baselines, static and smooth GLMs, partial pooling, multinomial choice | [Model cards](../model-cards.md) |
-| [Latent-state and reinforcement-learning models](latent-and-rl-models.md) | GLM-HMMs, Q-learning, composable RL agents | [Model-choice guide](../model-choice-guide.md) |
-| [Drift-diffusion models](drift-diffusion-models.md) | static, smooth, hierarchical, and mixed DDMs | [Drift diffusion](../drift-diffusion.md) |
+Everything else is public, documented, and reached at `behavio.<area>.<name>`.
 
-## Evidence and computation
+## The areas
 
-| API area | Contains | Guide |
-| --- | --- | --- |
-| [Recovery](recovery.md) | parameter, model, exact-protocol, and trajectory-shape recovery | [Recovery design](../model-recovery.md) |
-| [Diagnostics and sensitivity](diagnostics.md) | fit audits, posterior checks, SBC, sensitivity, reliability, blocked PSIS-LOO, paired ELPD comparison | [Fit diagnostics](../diagnostics.md) |
-| [Inference and parameters](inference.md) | parameter spaces, deterministic optimizers, estimator registration | [Inference backends](../inference-backends.md) |
-| [Posterior results](posterior.md) | labelled draws, PyMC backend, posterior interchange | [Posterior results](../posterior-results.md) |
-| [Plotting](plots.md) | SBC bands, Pareto-`k`, ELPD differences, predictive checks, recovery, calibration, convergence | [Scientific figure standard](figure-standard.md) |
+| Area | Contains | Reference | Guide |
+| --- | --- | --- | --- |
+| `behavio.trials` | `Study`, the trial-level data contract | [Trials and tasks](study-and-task.md) | [Data contract](../data-contract.md) |
+| `behavio.task` | task observation contracts, response times | [Trials and tasks](study-and-task.md) | [Task contract](../task-contract.md) |
+| `behavio.observed` | pose, ethograms, covariates, device clocks, interval policies, trialization | [Observed behaviour](observed-behaviour.md) | [Observed behaviour](../observed-behaviour.md) |
+| `behavio.time` | learning-time clocks, landmark clocks, fold-fitted transforms | [Time and design](time-and-design.md) | [Clocks and transforms](../clocks-and-transforms.md) |
+| `behavio.design` | fixed design-matrix terms and the formula notation | [Time and design](time-and-design.md) | [Design matrices](../design-matrices.md) |
+| `behavio.models` | the model catalogue and the shared estimator contract | [Choice](choice-models.md), [latent and RL](latent-and-rl-models.md), [drift diffusion](drift-diffusion-models.md) | [Model cards](../model-cards.md) |
+| `behavio.compose` | the `smooth` / `hierarchical` / `mix` combinators | [Choice models](choice-models.md) | [Composing models](../composing-models.md) |
+| `behavio.inference` | parameter spaces, priors, optimizer backends | [Inference and registry](inference.md) | [Inference backends](../inference-backends.md) |
+| `behavio.posterior` | labelled draws, convergence, predictive checks, PSIS-LOO, SBC, sensitivity, reliability | [Posterior](posterior.md), [diagnostics](diagnostics.md) | [Posterior results](../posterior-results.md) |
+| `behavio.evaluate` | validation splits and the fold-evaluation loop | [Evaluate and compare](validation-and-comparison.md) | [Prospective validation](../validation.md) |
+| `behavio.compare` | paired model comparison, nested selection, parameter-trajectory shapes | [Evaluate and compare](validation-and-comparison.md) | [Model comparison](../comparison.md) |
+| `behavio.recovery` | parameter recovery and model recovery | [Recovery](recovery.md) | [Recovery design](../model-recovery.md) |
+| `behavio.protocol` | the frozen declaration, its compiler, its runner, exact-design recovery | [Schema](protocol.md), [execution](execution.md) | [Protocol authoring](../protocols/index.md) |
+| `behavio.report` | bounded reports, evidence bundles, fit artifacts | [Report](evidence-bundles.md) | [Evidence bundles](../protocols/evidence-bundles.md) |
+| `behavio.adapters` | CSV/TSV/Parquet tables, NWB, DANDI, IBL ONE, adapter conformance | [Data adapters](data-adapters.md) | [Interoperability](../interoperability.md) |
+| `behavio.contracts` | every protocol a downstream package implements, at one address | [Extension contracts](contracts.md) | [Extend Behavio](../extensions.md) |
+| `behavio.plot` | SBC bands, Pareto-`k`, ELPD differences, predictive checks, recovery, calibration, convergence | [Plotting](plots.md) | [Figure standard](figure-standard.md) |
+| `behavio.diagnostics` | the fit audit, `audit_fit` | [Diagnostics](diagnostics.md) | [Fit diagnostics](../diagnostics.md) |
+| `behavio.registry` | named estimator registration for protocols and the CLI | [Inference and registry](inference.md) | [Extend Behavio](../extensions.md) |
 
-## Protocols and interoperability
-
-| API area | Contains | Guide |
-| --- | --- | --- |
-| [Protocol schema](protocol.md) | immutable scientific declarations and lifecycle | [Protocol authoring](../protocols/index.md) |
-| [Protocol execution](execution.md) | compilation, materialization, running, exact-design recovery | [Compile and audit](../protocols/auditing.md) |
-| [Reporting and evidence](evidence-bundles.md) | bounded reports and content-addressed evidence bundles | [Evidence bundles](../protocols/evidence-bundles.md) |
-| [Extension contracts](contracts.md) | every protocol a downstream package implements, at one address | [Extend Behavio](../extensions.md) |
-| [Data adapters](data-adapters.md) | CSV/TSV/Parquet tables, NWB, DANDI, IBL ONE, adapter conformance, and fit-artifact interchange | [Interoperability](../interoperability.md) |
-| [Observed behaviour](observed-behaviour.md) | pose, covariates, ethograms, DeepLabCut/SLEAP/MoSeq/BORIS readers, clock synchronisation, interval policies | [Observed behaviour](../observed-behaviour.md) |
-
-The stable public import surface remains `behavio`. Optional data-source, optimization,
-and probabilistic dependencies are required only when their corresponding APIs are used.
+Optional data-source, optimization, and probabilistic dependencies are required only when
+their corresponding APIs are used.

@@ -47,7 +47,7 @@ without loading a Python object graph.
 
 `predictions/pointwise.json` and `audits/fits.json` are keyed candidate-by-candidate and
 then fold-by-fold, under the name the fold declared through
-[`ValidationFold.identifier`](../reference/contracts.md). That is the only key those maps
+[`EvaluationFold.identifier`](../reference/contracts.md). That is the only key those maps
 have, so `evaluate_splits` refuses a split set whose fold names collide rather than letting
 one fold overwrite another in the archive. See
 [every fold names itself](../validation.md#every-fold-names-itself) for the naming scheme.
@@ -98,8 +98,8 @@ content, not the newest name the library knows:
 
 | Name | Adds |
 | --- | --- |
-| `behavio.evidence-bundle/1` | the frequentist evidence |
-| `behavio.evidence-bundle/2` | the optional `posterior/` slots |
+| `behavio.report.evidence_bundles-bundle/1` | the frequentist evidence |
+| `behavio.report.evidence_bundles-bundle/2` | the optional `posterior/` slots |
 
 A version-1 bundle is a valid version-2 bundle that happens to carry no posterior evidence,
 so both names are accepted on read and neither is ever restamped — restamping a
@@ -112,7 +112,8 @@ keeps a frequentist bundle byte-identical across the version bump; a bundle carr
 ```python
 from pathlib import Path
 
-from behavio import BundleFigure, build_evidence_bundle, write_evidence_bundle
+from behavio import build_evidence_bundle, write_evidence_bundle
+from behavio.report import BundleFigure
 
 figure = BundleFigure(
     name="forecast-comparison",
@@ -137,7 +138,7 @@ bundle identity; an existing archive is never overwritten silently.
 ## Replay without executing code
 
 ```python
-from behavio import read_evidence_bundle, replay_evidence_bundle
+from behavio.report import read_evidence_bundle, replay_evidence_bundle
 
 verified = read_evidence_bundle("study-evidence.zip")
 replay = replay_evidence_bundle(verified)
@@ -156,7 +157,7 @@ fit or execute source code.
 ## Compare two analyses
 
 ```python
-from behavio import compare_evidence_bundles
+from behavio.report import compare_evidence_bundles
 
 difference = compare_evidence_bundles("before.zip", "after.zip")
 print(difference.same_protocol)

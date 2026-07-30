@@ -1,6 +1,6 @@
 import pytest
 
-from behavio import DANDIAdapterError, DANDINWBSource, ResolvedDANDIAsset
+from behavio.adapters import DANDIAdapterError, DANDINWBSource, ResolvedDANDIAsset
 from behavio.adapters import dandi as dandi_adapter
 
 

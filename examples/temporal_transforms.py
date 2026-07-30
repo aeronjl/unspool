@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from behavio import (
+from behavio import Study, forward_session_splits
+from behavio.time import (
     BootstrapThresholdLandmarkClock,
     ClockKind,
     ClockSpec,
-    Study,
     ThresholdLandmarkClock,
     fit_transform_splits,
-    forward_session_splits,
     with_cumulative_trial_clock,
     with_elapsed_time_clock,
 )

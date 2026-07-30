@@ -19,7 +19,8 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from behavio import IBLONETrialSource, Study, read_ibl_one_sessions
+from behavio import Study
+from behavio.adapters import IBLONETrialSource, read_ibl_one_sessions
 from benchmarks.ibl2021_psychometrics.fetch_data import (
     DEFAULT_CACHE,
     INSTITUTIONS,

@@ -22,10 +22,7 @@ from numpy.typing import NDArray
 from behavio import (
     BernoulliHistoryGLM,
     BiasOnly,
-    ModelRecoveryScenario,
-    PosteriorGroup,
     PosteriorResult,
-    PosteriorVariable,
     Study,
     compare_models,
     forward_session_splits,
@@ -46,9 +43,11 @@ from behavio.contracts.posterior import (
     posterior_point_summary,
 )
 from behavio.diagnostics import FitAuditStatus
-from behavio.evaluation import PosteriorFoldPolicy, evaluate_splits
-from behavio.posterior_diagnostics import PosteriorAuditPolicy, PosteriorAuditStatus
-from behavio.recovery import (
+from behavio.evaluate.folds import PosteriorFoldPolicy, evaluate_splits
+from behavio.posterior import PosteriorGroup, PosteriorVariable
+from behavio.posterior.diagnostics import PosteriorAuditPolicy, PosteriorAuditStatus
+from behavio.recovery import ModelRecoveryScenario
+from behavio.recovery.parameters import (
     POSTERIOR_QUANTILE_INTERVAL,
     RUN_FAILURE_CODE,
     WALD_INTERVAL,
@@ -68,7 +67,7 @@ class LaplaceSampledGLM:
     """A sampler-backed Bernoulli GLM with an analytic Gaussian posterior.
 
     ``diverging`` marks every transition as divergent, which is the cheapest way to force
-    :func:`behavio.posterior_diagnostics.audit_posterior` to return ``FAIL`` without
+    :func:`behavio.posterior.diagnostics.audit_posterior` to return ``FAIL`` without
     fabricating an unrealistic R-hat.
     """
 
@@ -584,7 +583,7 @@ def test_a_raising_refit_is_retained_as_evidence_instead_of_aborting_the_experim
         def fit(self, study: Study) -> FitResult:
             raise RuntimeError("optimizer exploded")
 
-    model = BrokenGLM(covariates=("stimulus",), choice_lags=0)
+    model = BrokenGLM(predictors=("stimulus",), choice_lags=0)
     design = sampled_design(n_subjects=1, n_sessions=1, n_trials=40)
 
     report = run_parameter_recovery(
@@ -709,7 +708,7 @@ def mle_design(*, n_subjects: int = 2, n_sessions: int = 4, n_trials: int = 25) 
 
 def mle_models() -> tuple[BernoulliHistoryGLM, BiasOnly]:
     return (
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.1),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.1),
         BiasOnly(),
     )
 

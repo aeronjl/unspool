@@ -39,7 +39,8 @@ coordinate for every dimension. `PosteriorGroup` collects related variables.
 ```python
 import numpy as np
 
-from behavio import PosteriorGroup, PosteriorResult, PosteriorVariable
+from behavio import PosteriorResult
+from behavio.posterior import PosteriorGroup, PosteriorVariable
 
 chain = np.arange(4)
 draw = np.arange(1_000)
@@ -97,7 +98,7 @@ groups into a DataTree while preserving named dimensions and coordinates; see th
 An existing backend-produced ArviZ object can enter the contract explicitly:
 
 ```python
-from behavio import posterior_result_from_arviz
+from behavio.posterior import posterior_result_from_arviz
 
 result = posterior_result_from_arviz(
     arviz_data,

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from behavio import LatentStateAlignment, align_latent_states
+from behavio.models import LatentStateAlignment, align_latent_states
 
 
 def test_alignment_recovers_swapped_probability_columns() -> None:

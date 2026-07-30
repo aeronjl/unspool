@@ -37,7 +37,8 @@ statuses, and stable issue codes remain in the report.
 ## Static versus smooth example
 
 ```python
-from behavio import ModelRecoveryScenario, run_model_recovery
+from behavio import run_model_recovery
+from behavio.recovery import ModelRecoveryScenario
 
 scenarios = [
     ModelRecoveryScenario(
@@ -92,7 +93,7 @@ one summary row per cell with trial/subject counts, resolution and accuracy, plu
 warning and failure rates.
 
 ```python
-from behavio import run_model_recovery_grid
+from behavio.recovery import run_model_recovery_grid
 
 grid = run_model_recovery_grid(
     {"sparse": sparse_design, "dense": dense_design},

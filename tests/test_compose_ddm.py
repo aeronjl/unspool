@@ -31,9 +31,6 @@ import numpy as np
 import pytest
 
 from behavio import (
-    BehaviourModel,
-    DriftDiffusionFitResult,
-    ModelDataError,
     Study,
     UniformResponseGuess,
     WienerDriftDiffusion,
@@ -41,7 +38,6 @@ from behavio import (
     compare_models,
     evaluate_splits,
     forward_session_splits,
-    leave_one_subject_out_splits,
     run_parameter_recovery,
 )
 from behavio.compose import (
@@ -55,6 +51,8 @@ from behavio.compose import (
     smooth,
 )
 from behavio.contracts.compose import PenalisedLinearEstimator, group_blocks
+from behavio.evaluate import leave_one_subject_out_splits
+from behavio.models import BehaviourModel, DriftDiffusionFitResult, ModelDataError
 from behavio.models._kernels.wiener import WienerLikelihood, wiener_cell_bytes, wiener_log_density
 
 REFERENCE = json.loads(
@@ -102,7 +100,7 @@ def design(
 
 def base_ddm(*, n_restarts: int = 2, **changes: Any) -> WienerDriftDiffusion:
     arguments: dict[str, Any] = {
-        "covariates": ("stimulus",),
+        "predictors": ("stimulus",),
         "n_restarts": n_restarts,
         "max_iterations": 300,
         "simulation_time_step": 0.001,

@@ -5,17 +5,16 @@ import pytest
 
 from behavio import (
     BernoulliHistoryGLM,
-    CategoryRateDiscrepancy,
     ChoiceSpec,
-    PyMCBackendError,
     PyMCHierarchicalGLMBackend,
-    PyMCUnavailableError,
     Study,
     TaskSpec,
     TaskValidationError,
     posterior_predictive_check,
 )
 from behavio.compose import HierarchicalModel, hierarchical
+from behavio.posterior import CategoryRateDiscrepancy
+from behavio.pymc_backend import PyMCBackendError, PyMCUnavailableError
 
 
 def hierarchical_study() -> tuple[HierarchicalModel, Study, TaskSpec]:
@@ -31,7 +30,7 @@ def hierarchical_study() -> tuple[HierarchicalModel, Study, TaskSpec]:
         }
     )
     model = hierarchical(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.25),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.25),
         over="subject",
         scale=0.4,
     )
@@ -85,7 +84,7 @@ def test_adapter_rejects_undeclared_covariates_and_empirical_bayes_scale() -> No
         )
 
     empirical_bayes = hierarchical(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1),
         over="subject",
         scale=0.4,
         estimate_scale=True,

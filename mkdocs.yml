@@ -171,27 +171,30 @@ nav:
       - Auditable interval and bout policies: interval-policy.md
       - Fit artifacts and extensions: fit-artifacts.md
       - Provenance: provenance.md
+      - API reorganisation: api-reorganisation.md
       - Migration guides: migration-guides.md
       - Extend Behavio: extensions.md
   - Reference:
       - Python API map: reference/index.md
-      - Extension contracts: reference/contracts.md
-      - Studies and tasks: reference/study-and-task.md
-      - Clocks, transforms, and design: reference/time-and-design.md
-      - Validation and comparison: reference/validation-and-comparison.md
-      - Observable choice models: reference/choice-models.md
-      - Latent states and reinforcement learning: reference/latent-and-rl-models.md
-      - Drift-diffusion models: reference/drift-diffusion-models.md
-      - Recovery: reference/recovery.md
-      - Diagnostics and sensitivity: reference/diagnostics.md
-      - Inference and parameters: reference/inference.md
-      - Posterior results: reference/posterior.md
-      - Plotting: reference/plots.md
-      - Data adapters: reference/data-adapters.md
-      - Observed behaviour API: reference/observed-behaviour.md
-      - Protocol schema API: reference/protocol.md
-      - Protocol execution API: reference/execution.md
-      - Reporting and evidence API: reference/evidence-bundles.md
+      - behavio.trials, behavio.task: reference/study-and-task.md
+      - behavio.observed: reference/observed-behaviour.md
+      - behavio.time, behavio.design: reference/time-and-design.md
+      - behavio.models, behavio.compose:
+          - Observable choice: reference/choice-models.md
+          - Latent states and reinforcement learning: reference/latent-and-rl-models.md
+          - Drift diffusion: reference/drift-diffusion-models.md
+      - behavio.inference, behavio.registry: reference/inference.md
+      - behavio.posterior: reference/posterior.md
+      - behavio.diagnostics: reference/diagnostics.md
+      - behavio.evaluate, behavio.compare: reference/validation-and-comparison.md
+      - behavio.recovery: reference/recovery.md
+      - behavio.protocol:
+          - Schema: reference/protocol.md
+          - Compiler and runner: reference/execution.md
+      - behavio.report: reference/evidence-bundles.md
+      - behavio.adapters: reference/data-adapters.md
+      - behavio.contracts: reference/contracts.md
+      - behavio.plot: reference/plots.md
       - Scientific figure standard: reference/figure-standard.md
       - Figure provenance: reference/figure-provenance.md
   - About:

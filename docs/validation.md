@@ -84,7 +84,7 @@ test side without reading held-out outcomes.
 ## Historical-cohort forecasting
 
 ```python
-from behavio import historical_cohort_forecast_splits
+from behavio.evaluate import historical_cohort_forecast_splits
 
 splits = historical_cohort_forecast_splits(
     aligned_study,
@@ -117,7 +117,7 @@ paper days.
 ## Within-session rolling origins
 
 ```python
-from behavio import within_session_rolling_splits
+from behavio.evaluate import within_session_rolling_splits
 
 splits = within_session_rolling_splits(
     study,
@@ -149,7 +149,7 @@ require model-specific integration over unobserved intermediate choices.
 ## Whole-session holdout
 
 ```python
-from behavio import leave_one_session_out_splits
+from behavio.evaluate import leave_one_session_out_splits
 
 for split in leave_one_session_out_splits(study):
     assert not split.prospective
@@ -163,7 +163,7 @@ perturbations, or the influence of individual sessions.
 ## Population holdout
 
 ```python
-from behavio import leave_one_lab_out_splits, leave_one_subject_out_splits
+from behavio.evaluate import leave_one_lab_out_splits, leave_one_subject_out_splits
 
 for split in leave_one_subject_out_splits(study):
     assert set(split.train_subjects).isdisjoint(split.test_subjects)
@@ -189,7 +189,7 @@ trajectory to a held-out subject.
 ## Held-out-lab future-session prediction
 
 ```python
-from behavio import leave_one_lab_out_session_forecast_splits
+from behavio.evaluate import leave_one_lab_out_session_forecast_splits
 
 splits = leave_one_lab_out_session_forecast_splits(
     aligned_study,
@@ -258,7 +258,7 @@ of them would simply disappear from the record — so `evaluate_splits` refuses 
 whose names collide.
 
 `identifier` is a declared member of the
-[`ValidationFold`](reference/contracts.md) protocol, which means a splitter you write
+[`EvaluationFold`](reference/contracts.md) protocol, which means a splitter you write
 yourself must supply one. It used to be read with a `getattr` fallback that numbered
 unnamed folds `fold-0000`; the library depended on a name it had never asked any fold for,
 which is exactly the hidden name-based contract this package has been removing.

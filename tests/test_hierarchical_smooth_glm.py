@@ -4,15 +4,7 @@ import numpy as np
 import pytest
 from scipy.special import expit
 
-from behavio import (
-    BehaviourModel,
-    BernoulliHistoryGLM,
-    FitDiagnostics,
-    ModelDataError,
-    Study,
-    evaluate_splits,
-    leave_one_subject_out_splits,
-)
+from behavio import BernoulliHistoryGLM, Study, evaluate_splits
 from behavio.compose import (
     HierarchicalFitResult,
     HierarchicalModel,
@@ -20,6 +12,8 @@ from behavio.compose import (
     hierarchical,
     smooth,
 )
+from behavio.evaluate import leave_one_subject_out_splits
+from behavio.models import BehaviourModel, FitDiagnostics, ModelDataError
 
 
 def make_design(*, n_subjects: int = 6, n_sessions: int = 5, trials_per_session: int = 80) -> Study:
@@ -62,7 +56,7 @@ def paths_model(
     over: str = "session_order",
 ) -> SmoothModel:
     return smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=choice_lags, l2=l2),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=choice_lags, l2=l2),
         over=over,
         knots=knots,
         smoothness=smoothness,
@@ -120,7 +114,7 @@ def test_hierarchical_smooth_model_has_a_stable_public_contract() -> None:
 
 def test_hierarchy_is_the_outer_combinator() -> None:
     pooled = hierarchical(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0), over="subject"
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0), over="subject"
     )
 
     with pytest.raises(TypeError, match="hierarchical\\(smooth\\(model\\)\\)"):

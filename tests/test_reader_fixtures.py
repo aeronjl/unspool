@@ -8,11 +8,11 @@ from pathlib import Path
 
 import pytest
 
-from behavio.ethograms import (
+from behavio.observed.ethograms import (
     annotations_from_boris_aggregated_file,
     annotations_from_moseq_results_h5,
 )
-from behavio.pose import (
+from behavio.observed.pose import (
     pose_from_deeplabcut_file,
     pose_from_sleap_analysis_h5,
 )

@@ -5,25 +5,26 @@ import numpy as np
 import pytest
 
 from behavio import (
-    PARAMETER_SPACE_SCHEMA,
     BinaryQLearning,
     ChoiceSpec,
-    FitDiagnostics,
-    FitResult,
-    FittedModel,
-    ParameterRole,
     ParameterSpace,
+    RewardSpec,
+    Study,
+    TaskSpec,
+    export_fit,
+)
+from behavio.inference import (
+    PARAMETER_SPACE_SCHEMA,
+    ParameterRole,
     ParameterSpaceError,
     ParameterSpaceProvider,
     ParameterSpec,
     ParameterTransform,
     PriorSpec,
-    RewardSpec,
-    Study,
-    TaskSpec,
-    export_fit,
     parameter_space_from_json,
 )
+from behavio.models import FitDiagnostics, FitResult
+from behavio.task import FittedModel
 
 
 def example_space() -> ParameterSpace:

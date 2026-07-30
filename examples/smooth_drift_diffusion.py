@@ -15,7 +15,7 @@ design = Study.factorial(
 )
 model = smooth(
     WienerDriftDiffusion(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         n_restarts=2,
         max_iterations=300,
         simulation_time_step=0.001,

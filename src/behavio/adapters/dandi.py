@@ -14,7 +14,7 @@ from urllib.request import Request, urlopen
 
 from behavio.adapters.nwb import study_from_nwbfile
 from behavio.contracts.adapter import SessionOrderPolicy, SourceType
-from behavio.study import Study
+from behavio.trials import Study
 
 DEFAULT_DANDI_API = "https://api.dandiarchive.org/api"
 ADAPTER_NAME = "behavio.dandi"

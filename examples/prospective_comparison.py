@@ -38,7 +38,7 @@ def make_study() -> Study:
 
 def smooth_model() -> SmoothModel:
     return smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.02),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.02),
         over="session_order",
         knots=KNOTS,
         smoothness=3.0,
@@ -48,7 +48,7 @@ def smooth_model() -> SmoothModel:
 
 def candidates():
     return {
-        "static": BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.02),
+        "static": BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.02),
         "shared_smooth": smooth_model(),
     }
 

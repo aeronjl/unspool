@@ -5,7 +5,7 @@ existed they shared it by importing four to six underscore-prefixed names out of
 ``behavio.models.ddm``, which made the plain DDM the accidental owner of a likelihood that
 is not specific to it.
 
-Most of this module knows nothing about what a :class:`~behavio.study.Study` is. Every
+Most of this module knows nothing about what a :class:`~behavio.trials.Study` is. Every
 function takes broadcast arrays in the canonical parameterization -- drift rate, boundary
 separation, relative starting bias in ``(0, 1)``, decision time in seconds -- and returns
 arrays. :class:`WienerLikelihood` is the same density again, exposed as the four operations
@@ -450,7 +450,7 @@ class WienerLikelihood:
 def wiener_cell_design(features: NDArray[np.float64], *, n_extra_cells: int) -> NDArray[np.float64]:
     """Return the ``(rows, cells, parameters)`` design a Wiener predictor is built from.
 
-    The drift cell holds the covariate features; every other cell is a single intercept
+    The drift cell holds the predictor features; every other cell is a single intercept
     column, because boundary, starting bias and non-decision time are trial-constant
     parameters of the family rather than functions of the design. Making them cells rather
     than a separate vector of "the other parameters" is what lets one combinator smooth a

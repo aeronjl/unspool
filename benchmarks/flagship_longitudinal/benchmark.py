@@ -9,14 +9,9 @@ from typing import Any
 
 import numpy as np
 
-from behavio import (
-    BernoulliHistoryGLM,
-    FitResult,
-    Study,
-    cohort_forward_session_splits,
-    compare_models,
-)
+from behavio import BernoulliHistoryGLM, Study, cohort_forward_session_splits, compare_models
 from behavio.compose import HierarchicalFitResult, hierarchical, smooth
+from behavio.models import FitResult
 from benchmarks.cell2025.benchmark import load_study as load_cell_study
 from benchmarks.cell2025.fetch_data import DEFAULT_DESTINATION as DEFAULT_CELL_DATA
 from benchmarks.cell2025.fetch_data import FIGSHARE_ARTICLE_DOI, MEMBER_SHA256, sha256
@@ -199,7 +194,7 @@ def run(cell_path: Path, ibl_directory: Path) -> dict[str, Any]:
             "forecast": "session rank 5 from ranks 0 through 4",
             "outcome": "binary choice",
             "scored_columns": ["choice"],
-            "covariates": ["stimulus", "one-session-reset choice lag"],
+            "predictors": ["stimulus", "one-session-reset choice lag"],
             "knots": list(KNOTS),
             "hyperparameters": {
                 "l2": 0.02,
@@ -310,7 +305,7 @@ def _build_six_session_panel(
 
 
 def _models() -> Mapping[str, Any]:
-    common = {"covariates": ("stimulus",), "choice_lags": 1, "l2": 0.02}
+    common = {"predictors": ("stimulus",), "choice_lags": 1, "l2": 0.02}
     return {
         "complete_pooling": BernoulliHistoryGLM(**common),
         "static_partial_pooling": hierarchical(

@@ -19,7 +19,7 @@ pytestmark = pytest.mark.benchmark
 
 ROOT = Path(__file__).parents[1]
 CONTRACT_PATHS = sorted(ROOT.glob("benchmarks/*/published_claims.json"))
-SCHEMA_VERSION = 1
+PROTOCOL_SCHEMA_VERSION = 1
 TOP_LEVEL_FIELDS = {"schema_version", "paper", "data", "result", "claims"}
 PAPER_FIELDS = {"doi", "figure", "citation"}
 DATA_FIELDS = {"accession", "member_sha256"}
@@ -98,7 +98,7 @@ def test_contract_declares_its_paper_data_and_result(
     name: str, path: Path, contract: dict[str, Any]
 ) -> None:
     assert set(contract) == TOP_LEVEL_FIELDS, name
-    assert contract["schema_version"] == SCHEMA_VERSION, name
+    assert contract["schema_version"] == PROTOCOL_SCHEMA_VERSION, name
     assert set(contract["paper"]) == PAPER_FIELDS, name
     assert set(contract["data"]) == DATA_FIELDS, name
     assert all(str(value).strip() for value in contract["paper"].values()), name

@@ -1,4 +1,4 @@
-# Drift-diffusion model API
+# `behavio.models`: drift-diffusion API
 
 These models jointly score choice and response time. Unit declarations, the declared
 support of any mixture component, and the prediction mode remain part of the fitted
@@ -24,7 +24,7 @@ from behavio import WienerDriftDiffusion
 from behavio.compose import hierarchical, smooth
 
 paths = smooth(
-    WienerDriftDiffusion(covariates=("stimulus",)),
+    WienerDriftDiffusion(predictors=("stimulus",)),
     over="session_order",
     knots=(0.0, 2.0),
     parameters=("drift.stimulus", "boundary"),

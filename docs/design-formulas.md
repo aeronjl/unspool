@@ -3,7 +3,7 @@
 `DesignSpec` is composable but verbose. A formula is the notation for writing one down:
 
 ```python
-from behavio import DesignSpec
+from behavio.design import DesignSpec
 
 design = DesignSpec.from_formula("choice ~ stimulus * phase + lag(choice, 1)")
 ```
@@ -11,7 +11,7 @@ design = DesignSpec.from_formula("choice ~ stimulus * phase + lag(choice, 1)")
 That is the same object as the hand-built equivalent, term for term:
 
 ```python
-from behavio import DesignSpec, HistoryTerm, InteractionTerm, NumericTerm
+from behavio.design import DesignSpec, HistoryTerm, InteractionTerm, NumericTerm
 
 stimulus = NumericTerm("stimulus")
 phase = NumericTerm("phase")
@@ -26,7 +26,7 @@ design = DesignSpec(
 ```
 
 A formula is notation and nothing else. Every accepted form desugars onto a term that
-[`behavio.design`](design-matrices.md) already has; the parser has no algebra of its own,
+[`behavio.design.matrix`](design-matrices.md) already has; the parser has no algebra of its own,
 builds nothing `DesignSpec` cannot build, and cannot express a transformation the fixed
 design terms would refuse. If a formula parses, the design it names is a design you could
 have written by hand.
@@ -82,7 +82,7 @@ users migrate to from that shorthand, so `lag(choice, 1)` builds the same column
 
 ```python
 DesignSpec.from_formula("choice ~ stimulus + lag(choice, 1)")
-# the design BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1) builds
+# the design BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1) builds
 ```
 
 For the literal lagged value of a column that is not zero/one, ask for it:
@@ -150,7 +150,7 @@ the estimate in the formula at position 9
 The estimate is reached only through a call that says whose rows it came from:
 
 ```python
-from behavio.formula import Formula
+from behavio.design.formula import Formula
 
 design = Formula.parse("choice ~ scale(stimulus)").fit(training_study)
 ```
@@ -171,7 +171,7 @@ observed categories cannot be ordered, the formula says so and asks you to decla
 `(1|subject)` and `(stimulus|subject)` parse into a structured `GroupTerm`:
 
 ```python
-from behavio.formula import Formula
+from behavio.design.formula import Formula
 
 formula = Formula.parse("choice ~ stimulus + (stimulus | subject)")
 group = formula.groups[0]
@@ -261,7 +261,7 @@ the offending character under a caret.
 ## What a formula cannot say
 
 The notation covers the term algebra and stops there. It has no spelling for a
-transformation `behavio.design` does not implement, and adding one would mean adding a
+transformation `behavio.design.matrix` does not implement, and adding one would mean adding a
 design term first. Known limits:
 
 - **Varying effects.** `(1|subject)` parses but cannot be built, as above.

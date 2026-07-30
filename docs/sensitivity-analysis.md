@@ -23,11 +23,8 @@ The `changes` mapping is provenance, not executable configuration: the callback 
 those choices to the real model or pipeline.
 
 ```python
-from behavio import (
-    SensitivityScenario,
-    posterior_sensitivity_outcome,
-    run_sensitivity_analysis,
-)
+from behavio import run_sensitivity_analysis
+from behavio.posterior import SensitivityScenario, posterior_sensitivity_outcome
 
 scenarios = (
     SensitivityScenario(
@@ -96,7 +93,7 @@ Sensitivity is not limited to posterior means. A callback can return an explicit
 `SensitivityOutcome` containing one or more `SensitivityMetric` records:
 
 ```python
-from behavio import SensitivityMetric, SensitivityOutcome
+from behavio.posterior import SensitivityMetric, SensitivityOutcome
 
 return SensitivityOutcome(
     artifact_signature=evidence_bundle.fingerprint,

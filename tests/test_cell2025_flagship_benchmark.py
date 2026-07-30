@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from behavio import Study
-from behavio.interchange import _study_record
+from behavio.report.fit_artifacts import _study_record
 from benchmarks.cell2025_flagship.benchmark import (
     MODEL_ORDER,
     PANEL_COLUMN_ORDER,
@@ -99,11 +99,11 @@ def test_flagship_candidates_match_the_frozen_contract() -> None:
 
     assert tuple(models) == MODEL_ORDER
     assert all(_base(model).choice_lags == 0 for model in models.values())
-    assert _base(models["pooled_psychometric"]).covariates == (
+    assert _base(models["pooled_psychometric"]).predictors == (
         "left_contrast",
         "right_contrast",
     )
-    assert _base(models["early_bias_forecast"]).covariates[-3:] == (
+    assert _base(models["early_bias_forecast"]).predictors[-3:] == (
         "early_bias_forecast_phase",
         "early_bias_forecast_left_contrast",
         "early_bias_forecast_right_contrast",

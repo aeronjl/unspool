@@ -26,7 +26,8 @@ semantics.
 ```python
 import numpy as np
 
-from behavio import OptimizationProblem, ScipyMultistart
+from behavio import ScipyMultistart
+from behavio.inference import OptimizationProblem
 
 
 def negative_log_likelihood(vector):
@@ -76,7 +77,7 @@ record. Both are immutable, JSON-safe, and carry the parameter-space fingerprint
 ## MAP is explicit about its measure
 
 ```python
-from behavio import ObjectiveTarget, PriorMeasure
+from behavio.inference import ObjectiveTarget, PriorMeasure
 
 map_problem = OptimizationProblem(
     parameter_space=model.parameter_space,
@@ -158,7 +159,7 @@ backend.
 
 ## API
 
-::: behavio.inference
+::: behavio.inference.optimize
     options:
       members:
         - ObjectiveTarget

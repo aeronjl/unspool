@@ -48,7 +48,7 @@ ELPD computed from a posterior that did not converge is not evidence. `psis_loo`
 `loo.convergence`. The policy is injectable:
 
 ```python
-from behavio import PosteriorAuditPolicy
+from behavio.posterior import PosteriorAuditPolicy
 
 loo = psis_loo(posterior, policy=PosteriorAuditPolicy(max_rhat=1.005))
 ```
@@ -148,7 +148,7 @@ It is never `A.se - B.se` and never $\sqrt{\text{se}_A^2 + \text{se}_B^2}$; both
 positive correlation between models and inflate the interval.
 
 ```python
-from behavio.posterior_comparison import compare_posterior_models
+from behavio.posterior.comparison import compare_posterior_models
 
 comparison = compare_posterior_models(
     {"hierarchical": hierarchical_posterior, "pooled": pooled_posterior},

@@ -31,26 +31,26 @@ decision and is never inferred from nearest timestamps.
 ## Fit an evidence-bearing transform
 
 ```python
-from behavio.sync import (
-    ClockPulseMatches,
-    ClockSynchronizationSpec,
-    fit_clock_synchronization,
+from behavio.observed.device_clocks import (
+    DeviceClockPulses,
+    DeviceClockSyncSpec,
+    fit_device_clock_sync,
 )
 
-matches = ClockPulseMatches.from_arrays(
+matches = DeviceClockPulses.from_arrays(
     source_clock_id="video",
     target_clock_id="photometry",
     source_time_s=[0.0, 20.0, 40.0, 60.0],
     target_time_s=[0.3500, 20.3526, 40.3547, 60.3572],
     match_labels=["start", "pulse-1", "pulse-2", "stop"],
 )
-spec = ClockSynchronizationSpec(
+spec = DeviceClockSyncSpec(
     maximum_absolute_residual_s=0.002,
     maximum_drift_ppm=250,
     minimum_matches=4,
     minimum_source_span_s=50.0,
 )
-synchronization = fit_clock_synchronization(matches, spec)
+synchronization = fit_device_clock_sync(matches, spec)
 synchronization.to_json()
 ```
 

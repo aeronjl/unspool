@@ -5,19 +5,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from behavio import (
-    BernoulliGLMHMM,
-    BernoulliHistoryGLM,
-    DesignSpec,
-    HistoryKernelTerm,
-    HistoryTerm,
-    InteractionTerm,
-    NumericTerm,
-    Study,
-    WienerDriftDiffusion,
-)
+from behavio import BernoulliGLMHMM, BernoulliHistoryGLM, Study, WienerDriftDiffusion
 from behavio.compose import smooth
-from behavio.models._kernels.design import covariate_design, outcome_history_term
+from behavio.design import DesignSpec, HistoryKernelTerm, HistoryTerm, InteractionTerm, NumericTerm
+from behavio.models._kernels.design import outcome_history_term, predictor_design
 from behavio.models.base import ModelDataError
 
 
@@ -53,7 +44,7 @@ def panel(*, n_subjects: int = 2, n_sessions: int = 3, n_trials: int = 24) -> St
 
 def test_a_design_built_glm_and_a_covariate_built_glm_agree_exactly() -> None:
     study = panel()
-    shorthand = BernoulliHistoryGLM(covariates=("stimulus", "phase"), choice_lags=2, l2=0.1)
+    shorthand = BernoulliHistoryGLM(predictors=("stimulus", "phase"), choice_lags=2, l2=0.1)
     written_out = BernoulliHistoryGLM(
         choice_lags=2,
         l2=0.1,
@@ -84,7 +75,7 @@ def test_a_design_built_glm_and_a_covariate_built_glm_agree_exactly() -> None:
 
 def test_the_shorthand_history_term_reproduces_the_hand_built_history_column() -> None:
     study = panel()
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=2)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=2)
 
     built = model.design_matrix(study)
     term = outcome_history_term("choice", 2)
@@ -93,7 +84,7 @@ def test_the_shorthand_history_term_reproduces_the_hand_built_history_column() -
 
 
 def test_a_design_built_ddm_keeps_the_drift_prefix_on_every_column() -> None:
-    shorthand = WienerDriftDiffusion(covariates=("stimulus",))
+    shorthand = WienerDriftDiffusion(predictors=("stimulus",))
     written_out = WienerDriftDiffusion(
         design=DesignSpec(terms=(NumericTerm(column="stimulus"),), intercept=True)
     )
@@ -135,7 +126,7 @@ def test_an_interaction_expressed_as_a_term_fits_like_a_materialized_column() ->
     )
 
     by_column = BernoulliHistoryGLM(
-        covariates=("stimulus", "phase", "stimulus_phase"), choice_lags=0, l2=0.05
+        predictors=("stimulus", "phase", "stimulus_phase"), choice_lags=0, l2=0.05
     ).fit(materialized)
     by_term = BernoulliHistoryGLM(
         choice_lags=0,
@@ -159,13 +150,13 @@ def test_an_interaction_expressed_as_a_term_fits_like_a_materialized_column() ->
 
 
 def test_a_design_changes_the_signature_and_a_covariate_tuple_does_not() -> None:
-    legacy = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.1)
+    legacy = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.1)
     assert legacy.signature == (
-        "bernoulli-history-glm[outcome=choice;covariates=stimulus;choice_lags=1;l2=0.1]"
+        "bernoulli-history-glm[outcome=choice;predictors=stimulus;choice_lags=1;l2=0.1]"
     )
     assert "design=" not in legacy.signature
 
-    equivalent = BernoulliHistoryGLM(choice_lags=1, l2=0.1, design=covariate_design(("stimulus",)))
+    equivalent = BernoulliHistoryGLM(choice_lags=1, l2=0.1, design=predictor_design(("stimulus",)))
     assert equivalent.parameter_names == legacy.parameter_names
     assert equivalent.signature != legacy.signature
     assert "design=" in equivalent.signature
@@ -181,17 +172,17 @@ def test_a_design_changes_the_signature_and_a_covariate_tuple_does_not() -> None
 
 
 def test_a_ddm_design_changes_the_signature_and_a_covariate_tuple_does_not() -> None:
-    legacy = WienerDriftDiffusion(covariates=("stimulus",))
-    equivalent = WienerDriftDiffusion(design=covariate_design(("stimulus",)))
+    legacy = WienerDriftDiffusion(predictors=("stimulus",))
+    equivalent = WienerDriftDiffusion(design=predictor_design(("stimulus",)))
 
     assert "design=" not in legacy.signature
     assert "design=" in equivalent.signature
     assert equivalent.parameter_names == legacy.parameter_names
 
 
-def test_passing_both_a_design_and_covariates_is_rejected() -> None:
-    with pytest.raises(ValueError, match="either covariates or design"):
-        BernoulliHistoryGLM(covariates=("stimulus",), design=covariate_design(("stimulus",)))
+def test_passing_both_a_design_and_predictors_is_rejected() -> None:
+    with pytest.raises(ValueError, match="either predictors or design"):
+        BernoulliHistoryGLM(predictors=("stimulus",), design=predictor_design(("stimulus",)))
     with pytest.raises(TypeError, match="design must be a DesignSpec"):
         BernoulliHistoryGLM(design=("stimulus",))  # type: ignore[arg-type]
 
@@ -232,12 +223,12 @@ def test_a_history_kernel_can_replace_a_lag_tuple_without_new_columns() -> None:
 
 def test_a_smooth_glm_built_from_a_design_names_its_knots_the_same_way() -> None:
     shorthand = smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0),
         knots=(0.0, 2.0),
         shared_trajectory=True,
     )
     written_out = smooth(
-        BernoulliHistoryGLM(choice_lags=0, design=covariate_design(("stimulus",))),
+        BernoulliHistoryGLM(choice_lags=0, design=predictor_design(("stimulus",))),
         knots=(0.0, 2.0),
         shared_trajectory=True,
     )
@@ -256,7 +247,7 @@ def test_a_smooth_glm_built_from_a_design_names_its_knots_the_same_way() -> None
 
 def test_a_mistyped_covariate_is_found_before_fit_instead_of_inside_it() -> None:
     study = panel()
-    model = BernoulliHistoryGLM(covariates=("stimulis",))
+    model = BernoulliHistoryGLM(predictors=("stimulis",))
 
     description = model.describe(study)
     assert [finding.code for finding in description.errors] == ["missing_column"]
@@ -272,7 +263,7 @@ def test_a_mistyped_covariate_is_found_before_fit_instead_of_inside_it() -> None
 def test_knots_outside_the_observed_clock_are_reported_rather_than_ignored() -> None:
     study = panel()
     model = smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0),
         knots=(0.0, 2.0, 40.0),
         shared_trajectory=True,
     )
@@ -290,7 +281,7 @@ def test_knots_outside_the_observed_clock_are_reported_rather_than_ignored() -> 
 
 
 def test_describe_lists_the_design_parameters_bounds_and_priors_without_a_study() -> None:
-    model = WienerDriftDiffusion(covariates=("stimulus",))
+    model = WienerDriftDiffusion(predictors=("stimulus",))
 
     description = model.describe()
     assert description.n_observations is None
@@ -299,7 +290,7 @@ def test_describe_lists_the_design_parameters_bounds_and_priors_without_a_study(
     assert description.parameter_bounds["starting_bias"] == (0.02, 0.98)
     assert description.findings == ()
 
-    penalized = BernoulliHistoryGLM(covariates=("stimulus",), l2=0.25)
+    penalized = BernoulliHistoryGLM(predictors=("stimulus",), l2=0.25)
     assert any("ridge" in prior for prior in penalized.describe().priors)
 
 
@@ -312,7 +303,7 @@ def test_describe_prints_the_coding_of_every_history_column() -> None:
     for a history term inside an interaction, where the name is no less ambiguous.
     """
 
-    effect = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1).describe()
+    effect = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1).describe()
     identity = BernoulliHistoryGLM(
         design=DesignSpec.from_formula("choice ~ stimulus + lag(choice, 1, coding='identity')"),
         choice_lags=0,
@@ -344,9 +335,9 @@ def test_describe_prints_the_coding_of_every_history_column() -> None:
 
 
 def test_describe_names_the_required_task_columns_from_the_capability_contract() -> None:
-    from behavio import model_capabilities
+    from behavio.models import model_capabilities
 
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0)
     capabilities = model_capabilities(model)
 
     assert model.describe().required_task_columns == capabilities.required_task_columns
@@ -362,8 +353,8 @@ ALL_COVARIATE_MODELS = (
 
 @pytest.mark.parametrize("model_class", ALL_COVARIATE_MODELS, ids=lambda c: c.__name__)
 def test_every_covariate_model_accepts_an_equivalent_design(model_class: type) -> None:
-    legacy = model_class(covariates=("stimulus",))
-    designed = model_class(design=covariate_design(("stimulus",)))
+    legacy = model_class(predictors=("stimulus",))
+    designed = model_class(design=predictor_design(("stimulus",)))
 
     assert designed.parameter_names == legacy.parameter_names
     assert designed.coefficient_names == legacy.coefficient_names
@@ -376,7 +367,7 @@ def test_a_formula_built_design_drives_a_model_like_a_hand_built_one() -> None:
     """The join between the formula front end and the model design-acceptance path.
 
     ``DesignSpec.from_formula`` and the models' ``design=`` argument were written
-    independently against :mod:`behavio.design`. This is the test that they meet: the
+    independently against :mod:`behavio.design.matrix`. This is the test that they meet: the
     formula's desugaring must produce exactly the design a user would write out, and the
     model must name and fit it identically either way.
     """
@@ -405,7 +396,7 @@ def test_a_formula_built_design_drives_a_model_like_a_hand_built_one() -> None:
 
 def test_a_formula_lag_term_reproduces_the_choice_lags_shorthand_when_effect_coded() -> None:
     study = panel()
-    shorthand = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1)
+    shorthand = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1)
     parsed = BernoulliHistoryGLM(
         design=DesignSpec.from_formula('choice ~ stimulus + lag(choice, 1, coding="effect")'),
         choice_lags=0,
@@ -433,7 +424,7 @@ def test_a_default_formula_lag_is_the_glm_shorthand_rather_than_a_lookalike() ->
     parsed = BernoulliHistoryGLM(
         design=DesignSpec.from_formula("choice ~ stimulus + lag(choice, 1)"), choice_lags=0
     )
-    shorthand = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1)
+    shorthand = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1)
 
     assert parsed.parameter_names == shorthand.parameter_names
     assert np.array_equal(parsed.design_matrix(study), shorthand.design_matrix(study))
@@ -449,7 +440,7 @@ def test_an_identity_coded_formula_lag_is_still_one_keyword_away() -> None:
 
     assert (
         identity.parameter_names
-        == BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1).parameter_names
+        == BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1).parameter_names
     )
     assert set(np.unique(identity.design_matrix(study)[:, 2])) == {0.0, 1.0}
 
@@ -457,5 +448,5 @@ def test_an_identity_coded_formula_lag_is_still_one_keyword_away() -> None:
 def test_a_formula_built_ddm_keeps_the_drift_prefix() -> None:
     parsed = WienerDriftDiffusion(design=DesignSpec.from_formula("choice ~ stimulus"))
 
-    assert parsed.parameter_names == WienerDriftDiffusion(covariates=("stimulus",)).parameter_names
+    assert parsed.parameter_names == WienerDriftDiffusion(predictors=("stimulus",)).parameter_names
     assert "design=" in parsed.signature

@@ -1,18 +1,19 @@
-# Extension contract API
+# `behavio.contracts` API
 
 `behavio.contracts` is the single import address for every protocol a downstream package
 implements, and for the dataclasses those protocols declare structurally. The surfaces
 described in [Extend Behavio](../extensions.md) all resolve here.
 
-Every name below is also re-exported from the module it used to live in, so existing
-imports such as `from behavio.models.base import BehaviourEstimator` continue to work
-unchanged.
+Every name below is also re-exported at the friendly implementation-side home an author is
+already reading — `from behavio.models.base import BehaviourEstimator` resolves to the same
+object. A contract is declared once; it is surfaced where it is implemented.
 
-`behavio.contracts` is a runtime leaf: it imports only `behavio.study`, `behavio.clocks`
-and `behavio.posterior`, none of which import it back. Implementation modules
-(`behavio.models.base`, `behavio.inference`, `behavio.parameters`, `behavio.transforms`,
-`behavio.validation`, `behavio.posterior_predictive`, `behavio.diagnostics`) depend on it
-in one direction only.
+`behavio.contracts` is a runtime leaf: it imports only `behavio.trials` and
+`behavio.posterior.result`, neither of which imports anything from inside the package at all.
+Implementation modules (`behavio.models.base`, `behavio.inference.optimize`,
+`behavio.inference.parameters`, `behavio.time.transforms`, `behavio.evaluate.splits`,
+`behavio.posterior.predictive`, `behavio.diagnostics`) depend on it in one direction only, and
+`tests/test_contracts.py` fails if that direction ever reverses.
 
 ## Estimators, fits, and predictions
 

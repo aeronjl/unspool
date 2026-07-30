@@ -1,11 +1,11 @@
-# Recovery API
+# `behavio.recovery` API
 
 Recovery is evidence about a declared model and experimental design. It is not a permanent
 property of a model class.
 
 ## Parameter recovery
 
-::: behavio.recovery
+::: behavio.recovery.parameters
     options:
       members_order: source
       show_root_heading: false
@@ -13,7 +13,7 @@ property of a model class.
 
 ## Model recovery
 
-::: behavio.model_recovery
+::: behavio.recovery.models
     options:
       members_order: source
       show_root_heading: false
@@ -21,7 +21,7 @@ property of a model class.
 
 ## Exact protocol recovery
 
-::: behavio.protocol_recovery
+::: behavio.protocol.exact_recovery
     options:
       members_order: source
       show_root_heading: false
@@ -29,15 +29,7 @@ property of a model class.
 
 ## Latent-state alignment
 
-::: behavio.state_alignment
-    options:
-      members_order: source
-      show_root_heading: false
-      show_source: false
-
-## Trajectory shapes
-
-::: behavio.trajectory_shapes
+::: behavio.models.state_alignment
     options:
       members_order: source
       show_root_heading: false

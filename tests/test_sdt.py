@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 from scipy.special import ndtr
 
-from behavio import Study, model_capabilities, run_parameter_recovery
+from behavio import Study, run_parameter_recovery
 from behavio.contracts import (
     BehaviourModel,
     CategoricalBehaviourEstimator,
@@ -37,6 +37,7 @@ from behavio.models import (
     equal_variance_summary,
     forced_choice_d_prime,
     forced_choice_proportion_correct,
+    model_capabilities,
     roc_points,
     z_roc_summary,
 )

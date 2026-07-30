@@ -4,17 +4,16 @@ import math
 import numpy as np
 import pytest
 
-from behavio import (
+from behavio import ParameterSpace, ScipyMultistart
+from behavio.inference import (
     InferenceError,
     ObjectiveTarget,
     OptimizationBackend,
     OptimizationProblem,
-    ParameterSpace,
     ParameterSpec,
     ParameterTransform,
     PriorMeasure,
     PriorSpec,
-    ScipyMultistart,
 )
 
 

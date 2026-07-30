@@ -6,8 +6,8 @@ from dataclasses import FrozenInstanceError, replace
 
 import pytest
 
-from behavio.protocol import (
-    SCHEMA_VERSION,
+from behavio.protocol.schema import (
+    PROTOCOL_SCHEMA_VERSION,
     AggregationWeighting,
     CandidateSpec,
     CohortPredicate,
@@ -54,7 +54,7 @@ def default_candidates() -> tuple[CandidateSpec, ...]:
     the very defect these tests exist to catch.
     """
 
-    common = (Setting("covariates", ("stimulus",)), Setting("choice_lags", 0))
+    common = (Setting("predictors", ("stimulus",)), Setting("choice_lags", 0))
     return (
         CandidateSpec(
             name="static",
@@ -153,7 +153,7 @@ def example_protocol(
         transforms=(
             TransformSpec(
                 name="stimulus-scale",
-                implementation="behavio.transforms.Standardize",
+                implementation="behavio.time.transforms.Standardize",
                 input_columns=("stimulus",),
                 output_columns=("stimulus_z",),
                 visibility=TransformVisibility.TRAINING_ONLY,
@@ -161,7 +161,7 @@ def example_protocol(
         ),
         validation=ValidationSpec(
             geometry=ValidationGeometry.FUTURE_SESSION,
-            splitter="behavio.validation.cohort_forward_session_splits",
+            splitter="behavio.evaluate.splits.cohort_forward_session_splits",
             prediction_information=PredictionInformation.FILTERED,
             origin=4,
             horizon=(5,),
@@ -193,7 +193,7 @@ def example_protocol(
 def test_protocol_is_deeply_immutable_and_has_versioned_fingerprint() -> None:
     protocol = example_protocol()
 
-    assert protocol.schema_version == SCHEMA_VERSION
+    assert protocol.schema_version == PROTOCOL_SCHEMA_VERSION
     assert len(protocol.fingerprint) == 64
     assert protocol.state == ProtocolState.DRAFT
     with pytest.raises(FrozenInstanceError):
@@ -285,7 +285,7 @@ def test_outcome_derived_transform_must_be_training_only() -> None:
     with pytest.raises(ProtocolValidationError, match="training-only"):
         TransformSpec(
             name="learning-landmark",
-            implementation="behavio.transforms.ThresholdLandmarkClock",
+            implementation="behavio.time.landmarks.ThresholdLandmarkClock",
             input_columns=("choice",),
             output_columns=("relative_trial",),
             visibility=TransformVisibility.FIXED_A_PRIORI,
@@ -477,6 +477,6 @@ def test_an_amendment_is_recorded_under_the_schema_it_is_written_in() -> None:
         comparison=replace(legacy.comparison, multiplicity=ComparisonMultiplicity.BONFERRONI),
     )
 
-    assert amended.schema_version == SCHEMA_VERSION
+    assert amended.schema_version == PROTOCOL_SCHEMA_VERSION
     assert amended.comparison.multiplicity is ComparisonMultiplicity.BONFERRONI
     assert amended.amendments[-1].parent_fingerprint == legacy.fingerprint

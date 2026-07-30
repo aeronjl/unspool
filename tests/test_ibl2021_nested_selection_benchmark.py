@@ -6,14 +6,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from behavio import (
-    BernoulliHistoryGLM,
-    Study,
-    cohort_forward_session_splits,
-    leave_one_lab_out_session_forecast_splits,
-    nested_select_model,
-)
+from behavio import BernoulliHistoryGLM, Study, cohort_forward_session_splits, nested_select_model
 from behavio.compose import hierarchical, smooth
+from behavio.evaluate import leave_one_lab_out_session_forecast_splits
 from benchmarks.ibl2021_nested_selection.benchmark import (
     CANDIDATES,
     _candidates,
@@ -64,7 +59,7 @@ def _panel() -> Study:
     )
     generator = hierarchical(
         smooth(
-            BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.02),
+            BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.02),
             over="session_order",
             knots=(0.0, 2.0, 5.0),
             smoothness=3.0,

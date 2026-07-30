@@ -190,7 +190,7 @@ def _model(
     return hierarchical(
         smooth(
             WienerDriftDiffusion(
-                covariates=("stimulus",),
+                predictors=("stimulus",),
                 n_restarts=1,
                 max_iterations=400,
                 tolerance=1e-6,

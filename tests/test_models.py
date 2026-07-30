@@ -5,9 +5,15 @@ import pytest
 from scipy.special import expit
 
 from behavio import (
+    BernoulliHistoryGLM,
+    Study,
+    evaluate_splits,
+    forward_session_splits,
+    run_parameter_recovery,
+)
+from behavio.models import (
     BehaviourEstimator,
     BehaviourModel,
-    BernoulliHistoryGLM,
     FitDiagnostics,
     FitResult,
     GenerativeBehaviourModel,
@@ -15,12 +21,8 @@ from behavio import (
     ModelDataError,
     Prediction,
     PredictionMode,
-    Study,
     UnsupportedPredictionMode,
-    evaluate_splits,
-    forward_session_splits,
     model_capabilities,
-    run_parameter_recovery,
 )
 
 
@@ -123,7 +125,7 @@ class FitOnlyEstimator:
 
 
 def test_model_satisfies_public_contract() -> None:
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=2)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=2)
 
     assert isinstance(model, BehaviourModel)
     assert isinstance(model, BehaviourEstimator)
@@ -149,7 +151,7 @@ def test_model_satisfies_public_contract() -> None:
 
 
 def test_fit_only_estimators_can_be_evaluated_but_not_sent_to_recovery() -> None:
-    generator = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0)
+    generator = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0)
     estimator = FitOnlyEstimator(generator)
     simulated = generator.simulate(
         make_design(n_sessions=3, n_trials=30),
@@ -197,8 +199,8 @@ def test_capability_metadata_rejects_ambiguous_scalar_columns_and_flags() -> Non
 @pytest.mark.parametrize(
     "arguments",
     [
-        {"covariates": ("stimulus", "stimulus")},
-        {"covariates": ("choice_lag_1",)},
+        {"predictors": ("stimulus", "stimulus")},
+        {"predictors": ("choice_lag_1",)},
         {"outcome": "trial"},
         {"choice_lags": -1},
         {"l2": -1.0},
@@ -211,7 +213,7 @@ def test_model_configuration_is_validated(arguments: dict[str, object]) -> None:
 
 
 def test_simulation_is_reproducible_and_preserves_design() -> None:
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1)
     design = make_design(n_sessions=2, n_trials=20)
     parameters = {"intercept": -0.2, "stimulus": 1.1, "choice_lag_1": 0.7}
 
@@ -271,7 +273,7 @@ def test_filtered_prediction_does_not_use_future_choices() -> None:
 
 
 def test_static_glm_recovers_parameters_and_exposes_diagnostics() -> None:
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1)
     truth = {"intercept": -0.25, "stimulus": 1.1, "choice_lag_1": 0.55}
     simulated = model.simulate(make_design(), truth, seed=7)
 
@@ -346,7 +348,7 @@ def test_smoothed_prediction_is_rejected_explicitly() -> None:
 
 def test_invalid_model_data_remains_visible() -> None:
     design = make_design(n_sessions=1, n_trials=3)
-    model = BernoulliHistoryGLM(covariates=("stimulus",))
+    model = BernoulliHistoryGLM(predictors=("stimulus",))
 
     with pytest.raises(ModelDataError, match="missing outcome"):
         model.fit(design)

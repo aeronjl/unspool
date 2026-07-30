@@ -17,15 +17,12 @@ import pytest
 from scipy.special import expit
 
 from behavio import (
-    BehaviourModel,
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
     BiasOnly,
     BinaryRLAgent,
     ChoiceSpec,
-    DesignSpec,
     MultinomialLogit,
-    NumericTerm,
     Study,
     UniformCategoryGuess,
     UniformChoiceGuess,
@@ -45,6 +42,8 @@ from behavio.contracts.mixture import (
     MixtureComponent,
     mixture_weight,
 )
+from behavio.design import DesignSpec, NumericTerm
+from behavio.models import BehaviourModel
 
 KNOTS = (0.0, 3.0)
 
@@ -78,7 +77,7 @@ def design(
 
 
 def glm(**changes: Any) -> BernoulliHistoryGLM:
-    arguments: dict[str, Any] = {"covariates": ("stimulus",), "choice_lags": 0}
+    arguments: dict[str, Any] = {"predictors": ("stimulus",), "choice_lags": 0}
     arguments.update(changes)
     return BernoulliHistoryGLM(**arguments)
 
@@ -147,7 +146,7 @@ def test_a_lapse_on_a_multinomial_guesses_uniformly_over_the_options_offered() -
 
 def test_a_lapse_on_a_drift_diffusion_model_scores_the_joint_observation() -> None:
     base = WienerDriftDiffusion(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         nondecision_time_bounds=(0.1, 0.6),
         n_restarts=2,
         simulation_time_step=0.001,
@@ -352,7 +351,7 @@ def test_the_full_stack_composes_in_exactly_one_order() -> None:
 
 def test_a_model_whose_likelihood_is_a_recursion_is_refused_by_name() -> None:
     with pytest.raises(TypeError, match="latent-state mixture"):
-        mix(BernoulliGLMHMM(covariates=("stimulus",)), UniformChoiceGuess())
+        mix(BernoulliGLMHMM(predictors=("stimulus",)), UniformChoiceGuess())
     with pytest.raises(TypeError, match="recursion over trials"):
         mix(BinaryRLAgent(), UniformChoiceGuess())
 
@@ -413,7 +412,7 @@ def test_a_mixture_a_design_cannot_identify_reports_a_finding() -> None:
 
 def test_a_component_that_could_not_have_produced_anything_reports_a_finding() -> None:
     base = WienerDriftDiffusion(
-        covariates=("stimulus",), nondecision_time_bounds=(0.1, 0.6), n_restarts=2
+        predictors=("stimulus",), nondecision_time_bounds=(0.1, 0.6), n_restarts=2
     )
     plausible = mix(base, UniformResponseGuess(time_bounds=(0.05, 3.0)))
     study = plausible.simulate(

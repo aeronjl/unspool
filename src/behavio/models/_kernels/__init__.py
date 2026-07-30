@@ -7,7 +7,7 @@ family never reaches into another family's private namespace to borrow it.
 
 The modules are deliberately importable only from inside ``behavio.models``: they are an
 implementation layer, not a second public surface. Nothing here validates a
-:class:`~behavio.study.Study` beyond what its own computation requires; column-level
+:class:`~behavio.trials.Study` beyond what its own computation requires; column-level
 contracts stay with the model that declares them.
 """
 

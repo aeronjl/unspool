@@ -23,8 +23,8 @@ from behavio.models.base import (
     PredictionMode,
 )
 from behavio.models.glm import BernoulliHistoryGLM
-from behavio.state_alignment import LatentStateAlignment, align_latent_states
-from behavio.study import Study
+from behavio.models.state_alignment import LatentStateAlignment, align_latent_states
+from behavio.trials import Study
 
 
 @dataclass(frozen=True, slots=True)
@@ -225,10 +225,10 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
 
     @property
     def signature(self) -> str:
-        covariates = ",".join(self.covariates)
+        predictors = ",".join(self.predictors)
         return (
             f"{self.model_name}[states={self.n_states};outcome={self.outcome};"
-            f"covariates={covariates};choice_lags={self.choice_lags};"
+            f"predictors={predictors};choice_lags={self.choice_lags};"
             f"label_by={self.label_by};l2={self.l2};"
             f"stickiness={self.stickiness}{self._design_signature}]"
         )
@@ -365,11 +365,11 @@ require_penalised_linear` reads it before it runs the structural test that would
         """Generate choices and return latent-state truth in a separate result."""
 
         components = self.parameter_components(parameters)
-        covariates = self._covariate_matrix(design)
+        predictors = self._predictor_matrix(design)
         generator = seed if isinstance(seed, np.random.Generator) else np.random.default_rng(seed)
         choices = np.zeros(len(design), dtype=np.int8)
         states = np.zeros(len(design), dtype=np.int64)
-        covariate_end = 1 + len(self.covariates)
+        predictor_end = 1 + len(self.predictors)
 
         for session_indices in ordered_session_indices(design):
             generated_history: list[float] = []
@@ -381,9 +381,9 @@ require_penalised_linear` reads it before it runs the structural test that would
                     )
                 features = np.empty(len(self.coefficient_names), dtype=np.float64)
                 features[0] = 1.0
-                features[1:covariate_end] = covariates[index]
+                features[1:predictor_end] = predictors[index]
                 for lag in range(1, self.choice_lags + 1):
-                    features[covariate_end + lag - 1] = (
+                    features[predictor_end + lag - 1] = (
                         generated_history[-lag] if len(generated_history) >= lag else 0.0
                     )
                 probability = expit(float(features @ components.emission_coefficients[state]))

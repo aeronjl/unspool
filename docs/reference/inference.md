@@ -1,11 +1,11 @@
-# Inference and parameter API
+# `behavio.inference` and `behavio.registry` API
 
 Parameter meaning is separate from optimizer choice. These APIs define constrained
 spaces, deterministic objectives, multistart backends, and external estimator registration.
 
 ## Parameter spaces
 
-::: behavio.parameters
+::: behavio.inference.parameters
     options:
       members_order: source
       show_root_heading: false
@@ -13,7 +13,7 @@ spaces, deterministic objectives, multistart backends, and external estimator re
 
 ## Optimization backends
 
-::: behavio.inference
+::: behavio.inference.optimize
     options:
       members_order: source
       show_root_heading: false

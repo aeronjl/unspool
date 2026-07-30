@@ -7,13 +7,7 @@ different models without hiding task semantics inside model-specific preprocessi
 ## A first fit
 
 ```python
-from behavio import (
-    BernoulliHistoryGLM,
-    ChoiceSpec,
-    Study,
-    TaskSpec,
-    fit_model,
-)
+from behavio import BernoulliHistoryGLM, ChoiceSpec, Study, TaskSpec, fit_model
 
 study = Study.from_dataframe(
     trials,
@@ -27,7 +21,7 @@ task = TaskSpec(
     predictors=("stimulus",),
 )
 model = BernoulliHistoryGLM(
-    covariates=("stimulus",),
+    predictors=("stimulus",),
     choice_lags=1,
 )
 

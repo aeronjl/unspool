@@ -4,27 +4,29 @@ import numpy as np
 import pytest
 
 from behavio import (
-    BehaviourModel,
     BernoulliHistoryGLM,
     BinaryQLearning,
     ChoiceSpec,
-    FitDiagnostics,
-    FitResult,
-    FittedModel,
-    ModelDataError,
-    PredictionMode,
     RewardSpec,
     Study,
     TaskSpec,
-    UnsupportedPredictionMode,
     evaluate_splits,
     export_fit,
     forward_session_splits,
     run_parameter_recovery,
-    within_session_rolling_splits,
 )
 from behavio.compose import smooth as make_smooth
+from behavio.evaluate import within_session_rolling_splits
+from behavio.models import (
+    BehaviourModel,
+    FitDiagnostics,
+    FitResult,
+    ModelDataError,
+    PredictionMode,
+    UnsupportedPredictionMode,
+)
 from behavio.models._kernels.bernoulli import ordered_session_indices
+from behavio.task import FittedModel
 
 
 def volatile_design(*, n_sessions: int = 8, trials_per_session: int = 120) -> Study:

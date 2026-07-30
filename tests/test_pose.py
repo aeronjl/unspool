@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from behavio.pose import (
+from behavio.observed.pose import (
     pose_from_deeplabcut,
     pose_from_deeplabcut_file,
     pose_from_movement,

@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from behavio.ethograms import BehaviorAnnotations, BehaviorInterval
-from behavio.interval_policy import (
+from behavio.observed.ethograms import BehaviorAnnotations, BehaviorInterval
+from behavio.observed.interval_policy import (
     ContextualizeIntervals,
     FilterIntervals,
     IntervalPolicy,

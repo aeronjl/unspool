@@ -19,7 +19,7 @@ Every clock declares:
 are `with_cumulative_trial_clock()` and `with_elapsed_time_clock()`:
 
 ```python
-from behavio import with_cumulative_trial_clock, with_elapsed_time_clock
+from behavio.time import with_cumulative_trial_clock, with_elapsed_time_clock
 
 study = with_cumulative_trial_clock(study).study
 study = with_elapsed_time_clock(
@@ -42,7 +42,7 @@ reset its origin and change its meaning.
 Categorical protocol stages can be described explicitly rather than coerced to numbers:
 
 ```python
-from behavio import ClockKind, ClockScope, ClockSpec
+from behavio.time import ClockKind, ClockScope, ClockSpec
 
 phase = ClockSpec(
     "task_phase",
@@ -71,13 +71,8 @@ the training pipeline. `ThresholdLandmarkClock` therefore has separate `fit()` a
 `transform()` operations:
 
 ```python
-from behavio import (
-    ClockKind,
-    ClockSpec,
-    ThresholdLandmarkClock,
-    fit_transform_splits,
-    forward_session_splits,
-)
+from behavio import forward_session_splits
+from behavio.time import ClockKind, ClockSpec, ThresholdLandmarkClock, fit_transform_splits
 
 landmark = ThresholdLandmarkClock(
     clock=ClockSpec(
@@ -134,7 +129,7 @@ For a binary metric, `BootstrapThresholdLandmarkClock` makes uncertainty estimat
 of the same generic fold-transform path:
 
 ```python
-from behavio import BootstrapThresholdLandmarkClock
+from behavio.time import BootstrapThresholdLandmarkClock
 
 uncertain_landmark = BootstrapThresholdLandmarkClock(
     landmark,

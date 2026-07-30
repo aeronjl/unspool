@@ -142,7 +142,7 @@ def _model(
     estimate_scale: bool = False,
 ) -> HierarchicalModel:
     return hierarchical(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.05),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.05),
         over="subject",
         scale=subject_scale,
         estimate_scale=estimate_scale,

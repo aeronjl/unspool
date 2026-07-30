@@ -4,13 +4,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from behavio import (
-    BernoulliHistoryGLM,
-    ModelRecoveryScenario,
-    Study,
-    run_model_recovery,
-)
+from behavio import BernoulliHistoryGLM, Study, run_model_recovery
 from behavio.compose import smooth as make_smooth
+from behavio.recovery import ModelRecoveryScenario
 
 
 def build_design(*, n_sessions: int = 10, trials_per_session: int = 120) -> Study:
@@ -26,12 +22,12 @@ def build_design(*, n_sessions: int = 10, trials_per_session: int = 120) -> Stud
 def main() -> None:
     design = build_design()
     static = BernoulliHistoryGLM(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         choice_lags=1,
         l2=0.01,
     )
     smooth = make_smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01),
         over="session_order",
         knots=tuple(float(knot) for knot in range(10)),
         smoothness=10.0,

@@ -200,7 +200,7 @@ def run(*, repetitions: int = 20, seed: int = 84_221) -> dict[str, Any]:
 
 def _generator_model() -> SmoothModel:
     return smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.02),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.02),
         over="session_order",
         knots=KNOTS,
         smoothness=3.0,
@@ -211,7 +211,7 @@ def _generator_model() -> SmoothModel:
 def _candidates() -> dict[str, Any]:
     return {
         "static": BernoulliHistoryGLM(
-            covariates=("stimulus",),
+            predictors=("stimulus",),
             choice_lags=1,
             l2=0.02,
         ),

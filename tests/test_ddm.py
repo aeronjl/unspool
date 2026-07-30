@@ -5,20 +5,22 @@ import pytest
 from scipy.integrate import quad
 
 from behavio import (
-    BehaviourModel,
-    DriftDiffusionFitResult,
-    PredictionMode,
     ResponseTimeSpec,
-    ResponseTimeUnit,
     Study,
     WienerDriftDiffusion,
     evaluate_splits,
     forward_session_splits,
-    model_capabilities,
     run_parameter_recovery,
+)
+from behavio.models import (
+    BehaviourModel,
+    DriftDiffusionFitResult,
+    PredictionMode,
+    model_capabilities,
 )
 from behavio.models._kernels.curvature import bounded_value_difference_hessian
 from behavio.models._kernels.wiener import upper_boundary_probability, wiener_log_density
+from behavio.task import ResponseTimeUnit
 
 
 def design(
@@ -46,7 +48,7 @@ def design(
 
 def model(**changes: object) -> WienerDriftDiffusion:
     arguments = {
-        "covariates": ("stimulus",),
+        "predictors": ("stimulus",),
         "n_restarts": 3,
         "max_iterations": 300,
         "simulation_time_step": 0.0005,

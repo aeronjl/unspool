@@ -25,11 +25,18 @@ from pathlib import Path
 from typing import Literal
 
 from behavio import (
+    ComparisonMultiplicity,
+    StudyProtocol,
+    cohort_forward_session_splits,
+    compile_execution_plan,
+)
+from behavio.evaluate import leave_one_lab_out_session_forecast_splits
+from behavio.models import model_capabilities
+from behavio.protocol import (
     AggregationWeighting,
     CandidateSpec,
     CohortPredicate,
     CohortSpec,
-    ComparisonMultiplicity,
     ComparisonSpec,
     CompiledProtocol,
     EstimandSpec,
@@ -46,17 +53,12 @@ from behavio import (
     SelectionTieBreak,
     Setting,
     SourceSpec,
-    StudyProtocol,
     UnitRole,
     UnitSpec,
     ValidationGeometry,
     ValidationSpec,
     WinnerPolicy,
-    cohort_forward_session_splits,
-    compile_execution_plan,
-    leave_one_lab_out_session_forecast_splits,
     materialize_protocol,
-    model_capabilities,
     run_nested_protocol,
 )
 from benchmarks.ibl2021_nested_selection.benchmark import (
@@ -120,9 +122,9 @@ def build_protocol(target: Target) -> StudyProtocol:
             else ValidationGeometry.FUTURE_SESSION
         ),
         (
-            "behavio.validation.leave_one_lab_out_session_forecast_splits"
+            "behavio.evaluate.splits.leave_one_lab_out_session_forecast_splits"
             if held_out
-            else "behavio.validation.cohort_forward_session_splits"
+            else "behavio.evaluate.splits.cohort_forward_session_splits"
         ),
         PredictionInformation.FILTERED,
         group_unit="lab" if held_out else None,
@@ -145,9 +147,9 @@ def build_protocol(target: Target) -> StudyProtocol:
             else ValidationGeometry.FUTURE_SESSION
         ),
         (
-            "behavio.validation.leave_one_lab_out_session_forecast_splits"
+            "behavio.evaluate.splits.leave_one_lab_out_session_forecast_splits"
             if held_out
-            else "behavio.validation.cohort_forward_session_splits"
+            else "behavio.evaluate.splits.cohort_forward_session_splits"
         ),
         PredictionInformation.FILTERED,
         group_unit="lab" if held_out else None,
@@ -432,7 +434,7 @@ def _base_settings(settings: tuple[Setting, ...], *, depth: int = 1) -> tuple[Se
 
 def _candidate_specs(*, held_out: bool) -> tuple[CandidateSpec, ...]:
     common = (
-        Setting("covariates", ("stimulus",)),
+        Setting("predictors", ("stimulus",)),
         Setting("choice_lags", 1),
         Setting("l2", 0.02),
     )

@@ -16,19 +16,13 @@ import numpy as np
 import pytest
 
 from behavio import (
-    BehaviourEstimator,
-    BehaviourModel,
-    CategoricalPrediction,
     ChoiceSpec,
-    DesignSpec,
     MultinomialLogit,
-    NumericTerm,
     Study,
     cohort_forward_session_splits,
     compare_models,
     evaluate_splits,
     forward_session_splits,
-    leave_one_subject_out_splits,
     run_parameter_recovery,
 )
 from behavio.compose import hierarchical, smooth
@@ -37,6 +31,9 @@ from behavio.contracts.compose import (
     expand_group_design,
     group_blocks,
 )
+from behavio.design import DesignSpec, NumericTerm
+from behavio.evaluate import leave_one_subject_out_splits
+from behavio.models import BehaviourEstimator, BehaviourModel, CategoricalPrediction
 
 OPTIONS = ("left", "right", "up")
 KNOTS = (0.0, 3.0)
@@ -228,7 +225,7 @@ def test_a_penalised_design_refuses_offsets_that_are_not_a_support_declaration()
 def test_a_glm_hmm_declines_the_contract_by_declaration_and_says_why() -> None:
     from behavio.models import BernoulliGLMHMM
 
-    model = BernoulliGLMHMM(covariates=("stimulus",))
+    model = BernoulliGLMHMM(predictors=("stimulus",))
 
     assert "latent-state mixture" in model.penalised_linear_refusal
     with pytest.raises(TypeError, match="forward recursion"):
@@ -539,7 +536,7 @@ def test_a_binary_glm_keeps_its_scalar_predictor_and_claims_no_category_coordina
 
     from behavio import BernoulliHistoryGLM
 
-    glm = BernoulliHistoryGLM(covariates=("stimulus",))
+    glm = BernoulliHistoryGLM(predictors=("stimulus",))
     drifting = smooth(glm, over="session_order", knots=KNOTS)
 
     assert glm.predictor_cells == ()

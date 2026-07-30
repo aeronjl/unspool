@@ -6,25 +6,25 @@ from test_compiler import capabilities, frozen_small_protocol, source_study
 from test_runner import compiled_small_protocol
 
 from behavio import (
-    CandidateSpec,
-    CategoricalPrediction,
     ChoiceSpec,
-    DesignSpec,
-    ModelDataError,
     MultinomialLogit,
-    NumericTerm,
-    ProtocolState,
-    ScoreMetric,
-    Setting,
     Study,
     cohort_forward_session_splits,
     compare_models,
     compile_execution_plan,
     evaluate_splits,
     forward_session_splits,
-    materialize_protocol,
     run_parameter_recovery,
     run_protocol,
+)
+from behavio.design import DesignSpec, NumericTerm
+from behavio.models import CategoricalPrediction, ModelDataError
+from behavio.protocol import (
+    CandidateSpec,
+    ProtocolState,
+    ScoreMetric,
+    Setting,
+    materialize_protocol,
 )
 
 

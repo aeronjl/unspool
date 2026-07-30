@@ -18,7 +18,7 @@ what the resulting model means for a cohort of animals.
 from behavio import WienerDriftDiffusion
 from behavio.compose import hierarchical, smooth
 
-base = WienerDriftDiffusion(covariates=("stimulus",))
+base = WienerDriftDiffusion(predictors=("stimulus",))
 
 # Animals differ, but nothing changes across sessions.
 pooled = hierarchical(base, over="subject", parameters=("drift.stimulus", "boundary"), scale=0.2)
@@ -90,7 +90,7 @@ prior. A narrow hypothesis keeps the optimization and interpretation tractable:
 ```python
 model = hierarchical(
     smooth(
-        WienerDriftDiffusion(covariates=("stimulus",)),
+        WienerDriftDiffusion(predictors=("stimulus",)),
         over="session_order",
         knots=(0.0, 2.0, 4.0),
         parameters=("drift.stimulus", "boundary"),
@@ -117,7 +117,7 @@ rows, starting at the declared values:
 ```python
 model = hierarchical(
     smooth(
-        WienerDriftDiffusion(covariates=("stimulus",)),
+        WienerDriftDiffusion(predictors=("stimulus",)),
         over="session_order",
         knots=(0.0, 2.0, 4.0),
         parameters=("drift.stimulus", "boundary"),

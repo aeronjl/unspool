@@ -10,15 +10,10 @@ from typing import Any
 
 import numpy as np
 
-from behavio import (
-    BernoulliHistoryGLM,
-    ProspectiveComparisonReport,
-    Study,
-    cohort_forward_session_splits,
-    compare_models,
-    leave_one_lab_out_session_forecast_splits,
-)
+from behavio import BernoulliHistoryGLM, Study, cohort_forward_session_splits, compare_models
+from behavio.compare import ProspectiveComparisonReport
 from behavio.compose import hierarchical, smooth
+from behavio.evaluate import leave_one_lab_out_session_forecast_splits
 from benchmarks.ibl2021_replicated.benchmark import DEFAULT_CACHE, load_study
 from benchmarks.ibl2021_replicated.manifest import EXPECTED_MANIFEST_SHA256
 from benchmarks.provenance import render
@@ -200,7 +195,7 @@ def run(
             "panel": "up to the first 100 source rows in each outcome-blind endpoint window",
             "choice_eligibility": "drop no-go choice=0 only after the source-row cap",
             "outcome": "rightward binary choice; IBL source choice -1 maps to 1",
-            "covariates": ["signed contrast", "one-session-reset choice lag"],
+            "predictors": ["signed contrast", "one-session-reset choice lag"],
             "clock": "outcome-blind ordinal endpoint window_position; not elapsed time",
             "forecast": "position 5 from positions 0 through 4",
             "prediction_mode": (
@@ -235,7 +230,7 @@ def run(
 
 
 def _models() -> Mapping[str, Any]:
-    common = {"covariates": ("stimulus",), "choice_lags": 1, "l2": 0.02}
+    common = {"predictors": ("stimulus",), "choice_lags": 1, "l2": 0.02}
     return {
         "static_partial_pooling": hierarchical(
             BernoulliHistoryGLM(**common), over="subject", scale=0.4

@@ -9,7 +9,7 @@ excluded?
 ## Materialize the declared cohort
 
 ```python
-from behavio import materialize_protocol
+from behavio.protocol import materialize_protocol
 
 materialized = materialize_protocol(frozen, source_study)
 manifest = materialized.manifest
@@ -49,7 +49,8 @@ omissions only when they were declared.
 ## Compile explicit row roles
 
 ```python
-from behavio import compile_execution_plan, model_capabilities
+from behavio import compile_execution_plan
+from behavio.models import model_capabilities
 
 compiled = compile_execution_plan(
     materialized,

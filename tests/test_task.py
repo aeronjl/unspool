@@ -115,7 +115,7 @@ def test_fit_model_is_the_task_validated_golden_path() -> None:
             "stimulus": np.linspace(-2.0, 2.0, 80),
         }
     )
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0)
     study = model.simulate(design, {"intercept": -0.1, "stimulus": 1.2}, seed=42)
     task = TaskSpec(choice=ChoiceSpec(options=(0, 1)), predictors=("stimulus",))
 

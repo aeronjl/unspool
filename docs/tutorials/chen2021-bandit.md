@@ -81,13 +81,7 @@ the last observed reward. Q-learning maintains session-reset action values and u
 chosen value with its reward prediction error.
 
 ```python
-from behavio import (
-    BiasOnly,
-    BinaryQLearning,
-    Perseveration,
-    WinStayLoseShift,
-    compare_models,
-)
+from behavio import BiasOnly, BinaryQLearning, Perseveration, WinStayLoseShift, compare_models
 
 models = {
     "bias": BiasOnly(l2=0.01),

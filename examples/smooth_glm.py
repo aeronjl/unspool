@@ -34,7 +34,7 @@ def main() -> None:
     design = build_design()
     knots = tuple(range(10))
     smooth = make_smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01),
         over="session_order",
         knots=tuple(float(knot) for knot in knots),
         smoothness=10.0,
@@ -50,7 +50,7 @@ def main() -> None:
     splits = forward_session_splits(study, min_train_sessions=3)
 
     static = BernoulliHistoryGLM(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         choice_lags=1,
         l2=0.01,
     )

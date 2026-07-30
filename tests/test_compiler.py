@@ -7,7 +7,9 @@ import numpy as np
 import pytest
 from test_protocol import example_protocol
 
-from behavio.compiler import (
+from behavio.evaluate.splits import cohort_forward_session_splits
+from behavio.models import ModelCapabilities, PredictionMode
+from behavio.protocol.compiler import (
     AuditLevel,
     ObservationContractRule,
     ProtocolCompilationError,
@@ -15,8 +17,7 @@ from behavio.compiler import (
     materialize_protocol,
     validate_observation_contract,
 )
-from behavio.models import ModelCapabilities, PredictionMode
-from behavio.protocol import (
+from behavio.protocol.schema import (
     NestedSelectionSpec,
     ObservationDataType,
     ObservationRole,
@@ -25,8 +26,7 @@ from behavio.protocol import (
     ScoreMetric,
     SelectionTieBreak,
 )
-from behavio.study import Study
-from behavio.validation import cohort_forward_session_splits
+from behavio.trials import Study
 
 
 def source_study() -> Study:

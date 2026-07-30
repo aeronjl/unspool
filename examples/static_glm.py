@@ -26,7 +26,7 @@ def build_design(*, n_sessions: int = 5, trials_per_session: int = 120) -> Study
 def main() -> None:
     design = build_design()
     model = BernoulliHistoryGLM(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         choice_lags=1,
         l2=0.05,
     )

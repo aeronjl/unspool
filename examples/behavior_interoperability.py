@@ -14,14 +14,14 @@ from typing import Any
 import numpy as np
 
 from behavio import Study
-from behavio.ethograms import annotations_from_boris, annotations_from_moseq
-from behavio.pose import pose_from_deeplabcut, pose_from_sleap
-from behavio.sync import (
-    ClockPulseMatches,
-    ClockSynchronizationSpec,
-    fit_clock_synchronization,
+from behavio.observed.device_clocks import (
+    DeviceClockPulses,
+    DeviceClockSyncSpec,
+    fit_device_clock_sync,
 )
-from behavio.trialization import (
+from behavio.observed.ethograms import annotations_from_boris, annotations_from_moseq
+from behavio.observed.pose import pose_from_deeplabcut, pose_from_sleap
+from behavio.observed.trialization import (
     EventCount,
     FractionOfTimeInState,
     MaximumValue,
@@ -102,14 +102,14 @@ def run() -> dict[str, Any]:
 
     video_pulses = np.asarray([0.0, 0.3, 0.6])
     acquisition_pulses = 0.02 + 1.001 * video_pulses
-    clock_synchronization = fit_clock_synchronization(
-        ClockPulseMatches.from_arrays(
+    clock_synchronization = fit_device_clock_sync(
+        DeviceClockPulses.from_arrays(
             source_clock_id="video",
             target_clock_id="acquisition",
             source_time_s=video_pulses,
             target_time_s=acquisition_pulses,
         ),
-        ClockSynchronizationSpec(
+        DeviceClockSyncSpec(
             maximum_absolute_residual_s=1e-6,
             maximum_drift_ppm=2_000,
             minimum_source_span_s=0.5,

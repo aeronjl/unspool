@@ -11,14 +11,14 @@ replaced by ``sample``, and adds ``point_summary``: the explicit, lossy reductio
 lets a sampled model enter the frequentist machinery.
 :func:`posterior_point_summary` is the reference implementation of that reduction.
 
-``behavio.evaluation``, ``behavio.comparison``, ``behavio.recovery`` and
-``behavio.model_recovery`` accept either contract through the
+``behavio.evaluate.folds``, ``behavio.compare.models``, ``behavio.recovery.parameters`` and
+``behavio.recovery.models`` accept either contract through the
 :data:`AnyBehaviourEstimator` alias and dispatch on
 :func:`is_posterior_estimator`. This module stays a leaf, so it declares the contract, the
 projection, and the pure helpers those callers need; the convergence gate itself lives in
-``behavio.evaluation``, which is allowed to import
-:func:`behavio.posterior_diagnostics.audit_posterior`. Wiring the protocol into
-``behavio.runner`` remains out of scope.
+``behavio.evaluate.folds``, which is allowed to import
+:func:`behavio.posterior.diagnostics.audit_posterior`. Wiring the protocol into
+``behavio.protocol.runner`` remains out of scope.
 
 Scoring with the whole posterior
 --------------------------------
@@ -69,8 +69,8 @@ from behavio.contracts.estimator import (
     validate_model_identity,
     validate_parameter_names,
 )
-from behavio.posterior import SAMPLE_DIMS, PosteriorError, PosteriorResult, PosteriorVariable
-from behavio.study import Study
+from behavio.posterior.result import SAMPLE_DIMS, PosteriorError, PosteriorResult, PosteriorVariable
+from behavio.trials import Study
 
 _SUMMARY_TAIL = "projected to a point summary; optimizer diagnostics are inapplicable"
 
@@ -258,7 +258,7 @@ def posterior_draw_matrix(result: PosteriorResult) -> tuple[tuple[str, ...], NDA
     """Flatten every declared parameter into one ``(sample, coordinate)`` draw matrix.
 
     Coordinate labels follow the ``name[dim=label]`` convention shared with
-    :func:`behavio.posterior_diagnostics.audit_posterior`, so an audit target and a
+    :func:`behavio.posterior.diagnostics.audit_posterior`, so an audit target and a
     projected parameter name are the same string. Chains are concatenated in order, which
     is correct for any summary that treats the retained draws as one posterior sample and
     is never a substitute for a per-chain convergence diagnostic.
@@ -337,13 +337,13 @@ def posterior_point_summary(
     """Reduce a labelled posterior to the frequentist :class:`FitResult` contract.
 
     ``converged`` is required and is never inferred here: convergence of a sampler is the
-    verdict of :func:`behavio.posterior_diagnostics.audit_posterior`, which this module
+    verdict of :func:`behavio.posterior.diagnostics.audit_posterior`, which this module
     must not import (it depends on ``behavio.contracts``). Pass
     ``audit.status is not PosteriorAuditStatus.FAIL`` or a stricter rule of your choosing.
 
     Parameters with intrinsic dimensions are flattened to one entry per coordinate using
     the ``name[dim=label]`` convention shared with
-    :func:`behavio.posterior_diagnostics.audit_posterior`. ``n_observations`` is taken
+    :func:`behavio.posterior.diagnostics.audit_posterior`. ``n_observations`` is taken
     from the ``log_likelihood`` group, then ``observed_data``, unless given explicitly.
 
     The default ``message`` names the centre that produced the estimates, so a fold scored

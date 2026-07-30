@@ -3,18 +3,17 @@ import json
 import numpy as np
 import pytest
 
-from behavio import (
+from behavio import PosteriorResult, assess_test_retest_reliability
+from behavio.posterior import (
     PosteriorGroup,
-    PosteriorResult,
     PosteriorVariable,
     ReliabilityError,
     ReliabilityPolicy,
     ReliabilityStatistic,
     SubjectEstimates,
-    assess_test_retest_reliability,
     posterior_subject_estimates,
 )
-from behavio.reliability import SubjectPooling
+from behavio.posterior.reliability import SubjectPooling
 
 SUBJECTS = tuple(f"s{index:02d}" for index in range(12))
 CHAINS = 2

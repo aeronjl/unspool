@@ -13,7 +13,8 @@ It does not silently turn a sampler-specific summary table into a scientific ver
 ## The routine workflow
 
 ```python
-from behavio import PosteriorAuditPolicy, audit_posterior
+from behavio import audit_posterior
+from behavio.posterior import PosteriorAuditPolicy
 
 posterior = backend.sample(model, study, task=task)
 

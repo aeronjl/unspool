@@ -25,7 +25,8 @@ and pretending otherwise would make the catalogue less honest rather than more u
 ## Equal-variance yes/no
 
 ```python
-from behavio import DetectionCounts, EqualVarianceSDT, RateCorrection, equal_variance_summary
+from behavio import EqualVarianceSDT, equal_variance_summary
+from behavio.models import DetectionCounts, RateCorrection
 
 summary = equal_variance_summary(
     DetectionCounts(hits=67, misses=33, false_alarms=16, correct_rejections=84)

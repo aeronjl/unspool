@@ -3,11 +3,11 @@ import importlib
 import numpy as np
 import pytest
 
-from behavio import (
+from behavio import PosteriorResult
+from behavio.posterior import (
     ArviZUnavailableError,
     PosteriorError,
     PosteriorGroup,
-    PosteriorResult,
     PosteriorVariable,
     posterior_result_from_arviz,
 )
@@ -241,7 +241,7 @@ def test_arviz_roundtrip_preserves_groups_dimensions_coordinates_and_provenance(
 
 
 def test_arviz_remains_an_optional_dependency(monkeypatch) -> None:
-    posterior_module = importlib.import_module("behavio.posterior")
+    posterior_module = importlib.import_module("behavio.posterior.result")
     real_import = posterior_module.importlib.import_module
 
     def unavailable(name):

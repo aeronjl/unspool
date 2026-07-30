@@ -45,7 +45,7 @@ from behavio import WienerDriftDiffusion
 from behavio.compose import smooth
 
 model = smooth(
-    WienerDriftDiffusion(covariates=("stimulus",)),
+    WienerDriftDiffusion(predictors=("stimulus",)),
     over="session_order",
     knots=(0.0, 1.0, 2.0, 3.0, 4.0, 5.0),
     parameters=("drift.stimulus", "boundary"),

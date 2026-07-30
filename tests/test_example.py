@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pytest import CaptureFixture
 
-from behavio.study import REQUIRED_COLUMNS
+from behavio.trials import REQUIRED_COLUMNS
 
 
 def test_static_glm_example_runs_end_to_end(capsys: CaptureFixture[str]) -> None:

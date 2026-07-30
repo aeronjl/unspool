@@ -12,7 +12,7 @@ model and return a model, so the cells are expressions rather than classes::
     from behavio import BernoulliHistoryGLM
     from behavio.compose import UniformChoiceGuess, hierarchical, mix, smooth
 
-    base = BernoulliHistoryGLM(covariates=("stimulus",))
+    base = BernoulliHistoryGLM(predictors=("stimulus",))
     drifting = smooth(base, over="session_order", knots=(0.0, 4.0, 8.0))
     pooled = hierarchical(base, over="subject", parameters=("intercept",))
     lapsing = mix(base, UniformChoiceGuess())

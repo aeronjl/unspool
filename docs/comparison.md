@@ -6,7 +6,7 @@ aggregated under a declared unit, and the same bootstrap draws are reused for al
 and pairwise differences.
 
 ```python
-from behavio import compare_models, cohort_forward_session_splits
+from behavio import cohort_forward_session_splits, compare_models
 
 splits = cohort_forward_session_splits(
     study,
@@ -105,7 +105,7 @@ can only take separations away, never add one, so a corrected reading refuses to
 winner strictly more often than an uncorrected one — which is the direction this package
 errs in deliberately. `ProspectiveComparisonReport.winner` is unaffected: it has always
 been the lowest point estimate among audit-eligible candidates and remains descriptive.
-`behavio.runner`'s `INTERVAL_EXCLUDES_ZERO` policy reads `decisive`, and records the family
+`behavio.protocol.runner`'s `INTERVAL_EXCLUDES_ZERO` policy reads `decisive`, and records the family
 it read on `Ranking.family` and in `Ranking.reason`.
 
 ### The adjustment is declared, not chosen at read time
@@ -116,7 +116,7 @@ because *which contrasts survive it decides which candidate wins*. See
 [study protocols](protocols/index.md#one-fold-loop-and-how-many-contrasts-read-it).
 
 `ComparisonMultiplicity` and `ComparisonFamily` are one type each, shared by three callers.
-`compare_models` and the protocol runner reach them through `behavio.comparison`;
+`compare_models` and the protocol runner reach them through `behavio.compare.models`;
 `compare_posterior_models` reaches the same records for its ELPD family; and the step-up
 arithmetic itself is written once. A Bayesian model comparison is therefore corrected on
 the same terms as a frequentist one and reports the same family statistics — see

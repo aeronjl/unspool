@@ -1,7 +1,7 @@
 """Importance-sampling reliability display for pointwise and blocked PSIS-LOO.
 
 Pareto-:math:`k` is the diagnostic that says whether an ELPD number may be read at all. It
-is per observation, or per block when :func:`~behavio.posterior_loo.psis_loo` was given a
+is per observation, or per block when :func:`~behavio.posterior.loo.psis_loo` was given a
 grouping variable, and its threshold is sample-size dependent, so the report carries its own
 ``good_k`` rather than the folklore 0.7.
 """
@@ -14,7 +14,7 @@ import numpy as np
 
 from behavio.plot._axes import annotate_note, annotate_status, resolve_axes
 from behavio.plot.style import ALERT, BLUE, INK, MUTED, figure_style
-from behavio.posterior_loo import PSISLOOResult
+from behavio.posterior.loo import PSISLOOResult
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -37,7 +37,7 @@ def plot_pareto_k(
     so the exceedance survives a greyscale print. Non-finite values cannot be placed on the
     axis; they are counted in the note rather than dropped silently.
 
-    The result's :attr:`~behavio.posterior_loo.PSISLOOResult.status` and issue codes are
+    The result's :attr:`~behavio.posterior.loo.PSISLOOResult.status` and issue codes are
     written onto the axes: an ELPD from a non-converged posterior must not be able to look
     like an ELPD from a converged one.
     """

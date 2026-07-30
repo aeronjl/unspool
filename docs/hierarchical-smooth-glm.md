@@ -17,7 +17,7 @@ from behavio import BernoulliHistoryGLM
 from behavio.compose import hierarchical, smooth
 
 paths = smooth(
-    BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1),
+    BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1),
     over="session_order",
     knots=(0.0, 2.0, 4.0),
     smoothness=3.0,

@@ -12,7 +12,7 @@ from uuid import UUID
 import numpy as np
 
 from behavio.contracts.adapter import SessionOrderPolicy, SourceType
-from behavio.study import REQUIRED_COLUMNS, Study
+from behavio.trials import REQUIRED_COLUMNS, Study
 
 DEFAULT_IBL_ALYX_URL = "https://openalyx.internationalbrainlab.org"
 DEFAULT_PUBLIC_PASSWORD = "international"

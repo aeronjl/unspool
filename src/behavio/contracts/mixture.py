@@ -114,7 +114,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.special import expit, logit
 
-from behavio.study import Study
+from behavio.trials import Study
 
 __all__ = [
     "MIXTURE_LOGIT",

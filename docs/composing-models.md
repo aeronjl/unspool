@@ -25,7 +25,7 @@ They are combinators now.
 from behavio import BernoulliHistoryGLM
 from behavio.compose import UniformChoiceGuess, hierarchical, mix, smooth
 
-base = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.02)
+base = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.02)
 
 drifting = smooth(base, over="session_order", knots=(0.0, 2.0, 4.0), smoothness=3.0)
 pooled = hierarchical(base, over="subject", scale=0.4)
@@ -42,7 +42,8 @@ drifting, per-subject and per-subject-drifting choice models without a line of n
 modelling code:
 
 ```python
-from behavio import ChoiceSpec, DesignSpec, MultinomialLogit, NumericTerm
+from behavio import ChoiceSpec, MultinomialLogit
+from behavio.design import DesignSpec, NumericTerm
 
 actions = MultinomialLogit(
     choice=ChoiceSpec(options=("left", "right", "up"), available_options_column="available"),
@@ -176,8 +177,8 @@ from behavio import (
     ChoiceSpec,
     MultinomialLogit,
     UniformCategoryGuess,
-    UniformResponseGuess,
     UniformChoiceGuess,
+    UniformResponseGuess,
     WienerDriftDiffusion,
     mix,
 )
@@ -185,7 +186,7 @@ from behavio import (
 lapsing_glm = mix(base, UniformChoiceGuess(), weight_bounds=(0.0, 0.2))
 lapsing_actions = mix(actions, UniformCategoryGuess(choice=actions.choice))
 contaminated_ddm = mix(
-    WienerDriftDiffusion(covariates=("stimulus",), nondecision_time_bounds=(0.1, 0.6)),
+    WienerDriftDiffusion(predictors=("stimulus",), nondecision_time_bounds=(0.1, 0.6)),
     UniformResponseGuess(time_bounds=(0.05, 3.0)),
     weight_bounds=(0.0, 0.25),
 )
@@ -322,7 +323,7 @@ Naming is mechanical and stable, and it is part of the promise:
 
 | Model | `parameter_names` |
 | --- | --- |
-| `BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1)` | `intercept`, `stimulus`, `choice_lag_1` |
+| `BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1)` | `intercept`, `stimulus`, `choice_lag_1` |
 | `smooth(base, over="session_order", knots=(0, 4))` | `intercept[session_order=0]`, `intercept[session_order=4]`, `stimulus[session_order=0]`, ... |
 | `hierarchical(base, over="subject")` | `intercept`, `stimulus`, `choice_lag_1` |
 | `hierarchical(smooth(base, ...), over="subject")` | the smooth names, unchanged |
@@ -519,7 +520,7 @@ No arrangement of members can be inspected to discover that, so a model in that 
 declares it in a sentence:
 
 ```python
-BernoulliGLMHMM(covariates=("stimulus",)).penalised_linear_refusal
+BernoulliGLMHMM(predictors=("stimulus",)).penalised_linear_refusal
 # 'a GLM-HMM is a latent-state mixture, not a penalised linear model: ...'
 ```
 

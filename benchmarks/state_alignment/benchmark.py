@@ -8,7 +8,8 @@ from typing import Any
 
 import numpy as np
 
-from behavio import BernoulliGLMHMM, Study, align_latent_states
+from behavio import BernoulliGLMHMM, Study
+from behavio.models import align_latent_states
 from benchmarks.provenance import render
 
 DEFAULT_REPETITIONS = 20
@@ -45,7 +46,7 @@ def experiment(*, regime: str, seed: int) -> dict[str, Any]:
     if regime not in REGIMES:
         raise ValueError(f"regime must be one of {tuple(REGIMES)}")
     model = BernoulliGLMHMM(
-        covariates=(),
+        predictors=(),
         choice_lags=0,
         n_states=2,
         n_restarts=3,

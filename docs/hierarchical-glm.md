@@ -24,7 +24,7 @@ from behavio import BernoulliHistoryGLM
 from behavio.compose import hierarchical
 
 model = hierarchical(
-    BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1),
+    BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1),
     over="subject",
     scale=0.5,
 )
@@ -43,7 +43,7 @@ their scales instead:
 
 ```python
 model = hierarchical(
-    BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1),
+    BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1),
     over="subject",
     parameters=("intercept", "choice_lag_1"),
     scale=0.5,
@@ -61,7 +61,7 @@ the training data:
 
 ```python
 model = hierarchical(
-    BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1),
+    BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1),
     over="subject",
     scale=0.4,
     estimate_scale=True,

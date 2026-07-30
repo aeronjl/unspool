@@ -36,7 +36,7 @@ from behavio import BernoulliHistoryGLM
 from behavio.compose import smooth
 
 model = smooth(
-    BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1),
+    BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1),
     over="session_order",
     knots=(0.0, 2.0, 4.0, 6.0, 8.0),
     smoothness=10.0,

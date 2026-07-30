@@ -26,7 +26,7 @@ from behavio.models.base import (
     PredictionMode,
     UnsupportedPredictionMode,
 )
-from behavio.study import REQUIRED_COLUMNS, Study
+from behavio.trials import REQUIRED_COLUMNS, Study
 
 
 class LearningRule(Protocol):

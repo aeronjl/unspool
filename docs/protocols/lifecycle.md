@@ -72,7 +72,7 @@ cross-checks those identities rather than trusting a status label.
 ## Serialization and schema versions
 
 ```python
-from behavio import protocol_from_json
+from behavio.protocol import protocol_from_json
 
 encoded = frozen.canonical_json()
 decoded = protocol_from_json(encoded)

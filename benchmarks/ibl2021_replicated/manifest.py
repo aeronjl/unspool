@@ -7,7 +7,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from behavio import IBLONETrialSource
+from behavio.adapters import IBLONETrialSource
 from benchmarks.ibl2021.selection import manifest_digest
 
 MANIFEST_PATH = Path(__file__).with_name("manifest.json")

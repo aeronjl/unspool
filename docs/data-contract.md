@@ -67,7 +67,7 @@ from behavio.adapters.table import read_table
 study = read_table("trials.csv")
 ```
 
-It is a reader rather than a `Study` constructor on purpose: `behavio.study` is the leaf
+It is a reader rather than a `Study` constructor on purpose: `behavio.trials` is the leaf
 module every other module imports, and file formats, optional readers, and chronology
 derivations do not belong inside the contract they produce. What the reader will and will
 not infer -- above all that it never invents `session_order` -- is documented in
@@ -118,7 +118,7 @@ alike. It is an *ingest* boundary and only that: intermediate arrays such as a
 ```python
 import numpy as np
 from behavio import Study
-from behavio.interchange import _study_record
+from behavio.report.fit_artifacts import _study_record
 
 identity = {"subject": ["m", "m"], "session": ["d", "d"], "trial": [0, 1], "session_order": [0, 0]}
 stimulus = np.asarray([-2.0, 0.0])

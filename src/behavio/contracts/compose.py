@@ -140,7 +140,7 @@ from behavio.contracts.estimator import (
     ModelPrediction,
     PredictionMode,
 )
-from behavio.study import Study
+from behavio.trials import Study
 
 __all__ = [
     "GroupBlocks",

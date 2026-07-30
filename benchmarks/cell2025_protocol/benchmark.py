@@ -27,12 +27,14 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from behavio import (
+from behavio import ComparisonMultiplicity, StudyProtocol, compile_execution_plan, run_protocol
+from behavio.evaluate import historical_cohort_forecast_splits
+from behavio.models import model_capabilities
+from behavio.protocol import (
     AggregationWeighting,
     CandidateSpec,
     CohortPredicate,
     CohortSpec,
-    ComparisonMultiplicity,
     ComparisonSpec,
     CompiledProtocol,
     EstimandSpec,
@@ -49,7 +51,6 @@ from behavio import (
     ScoreMetric,
     Setting,
     SourceSpec,
-    StudyProtocol,
     TransformSpec,
     TransformVisibility,
     UnitRole,
@@ -57,11 +58,7 @@ from behavio import (
     ValidationGeometry,
     ValidationSpec,
     WinnerPolicy,
-    compile_execution_plan,
-    historical_cohort_forecast_splits,
     materialize_protocol,
-    model_capabilities,
-    run_protocol,
 )
 from benchmarks.cell2025.benchmark import load_study
 from benchmarks.cell2025.fetch_data import (
@@ -147,13 +144,13 @@ def build_protocol() -> StudyProtocol:
         CandidateSpec(
             "pooled_psychometric",
             "behavio.models.BernoulliHistoryGLM",
-            (Setting("covariates", psychometric), *common),
+            (Setting("predictors", psychometric), *common),
             ("choice",),
         ),
         CandidateSpec(
             "late_phase_psychometric",
             "behavio.models.BernoulliHistoryGLM",
-            (Setting("covariates", late_phase), *common),
+            (Setting("predictors", late_phase), *common),
             ("choice",),
         ),
         CandidateSpec(
@@ -161,7 +158,7 @@ def build_protocol() -> StudyProtocol:
             "behavio.models.BernoulliHistoryGLM",
             (
                 Setting(
-                    "covariates",
+                    "predictors",
                     (
                         *late_phase,
                         "early_bias",
@@ -179,7 +176,7 @@ def build_protocol() -> StudyProtocol:
             "behavio.compose.hierarchical",
             (
                 Setting("base", "behavio.models.BernoulliHistoryGLM"),
-                Setting("base.covariates", psychometric),
+                Setting("base.predictors", psychometric),
                 Setting("over", "subject"),
                 Setting("scale", 0.4),
                 *_base_settings(common),
@@ -191,7 +188,7 @@ def build_protocol() -> StudyProtocol:
             "behavio.compose.smooth",
             (
                 Setting("base", "behavio.models.BernoulliHistoryGLM"),
-                Setting("base.covariates", psychometric),
+                Setting("base.predictors", psychometric),
                 Setting("over", "session_order"),
                 Setting("knots", KNOTS),
                 Setting("smoothness", 3.0),
@@ -206,7 +203,7 @@ def build_protocol() -> StudyProtocol:
             (
                 Setting("base", "behavio.compose.smooth"),
                 Setting("base.base", "behavio.models.BernoulliHistoryGLM"),
-                Setting("base.base.covariates", psychometric),
+                Setting("base.base.predictors", psychometric),
                 Setting("base.over", "session_order"),
                 Setting("base.knots", KNOTS),
                 Setting("base.smoothness", 3.0),
@@ -320,7 +317,7 @@ def build_protocol() -> StudyProtocol:
         ),
         validation=ValidationSpec(
             ValidationGeometry.HISTORICAL_COHORT_FUTURE_SESSION,
-            "behavio.validation.historical_cohort_forecast_splits",
+            "behavio.evaluate.splits.historical_cohort_forecast_splits",
             PredictionInformation.FILTERED,
             settings=(
                 Setting("context_session_count", len(CONTEXT_PAPER_DAYS)),

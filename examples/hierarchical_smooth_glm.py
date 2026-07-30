@@ -20,7 +20,7 @@ def build_design() -> Study:
 
 def main() -> None:
     paths = smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.02),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=0.02),
         over="session_order",
         knots=(0.0, 2.0, 4.0),
         smoothness=3.0,

@@ -24,7 +24,7 @@ from typing import Any
 
 ROOT = Path(__file__).parents[1]
 PROVENANCE_KEY = "provenance"
-SCHEMA_VERSION = 1
+PROTOCOL_SCHEMA_VERSION = 1
 BASE_LIBRARIES = ("numpy", "scipy", "behavio")
 UNKNOWN_REVISION = "unknown"
 MISSING_VERSION = "not installed"
@@ -75,7 +75,7 @@ def environment(*, libraries: Iterable[str] = ()) -> dict[str, Any]:
     """Return the provenance block written beside a benchmark result."""
 
     return {
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": PROTOCOL_SCHEMA_VERSION,
         "git_describe": git_revision(),
         "python": platform.python_version(),
         "libraries": library_versions((*BASE_LIBRARIES, *libraries)),

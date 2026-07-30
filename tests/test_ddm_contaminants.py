@@ -18,10 +18,7 @@ import pytest
 from scipy.integrate import quad
 
 from behavio import (
-    BehaviourModel,
-    DriftDiffusionFitResult,
     ResponseTimeSpec,
-    ResponseTimeUnit,
     Study,
     UniformResponseGuess,
     WienerDriftDiffusion,
@@ -32,6 +29,8 @@ from behavio import (
 )
 from behavio.compose import MixtureModel
 from behavio.contracts.compose import linear_predictor
+from behavio.models import BehaviourModel, DriftDiffusionFitResult
+from behavio.task import ResponseTimeUnit
 
 
 def design(*, n_sessions: int = 4, trials_per_session: int = 300, seed: int = 401) -> Study:
@@ -56,7 +55,7 @@ def design(*, n_sessions: int = 4, trials_per_session: int = 300, seed: int = 40
 
 def model(*, weight_bounds: tuple[float, float] = (0.0, 0.25), **changes: Any) -> MixtureModel:
     arguments: dict[str, Any] = {
-        "covariates": ("stimulus",),
+        "predictors": ("stimulus",),
         "nondecision_time_bounds": (0.1, 0.6),
         "n_restarts": 4,
         "max_iterations": 400,

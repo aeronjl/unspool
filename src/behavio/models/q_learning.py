@@ -10,7 +10,8 @@ from numpy.typing import NDArray
 from scipy.special import expit
 
 from behavio._internal.arrays import protected_array
-from behavio.inference import OptimizationProblem, OptimizationRun, ScipyMultistart
+from behavio.inference.optimize import OptimizationProblem, OptimizationRun, ScipyMultistart
+from behavio.inference.parameters import ParameterSpace, ParameterSpec, ParameterTransform
 from behavio.models._kernels.bernoulli import ordered_session_indices
 from behavio.models._kernels.curvature import finite_difference_hessian, offset_steps
 from behavio.models.base import (
@@ -21,8 +22,7 @@ from behavio.models.base import (
     PredictionMode,
     UnsupportedPredictionMode,
 )
-from behavio.parameters import ParameterSpace, ParameterSpec, ParameterTransform
-from behavio.study import REQUIRED_COLUMNS, Study
+from behavio.trials import REQUIRED_COLUMNS, Study
 
 _Q_LEARNING_PARAMETER_SPACE = ParameterSpace(
     (

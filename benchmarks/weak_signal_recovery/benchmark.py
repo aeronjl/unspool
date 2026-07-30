@@ -9,7 +9,8 @@ from typing import Any
 
 import numpy as np
 
-from behavio import ModelRecoveryReport, ModelRecoveryScenario, run_model_recovery
+from behavio import run_model_recovery
+from behavio.recovery import ModelRecoveryReport, ModelRecoveryScenario
 from benchmarks.provenance import render
 from benchmarks.recovery_grid.benchmark import N_SESSIONS, build_design, experiment
 

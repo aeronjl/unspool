@@ -54,7 +54,7 @@ def run(*, repeats: int = 20, seed: int = 73_901) -> dict[str, Any]:
         raise ValueError("seed must be a non-negative integer")
     robust = mix(
         WienerDriftDiffusion(
-            covariates=("stimulus",),
+            predictors=("stimulus",),
             nondecision_time_bounds=(0.1, 0.6),
             n_restarts=3,
             max_iterations=400,
@@ -65,7 +65,7 @@ def run(*, repeats: int = 20, seed: int = 73_901) -> dict[str, Any]:
         n_restarts=3,
     )
     naive = WienerDriftDiffusion(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         n_restarts=3,
         max_iterations=400,
         simulation_time_step=0.0001,

@@ -1,7 +1,7 @@
 """What a model will do to a study, answered before the study is fitted.
 
 Two silent failures motivated this module, and both are failures of *timing* rather than of
-checking. A mistyped covariate survives construction, survives :attr:`signature`, survives
+checking. A mistyped predictor survives construction, survives :attr:`signature`, survives
 serialization, and finally raises from deep inside ``fit`` with a traceback through the
 optimizer. Knots placed outside the observed clock range never raise at all: the basis
 happily interpolates towards a knot no observation stands near, and the fit reports its
@@ -27,7 +27,7 @@ from typing import Any
 import numpy as np
 
 from behavio.contracts.estimator import ModelDataError
-from behavio.design import (
+from behavio.design.matrix import (
     DesignSpec,
     DesignValidationError,
     HistoryKernelTerm,
@@ -35,7 +35,7 @@ from behavio.design import (
     InteractionTerm,
 )
 from behavio.models._kernels.basis import knot_support_findings
-from behavio.study import Study
+from behavio.trials import Study
 
 ERROR = "error"
 """A finding that will make ``fit`` raise."""

@@ -8,13 +8,13 @@ from typing import Any
 
 import numpy as np
 
-from behavio import (
-    Study,
-    TrajectoryPanel,
+from behavio import Study
+from behavio.compare import (
+    ParameterTrajectoryPanel,
     audit_trajectory_replication,
     compare_trajectory_shapes,
-    leave_one_lab_out_splits,
 )
+from behavio.evaluate import leave_one_lab_out_splits
 from benchmarks.provenance import render
 
 GROUPS = ("reference", "level_shift", "amplitude_shift", "shape_change")
@@ -62,7 +62,7 @@ def experiment(
             )
             subjects.append(f"{group}-{subject_index:02d}")
             groups.append(group)
-    panel = TrajectoryPanel(
+    panel = ParameterTrajectoryPanel(
         grid=grid,
         values=np.stack(curves),
         subjects=tuple(subjects),
@@ -157,7 +157,7 @@ def run(
             "amplitude_interval_excludes_zero",
         )
     }
-    singleton_panel = TrajectoryPanel(
+    singleton_panel = ParameterTrajectoryPanel(
         grid=np.asarray([0.0, 1.0]),
         values=np.zeros((9, 2)),
         subjects=tuple(f"mouse-{index}" for index in range(9)),

@@ -24,7 +24,7 @@ from numpy.typing import NDArray
 
 from behavio._internal.arrays import protected_array
 from behavio.contracts.audit import FitAudit, FitAuditPolicy, FitDiagnostics
-from behavio.study import Study
+from behavio.trials import Study
 
 
 class PredictionMode(StrEnum):

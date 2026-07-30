@@ -1,4 +1,4 @@
-# Diagnostics, calibration, and sensitivity API
+# `behavio.diagnostics` and `behavio.posterior` checks API
 
 These APIs answer different credibility questions. Numerical audits, posterior checks,
 simulation calibration, sensitivity, and repeatability should not be collapsed into one
@@ -14,13 +14,13 @@ generic pass/fail label.
 
 ## Posterior diagnostics and predictive checks
 
-::: behavio.posterior_diagnostics
+::: behavio.posterior.diagnostics
     options:
       members_order: source
       show_root_heading: false
       show_source: false
 
-::: behavio.posterior_predictive
+::: behavio.posterior.predictive
     options:
       members_order: source
       show_root_heading: false
@@ -28,7 +28,7 @@ generic pass/fail label.
 
 ## Simulation-based calibration
 
-::: behavio.sbc
+::: behavio.posterior.simulation_based_calibration
     options:
       members_order: source
       show_root_heading: false
@@ -36,13 +36,13 @@ generic pass/fail label.
 
 ## Sensitivity and reliability
 
-::: behavio.sensitivity
+::: behavio.posterior.sensitivity
     options:
       members_order: source
       show_root_heading: false
       show_source: false
 
-::: behavio.reliability
+::: behavio.posterior.reliability
     options:
       members_order: source
       show_root_heading: false
@@ -50,13 +50,13 @@ generic pass/fail label.
 
 ## PSIS-LOO and posterior model comparison
 
-::: behavio.posterior_loo
+::: behavio.posterior.loo
     options:
       members_order: source
       show_root_heading: false
       show_source: false
 
-::: behavio.posterior_comparison
+::: behavio.posterior.comparison
     options:
       members_order: source
       show_root_heading: false

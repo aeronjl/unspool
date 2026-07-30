@@ -30,14 +30,12 @@ For a conjugate beta–binomial check, the complete pattern is:
 ```python
 import numpy as np
 
-from behavio import (
+from behavio import PosteriorResult, Study, run_simulation_based_calibration
+from behavio.posterior import (
     PosteriorGroup,
     PosteriorParameterQuantity,
-    PosteriorResult,
     PosteriorVariable,
     SBCSimulation,
-    Study,
-    run_simulation_based_calibration,
 )
 
 
@@ -152,7 +150,7 @@ check entirely. The choice is recorded on the report and in `to_dict()`, so a re
 always see whether the histogram was convergence-filtered:
 
 ```python
-from behavio.posterior_diagnostics import PosteriorAuditPolicy
+from behavio.posterior.diagnostics import PosteriorAuditPolicy
 
 report = run_simulation_based_calibration(
     simulate,

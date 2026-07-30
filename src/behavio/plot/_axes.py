@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any
 from behavio.contracts.audit import FitAuditStatus
 from behavio.plot._optional import require_figure_type
 from behavio.plot.style import ALERT, AMBER, MUTED, TEAL
-from behavio.posterior_diagnostics import PosteriorAuditStatus
+from behavio.posterior.diagnostics import PosteriorAuditStatus
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes

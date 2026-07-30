@@ -2,10 +2,10 @@
 
 .. warning::
 
-   :class:`~behavio.runner.CalibrationSummary` retains *aggregate* calibration only. The
+   :class:`~behavio.protocol.runner.CalibrationSummary` retains *aggregate* calibration only. The
    ten-bin reliability decomposition behind
-   :attr:`~behavio.runner.CalibrationSummary.expected_calibration_error` is computed inside
-   :mod:`behavio.runner` and then discarded, so a full reliability curve cannot be drawn
+   :attr:`~behavio.protocol.runner.CalibrationSummary.expected_calibration_error` is computed inside
+   :mod:`behavio.protocol.runner` and then discarded, so a full reliability curve cannot be drawn
    without recomputing it. This module presents the aggregate point rather than
    re-deriving the bins, because the plotting layer presents; it does not compute. Retaining
    per-bin counts and rates on ``CalibrationSummary`` is the change that would upgrade this
@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING
 
 from behavio.plot._axes import annotate_note, resolve_axes
 from behavio.plot.style import ALERT, INDIGO, INK, MUTED, figure_style
-from behavio.runner import CalibrationSummary
+from behavio.protocol.runner import CalibrationSummary
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes

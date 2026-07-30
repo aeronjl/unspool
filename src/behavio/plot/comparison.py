@@ -19,10 +19,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from behavio._internal.multiplicity import ComparisonFamily
+from behavio._internal.scoring import ComparisonFamily
 from behavio.plot._axes import annotate_note, resolve_axes, status_colour
 from behavio.plot.style import ALERT, INDIGO, INK, MUTED, TEAL, figure_style
-from behavio.posterior_comparison import ModelComparisonStatus, PosteriorModelComparison
+from behavio.posterior.comparison import ModelComparisonStatus, PosteriorModelComparison
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -41,7 +41,7 @@ def plot_elpd_differences(
 
     ``xerr`` is built from the report's own ``lower`` and ``upper``, which come from the
     paired pointwise standard error at
-    :attr:`~behavio.posterior_comparison.PosteriorModelComparison.interval_scale`. The plot
+    :attr:`~behavio.posterior.comparison.PosteriorModelComparison.interval_scale`. The plot
     does not recompute a standard error and does not combine the per-model ``se`` values,
     which are positively correlated and would give a wrong interval.
     """

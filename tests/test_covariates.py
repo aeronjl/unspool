@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from behavio.covariates import BehaviorCovariate
+from behavio.observed.covariates import BehaviorCovariate
 
 
 def test_covariate_validity_excludes_nonfinite_values() -> None:

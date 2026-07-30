@@ -18,18 +18,12 @@ import pytest
 
 from behavio import (
     BernoulliHistoryGLM,
-    ModelRecoveryScenario,
-    PosteriorGroup,
-    PosteriorParameterQuantity,
     PosteriorResult,
-    PosteriorVariable,
-    SBCSimulation,
     Study,
     compare_models,
     forward_session_splits,
     nested_select_model,
     run_model_recovery,
-    run_model_recovery_grid,
     run_simulation_based_calibration,
 )
 from behavio._internal.parallel import (
@@ -40,6 +34,13 @@ from behavio._internal.parallel import (
     resolve_workers,
 )
 from behavio.compose import smooth as make_smooth
+from behavio.posterior import (
+    PosteriorGroup,
+    PosteriorParameterQuantity,
+    PosteriorVariable,
+    SBCSimulation,
+)
+from behavio.recovery import ModelRecoveryScenario, run_model_recovery_grid
 
 # --------------------------------------------------------------------------------------
 # Fixtures shared by the recovery, comparison and selection cases
@@ -61,9 +62,9 @@ def recovery_design(*, n_sessions: int = 6, n_trials: int = 60) -> Study:
 
 
 def competing_models(n_sessions: int = 6):
-    static = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01)
+    static = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01)
     smooth = make_smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01),
         over="session_order",
         knots=tuple(float(knot) for knot in range(n_sessions)),
         smoothness=10.0,
@@ -273,9 +274,9 @@ def test_a_recovery_scenario_survives_a_round_trip_with_a_frozen_parameter_map()
 @pytest.mark.parametrize(
     "model",
     [
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01),
         make_smooth(
-            BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1),
+            BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1),
             over="session_order",
             knots=(0.0, 1.0, 2.0),
         ),
@@ -651,8 +652,8 @@ def test_a_model_signature_does_not_capture_everything_that_changes_a_fit() -> N
             "choice": generator.integers(0, 2, size=n_rows),
         }
     )
-    loose = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, max_iterations=2)
-    tight = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, max_iterations=1_000)
+    loose = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, max_iterations=2)
+    tight = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, max_iterations=1_000)
 
     assert loose.signature == tight.signature
     assert not np.array_equal(loose.fit(study).estimates, tight.fit(study).estimates)
@@ -667,7 +668,7 @@ def test_a_repeated_fit_of_one_model_is_bitwise_deterministic() -> None:
     """
 
     study = comparison_study()
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01)
     first = model.fit(study)
     second = model.fit(study)
 

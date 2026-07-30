@@ -18,7 +18,7 @@ registry, registers it, and passes it in.
 What a registration buys
 ------------------------
 A registration is not only a factory. It also declares what the factory *produces*, which
-is what lets :func:`behavio.runner.verify_candidate_declarations` decide -- rather than
+is what lets :func:`behavio.protocol.runner.verify_candidate_declarations` decide -- rather than
 shrug at -- whether the object handed to the runner is the object the protocol froze.
 Without a registry that check can only compare class names and consult already-imported
 modules, so it reports ``unverifiable`` for anything it has not seen; with one, a declared
@@ -287,7 +287,7 @@ def builtin_estimator_registry() -> EstimatorRegistry:
     """Return a fresh registry holding every implementation the package ships.
 
     This is the registry :mod:`behavio.cli` resolves protocol candidates through, and the
-    default one :func:`behavio.runner.verify_candidate_declarations` checks declarations
+    default one :func:`behavio.protocol.runner.verify_candidate_declarations` checks declarations
     against. It is constructed per call rather than shared, so an extension that registers
     into it cannot leak into an unrelated analysis in the same process.
     """

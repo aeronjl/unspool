@@ -19,18 +19,7 @@ from behavio.adapters.table import (
     session_order_from_appearance,
     session_order_from_column,
 )
-from behavio.compiler import compile_execution_plan, materialize_protocol
-from behavio.evidence import (
-    compare_evidence_bundles,
-    read_evidence_bundle,
-    replay_evidence_bundle,
-)
-from behavio.models import model_capabilities
-from behavio.protocol import ProtocolState, StudyProtocol, protocol_from_json
-from behavio.registry import EstimatorRegistry, RegistryError, builtin_estimator_registry
-from behavio.runner import run_nested_protocol, run_protocol
-from behavio.study import Study
-from behavio.validation import (
+from behavio.evaluate.splits import (
     cohort_forward_session_splits,
     forward_session_splits,
     historical_cohort_forecast_splits,
@@ -39,17 +28,30 @@ from behavio.validation import (
     leave_one_subject_out_splits,
     within_session_rolling_splits,
 )
+from behavio.models import model_capabilities
+from behavio.protocol.compiler import compile_execution_plan, materialize_protocol
+from behavio.protocol.runner import run_nested_protocol, run_protocol
+from behavio.protocol.schema import ProtocolState, StudyProtocol, protocol_from_json
+from behavio.registry import EstimatorRegistry, RegistryError, builtin_estimator_registry
+from behavio.report.evidence_bundles import (
+    compare_evidence_bundles,
+    read_evidence_bundle,
+    replay_evidence_bundle,
+)
+from behavio.trials import Study
 
 _SPLITTERS: dict[str, Callable[..., tuple[Any, ...]]] = {
-    "behavio.validation.forward_session_splits": forward_session_splits,
-    "behavio.validation.cohort_forward_session_splits": cohort_forward_session_splits,
-    "behavio.validation.historical_cohort_forecast_splits": (historical_cohort_forecast_splits),
-    "behavio.validation.leave_one_subject_out_splits": leave_one_subject_out_splits,
-    "behavio.validation.leave_one_lab_out_splits": leave_one_lab_out_splits,
-    "behavio.validation.leave_one_lab_out_session_forecast_splits": (
+    "behavio.evaluate.splits.forward_session_splits": forward_session_splits,
+    "behavio.evaluate.splits.cohort_forward_session_splits": cohort_forward_session_splits,
+    "behavio.evaluate.splits.historical_cohort_forecast_splits": (
+        historical_cohort_forecast_splits
+    ),
+    "behavio.evaluate.splits.leave_one_subject_out_splits": leave_one_subject_out_splits,
+    "behavio.evaluate.splits.leave_one_lab_out_splits": leave_one_lab_out_splits,
+    "behavio.evaluate.splits.leave_one_lab_out_session_forecast_splits": (
         leave_one_lab_out_session_forecast_splits
     ),
-    "behavio.validation.within_session_rolling_splits": within_session_rolling_splits,
+    "behavio.evaluate.splits.within_session_rolling_splits": within_session_rolling_splits,
 }
 
 
@@ -189,7 +191,7 @@ def _execute(arguments: argparse.Namespace) -> int:
         "evaluation.json": run.report.to_dict(),
     }
     snapshot = {
-        "schema_version": "behavio.evaluation-snapshot/1",
+        "schema_version": "behavio.evaluate.folds-snapshot/1",
         "protocol_fingerprint": protocol.fingerprint,
         "state": run.protocol.state.value,
         "recovery_pending": bool(protocol.recovery),

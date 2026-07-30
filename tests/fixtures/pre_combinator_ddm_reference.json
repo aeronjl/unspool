@@ -1,5 +1,5 @@
 {
-  "covariates": [
+  "predictors": [
     "stimulus"
   ],
   "description": "Fits produced by the hand-written SmoothWienerDriftDiffusion and HierarchicalSmoothWienerDriftDiffusion classes immediately before they were replaced by behavio.compose.smooth and behavio.compose.hierarchical applied to WienerDriftDiffusion.",
@@ -624,7 +624,7 @@
         67.06353843786025
       ],
       "selected_restart": 1,
-      "signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.18;subject_parameter_scales=drift.stimulus:0.18,boundary:0.18;estimate_subject_scales=False;subject_scale_bounds=0.05,2.0;scale_max_iterations=12;scale_tolerance=0.01;subject_scale_uncertainty=observed;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+      "signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;predictors=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.18;subject_parameter_scales=drift.stimulus:0.18,boundary:0.18;estimate_subject_scales=False;subject_scale_bounds=0.05,2.0;scale_max_iterations=12;scale_tolerance=0.01;subject_scale_uncertainty=observed;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
       "simulated_deviations": [
         [
           [
@@ -760,7 +760,7 @@
       "objective": 113.3455587696933,
       "scale_estimation_converged": false,
       "scale_estimation_iterations": 6,
-      "signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.18;subject_parameter_scales=drift.stimulus:0.22,boundary:0.08;estimate_subject_scales=True;subject_scale_bounds=0.04,0.5;scale_max_iterations=6;scale_tolerance=0.05;subject_scale_uncertainty=observed;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
+      "signature": "hierarchical-smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;predictors=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;subject_parameters=drift.stimulus,boundary;subject_scale=0.18;subject_parameter_scales=drift.stimulus:0.22,boundary:0.08;estimate_subject_scales=True;subject_scale_bounds=0.04,0.5;scale_max_iterations=6;scale_tolerance=0.05;subject_scale_uncertainty=observed;subject_smoothness=8.0;nondecision_bounds=data-constrained]",
       "standard_errors": [
         0.11686989879633063,
         0.13509171491969568,
@@ -1037,7 +1037,7 @@
         19.71515538964701
       ],
       "selected_restart": 1,
-      "signature": "smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;covariates=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;nondecision_bounds=data-constrained;shared_trajectory=False]",
+      "signature": "smooth-wiener-drift-diffusion[outcome=choice;response_time=response_time:seconds;predictors=stimulus;diffusion_scale=1;density_terms=12;simulation_dt=0.001;time=session_order;knots=0,2;varying=drift.stimulus,boundary;smoothness=8.0;nondecision_bounds=data-constrained;shared_trajectory=False]",
       "standard_errors": [
         0.24013261043741038,
         0.24840332291733447,

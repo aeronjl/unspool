@@ -12,15 +12,14 @@ import numpy as np
 from behavio import (
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
-    IBLONETrialSource,
     ResponseTimeSpec,
-    ResponseTimeUnit,
     Study,
     UniformResponseGuess,
     WienerDriftDiffusion,
     mix,
-    read_ibl_one_sessions,
 )
+from behavio.adapters import IBLONETrialSource, read_ibl_one_sessions
+from behavio.task import ResponseTimeUnit
 from benchmarks.ibl2021.refresh_manifest import PUBLIC_PASSWORD
 from benchmarks.ibl2021_replicated.benchmark import DEFAULT_CACHE
 from benchmarks.ibl2021_replicated.manifest import (
@@ -341,7 +340,7 @@ def _analyze_glm_hmm(panel: Study) -> dict[str, Any]:
         raise AssertionError("all GLM-HMM state-count candidates failed the training-only audit")
     selected_states = int(min(eligible, key=lambda row: row["mean_selection_log_loss"])["n_states"])
 
-    static = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=HMM_L2)
+    static = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=HMM_L2)
     hmm = _hmm(selected_states)
     static_fit = static.fit(outer_train)
     hmm_fit = hmm.fit(outer_train)
@@ -399,7 +398,7 @@ def _analyze_glm_hmm(panel: Study) -> dict[str, Any]:
 
 def _ddm(*, robust: bool) -> Any:
     model = WienerDriftDiffusion(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         response_time=ResponseTimeSpec(unit=ResponseTimeUnit.SECONDS),
         n_restarts=4,
         max_iterations=500,
@@ -422,7 +421,7 @@ def _ddm(*, robust: bool) -> Any:
 
 def _hmm(n_states: int) -> BernoulliGLMHMM:
     return BernoulliGLMHMM(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         choice_lags=1,
         l2=HMM_L2,
         n_states=n_states,

@@ -1,4 +1,4 @@
-# Plotting API
+# `behavio.plot` API
 
 `behavio.plot` renders the reports the rest of the package produces. Every central
 diagnostic here is inherently visual: a rank histogram, an ECDF-difference band, a
@@ -16,7 +16,7 @@ pip install 'behavio[plots]'
 
 `import behavio` and `import behavio.plot` both work without matplotlib installed. Only
 calling a plotting function raises `MatplotlibUnavailableError`, whose message names the
-extra. This mirrors how `behavio.posterior` treats ArviZ.
+extra. This mirrors how `behavio.posterior.result` treats ArviZ.
 
 ## Contract
 
@@ -73,7 +73,7 @@ styles, and an explicit legend label naming the kind.
 
 `CalibrationSummary` retains mean predicted probability, observed rate, Brier score, and
 expected calibration error. The ten-bin decomposition behind the expected calibration error
-is computed inside `behavio.runner` and then discarded, so `plot_calibration` draws the
+is computed inside `behavio.protocol.runner` and then discarded, so `plot_calibration` draws the
 aggregate point against the diagonal rather than a full reliability curve. Retaining per-bin
 counts and rates on `CalibrationSummary` is the change that would upgrade this display.
 

@@ -68,7 +68,7 @@ Two continuous rules have shared defaults and can be changed without changing th
 model:
 
 ```python
-from behavio import FitAuditPolicy
+from behavio.diagnostics import FitAuditPolicy
 
 audit = fit.audit(
     policy=FitAuditPolicy(

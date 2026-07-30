@@ -5,17 +5,17 @@ import numpy as np
 import pytest
 from scipy.stats import norm
 
-from behavio.comparison import ComparisonFamily, ComparisonMultiplicity
+from behavio.compare.models import ComparisonFamily, ComparisonMultiplicity
 from behavio.contracts.audit import AuditSeverity
-from behavio.posterior import PosteriorError
-from behavio.posterior_comparison import (
+from behavio.posterior.comparison import (
     ModelComparisonStatus,
     PairedELPDDifference,
     PosteriorModelComparison,
     compare_posterior_models,
 )
-from behavio.posterior_diagnostics import PosteriorAuditStatus
-from behavio.posterior_loo import PSISLOOIssue, PSISLOOResult, psis_loo
+from behavio.posterior.diagnostics import PosteriorAuditStatus
+from behavio.posterior.loo import PSISLOOIssue, PSISLOOResult, psis_loo
+from behavio.posterior.result import PosteriorError
 from tests.test_posterior_loo import N_SUBJECTS, N_TRIALS, hierarchical_result
 
 

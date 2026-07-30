@@ -1,4 +1,4 @@
-# Observed behaviour API
+# `behavio.observed` API
 
 Typed boundaries for pose, ethograms, and continuous behavioural covariates, the
 readers that fill them from community tools, the matched-pulse clock transform
@@ -21,7 +21,7 @@ pip install "behavio[readers]"
 
 See [Pose trajectories](../pose.md).
 
-::: behavio.pose
+::: behavio.observed.pose
     options:
       members_order: source
       show_root_heading: false
@@ -31,7 +31,7 @@ See [Pose trajectories](../pose.md).
 
 See [Ethograms](../ethograms.md).
 
-::: behavio.ethograms
+::: behavio.observed.ethograms
     options:
       members_order: source
       show_root_heading: false
@@ -41,7 +41,7 @@ See [Ethograms](../ethograms.md).
 
 See [Behavioural covariates](../covariates.md).
 
-::: behavio.covariates
+::: behavio.observed.covariates
     options:
       members_order: source
       show_root_heading: false
@@ -51,9 +51,9 @@ See [Behavioural covariates](../covariates.md).
 
 See [Clock synchronisation](../clock-synchronization.md). This is hardware time
 in seconds, not the [longitudinal clocks](../clocks-and-transforms.md) in
-`behavio.clocks`.
+`behavio.time.clocks`.
 
-::: behavio.sync
+::: behavio.observed.device_clocks
     options:
       members_order: source
       show_root_heading: false
@@ -64,7 +64,7 @@ in seconds, not the [longitudinal clocks](../clocks-and-transforms.md) in
 The bridge from observed seconds to `Study` trial columns. See
 [From seconds to trials](../observed-behaviour.md#from-seconds-to-trials).
 
-::: behavio.trialization
+::: behavio.observed.trialization
     options:
       members_order: source
       show_root_heading: false
@@ -72,7 +72,7 @@ The bridge from observed seconds to `Study` trial columns. See
 
 ## Interval policies
 
-::: behavio.interval_policy
+::: behavio.observed.interval_policy
     options:
       members_order: source
       show_root_heading: false

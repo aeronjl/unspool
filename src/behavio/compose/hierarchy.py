@@ -41,7 +41,7 @@ from behavio.contracts.estimator import (
 )
 from behavio.models._kernels.curvature import relative_steps, value_difference_hessian
 from behavio.models._kernels.introspection import Describable
-from behavio.study import REQUIRED_COLUMNS, Study
+from behavio.trials import REQUIRED_COLUMNS, Study
 
 __all__ = [
     "HierarchicalFitResult",

@@ -12,13 +12,9 @@ from typing import Any
 
 import numpy as np
 
-from behavio import (
-    Study,
-    TrajectoryPanel,
-    audit_trajectory_replication,
-    leave_one_lab_out_splits,
-    leave_one_subject_out_splits,
-)
+from behavio import Study
+from behavio.compare import ParameterTrajectoryPanel, audit_trajectory_replication
+from behavio.evaluate import leave_one_lab_out_splits, leave_one_subject_out_splits
 from benchmarks.ibl2021.fetch_data import (
     DEFAULT_DESTINATION,
     EXPECTED_MANIFEST_SHA256,
@@ -252,7 +248,7 @@ def run(data_directory: Path, *, check: bool = True) -> dict[str, Any]:
         if len(labs) != 1:
             raise ValueError(f"subject {subject} must belong to exactly one lab")
         subject_labs.append(labs.pop())
-    trajectory_panel = TrajectoryPanel(
+    trajectory_panel = ParameterTrajectoryPanel(
         grid=np.asarray([0.0, 1.0]),
         values=np.column_stack((early_accuracy, late_accuracy)),
         subjects=tuple(subjects),

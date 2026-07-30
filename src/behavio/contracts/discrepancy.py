@@ -2,7 +2,7 @@
 
 ``PredictiveTail`` moves here with :class:`PredictiveDiscrepancy` because the protocol
 declares it structurally; keeping them together avoids a back-reference into
-:mod:`behavio.posterior_predictive`, which re-exports both.
+:mod:`behavio.posterior.predictive`, which re-exports both.
 """
 
 from __future__ import annotations

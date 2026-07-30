@@ -16,15 +16,15 @@ from scipy.stats import binom
 from test_compiler import capabilities
 from test_execution_parity import parity_compiled, parity_protocol
 
-from behavio.comparison import (
+from behavio.compare.models import (
     ComparisonFamily,
     ComparisonMultiplicity,
     paired_comparisons,
 )
 from behavio.models import BernoulliHistoryGLM
-from behavio.protocol import CandidateSpec, ScoreMetric, Setting, WinnerPolicy
-from behavio.reporting import ReportItem, ReportItemKind, generate_bounded_report
-from behavio.runner import run_protocol
+from behavio.protocol.runner import run_protocol
+from behavio.protocol.schema import CandidateSpec, ScoreMetric, Setting, WinnerPolicy
+from behavio.report.bounded import ReportItem, ReportItemKind, generate_bounded_report
 
 UNITS = tuple(f"subject-{index:02d}" for index in range(24))
 
@@ -277,7 +277,7 @@ def five_candidate_run():
             implementation="behavio.models.BernoulliHistoryGLM",
             hyperparameters=(
                 Setting("choice_lags", 0),
-                Setting("covariates", ("stimulus",)),
+                Setting("predictors", ("stimulus",)),
                 Setting("l2", penalty),
             ),
             scored_columns=("choice",),
@@ -294,7 +294,7 @@ def five_candidate_run():
         protocol, model_capabilities=dict.fromkeys(penalties, reference)
     )
     models = {
-        name: BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=penalty)
+        name: BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=penalty)
         for name, penalty in penalties.items()
     }
     return run_protocol(compiled, models)

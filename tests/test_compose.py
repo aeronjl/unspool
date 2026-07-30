@@ -19,21 +19,20 @@ import numpy as np
 import pytest
 
 from behavio import (
-    BehaviourEstimator,
-    BehaviourModel,
     BernoulliHistoryGLM,
-    ModelRecoveryScenario,
     Study,
     cohort_forward_session_splits,
     compare_models,
     evaluate_splits,
-    leave_one_subject_out_splits,
     model_from_formula,
     run_model_recovery,
     run_parameter_recovery,
 )
 from behavio.compose import HierarchicalModel, SmoothModel, hierarchical, smooth
 from behavio.contracts.compose import PenalisedLinearEstimator, VaryingEffects, group_blocks
+from behavio.evaluate import leave_one_subject_out_splits
+from behavio.models import BehaviourEstimator, BehaviourModel
+from behavio.recovery import ModelRecoveryScenario
 
 REFERENCE = json.loads(
     (Path(__file__).parent / "fixtures" / "pre_combinator_glm_reference.json").read_text(
@@ -73,7 +72,7 @@ def design(*, n_subjects: int, n_sessions: int = 3, n_trials: int = 40) -> Study
 
 
 def base_glm(*, l2: float = 0.1, choice_lags: int = 1) -> BernoulliHistoryGLM:
-    return BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=choice_lags, l2=l2)
+    return BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=choice_lags, l2=l2)
 
 
 def paths_model(*, smoothness: float = 2.0, group_smoothness: float | None = None) -> SmoothModel:
@@ -222,9 +221,9 @@ def test_a_model_whose_estimated_coordinate_is_not_its_reported_one_is_refused()
     from behavio.models import BernoulliGLMHMM
 
     with pytest.raises(TypeError, match="latent-state mixture"):
-        smooth(BernoulliGLMHMM(covariates=("stimulus",)), knots=KNOTS)
+        smooth(BernoulliGLMHMM(predictors=("stimulus",)), knots=KNOTS)
     with pytest.raises(TypeError, match="latent-state mixture"):
-        hierarchical(BernoulliGLMHMM(covariates=("stimulus",)), over="subject")
+        hierarchical(BernoulliGLMHMM(predictors=("stimulus",)), over="subject")
 
 
 def test_group_blocks_follow_first_appearance_order() -> None:
@@ -374,7 +373,7 @@ def test_a_smooth_parameter_varies_by_group_as_a_whole_path() -> None:
 def test_a_formula_group_term_produces_a_model_that_fits() -> None:
     panel = design(n_subjects=4)
     truth = hierarchical(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0), over="subject", scale=0.4
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0), over="subject", scale=0.4
     )
     study = truth.simulate(panel, {"intercept": -0.2, "stimulus": 1.0}, seed=21)
 
@@ -414,7 +413,7 @@ def test_a_formula_without_a_group_term_configures_the_model_and_stops() -> None
 
 
 def test_one_grouping_level_at_a_time() -> None:
-    from behavio.formula import FormulaError
+    from behavio.design.formula import FormulaError
 
     with pytest.raises(FormulaError, match="one grouping level"):
         model_from_formula(

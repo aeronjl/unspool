@@ -1,6 +1,6 @@
 # Behavioural covariates
 
-`behavio.covariates` holds one type. A `BehaviorCovariate` is a named scalar
+`behavio.observed.covariates` holds one type. A `BehaviorCovariate` is a named scalar
 observed over time alongside behaviour — confidence-gated speed, pupil area, a
 state probability — with the timestamps it was measured on and an explicit
 validity mask. It is one shape in the wider
@@ -39,7 +39,7 @@ The clock check is the important part. Interpolation answers what value a
 covariate has on another sampling grid; it does not establish that two streams
 share a physical time base. Giving two unsynchronised clocks the same name is
 not synchronisation — fit an explicit transform first, with
-[`fit_clock_synchronization()`](clock-synchronization.md).
+[`fit_device_clock_sync()`](clock-synchronization.md).
 
 !!! note "Not the longitudinal clocks"
     `clock_id` here names a hardware time coordinate in seconds. It is
@@ -48,7 +48,7 @@ not synchronisation — fit an explicit transform first, with
 
 ## Reduction to trial columns
 
-`reduce_covariate_to_trials()` in `behavio.trialization` turns a covariate into
+`reduce_covariate_to_trials()` in `behavio.observed.trialization` turns a covariate into
 one value per declared trial, and `attach_trial_columns()` joins those values
 onto a `Study` by `subject`/`session`/`trial`. `MeanValue`, `MedianValue`,
 `MinimumValue` and `MaximumValue` ship; the `TrialCovariateReducer` protocol is

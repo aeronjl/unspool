@@ -4,7 +4,7 @@ A tail probability is a summary of a picture. Whether the observed value sits ju
 long tail or far outside a tight one is the difference between a model that is nearly right
 and one that is wrong in kind, and only the reference distribution shows it.
 
-The family-level accounting from :class:`~behavio.posterior_predictive.PredictiveFamily` is
+The family-level accounting from :class:`~behavio.posterior.predictive.PredictiveFamily` is
 drawn onto the grid, because a single extreme check among forty is not the same finding as a
 single extreme check among two.
 """
@@ -24,7 +24,7 @@ from behavio.plot._axes import (
     resolve_axes,
 )
 from behavio.plot.style import ALERT, BLUE, INDIGO, INK, LIGHT, MUTED, figure_style
-from behavio.posterior_predictive import PosteriorPredictiveAudit, PosteriorPredictiveCheck
+from behavio.posterior.predictive import PosteriorPredictiveAudit, PosteriorPredictiveCheck
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -48,7 +48,7 @@ def plot_predictive_check(
 
     ``interval_probability`` only labels the shaded interval; the interval itself is the one
     the check retained. Pass
-    :attr:`~behavio.posterior_predictive.PosteriorPredictivePolicy.interval_probability` when
+    :attr:`~behavio.posterior.predictive.PosteriorPredictivePolicy.interval_probability` when
     the policy is to hand.
     """
 

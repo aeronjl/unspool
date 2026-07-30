@@ -252,7 +252,7 @@ def run(*, repetitions: int = 20, seed: int = 64_219) -> dict[str, Any]:
 
 def _base_model() -> WienerDriftDiffusion:
     return WienerDriftDiffusion(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         n_restarts=2,
         max_iterations=350,
         simulation_time_step=0.001,

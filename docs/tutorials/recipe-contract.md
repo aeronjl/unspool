@@ -118,12 +118,7 @@ with population generality.
 ## Minimal executable skeleton
 
 ```python
-from behavio import (
-    ChoiceSpec,
-    TaskSpec,
-    compare_models,
-    forward_session_splits,
-)
+from behavio import ChoiceSpec, TaskSpec, compare_models, forward_session_splits
 
 task = TaskSpec(
     choice=ChoiceSpec(options=(0, 1)),

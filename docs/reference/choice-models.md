@@ -1,4 +1,4 @@
-# Observable choice-model API
+# `behavio.models` and `behavio.compose`: observable choice API
 
 These models express structure directly in observed choices and predictors. They are the
 first matched alternatives for more elaborate latent or mechanistic accounts.

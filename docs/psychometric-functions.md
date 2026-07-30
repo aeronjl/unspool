@@ -36,7 +36,8 @@ units, and a declared link \(F\).
 | `WEIBULL` | \(1 - \exp(-e^{z})\) | log |
 
 ```python
-from behavio import PsychometricFunction, PsychometricLink
+from behavio import PsychometricFunction
+from behavio.models import PsychometricLink
 
 model = PsychometricFunction(
     stimulus="signed_contrast",
@@ -130,7 +131,7 @@ released form under a different naming of the location:
 | `lapse_high` | `lapse_rate` |
 
 ```python
-from behavio import erf_two_gamma_probability
+from behavio.models import erf_two_gamma_probability
 
 erf_two_gamma_probability(contrasts, bias=-4.0, threshold=18.0, lapse_low=0.06, lapse_high=0.11)
 ```

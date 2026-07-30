@@ -5,22 +5,22 @@ import pytest
 
 from behavio import (
     BernoulliHistoryGLM,
-    ModelDataError,
     Study,
     evaluate_splits,
     forward_session_splits,
     run_parameter_recovery,
 )
 from behavio.compose import SmoothModel, smooth
+from behavio.models import ModelDataError
 
 
 def base_glm(
     *,
     choice_lags: int = 1,
-    covariates: tuple[str, ...] = ("stimulus",),
+    predictors: tuple[str, ...] = ("stimulus",),
     l2: float = 0.01,
 ) -> BernoulliHistoryGLM:
-    return BernoulliHistoryGLM(covariates=covariates, choice_lags=choice_lags, l2=l2)
+    return BernoulliHistoryGLM(predictors=predictors, choice_lags=choice_lags, l2=l2)
 
 
 def make_design(
@@ -124,7 +124,7 @@ def test_simulation_and_fitting_recover_an_inspectable_trajectory() -> None:
 
 
 def test_trajectory_can_be_evaluated_between_knots() -> None:
-    model = smooth(base_glm(choice_lags=0, covariates=()), knots=(0.0, 2.0), smoothness=1.0)
+    model = smooth(base_glm(choice_lags=0, predictors=()), knots=(0.0, 2.0), smoothness=1.0)
     parameters = model.parameters_from_paths({"intercept": [-1.0, 1.0]})
     design = Study(
         {
@@ -168,7 +168,7 @@ def test_smooth_drift_beats_static_baseline_prospectively_when_truth_drifts() ->
     drifting = smooth_model(n_sessions=n_sessions)
     study = drifting.simulate(design, smooth_truth(drifting), seed=77)
     splits = forward_session_splits(study, min_train_sessions=3)
-    static = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01)
+    static = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01)
 
     static_evaluations = evaluate_splits(static, study, splits)
     smooth_evaluations = evaluate_splits(drifting, study, splits)
@@ -200,7 +200,7 @@ def test_stationary_truth_does_not_require_a_smooth_advantage() -> None:
     )
     study = drifting.simulate(design, truth, seed=17)
     splits = forward_session_splits(study, min_train_sessions=3)
-    static = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01)
+    static = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01)
 
     static_loss = -np.mean(
         np.concatenate(

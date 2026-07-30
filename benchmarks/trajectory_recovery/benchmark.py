@@ -8,10 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from behavio import (
-    BernoulliHistoryGLM,
-    Study,
-)
+from behavio import BernoulliHistoryGLM, Study
 from behavio.compose import HierarchicalModel, hierarchical, smooth
 from benchmarks.provenance import render
 
@@ -94,12 +91,12 @@ def experiment(*, regime: str, seed: int) -> dict[str, dict[str, Any]]:
     test = simulation.study.take(test_indices)
     truth = simulation.group_parameters.reshape(len(simulation.groups), 2, len(KNOTS))
 
-    complete = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.02)
+    complete = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=0.02)
     complete_fit = complete.fit(train)
     complete_paths = np.broadcast_to(complete_fit.estimates[None, :, None], truth.shape)
 
     static_partial = hierarchical(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.02),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=0.02),
         over="subject",
         scale=0.4,
     )
@@ -107,7 +104,7 @@ def experiment(*, regime: str, seed: int) -> dict[str, dict[str, Any]]:
     static_paths = np.broadcast_to(static_fit.group_parameters[:, :, None], truth.shape)
 
     shared_smooth = smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.02),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=0.02),
         over="session_order",
         knots=KNOTS,
         smoothness=3.0,
@@ -125,7 +122,7 @@ def experiment(*, regime: str, seed: int) -> dict[str, dict[str, Any]]:
         subject_train = _subject_study(train, subject)
         subject_test = _subject_study(test, subject)
         independent = smooth(
-            BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.02),
+            BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=0.02),
             over="session_order",
             knots=KNOTS,
             smoothness=3.0,
@@ -268,7 +265,7 @@ def _truth(
 def _hierarchical_smooth_model() -> HierarchicalModel:
     return hierarchical(
         smooth(
-            BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.02),
+            BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=0.02),
             over="session_order",
             knots=KNOTS,
             smoothness=3.0,

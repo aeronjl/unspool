@@ -3,16 +3,15 @@ import json
 import numpy as np
 import pytest
 
-from behavio import (
+from behavio import PosteriorResult, audit_posterior
+from behavio.contracts import AuditSeverity
+from behavio.posterior import (
     PosteriorAuditPolicy,
     PosteriorAuditStatus,
     PosteriorGroup,
-    PosteriorResult,
     PosteriorVariable,
-    audit_posterior,
 )
-from behavio.contracts import AuditSeverity
-from behavio.posterior_diagnostics import PosteriorAuditIssue
+from behavio.posterior.diagnostics import PosteriorAuditIssue
 
 
 def posterior_result(*, shifted: bool = False) -> PosteriorResult:

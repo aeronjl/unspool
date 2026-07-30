@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from behavio import ResponseTimes, ResponseTimeSpec, ResponseTimeUnit, Study
+from behavio import ResponseTimeSpec, Study
+from behavio.task import ResponseTimes, ResponseTimeUnit
 
 
 def study_with_response_times(values: list[object]) -> Study:

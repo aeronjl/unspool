@@ -1,19 +1,17 @@
 import numpy as np
 import pytest
 
-from behavio import (
+from behavio import BinaryRLAgent, Study, run_parameter_recovery
+from behavio.models import (
     AsymmetricLearning,
     BehaviourModel,
-    BinaryRLAgent,
     ChoiceKernel,
     FitDiagnostics,
     FitResult,
     ResetRule,
     SoftmaxPolicy,
-    Study,
     SymmetricLearning,
     UnchosenForgetting,
-    run_parameter_recovery,
 )
 
 

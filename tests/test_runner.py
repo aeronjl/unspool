@@ -13,11 +13,11 @@ from test_compiler import (
 )
 from test_protocol import example_protocol
 
-from behavio.comparison import ComparisonMultiplicity
-from behavio.compiler import compile_execution_plan, materialize_protocol
+from behavio.compare.models import ComparisonMultiplicity
 from behavio.compose import smooth
 from behavio.contracts.audit import FitDiagnostics
-from behavio.evaluation import FoldStage
+from behavio.evaluate.folds import FoldStage
+from behavio.evaluate.splits import cohort_forward_session_splits
 from behavio.models import (
     BernoulliHistoryGLM,
     FitResult,
@@ -25,14 +25,8 @@ from behavio.models import (
     Prediction,
     PredictionMode,
 )
-from behavio.protocol import (
-    CandidateSpec,
-    ProtocolState,
-    ScoreMetric,
-    Setting,
-    WinnerPolicy,
-)
-from behavio.runner import (
+from behavio.protocol.compiler import compile_execution_plan, materialize_protocol
+from behavio.protocol.runner import (
     DeclarationCheck,
     ProtocolRunError,
     RankingStatus,
@@ -40,8 +34,14 @@ from behavio.runner import (
     run_protocol,
     verify_candidate_declarations,
 )
-from behavio.study import Study
-from behavio.validation import cohort_forward_session_splits
+from behavio.protocol.schema import (
+    CandidateSpec,
+    ProtocolState,
+    ScoreMetric,
+    Setting,
+    WinnerPolicy,
+)
+from behavio.trials import Study
 
 
 def compiled_small_protocol(candidates: tuple[CandidateSpec, ...] = ()):
@@ -65,8 +65,8 @@ def declared_glm(name: str, **hyperparameters) -> CandidateSpec:
 
 def candidate_models():
     return {
-        "static": BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.1),
-        "smooth": BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=1.0),
+        "static": BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=0.1),
+        "smooth": BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=1.0),
     }
 
 
@@ -139,7 +139,7 @@ def test_declared_brier_score_controls_summaries_comparisons_and_ranking() -> No
 
 
 def test_identical_candidates_retain_an_unresolved_ranking() -> None:
-    settings = {"covariates": ("stimulus",), "choice_lags": 0, "l2": 0.5}
+    settings = {"predictors": ("stimulus",), "choice_lags": 0, "l2": 0.5}
     model = BernoulliHistoryGLM(**settings)
     run = run_protocol(
         compiled_small_protocol(
@@ -197,7 +197,7 @@ def test_candidate_failure_is_retained_while_other_candidate_completes() -> None
                     hyperparameters=(),
                     scored_columns=("choice",),
                 ),
-                declared_glm("smooth", covariates=("stimulus",), choice_lags=0, l2=1.0),
+                declared_glm("smooth", predictors=("stimulus",), choice_lags=0, l2=1.0),
             )
         ),
         {
@@ -380,7 +380,7 @@ def test_declared_model_is_verified_and_leaves_the_evaluation_untouched() -> Non
     assert static.model_name == "bernoulli-history-glm"
     assert {finding.subject for finding in static.findings} == {
         "implementation",
-        "hyperparameter:covariates",
+        "hyperparameter:predictors",
         "hyperparameter:choice_lags",
         "hyperparameter:l2",
     }
@@ -389,7 +389,7 @@ def test_declared_model_is_verified_and_leaves_the_evaluation_untouched() -> Non
 def test_a_contradicting_implementation_refuses_to_produce_evidence() -> None:
     models = candidate_models()
     models["smooth"] = smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=1.0),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=1.0),
         over="session_order",
     )
 
@@ -399,7 +399,7 @@ def test_a_contradicting_implementation_refuses_to_produce_evidence() -> None:
 
 def test_a_contradicting_hyperparameter_refuses_to_produce_evidence() -> None:
     models = candidate_models()
-    models["static"] = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.5)
+    models["static"] = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=0.5)
 
     with pytest.raises(ProtocolRunError) as error:
         run_protocol(compiled_small_protocol(), models)
@@ -418,7 +418,7 @@ def test_verification_separates_contradiction_from_unverifiability() -> None:
                 hyperparameters=(Setting("l2", 0.1), Setting("tolerance", 1e-9)),
                 scored_columns=("choice",),
             ),
-            declared_glm("smooth", covariates=("stimulus",), choice_lags=0, l2=2.0),
+            declared_glm("smooth", predictors=("stimulus",), choice_lags=0, l2=2.0),
         )
     )
 
@@ -433,15 +433,15 @@ def test_verification_separates_contradiction_from_unverifiability() -> None:
     assert [finding.status for finding in smooth.findings] == [
         DeclarationCheck.VERIFIED,
         DeclarationCheck.VERIFIED,
-        DeclarationCheck.VERIFIED,
         DeclarationCheck.CONTRADICTED,
+        DeclarationCheck.VERIFIED,
     ]
 
 
 def test_a_setting_with_no_matching_field_is_recorded_rather_than_failed() -> None:
     protocol = frozen_small_protocol(
         (
-            declared_glm("static", covariates=("stimulus",), choice_lags=0, l2=0.1),
+            declared_glm("static", predictors=("stimulus",), choice_lags=0, l2=0.1),
             CandidateSpec(
                 name="smooth",
                 implementation="behavio.models.BernoulliHistoryGLM",
@@ -465,7 +465,7 @@ def test_a_setting_with_no_matching_field_is_recorded_rather_than_failed() -> No
 
 def test_nested_selection_verifies_the_same_frozen_declaration() -> None:
     models = candidate_models()
-    models["static"] = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.1)
+    models["static"] = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.1)
 
     with pytest.raises(ProtocolRunError, match="hyperparameter:choice_lags"):
         run_nested_protocol(compiled_nested(), models)

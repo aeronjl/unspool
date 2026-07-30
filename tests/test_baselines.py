@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from behavio import (
-    BehaviourModel,
     BiasOnly,
     Perseveration,
     Psychometric,
@@ -12,6 +11,7 @@ from behavio import (
     mix,
     run_parameter_recovery,
 )
+from behavio.models import BehaviourModel
 
 
 def design(n_trials: int = 400) -> Study:

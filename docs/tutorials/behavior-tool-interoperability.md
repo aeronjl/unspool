@@ -25,7 +25,7 @@ present. Install the lightweight file dependencies with
 `uv add "behavio[readers]"`.
 
 ```python
-from behavio.pose import pose_from_deeplabcut_file
+from behavio.observed.pose import pose_from_deeplabcut_file
 
 nose = pose_from_deeplabcut_file(
     "mouse-07-day-04DLC.h5",
@@ -63,7 +63,7 @@ The file reader uses stored dimension metadata when present. Older files omit it
 so supply `dims` rather than guessing from array size.
 
 ```python
-from behavio.pose import pose_from_sleap_analysis_h5
+from behavio.observed.pose import pose_from_sleap_analysis_h5
 
 nose = pose_from_sleap_analysis_h5(
     "mouse-07-day-04.analysis.h5",
@@ -92,7 +92,7 @@ Run-length encoding turns consecutive equal states into bouts without discarding
 duration.
 
 ```python
-from behavio.ethograms import annotations_from_moseq_results_h5
+from behavio.observed.ethograms import annotations_from_moseq_results_h5
 
 moseq = annotations_from_moseq_results_h5(
     "moseq-project/model-a/results.h5",
@@ -153,7 +153,7 @@ For a BORIS tabular CSV, the file reader skips the observation metadata preamble
 selects one source subject, and pairs START/STOP rows.
 
 ```python
-from behavio.ethograms import annotations_from_boris_tabular_file
+from behavio.observed.ethograms import annotations_from_boris_tabular_file
 
 boris = annotations_from_boris_tabular_file(
     "mouse-07-day-04-boris.csv",
@@ -169,7 +169,7 @@ intervals. Aggregated CSV/TSV files can be read directly without first building 
 column mapping:
 
 ```python
-from behavio.ethograms import annotations_from_boris_aggregated_file
+from behavio.observed.ethograms import annotations_from_boris_aggregated_file
 
 aggregated = annotations_from_boris_aggregated_file(
     "mouse-07-day-04-aggregated.tsv",
@@ -186,7 +186,7 @@ Before projecting intervals into any model, declare any cleanup or contextual
 rules as an ordered policy. Do not edit adapter output in place:
 
 ```python
-from behavio.interval_policy import (
+from behavio.observed.interval_policy import (
     ContextualizeIntervals,
     FilterIntervals,
     IntervalPolicy,
@@ -228,21 +228,21 @@ Fit the clock mapping before interpolation. Pulse correspondence is explicit: th
 function never guesses which pulses match.
 
 ```python
-from behavio.sync import (
-    ClockPulseMatches,
-    ClockSynchronizationSpec,
-    fit_clock_synchronization,
+from behavio.observed.device_clocks import (
+    DeviceClockPulses,
+    DeviceClockSyncSpec,
+    fit_device_clock_sync,
 )
 
-synchronization = fit_clock_synchronization(
-    ClockPulseMatches.from_arrays(
+synchronization = fit_device_clock_sync(
+    DeviceClockPulses.from_arrays(
         source_clock_id="video",
         target_clock_id="acquisition",
         source_time_s=video_sync_pulses,
         target_time_s=acquisition_sync_pulses,
         match_labels=sync_pulse_ids,
     ),
-    ClockSynchronizationSpec(
+    DeviceClockSyncSpec(
         maximum_absolute_residual_s=0.002,
         maximum_drift_ppm=250,
         minimum_matches=4,
@@ -328,7 +328,7 @@ the trial timing on the same clock and reduce the covariate and the bouts over
 trial windows:
 
 ```python
-from behavio.trialization import (
+from behavio.observed.trialization import (
     MaximumValue,
     TrialTiming,
     TrialWindow,

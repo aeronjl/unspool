@@ -23,12 +23,8 @@ unique subject, a target signature and unit, an occasion name, and the artifact 
 produced the values.
 
 ```python
-from behavio import (
-    ReliabilityPolicy,
-    ReliabilityStatistic,
-    SubjectEstimates,
-    assess_test_retest_reliability,
-)
+from behavio import assess_test_retest_reliability
+from behavio.posterior import ReliabilityPolicy, ReliabilityStatistic, SubjectEstimates
 
 test = SubjectEstimates(
     occasion="week-1",
@@ -117,7 +113,7 @@ For a posterior variable with one `subject` dimension, extract per-subject poste
 without losing model and backend provenance:
 
 ```python
-from behavio import posterior_subject_estimates
+from behavio.posterior import posterior_subject_estimates
 
 week_1 = posterior_subject_estimates(
     posterior_week_1,

@@ -21,8 +21,8 @@ import numpy as np
 from behavio.contracts.audit import FitAuditStatus
 from behavio.plot._axes import annotate_note, new_figure, resolve_axes
 from behavio.plot.style import ALERT, BLUE, INK, MUTED, TEAL, figure_style
-from behavio.recovery import _NORMAL_95 as WALD_MULTIPLIER
-from behavio.recovery import (
+from behavio.recovery.parameters import _NORMAL_95 as WALD_MULTIPLIER
+from behavio.recovery.parameters import (
     POSTERIOR_QUANTILE_INTERVAL,
     ParameterRecoveryReport,
     ParameterRecoverySummary,

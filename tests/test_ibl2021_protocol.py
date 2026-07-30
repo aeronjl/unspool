@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from behavio import ProtocolState, protocol_from_dict, protocol_from_json
+from behavio.protocol import ProtocolState, protocol_from_dict, protocol_from_json
 from benchmarks.ibl2021_nested_selection.benchmark import CANDIDATES
 from benchmarks.ibl2021_protocol.benchmark import (
     LEGACY_RESULT,

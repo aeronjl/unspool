@@ -5,9 +5,9 @@ helper that had become the de-facto array-immutability utility for more than a d
 unrelated modules. It lives here so that importing it no longer drags in the model
 contracts, and so that ``behavio.contracts`` can depend on it without a cycle.
 
-Future work: ``behavio._arrays`` holds ``_readonly_float`` and ``_validate_time``, whose
+Future work: ``behavio.observed._arrays`` holds ``_readonly_float`` and ``_validate_time``, whose
 docstring deliberately scopes them to the four observed-behaviour modules
-(``pose``, ``ethograms``, ``covariates``, ``sync``). Those helpers coerce to a single
+(``pose``, ``ethograms``, ``predictors``, ``sync``). Those helpers coerce to a single
 dtype and enforce a time contract, so they are not a drop-in for ``protected_array``.
 Consolidating the two modules is a separate change and is intentionally not done here.
 """

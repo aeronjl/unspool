@@ -5,7 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from behavio import (
+from behavio import Study
+from behavio.design import (
     CategoricalTerm,
     DesignSpec,
     DesignValidationError,
@@ -14,9 +15,8 @@ from behavio import (
     InteractionTerm,
     NumericTerm,
     StandardizeTerm,
-    Study,
 )
-from behavio.formula import (
+from behavio.design.formula import (
     CategoricalFormulaTerm,
     ColumnFormulaTerm,
     Formula,

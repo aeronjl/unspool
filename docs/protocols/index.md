@@ -39,12 +39,9 @@ when the runner is handed its models.
 ## The shortest useful workflow
 
 ```python
-from behavio import (
-    compile_execution_plan,
-    materialize_protocol,
-    model_capabilities,
-    run_protocol,
-)
+from behavio import compile_execution_plan, run_protocol
+from behavio.models import model_capabilities
+from behavio.protocol import materialize_protocol
 
 frozen = protocol.freeze()
 materialized = materialize_protocol(frozen, source_study)
@@ -161,8 +158,8 @@ performance uses `comparison`.
 ## One fold loop, and how many contrasts read it
 
 The runner does not implement fitting, prediction, or scoring. It adapts each compiled fold
-to the [`ValidationFold`](../reference/contracts.md) contract and calls
-`behavio.evaluation.evaluate_splits`, the same primitive `compare_models` calls, with
+to the [`EvaluationFold`](../reference/contracts.md) contract and calls
+`behavio.evaluate.folds.evaluate_splits`, the same primitive `compare_models` calls, with
 `FoldFailurePolicy.RETAIN`. Retaining a fold failure rather than raising on it is the one
 thing a protocol run needs that an interactive call does not, and it is now a declared
 option on the shared loop instead of a second implementation of it. A number produced under

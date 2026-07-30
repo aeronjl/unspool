@@ -111,7 +111,7 @@ from behavio.models._kernels.curvature import (
     finite_difference_gradient,
     finite_difference_hessian,
 )
-from behavio.study import REQUIRED_COLUMNS, Study
+from behavio.trials import REQUIRED_COLUMNS, Study
 
 #: Probability floor used whenever a model cell would otherwise be exactly zero.
 PROBABILITY_FLOOR = 1e-12

@@ -3,10 +3,10 @@ from datetime import UTC, datetime
 import numpy as np
 import pytest
 
-from behavio import (
+from behavio import Study
+from behavio.adapters import (
     NWBAdapterError,
     NWBSessionSource,
-    Study,
     add_study_trials,
     read_nwb,
     read_nwb_sessions,

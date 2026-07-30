@@ -20,7 +20,7 @@ from typing import Any
 import numpy as np
 
 from behavio.contracts.adapter import AdapterCapabilities, adapter_capabilities
-from behavio.study import Study
+from behavio.trials import Study
 
 
 class AdapterConformanceError(AssertionError):

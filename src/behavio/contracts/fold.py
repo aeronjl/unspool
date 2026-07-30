@@ -1,15 +1,15 @@
 """The validation-fold contract.
 
-``ValidationFold`` used to be a bare union alias at ``behavio.validation:501`` while doing
+``EvaluationFold`` used to be a bare union alias at ``behavio.evaluate.splits:501`` while doing
 structural-contract work across ``transforms``, ``evaluation``, ``comparison`` and
 ``model_recovery``: those modules only ever read the members declared below, and a
 union alias silently excluded any downstream split type. It is now a runtime-checkable
 protocol, so an extension package can supply its own fold without editing the union, and
-``isinstance(split, ValidationFold)`` is meaningful. Every first-party split in
-:mod:`behavio.validation` satisfies it.
+``isinstance(split, EvaluationFold)`` is meaningful. Every first-party split in
+:mod:`behavio.evaluate.splits` satisfies it.
 
 ``identifier`` joined the contract once it became load-bearing:
-:attr:`behavio.evaluation.FoldEvaluation.identifier` names retained failures and keys the
+:attr:`behavio.evaluate.folds.FoldEvaluation.identifier` names retained failures and keys the
 evidence bundle's prediction and audit maps. ``evaluate_splits`` read it through a
 ``getattr`` fallback that numbered folds by position when a split did not supply one,
 which is the hidden name-based contract this package has been removing -- the same shape
@@ -26,7 +26,7 @@ from numpy.typing import NDArray
 
 
 @runtime_checkable
-class ValidationFold(Protocol):
+class EvaluationFold(Protocol):
     """One training/test partition of a study's source row positions.
 
     ``prediction_context_indices`` are observed training rows replayed to initialize a

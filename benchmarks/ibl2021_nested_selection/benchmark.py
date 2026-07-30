@@ -12,15 +12,10 @@ from typing import Any
 
 import numpy as np
 
-from behavio import (
-    BernoulliHistoryGLM,
-    NestedProspectiveSelectionReport,
-    Study,
-    cohort_forward_session_splits,
-    leave_one_lab_out_session_forecast_splits,
-    nested_select_model,
-)
+from behavio import BernoulliHistoryGLM, Study, cohort_forward_session_splits, nested_select_model
+from behavio.compare import NestedProspectiveSelectionReport
 from behavio.compose import hierarchical, smooth
+from behavio.evaluate import leave_one_lab_out_session_forecast_splits
 from benchmarks.ibl2021_prospective.benchmark import (
     TRAIN_SESSION_COUNT,
     build_panel,
@@ -171,7 +166,7 @@ def run(
                 },
                 "common": {
                     "l2": 0.02,
-                    "covariates": ["signed contrast", "one-session-reset choice lag"],
+                    "predictors": ["signed contrast", "one-session-reset choice lag"],
                 },
             },
             "within_inner": "positions 3 and 4 forecast from earlier prefixes",
@@ -205,7 +200,7 @@ def run(
 
 
 def _candidates() -> Mapping[str, Any]:
-    common = {"covariates": ("stimulus",), "choice_lags": 1, "l2": 0.02}
+    common = {"predictors": ("stimulus",), "choice_lags": 1, "l2": 0.02}
     candidates: dict[str, Any] = {
         "static": hierarchical(BernoulliHistoryGLM(**common), over="subject", scale=0.4)
     }

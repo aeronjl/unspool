@@ -12,15 +12,7 @@ import numpy as np
 import pytest
 
 import behavio.contracts as contracts
-from behavio import (
-    BernoulliHistoryGLM,
-    ChoiceSpec,
-    PosteriorGroup,
-    PosteriorResult,
-    PosteriorVariable,
-    Study,
-    TaskSpec,
-)
+from behavio import BernoulliHistoryGLM, ChoiceSpec, PosteriorResult, Study, TaskSpec
 from behavio._internal.arrays import protected_array
 from behavio.contracts.audit import AuditSeverity, FitAuditStatus, FitDiagnostics
 from behavio.contracts.estimator import FitResult, PredictionMode, fit_auditor
@@ -36,12 +28,15 @@ from behavio.contracts.posterior import (
     posterior_point_summary,
 )
 from behavio.diagnostics import audit_fit
-from behavio.posterior import PosteriorError
+from behavio.posterior import PosteriorGroup, PosteriorVariable
+from behavio.posterior.result import PosteriorError
 
 PACKAGE = Path(behavio_root := Path(__file__).parents[1] / "src" / "behavio")
 
-# Every contract name and the module that must keep re-exporting it unchanged.
-BACK_COMPATIBLE_HOMES = {
+# Every contract name and the friendly implementation-side home that must keep re-exporting
+# it. A contract is declared once in ``behavio.contracts`` and surfaced where the author who
+# implements it is already reading; these pairs are that promise, not a compatibility shim.
+CONTRACT_RE_EXPORT_HOMES = {
     "behavio.models.base": (
         "BehaviourEstimator",
         "BehaviourModel",
@@ -70,11 +65,15 @@ BACK_COMPATIBLE_HOMES = {
         "MultistartFit",
         "RestartAudit",
     ),
-    "behavio.inference": ("ObjectiveTarget", "OptimizationBackend", "PriorMeasure"),
-    "behavio.parameters": ("ParameterSpaceProvider",),
-    "behavio.posterior_predictive": ("PredictiveDiscrepancy", "PredictiveTail"),
-    "behavio.transforms": ("FittedStudyTransform", "StudyTransform", "TransformProvenance"),
-    "behavio.validation": ("ValidationFold",),
+    "behavio.inference.optimize": ("ObjectiveTarget", "OptimizationBackend", "PriorMeasure"),
+    "behavio.inference.parameters": ("ParameterSpaceProvider",),
+    "behavio.posterior.predictive": ("PredictiveDiscrepancy", "PredictiveTail"),
+    "behavio.time.transforms": (
+        "FittedStudyTransform",
+        "StudyTransform",
+        "TransformProvenance",
+    ),
+    "behavio.evaluate.splits": ("EvaluationFold",),
     "behavio.models": (
         "BehaviourEstimator",
         "FitDiagnostics",
@@ -153,19 +152,121 @@ def test_the_package_has_no_module_level_import_cycle() -> None:
     graphlib.TopologicalSorter(graph).prepare()
 
 
+#: The package's layering, lowest first. Every module belongs to exactly one layer, matched by
+#: the longest declared prefix, and **every module-level import must land in the same layer or
+#: a lower one**. That is the invariant this file exists to keep: a reorganisation that groups
+#: modules into readable areas is only worth anything if the areas stay ordered, and an
+#: accidental upward import is the one defect that a passing test suite will not otherwise
+#: reveal until something downstream cannot be imported at all.
+#:
+#: Two entries name a single module rather than an area, and both are deliberate.
+#: ``behavio.trials`` and ``behavio.posterior.result`` are pure data containers with no
+#: intra-package imports of their own; ``behavio.contracts`` names both of them in the
+#: signatures it declares, so they must sit *below* the contracts package even though one of
+#: them lives inside ``behavio.posterior``, whose other modules sit above it. A package may
+#: span layers; a module may not.
+LAYERS: tuple[tuple[str, ...], ...] = (
+    ("behavio._internal",),
+    ("behavio.trials", "behavio.posterior.result"),
+    ("behavio.contracts",),
+    (
+        "behavio.adapters",
+        "behavio.design",
+        "behavio.diagnostics",
+        "behavio.inference",
+        "behavio.observed",
+        "behavio.posterior",
+        "behavio.task",
+        "behavio.time",
+    ),
+    ("behavio.models",),
+    ("behavio.compose",),
+    ("behavio.registry",),
+    ("behavio.evaluate",),
+    ("behavio.compare",),
+    ("behavio.protocol", "behavio.recovery"),
+    ("behavio.pymc_backend", "behavio.report"),
+    ("behavio.plot",),
+    ("behavio.cli",),
+    ("behavio",),
+)
+
+
+def _layer_of(module: str) -> int:
+    best, best_length = None, -1
+    for index, prefixes in enumerate(LAYERS):
+        for prefix in prefixes:
+            if (module == prefix or module.startswith(prefix + ".")) and len(prefix) > best_length:
+                best, best_length = index, len(prefix)
+    assert best is not None, f"{module} belongs to no declared layer"
+    return best
+
+
+def test_every_module_belongs_to_exactly_one_declared_layer() -> None:
+    """A new top-level area must be placed in the order, not merely created."""
+
+    for module in _import_graph():
+        _layer_of(module)
+
+
+def test_no_module_imports_a_module_from_a_higher_layer() -> None:
+    violations = [
+        (module, edge, _layer_of(module), _layer_of(edge))
+        for module, edges in _import_graph().items()
+        for edge in sorted(edges)
+        if _layer_of(edge) > _layer_of(module)
+    ]
+
+    assert not violations, "\n".join(
+        f"{module} (layer {low}) imports {edge} (layer {high})"
+        for module, edge, low, high in violations
+    )
+
+
+def test_no_area_imports_an_area_that_imports_it_back() -> None:
+    """The module graph being acyclic is not enough; the *areas* must be ordered too.
+
+    Two modules in different packages can depend on each other without forming a module
+    cycle, and the result still cannot be read as layers and still breaks as soon as either
+    package's ``__init__`` imports the other's module. Modules with no intra-package imports
+    at all are excluded, because they cannot participate in a cycle and grouping them into an
+    area would invent one: ``behavio.posterior.result`` is named by ``behavio.contracts``, but
+    it imports nothing, so ``contracts`` and ``posterior`` are not mutually dependent.
+    """
+
+    graph = _import_graph()
+    leaves = {module for module, edges in graph.items() if not edges and module != "behavio"}
+
+    def area(module: str) -> str:
+        parts = module.split(".")
+        return ".".join(parts[:2]) if len(parts) > 1 else module
+
+    areas: dict[str, set[str]] = {}
+    for module, edges in graph.items():
+        if module == "behavio" or module in leaves:
+            continue
+        source = area(module)
+        areas.setdefault(source, set()).update(
+            {area(edge) for edge in edges if edge not in leaves and edge != "behavio"} - {source}
+        )
+
+    # graphlib raises CycleError and names the offending areas.
+    graphlib.TopologicalSorter(areas).prepare()
+
+
 def test_contracts_never_depends_on_the_modules_that_implement_it() -> None:
     graph = _import_graph()
     implementers = {
         "behavio",
         "behavio.diagnostics",
-        "behavio.inference",
+        "behavio.inference.optimize",
         "behavio.models",
         "behavio.models.base",
-        "behavio.parameters",
-        "behavio.posterior_diagnostics",
-        "behavio.posterior_predictive",
-        "behavio.transforms",
-        "behavio.validation",
+        "behavio.inference.parameters",
+        "behavio.posterior.diagnostics",
+        "behavio.posterior.predictive",
+        "behavio.time.transforms",
+        "behavio.evaluate.splits",
     }
 
     for module, edges in graph.items():
@@ -194,8 +295,8 @@ def test_fit_result_audit_still_works_from_its_documented_public_path() -> None:
 # --------------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(("module_name", "names"), sorted(BACK_COMPATIBLE_HOMES.items()))
-def test_every_original_import_path_still_resolves_to_the_contract(
+@pytest.mark.parametrize(("module_name", "names"), sorted(CONTRACT_RE_EXPORT_HOMES.items()))
+def test_every_friendly_home_re_exports_the_one_contract_object(
     module_name: str, names: tuple[str, ...]
 ) -> None:
     module = __import__(module_name, fromlist=["__name__"])
@@ -225,37 +326,37 @@ def test_protected_array_moved_but_the_old_private_alias_still_works() -> None:
 
 
 def test_validation_fold_is_a_declared_protocol_every_first_party_split_satisfies() -> None:
-    from behavio.contracts.fold import ValidationFold
-    from behavio.validation import (
-        CohortValidationSplit,
+    from behavio.contracts.fold import EvaluationFold
+    from behavio.evaluate.splits import (
+        CohortSplit,
         HistoricalCohortForecastSplit,
         PopulationForecastSplit,
-        PopulationValidationSplit,
-        ValidationSplit,
+        PopulationSplit,
+        Split,
         cohort_forward_session_splits,
         forward_session_splits,
     )
 
-    assert ValidationFold is contracts.ValidationFold
+    assert EvaluationFold is contracts.EvaluationFold
     study = _study()
     for split in forward_session_splits(study):
-        assert isinstance(split, ValidationFold)
-        assert isinstance(split, ValidationSplit)
+        assert isinstance(split, EvaluationFold)
+        assert isinstance(split, Split)
     for split in cohort_forward_session_splits(study):
-        assert isinstance(split, ValidationFold)
-        assert isinstance(split, CohortValidationSplit)
+        assert isinstance(split, EvaluationFold)
+        assert isinstance(split, CohortSplit)
     for declared in (
-        PopulationValidationSplit,
+        PopulationSplit,
         PopulationForecastSplit,
         HistoricalCohortForecastSplit,
     ):
         # ``__protocol_attrs__`` is a CPython 3.12 implementation detail and
         # ``typing.get_protocol_members`` only arrives in 3.13, so the declared members are
         # read off the protocol itself; the package supports 3.11.
-        members = {name for name in dir(ValidationFold) if not name.startswith("_")}
+        members = {name for name in dir(EvaluationFold) if not name.startswith("_")}
         assert members
         assert members <= set(declared.__dataclass_fields__) | set(dir(declared))
-    assert not isinstance(object(), ValidationFold)
+    assert not isinstance(object(), EvaluationFold)
 
 
 def test_first_party_models_still_satisfy_the_re_homed_estimator_protocol() -> None:
@@ -672,7 +773,7 @@ def test_derived_quantities_reach_a_consumer_typed_on_plain_fit_result() -> None
 
 
 def test_the_natural_contract_is_optional_and_a_declining_model_is_inert() -> None:
-    plain = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0)
+    plain = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0)
 
     assert not isinstance(plain, contracts.NaturalParameterisation)
     with pytest.raises(TypeError, match="NaturalParameterisation"):
@@ -830,7 +931,7 @@ def test_a_procedure_with_no_convergence_question_cannot_report_a_status() -> No
 def test_required_task_columns_is_part_of_the_contract_and_is_surfaced() -> None:
     from behavio.models import EqualVarianceSDT
 
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0)
     assert isinstance(model, contracts.BehaviourEstimator)
     assert contracts.model_capabilities(model).required_task_columns == ("stimulus",)
     assert contracts.model_task_columns(EqualVarianceSDT()) == ("signal",)

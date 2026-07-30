@@ -29,8 +29,9 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from behavio import BernoulliHistoryGLM, ModelRecoveryScenario, Study, run_model_recovery
+from behavio import BernoulliHistoryGLM, Study, run_model_recovery
 from behavio.compose import smooth as make_smooth
+from behavio.recovery import ModelRecoveryScenario
 
 
 def design(n_sessions: int, n_trials: int) -> Study:
@@ -48,9 +49,9 @@ def design(n_sessions: int, n_trials: int) -> Study:
 
 
 def candidates(n_sessions: int):
-    static = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01)
+    static = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01)
     smooth = make_smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01),
         over="session_order",
         knots=tuple(float(knot) for knot in range(n_sessions)),
         smoothness=10.0,

@@ -1,9 +1,12 @@
 """The fold-fitted study-transform contract.
 
-:class:`TransformProvenance` moves here with the two protocols because
-:class:`FittedStudyTransform` declares it structurally. ``behavio.clocks`` and
-``behavio.study`` are imported normally: neither re-exports anything from
-``behavio.contracts``, so there is no cycle.
+:class:`TransformProvenance` lives here with the two protocols because
+:class:`FittedStudyTransform` declares it structurally.
+
+``ClockedStudy``, ``ClockSpec`` and ``Study`` appear only in annotations, so they are
+imported under ``TYPE_CHECKING``. That is what keeps ``behavio.contracts`` a leaf: the
+package that *declares* the transform contract must be importable before the package that
+*implements* it, and :mod:`behavio.time.transforms` imports these protocols back.
 """
 
 from __future__ import annotations
@@ -11,10 +14,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
-from behavio.clocks import ClockedStudy, ClockSpec
-from behavio.study import Study
+if TYPE_CHECKING:
+    from behavio.time.clocks import ClockedStudy, ClockSpec
+    from behavio.trials import Study
 
 
 @dataclass(frozen=True, slots=True)

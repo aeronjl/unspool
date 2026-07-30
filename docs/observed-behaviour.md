@@ -10,11 +10,11 @@ That boundary is five small modules, one per thing being carried:
 
 | Module | Holds | Page |
 |---|---|---|
-| `behavio.pose` | `PoseTrajectory`, and the DeepLabCut, SLEAP and `movement` readers | [Pose trajectories](pose.md) |
-| `behavio.ethograms` | `BehaviorInterval`, `BehaviorAnnotations`, and the Keypoint-MoSeq and BORIS readers | [Ethograms](ethograms.md) |
-| `behavio.covariates` | `BehaviorCovariate` | [Behavioural covariates](covariates.md) |
-| `behavio.sync` | `ClockSynchronization` and `fit_clock_synchronization()` | [Clock synchronisation](clock-synchronization.md) |
-| `behavio.trialization` | `TrialTiming`, `TrialWindow`, the reducers, and `attach_trial_columns()` | [From seconds to trials](#from-seconds-to-trials) |
+| `behavio.observed.pose` | `PoseTrajectory`, and the DeepLabCut, SLEAP and `movement` readers | [Pose trajectories](pose.md) |
+| `behavio.observed.ethograms` | `BehaviorInterval`, `BehaviorAnnotations`, and the Keypoint-MoSeq and BORIS readers | [Ethograms](ethograms.md) |
+| `behavio.observed.covariates` | `BehaviorCovariate` | [Behavioural covariates](covariates.md) |
+| `behavio.observed.device_clocks` | `DeviceClockSync` and `fit_device_clock_sync()` | [Clock synchronisation](clock-synchronization.md) |
+| `behavio.observed.trialization` | `TrialTiming`, `TrialWindow`, the reducers, and `attach_trial_columns()` | [From seconds to trials](#from-seconds-to-trials) |
 
 Readers live with the type they produce rather than in a module of their own,
 because a reader is only ever a thin translation into one of these types.
@@ -132,7 +132,7 @@ For photometry specifically, `fipha` consumes `interval_encoding_inputs()` and
 `normalized_progress()` directly in its event-kernel models; the return of a
 trial-level *neural* summary to a Behavio `Study` is documented in its
 [Behavio interoperability contract](https://aeronjl.github.io/fipha/behavio-interoperability/).
-Behavioural quantities no longer need that round trip: `behavio.trialization`
+Behavioural quantities no longer need that round trip: `behavio.observed.trialization`
 computes them here.
 
 !!! warning "What the bridge still does not do"
@@ -156,7 +156,7 @@ A `PoseTrajectory` lives in float64 seconds on a named hardware clock. A `Study`
 has one row per trial and **no time column at all** — its four required columns
 are `subject`, `session`, `trial` and `session_order`. The two therefore cannot
 be related until something supplies the missing coordinate: when each trial
-started. `behavio.trialization` is that bridge.
+started. `behavio.observed.trialization` is that bridge.
 
 ### Trial timing is declared, never inferred
 
@@ -166,7 +166,7 @@ does — which is why no time column is added to `Study`, and why the join is
 exact rather than positional:
 
 ```python
-from behavio.trialization import TrialTiming
+from behavio.observed.trialization import TrialTiming
 
 timing = TrialTiming.from_arrays(
     subject="mouse-07",

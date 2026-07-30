@@ -14,19 +14,11 @@ import numpy as np
 from scipy import stats
 from scipy.special import expit
 
-from behavio import (
-    BernoulliHistoryGLM,
-    DesignSpec,
-    InteractionTerm,
-    ModelRecoveryReport,
-    ModelRecoveryScenario,
-    NumericTerm,
-    Study,
-    compare_models,
-    historical_cohort_forecast_splits,
-    run_model_recovery,
-)
+from behavio import BernoulliHistoryGLM, Study, compare_models, run_model_recovery
 from behavio.compose import HierarchicalFitResult, HierarchicalModel, hierarchical, smooth
+from behavio.design import DesignSpec, InteractionTerm, NumericTerm
+from behavio.evaluate import historical_cohort_forecast_splits
+from behavio.recovery import ModelRecoveryReport, ModelRecoveryScenario
 from benchmarks.cell2025.benchmark import (
     calculate_session_metrics,
     load_study,
@@ -707,10 +699,10 @@ def _models() -> Mapping[str, Any]:
     )
     common = {"choice_lags": 0, "l2": 0.02}
     return {
-        "pooled_psychometric": BernoulliHistoryGLM(covariates=psychometric, **common),
-        "late_phase_psychometric": BernoulliHistoryGLM(covariates=late_phase, **common),
+        "pooled_psychometric": BernoulliHistoryGLM(predictors=psychometric, **common),
+        "late_phase_psychometric": BernoulliHistoryGLM(predictors=late_phase, **common),
         "early_bias_forecast": BernoulliHistoryGLM(
-            covariates=(
+            predictors=(
                 *late_phase,
                 "early_bias",
                 "early_bias_forecast_phase",
@@ -720,12 +712,12 @@ def _models() -> Mapping[str, Any]:
             **common,
         ),
         "static_partial_pooling": hierarchical(
-            BernoulliHistoryGLM(covariates=psychometric, **common),
+            BernoulliHistoryGLM(predictors=psychometric, **common),
             over="subject",
             scale=0.4,
         ),
         "shared_smooth_trajectory": smooth(
-            BernoulliHistoryGLM(covariates=psychometric, **common),
+            BernoulliHistoryGLM(predictors=psychometric, **common),
             over="session_order",
             knots=KNOTS,
             smoothness=3.0,
@@ -733,7 +725,7 @@ def _models() -> Mapping[str, Any]:
         ),
         "hierarchical_smooth_trajectory": hierarchical(
             smooth(
-                BernoulliHistoryGLM(covariates=psychometric, **common),
+                BernoulliHistoryGLM(predictors=psychometric, **common),
                 over="session_order",
                 knots=KNOTS,
                 smoothness=3.0,

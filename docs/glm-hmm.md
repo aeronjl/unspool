@@ -37,7 +37,7 @@ word “input-driven” here.
 from behavio import BernoulliGLMHMM
 
 model = BernoulliGLMHMM(
-    covariates=("stimulus",),
+    predictors=("stimulus",),
     choice_lags=1,
     n_states=2,
     n_restarts=5,
@@ -68,7 +68,7 @@ mapping needed by simulation and the generic recovery API.
 
 ```python
 sticky = BernoulliGLMHMM(
-    covariates=("stimulus",),
+    predictors=("stimulus",),
     n_states=3,
     stickiness=2.0,
 )

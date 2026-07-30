@@ -11,7 +11,7 @@ from scipy.special import expit
 
 from behavio._internal.arrays import protected_array
 from behavio.contracts.compose import PenalisedDesign
-from behavio.design import DesignSpec
+from behavio.design.matrix import DesignSpec
 from behavio.models._kernels.bernoulli import (
     BernoulliLikelihood,
     fit_bernoulli,
@@ -25,7 +25,7 @@ from behavio.models.base import (
     UnsupportedPredictionMode,
 )
 from behavio.models.glm import BernoulliHistoryGLM
-from behavio.study import REQUIRED_COLUMNS, Study
+from behavio.trials import REQUIRED_COLUMNS, Study
 
 
 class _DelegatedGLMBaseline:
@@ -243,7 +243,7 @@ class Psychometric(_DelegatedGLMBaseline):
 
     def _glm(self) -> BernoulliHistoryGLM:
         return BernoulliHistoryGLM(
-            covariates=(self.stimulus,), outcome=self.outcome, choice_lags=0, l2=self.l2
+            predictors=(self.stimulus,), outcome=self.outcome, choice_lags=0, l2=self.l2
         )
 
     @property

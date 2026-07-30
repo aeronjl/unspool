@@ -6,7 +6,7 @@ implementations have a traceable history.
 ## The library's own provenance: `environment/environment.json`
 
 Every [evidence bundle](protocols/evidence-bundles.md) carries an environment record
-written by `behavio.evidence.capture_environment` at the moment the bundle is built:
+written by `behavio.report.evidence_bundles.capture_environment` at the moment the bundle is built:
 
 ```json
 {

@@ -13,12 +13,8 @@ model-criticism workflow described by [Gabry et al.
 ## A minimal behavioural check
 
 ```python
-from behavio import (
-    CategoryRateDiscrepancy,
-    MeanDiscrepancy,
-    SwitchRateDiscrepancy,
-    posterior_predictive_check,
-)
+from behavio import posterior_predictive_check
+from behavio.posterior import CategoryRateDiscrepancy, MeanDiscrepancy, SwitchRateDiscrepancy
 
 audit = posterior_predictive_check(
     posterior,
@@ -78,8 +74,8 @@ chronology or bridge session boundaries on the user's behalf.
 ## Policies and warnings
 
 ```python
-from behavio import PosteriorPredictivePolicy
-from behavio.posterior_predictive import PredictiveMultiplicity
+from behavio.posterior import PosteriorPredictivePolicy
+from behavio.posterior.predictive import PredictiveMultiplicity
 
 policy = PosteriorPredictivePolicy(
     interval_probability=0.9,

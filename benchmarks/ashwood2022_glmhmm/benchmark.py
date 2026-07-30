@@ -35,12 +35,12 @@ from behavio import (
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
     MixtureModel,
-    PredictionMode,
     Psychometric,
     Study,
     UniformChoiceGuess,
     mix,
 )
+from behavio.models import PredictionMode
 from benchmarks.ashwood2022_glmhmm.fetch_data import (
     ARCHIVE_LICENCE,
     ARCHIVE_SHA256,
@@ -298,7 +298,7 @@ def glm_hmm(n_states: int) -> BernoulliGLMHMM:
     """Return the frozen GLM-HMM configuration for a given state count."""
 
     return BernoulliGLMHMM(
-        covariates=COVARIATES,
+        predictors=COVARIATES,
         choice_lags=CHOICE_LAGS,
         n_states=n_states,
         n_restarts=N_RESTARTS,
@@ -310,7 +310,7 @@ def glm_hmm(n_states: int) -> BernoulliGLMHMM:
 def single_state_glm() -> BernoulliHistoryGLM:
     """Ashwood's K = 1 comparison model: the same GLM without latent states."""
 
-    return BernoulliHistoryGLM(covariates=COVARIATES, choice_lags=CHOICE_LAGS, l2=L2)
+    return BernoulliHistoryGLM(predictors=COVARIATES, choice_lags=CHOICE_LAGS, l2=L2)
 
 
 def lapse_model() -> MixtureModel:

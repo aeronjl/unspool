@@ -30,7 +30,7 @@ from behavio.contracts.adapter import (
     StudyAdapter,
     adapter_capabilities,
 )
-from behavio.study import Study
+from behavio.trials import Study
 
 FIXTURES = Path(__file__).parent / "fixtures" / "tables"
 

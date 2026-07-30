@@ -32,7 +32,7 @@ from behavio.models._kernels.basis import (
     validated_knots,
 )
 from behavio.models._kernels.introspection import Describable
-from behavio.study import Study
+from behavio.trials import Study
 
 __all__ = ["SmoothModel", "smooth"]
 
@@ -111,7 +111,7 @@ class SmoothModel(Describable):
     Parameter naming is stable and mechanical: a smoothed parameter ``p`` of the wrapped
     model becomes ``p[clock=knot]`` for each knot, in coefficient-major, knot-minor order,
     and a parameter that was not smoothed keeps its own name and its single coordinate. So
-    ``BernoulliHistoryGLM(covariates=("stimulus",))`` smoothed over ``session_order`` with
+    ``BernoulliHistoryGLM(predictors=("stimulus",))`` smoothed over ``session_order`` with
     knots ``(0, 4)`` has parameters ``intercept[session_order=0]``,
     ``intercept[session_order=4]``, ``stimulus[session_order=0]``,
     ``stimulus[session_order=4]``, ``choice_lag_1[session_order=0]``, ...; smoothing only

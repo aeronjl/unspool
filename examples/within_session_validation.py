@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-from behavio import (
-    BernoulliHistoryGLM,
-    Study,
-    evaluate_splits,
-    within_session_rolling_splits,
-)
+from behavio import BernoulliHistoryGLM, Study, evaluate_splits
+from behavio.evaluate import within_session_rolling_splits
 
 
 def build_design() -> Study:
@@ -22,7 +18,7 @@ def build_design() -> Study:
 
 def main() -> None:
     model = BernoulliHistoryGLM(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         choice_lags=1,
         l2=0.1,
     )

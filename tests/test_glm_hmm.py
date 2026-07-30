@@ -4,19 +4,21 @@ import numpy as np
 import pytest
 
 from behavio import (
-    BehaviourModel,
     BernoulliGLMHMM,
     BernoulliHistoryGLM,
-    FitDiagnostics,
-    FitResult,
-    PredictionMode,
     Study,
-    UnsupportedPredictionMode,
     evaluate_splits,
     forward_session_splits,
     run_parameter_recovery,
 )
 from behavio.compose import smooth as make_smooth
+from behavio.models import (
+    BehaviourModel,
+    FitDiagnostics,
+    FitResult,
+    PredictionMode,
+    UnsupportedPredictionMode,
+)
 from behavio.models._kernels.bernoulli import ordered_session_indices
 
 
@@ -181,7 +183,7 @@ def test_analytic_likelihood_gradient_matches_finite_differences() -> None:
         }
     )
     model = BernoulliGLMHMM(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         choice_lags=1,
         l2=0.2,
         n_restarts=1,

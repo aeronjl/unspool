@@ -85,6 +85,7 @@ from behavio.models.sdt import (
     roc_points,
     z_roc_summary,
 )
+from behavio.models.state_alignment import LatentStateAlignment, align_latent_states
 
 __all__ = [
     "AsymmetricLearning",
@@ -111,6 +112,7 @@ __all__ = [
     "GLMHMMParameters",
     "GLMHMMSimulation",
     "GenerativeBehaviourModel",
+    "LatentStateAlignment",
     "LearningRule",
     "MetaSDT",
     "ModelCapabilities",
@@ -145,6 +147,7 @@ __all__ = [
     "WienerDriftDiffusion",
     "WinStayLoseShift",
     "ZRocSummary",
+    "align_latent_states",
     "describe_model",
     "detection_rates",
     "equal_variance_summary",

@@ -3,15 +3,9 @@ import json
 import numpy as np
 import pytest
 
-from behavio import (
-    AuditSeverity,
-    FitAuditPolicy,
-    FitAuditStatus,
-    FitDiagnostics,
-    FitResult,
-    GLMHMMFitResult,
-    audit_fit,
-)
+from behavio import audit_fit
+from behavio.diagnostics import AuditSeverity, FitAuditPolicy, FitAuditStatus
+from behavio.models import FitDiagnostics, FitResult, GLMHMMFitResult
 
 
 def _diagnostics(**changes: object) -> FitDiagnostics:

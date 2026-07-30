@@ -3,19 +3,18 @@ import json
 import numpy as np
 import pytest
 
-from behavio import (
+from behavio import PosteriorResult, run_sensitivity_analysis
+from behavio.contracts import AuditSeverity
+from behavio.posterior import (
     PosteriorAuditPolicy,
     PosteriorGroup,
-    PosteriorResult,
     PosteriorVariable,
     SensitivityMetric,
     SensitivityOutcome,
     SensitivityScenario,
     posterior_sensitivity_outcome,
-    run_sensitivity_analysis,
 )
-from behavio.contracts import AuditSeverity
-from behavio.sensitivity import SensitivityError
+from behavio.posterior.sensitivity import SensitivityError
 
 
 def unaudited_policy() -> PosteriorAuditPolicy:

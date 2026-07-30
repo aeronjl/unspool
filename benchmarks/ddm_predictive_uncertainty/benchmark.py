@@ -8,8 +8,9 @@ from typing import Any
 
 import numpy as np
 
-from behavio import ModelDataError, Study, WienerDriftDiffusion
+from behavio import Study, WienerDriftDiffusion
 from behavio.compose import HierarchicalModel, hierarchical, smooth
+from behavio.models import ModelDataError
 from benchmarks.provenance import render
 
 TRAINING_SUBJECTS = 8
@@ -285,7 +286,7 @@ def _model(
     return hierarchical(
         smooth(
             WienerDriftDiffusion(
-                covariates=("stimulus",),
+                predictors=("stimulus",),
                 n_restarts=1,
                 max_iterations=350,
                 tolerance=1e-6,

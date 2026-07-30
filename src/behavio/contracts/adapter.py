@@ -8,7 +8,7 @@ it must never invent ``session_order`` -- existed only in prose.
 :class:`StudyAdapter` makes those conventions structural. It is deliberately shaped around
 what the existing adapters already do: the frozen source dataclass *is* the adapter. It
 declares the source it points at, and :meth:`StudyAdapter.read` turns that declaration into
-a validated :class:`behavio.study.Study`. The free functions remain the primary API; the
+a validated :class:`behavio.trials.Study`. The free functions remain the primary API; the
 protocol adds the stable identity, the declared source type, and the chronology policy that
 a registry, an evidence bundle, or a conformance harness can read without special-casing
 each adapter.
@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Protocol, runtime_checkable
 
-from behavio.study import Study
+from behavio.trials import Study
 
 
 class SourceType(StrEnum):

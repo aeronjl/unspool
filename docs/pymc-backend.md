@@ -32,7 +32,7 @@ task = TaskSpec(
     predictors=("stimulus",),
 )
 model = hierarchical(
-    BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.25),
+    BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.25),
     over="subject",
     scale=0.5,
 )

@@ -15,7 +15,6 @@ from behavio import (
     BiasOnly,
     BinaryQLearning,
     ChoiceSpec,
-    ModelRecoveryScenario,
     Perseveration,
     RewardSpec,
     Study,
@@ -25,6 +24,7 @@ from behavio import (
     compare_models,
     run_model_recovery,
 )
+from behavio.recovery import ModelRecoveryScenario
 from benchmarks.chen2021_bandit.fetch_data import (
     ARCHIVE_MD5,
     ARCHIVE_SHA256,

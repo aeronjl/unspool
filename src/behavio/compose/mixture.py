@@ -38,7 +38,7 @@ from behavio.contracts.mixture import (
 )
 from behavio.contracts.natural import natural_quantities
 from behavio.models._kernels.introspection import WARNING, Describable, ModelFinding
-from behavio.study import Study
+from behavio.trials import Study
 
 __all__ = [
     "MixtureLikelihood",

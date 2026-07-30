@@ -12,7 +12,7 @@ from typing import Any, ClassVar
 import numpy as np
 
 from behavio.contracts.adapter import SessionOrderPolicy, SourceType
-from behavio.study import REQUIRED_COLUMNS, Study
+from behavio.trials import REQUIRED_COLUMNS, Study
 
 ADAPTER_NAME = "behavio.nwb"
 ADAPTER_VERSION = "1"

@@ -14,13 +14,8 @@ chosen.
 ## Declare one semantic object
 
 ```python
-from behavio import (
-    ParameterRole,
-    ParameterSpace,
-    ParameterSpec,
-    ParameterTransform,
-    PriorSpec,
-)
+from behavio import ParameterSpace
+from behavio.inference import ParameterRole, ParameterSpec, ParameterTransform, PriorSpec
 
 space = ParameterSpace(
     (
@@ -137,7 +132,7 @@ dependencies do not become part of Behavio core.
 
 ## API
 
-::: behavio.parameters
+::: behavio.inference.parameters
     options:
       members:
         - ParameterRole

@@ -10,7 +10,7 @@ design = Study.factorial(
     seed=104,
 )
 model = WienerDriftDiffusion(
-    covariates=("stimulus",),
+    predictors=("stimulus",),
     n_restarts=3,
     simulation_time_step=0.0005,
 )

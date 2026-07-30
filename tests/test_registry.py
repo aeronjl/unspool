@@ -2,16 +2,11 @@
 
 import pytest
 
-from behavio import (
-    BernoulliHistoryGLM,
-    EstimatorRegistration,
-    EstimatorRegistry,
-    RegistryError,
-    builtin_estimator_registry,
-)
+from behavio import BernoulliHistoryGLM, EstimatorRegistry, builtin_estimator_registry
 from behavio.compose import HierarchicalModel, SmoothModel
-from behavio.protocol import CandidateSpec, Setting
-from behavio.runner import DeclarationCheck, verify_candidate_declarations
+from behavio.protocol.runner import DeclarationCheck, verify_candidate_declarations
+from behavio.protocol.schema import CandidateSpec, Setting
+from behavio.registry import EstimatorRegistration, RegistryError
 
 
 def glm_factory(**config):
@@ -54,7 +49,7 @@ def test_registry_constructs_validated_external_estimators_and_manifests_provena
 
     model = registry.create(
         "mylab.models.HistoryGLM",
-        {"covariates": ("stimulus",), "choice_lags": 0},
+        {"predictors": ("stimulus",), "choice_lags": 0},
     )
 
     assert model.model_name == "bernoulli-history-glm"
@@ -128,7 +123,7 @@ def test_the_builtin_registry_resolves_every_implementation_the_cli_accepts() ->
     )
     model = registry.create(
         "behavio.models.BernoulliHistoryGLM",
-        {"covariates": ("stimulus",), "choice_lags": 0},
+        {"predictors": ("stimulus",), "choice_lags": 0},
     )
     assert isinstance(model, BernoulliHistoryGLM)
 
@@ -141,7 +136,7 @@ def test_the_registry_resolves_a_composed_candidate_from_flat_settings() -> None
         {
             "base": "behavio.compose.smooth",
             "base.base": "behavio.models.BernoulliHistoryGLM",
-            "base.base.covariates": ("stimulus",),
+            "base.base.predictors": ("stimulus",),
             "base.base.choice_lags": 0,
             "base.over": "session_order",
             "base.knots": (0.0, 2.0),
@@ -158,13 +153,13 @@ def test_base_settings_without_a_base_implementation_are_refused() -> None:
     registry = builtin_estimator_registry()
 
     with pytest.raises(RegistryError, match="need a base implementation"):
-        registry.create("behavio.models.BernoulliHistoryGLM", {"base.covariates": ("stimulus",)})
+        registry.create("behavio.models.BernoulliHistoryGLM", {"base.predictors": ("stimulus",)})
 
 
 def test_a_registered_declaration_is_decidable_rather_than_unverifiable() -> None:
     """The point of wiring the registry in: no shrugging about a name it knows."""
 
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0)
 
     verified = findings(declared("behavio.models.BernoulliHistoryGLM", choice_lags=0), model)
     contradicted = findings(declared("behavio.models.BinaryQLearning"), model)
@@ -182,7 +177,7 @@ def test_a_composed_candidate_verifies_through_the_registry() -> None:
     from behavio.compose import hierarchical
 
     model = hierarchical(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0), over="subject"
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0), over="subject"
     )
 
     statuses = findings(
@@ -205,7 +200,7 @@ def test_a_composed_candidate_wrapping_the_wrong_base_is_contradicted() -> None:
     from behavio.compose import hierarchical
 
     model = hierarchical(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0), over="subject"
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0), over="subject"
     )
 
     statuses = findings(
@@ -227,7 +222,7 @@ def test_a_composed_candidate_wrapping_the_wrong_base_is_contradicted() -> None:
 def test_an_unregistered_declaration_still_falls_back_to_the_import_free_check() -> None:
     """A registry that has never heard of a name must not manufacture a verdict."""
 
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0)
 
     statuses = findings(
         declared("some.unimported.package.BernoulliHistoryGLM"),
@@ -247,7 +242,7 @@ def test_an_extension_registry_makes_its_own_model_decidable() -> None:
         version="2.1.0",
         produces=BernoulliHistoryGLM,
     )
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0)
 
     assert findings(declared("mylab.models.HistoryGLM"), model, registry=registry) == {
         "implementation": DeclarationCheck.VERIFIED

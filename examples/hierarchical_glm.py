@@ -17,7 +17,7 @@ def build_design() -> Study:
 
 
 def main() -> None:
-    base = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.05)
+    base = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.05)
     generator = hierarchical(base, over="subject", scale=0.45)
     truth = {"intercept": -0.2, "stimulus": 1.0, "choice_lag_1": 0.35}
     simulation = generator.simulate_with_effects(build_design(), truth, seed=71)

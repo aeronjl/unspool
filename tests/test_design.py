@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from behavio import (
+from behavio import Study
+from behavio.design import (
     CategoricalTerm,
     DesignSpec,
     DesignValidationError,
@@ -10,7 +11,6 @@ from behavio import (
     InteractionTerm,
     NumericTerm,
     StandardizeTerm,
-    Study,
 )
 
 
@@ -153,7 +153,7 @@ def test_design_verifies_extension_term_names_before_model_fitting() -> None:
         required_columns = ("stimulus",)
 
         def build(self, study):
-            from behavio import FeatureBlock
+            from behavio.design import FeatureBlock
 
             return FeatureBlock(("observed",), np.ones((len(study), 1)))
 

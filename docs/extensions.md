@@ -25,7 +25,7 @@ re-export them, so older imports keep working.
 | Posterior samples | `PosteriorResult` or ArviZ adapter | convergence audit, PPC, PSIS-LOO, SBC, and sensitivity |
 | A sampler-backed model | `PosteriorBehaviourEstimator` | the sampled counterpart of the estimator contract, plus a declared point-summary projection |
 | A behavioural summary | `PredictiveDiscrepancy` | grouped posterior-predictive checks |
-| A training/test partition | `ValidationFold` | fold-fitted transforms, evaluation, comparison, and recovery |
+| A training/test partition | `EvaluationFold` | fold-fitted transforms, evaluation, comparison, and recovery |
 | A complete public analysis | literature-recipe contract | documentation and evidence-bundle integration |
 
 Three of these surfaces are optional widenings that only refine what a model already
@@ -125,7 +125,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from behavio.contracts.adapter import SessionOrderPolicy, SourceType
-from behavio.study import Study
+from behavio.trials import Study
 
 
 @dataclass(frozen=True, slots=True)
@@ -184,7 +184,7 @@ An estimator supplies stable identity, the complete observed event, supported pr
 modes, and three methods:
 
 ```python
-from behavio import BehaviourEstimator, model_capabilities
+from behavio.models import BehaviourEstimator, model_capabilities
 
 assert isinstance(external_model, BehaviourEstimator)
 capabilities = model_capabilities(external_model)
@@ -245,7 +245,7 @@ by class name against already-imported modules and is often recorded as *unverif
 whose identity has drifted from the registration it was made under.
 
 ```python
-from behavio.runner import run_protocol, verify_candidate_declarations
+from behavio.protocol.runner import run_protocol, verify_candidate_declarations
 
 verification = verify_candidate_declarations(protocol, models, registry=registry)
 assert all(item.verified for item in verification)
@@ -266,7 +266,7 @@ model = registry.create(
     {
         "base": "behavio.compose.smooth",
         "base.base": "behavio.models.BernoulliHistoryGLM",
-        "base.base.covariates": ("stimulus",),
+        "base.base.predictors": ("stimulus",),
         "base.over": "session_order",
         "base.knots": (0.0, 4.0, 8.0),
         "over": "subject",
@@ -335,7 +335,7 @@ be recorded as findings against your model.
 
 ```python
 from behavio import compare_models
-from behavio.evaluation import PosteriorFoldPolicy
+from behavio.evaluate.folds import PosteriorFoldPolicy
 
 report = compare_models(
     {"sampled": external_model, "baseline": BiasOnly()},

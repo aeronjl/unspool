@@ -1,6 +1,6 @@
 # Pose trajectories
 
-`behavio.pose` holds one type and the readers that fill it. A `PoseTrajectory`
+`behavio.observed.pose` holds one type and the readers that fill it. A `PoseTrajectory`
 is one keypoint of one tracked individual: coordinates, a confidence-like score,
 timestamps, and the identity fields that make those numbers interpretable. It is
 one shape in the wider [observed-behaviour boundary](observed-behaviour.md).
@@ -30,7 +30,7 @@ x/y/likelihood triplet.
 ```python
 from importlib.metadata import version
 
-from behavio.pose import pose_from_deeplabcut_file
+from behavio.observed.pose import pose_from_deeplabcut_file
 
 pose = pose_from_deeplabcut_file(
     "sessionDLC_resnet50.h5",
@@ -56,7 +56,7 @@ dimension attributes, so the caller must declare them; Python-native and
 MATLAB-compatible presets use different axis orders.
 
 ```python
-from behavio.pose import pose_from_sleap_analysis_h5
+from behavio.observed.pose import pose_from_sleap_analysis_h5
 
 pose = pose_from_sleap_analysis_h5(
     "predictions.analysis.h5",
@@ -88,7 +88,7 @@ actively released. Behavio consumes its output rather than competing with it:
 ```python
 from movement.io import load_poses
 
-from behavio.pose import pose_from_movement
+from behavio.observed.pose import pose_from_movement
 
 dataset = load_poses.from_dlc_file("sessionDLC_resnet50.h5", fps=30.0)
 pose = pose_from_movement(
@@ -122,10 +122,10 @@ Three things in this boundary have no counterpart in `movement`, and stay here:
 
 - **Ethogram and annotation types.** `movement` covers poses and bounding boxes;
   point events and behavioural intervals are Behavio types, in
-  [`behavio.ethograms`](ethograms.md).
+  [`behavio.observed.ethograms`](ethograms.md).
 - **Foreign-clock alignment.** `movement` interpolates gaps along a pose's own
   time axis. It has no clock identity, no synchronisation fit and no lineage, so
-  [`fit_clock_synchronization()`](clock-synchronization.md) and
+  [`fit_device_clock_sync()`](clock-synchronization.md) and
   [`BehaviorCovariate.aligned_to()`](covariates.md) remain here.
 - **Value/mask separation.** `movement` gates confidence by overwriting
   coordinates with `NaN`, and `compute_speed` uses a central difference. On a
@@ -156,11 +156,11 @@ synchronisation lineage. From there the composition continues through
 ## From pose to a `Study`
 
 A pose is in seconds; a [`Study`](data-contract.md) is in trials and has no time
-column. `behavio.trialization` closes that gap. Declare when the trials started
+column. `behavio.observed.trialization` closes that gap. Declare when the trials started
 on the pose's own clock, then reduce the derived covariate over trial windows:
 
 ```python
-from behavio.trialization import (
+from behavio.observed.trialization import (
     MaximumValue,
     TrialTiming,
     TrialWindow,

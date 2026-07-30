@@ -13,7 +13,7 @@ design = Study.factorial(
 )
 model = mix(
     WienerDriftDiffusion(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         nondecision_time_bounds=(0.1, 0.6),
         n_restarts=3,
     ),

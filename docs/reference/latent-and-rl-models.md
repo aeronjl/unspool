@@ -1,4 +1,4 @@
-# Latent-state and reinforcement-learning API
+# `behavio.models`: latent-state and reinforcement-learning API
 
 Latent states and learned values need observable competitors, prospective predictions,
 state or parameter recovery, and explicit reset semantics.

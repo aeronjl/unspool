@@ -10,13 +10,10 @@ from typing import Any
 
 import numpy as np
 
-from behavio import (
-    Study,
-    TrajectoryPanel,
-    compare_trajectory_shapes,
-    leave_one_lab_out_splits,
-    read_ibl_one_sessions,
-)
+from behavio import Study
+from behavio.adapters import read_ibl_one_sessions
+from behavio.compare import ParameterTrajectoryPanel, compare_trajectory_shapes
+from behavio.evaluate import leave_one_lab_out_splits
 from benchmarks.ibl2021.refresh_manifest import PUBLIC_PASSWORD
 from benchmarks.ibl2021_replicated.manifest import (
     EXPECTED_MANIFEST_SHA256,
@@ -128,7 +125,7 @@ def run(
             np.mean(trajectories[subject][:3])
         )
 
-    panel = TrajectoryPanel(
+    panel = ParameterTrajectoryPanel(
         grid=np.arange(6, dtype=np.float64),
         values=np.stack([trajectories[subject] for subject in subjects]),
         subjects=subjects,

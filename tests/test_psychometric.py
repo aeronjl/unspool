@@ -13,13 +13,7 @@ import numpy as np
 import pytest
 from scipy.special import erf, expit, ndtr
 
-from behavio import (
-    Study,
-    UniformChoiceGuess,
-    mix,
-    model_capabilities,
-    run_parameter_recovery,
-)
+from behavio import Study, UniformChoiceGuess, mix, run_parameter_recovery
 from behavio.contracts import (
     BehaviourModel,
     DerivedQuantity,
@@ -34,6 +28,7 @@ from behavio.models import (
     PsychometricLink,
     PsychometricParameters,
     erf_two_gamma_probability,
+    model_capabilities,
 )
 from benchmarks.ibl2021_psychometrics.psychometric import erf_psycho_2gammas
 

@@ -2,9 +2,9 @@
 
 ``ObjectiveTarget`` and ``PriorMeasure`` are pure declarations and live here.
 ``OptimizationProblem``, ``OptimizationAttempt`` and ``OptimizationRun`` stay in
-:mod:`behavio.inference`: they carry substantial validation logic and
-``OptimizationProblem`` needs a concrete :class:`behavio.parameters.ParameterSpace` at
-runtime, which ``behavio.contracts`` must not import (``behavio.parameters`` re-exports
+:mod:`behavio.inference.optimize`: they carry substantial validation logic and
+``OptimizationProblem`` needs a concrete :class:`behavio.inference.parameters.ParameterSpace` at
+runtime, which ``behavio.contracts`` must not import (``behavio.inference.parameters`` re-exports
 :class:`~behavio.contracts.parameters.ParameterSpaceProvider` from here, so a runtime
 import would be circular). They are referenced under ``TYPE_CHECKING`` only, which keeps
 this package a runtime leaf while the protocol stays fully typed.
@@ -16,7 +16,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from behavio.inference import OptimizationProblem, OptimizationRun
+    from behavio.inference.optimize import OptimizationProblem, OptimizationRun
 
 
 class ObjectiveTarget(StrEnum):

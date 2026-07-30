@@ -24,7 +24,7 @@ from scipy.special import expit
 from behavio._internal.arrays import protected_array
 from behavio.contracts.estimator import FitResult, ModelPrediction, Prediction, PredictionMode
 from behavio.models._kernels.penalised import fit_penalised_linear
-from behavio.study import Study
+from behavio.trials import Study
 
 
 @dataclass(frozen=True, slots=True)

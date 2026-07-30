@@ -20,7 +20,7 @@ from behavio.adapters.table import (
     session_order_from_explicit,
 )
 from behavio.contracts.adapter import SessionOrderPolicy, SourceType
-from behavio.study import Study
+from behavio.trials import Study
 
 FIXTURES = Path(__file__).parent / "fixtures" / "tables"
 

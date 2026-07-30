@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from behavio import ProtocolState, RecoveryKind, protocol_from_dict
+from behavio.protocol import ProtocolState, RecoveryKind, protocol_from_dict
 from benchmarks.cell2025_flagship.benchmark import MODEL_ORDER
 from benchmarks.cell2025_protocol.benchmark import (
     DEFAULT_DESTINATION,

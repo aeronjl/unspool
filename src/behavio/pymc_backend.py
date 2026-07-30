@@ -21,14 +21,14 @@ import numpy as np
 from behavio.compose.hierarchy import HierarchicalModel
 from behavio.contracts.compose import group_blocks
 from behavio.models._kernels.bernoulli import BernoulliLikelihood
-from behavio.posterior import (
+from behavio.posterior.result import (
     PosteriorGroup,
     PosteriorResult,
     PosteriorVariable,
     posterior_result_from_arviz,
 )
-from behavio.study import Study
-from behavio.task import TaskSpec
+from behavio.task.spec import TaskSpec
+from behavio.trials import Study
 
 
 class PyMCBackendError(ValueError):
@@ -53,8 +53,9 @@ class PyMCHierarchicalGLMBackend:
 
     ``seed`` is entropy for :class:`numpy.random.SeedSequence`, not a 32-bit sampler seed:
     it is any non-negative integer, and the adapter derives the 32-bit words PyMC needs.
-    That is what lets a seed emitted by :mod:`behavio.sbc`, :mod:`behavio.recovery`, or
-    :mod:`behavio.model_recovery` be handed straight to this backend.
+    That is what lets a seed emitted by
+    :mod:`behavio.posterior.simulation_based_calibration`, :mod:`behavio.recovery.parameters`, or
+    :mod:`behavio.recovery.models` be handed straight to this backend.
     """
 
     draws: int = 1_000

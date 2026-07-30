@@ -42,7 +42,7 @@ def run(*, repeats: int = 20, seed: int = 91_337) -> dict[str, Any]:
     if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
         raise ValueError("seed must be a non-negative integer")
     model = WienerDriftDiffusion(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         n_restarts=3,
         max_iterations=300,
         simulation_time_step=0.0001,

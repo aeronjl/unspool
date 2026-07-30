@@ -37,7 +37,7 @@ coordinate. That is a model's own knowledge, so :func:`natural_quantities` repor
 delta-method standard error and leaves :attr:`DerivedQuantity.interval` absent. A model
 that can form an honest interval attaches one itself.
 
-It is also not :class:`behavio.parameters.ParameterSpace`. A ``ParameterSpace`` is a
+It is also not :class:`behavio.inference.parameters.ParameterSpace`. A ``ParameterSpace`` is a
 declarative, serialisable, element-by-element description in which every natural parameter
 maps through one of three named transforms of exactly one optimizer coordinate. That is a
 different and stricter thing: it cannot express ordered rating criteria built from

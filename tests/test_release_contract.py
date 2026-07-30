@@ -1,8 +1,21 @@
-"""Public-surface regression for the completed 0.21--0.24 package boundary."""
+"""What ``behavio`` promises at its top level, and the argument for every name in it.
+
+``behavio.__all__`` is not a re-export of the package; it is a curated golden path, and the
+sets below *are* that path. The final test asserts set equality, not containment: a name
+added to the top level without an argument written here fails, and so does a name silently
+dropped. Everything the package implements that is not named below is public and supported
+at ``behavio.<area>.<name>``.
+
+The rule the boundary is drawn with: **pin what a user writes down on the shortest correct
+path from a table of trials to a validated, compared and audited result.** A type read back
+off a call, an optional refinement of a pinned argument, a display, or a mechanism the
+library uses to talk to code it did not write lives in its area instead.
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
+from types import ModuleType
 
 import behavio
 
@@ -59,7 +72,7 @@ MODEL_CATALOGUE = {
 #: components are pinned because ``mix`` is useless without one and there is no way to write
 #: your own without first seeing these.
 #:
-#: Deliberately unpinned, though all remain importable from ``behavio``:
+#: Deliberately unpinned, and therefore reached at ``behavio.compose.<name>``:
 #: ``HierarchicalSimulation``, ``MixtureSimulation`` and ``CoefficientTrajectory`` (records you
 #: read back off a call, free to gain fields, in the same class as ``PsychometricSummary``), and
 #: the whole of ``behavio.contracts.compose`` and ``behavio.contracts.mixture`` --
@@ -86,7 +99,7 @@ COMBINATOR_SURFACE = {
 #: published equations cannot move. ``forced_choice_proportion_correct`` is left out because
 #: it only inverts ``forced_choice_d_prime``, and ``erf_two_gamma_probability`` because it
 #: exists to reproduce one released implementation rather than to be a general entry point;
-#: both remain exported.
+#: both remain public at ``behavio.models``.
 CLOSED_FORM_SUMMARIES = {
     "detection_rates",
     "equal_variance_summary",
@@ -95,7 +108,8 @@ CLOSED_FORM_SUMMARIES = {
     "z_roc_summary",
 }
 
-# Exported from the top level, documented, and deliberately not pinned by any set here.
+# Documented and supported, deliberately not pinned by any set here, and therefore reached
+# through their own area rather than from ``behavio``.
 #
 # The whole of ``behavio.plot``: the twelve ``plot_*`` displays, ``figure_style``,
 # ``configure_figure_style``, ``save_svg`` and ``MatplotlibUnavailableError``. Plotting is the
@@ -104,7 +118,8 @@ CLOSED_FORM_SUMMARIES = {
 # already want to change these signatures. Pinning the shape of a display now would freeze it
 # against the reports it exists to present. The palette constants and ``FIGURE_RC_PARAMS`` are
 # not re-exported at the top level at all -- a house style is a detail of how a figure is
-# drawn, not a promise about what a caller may draw -- and stay in ``behavio.plot``.
+# drawn, not a promise about what a caller may draw -- and the displays themselves are now
+# reached the same way: ``from behavio.plot import plot_pareto_k``.
 #
 # The detection-theory and psychometric records: ``PsychometricFitResult``,
 # ``PsychometricParameters``, ``PsychometricSummary``, ``SignalDetectionSummary``,
@@ -167,7 +182,7 @@ POSTERIOR_EXTENSION_SURFACE = {
 #: the top level is not a promise.
 #:
 #: Where the line is drawn, and why these and not their neighbours: pin what a user writes
-#: down, not what runs underneath it. Deliberately unpinned, though all remain importable:
+#: down, not what runs underneath it. Deliberately unpinned, and reached through their area:
 #: the ``Any*`` structural aliases and ``posterior_draw_matrix`` /
 #: ``posterior_summary_message`` / ``posterior_log_predictive_density`` /
 #: ``posterior_parameter_columns`` (projections the library uses to talk to an estimator it
@@ -183,7 +198,8 @@ POSTERIOR_EXTENSION_SURFACE = {
 #: optional refinement of ``TableSource`` (``TableFormat``, ``ColumnType``,
 #: ``SessionOrderDerivation``, ``SessionOrderRule``, ``TableReadError``,
 #: ``DEFAULT_MISSING_VALUES``, the ``session_order_from_*`` helpers), since
-#: ``TableSource(path=...)`` alone is a working call and the rest are opt-in.
+#: ``TableSource(path=...)`` alone is a working call and the rest are opt-in. Everything
+#: unpinned here is reached at ``behavio.adapters`` or ``behavio.contracts``.
 #:
 #: Over-pinning is cheap now and expensive to undo. A name earns a place here by being
 #: unavoidable on the shortest correct path, not by being useful.
@@ -208,8 +224,8 @@ DATA_SOURCE_AND_VERIFICATION_SURFACE = {
 #: pinned because both reports carry it and ``decisive`` is the member a winner rule reads.
 #:
 #: ``ComparisonFamily`` and ``ComparisonMultiplicity`` are now *defined* in
-#: ``behavio._internal.multiplicity`` beside the step-up they describe, so that
-#: ``behavio.protocol`` can freeze the adjustment and ``behavio.posterior_comparison`` can
+#: ``behavio._internal.scoring`` beside the step-up they describe, so that
+#: ``behavio.protocol.schema`` can freeze the adjustment and ``behavio.posterior.comparison`` can
 #: size an ELPD family without either importing the estimator stack. That is exactly why
 #: the names are pinned here: three callers share two types, and the public address of both
 #: has to stay ``behavio``.
@@ -242,7 +258,7 @@ SHARED_EXECUTION_SURFACE = {
 #: into the study, so the column a user actually reads back holds plain strings. A name earns a
 #: pin by being unavoidable, and this one is avoidable.
 #:
-#: Also unpinned, though all remain exported: the reducers (``MeanValue``, ``MedianValue``,
+#: Also unpinned, and reached at ``behavio.observed``: the reducers (``MeanValue``, ``MedianValue``,
 #: ``MinimumValue``, ``MaximumValue``, ``FractionOfTimeInState``, ``EventCount``,
 #: ``FirstOccurrenceLatency``) and the two reducer protocols, because the set is explicitly
 #: designed to be open and will grow -- pinning today's members would imply the list is the
@@ -306,23 +322,88 @@ PARALLELISM_SURFACE = {
     "ParallelWorkerError",
 }
 
+#: Four names that no set above promises and that the shortest correct first analysis still
+#: cannot be written without. This is the *second* clause of the rule, and it is deliberately
+#: small: each entry names something a user types before they have any result to read.
+#:
+#: ``forward_session_splits`` is the plain single-cohort forecast split. Its multi-cohort
+#: sibling ``cohort_forward_session_splits`` is already in ``GOLDEN_PATH``, and the two are
+#: chosen between on one line of the first analysis; promising only the harder one would be
+#: an accident of which was written first.
+#:
+#: ``audit_fit`` is the frequentist twin of ``audit_posterior``, which
+#: ``INTEROPERABILITY_AND_EVIDENCE`` already pins. "Keep optimization failures and boundary
+#: estimates visible" is a stated scientific requirement of this package, and the call that
+#: does it for a maximum-likelihood fit cannot be one level less reachable than the call that
+#: does it for a sampled one.
+#:
+#: ``StudyValidationError`` and ``TaskValidationError`` are the two exceptions raised by the
+#: first two constructors a user writes, before any model exists. The same argument that pins
+#: ``ParallelWorkerError`` and ``UnpicklableTaskError`` -- an exception a caller cannot name
+#: is an exception they cannot handle -- reaches further here, not less far.
+#:
+#: Deliberately *not* here, and reached through their area instead: the whole of
+#: ``behavio.plot`` (a display is not on the path to a result); ``DesignSpec`` and the design
+#: terms (``behavio.design``); ``ClockSpec`` and the landmark clocks (``behavio.time``);
+#: ``model_capabilities`` and the fit records (``behavio.models``); the remaining splitters
+#: (``behavio.evaluate``); every ``*Policy`` and every report type (their area); and the NWB,
+#: DANDI and IBL readers (``behavio.adapters``), since ``read_table`` is the shortest path
+#: from a file to a ``Study`` and the rest are opt-in.
+FIRST_ANALYSIS_SURFACE = {
+    "forward_session_splits",
+    "audit_fit",
+    "StudyValidationError",
+    "TaskValidationError",
+}
+
+
+PROMISED = (
+    GOLDEN_PATH
+    | MODEL_CATALOGUE
+    | COMBINATOR_SURFACE
+    | CLOSED_FORM_SUMMARIES
+    | INTEROPERABILITY_AND_EVIDENCE
+    | POSTERIOR_EXTENSION_SURFACE
+    | DATA_SOURCE_AND_VERIFICATION_SURFACE
+    | OBSERVED_BEHAVIOUR_SURFACE
+    | MODEL_EXTENSION_SURFACE
+    | SHARED_EXECUTION_SURFACE
+    | PARALLELISM_SURFACE
+    | FIRST_ANALYSIS_SURFACE
+)
+
 
 def test_completed_release_surface_is_public_and_explicit() -> None:
-    promised = (
-        GOLDEN_PATH
-        | MODEL_CATALOGUE
-        | CLOSED_FORM_SUMMARIES
-        | INTEROPERABILITY_AND_EVIDENCE
-        | POSTERIOR_EXTENSION_SURFACE
-        | DATA_SOURCE_AND_VERIFICATION_SURFACE
-        | OBSERVED_BEHAVIOUR_SURFACE
-        | MODEL_EXTENSION_SURFACE
-        | SHARED_EXECUTION_SURFACE
-        | PARALLELISM_SURFACE
-    )
+    assert set(behavio.__all__) >= PROMISED
+    assert all(hasattr(behavio, name) for name in PROMISED)
 
-    assert promised <= set(behavio.__all__)
-    assert all(hasattr(behavio, name) for name in promised)
+
+def test_the_top_level_namespace_is_exactly_the_promised_surface() -> None:
+    """``__all__`` is the golden path, not a re-export of the package.
+
+    Containment is not enough. A name that reaches the top level without an argument written
+    in one of the sets above is exactly the drift that produced a 530-name namespace, and a
+    name quietly dropped from a promised set is a break nobody declared. Both fail here.
+    """
+
+    assert set(behavio.__all__) == PROMISED | {"__version__"}
+
+
+def test_nothing_beyond_the_golden_path_is_reachable_from_the_top_level() -> None:
+    """A culled name is gone from ``behavio``, not merely absent from ``__all__``.
+
+    ``__all__`` governs ``import *`` and tooling; it does not stop ``behavio.SomeCulledName``
+    from resolving if the root package still imports it. This release removed the aliases
+    rather than hiding them, so the module's public attributes and its ``__all__`` agree.
+    """
+
+    public = {
+        name
+        for name in vars(behavio)
+        if not name.startswith("_") and not isinstance(vars(behavio)[name], ModuleType)
+    }
+
+    assert public == PROMISED
 
 
 def test_release_orientation_documents_are_in_the_strict_site_navigation() -> None:

@@ -1,17 +1,12 @@
 import numpy as np
 import pytest
 
-from behavio import (
-    BernoulliHistoryGLM,
-    FitAuditStatus,
-    ModelRecoveryScenario,
-    Study,
-    historical_cohort_forecast_splits,
-    run_model_recovery,
-    run_model_recovery_grid,
-)
+from behavio import BernoulliHistoryGLM, Study, run_model_recovery
 from behavio.compose import SmoothModel
 from behavio.compose import smooth as make_smooth
+from behavio.diagnostics import FitAuditStatus
+from behavio.evaluate import historical_cohort_forecast_splits
+from behavio.recovery import ModelRecoveryScenario, run_model_recovery_grid
 
 
 def recovery_design(*, n_sessions: int = 10, n_trials: int = 120) -> Study:
@@ -63,9 +58,9 @@ def historical_recovery_design() -> Study:
 
 
 def competing_models(n_sessions: int = 10):
-    static = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01)
+    static = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01)
     smooth = make_smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01),
         over="session_order",
         knots=tuple(float(knot) for knot in range(n_sessions)),
         smoothness=10.0,
@@ -149,7 +144,7 @@ def test_model_recovery_builds_an_explicit_prospective_confusion_matrix() -> Non
 
 
 def test_model_recovery_accepts_an_exact_custom_validation_geometry() -> None:
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0, l2=0.01)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0, l2=0.01)
     scenario = ModelRecoveryScenario(
         name="stationary",
         truth_label="static",
@@ -188,7 +183,7 @@ def test_model_recovery_accepts_an_exact_custom_validation_geometry() -> None:
 
 
 def test_exact_candidate_ties_are_unresolved_and_reproducible() -> None:
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01)
     scenario = ModelRecoveryScenario(
         name="same-model-tie",
         truth_label="first",
@@ -214,9 +209,9 @@ def test_exact_candidate_ties_are_unresolved_and_reproducible() -> None:
 
 
 def test_nonconvergence_is_retained_and_excluded_from_selection() -> None:
-    good = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01)
+    good = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01)
     limited = BernoulliHistoryGLM(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         choice_lags=1,
         l2=0.01,
         max_iterations=1,
@@ -248,7 +243,7 @@ def test_nonconvergence_is_retained_and_excluded_from_selection() -> None:
 
 def test_audit_warnings_are_retained_without_disqualifying_a_candidate() -> None:
     warning_model = BernoulliHistoryGLM(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         choice_lags=1,
         l2=0.01,
         coefficient_warning_threshold=0.01,
@@ -276,7 +271,7 @@ def test_audit_warnings_are_retained_without_disqualifying_a_candidate() -> None
 
 
 def test_recovery_grid_compares_named_designs_with_independent_seeds() -> None:
-    model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01)
+    model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01)
     scenario = ModelRecoveryScenario(
         name="stationary",
         truth_label="static",

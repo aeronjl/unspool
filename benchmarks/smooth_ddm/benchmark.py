@@ -196,7 +196,7 @@ def run(*, repetitions: int = 20, seed: int = 82_411) -> dict[str, Any]:
 def _smooth_model() -> SmoothModel:
     return smooth(
         WienerDriftDiffusion(
-            covariates=("stimulus",),
+            predictors=("stimulus",),
             n_restarts=3,
             max_iterations=400,
             simulation_time_step=0.0005,
@@ -210,7 +210,7 @@ def _smooth_model() -> SmoothModel:
 
 def _static_model() -> WienerDriftDiffusion:
     return WienerDriftDiffusion(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         n_restarts=3,
         max_iterations=400,
         simulation_time_step=0.0005,

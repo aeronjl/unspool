@@ -202,8 +202,8 @@ only in `max_iterations` or `tolerance` have identical signatures and produce di
 estimates:
 
 ```python
-loose = BernoulliHistoryGLM(covariates=("stimulus",), max_iterations=2)
-tight = BernoulliHistoryGLM(covariates=("stimulus",), max_iterations=1_000)
+loose = BernoulliHistoryGLM(predictors=("stimulus",), max_iterations=2)
+tight = BernoulliHistoryGLM(predictors=("stimulus",), max_iterations=1_000)
 
 loose.signature == tight.signature  # True
 loose.fit(study).estimates == tight.fit(study).estimates  # not equal

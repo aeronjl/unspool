@@ -1,18 +1,18 @@
-# Protocol execution API
+# `behavio.protocol` execution API
 
 The compiler materializes cohorts and audits row boundaries. The runner evaluates flat or
 nested candidate procedures. Recovery reuses the exact compiled design.
 
 ## Compiler
 
-::: behavio.compiler
+::: behavio.protocol.compiler
     options:
       members_order: source
       show_root_heading: false
       show_source: false
 ## Runner
 
-::: behavio.runner
+::: behavio.protocol.runner
     options:
       members_order: source
       show_root_heading: false
@@ -20,7 +20,7 @@ nested candidate procedures. Recovery reuses the exact compiled design.
 
 ## Exact-design recovery
 
-::: behavio.protocol_recovery
+::: behavio.protocol.exact_recovery
     options:
       members_order: source
       show_root_heading: false

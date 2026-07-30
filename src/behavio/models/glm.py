@@ -25,7 +25,7 @@ from behavio.contracts.compose import (
     ridge_group_draw,
     ridge_group_penalty,
 )
-from behavio.design import DesignSpec
+from behavio.design.matrix import DesignSpec
 from behavio.models._kernels.bernoulli import (
     BERNOULLI,
     BernoulliLikelihood,
@@ -47,12 +47,12 @@ from behavio.models.base import (
     PredictionMode,
     UnsupportedPredictionMode,
 )
-from behavio.study import REQUIRED_COLUMNS, Study
+from behavio.trials import REQUIRED_COLUMNS, Study
 
 
 @dataclass(frozen=True, slots=True)
 class BernoulliHistoryGLM(Describable):
-    """A static Bernoulli GLM with exogenous covariates and choice history.
+    """A static Bernoulli GLM with exogenous predictors and choice history.
 
     Previous choices are constructed within subject/session boundaries and effect-coded as
     -1 and +1. Missing history at the beginning of each session is encoded as zero. During
@@ -60,7 +60,7 @@ class BernoulliHistoryGLM(Describable):
     observed past choices provide one-step-ahead filtered history.
 
     The exogenous half of the linear predictor is a :class:`~behavio.design.DesignSpec`.
-    ``covariates=("a", "b")`` is shorthand for one identity numeric term per name plus an
+    ``predictors=("a", "b")`` is shorthand for one identity numeric term per name plus an
     intercept, and is exactly equal to writing that design out; pass ``design=`` instead to
     say anything the shorthand cannot -- an interaction, a fixed-level contrast, a weighted
     history kernel. The two are alternatives, not layers, and passing both is an error.
@@ -70,7 +70,7 @@ class BernoulliHistoryGLM(Describable):
     exogenous column. It is appended to whichever design supplied the exogenous terms.
     """
 
-    covariates: tuple[str, ...] = ()
+    predictors: tuple[str, ...] = ()
     outcome: str = "choice"
     choice_lags: int = 1
     l2: float = 0.0
@@ -80,18 +80,18 @@ class BernoulliHistoryGLM(Describable):
     design: DesignSpec | None = field(default=None, kw_only=True)
 
     def __post_init__(self) -> None:
-        covariates = tuple(self.covariates)
-        validate_design_choice(self.design, covariates)
-        if len(set(covariates)) != len(covariates):
-            raise ValueError("covariates must be unique")
-        if any(not isinstance(name, str) or not name for name in covariates):
-            raise ValueError("covariate names must be non-empty strings")
+        predictors = tuple(self.predictors)
+        validate_design_choice(self.design, predictors)
+        if len(set(predictors)) != len(predictors):
+            raise ValueError("predictors must be unique")
+        if any(not isinstance(name, str) or not name for name in predictors):
+            raise ValueError("predictor names must be non-empty strings")
         if not isinstance(self.outcome, str) or not self.outcome:
             raise ValueError("outcome must be a non-empty column name")
         if self.outcome in REQUIRED_COLUMNS:
             raise ValueError("outcome cannot replace a required Study column")
-        if self.outcome in covariates:
-            raise ValueError("the outcome cannot also be a covariate")
+        if self.outcome in predictors:
+            raise ValueError("the outcome cannot also be a predictor")
         if isinstance(self.choice_lags, bool) or not isinstance(self.choice_lags, int):
             raise ValueError("choice_lags must be a non-negative integer")
         if self.choice_lags < 0:
@@ -112,10 +112,10 @@ class BernoulliHistoryGLM(Describable):
         ):
             raise ValueError("coefficient_warning_threshold must be finite and positive")
         reserved = {"intercept", *(f"choice_lag_{lag}" for lag in range(1, self.choice_lags + 1))}
-        conflict = reserved.intersection(covariates)
+        conflict = reserved.intersection(predictors)
         if conflict:
-            raise ValueError(f"covariate names conflict with model parameters: {sorted(conflict)}")
-        object.__setattr__(self, "covariates", covariates)
+            raise ValueError(f"predictor names conflict with model parameters: {sorted(conflict)}")
+        object.__setattr__(self, "predictors", predictors)
 
     @property
     def model_name(self) -> str:
@@ -123,15 +123,15 @@ class BernoulliHistoryGLM(Describable):
 
     @property
     def signature(self) -> str:
-        covariates = ",".join(self.covariates)
+        predictors = ",".join(self.predictors)
         return (
-            f"{self.model_name}[outcome={self.outcome};covariates={covariates};"
+            f"{self.model_name}[outcome={self.outcome};predictors={predictors};"
             f"choice_lags={self.choice_lags};l2={self.l2}{self._design_signature}]"
         )
 
     @property
     def _design_signature(self) -> str:
-        """The design's contribution to the signature, empty for a ``covariates`` model.
+        """The design's contribution to the signature, empty for a ``predictors`` model.
 
         A signature is a scientific fingerprint, so a design has to change it. It must
         equally not change for a model constructed the old way, because those signatures
@@ -143,9 +143,9 @@ class BernoulliHistoryGLM(Describable):
 
     @property
     def exogenous_design(self) -> DesignSpec:
-        """The declared design, or the one a ``covariates`` tuple denotes."""
+        """The declared design, or the one a ``predictors`` tuple denotes."""
 
-        return resolve_design(self.design, self.covariates)
+        return resolve_design(self.design, self.predictors)
 
     @property
     def design_spec(self) -> DesignSpec:
@@ -265,7 +265,7 @@ class BernoulliHistoryGLM(Describable):
         coefficients = np.asarray(coefficients, dtype=np.float64)
         if coefficients.shape != (len(design), len(self.coefficient_names)):
             raise ValueError("simulate_rows needs one coefficient per parameter per study row")
-        covariates = self._covariate_matrix(design)
+        predictors = self._predictor_matrix(design)
         generator = seed if isinstance(seed, np.random.Generator) else np.random.default_rng(seed)
         choices = np.zeros(len(design), dtype=np.int8)
 
@@ -277,10 +277,10 @@ class BernoulliHistoryGLM(Describable):
                 row = coefficients[index]
                 if exogenous.intercept:
                     linear_predictor = row[0]
-                    if covariates.shape[1]:
-                        linear_predictor += float(covariates[index] @ row[1:history_start])
+                    if predictors.shape[1]:
+                        linear_predictor += float(predictors[index] @ row[1:history_start])
                 else:
-                    linear_predictor = float(covariates[index] @ row[:history_start])
+                    linear_predictor = float(predictors[index] @ row[:history_start])
                 for lag in range(1, self.choice_lags + 1):
                     history_value = (
                         generated_history[-lag] if len(generated_history) >= lag else 0.0
@@ -425,7 +425,7 @@ class BernoulliHistoryGLM(Describable):
             raise ModelDataError(f"outcome column {self.outcome!r} must contain only zero and one")
         return outcomes
 
-    def _covariate_matrix(self, study: Study) -> NDArray[np.float64]:
+    def _predictor_matrix(self, study: Study) -> NDArray[np.float64]:
         """The exogenous block alone, without the intercept, as simulation consumes it."""
 
         design = self.exogenous_design
@@ -433,7 +433,7 @@ class BernoulliHistoryGLM(Describable):
             return np.empty((len(study), 0), dtype=np.float64)
         missing = [name for name in design.required_columns if name not in study.columns]
         if missing:
-            raise ModelDataError(f"study is missing covariate columns: {missing}")
+            raise ModelDataError(f"study is missing predictor columns: {missing}")
         return build_matrix(DesignSpec(terms=design.terms, intercept=False), study).values
 
     def design_matrix(self, study: Study) -> NDArray[np.float64]:
@@ -450,7 +450,7 @@ class BernoulliHistoryGLM(Describable):
             name for name in self.exogenous_design.required_columns if name not in study.columns
         ]
         if missing:
-            raise ModelDataError(f"study is missing covariate columns: {missing}")
+            raise ModelDataError(f"study is missing predictor columns: {missing}")
         return build_matrix(self.design_spec, study).values
 
     def _validate_fit(self, fit: FitResult) -> None:

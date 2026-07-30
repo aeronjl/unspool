@@ -5,16 +5,15 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from behavio.covariates import BehaviorCovariate
-from behavio.ethograms import BehaviorAnnotations, BehaviorInterval
-from behavio.pose import PoseTrajectory
-from behavio.study import Study
-from behavio.sync import (
-    ClockPulseMatches,
-    ClockSynchronizationSpec,
-    fit_clock_synchronization,
+from behavio.observed.covariates import BehaviorCovariate
+from behavio.observed.device_clocks import (
+    DeviceClockPulses,
+    DeviceClockSyncSpec,
+    fit_device_clock_sync,
 )
-from behavio.trialization import (
+from behavio.observed.ethograms import BehaviorAnnotations, BehaviorInterval
+from behavio.observed.pose import PoseTrajectory
+from behavio.observed.trialization import (
     EventCount,
     FirstOccurrenceLatency,
     FractionOfTimeInState,
@@ -32,6 +31,7 @@ from behavio.trialization import (
     reduce_covariate_to_trials,
     trial_timing_from_events,
 )
+from behavio.trials import Study
 
 
 def _covariate(
@@ -285,14 +285,14 @@ def test_mismatched_subject_or_session_is_refused() -> None:
 
 
 def test_trial_timing_moves_between_clocks_only_through_a_synchronization() -> None:
-    synchronization = fit_clock_synchronization(
-        ClockPulseMatches.from_arrays(
+    synchronization = fit_device_clock_sync(
+        DeviceClockPulses.from_arrays(
             source_clock_id="video",
             target_clock_id="acquisition",
             source_time_s=[0.0, 1.0, 2.0],
             target_time_s=[0.5, 1.5, 2.5],
         ),
-        ClockSynchronizationSpec(
+        DeviceClockSyncSpec(
             maximum_absolute_residual_s=1e-9,
             maximum_drift_ppm=10.0,
             minimum_source_span_s=1.0,

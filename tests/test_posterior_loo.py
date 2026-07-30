@@ -4,17 +4,11 @@ import json
 import numpy as np
 import pytest
 
-from behavio import (
-    PosteriorAuditStatus,
-    PosteriorGroup,
-    PosteriorResult,
-    PosteriorVariable,
-    PSISLOOResult,
-    psis_loo,
-)
+from behavio import PosteriorResult, psis_loo
 from behavio.contracts.audit import AuditSeverity
-from behavio.posterior import PosteriorError
-from behavio.posterior_diagnostics import PosteriorAuditPolicy
+from behavio.posterior import PosteriorAuditStatus, PosteriorGroup, PosteriorVariable, PSISLOOResult
+from behavio.posterior.diagnostics import PosteriorAuditPolicy
+from behavio.posterior.result import PosteriorError
 
 
 def posterior_result(*, pathological: bool = False) -> PosteriorResult:
@@ -160,7 +154,7 @@ def test_psis_loo_requires_pointwise_finite_named_likelihood() -> None:
 
 
 def _stats():
-    """Resolve PSIS the way :mod:`behavio.posterior_loo` does, under the same gate."""
+    """Resolve PSIS the way :mod:`behavio.posterior.loo` does, under the same gate."""
 
     pytest.importorskip("arviz")
     try:

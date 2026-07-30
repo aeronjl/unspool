@@ -3,23 +3,22 @@ import json
 import numpy as np
 import pytest
 
-from behavio import (
+from behavio import PosteriorResult, posterior_predictive_check
+from behavio.contracts import AuditSeverity
+from behavio.posterior import (
     CategoryRateDiscrepancy,
     MeanDiscrepancy,
     PosteriorAuditPolicy,
     PosteriorAuditStatus,
     PosteriorGroup,
     PosteriorPredictivePolicy,
-    PosteriorResult,
     PosteriorVariable,
     PredictiveTail,
     SwitchRateDiscrepancy,
     VarianceDiscrepancy,
-    posterior_predictive_check,
 )
-from behavio.contracts import AuditSeverity
-from behavio.posterior import PosteriorError
-from behavio.posterior_predictive import PredictiveMultiplicity
+from behavio.posterior.predictive import PredictiveMultiplicity
+from behavio.posterior.result import PosteriorError
 
 CHAINS = 2
 DRAWS = 500

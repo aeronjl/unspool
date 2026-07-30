@@ -5,7 +5,8 @@ portable common view that binds that result to its task semantics, complete inpu
 package version, numerical diagnostics, and normalized audit.
 
 ```python
-from behavio import export_fit, fit_artifact_from_json
+from behavio import export_fit
+from behavio.report import fit_artifact_from_json
 
 fitted = fit_model(model, study, task=task)
 artifact = export_fit(fitted, study)

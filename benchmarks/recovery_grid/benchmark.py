@@ -8,15 +8,9 @@ from typing import Any
 
 import numpy as np
 
-from behavio import (
-    BernoulliGLMHMM,
-    BernoulliHistoryGLM,
-    BinaryQLearning,
-    ModelRecoveryScenario,
-    Study,
-    run_model_recovery_grid,
-)
+from behavio import BernoulliGLMHMM, BernoulliHistoryGLM, BinaryQLearning, Study
 from behavio.compose import SmoothModel, smooth
+from behavio.recovery import ModelRecoveryScenario, run_model_recovery_grid
 from benchmarks.provenance import render
 
 N_SESSIONS = 5
@@ -74,18 +68,18 @@ def experiment() -> tuple[
     """Return fixed candidate configurations and one parameter regime per family."""
 
     static = BernoulliHistoryGLM(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         choice_lags=1,
         l2=0.01,
     )
     drifting = smooth(
-        BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.01),
+        BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.01),
         over="session_order",
         knots=tuple(float(order) for order in range(N_SESSIONS)),
         smoothness=5.0,
     )
     hidden_state = BernoulliGLMHMM(
-        covariates=("stimulus",),
+        predictors=("stimulus",),
         choice_lags=1,
         n_states=2,
         n_restarts=1,

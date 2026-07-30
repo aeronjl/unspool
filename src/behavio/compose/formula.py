@@ -1,6 +1,6 @@
 """Turning a parsed formula, group terms and all, into a model.
 
-``behavio.formula`` has always parsed ``(1 | subject)`` into a :class:`GroupTerm` holding
+``behavio.design.formula`` has always parsed ``(1 | subject)`` into a :class:`GroupTerm` holding
 the grouping column and the within-group design, and has always refused to *use* one:
 a :class:`~behavio.design.DesignSpec` is a single fixed matrix and has no varying-effect
 representation, so there was nothing to hand the declaration to. There is now.
@@ -15,8 +15,8 @@ from dataclasses import fields, replace
 from typing import Any
 
 from behavio.compose.hierarchy import hierarchical
-from behavio.formula import Formula, FormulaError
-from behavio.study import Study
+from behavio.design.formula import Formula, FormulaError
+from behavio.trials import Study
 
 __all__ = ["model_from_formula"]
 
@@ -39,7 +39,7 @@ def model_from_formula(
     ``training_study`` is required exactly when the formula contains a term that estimates
     its own coordinate -- ``scale(x)``, or ``C(x)`` without a declared level set -- and must
     then be the *training* rows of the fold the model will be fitted in, for the same reason
-    :meth:`behavio.formula.Formula.fit` requires it.
+    :meth:`behavio.design.formula.Formula.fit` requires it.
     """
 
     parsed = formula if isinstance(formula, Formula) else Formula.parse(formula)
@@ -71,7 +71,7 @@ def model_from_formula(
 def _reconfigure(model: Any, parsed: Formula, design: Any) -> Any:
     """Return ``model`` rebuilt around a formula-built design.
 
-    ``covariates`` and ``choice_lags`` are cleared because the formula already spells both:
+    ``predictors`` and ``choice_lags`` are cleared because the formula already spells both:
     a lag it declares is an ordinary design term, and leaving the model-level shorthand in
     place would silently append a second copy of the same column.
     """
@@ -82,8 +82,8 @@ def _reconfigure(model: Any, parsed: Formula, design: Any) -> Any:
             f"{type(model).__name__} has no design field, so a formula cannot configure it"
         )
     changes: dict[str, Any] = {"design": design}
-    if "covariates" in available:
-        changes["covariates"] = ()
+    if "predictors" in available:
+        changes["predictors"] = ()
     if "choice_lags" in available:
         changes["choice_lags"] = 0
     if parsed.response is not None and "outcome" in available:

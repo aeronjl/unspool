@@ -29,7 +29,7 @@ unchanged.
 ## Define an ordered policy
 
 ```python
-from behavio.interval_policy import (
+from behavio.observed.interval_policy import (
     ContextualizeIntervals,
     FilterIntervals,
     IntervalPolicy,

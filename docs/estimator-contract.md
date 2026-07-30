@@ -39,7 +39,7 @@ The protocols are structural: a plugin does not need to inherit an Behavio base 
 presence:
 
 ```python
-from behavio import model_capabilities
+from behavio.models import model_capabilities
 
 capabilities = model_capabilities(plugin)
 print(capabilities.scored_columns)

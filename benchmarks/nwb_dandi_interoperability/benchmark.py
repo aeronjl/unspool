@@ -9,7 +9,7 @@ from typing import Any
 
 import numpy as np
 
-from behavio import DANDINWBSource, resolve_dandi_nwb_asset, study_from_dandi
+from behavio.adapters import DANDINWBSource, resolve_dandi_nwb_asset, study_from_dandi
 from benchmarks.provenance import render
 
 DANDISET_ID = "000004"

@@ -25,7 +25,7 @@ matplotlib.use("Agg")
 from matplotlib.collections import PolyCollection  # noqa: E402
 from matplotlib.text import Text  # noqa: E402
 
-from behavio.comparison import ComparisonFamily, ComparisonMultiplicity  # noqa: E402
+from behavio.compare.models import ComparisonFamily, ComparisonMultiplicity  # noqa: E402
 from behavio.contracts.audit import AuditSeverity, FitAudit, FitDiagnostics, FitIssue  # noqa: E402
 from behavio.plot import (  # noqa: E402
     FIGURE_RC_PARAMS,
@@ -46,22 +46,22 @@ from behavio.plot import (  # noqa: E402
     plot_sbc_rank_histogram,
     save_svg,
 )
-from behavio.posterior_comparison import (  # noqa: E402
+from behavio.posterior.comparison import (  # noqa: E402
     ModelComparisonIssue,
     ModelComparisonStatus,
     PairedELPDDifference,
     PosteriorModelComparison,
     ScoredModel,
 )
-from behavio.posterior_diagnostics import (  # noqa: E402
+from behavio.posterior.diagnostics import (  # noqa: E402
     PosteriorAudit,
     PosteriorAuditIssue,
     PosteriorAuditPolicy,
     PosteriorAuditStatus,
     PosteriorDiagnostic,
 )
-from behavio.posterior_loo import PSISLOOIssue, PSISLOOResult  # noqa: E402
-from behavio.posterior_predictive import (  # noqa: E402
+from behavio.posterior.loo import PSISLOOIssue, PSISLOOResult  # noqa: E402
+from behavio.posterior.predictive import (  # noqa: E402
     PosteriorPredictiveAudit,
     PosteriorPredictiveCheck,
     PosteriorPredictiveIssue,
@@ -69,13 +69,13 @@ from behavio.posterior_predictive import (  # noqa: E402
     PredictiveFamily,
     PredictiveMultiplicity,
 )
-from behavio.recovery import (  # noqa: E402
+from behavio.posterior.simulation_based_calibration import SBCSummary, SBCUniformity  # noqa: E402
+from behavio.protocol.runner import CalibrationSummary  # noqa: E402
+from behavio.recovery.parameters import (  # noqa: E402
     POSTERIOR_QUANTILE_INTERVAL,
     WALD_INTERVAL,
     ParameterRecoveryReport,
 )
-from behavio.runner import CalibrationSummary  # noqa: E402
-from behavio.sbc import SBCSummary, SBCUniformity  # noqa: E402
 
 PLOT_PACKAGE = Path(__file__).parents[1] / "src" / "behavio" / "plot"
 

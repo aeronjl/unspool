@@ -4,26 +4,20 @@ import numpy as np
 import pytest
 from scipy.special import expit
 
-from behavio import (
-    BehaviourModel,
-    BernoulliHistoryGLM,
-    FitDiagnostics,
-    ModelDataError,
-    Study,
-    evaluate_splits,
-    leave_one_subject_out_splits,
-)
+from behavio import BernoulliHistoryGLM, Study, evaluate_splits
 from behavio.compose import HierarchicalFitResult, HierarchicalModel, hierarchical
+from behavio.evaluate import leave_one_subject_out_splits
+from behavio.models import BehaviourModel, FitDiagnostics, ModelDataError
 
 
 def pooled_glm(
     *,
-    covariates: tuple[str, ...] = ("stimulus",),
+    predictors: tuple[str, ...] = ("stimulus",),
     choice_lags: int = 1,
     l2: float = 0.0,
     **effects: object,
 ) -> HierarchicalModel:
-    base = BernoulliHistoryGLM(covariates=covariates, choice_lags=choice_lags, l2=l2)
+    base = BernoulliHistoryGLM(predictors=predictors, choice_lags=choice_lags, l2=l2)
     return hierarchical(base, over="subject", **effects)
 
 
@@ -287,7 +281,7 @@ def test_hierarchical_fit_rejects_one_subject_and_static_fit_results() -> None:
         {"intercept": 0.0, "stimulus": 1.0},
         seed=4,
     )
-    static_model = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=0)
+    static_model = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=0)
     static_fit = static_model.fit(population_study)
     with pytest.raises(ValueError, match="hierarchical group effects"):
         model.predict(population_study, static_fit)

@@ -6,13 +6,7 @@ predictors use common effects such as stimulus strength, condition, trial histor
 interactions.
 
 ```python
-from behavio import (
-    CategoricalTerm,
-    DesignSpec,
-    HistoryTerm,
-    InteractionTerm,
-    NumericTerm,
-)
+from behavio.design import CategoricalTerm, DesignSpec, HistoryTerm, InteractionTerm, NumericTerm
 
 stimulus = NumericTerm("stimulus", center=0.0, scale=100.0)
 condition = CategoricalTerm(
@@ -64,7 +58,7 @@ When centring and scaling are not known in advance, fit them on training rows an
 the returned fixed term:
 
 ```python
-from behavio import DesignSpec, StandardizeTerm
+from behavio.design import DesignSpec, StandardizeTerm
 
 stimulus = StandardizeTerm("stimulus").fit(training_study)
 training_matrix = DesignSpec(terms=(stimulus,)).build(training_study)
@@ -110,7 +104,7 @@ differently scaled one under the same name.
 `HistoryKernelTerm` contracts several explicit lags into one feature with fixed weights:
 
 ```python
-from behavio import HistoryKernelTerm
+from behavio.design import HistoryKernelTerm
 
 trace = HistoryKernelTerm(
     "choice",

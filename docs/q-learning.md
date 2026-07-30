@@ -12,9 +12,9 @@ separate immutable components.
 ## Compose an agent
 
 ```python
-from behavio import (
+from behavio import BinaryRLAgent
+from behavio.models import (
     AsymmetricLearning,
-    BinaryRLAgent,
     ChoiceKernel,
     ResetRule,
     SoftmaxPolicy,

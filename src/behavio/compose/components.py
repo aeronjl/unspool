@@ -26,9 +26,9 @@ import numpy as np
 from numpy.typing import NDArray
 
 from behavio.contracts.estimator import ModelDataError
-from behavio.response_times import ResponseTimeSpec
-from behavio.study import REQUIRED_COLUMNS, Study
-from behavio.task import ChoiceSpec, TaskValidationError
+from behavio.task.response_times import ResponseTimeSpec
+from behavio.task.spec import ChoiceSpec, TaskValidationError
+from behavio.trials import REQUIRED_COLUMNS, Study
 
 __all__ = [
     "UniformCategoryGuess",

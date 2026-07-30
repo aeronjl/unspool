@@ -1,4 +1,4 @@
-# Data-adapter API
+# `behavio.adapters` API
 
 Adapters retain source identities while converting trials into the same canonical study
 contract. Every source dataclass here satisfies the

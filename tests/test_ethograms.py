@@ -8,7 +8,7 @@ import h5py
 import numpy as np
 import pytest
 
-from behavio.ethograms import (
+from behavio.observed.ethograms import (
     BehaviorAnnotations,
     BehaviorInterval,
     annotations_from_boris,

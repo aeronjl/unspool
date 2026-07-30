@@ -1,6 +1,6 @@
 # Ethograms: point events and behavioural intervals
 
-An ethogram is a catalogue of what an animal did and when. `behavio.ethograms`
+An ethogram is a catalogue of what an animal did and when. `behavio.observed.ethograms`
 holds that catalogue as two types and the readers that fill them, as one shape
 in the wider [observed-behaviour boundary](observed-behaviour.md):
 
@@ -52,7 +52,7 @@ Which bouts enter an analysis at all is a separate, ordered decision; see
 directly. Each interval retains the full duration of one uninterrupted state.
 
 ```python
-from behavio.ethograms import annotations_from_moseq_results_h5
+from behavio.observed.ethograms import annotations_from_moseq_results_h5
 
 states = annotations_from_moseq_results_h5(
     "moseq-project/model-a/results.h5",
@@ -77,7 +77,7 @@ directly. `annotations_from_boris_tabular_file()` handles the other common
 shape: a metadata preamble followed by START/STOP or point-event rows.
 
 ```python
-from behavio.ethograms import (
+from behavio.observed.ethograms import (
     annotations_from_boris_aggregated_file,
     annotations_from_boris_tabular_file,
 )
@@ -105,18 +105,18 @@ handled directly. Invalid, unmatched or unknown rows are rejected.
 
 Annotations carry `clock_id` like every other type in this boundary. Moving
 them onto a recording clock is
-[`ClockSynchronization.synchronize_annotations()`](clock-synchronization.md),
+[`DeviceClockSync.synchronize_annotations()`](clock-synchronization.md),
 which transforms point and interval times while retaining their point-versus-state
 semantics.
 
 ## From an ethogram to a `Study`
 
 Point events and bouts also reduce to trial columns through
-`behavio.trialization`. Because annotations often already encode trial
+`behavio.observed.trialization`. Because annotations often already encode trial
 structure, they can supply the trial timing as well:
 
 ```python
-from behavio.trialization import (
+from behavio.observed.trialization import (
     FractionOfTimeInState,
     TrialWindow,
     attach_trial_columns,

@@ -37,7 +37,10 @@ from behavio.plot.convergence import plot_convergence, plot_ess, plot_rhat
 from behavio.plot.loo import plot_pareto_k
 from behavio.plot.predictive import plot_predictive_check, plot_predictive_checks
 from behavio.plot.recovery import plot_parameter_recovery, plot_parameter_recovery_grid
-from behavio.plot.sbc import plot_sbc_ecdf_difference, plot_sbc_rank_histogram
+from behavio.plot.simulation_based_calibration import (
+    plot_sbc_ecdf_difference,
+    plot_sbc_rank_histogram,
+)
 from behavio.plot.style import (
     ALERT,
     AMBER,

@@ -1,7 +1,7 @@
 """One execution path: the two entry points must produce the same numbers.
 
-``behavio.runner`` used to re-implement the fit-predict-score loop that
-:func:`behavio.evaluation.evaluate_splits` already performed, so the protocol path and the
+``behavio.protocol.runner`` used to re-implement the fit-predict-score loop that
+:func:`behavio.evaluate.folds.evaluate_splits` already performed, so the protocol path and the
 interactive path were two programs computing the same quantities. They are now one, and
 these tests hold that collapse in place from both directions:
 
@@ -28,17 +28,17 @@ import pytest
 from test_compiler import capabilities
 from test_protocol import example_protocol
 
-from behavio.comparison import (
+from behavio.compare.models import (
     ComparisonMultiplicity,
     bootstrap_interval,
     compare_models,
 )
-from behavio.compiler import compile_execution_plan, materialize_protocol
-from behavio.evaluation import FoldFailurePolicy, evaluate_splits
+from behavio.evaluate.folds import FoldFailurePolicy, evaluate_splits
+from behavio.evaluate.splits import cohort_forward_session_splits
 from behavio.models import BernoulliHistoryGLM, PredictionMode
-from behavio.runner import run_protocol
-from behavio.study import Study
-from behavio.validation import cohort_forward_session_splits
+from behavio.protocol.compiler import compile_execution_plan, materialize_protocol
+from behavio.protocol.runner import run_protocol
+from behavio.trials import Study
 
 #: Every number below was produced by commit ``f0e47b5``, the last commit in which
 #: ``runner._run_candidate_folds`` re-implemented the fold loop and ``runner`` carried its

@@ -9,8 +9,8 @@ import pytest
 
 from benchmarks.provenance import (
     HISTORICAL_LIBRARY_NAMES,
+    PROTOCOL_SCHEMA_VERSION,
     PROVENANCE_KEY,
-    SCHEMA_VERSION,
     canonical_libraries,
     environment,
     render,
@@ -52,7 +52,7 @@ def test_any_committed_provenance_block_is_complete(path: Path) -> None:
         pytest.skip(f"{path.parent.name} predates the provenance contract")
 
     assert set(stamp) == PROVENANCE_FIELDS
-    assert stamp["schema_version"] == SCHEMA_VERSION
+    assert stamp["schema_version"] == PROTOCOL_SCHEMA_VERSION
     assert stamp["git_describe"] and stamp["git_describe"] != "unknown"
     assert stamp["python"].count(".") == 2
     assert set(canonical_libraries(stamp["libraries"])) >= BASE_LIBRARIES

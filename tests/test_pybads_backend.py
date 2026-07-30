@@ -4,14 +4,13 @@ from typing import ClassVar
 import numpy as np
 import pytest
 
-import behavio.inference as inference
-from behavio import (
+import behavio.inference.optimize as inference
+from behavio import ParameterSpace, PyBADSMultistart
+from behavio.inference import (
     InferenceError,
     OptimizationBackend,
     OptimizationProblem,
-    ParameterSpace,
     ParameterSpec,
-    PyBADSMultistart,
     PyBADSUnavailableError,
 )
 

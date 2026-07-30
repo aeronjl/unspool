@@ -34,7 +34,7 @@ the last few digits.
 
 | Deleted | Replacement |
 | --- | --- |
-| `SmoothBernoulliHistoryGLM(covariates=c, choice_lags=k, l2=λ, time=t, knots=κ, smoothness=s, shared_trajectory=b)` | `smooth(BernoulliHistoryGLM(covariates=c, choice_lags=k, l2=λ), over=t, knots=κ, smoothness=s, shared_trajectory=b)` |
+| `SmoothBernoulliHistoryGLM(predictors=c, choice_lags=k, l2=λ, time=t, knots=κ, smoothness=s, shared_trajectory=b)` | `smooth(BernoulliHistoryGLM(predictors=c, choice_lags=k, l2=λ), over=t, knots=κ, smoothness=s, shared_trajectory=b)` |
 | `HierarchicalBernoulliHistoryGLM(..., subject_scale=σ)` | `hierarchical(BernoulliHistoryGLM(...), over="subject", scale=σ)` |
 | `HierarchicalSmoothBernoulliHistoryGLM(..., smoothness=s, subject_scale=σ, subject_smoothness=g)` | `hierarchical(smooth(BernoulliHistoryGLM(...), over=t, knots=κ, smoothness=s, group_smoothness=g), over="subject", scale=σ)` |
 
@@ -70,7 +70,7 @@ table above apply unchanged.
 
 | Deleted | Replacement |
 | --- | --- |
-| `SmoothWienerDriftDiffusion(covariates=c, time=t, knots=κ, varying_parameters=v, smoothness=s, shared_trajectory=b)` | `smooth(WienerDriftDiffusion(covariates=c), over=t, knots=κ, parameters=v, smoothness=s, shared_trajectory=b)` |
+| `SmoothWienerDriftDiffusion(predictors=c, time=t, knots=κ, varying_parameters=v, smoothness=s, shared_trajectory=b)` | `smooth(WienerDriftDiffusion(predictors=c), over=t, knots=κ, parameters=v, smoothness=s, shared_trajectory=b)` |
 | `HierarchicalSmoothWienerDriftDiffusion(..., subject_parameters=p, subject_parameter_scales=σ, subject_smoothness=g, estimate_subject_scales=True, subject_scale_uncertainty=u)` | `hierarchical(smooth(WienerDriftDiffusion(...), over=t, knots=κ, parameters=v, smoothness=s, group_smoothness=g), over="subject", parameters=p, parameter_scales=σ, estimate_scale=True, scale_estimator="laplace-em", scale_uncertainty=u)` |
 | `model.population_trajectory(fit)`, `model.subject_trajectory(fit, s)` | `model.coefficient_trajectory(fit)`, `model.group_trajectory(fit, s)` |
 | `model.predict_new_subjects(...)` | `model.predict_new_groups(...)`, whose result exposes `probability`, `group_joint_log_probability_map`, `group_effective_draws`, and `group_log_probability_mcse` |

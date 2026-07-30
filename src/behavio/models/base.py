@@ -1,9 +1,9 @@
 """Shared contracts for behavioural models and their outputs.
 
-These names now live in :mod:`behavio.contracts`, the single address for Behavio's
-extension surface. This module re-exports them so that every existing import path -- for
-example ``from behavio.models.base import BehaviourEstimator`` -- keeps working
-unchanged.
+These names are declared in :mod:`behavio.contracts`, the single address for Behavio's
+extension surface. This module re-exports them at the address a *model author* is already
+reading: someone writing an estimator beside the first-party catalogue should not have to
+know that the protocol they implement is defined one package over.
 """
 
 from __future__ import annotations

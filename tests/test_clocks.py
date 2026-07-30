@@ -1,12 +1,12 @@
 import numpy as np
 import pytest
 
-from behavio import (
+from behavio import Study
+from behavio.time import (
     ClockKind,
     ClockScope,
     ClockSpec,
     ClockValidationError,
-    Study,
     session_order_clock,
     with_cumulative_trial_clock,
     with_elapsed_time_clock,

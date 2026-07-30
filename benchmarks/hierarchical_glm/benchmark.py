@@ -58,7 +58,7 @@ def build_design(
 def experiment(*, subject_scale: float, seed: int) -> dict[str, dict[str, Any]]:
     """Run one matched prospective comparison at a fixed generative scale."""
 
-    static = BernoulliHistoryGLM(covariates=("stimulus",), choice_lags=1, l2=0.05)
+    static = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.05)
     pooled = hierarchical(static, over="subject", scale=subject_scale)
     design = build_design(seed=seed)
     simulation = pooled.simulate_with_effects(

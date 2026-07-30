@@ -8,7 +8,7 @@ is an actionable :class:`MatplotlibUnavailableError` naming the extra, never a b
 ``ModuleNotFoundError`` from somewhere inside a drawing routine.
 
 The version is sniffed at call time for the same reason ArviZ is in
-:mod:`behavio.posterior`: an installed-but-too-old dependency is a different failure from a
+:mod:`behavio.posterior.result`: an installed-but-too-old dependency is a different failure from a
 missing one and deserves a different message.
 """
 
