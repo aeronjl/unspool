@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
+from typing import Any
 
 import numpy as np
 import pytest
@@ -13,6 +15,13 @@ from behavio import (
     nested_select_model,
 )
 from behavio.compose import smooth
+from behavio.contracts import (
+    BehaviourEstimator,
+    ConvergenceStatus,
+    FitAuditStatus,
+    FitResult,
+    PredictionMode,
+)
 from behavio.evaluate import leave_one_lab_out_session_forecast_splits, leave_one_session_out_splits
 
 KNOTS = (0.0, 2.0, 5.0)
@@ -174,6 +183,101 @@ def test_failed_audit_candidate_is_retained_but_ineligible_to_win() -> None:
     assert report.eligible_model_order == ("eligible",)
     assert report.winner == "eligible"
     assert "forced_nonconvergence" in report.to_dict()["models"]
+
+
+class SilentAboutConvergence:
+    """A stand-in for a wrapped third-party fitter: it searches and reports no verdict.
+
+    This is the state PyDDM 0.9 leaves a fit in, and the state any fitter with a private
+    stopping rule leaves it in. The three older ``converged`` values each misdescribe it,
+    and the one that used to be chosen in practice -- ``False`` -- made the audit ``FAIL``
+    and evicted a perfectly usable candidate from the comparison.
+    """
+
+    def __init__(self, inner: Any) -> None:
+        self._inner = inner
+
+    @property
+    def model_name(self) -> str:
+        return self._inner.model_name
+
+    @property
+    def signature(self) -> str:
+        return f"{self._inner.signature}+silent"
+
+    @property
+    def scored_columns(self) -> tuple[str, ...]:
+        return tuple(self._inner.scored_columns)
+
+    @property
+    def required_task_columns(self) -> tuple[str, ...]:
+        return tuple(self._inner.required_task_columns)
+
+    @property
+    def supported_prediction_modes(self) -> tuple[PredictionMode, ...]:
+        return tuple(self._inner.supported_prediction_modes)
+
+    def fit(self, study: Study) -> FitResult:
+        fitted = self._inner.fit(study)
+        return replace(
+            fitted,
+            model_signature=self.signature,
+            diagnostics=replace(
+                fitted.diagnostics,
+                converged=ConvergenceStatus.UNREPORTED,
+                status=None,
+                message="the fitter reported no convergence flag",
+            ),
+        )
+
+    def predict(self, study: Study, fit: FitResult, *, mode: Any = PredictionMode.FILTERED) -> Any:
+        return self._inner.predict(
+            study, replace(fit, model_signature=self._inner.signature), mode=mode
+        )
+
+    def pointwise_log_prob(
+        self, study: Study, fit: FitResult, *, mode: Any = PredictionMode.FILTERED
+    ) -> Any:
+        return self._inner.pointwise_log_prob(
+            study, replace(fit, model_signature=self._inner.signature), mode=mode
+        )
+
+
+def test_a_candidate_that_reports_no_convergence_verdict_stays_eligible() -> None:
+    """Absence of evidence is recorded as a warning, not converted into a failure.
+
+    The candidate must remain comparable -- nobody measured a failure -- while the gap is
+    visible in its audit rather than smoothed over.
+    """
+
+    study = comparison_study()
+    splits = cohort_forward_session_splits(study, min_train_sessions=5)
+    reference = BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1, l2=0.02)
+    silent = SilentAboutConvergence(BernoulliHistoryGLM(predictors=("stimulus",), choice_lags=1))
+    assert isinstance(silent, BehaviourEstimator)
+
+    report = compare_models(
+        {"silent": silent, "eligible": reference},
+        study,
+        splits,
+        bootstrap_resamples=50,
+        bootstrap_seed=92,
+    )
+
+    result = report.result_for("silent")
+    assert result.audit_status is FitAuditStatus.WARNING
+    assert "silent" in report.eligible_model_order
+    assert report.winner in {"silent", "eligible"}
+    for audit in result.audits:
+        assert audit.convergence is ConvergenceStatus.UNREPORTED
+        assert "optimizer_convergence_unreported" in audit.issue_codes
+        assert "optimizer_nonconvergence" not in audit.issue_codes
+        assert not audit.numerical.failed_to_converge
+    # The state reaches a portable record, not only the live object.
+    record = report.to_dict()["models"]["silent"]
+    assert record["audit_status"] == "warning"
+    assert record["fit_audits"][0]["convergence"] == "unreported"
+    assert record["fit_audits"][0]["numerical"]["converged"] == "unreported"
 
 
 def test_nested_selection_never_uses_outer_test_outcomes() -> None:

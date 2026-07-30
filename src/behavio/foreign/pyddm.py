@@ -27,7 +27,7 @@ everything the Behavio contract needs and PyDDM does not produce:
   its own loss reads it by rounding each response time to the nearest grid index, which
   makes a per-trial likelihood a function of the solver's step size. ``pointwise_log_prob``
   interpolates linearly instead, through
-  :class:`~behavio.adapters.prediction.DensityPrediction`.
+  :class:`~behavio.contracts.DensityPrediction`.
 - **A covariance.** PyDDM reports a point estimate and a loss value and nothing about
   uncertainty. The wrapper differences the log-likelihood at the optimum to get an
   observed-information covariance, refuses rather than invents one when that matrix is not
@@ -67,14 +67,22 @@ differences that span two cells; the residual bias is real, and Behavio's own
 *PyDDM 0.9 reports no convergence flag.* :func:`pyddm.fit_adjust_model` reads SciPy's
 ``message`` off ``result.__dict__``, which an ``OptimizeResult`` does not populate, so the
 field is always empty for differential evolution and ``success`` is discarded entirely. The
-wrapper therefore verifies convergence itself; see :meth:`PyDDMDriftDiffusion._local_curvature`
-for what it can and cannot claim.
+contract now has a value for exactly this --
+:attr:`~behavio.contracts.ConvergenceStatus.UNREPORTED`, audited as a warning -- and the
+wrapper still verifies convergence itself anyway, because coordinate-wise local optimality
+on the solver lattice is a *stronger* claim than "nobody said", it is checkable, and the
+evaluations it needs are the ones the Hessian already takes, so it costs nothing. See
+:meth:`PyDDMDriftDiffusion._local_curvature` for what it can and cannot claim.
+``UNREPORTED`` is what the fit records in the one case where that check itself cannot run:
+every parameter pinned against a bound, no admissible local move, nothing measured. That
+case used to record ``converged=False``, which failed the audit and evicted the fit from
+every comparison on the strength of a test that never executed.
 
 *The far tail of the analytic solution underflows to exactly zero.* PyDDM's grid holds
 per-bin masses, and past a few seconds those round to zero even where the analytic density is
 merely very small -- Behavio's own series still returns ``6e-10`` where PyDDM returns ``0``.
 A single such trial would make a fold's score ``-inf``, so scores are floored at
-:data:`~behavio.adapters.prediction.LOG_DENSITY_FLOOR`, the same floor Behavio's own Wiener
+:data:`~behavio.contracts.LOG_DENSITY_FLOOR`, the same floor Behavio's own Wiener
 density uses, and the number of floored rows is retained on the fit.
 
 One more thing is not a strain but is worth stating: ``pointwise_log_prob`` is *not* the
@@ -111,16 +119,14 @@ from numpy.typing import NDArray
 from scipy.optimize import differential_evolution as _differential_evolution
 
 from behavio._internal.arrays import protected_array
-from behavio.adapters.prediction import (
-    LOG_DENSITY_FLOOR,
-    DensityPrediction,
-)
-from behavio.contracts.audit import FitDiagnostics
+from behavio.contracts.audit import ConvergenceStatus, FitDiagnostics
 from behavio.contracts.estimator import (
+    LOG_DENSITY_FLOOR,
+    CategoricalPrediction,
+    DensityPrediction,
     DerivedQuantity,
     FitResult,
     ModelDataError,
-    Prediction,
     PredictionMode,
     UnsupportedPredictionMode,
 )
@@ -168,14 +174,27 @@ _MASS_TOLERANCE: Final = 1e-3
 
 @dataclass(frozen=True, slots=True)
 class _LocalCurvature:
-    """What differencing the likelihood at the reported optimum established, or did not."""
+    """What differencing the likelihood at the reported optimum established, or did not.
+
+    ``converged`` is ``True``/``False`` when the local-optimality probe ran, and
+    :attr:`~behavio.contracts.ConvergenceStatus.UNREPORTED` when it could not run at all --
+    the one case where neither PyDDM nor this wrapper has an answer.
+    """
 
     covariance: NDArray[np.float64]
     standard_errors: NDArray[np.float64]
     gradient_norm: float | None
-    converged: bool
+    converged: bool | ConvergenceStatus
     estimated: bool
     message: str
+
+    @property
+    def status(self) -> int | None:
+        """The integer convergence status the fit records, absent when there is no verdict."""
+
+        if isinstance(self.converged, ConvergenceStatus):
+            return None
+        return 0 if self.converged else 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -405,6 +424,27 @@ class PyDDMDriftDiffusion(Describable):
         return self.response_time.column
 
     @property
+    def categories(self) -> tuple[Any, ...]:
+        """The two absorbing boundaries, in the order the predicted density stacks them.
+
+        Declared because the predicted density is *defective across* these categories, and
+        a fold that retains such a prediction must also retain which one each trial
+        observed -- that is what lets the comparison layer score the choice margin of a
+        density against a choice-only competitor on the same rows.
+        """
+
+        return (LOWER_CHOICE, UPPER_CHOICE)
+
+    def outcome_codes(self, study: Study) -> NDArray[np.int64]:
+        """Return the observed boundary of each trial as an index into :attr:`categories`."""
+
+        outcomes = self._outcomes(study)
+        return protected_array(
+            np.where(outcomes == UPPER_CHOICE, 1, 0),
+            dtype=np.int64,
+        )
+
+    @property
     def parameter_bounds(self) -> dict[str, tuple[float, float]]:
         """The optimizer box, as configured. Reported by :meth:`describe`.
 
@@ -543,7 +583,7 @@ class PyDDMDriftDiffusion(Describable):
             diagnostics=FitDiagnostics(
                 converged=curvature.converged,
                 optimizer=f"pyddm:{self.fitting_method}",
-                status=0 if curvature.converged else 1,
+                status=curvature.status,
                 message=(
                     f"{curvature.message} "
                     f"[pyddm {pyddm_version()} {pyddm_message or 'reported no message'}, "
@@ -587,27 +627,34 @@ class PyDDMDriftDiffusion(Describable):
         fit: FitResult,
         *,
         mode: PredictionMode = PredictionMode.FILTERED,
-    ) -> Prediction:
-        """Return the probability that the upper boundary is crossed on each trial.
+    ) -> DensityPrediction:
+        """Return the model's whole prediction: the defective density of each boundary.
 
-        Derived by integrating the same defective densities :meth:`predict_density` returns
-        and renormalising, so the choice half and the latency half of the prediction cannot
-        disagree. Renormalisation matters only when the solver grid truncated mass, which
-        :attr:`~behavio.adapters.prediction.DensityPrediction.total_mass` reports.
+        This *is* :meth:`predict_density`. A drift diffusion predicts a joint distribution
+        over which boundary is crossed and when, and returning the choice probability alone
+        -- which is what this method used to do -- discarded the half of the prediction that
+        distinguishes the model from a logistic regression, and discarded it at exactly the
+        point where Behavio's falsification machinery picks a prediction up. The fold, the
+        comparison and the evidence bundle now see the density.
+
+        The choice probabilities are still one call away and are still exactly consistent
+        with the latency half, because they are derived from it:
+        :meth:`~behavio.contracts.DensityPrediction.choice_prediction` integrates the grid
+        away, and :attr:`~behavio.contracts.DensityPrediction.total_mass` reports whatever
+        mass the grid truncated before the renormalisation that implies.
         """
 
-        density = self.predict_density(study, fit, mode=mode)
-        categorical = density.choice_prediction()
-        probability = np.clip(
-            np.asarray(categorical.probability[:, 1], dtype=np.float64),
-            np.finfo(float).tiny,
-            1.0 - np.finfo(float).eps,
-        )
-        return Prediction(
-            probability=probability,
-            linear_predictor=np.log(probability) - np.log1p(-probability),
-            mode=PredictionMode(mode),
-        )
+        return self.predict_density(study, fit, mode=mode)
+
+    def choice_probability(self, study: Study, fit: FitResult) -> CategoricalPrediction:
+        """Return the choice margin of the predicted density, for a discrete-only consumer.
+
+        Exactly ``predict(...).choice_prediction()``, named so a caller who wants the
+        two-boundary probabilities does not have to know that integrating the grid is how
+        one gets them.
+        """
+
+        return self.predict_density(study, fit).choice_prediction()
 
     def predict_density(
         self,
@@ -656,7 +703,7 @@ class PyDDMDriftDiffusion(Describable):
     ) -> NDArray[np.float64]:
         """Return the joint log density of each observed choice and response time.
 
-        Floored at :data:`~behavio.adapters.prediction.LOG_DENSITY_FLOOR`. PyDDM's grid
+        Floored at :data:`~behavio.contracts.LOG_DENSITY_FLOOR`. PyDDM's grid
         rounds the extreme tail of the analytic density to zero, and one such trial would
         otherwise make an entire fold's score ``-inf``; the count of floored rows is retained
         on the fit as ``likelihood_floor_count``.
@@ -902,8 +949,13 @@ class PyDDMDriftDiffusion(Describable):
 
         *Convergence* is **coordinate-wise local optimality on the solver lattice**: no
         single-parameter move of one difference step in either direction improves PyDDM's
-        loss by more than ``convergence_tolerance`` nats. That is a weaker claim than "the
-        optimizer's stopping rule fired", and it is the strongest claim available. A
+        loss by more than ``convergence_tolerance`` nats. That is a different claim from
+        "the optimizer's stopping rule fired" -- weaker in one direction, stronger in the
+        other -- and it is the strongest claim available. It is also strictly more than
+        :attr:`~behavio.contracts.ConvergenceStatus.UNREPORTED` says, which is why the check
+        stayed once that value existed: ``UNREPORTED`` records that nobody looked, and this
+        looks. When the probe cannot be taken at all -- every coordinate pinned against its
+        bound -- the fit falls back to ``UNREPORTED``, because then nobody has looked. A
         gradient-based test is not: the likelihood is a *step function* of two of the five
         coordinates (see below), so its numerical gradient at any point is an artefact of
         where the reported estimate happens to sit inside a lattice cell, and a
@@ -975,10 +1027,16 @@ class PyDDMDriftDiffusion(Describable):
             offset[index] = steps[index]
             neighbours[index] = (objective(vector + offset), objective(vector - offset))
         if not neighbours:
+            # Neither PyDDM nor this wrapper has anything to say about convergence here:
+            # the fitter reported no verdict and the probe that would have supplied one
+            # cannot be taken. That is UNREPORTED, not failure -- recording ``False`` would
+            # have failed the audit and evicted the fit from every comparison on the
+            # strength of a check that never ran.
             return _unknown_curvature(
                 size,
                 "no covariance and no convergence check: every parameter is pinned against "
                 "its bound, so no admissible local move exists",
+                converged=ConvergenceStatus.UNREPORTED,
             )
         gain = max(max(high, low) for high, low in neighbours.values()) - centre
         converged = bool(np.isfinite(gain) and gain <= self.convergence_tolerance)
@@ -1265,7 +1323,7 @@ def _unknown_curvature(
     size: int,
     message: str,
     *,
-    converged: bool = False,
+    converged: bool | ConvergenceStatus,
     gradient_norm: float | None = None,
 ) -> _LocalCurvature:
     return _LocalCurvature(

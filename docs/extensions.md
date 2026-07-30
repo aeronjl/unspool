@@ -204,9 +204,10 @@ scores = external_model.pointwise_log_prob(test_study, fit)
 ```
 
 `fit()` must return an Behavio `FitResult` whose model name, signature, and training-row
-count match the estimator. `predict()` returns `Prediction` or `CategoricalPrediction` in
-the requested study's source row order. `pointwise_log_prob()` returns one finite value per
-row for exactly `scored_columns`.
+count match the estimator. `predict()` returns `Prediction`, `CategoricalPrediction` or
+`DensityPrediction` — the three members of `ModelPrediction` — in the requested study's
+source row order. `pointwise_log_prob()` returns one finite value per row for exactly
+`scored_columns`.
 
 If an upstream package uses sequence arrays, xarray objects, or its own sample class, keep
 that conversion inside the adapter and test boundary resets and row restoration directly.
@@ -217,7 +218,9 @@ fields are the interoperability floor, not a demand to discard evidence.
 
 `Study` is a flat columnar table in source row order; almost nothing outside Behavio wants
 that shape. Rather than every wrapper working the conversion out for itself and getting it
-wrong differently, three pieces live in `behavio.adapters` and name no third-party package.
+wrong differently, three pieces exist and none of them names a third-party package. They
+live where the thing they describe lives: the sequence helper beside `Study`, the density
+prediction beside the other predictions, the conformance harness in `behavio.adapters`.
 
 **`sequence_layout(study)`** derives the contiguous trial sequences from the study's own
 `chronological_indices()`, splits any column into per-sequence arrays, and joins them back
@@ -228,24 +231,38 @@ sorted order still validates. It also supplies the `subj_idx`-style integer subj
 hierarchical package will ask for, derived from first appearance rather than invented.
 
 ```python
-from behavio.adapters import sequence_layout
+from behavio.trials import sequence_layout
 
 layout = sequence_layout(study)  # or grouping="subject"
 states = [foreign.filter(block) for block in layout.column(study, "choice")]
 per_row = layout.join(states)  # back in source row order
 ```
 
-**`DensityPrediction`** is the prediction type for a continuous outcome. `Prediction` is a
-probability and `CategoricalPrediction` is a simplex; neither can hold a response-time
-density, a continuous confidence report, or the finishing-time distribution of a race, so a
-wrapper around a package that predicts one used to have to discard it. A `DensityPrediction`
-carries the density on an explicit grid, optionally *defective* across named categories --
-the two boundaries of a diffusion, the accumulators of a race -- reports the mass a
-truncated grid failed to cover instead of normalising it away, and interpolates at an
-observed value so a per-trial likelihood is not a function of the solver's step size. A
-model that returns one from `predict_density()` alongside its ordinary `predict()`
-satisfies `DensityBehaviourEstimator`, and the conformance harness then checks that
-integrating the density reproduces the model's own choice probabilities.
+**`DensityPrediction`** (in `behavio.contracts`) is the prediction type for a continuous
+outcome. `Prediction` is a probability and `CategoricalPrediction` is a simplex; neither can
+hold a response-time density, a continuous confidence report, or the finishing-time
+distribution of a race, so a wrapper around a package that predicts one used to have to
+discard it. A `DensityPrediction` carries the density on an explicit grid, optionally
+*defective* across named categories — the two boundaries of a diffusion, the accumulators of
+a race — reports the mass a truncated grid failed to cover instead of normalising it away,
+and interpolates at an observed value so a per-trial likelihood is not a function of the
+solver's step size.
+
+It is a full member of `ModelPrediction`, so **return it from `predict()`**: a fold retains
+it, slices it to the scored rows and keeps the observed category of each row beside it, and
+`compare_models` scores it. A model that offers it only through `predict_density()` while
+`predict()` returns choice probabilities also satisfies `DensityBehaviourEstimator`, and the
+conformance harness then checks that integrating the density reproduces the model's own
+choice probabilities — but the density is then invisible to everything downstream of
+`predict()`, which is most of the falsification stack.
+
+Two metrics, two meanings. The **log score is joint** and is what a comparison ranks on:
+`pointwise_log_prob` returns the log density of the whole observation, choice and latency
+together. The **Brier score is a scoring rule for a probability, and a density is not one**,
+so `compare_models` scores the density's *discrete margin* — the integrated per-category
+mass, which is exactly what a choice-only competitor is scored on, and which says nothing
+about the latency half. A density with no categorical margin has no probability at all, and
+the comparison raises `UnscoreableByBrier` rather than reporting a number.
 
 **`check_behaviour_estimator(model, study)`** executes the nine-item list below. Its
 headline check is the one the contract could not previously make: see

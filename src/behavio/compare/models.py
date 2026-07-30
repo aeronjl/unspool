@@ -13,6 +13,30 @@ optimizer fit already is. ``ProspectiveModelResult.to_dict`` gains a ``posterior
 entry only when a candidate actually was sampled, so a maximum-likelihood report is
 byte-identical to what it was before sampled candidates existed.
 
+What each metric means for a candidate that predicts a density
+--------------------------------------------------------------
+A candidate whose ``predict`` returns a
+:class:`~behavio.contracts.DensityPrediction` -- a drift diffusion, a race, a continuous
+confidence report -- is scored on the same two metrics as every other candidate, but only
+one of them is defined the same way.
+
+The **log score is unchanged and is the metric that ranks candidates.**
+``pointwise_log_prob`` returns the joint log density of the whole observation, so a
+response-time model's log loss and a choice-only model's log loss are both proper scores of
+whatever each one claims to predict. That is the number
+:attr:`ProspectiveComparisonReport.winner` and every paired contrast read.
+
+The **Brier score is a scoring rule for a probability, and a density is not one.** For a
+*defective* density -- one split across named categories, which is what a two-boundary
+diffusion produces -- integrating the grid away gives genuine choice probabilities, and
+those are scored exactly as a categorical candidate's are. That is deliberate: it is the
+only reading under which a diffusion and a logistic regression earn comparable Brier scores
+on the same rows. It also means the Brier column reads the **discrete margin only** and
+says nothing about the latency half of the prediction. For a density with no categorical
+margin there is no probability at all, and the comparison raises
+:class:`UnscoreableByBrier` rather than reporting a number; see
+:func:`_brier_scoreable_margin` for the full argument.
+
 Simultaneous inference
 ----------------------
 ``K`` candidates produce ``K(K-1)/2`` pairwise contrasts, all read against the same
@@ -82,6 +106,7 @@ from behavio.evaluate.splits import (
 from behavio.models.base import (
     BehaviourEstimator,
     CategoricalPrediction,
+    DensityPrediction,
     PredictionMode,
 )
 from behavio.trials import Study
@@ -1245,15 +1270,18 @@ def _aggregate_evaluations(
     for evaluation in evaluations:
         test = study.take(evaluation.split.test_indices)
         losses = -evaluation.pointwise_log_probability
-        if isinstance(evaluation.prediction, CategoricalPrediction):
+        prediction = evaluation.prediction
+        if isinstance(prediction, DensityPrediction):
+            prediction = _brier_scoreable_margin(prediction)
+        if isinstance(prediction, CategoricalPrediction):
             if evaluation.outcome_codes is None:
                 raise ValueError("categorical fold is missing observed outcome codes")
-            targets = np.zeros_like(evaluation.prediction.probability)
+            targets = np.zeros_like(prediction.probability)
             targets[np.arange(len(targets)), evaluation.outcome_codes] = 1.0
             # Half the multicategory squared distance preserves the familiar [0, 1]
             # range and exactly matches the existing binary Brier convention.
             brier = 0.5 * np.sum(
-                (evaluation.prediction.probability - targets) ** 2,
+                (prediction.probability - targets) ** 2,
                 axis=1,
             )
         else:
@@ -1266,7 +1294,7 @@ def _aggregate_evaluations(
                 ) from None
             if not np.all(np.isfinite(outcomes)) or not np.all((outcomes == 0) | (outcomes == 1)):
                 raise ValueError(f"outcome column {outcome_column!r} must contain only 0 and 1")
-            brier = (evaluation.prediction.probability - outcomes) ** 2
+            brier = (prediction.probability - outcomes) ** 2
         if len(test) != len(losses):
             raise ValueError("fold test rows and pointwise scores must align")
         pooled_losses.append(losses)
@@ -1292,6 +1320,57 @@ def _aggregate_evaluations(
         pooled_log_loss=float(np.mean(np.concatenate(pooled_losses))),
         pooled_brier_score=float(np.mean(np.concatenate(pooled_brier))),
     )
+
+
+class UnscoreableByBrier(ValueError):
+    """Raised when a candidate's prediction carries no probability a Brier score can read.
+
+    Naming the refusal is the point. A caller who reaches this has not made a mistake about
+    columns or folds; they have asked a probability scoring rule to score something that is
+    not a probability, and the answer is that the metric does not apply -- not a number that
+    looks like one.
+    """
+
+
+def _brier_scoreable_margin(prediction: DensityPrediction) -> CategoricalPrediction:
+    """Return the discrete margin of a density, or refuse to invent one.
+
+    **A density is not a probability.** ``p(rt = 0.43) = 1.7`` is a perfectly ordinary value
+    for a response-time model to report and it is not a number ``(p - y)**2`` means anything
+    about: a Brier score is a squared distance to an indicator, so it needs a quantity
+    bounded by one and reported against an outcome that either happened or did not. Rescaling
+    a density until it fits that shape would produce a number that ranks models by their
+    grid resolution.
+
+    What a *defective* density does carry is a genuine probability: integrating each
+    category's density over the grid gives the choice probabilities, and those are exactly
+    what a choice-only competitor is scored on. Scoring that margin is therefore not a
+    concession -- it is the only reading under which a response-time model and a logistic
+    regression earn comparable Brier scores on the same rows, which is what a comparison
+    table is for. Two things follow, and both are deliberate:
+
+    - the Brier column of a comparison scores the **discrete margin only**. It says nothing
+      about the latency half of the prediction, and a model that gets the choice right and
+      the response-time distribution badly wrong will look good in it;
+    - the **log score does not have this problem**. ``pointwise_log_prob`` is the joint log
+      density of the whole observation, choice and latency together, and it is the metric
+      :attr:`ProspectiveComparisonReport.winner` and every paired contrast rank on. The
+      Brier column is retained beside it as a secondary, deliberately narrower reading.
+
+    A density with no categories -- an unlabelled continuous outcome, a confidence report --
+    has no discrete margin at all, so there is nothing to score and no honest number to
+    report. That raises :class:`UnscoreableByBrier` rather than returning ``NaN`` or zero.
+    """
+
+    if not prediction.is_defective:
+        raise UnscoreableByBrier(
+            f"the candidate predicts a density over {prediction.outcome!r} with no "
+            "categorical margin, and a Brier score is a scoring rule for a probability, "
+            "not for a density; there is no number to report. Compare on the log score, "
+            "which is the joint log density of the observation and is defined for this "
+            "prediction"
+        )
+    return prediction.choice_prediction()
 
 
 def _policy_for(

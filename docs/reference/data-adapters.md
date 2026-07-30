@@ -7,10 +7,12 @@ contract. Every source dataclass here satisfies the
 Third-party dependencies are optional everywhere except delimited tables: CSV and TSV are
 read with the standard library and NumPy alone, and only Parquet requires an extra.
 
-The last three sections are not data readers. They are the tooling an author of a *model*
-wrapper needs — the sequence/row helper, the continuous-outcome prediction type, and the
-estimator conformance harness — and none of them names a third-party package. Concrete
-wrappers live in [`behavio.foreign`](foreign-models.md).
+The last section is not a data reader. It is the estimator conformance harness a *model*
+wrapper author runs, and it names no third-party package. The other two things a wrapper
+author needs live where what they describe lives: `SequenceLayout` beside
+[`Study`](study-and-task.md), and `DensityPrediction` beside the other predictions in
+[`behavio.contracts`](contracts.md). Concrete wrappers live in
+[`behavio.foreign`](foreign-models.md).
 
 ## Tables: CSV, TSV, and Parquet
 
@@ -47,22 +49,6 @@ wrappers live in [`behavio.foreign`](foreign-models.md).
 ## IBL ONE
 
 ::: behavio.adapters.ibl_one
-    options:
-      members_order: source
-      show_root_heading: false
-      show_source: false
-
-## Trial sequences and source row order
-
-::: behavio.adapters.sequences
-    options:
-      members_order: source
-      show_root_heading: false
-      show_source: false
-
-## Continuous-outcome predictions
-
-::: behavio.adapters.prediction
     options:
       members_order: source
       show_root_heading: false

@@ -151,12 +151,19 @@ def _common_issues(fit: FitResult, policy: FitAuditPolicy) -> list[FitIssue]:
     non-finite ones are still reported exactly as before, so maximum-likelihood audits are
     unchanged.
 
-    ``converged`` is the case that needs three values rather than two, and it is tested
-    against ``None`` explicitly rather than for truthiness. A closed-form estimator leaves
-    it absent because it never searched; reading that absence as falsy would report
-    ``optimizer_nonconvergence`` against an exact solution, which is precisely the
-    spurious error that used to force such an estimator to claim ``converged=True``. The
-    distinction is not merely suppressed here -- it is reported, as
+    ``converged`` is the case that needs four values rather than two, and it is read
+    through :attr:`~behavio.contracts.audit.FitDiagnostics.convergence` rather than tested
+    for truthiness. A closed-form estimator leaves it absent because it never searched;
+    reading that absence as falsy would report ``optimizer_nonconvergence`` against an
+    exact solution, which is precisely the spurious error that used to force such an
+    estimator to claim ``converged=True``. A wrapped third-party fitter that searched and
+    reported nothing is the fourth case, and the severity is what separates it from the
+    second: :attr:`~behavio.contracts.audit.ConvergenceStatus.NOT_CONVERGED` is an
+    ``ERROR`` and makes the audit ``FAIL``, which every consumer reads as ineligible;
+    :attr:`~behavio.contracts.audit.ConvergenceStatus.UNREPORTED` is a ``WARNING`` and
+    makes it ``WARNING``, which no consumer reads as ineligible. Absence of evidence is
+    recorded, not converted into evidence of failure. The distinction is not merely
+    suppressed here -- it is reported, as
     :attr:`~behavio.contracts.audit.FitAudit.convergence`.
     """
 
@@ -168,6 +175,17 @@ def _common_issues(fit: FitResult, policy: FitAuditPolicy) -> list[FitIssue]:
                 code="optimizer_nonconvergence",
                 severity=AuditSeverity.ERROR,
                 message=f"optimizer did not converge: {diagnostics.message}",
+            )
+        )
+    elif diagnostics.convergence is ConvergenceStatus.UNREPORTED:
+        issues.append(
+            FitIssue(
+                code="optimizer_convergence_unreported",
+                severity=AuditSeverity.WARNING,
+                message=(
+                    "the procedure searched and reported no convergence verdict: "
+                    f"{diagnostics.message}"
+                ),
             )
         )
     if not np.all(np.isfinite(fit.estimates)):

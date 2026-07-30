@@ -217,13 +217,29 @@ def test_the_base_glm_satisfies_the_composable_contract_and_the_wrappers_preserv
     assert isinstance(hierarchical(base, over="subject"), BehaviourModel)
 
 
-def test_a_model_whose_estimated_coordinate_is_not_its_reported_one_is_refused() -> None:
+def test_a_latent_state_model_is_refused_where_its_labels_cannot_be_pinned() -> None:
+    """Both refusals are about labels, and they are refusals of different things.
+
+    A path in clock time has no canonical labelling at all, because the ordering that names
+    a GLM-HMM's states is an ordering of numbers and a smooth model's are paths. Letting
+    *every* parameter vary by group would put a Gaussian ridge on reference-coded transition
+    logits, which is a prior on a chart rather than on the simplex it charts. The cell that
+    is open -- group deviations on named emission coefficients -- is exercised in
+    ``tests/test_compose_glm_hmm.py``.
+    """
+
     from behavio.models import BernoulliGLMHMM
 
-    with pytest.raises(TypeError, match="latent-state mixture"):
+    with pytest.raises(TypeError, match="no canonical labelling"):
         smooth(BernoulliGLMHMM(predictors=("stimulus",)), knots=KNOTS)
-    with pytest.raises(TypeError, match="latent-state mixture"):
+    with pytest.raises(TypeError, match="reference-category logits"):
         hierarchical(BernoulliGLMHMM(predictors=("stimulus",)), over="subject")
+    assert isinstance(
+        hierarchical(
+            BernoulliGLMHMM(predictors=("stimulus",)), over="subject", parameters=("intercept",)
+        ),
+        BehaviourModel,
+    )
 
 
 def test_group_blocks_follow_first_appearance_order() -> None:
@@ -419,3 +435,23 @@ def test_one_grouping_level_at_a_time() -> None:
         model_from_formula(
             "choice ~ stimulus + (1 | subject) + (1 | session)", BernoulliHistoryGLM()
         )
+
+
+def test_a_composed_model_reports_both_of_its_axes_to_describe() -> None:
+    """`describe()` must see through the outer combinator.
+
+    Hierarchy declares no clock and smoothness declares no grouping, but a caller holds
+    only the outermost wrapper. If it does not forward, a partially pooled model whose
+    coefficients are paths reports itself as stationary and ungrouped -- which is exactly
+    the pair of facts a reader needs to know what the fit means.
+    """
+
+    base = BernoulliHistoryGLM(predictors=("stimulus",))
+    paths = smooth(base, over="session_order", knots=(0.0, 2.0))
+    pooled = hierarchical(paths, over="subject")
+
+    assert base.describe().clock is None
+    assert base.describe().group is None
+    assert paths.describe().clock == "session_order"
+    assert pooled.describe().clock == "session_order"
+    assert pooled.describe().group == "subject"

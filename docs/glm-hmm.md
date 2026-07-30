@@ -190,10 +190,154 @@ GLMs on a future session. The repeated
 [state-alignment benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/state_alignment) additionally contrasts
 clear and overlapping emissions and verifies exact invariance to inferred-label reversal.
 
+## Partial pooling across subjects
+
+`hierarchical()` works on this model, on the **emission coefficients** and on nothing else:
+
+```python
+from behavio import BernoulliGLMHMM
+from behavio.compose import hierarchical
+
+model = BernoulliGLMHMM(predictors=("stimulus",), n_states=2, l2=0.01)
+pooled = hierarchical(model, over="subject", parameters=("intercept",), scale=0.5)
+
+fit = pooled.fit(study)
+fit.estimates  # the population coordinate, in canonical label order
+fit.group_deviations  # (subjects, 2) deviations on state[0].intercept and state[1].intercept
+fit.parameters_for("mouse-a")
+```
+
+Naming `"intercept"` varies `state[0].intercept` and `state[1].intercept` together, under one
+prior scale. That is not a shorthand: it is the model. A GLM-HMM's coordinate is
+*permutation-equivariant* — relabelling the states permutes the emission rows — so a
+coefficient varies by group for every state at once or the fit stops being invariant under
+relabelling, which is the invariance the canonical ordering canonicalises. Naming
+`state[0].intercept` alone is refused.
+
+### Why a subject-level hierarchy is expressible at all
+
+A GLM-HMM's likelihood is a forward recursion, so there is no per-row score to profile a
+group deviation against. There is a per-**session** score, and that is enough. The
+bounded-coordinate contract asks for a negative log likelihood in one coordinate vector per
+row *plus* [`row_blocks`](composing-models.md#models-whose-coordinate-is-bounded-not-linear),
+the blocks the coordinate must be constant within; a GLM-HMM answers with its sessions, the
+same answer a Q-learning agent gives. `over="subject"` is admissible because a session lies
+inside a subject. A grouping column that cuts a session is refused rather than averaged:
+
+```python
+hierarchical(model, over="trial", parameters=("intercept",)).fit(study)
+# ValueError: grouping by 'trial' splits a block this model's likelihood recurses over ...
+```
+
+### Why transitions stay pooled
+
+A row of the transition matrix lives on a simplex. This model charts it with
+reference-category logits, \(t_{rj} = \log A_{rj} - \log A_{r,K-1}\), and an isotropic
+Gaussian on those coordinates is **not** a prior on the transition matrix — it is a prior on
+the chart. For \(K = 2\) the two possible charts differ by a sign and a Gaussian survives it.
+For \(K \ge 3\) they do not: independent normals on \((\log A_{r0}/A_{r2}, \log
+A_{r1}/A_{r2})\) is a different distribution on the simplex from the one you get by making
+state 0 the reference, so two users who ordered their states differently would be fitting
+different models while reading the same declaration. And the reference state here is not
+chosen by the user at all — it is whichever state canonicalisation puts last, which is a
+function of the data.
+
+So "this animal is stickier" is not a deviation this coordinate can carry honestly. It is a
+statement about a contrast, it has no single named parameter for \(K > 2\), and the reference
+state has no self-transition coordinate of its own. A per-animal transition model needs a
+symmetric parameterisation — a centred or isometric log-ratio coordinate with a relabelling-
+invariant penalty — and that is a different model rather than a wider declaration. Until it
+exists:
+
+- `stickiness=` is the declared, chart-free way to say that states persist, at population
+  level;
+- per-animal dynamics are answered by fitting subjects separately and comparing, not by a
+  deviation the package cannot define.
+
+`hierarchical(model, over="subject")` with the default `parameters=None` is therefore an
+error, not a fit, and it names the alternative.
+
+Composition also declines while `stickiness > 0`, because \(-\kappa \sum_k \log A_{kk}\) is
+neither a per-row score nor a quadratic penalty and a combinator would have to apply it once
+per session block instead of once per model.
+
+### Labels under a joint fit
+
+This is the part worth reading slowly, because a hierarchical latent-state model is exactly
+where a fit can be well typed and meaningless.
+
+**The likelihood cannot identify a subject's labels.** Relabelling one subject's states is
+an exact symmetry of a GLM-HMM's likelihood whenever its dynamics are symmetric — the forward
+recursion cannot tell the two apart at any sample size. Behavio's test suite asserts that
+equality rather than assuming it.
+
+**The group prior can, and is the only thing that does.** Subject \(g\)'s emissions are the
+population's plus a deviation \(b_g \sim \mathcal N(0, \sigma^2)\). Relabelling subject \(g\)
+alone leaves the likelihood where it was but replaces \(b_g\) with
+\(\Pi(\beta + b_g) - \beta\), which for well-separated population states is a much larger
+vector and pays a much larger price. Per-subject relabelling is therefore **not** a symmetry
+of the joint objective, and the label-consistent solution is its global optimum. The one
+symmetry that survives is the *global* one — relabelling the population and every deviation
+together — which is the same symmetry the pooled fit has, and `fit_rows` resolves it the same
+way, by sorting states along `label_by`. It can do that to the whole joint vector at once
+because relabelling is a **linear** map on this coordinate (emissions permute; the two
+simplexes permute and re-reference), so the covariance is carried through exactly rather than
+recomputed. `model.relabelling_map(permutation)` is that matrix.
+
+**"Global optimum" is not "the optimizer found it".** So the claim is checked rather than
+asserted:
+
+```python
+agreement = model.group_label_agreement(fit)
+
+agreement.aligned  # per group: is its closest match to the population the identity?
+agreement.relabelled_groups  # the groups whose deviation is a relabelling, not a difference
+agreement.margins  # how much worse the best *other* matching is
+agreement.all_aligned
+```
+
+Each group's emission rows are Hungarian-matched to the population's on Euclidean distance. A
+group that comes back permuted has a deviation that must not be read as "this animal is more
+biased in state 1", because its state 1 is not the population's state 1. A group whose margin
+is near zero has states too poorly separated for the anchor to have bitten, and its deviation
+should be read with the same suspicion as a fit with a small `label_order_gap`.
+
+This is a different question from `state_recovery()`. That aligns inferred state *posteriors*
+against known simulated truth and so cannot be run on data; `group_label_agreement()` compares
+two fitted parameter vectors and runs on anything.
+
+The recovery test that opened this cell simulates three subjects of which one has its
+intercepts reversed relative to the population — far enough that fitting that subject **alone**
+puts its stimulus-sensitive state at index 0 while every other subject's sits at index 1. One
+joint fit puts all three on the population's labelling, reports the reversal as a large
+deviation rather than as a swap, recovers the population, and reports a visibly smaller
+alignment margin for the subject whose labels were at risk.
+
+### No path in clock time
+
+`smooth()` is refused for this family, at any parameter selection:
+
+```python
+smooth(model, over="session_order", knots=(0.0, 4.0), parameters=("intercept",))
+# TypeError: ... a GLM-HMM's latent labels are an ordering of one emission coefficient, and
+# an ordering of coefficient *paths* is only a permutation where the paths do not cross ...
+```
+
+The ordering that names these states is an ordering of numbers. When `label_by` becomes a
+path, states can be ordered one way early in training and the other way late, and no single
+permutation canonicalises the fit: "state 0" would name different behaviour at the two ends of
+the clock. The fit would converge and report knots, which is precisely the hazard — a drifting
+GLM-HMM is a real and useful model, and it needs a labelling rule defined on paths, plus a
+report of where paths cross, before anything it estimates can be read. Compare this model
+against a [smooth GLM](composing-models.md) meanwhile; that is the competitor the comparison
+was always for.
+
 ## Current boundary
 
-This implementation pools one parameter set across supplied subjects and resets state at
-each session. It does not yet provide hierarchical partial pooling, state carry-over across
-sessions, time-varying or covariate-dependent transitions, missing-outcome inference,
-semi-Markov dwell times, or smoothed state reports. Those should be added only with targeted
-recovery and competing-explanation tests.
+This implementation resets state at each session and pools the transition matrix and the
+initial distribution across subjects. Emission coefficients partially pool by any grouping
+column that respects session boundaries. It does not provide per-group transition dynamics,
+smooth (path-valued) parameters, state carry-over across sessions, covariate-dependent
+transitions, missing-outcome inference, semi-Markov dwell times, or smoothed state reports.
+Those should be added only with targeted recovery and competing-explanation tests, and two of
+them need a labelling rule first.

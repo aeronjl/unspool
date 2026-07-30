@@ -1,10 +1,16 @@
-"""The one derivation of session boundaries and source-row restoration."""
+"""The one derivation of session boundaries and source-row restoration.
+
+The helper lives beside :class:`behavio.trials.Study`, not in ``behavio.adapters``: it is a
+fact about a study's own chronology, imports nothing above ``behavio.trials``, and is
+wanted by smoothers and plots as much as by adapter authors.
+"""
 
 import numpy as np
 import pytest
 
+import behavio.adapters
 from behavio import Study
-from behavio.adapters import (
+from behavio.trials import (
     SequenceGrouping,
     SequenceLayout,
     SequenceLayoutError,
@@ -145,3 +151,11 @@ def test_the_layout_is_read_only_and_rejects_a_foreign_study() -> None:
         layout.column(study.take(np.arange(8)), "choice")
     with pytest.raises(TypeError, match="must be a Study"):
         sequence_layout({"subject": ["m1"]})
+
+
+def test_the_helper_lives_beside_study_and_no_longer_beside_the_adapters() -> None:
+    """The move is the test: an adapter package should not own a fact about a study."""
+
+    for name in ("SequenceLayout", "SequenceGrouping", "TrialSequence", "sequence_layout"):
+        assert not hasattr(behavio.adapters, name)
+    assert SequenceLayout.__module__ == "behavio.trials"

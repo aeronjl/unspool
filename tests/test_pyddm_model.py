@@ -11,13 +11,15 @@ import numpy as np
 import pytest
 
 from behavio import Study, compare_models, forward_session_splits
-from behavio.adapters import (
-    DensityBehaviourEstimator,
-    DensityPrediction,
-    assert_behaviour_estimator_conforms,
-)
+from behavio.adapters import assert_behaviour_estimator_conforms
 from behavio.contracts import (
     BehaviourEstimator,
+    CategoricalBehaviourEstimator,
+    ConvergenceStatus,
+    DensityBehaviourEstimator,
+    DensityPrediction,
+    FitAuditStatus,
+    FitDiagnostics,
     GenerativeBehaviourModel,
     PredictionMode,
     UnsupportedPredictionMode,
@@ -304,21 +306,37 @@ def test_a_different_seed_is_a_different_configuration(simulated: Study) -> None
 # ---------------------------------------------------------------------------------------
 
 
-def test_prediction_and_density_describe_one_model(
+def test_predict_returns_the_density_itself_not_the_choice_probability(
     fitted: tuple[PyDDMDriftDiffusion, PyDDMFitResult], simulated: Study
 ) -> None:
+    """A diffusion predicts a joint distribution, and ``predict`` now says so.
+
+    ``predict`` used to return the upper-boundary probability alone, which threw the
+    latency half away at exactly the point where a fold, a comparison and an evidence
+    bundle pick a prediction up. The choice probabilities are still available and are
+    still derived from the density, so the two halves cannot disagree.
+    """
+
     model, fit = fitted
 
     prediction = model.predict(simulated, fit)
     density = model.predict_density(simulated, fit)
 
+    assert isinstance(prediction, DensityPrediction)
     assert isinstance(density, DensityPrediction)
     assert density.is_defective and density.categories == (0, 1)
     assert density.outcome == "response_time"
     assert density.n_observations == len(simulated)
-    implied = density.choice_prediction().probability[:, 1]
-    assert np.allclose(implied, prediction.probability, atol=1e-9)
+    assert np.array_equal(prediction.density, density.density)
+    margin = model.choice_probability(simulated, fit)
+    assert margin.categories == (0, 1)
+    assert np.allclose(margin.probability, density.choice_prediction().probability)
     assert np.all(density.total_mass > 0.999)
+    # The category coordinate the fold retains codes against is the density's own.
+    assert isinstance(model, CategoricalBehaviourEstimator)
+    assert tuple(model.categories) == density.categories
+    codes = model.outcome_codes(simulated)
+    assert np.array_equal(codes, np.asarray(simulated["choice"], dtype=np.int64))
 
 
 def test_the_pointwise_score_is_the_density_read_at_the_observation(
@@ -373,6 +391,69 @@ def test_a_fit_from_another_specification_is_refused(simulated: Study) -> None:
 
     with pytest.raises(ValueError, match="different model specification"):
         model.predict(simulated, fit)
+
+
+# ---------------------------------------------------------------------------------------
+# Convergence: what PyDDM does not report, and what the wrapper checks instead.
+# ---------------------------------------------------------------------------------------
+
+
+def test_the_wrapper_still_verifies_local_optimality_rather_than_shrugging(
+    fitted: tuple[PyDDMDriftDiffusion, PyDDMFitResult],
+) -> None:
+    """``UNREPORTED`` exists now, and the self-check survived it, because it says more.
+
+    PyDDM reports no convergence flag, so the honest floor is
+    :attr:`~behavio.contracts.ConvergenceStatus.UNREPORTED`. Coordinate-wise local
+    optimality on the solver lattice is a strictly stronger, checkable claim, and the
+    probe evaluations are the ones the Hessian already takes, so it costs nothing to keep.
+    """
+
+    _, fit = fitted
+
+    assert fit.diagnostics.convergence is ConvergenceStatus.CONVERGED
+    assert fit.diagnostics.converged is True
+    assert fit.diagnostics.status == 0
+    assert "solver-lattice step" in fit.diagnostics.message
+    assert "pyddm 0.9" in fit.diagnostics.message
+    assert fit.audit().status is not FitAuditStatus.FAIL
+
+
+def test_a_convergence_check_that_could_not_run_reports_unreported_not_failure() -> None:
+    """The one branch where neither PyDDM nor the wrapper measured anything.
+
+    Every coordinate pinned against a bound leaves no admissible local move, so the probe
+    cannot be taken. That used to be recorded as ``converged=False``, which failed the
+    audit and evicted the fit from every comparison on the strength of a test that never
+    executed.
+    """
+
+    from behavio.foreign.pyddm import _unknown_curvature
+
+    curvature = _unknown_curvature(
+        2,
+        "no covariance and no convergence check: every parameter is pinned against its bound",
+        converged=ConvergenceStatus.UNREPORTED,
+    )
+
+    assert curvature.status is None
+    diagnostics = FitDiagnostics(
+        converged=curvature.converged,
+        optimizer="pyddm:differential_evolution",
+        status=curvature.status,
+        message=curvature.message,
+        n_iterations=None,
+        objective=1.0,
+        gradient_norm=None,
+        hessian_condition=None,
+        boundary_estimate=True,
+    )
+
+    assert diagnostics.convergence is ConvergenceStatus.UNREPORTED
+    assert not diagnostics.failed_to_converge
+    # A refused covariance is still a refused covariance, and still only a warning.
+    assert not np.all(np.isfinite(curvature.covariance))
+    assert not curvature.estimated
 
 
 # ---------------------------------------------------------------------------------------
@@ -454,6 +535,11 @@ def test_the_wrapper_flows_through_prospective_evaluation(simulated: Study) -> N
     for fold in evaluation.evaluations:
         assert np.isfinite(fold.total_log_probability)
         assert fold.prediction.n_observations == fold.split.test_indices.size
+        # The density itself survives the fold, sliced to the scored rows, with the
+        # observed boundary of each row retained beside it.
+        assert isinstance(fold.prediction, DensityPrediction)
+        assert fold.prediction.is_defective
+        assert fold.outcome_codes is not None
 
 
 def test_the_wrapper_is_comparable_against_behavios_own_drift_diffusion(
@@ -470,8 +556,20 @@ def test_the_wrapper_is_comparable_against_behavios_own_drift_diffusion(
     assert set(report.model_order) == {"pyddm", "wiener"}
     assert report.scored_columns == ("choice", "response_time")
     for name in report.model_order:
-        assert report.result_for(name).audit_status.value == "pass"
+        assert report.result_for(name).audit_status is not FitAuditStatus.FAIL
+    assert set(report.eligible_model_order) == {"pyddm", "wiener"}
     assert report.winner in {"pyddm", "wiener"}
+    # The Brier score of the density candidate is its choice margin's, which is the only
+    # part of a density a probability scoring rule can read; the log loss is joint.
+    pyddm_result = report.result_for("pyddm")
+    assert 0.0 <= pyddm_result.pooled_brier_score <= 1.0
+    expected = []
+    for evaluation in pyddm_result.evaluations:
+        margin = evaluation.prediction.choice_prediction().probability
+        targets = np.zeros_like(margin)
+        targets[np.arange(len(targets)), evaluation.outcome_codes] = 1.0
+        expected.extend(0.5 * np.sum((margin - targets) ** 2, axis=1))
+    assert pyddm_result.pooled_brier_score == pytest.approx(float(np.mean(expected)))
 
 
 def test_parameter_recovery_runs_against_the_wrappers_own_simulator() -> None:

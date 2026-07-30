@@ -119,7 +119,10 @@ contract needs are not in it:
 - **Interpolated per-trial densities.** PyDDM tabulates the PDF on a time grid and its own
   loss reads it by rounding each response time to the nearest grid index, which makes a
   per-trial likelihood a function of the step size. `pointwise_log_prob` interpolates
-  through a [`DensityPrediction`](reference/data-adapters.md) instead.
+  through a [`DensityPrediction`](reference/contracts.md) instead, which is also what
+  `predict()` returns: a diffusion predicts a joint distribution over which boundary and
+  when, and reporting the choice probability alone would discard half of it at the point
+  where a fold picks the prediction up.
 - **A covariance.** The wrapper differences PyDDM's own loss at the optimum for an
   observed-information matrix, and reports `NaN` rather than a number it does not believe
   when that matrix is not positive definite.
@@ -205,15 +208,16 @@ filtered prediction.
 [Extend Behavio](extensions.md) is the contract; three helpers exist so a wrapper does not
 have to re-derive what every wrapper needs.
 
-- `behavio.adapters.sequence_layout` derives session boundaries from `Study` once and
+- `behavio.trials.sequence_layout` derives session boundaries from `Study` once and
   restores source row order exactly. `layout.join(layout.split(values)) == values`, always.
   Use it wherever a foreign package wants a list of per-sequence arrays or a `subj_idx`
   column; do not re-derive boundaries by scanning for changes in a column.
-- `behavio.adapters.DensityPrediction` is the prediction type for a continuous outcome — a
+- `behavio.contracts.DensityPrediction` is the prediction type for a continuous outcome — a
   response-time density, a continuous confidence report, an *n*-accumulator race. It carries
   defective densities on an explicit grid, reports the mass a truncated grid lost rather
   than normalising it away, and interpolates at an observed value so a per-trial likelihood
-  is not a function of the solver's step size.
+  is not a function of the solver's step size. Return it from `predict()`; it is one of the
+  three shapes `ModelPrediction` names, and everything downstream reads it.
 - `behavio.adapters.check_behaviour_estimator` executes the estimator half of the
   [compatibility list](extensions.md#compatibility-tests), including the filtered/smoothed
   check above and a cross-check that an integrated `DensityPrediction` reproduces the

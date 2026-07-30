@@ -63,6 +63,7 @@ from behavio.evaluate.splits import EvaluationFold
 from behavio.models.base import (
     CategoricalBehaviourEstimator,
     CategoricalPrediction,
+    DensityPrediction,
     FitResult,
     ModelPrediction,
     Prediction,
@@ -219,6 +220,14 @@ class FoldEvaluation:
     a report always names the fold the splitter named. ``audit`` is the fold fit's
     normalized numerical audit, computed once here rather than recomputed by every layer
     that needs to know whether the fold is usable.
+
+    ``outcome_codes`` names the observed category of each scored row and is required
+    exactly when the prediction *has* categories -- a
+    :class:`~behavio.contracts.CategoricalPrediction`, or a
+    :class:`~behavio.contracts.DensityPrediction` that is defective across them. A
+    defective density is a joint prediction about a discrete choice and a continuous
+    latency, and without the codes the discrete half is unscoreable: it is what
+    :func:`behavio.compare.compare_models` reads to score the choice margin.
     """
 
     split: EvaluationFold
@@ -237,12 +246,13 @@ class FoldEvaluation:
         if not np.all(np.isfinite(scores)):
             raise ValueError("pointwise scores must be finite")
         codes = self.outcome_codes
-        if isinstance(self.prediction, CategoricalPrediction):
+        categories = _prediction_categories(self.prediction)
+        if categories is not None:
             if codes is None:
                 raise ValueError("categorical predictions require observed outcome codes")
             protected_codes = protected_array(codes, dtype=np.int64)
             if protected_codes.shape != scores.shape or np.any(
-                (protected_codes < 0) | (protected_codes >= len(self.prediction.categories))
+                (protected_codes < 0) | (protected_codes >= len(categories))
             ):
                 raise ValueError("outcome codes must identify one predicted category per row")
             object.__setattr__(self, "outcome_codes", protected_codes)
@@ -525,27 +535,53 @@ def _fold_prediction(
     context: Any,
     prediction_mode: PredictionMode,
 ) -> tuple[Study, ModelPrediction, NDArray[np.int64] | None]:
-    """Predict over context and test rows together and check shape and coordinates."""
+    """Predict over context and test rows together and check shape and coordinates.
+
+    All three prediction shapes are admitted, and a
+    :class:`~behavio.contracts.DensityPrediction` is checked on exactly the terms a
+    :class:`~behavio.contracts.CategoricalPrediction` is: if it names categories, the model
+    must name the same ones and must be able to code each row's observed category. A
+    density that names none is a prediction about a continuous outcome alone and carries no
+    codes.
+    """
 
     prediction_rows = np.concatenate((split.prediction_context_indices, split.test_indices))
     prediction_study = study.take(prediction_rows)
     full_prediction = model.predict(prediction_study, context, mode=prediction_mode)
-    if not isinstance(full_prediction, (Prediction, CategoricalPrediction)):
-        raise TypeError("model.predict must return Prediction or CategoricalPrediction")
+    if not isinstance(full_prediction, (Prediction, CategoricalPrediction, DensityPrediction)):
+        raise TypeError(
+            "model.predict must return Prediction, CategoricalPrediction or DensityPrediction"
+        )
     if full_prediction.n_observations != len(prediction_study):
         raise ValueError("model.predict must return one prediction per row")
     full_codes: NDArray[np.int64] | None = None
-    if isinstance(full_prediction, CategoricalPrediction):
+    categories = _prediction_categories(full_prediction)
+    if categories is not None:
         if not isinstance(model, CategoricalBehaviourEstimator):
             raise TypeError(
                 "categorical predictions require categories and outcome_codes() on the model"
             )
-        if tuple(model.categories) != full_prediction.categories:
+        if tuple(model.categories) != categories:
             raise ValueError("model and prediction category coordinates differ")
         full_codes = np.asarray(model.outcome_codes(prediction_study), dtype=np.int64)
         if full_codes.shape != (len(prediction_study),):
             raise ValueError("outcome_codes must return one code per prediction row")
     return prediction_study, full_prediction, full_codes
+
+
+def _prediction_categories(prediction: ModelPrediction) -> tuple[Any, ...] | None:
+    """Return the category coordinate a prediction declares, or ``None`` for one that does not.
+
+    A :class:`~behavio.contracts.DensityPrediction` may or may not be defective across
+    categories, so "does this prediction have a discrete coordinate?" is a question about
+    the value rather than about its type.
+    """
+
+    if isinstance(prediction, CategoricalPrediction):
+        return prediction.categories
+    if isinstance(prediction, DensityPrediction):
+        return prediction.categories
+    return None
 
 
 def _fold_evaluation(

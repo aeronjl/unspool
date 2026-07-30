@@ -42,6 +42,8 @@ CONTRACT_RE_EXPORT_HOMES = {
         "BehaviourModel",
         "CategoricalBehaviourEstimator",
         "CategoricalPrediction",
+        "DensityBehaviourEstimator",
+        "DensityPrediction",
         "FitDiagnostics",
         "FitResult",
         "GenerativeBehaviourModel",
@@ -76,6 +78,8 @@ CONTRACT_RE_EXPORT_HOMES = {
     "behavio.evaluate.splits": ("EvaluationFold",),
     "behavio.models": (
         "BehaviourEstimator",
+        "DensityBehaviourEstimator",
+        "DensityPrediction",
         "FitDiagnostics",
         "FitResult",
         "model_capabilities",
@@ -317,7 +321,13 @@ def test_every_friendly_home_re_exports_the_one_contract_object(
 def test_contracts_exports_exactly_what_it_declares() -> None:
     for name in contracts.__all__:
         assert hasattr(contracts, name)
-    assert sorted(contracts.__all__) == list(contracts.__all__)
+    # The isort-style order ruff's RUF022 enforces: constants, then everything else in
+    # ASCII order, which puts classes before functions. Asserting the same order here
+    # rather than a plain ``sorted`` keeps the test and the linter from disagreeing about
+    # where a name like ``LOG_DENSITY_FLOOR`` belongs.
+    assert sorted(contracts.__all__, key=lambda name: (not name.isupper(), name)) == list(
+        contracts.__all__
+    )
 
 
 def test_protected_array_moved_but_the_old_private_alias_still_works() -> None:
@@ -905,6 +915,70 @@ def test_the_audit_separates_non_convergence_from_an_inapplicable_question() -> 
     assert failed.audit().status is contracts.FitAuditStatus.FAIL
     assert solved.audit().status is contracts.FitAuditStatus.PASS
     assert solved.audit().to_dict()["convergence"] == "inapplicable"
+
+
+def test_a_fitter_that_searched_and_said_nothing_is_neither_a_success_nor_a_failure() -> None:
+    """The fourth value, and the three claims it replaces.
+
+    A wrapper around a third-party fitter whose stopping rule is private lands here every
+    time. ``True`` would claim a success nobody measured; ``False`` would condemn the fit
+    to an audit ``FAIL`` and evict it from every comparison; ``None`` would assert that no
+    search happened, which is the one thing that is certainly false.
+    """
+
+    searched = _mle_fit()
+    silent = replace(
+        searched,
+        diagnostics=replace(
+            searched.diagnostics,
+            converged=contracts.ConvergenceStatus.UNREPORTED,
+            status=None,
+            message="the fitter reported no convergence flag",
+        ),
+    )
+
+    diagnostics = silent.diagnostics
+    assert diagnostics.convergence is contracts.ConvergenceStatus.UNREPORTED
+    # Not a failure: the question every consumer actually asks answers "no".
+    assert not diagnostics.failed_to_converge
+
+    audit = silent.audit()
+    assert audit.convergence is contracts.ConvergenceStatus.UNREPORTED
+    assert audit.status is contracts.FitAuditStatus.WARNING
+    assert "optimizer_convergence_unreported" in audit.issue_codes
+    assert "optimizer_nonconvergence" not in audit.issue_codes
+    assert audit.to_dict()["convergence"] == "unreported"
+    assert audit.to_dict()["numerical"]["converged"] == "unreported"
+
+
+def test_the_fourth_value_is_the_only_status_a_fit_may_spell_as_an_enum() -> None:
+    """One state, one spelling. The other three are written True, False and None."""
+
+    for status in (
+        contracts.ConvergenceStatus.CONVERGED,
+        contracts.ConvergenceStatus.NOT_CONVERGED,
+        contracts.ConvergenceStatus.INAPPLICABLE,
+    ):
+        with pytest.raises(ValueError, match="only ConvergenceStatus a fit records"):
+            _diagnostics(converged=status, status=None)
+    with pytest.raises(ValueError, match="reported no convergence verdict"):
+        _diagnostics(converged=contracts.ConvergenceStatus.UNREPORTED, status=0)
+    with pytest.raises(ValueError, match="boolean, None, or ConvergenceStatus"):
+        _diagnostics(converged="maybe", status=None)
+
+
+def _diagnostics(*, converged: Any, status: int | None) -> contracts.FitDiagnostics:
+    return contracts.FitDiagnostics(
+        converged=converged,
+        optimizer="foreign",
+        status=status,
+        message="x",
+        n_iterations=None,
+        objective=None,
+        gradient_norm=None,
+        hessian_condition=None,
+        boundary_estimate=None,
+    )
 
 
 def test_a_procedure_with_no_convergence_question_cannot_report_a_status() -> None:

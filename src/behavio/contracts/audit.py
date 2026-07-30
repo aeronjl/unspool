@@ -43,12 +43,27 @@ class ConvergenceStatus(StrEnum):
     because ``converged=False`` and *there was nothing to converge* are different claims
     and a boolean cannot hold both: reading a closed-form estimator's absent convergence
     flag as falsy manufactures a numerical failure out of an exact solution.
+
+    :attr:`UNREPORTED` is the reason three values were not enough. A wrapper around a
+    third-party fitter routinely lands in a fourth state: the procedure *did* search, and
+    it did not say whether it succeeded. PyDDM 0.9 is the worked example --
+    :func:`pyddm.fit_adjust_model` reads SciPy's ``message`` off ``result.__dict__``, which
+    an ``OptimizeResult`` does not populate, and discards ``success`` entirely -- but any
+    fitter whose stopping rule is private is in the same position. The three earlier values
+    each misdescribe it: ``CONVERGED`` claims a success nobody measured, ``NOT_CONVERGED``
+    condemns the fit to an audit ``FAIL`` and evicts it from every comparison, and
+    ``INAPPLICABLE`` asserts that no search happened. The fourth value says only what is
+    true, and :func:`behavio.diagnostics.audit_fit` reports it as a *warning*: the
+    uncertainty is visible in the audit and the candidate stays eligible, because "I do not
+    know whether this converged" is not evidence that it did not.
     """
 
     #: The procedure searched and reported success.
     CONVERGED = "converged"
     #: The procedure searched and did not reach its own convergence criterion.
     NOT_CONVERGED = "not-converged"
+    #: The procedure searched and reported no verdict either way.
+    UNREPORTED = "unreported"
     #: The procedure did not search, so convergence is not a question it can answer.
     INAPPLICABLE = "inapplicable"
 
@@ -68,6 +83,16 @@ class FitDiagnostics:
     ``converged=False`` as a numerical failure, and reports ``converged=None`` as
     :attr:`ConvergenceStatus.INAPPLICABLE` without raising an issue at all.
 
+    ``converged`` additionally accepts :attr:`ConvergenceStatus.UNREPORTED`, which is the
+    only value of that enum a fit ever writes down, because it is the only state the
+    ``bool | None`` vocabulary cannot express: the procedure searched and said nothing
+    about whether it succeeded. Passing any other member is refused rather than silently
+    re-encoded, so there is exactly one spelling of each state --
+    :attr:`ConvergenceStatus.CONVERGED` is written ``True``, :attr:`NOT_CONVERGED` is
+    written ``False`` and :attr:`INAPPLICABLE` is written ``None``. The audit reports
+    ``UNREPORTED`` as a *warning*, so a fit in that state keeps its comparison eligibility
+    while the gap stays on the record.
+
     ``optimizer`` names the numerical procedure that produced the estimates and stays
     mandatory, because every fit can answer *what computed this*: for a searching
     estimator that is the optimizer, for a closed-form estimator the solution method. Only
@@ -77,7 +102,7 @@ class FitDiagnostics:
     diagnostic by accident.
     """
 
-    converged: bool | None
+    converged: bool | ConvergenceStatus | None
     optimizer: str
     status: int | None
     message: str
@@ -90,8 +115,20 @@ class FitDiagnostics:
     def __post_init__(self) -> None:
         if not isinstance(self.optimizer, str) or not self.optimizer:
             raise ValueError("a fit must name the procedure that produced it")
+        if isinstance(self.converged, ConvergenceStatus):
+            if self.converged is not ConvergenceStatus.UNREPORTED:
+                raise ValueError(
+                    "the only ConvergenceStatus a fit records directly is UNREPORTED; write "
+                    "converged as True, False or None for the other three"
+                )
+            if self.status is not None:
+                raise ValueError(
+                    "a procedure that reported no convergence verdict cannot report a "
+                    "convergence status"
+                )
+            return
         if self.converged is not None and not isinstance(self.converged, (bool, np.bool_)):
-            raise ValueError("converged must be boolean or None")
+            raise ValueError("converged must be boolean, None, or ConvergenceStatus.UNREPORTED")
         if self.converged is None and self.status is not None:
             raise ValueError(
                 "a procedure with no convergence question cannot report a convergence status"
@@ -101,8 +138,10 @@ class FitDiagnostics:
 
     @property
     def convergence(self) -> ConvergenceStatus:
-        """Three-valued reading of :attr:`converged`."""
+        """Four-valued reading of :attr:`converged`."""
 
+        if isinstance(self.converged, ConvergenceStatus):
+            return self.converged
         if self.converged is None:
             return ConvergenceStatus.INAPPLICABLE
         return ConvergenceStatus.CONVERGED if self.converged else ConvergenceStatus.NOT_CONVERGED
@@ -115,6 +154,9 @@ class FitDiagnostics:
         asking when it decides whether a run is usable. ``not converged`` answers it wrongly
         for a closed-form estimator, whose ``converged`` is absent rather than false; a
         recovery grid reading it that way would report an exact solution as a failed run.
+        It answers it wrongly for :attr:`ConvergenceStatus.UNREPORTED` too, and in the more
+        damaging direction: a wrapped fitter that searched and stayed silent would be
+        recorded as having failed, which is a claim nobody measured.
         """
 
         return self.convergence is ConvergenceStatus.NOT_CONVERGED
@@ -374,7 +416,7 @@ class FitAudit:
 
     @property
     def convergence(self) -> ConvergenceStatus:
-        """Whether the fit converged, failed to converge, or could not be asked.
+        """Whether the fit converged, failed to, stayed silent, or could not be asked.
 
         :attr:`status` collapses every issue into pass/warning/fail, and a closed-form
         estimator passes for the same reason a converged optimizer does. That is correct
@@ -402,7 +444,13 @@ class FitAudit:
             "status": self.status.value,
             "convergence": self.convergence.value,
             "numerical": {
-                "converged": diagnostics.converged,
+                # ``UNREPORTED`` is the one non-boolean this field carries; it is written
+                # out as its plain value so an artifact holds a string, not an enum repr.
+                "converged": (
+                    diagnostics.converged.value
+                    if isinstance(diagnostics.converged, ConvergenceStatus)
+                    else diagnostics.converged
+                ),
                 "optimizer": diagnostics.optimizer,
                 "status": diagnostics.status,
                 "message": diagnostics.message,

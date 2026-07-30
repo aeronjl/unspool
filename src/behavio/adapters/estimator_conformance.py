@@ -48,10 +48,10 @@ import numpy as np
 from numpy.typing import NDArray
 
 from behavio.adapters.conformance import CheckStatus, ConformanceCheck
-from behavio.adapters.prediction import DensityBehaviourEstimator, DensityPrediction
-from behavio.adapters.sequences import sequence_layout
 from behavio.contracts.estimator import (
     CategoricalPrediction,
+    DensityBehaviourEstimator,
+    DensityPrediction,
     FitResult,
     GenerativeBehaviourModel,
     ModelCapabilities,
@@ -60,7 +60,7 @@ from behavio.contracts.estimator import (
     UnsupportedPredictionMode,
     model_capabilities,
 )
-from behavio.trials import REQUIRED_COLUMNS, Study
+from behavio.trials import REQUIRED_COLUMNS, Study, sequence_layout
 
 _TOLERANCE = 1e-9
 """Relative agreement two recomputations of the same quantity must reach.
@@ -565,6 +565,27 @@ def _check_density_agrees_with_choice(model: Any, study: Study, fit: FitResult) 
             f"{float(np.max(density.total_mass)):.4f}]",
         )
     implied = density.choice_prediction()
+    if isinstance(prediction, DensityPrediction):
+        # ``predict`` returns the density itself, which is the shape this check most wants
+        # to see: there are not two halves to reconcile because there is only one object.
+        # What is still worth checking is that the two calls agree, since a model may build
+        # the density twice.
+        if prediction.categories != density.categories or not np.array_equal(
+            np.asarray(prediction.density), np.asarray(density.density)
+        ):
+            return ConformanceCheck(
+                name,
+                CheckStatus.FAILED,
+                "predict() and predict_density() returned different densities",
+            )
+        return ConformanceCheck(
+            name,
+            CheckStatus.PASSED,
+            "predict() returns the density itself, so the discrete and continuous halves "
+            "cannot disagree; grid mass in "
+            f"[{float(np.min(density.total_mass)):.4f}, "
+            f"{float(np.max(density.total_mass)):.4f}]",
+        )
     if isinstance(prediction, Prediction):
         if len(implied.categories) != 2:
             return ConformanceCheck(

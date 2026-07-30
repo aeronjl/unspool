@@ -21,6 +21,7 @@ from behavio.contracts.compose import (
     validate_predictor_shape,
 )
 from behavio.contracts.estimator import (
+    LOG_DENSITY_FLOOR,
     FitResult,
     ModelDataError,
     ModelPrediction,
@@ -46,9 +47,6 @@ __all__ = [
     "MixtureSimulation",
     "mix",
 ]
-
-LOG_DENSITY_FLOOR = float(np.log(np.finfo(np.float64).tiny))
-"""The floor a mixture log density is held at when neither process could have produced a row."""
 
 LOGIT_STARTS = (-5.0, -2.0, 1.0)
 """Deterministic mixture-logit restarts, in the order the deleted lapse model used them.

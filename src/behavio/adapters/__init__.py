@@ -9,18 +9,19 @@ Every source dataclass here satisfies :class:`behavio.contracts.adapter.StudyAda
 :func:`behavio.adapters.conformance.check_study_adapter` is the runnable harness a
 downstream adapter author can point at their own implementation.
 
-Three modules serve the *other* kind of adapter -- a wrapper around a foreign model
-implementation -- and none of them names a third-party package:
+One module serves the *other* kind of adapter -- a wrapper around a foreign model
+implementation -- and it names no third-party package:
+:mod:`behavio.adapters.estimator_conformance` executes the estimator half of the
+compatibility list in ``docs/extensions.md``, including the behavioural test that
+distinguishes a filtered prediction from a smoothed one.
 
-- :mod:`behavio.adapters.sequences` derives session boundaries and restores source row order
-  once, so every wrapper that has to hand a foreign package a list of per-sequence arrays
-  does it the same way;
-- :mod:`behavio.adapters.prediction` adds :class:`~behavio.adapters.prediction.DensityPrediction`,
-  the predictive object a response-time, confidence, or race model produces and the
-  estimator contract had no shape for;
-- :mod:`behavio.adapters.estimator_conformance` executes the estimator half of the
-  compatibility list in ``docs/extensions.md``, including the behavioural test that
-  distinguishes a filtered prediction from a smoothed one.
+Two things a wrapper author needs used to live here and no longer do, because neither was
+adapter-specific. :class:`behavio.trials.SequenceLayout` derives session boundaries and
+restores source row order; it is a fact about a :class:`~behavio.trials.Study`, so it lives
+beside one. :class:`behavio.contracts.DensityPrediction` is the predictive object a
+response-time, confidence, or race model produces; it is a prediction, so it lives beside
+:class:`~behavio.contracts.Prediction` and :class:`~behavio.contracts.CategoricalPrediction`
+in the estimator contract, and ``ModelPrediction`` is the union of all three.
 
 Concrete wrappers around third-party model packages live in :mod:`behavio.foreign`, which
 sits above ``behavio.models`` because a wrapped model is a model.
@@ -64,18 +65,6 @@ from behavio.adapters.nwb import (
     study_from_nwbfile,
     write_nwb,
 )
-from behavio.adapters.prediction import (
-    LOG_DENSITY_FLOOR,
-    DensityBehaviourEstimator,
-    DensityPrediction,
-)
-from behavio.adapters.sequences import (
-    SequenceGrouping,
-    SequenceLayout,
-    SequenceLayoutError,
-    TrialSequence,
-    sequence_layout,
-)
 from behavio.adapters.table import (
     DEFAULT_MISSING_VALUES,
     ColumnType,
@@ -94,7 +83,6 @@ from behavio.adapters.table import (
 __all__ = [
     "DEFAULT_IBL_ALYX_URL",
     "DEFAULT_MISSING_VALUES",
-    "LOG_DENSITY_FLOOR",
     "AdapterConformance",
     "AdapterConformanceError",
     "CheckStatus",
@@ -102,8 +90,6 @@ __all__ = [
     "ConformanceCheck",
     "DANDIAdapterError",
     "DANDINWBSource",
-    "DensityBehaviourEstimator",
-    "DensityPrediction",
     "EstimatorConformance",
     "EstimatorConformanceError",
     "IBLONEAdapterError",
@@ -111,15 +97,11 @@ __all__ = [
     "NWBAdapterError",
     "NWBSessionSource",
     "ResolvedDANDIAsset",
-    "SequenceGrouping",
-    "SequenceLayout",
-    "SequenceLayoutError",
     "SessionOrderDerivation",
     "SessionOrderRule",
     "TableFormat",
     "TableReadError",
     "TableSource",
-    "TrialSequence",
     "add_study_trials",
     "assert_behaviour_estimator_conforms",
     "assert_study_adapter_conforms",
@@ -132,7 +114,6 @@ __all__ = [
     "read_table",
     "read_tables",
     "resolve_dandi_nwb_asset",
-    "sequence_layout",
     "session_order_from_appearance",
     "session_order_from_column",
     "session_order_from_explicit",

@@ -36,6 +36,7 @@ from behavio.contracts.compose import (
     joint_parameter_names,
     linear_predictor,
     parameter_gradient,
+    require_varying_parameters,
     validate_predictor_shape,
 )
 from behavio.contracts.estimator import (
@@ -118,6 +119,7 @@ group_parameter_expansion` is what is asked.
     """
 
     require_composable(model, combinator="hierarchical")
+    require_varying_parameters(model, parameters, combinator="hierarchical")
     selected, scales = _resolve_declaration(model, parameters, parameter_scales)
     effects = VaryingEffects.declare(
         model.parameter_names,
@@ -739,6 +741,18 @@ class HierarchicalModel(Describable):
         """The study column whose distinct values index the groups."""
 
         return self.effects.grouping
+
+    @property
+    def clock(self) -> str | None:
+        """The wrapped model's clock, if it has one.
+
+        Hierarchy declares no clock of its own, but it is the outer combinator, so it is
+        the only thing a caller holds. Reporting the wrapped model's clock is what lets
+        `describe()` say that a partially pooled model's coefficients are also paths --
+        without this a `hierarchical(smooth(model))` looks stationary from outside.
+        """
+
+        return getattr(self.model, "clock", None)
 
     @property
     def parameter_names(self) -> tuple[str, ...]:

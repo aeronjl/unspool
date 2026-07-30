@@ -325,7 +325,10 @@ predictor. That is the next section.
 `BinaryQLearning`, `BinaryRLAgent` and `PsychometricFunction` are the three families whose
 likelihood is not a penalised linear one and whose parameters are bounded: a learning rate
 in \((0,1)\), an inverse temperature above zero, a width above zero, a lapse rate below its
-declared maximum. All six of their `smooth()` and `hierarchical()` cells work:
+declared maximum. All six of their `smooth()` and `hierarchical()` cells work.
+`BernoulliGLMHMM` is a fourth model on this contract, and a partial one: its
+[hierarchical cell is open](#a-glm-hmm-which-cell-opened-and-what-still-refuses) on the
+emission coefficients, and its smooth cell is refused.
 
 ```python
 from behavio import BinaryQLearning, PsychometricFunction
@@ -678,7 +681,8 @@ be independent given that predictor. Every generalized linear family in Behavio 
 those, `MultinomialLogit` included, and so is `WienerDriftDiffusion`: there is no link on
 its four predictor cells, but each of them is still a design times a coefficient block, and
 a trial's joint choice/latency density depends on the study through nothing else. The
-GLM-HMM is not, and is refused rather than silently mis-composed.
+GLM-HMM is not, and is refused rather than silently mis-composed -- it composes through the
+sibling contract instead, and only on the parameters that can carry a Gaussian.
 
 `behavio.contracts.bounded.BoundedCoordinateEstimator` is the second, described
 [above](#models-whose-coordinate-is-bounded-not-linear): eight of the same members, and
@@ -724,8 +728,7 @@ it *inherits* every member above and would satisfy any widening of them -- a
 `(rows, states)` linear predictor is exactly what its emissions produce. What it cannot
 honour is the half of the contract that is not a shape: a penalised linear model's log
 likelihood is a sum of independent row scores, and a GLM-HMM's is a forward recursion in
-which each row depends on every row before it, so profiling out a group deviation one block
-at a time would optimise something that is not this model's likelihood.
+which each row depends on every row before it.
 
 No arrangement of members can be inspected to discover that, so a model in that position
 declares it in a sentence:
@@ -740,9 +743,93 @@ would say yes, and reports the sentence in the `TypeError`. `BinaryRLAgent` decl
 too, and it is still true -- there is no linear predictor to widen, which is why `mix()`
 refuses it -- but a *recursion* is not the same obstacle as a *latent-state mixture*: the
 agent's parameters are still one vector per session, so it composes through the
-bounded-coordinate contract. A GLM-HMM's latent states are what make its transitions live on
-a simplex and its group deviations ill-defined without a label-alignment rule, so it is
-refused by both.
+bounded-coordinate contract.
+
+`mix()` is the only combinator still gated on that declaration alone, and for a GLM-HMM the
+refusal is a modelling statement as much as an arithmetic one. A lapse on a GLM-HMM is a
+lapse on the *emission*, inside the recursion. Averaged in from outside, over the marginal
+one-step-ahead prediction, the weight would be free to absorb the state switching it is
+supposed to be distinguished from -- which is the opposite of what a lapse competitor is for.
+
+The other two cells are covered next.
+
+### A GLM-HMM: which cell opened, and what still refuses
+
+`hierarchical()` works on a GLM-HMM. `smooth()` and `mix()` do not, and the reasons are
+different from each other and from the sentence above.
+
+```python
+from behavio import BernoulliGLMHMM
+from behavio.compose import hierarchical
+
+switching = BernoulliGLMHMM(predictors=("stimulus",), n_states=2, l2=0.01)
+per_animal = hierarchical(switching, over="subject", parameters=("intercept",), scale=0.5)
+```
+
+**Row independence was never the obstacle hierarchy faced.** It is the obstacle
+`PenalisedLinearEstimator` faces, and `BoundedCoordinateEstimator` was written to relax it:
+`row_blocks` names the blocks a recursion runs over, and a coordinate that is constant within
+one is scored exactly. A GLM-HMM recurses over a subject's session, which is the same answer
+`BinaryQLearning` gives, so `over="subject"` composes for the same reason and a grouping
+column that cuts a session is refused by the same check. Almost none of this cell was new
+code; the row objective is the model's own forward-backward gradient, evaluated one session
+at a time.
+
+**The simplex is a real obstacle, and it closes transitions rather than hierarchy.** A
+transition row lives on a simplex and is charted here by reference-category logits. An
+isotropic Gaussian on those is a prior on the *chart*: for \(K \ge 3\) it is not invariant to
+which state was made the reference, and the reference here is chosen by label
+canonicalisation rather than by the user. So `parameters=` on a GLM-HMM admits emission
+coefficients and refuses everything else, `parameters=None` is an error rather than a fit,
+and "this animal is stickier" is left to `stickiness=` at population level or to per-animal
+models. See [the GLM-HMM page](glm-hmm.md#why-transitions-stay-pooled).
+
+**Label switching is what the cell had to earn, and anchoring is what earns it.** Relabelling
+one subject's states leaves a GLM-HMM's likelihood exactly where it was; it does not leave
+the group prior where it was, because a relabelled subject is far from the population and
+pays for it. Per-subject relabelling is therefore not a symmetry of the joint objective and
+the label-consistent solution is its global optimum. The only surviving symmetry is the
+global one, and `fit_rows` resolves it by the same `label_by` ordering the pooled fit uses --
+exactly, because relabelling is a linear map on this coordinate, so the covariance goes
+through it unchanged.
+
+That argument is about the global optimum, so it is checked rather than trusted:
+
+```python
+fit = per_animal.fit(study)
+agreement = switching.group_label_agreement(fit)
+agreement.relabelled_groups  # groups whose deviation is a relabelling, not a difference
+agreement.margins  # how much worse the next-best matching is, per group
+```
+
+`align_latent_states` does not answer this question. It aligns inferred state posteriors
+against *known simulated truth*, which is a recovery diagnostic and unavailable on data;
+`group_label_agreement` matches two fitted parameter vectors and runs on anything.
+
+**`smooth()` stays refused, and the reason is again labels.** The ordering that names these
+states is an ordering of numbers; under `smooth()` `label_by` becomes a path, paths cross, and
+no single permutation canonicalises a fit in which "state 0" is one behaviour early in
+training and another late. The fit would converge and report knots, which is what makes it
+dangerous rather than merely unavailable.
+
+### Saying which parameters may vary at all
+
+`require_penalised_linear` and `require_bounded_coordinate` ask whether a model composes.
+`behavio.contracts.compose.require_varying_parameters` asks the question immediately after,
+and it is a different one: a model can have a perfectly good row objective and a perfectly
+good box while still having parameters no Gaussian deviation and no Gaussian random walk can
+sit on.
+
+The case that forced it is a coordinate that is a **chart** rather than a quantity, and no
+member can express that -- `penalty_matrix` and `group_penalty` have the same shape whether
+or not the coordinate they act on is exchangeable. So a model may declare
+`varying_parameter_refusal(parameters, *, combinator=...)`, and both `smooth()` and
+`hierarchical()` consult it before building anything. The `combinator` argument is there
+because the answer may legitimately differ by axis, which is exactly what a latent-state model
+does when its labels are an ordering of one of the parameters in question.
+
+Like `penalised_linear_refusal`, it is read with `getattr` and absent by default: a contract
+cannot require a model to announce which parts of itself it declines.
 
 To make a new family composable, implement those members. See
 [extensions](extensions.md).

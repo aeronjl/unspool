@@ -22,6 +22,7 @@ from behavio.contracts.compose import (
     PenalisedDesign,
     PenalisedLinearEstimator,
     linear_predictor,
+    require_varying_parameters,
     validate_predictor_shape,
 )
 from behavio.contracts.estimator import (
@@ -92,6 +93,7 @@ def smooth(
             "many groups the study has, so it cannot be expanded again from outside"
         )
     require_composable(model, combinator="smooth")
+    require_varying_parameters(model, parameters, combinator="smooth")
     available = tuple(model.parameter_names)
     if parameters is None:
         varying = available

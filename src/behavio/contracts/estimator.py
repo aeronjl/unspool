@@ -17,7 +17,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Final, Protocol, runtime_checkable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -32,6 +32,27 @@ class PredictionMode(StrEnum):
 
     FILTERED = "filtered"
     SMOOTHED = "smoothed"
+
+
+LOG_DENSITY_FLOOR: Final = float(np.log(np.finfo(np.float64).tiny))
+"""Smallest log density a pointwise score reports.
+
+A density read off a numerical grid underflows to exactly zero far into the tail even where
+the analytic density is merely very small, so ``log(0)`` is a statement about the grid rather
+than about the model. Flooring keeps a single tail trial from making an entire fold's score
+``-inf``, and the floor is a declared constant rather than a magic number inside one model:
+``behavio.models._kernels.wiener`` and ``behavio.compose.mixture`` both read it from here.
+"""
+
+_MASS_TOLERANCE: Final = 1e-3
+"""How far above one a density row's integrated mass may sit before it is rejected.
+
+Loose on purpose. The trapezoid rule overshoots a convex density, so a legitimate
+tabulation on a coarse grid integrates to slightly more than one, and rejecting that would
+reject every real solver output. The check exists to catch a density that is wrong *by
+construction* -- per-bin masses passed as densities, a missing Jacobian after a unit change,
+a normalisation applied twice -- and those are wrong by orders of magnitude, not by 1e-4.
+"""
 
 
 class ModelDataError(ValueError):
@@ -467,7 +488,296 @@ class CategoricalPrediction:
             ) from None
 
 
-ModelPrediction = Prediction | CategoricalPrediction
+@dataclass(frozen=True, slots=True)
+class DensityPrediction:
+    """A predictive density for one continuous outcome, on an explicit grid.
+
+    :class:`Prediction` is a probability plus a linear predictor and
+    :class:`CategoricalPrediction` is a simplex over named categories. Both describe a
+    *discrete* outcome. Nothing else in the contract described a response time, a
+    continuous confidence report, or the finishing-time distribution of a race between
+    accumulators, so a model that predicts one had exactly two choices: throw the
+    continuous prediction away and report choice probabilities alone, or return it through
+    a private side channel no Behavio consumer could read. The first is what the contract
+    silently encouraged, and it discards the half of the prediction that distinguishes a
+    response-time model from a logistic regression -- which is to say, the half a
+    falsification layer most wants to test.
+
+    ``grid`` is the strictly increasing outcome coordinate the density is tabulated on, in
+    the units of the scored column. ``density`` is ``(n_trials, n_grid)`` for an unlabelled
+    continuous outcome and ``(n_trials, n_categories, n_grid)`` when the density is
+    *defective* across ``categories``:
+
+    - an unlabelled continuous outcome (a confidence rating) is a density that integrates
+      to one;
+    - a two-boundary diffusion is two defective densities whose masses are the choice
+      probabilities and whose total integral is one;
+    - an *n*-accumulator race is *n* defective densities on the same coordinate.
+
+    Integrated mass is checked, not assumed: a row's total mass may fall short of one,
+    because a finite grid truncates a distribution with unbounded support and because a
+    model may leave probability undecided, but it may never exceed one. :attr:`total_mass`
+    reports what each row actually integrates to, so a caller can see truncation rather than
+    discover it as a bias.
+
+    How a consumer scores one
+    -------------------------
+    The three facts a caller needs -- what the choice probabilities are, what the density
+    is at an observed value, and how much mass the grid failed to cover -- are methods
+    rather than conventions, so no two consumers can derive them differently.
+    :meth:`observed_log_density` is the pointwise log score, and it is exactly what a
+    proper log-scoring rule means for a joint discrete/continuous observation.
+    :meth:`choice_prediction` is the discrete margin, and it is the only part of a density
+    that a *probability* scoring rule such as the Brier score can be applied to; see
+    :func:`behavio.compare.compare_models` for what that means for a comparison table.
+    """
+
+    grid: NDArray[np.float64]
+    density: NDArray[np.float64]
+    outcome: str
+    mode: PredictionMode
+    categories: tuple[Any, ...] | None = None
+
+    def __post_init__(self) -> None:
+        grid = protected_array(self.grid, dtype=np.float64)
+        density = protected_array(self.density, dtype=np.float64)
+        mode = PredictionMode(self.mode)
+        if not isinstance(self.outcome, str) or not self.outcome:
+            raise ValueError("a density prediction must name the outcome column it predicts")
+        if grid.ndim != 1 or grid.size < 2:
+            raise ValueError("the outcome grid must be one-dimensional with at least two points")
+        if not np.all(np.isfinite(grid)) or np.any(np.diff(grid) <= 0):
+            raise ValueError("the outcome grid must be finite and strictly increasing")
+        categories = (
+            None
+            if self.categories is None
+            else tuple(_prediction_category(value) for value in self.categories)
+        )
+        if categories is None:
+            if density.ndim != 2:
+                raise ValueError("an unlabelled density must be (n_trials, n_grid)")
+        else:
+            if len(categories) < 2:
+                raise ValueError("a defective density must name at least two categories")
+            keys = [_category_key(value) for value in categories]
+            if len(set(keys)) != len(keys):
+                raise ValueError("density categories must be unique")
+            if density.ndim != 3 or density.shape[1] != len(categories):
+                raise ValueError("a defective density must be (n_trials, n_categories, n_grid)")
+        if density.shape[-1] != grid.size:
+            raise ValueError("the density's last axis must match the outcome grid")
+        if not density.shape[0]:
+            raise ValueError("a density prediction must cover at least one trial")
+        if not np.all(np.isfinite(density)) or np.any(density < 0):
+            raise ValueError("densities must be finite and non-negative")
+        object.__setattr__(self, "grid", grid)
+        object.__setattr__(self, "density", density)
+        object.__setattr__(self, "categories", categories)
+        object.__setattr__(self, "mode", mode)
+        mass = self.total_mass
+        if np.any(mass > 1.0 + _MASS_TOLERANCE):
+            worst = float(np.max(mass))
+            raise ValueError(f"a predictive density may not integrate above one; observed {worst}")
+        if np.any(mass <= 0.0):
+            raise ValueError("every trial's predictive density must carry positive mass")
+
+    @property
+    def n_observations(self) -> int:
+        """Number of trial rows represented by the prediction."""
+
+        return int(self.density.shape[0])
+
+    @property
+    def n_grid(self) -> int:
+        """Number of points the density is tabulated on."""
+
+        return int(self.grid.size)
+
+    @property
+    def is_defective(self) -> bool:
+        """Whether the density is split across named categories that share the grid."""
+
+        return self.categories is not None
+
+    @property
+    def category_mass(self) -> NDArray[np.float64]:
+        """Integrated mass of each category, ``(n_trials, n_categories)``.
+
+        For a two-boundary diffusion these are the choice probabilities, up to whatever mass
+        the grid truncated away.
+        """
+
+        if self.categories is None:
+            raise ValueError("this prediction declares no categories, so it has no category mass")
+        return protected_array(np.trapezoid(self.density, self.grid, axis=-1), dtype=np.float64)
+
+    @property
+    def total_mass(self) -> NDArray[np.float64]:
+        """Total integrated mass of each trial's prediction, ``(n_trials,)``.
+
+        One minus this is the probability the grid does not account for: truncated tail,
+        undecided mass, or both. It is reported rather than normalised away.
+        """
+
+        integral = np.trapezoid(self.density, self.grid, axis=-1)
+        if self.categories is not None:
+            integral = np.sum(integral, axis=-1)
+        return protected_array(integral, dtype=np.float64)
+
+    def density_at(
+        self, values: Sequence[float] | NDArray[np.floating[Any]]
+    ) -> NDArray[np.float64]:
+        """Linearly interpolate the density at one outcome value per trial.
+
+        Returns ``(n_trials,)`` for an unlabelled density and ``(n_trials, n_categories)``
+        for a defective one. Values outside the grid evaluate to zero rather than to the
+        nearest endpoint, because a grid that does not reach an observation carries no
+        information about it and clamping would invent some.
+
+        Interpolation, not nearest-bin lookup, is the point. A package that returns a
+        tabulated PDF is usually scored by rounding each observation to its grid index,
+        which makes the reported per-trial likelihood a function of the solver's step size.
+        """
+
+        observed = np.asarray(values, dtype=np.float64)
+        if observed.ndim != 1 or observed.size != self.n_observations:
+            raise ValueError("values must contain one outcome per predicted trial")
+        inside = np.isfinite(observed) & (observed >= self.grid[0]) & (observed <= self.grid[-1])
+        upper = np.clip(np.searchsorted(self.grid, observed, side="left"), 1, self.n_grid - 1)
+        lower = upper - 1
+        span = self.grid[upper] - self.grid[lower]
+        weight = np.where(span > 0, (observed - self.grid[lower]) / span, 0.0)
+        weight = np.clip(weight, 0.0, 1.0)
+        if self.categories is None:
+            left = self.density[np.arange(self.n_observations), lower]
+            right = self.density[np.arange(self.n_observations), upper]
+            interpolated = left + weight * (right - left)
+            return protected_array(np.where(inside, interpolated, 0.0), dtype=np.float64)
+        rows = np.arange(self.n_observations)[:, None]
+        columns = np.arange(len(self.categories))[None, :]
+        left = self.density[rows, columns, lower[:, None]]
+        right = self.density[rows, columns, upper[:, None]]
+        interpolated = left + weight[:, None] * (right - left)
+        return protected_array(np.where(inside[:, None], interpolated, 0.0), dtype=np.float64)
+
+    def observed_log_density(
+        self,
+        values: Sequence[float] | NDArray[np.floating[Any]],
+        categories: Sequence[Any] | NDArray[Any] | None = None,
+        *,
+        floor: float = LOG_DENSITY_FLOOR,
+    ) -> NDArray[np.float64]:
+        """Return one floored log density per trial for the observation it actually made.
+
+        This is the pointwise score of a joint discrete/continuous observation: for a
+        two-boundary diffusion, the log of the defective density of the *observed* boundary
+        at the *observed* time. ``categories`` is required exactly when the prediction is
+        defective, and names the observed category of each row.
+        """
+
+        if self.categories is None:
+            if categories is not None:
+                raise ValueError("this prediction declares no categories to select")
+            density = self.density_at(values)
+        else:
+            if categories is None:
+                raise ValueError("a defective density needs the observed category of each row")
+            observed = list(categories)
+            if len(observed) != self.n_observations:
+                raise ValueError("categories must contain one observed category per trial")
+            index = {_category_key(value): column for column, value in enumerate(self.categories)}
+            try:
+                columns = np.asarray(
+                    [index[_category_key(value)] for value in observed], dtype=np.intp
+                )
+            except KeyError as error:
+                raise ValueError(
+                    f"observed category {error.args[0][1]!r} is not one this prediction "
+                    f"declares: {list(self.categories)}"
+                ) from None
+            density = self.density_at(values)[np.arange(self.n_observations), columns]
+        floored = float(floor)
+        with np.errstate(divide="ignore"):
+            scores = np.where(density > 0.0, np.log(density), floored)
+        return protected_array(np.maximum(scores, floored), dtype=np.float64)
+
+    def category_codes(self, categories: Sequence[Any] | NDArray[Any]) -> NDArray[np.int64]:
+        """Return the column index of each row's observed category.
+
+        These are the ``outcome_codes`` a fold retains beside a defective density, and the
+        index :meth:`choice_prediction` must be scored against. Deriving them here rather
+        than in each consumer is what keeps a fold's codes and the density's own column
+        order from drifting apart.
+        """
+
+        if self.categories is None:
+            raise ValueError("this prediction declares no categories to code against")
+        observed = list(categories)
+        if len(observed) != self.n_observations:
+            raise ValueError("categories must contain one observed category per trial")
+        index = {_category_key(value): column for column, value in enumerate(self.categories)}
+        try:
+            return protected_array(
+                [index[_category_key(value)] for value in observed], dtype=np.int64
+            )
+        except KeyError as error:
+            raise ValueError(
+                f"observed category {error.args[0][1]!r} is not one this prediction "
+                f"declares: {list(self.categories)}"
+            ) from None
+
+    def choice_prediction(self) -> CategoricalPrediction:
+        """Marginalise the grid away and return the categorical prediction it implies.
+
+        Rows are renormalised, because a :class:`CategoricalPrediction` must sum to one and
+        a truncated grid does not. The renormalisation is exact only when
+        :attr:`total_mass` is one; read that array before treating the result as the model's
+        unconditional choice probabilities.
+        """
+
+        mass = np.asarray(self.category_mass, dtype=np.float64)
+        total = np.sum(mass, axis=1, keepdims=True)
+        probability = mass / total
+        with np.errstate(divide="ignore"):
+            linear_predictor = np.log(probability)
+        return CategoricalPrediction(
+            probability=probability,
+            linear_predictor=linear_predictor,
+            categories=self.categories or (),
+            mode=self.mode,
+        )
+
+    def expected_outcome(self) -> NDArray[np.float64]:
+        """Mass-weighted mean outcome per trial, conditional on the grid's support."""
+
+        weighted = self.density * self.grid
+        integral = np.trapezoid(weighted, self.grid, axis=-1)
+        if self.categories is not None:
+            integral = np.sum(integral, axis=-1)
+        return protected_array(integral / self.total_mass, dtype=np.float64)
+
+    def take(self, indices: Sequence[int] | NDArray[np.integer[Any]]) -> DensityPrediction:
+        """Return a protected row subset on the same grid and category coordinate."""
+
+        return DensityPrediction(
+            grid=self.grid,
+            density=self.density[indices],
+            outcome=self.outcome,
+            mode=self.mode,
+            categories=self.categories,
+        )
+
+
+ModelPrediction = Prediction | CategoricalPrediction | DensityPrediction
+"""Every prediction shape a Behavio consumer reads back off ``predict()``.
+
+The three are not a hierarchy. :class:`Prediction` is one probability per row,
+:class:`CategoricalPrediction` is a simplex over named categories, and
+:class:`DensityPrediction` is a density over a continuous outcome that may additionally be
+defective across categories. Every consumer that slices a prediction -- most of all
+:func:`behavio.evaluate.evaluate_splits`, which keeps only a fold's scored rows -- goes
+through ``take``, which all three implement with the same meaning.
+"""
 
 
 @runtime_checkable
@@ -524,6 +834,35 @@ class CategoricalBehaviourEstimator(BehaviourEstimator, Protocol):
     def categories(self) -> tuple[Any, ...]: ...
 
     def outcome_codes(self, study: Study) -> NDArray[np.int64]: ...
+
+
+@runtime_checkable
+class DensityBehaviourEstimator(BehaviourEstimator, Protocol):
+    """An estimator that predicts a density for a continuous scored outcome.
+
+    A model may satisfy this and still return a :class:`Prediction` from ``predict`` -- the
+    protocol only promises that a density is *available*, not that it is the headline
+    prediction. A model that returns the :class:`DensityPrediction` from ``predict`` itself,
+    as :class:`behavio.foreign.pyddm.PyDDMDriftDiffusion` does, is the case the evaluation
+    and comparison layers were widened for: the density then reaches every fold, every
+    score and every report rather than being reachable only by a caller who knows to ask
+    for it.
+
+    A model implementing both halves cannot quietly disagree with itself:
+    :func:`behavio.adapters.estimator_conformance.check_behaviour_estimator` integrates the
+    density and compares it against the choice probabilities.
+    """
+
+    @property
+    def density_outcome(self) -> str: ...
+
+    def predict_density(
+        self,
+        study: Study,
+        fit: FitResult,
+        *,
+        mode: PredictionMode = PredictionMode.FILTERED,
+    ) -> DensityPrediction: ...
 
 
 @runtime_checkable
@@ -648,8 +987,15 @@ def _category_key(value: Any) -> Any:
 
     Recursing into tuples is what keeps the distinction inside a composite category, where
     ``(0, 1)`` and ``(False, 1)`` are equal and equally hashed as plain tuples.
+
+    A NumPy scalar is unwrapped first. Declared categories are normalised on construction
+    and are therefore always Python scalars, but *observed* categories arrive straight out
+    of a study column as ``np.int64``; keying on the type would make every observation
+    unmatchable against the category it names.
     """
 
+    if isinstance(value, np.generic):
+        value = value.item()
     if isinstance(value, tuple):
         return (tuple, tuple(_category_key(item) for item in value))
     return (type(value), value)

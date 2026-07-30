@@ -30,10 +30,10 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.special import logsumexp
 
-from behavio.contracts.estimator import Prediction, PredictionMode
-
-LOG_DENSITY_FLOOR = float(np.log(np.finfo(np.float64).tiny))
-"""Smallest representable log density, used as the floor for impossible observations."""
+# ``LOG_DENSITY_FLOOR`` is declared in the contract layer, where the prediction type that
+# reads a tabulated density off a grid also lives; it used to be defined here and again in
+# ``behavio.compose.mixture``, three copies of one number.
+from behavio.contracts.estimator import LOG_DENSITY_FLOOR, Prediction, PredictionMode
 
 BRIDGE_EXPONENT_LIMIT = 30.0
 """Above this exponent a Brownian-bridge absorption probability underflows to zero."""

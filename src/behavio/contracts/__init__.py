@@ -107,10 +107,13 @@ from behavio.contracts.compose import (
 )
 from behavio.contracts.discrepancy import PredictiveDiscrepancy, PredictiveTail
 from behavio.contracts.estimator import (
+    LOG_DENSITY_FLOOR,
     BehaviourEstimator,
     BehaviourModel,
     CategoricalBehaviourEstimator,
     CategoricalPrediction,
+    DensityBehaviourEstimator,
+    DensityPrediction,
     DerivedQuantity,
     FitAuditor,
     FitResult,
@@ -163,6 +166,7 @@ from behavio.contracts.transform import (
 )
 
 __all__ = [
+    "LOG_DENSITY_FLOOR",
     "AdapterCapabilities",
     "AnyBehaviourEstimator",
     "AnyGenerativeBehaviourModel",
@@ -173,6 +177,8 @@ __all__ = [
     "CategoricalBehaviourEstimator",
     "CategoricalPrediction",
     "ConvergenceStatus",
+    "DensityBehaviourEstimator",
+    "DensityPrediction",
     "DerivedQuantity",
     "EvaluationFold",
     "FitAudit",

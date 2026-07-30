@@ -159,6 +159,7 @@ __all__ = [
     "linear_predictor",
     "parameter_gradient",
     "require_penalised_linear",
+    "require_varying_parameters",
     "ridge_group_penalty",
     "validate_predictor_shape",
 ]
@@ -662,6 +663,49 @@ def require_penalised_linear(model: Any, *, combinator: str) -> PenalisedLinearE
             "a linear predictor of one cell is the scalar case: declare predictor_cells=()"
         )
     return model
+
+
+def require_varying_parameters(
+    model: Any, parameters: Sequence[str] | None, *, combinator: str
+) -> None:
+    """Raise if a model declines to let *these* parameters vary, over *this* axis.
+
+    :func:`require_penalised_linear` and
+    :func:`~behavio.contracts.bounded.require_bounded_coordinate` ask whether a model can be
+    composed at all. This asks the question that comes immediately after, and it is a
+    different question with a different answer: a model may have a perfectly good row
+    objective and a perfectly good box while still having parameters that no Gaussian
+    deviation and no Gaussian random walk can be placed on.
+
+    The case that forced it is a coordinate that is a **chart** rather than a quantity. A
+    GLM-HMM's transition row is a point on a simplex and its coordinate is a
+    reference-category logit; an isotropic ridge there is a prior on which state was made
+    the reference, not on the transition matrix, so the same declaration means different
+    models to two users who ordered their states differently. Nothing in either estimator
+    contract can express that, because it is not a fact about a member -- ``penalty_matrix``
+    and ``group_penalty`` are the same shape whether or not the coordinate they act on is
+    exchangeable.
+
+    ``combinator`` is passed through because the answer may differ by axis: the same model
+    can admit a group deviation on a parameter and refuse a path in clock time on it, which
+    is exactly what a latent-state model does when its labels are an ordering of that
+    parameter.
+
+    Optional, and read with :func:`getattr` for the same reason ``penalised_linear_refusal``
+    is: a contract cannot require a model to announce which parts of itself it declines. A
+    combinator asks the model it *directly* wraps; a wrapper standing between them would
+    have to forward the question, and none does today because the one model that answers it
+    refuses every inner position it could occupy.
+    """
+
+    declare = getattr(model, "varying_parameter_refusal", None)
+    if declare is None:
+        return
+    refusal = declare(None if parameters is None else tuple(parameters), combinator=combinator)
+    if refusal:
+        raise TypeError(
+            f"{combinator}() cannot vary these parameters of {type(model).__name__}: {refusal}"
+        )
 
 
 def validate_predictor_shape(

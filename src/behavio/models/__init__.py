@@ -11,6 +11,8 @@ from behavio.models.base import (
     BehaviourModel,
     CategoricalBehaviourEstimator,
     CategoricalPrediction,
+    DensityBehaviourEstimator,
+    DensityPrediction,
     FitDiagnostics,
     FitResult,
     GenerativeBehaviourModel,
@@ -40,6 +42,7 @@ from behavio.models.glm_hmm import (
     GLMHMMFitResult,
     GLMHMMParameters,
     GLMHMMSimulation,
+    GroupLabelAgreement,
 )
 from behavio.models.multinomial import MultinomialLogit
 from behavio.models.psychometric import (
@@ -100,6 +103,8 @@ __all__ = [
     "CategoricalPrediction",
     "ChoiceKernel",
     "CorrectedRates",
+    "DensityBehaviourEstimator",
+    "DensityPrediction",
     "Describable",
     "DetectionCounts",
     "DriftDiffusionFitResult",
@@ -112,6 +117,7 @@ __all__ = [
     "GLMHMMParameters",
     "GLMHMMSimulation",
     "GenerativeBehaviourModel",
+    "GroupLabelAgreement",
     "LatentStateAlignment",
     "LearningRule",
     "MetaSDT",

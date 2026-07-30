@@ -24,6 +24,14 @@ answers `()`. `model_capabilities(...).required_task_columns` surfaces the valid
 answer, and `behavio.task.TaskSpec.validate_model` checks that each named column carries a
 declared task role.
 
+`ModelPrediction` is `Prediction | CategoricalPrediction | DensityPrediction`. The third is
+the shape a response-time, confidence or race model produces: a density on an explicit
+outcome grid, optionally *defective* across named categories. It is a full member of the
+union, not a side channel — `evaluate_splits` slices it to a fold's scored rows and retains
+each row's observed category beside it, and `compare_models` scores it. The log score is
+joint over the whole observation; the Brier score, being a scoring rule for a probability,
+reads the density's discrete margin only, and refuses outright for a density that has none.
+
 `CategoricalPrediction.categories` accepts **tuples** as well as scalars. A tuple category
 names one cell of a joint observation — meta-d' scores `(response, confidence)` together —
 and must be accompanied by `category_factors`, which names the tuple positions. Given
@@ -46,12 +54,24 @@ equal-variance z-transform, say — leaves them absent, because *it did not conv
 *there was nothing to converge* are different claims and a boolean cannot hold both.
 
 The distinction is reported rather than merely tolerated. `ConvergenceStatus` is
-three-valued and both `FitDiagnostics.convergence` and `FitAudit.convergence` return it,
+four-valued and both `FitDiagnostics.convergence` and `FitAudit.convergence` return it,
 `FitAudit.to_dict()` carries it under `"convergence"`, and `audit_fit` raises
 `optimizer_nonconvergence` only for `NOT_CONVERGED`. Consumers deciding whether a run is
 usable should ask `FitDiagnostics.failed_to_converge` rather than `not converged`; the
 latter answers the question wrongly for a closed-form fit, whose flag is absent rather
 than false.
+
+The fourth value is `UNREPORTED`: **the procedure searched and said nothing**. That is the
+normal state of a wrapper around a third-party fitter whose stopping rule is private —
+PyDDM 0.9 discards SciPy's `success` and never populates its `message` — and all three of
+the other values misdescribe it. `CONVERGED` claims a success nobody measured,
+`NOT_CONVERGED` makes the audit `FAIL` and evicts the candidate from every comparison, and
+`INAPPLICABLE` asserts that no search happened. `audit_fit` reports `UNREPORTED` as the
+warning `optimizer_convergence_unreported`, so the candidate stays eligible while the gap
+stays on the record; `failed_to_converge` is `False`, because absence of evidence is not
+evidence of failure. Write it as `converged=ConvergenceStatus.UNREPORTED` with
+`status=None`; the other three states keep their `True` / `False` / `None` spellings and
+passing any other enum member is refused.
 
 `optimizer` stays mandatory. Every fit can answer *what computed this* — for a searching
 estimator the optimizer, for a closed-form one the solution method — so only the questions

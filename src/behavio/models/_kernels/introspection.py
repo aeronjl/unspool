@@ -195,7 +195,7 @@ def describe_model(model: Any, study: Study | None = None) -> ModelDescription:
         parameter_bounds=_parameter_bounds(model, parameter_names),
         priors=tuple(getattr(model, "declared_priors", ())),
         clock=_optional_column(model, "clock"),
-        group=_optional_column(model, "group"),
+        group=_optional_column(model, "grouping"),
         findings=tuple(findings),
         design_column_notes=_design_column_notes(design),
     )

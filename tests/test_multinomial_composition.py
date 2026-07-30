@@ -228,9 +228,10 @@ def test_a_glm_hmm_declines_the_contract_by_declaration_and_says_why() -> None:
     model = BernoulliGLMHMM(predictors=("stimulus",))
 
     assert "latent-state mixture" in model.penalised_linear_refusal
-    with pytest.raises(TypeError, match="forward recursion"):
+    assert "forward recursion" in model.penalised_linear_refusal
+    with pytest.raises(TypeError, match="no canonical labelling"):
         smooth(model, knots=KNOTS)
-    with pytest.raises(TypeError, match="forward recursion"):
+    with pytest.raises(TypeError, match="reference-category logits"):
         hierarchical(model, over="subject")
 
 

@@ -127,7 +127,11 @@ class PyMCHierarchicalGLMBackend:
                 "use a fixed scale for this adapter"
             )
         inner = model.model
-        if not isinstance(inner.likelihood, BernoulliLikelihood):
+        # `likelihood` is not a universal member: a model whose scores come from a
+        # recursion withdraws it deliberately, and reading it raises rather than
+        # returning something misleading. Ask, so an unsupported model is refused by
+        # this adapter's own message instead of an AttributeError from inside it.
+        if not isinstance(getattr(inner, "likelihood", None), BernoulliLikelihood):
             raise PyMCBackendError(
                 "this adapter declares a Bernoulli observation model; "
                 f"{inner.model_name} does not use one"

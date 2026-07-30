@@ -59,6 +59,7 @@ from behavio.evaluate.folds import (
 from behavio.models import (
     BehaviourEstimator,
     CategoricalPrediction,
+    DensityPrediction,
     PredictionMode,
 )
 from behavio.protocol.compiler import CompiledProtocol
@@ -1410,11 +1411,27 @@ def _pointwise_predictions(
     ``units`` is the already-resolved aggregation column. ``Study.__getitem__`` builds a
     fresh read-only view per call, so looking it up per scored row would allocate one view
     per trial.
+
+    A :class:`~behavio.contracts.DensityPrediction` is retained through its discrete
+    margin. The retained record is a portable, JSON-shaped row, and a per-trial density
+    tabulated on a grid is neither -- a three-session study would archive tens of megabytes
+    of solver output per candidate. The log probability, which *is* the joint score over the
+    whole observation including the continuous half, is retained exactly as it was
+    computed; only the probability column narrows. A density with no categorical margin has
+    no probability column at all and is refused rather than blanked.
     """
 
     rows = tuple(int(row) for row in evaluation.split.test_indices)
     prediction = evaluation.prediction
     scores = evaluation.pointwise_log_probability
+    if isinstance(prediction, DensityPrediction):
+        if not prediction.is_defective:
+            raise ProtocolRunError(
+                f"candidate predicts a density over {prediction.outcome!r} with no "
+                "categorical margin, so there is no probability to retain per scored row; "
+                "a protocol run records probabilities, and a density is not one"
+            )
+        prediction = prediction.choice_prediction()
     if isinstance(prediction, CategoricalPrediction):
         codes = evaluation.outcome_codes
         if codes is None:  # pragma: no cover - established by FoldEvaluation

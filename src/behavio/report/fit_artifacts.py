@@ -14,6 +14,7 @@ from typing import Any, Final
 
 import numpy as np
 
+from behavio.contracts.audit import ConvergenceStatus
 from behavio.inference.optimize import OptimizationRun
 from behavio.inference.parameters import ParameterSpaceProvider
 from behavio.task.spec import FittedModel, TaskSpec
@@ -190,7 +191,15 @@ def export_fit(fitted: FittedModel, study: Study) -> FitArtifact:
     parameters = tuple(parameter_records)
 
     diagnostic_record: dict[str, Any] = {
-        "converged": result.diagnostics.converged,
+        # ``converged`` is ``True``/``False``/``None`` plus the one enum spelling,
+        # ``ConvergenceStatus.UNREPORTED``; the artifact holds its plain value, and
+        # ``convergence`` beside it names all four states without a reader inferring any.
+        "converged": (
+            result.diagnostics.converged.value
+            if isinstance(result.diagnostics.converged, ConvergenceStatus)
+            else result.diagnostics.converged
+        ),
+        "convergence": result.diagnostics.convergence.value,
         "optimizer": result.diagnostics.optimizer,
         "status": result.diagnostics.status,
         "message": result.diagnostics.message,

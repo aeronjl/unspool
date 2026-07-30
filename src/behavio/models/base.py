@@ -11,10 +11,13 @@ from __future__ import annotations
 from behavio._internal.arrays import protected_array
 from behavio.contracts.audit import FitDiagnostics
 from behavio.contracts.estimator import (
+    LOG_DENSITY_FLOOR,
     BehaviourEstimator,
     BehaviourModel,
     CategoricalBehaviourEstimator,
     CategoricalPrediction,
+    DensityBehaviourEstimator,
+    DensityPrediction,
     FitResult,
     GenerativeBehaviourModel,
     ModelCapabilities,
@@ -32,10 +35,13 @@ from behavio.contracts.estimator import (
 _protected_array = protected_array
 
 __all__ = [
+    "LOG_DENSITY_FLOOR",
     "BehaviourEstimator",
     "BehaviourModel",
     "CategoricalBehaviourEstimator",
     "CategoricalPrediction",
+    "DensityBehaviourEstimator",
+    "DensityPrediction",
     "FitDiagnostics",
     "FitResult",
     "GenerativeBehaviourModel",
