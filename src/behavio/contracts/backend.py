@@ -12,8 +12,9 @@ this package a runtime leaf while the protocol stays fully typed.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import StrEnum
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from behavio.inference.optimize import OptimizationProblem, OptimizationRun
@@ -41,3 +42,22 @@ class OptimizationBackend(Protocol):
     def backend_name(self) -> str: ...
 
     def run(self, problem: OptimizationProblem) -> OptimizationRun: ...
+
+
+@runtime_checkable
+class OptimizationRunRecord(Protocol):
+    """Read-only optimization provenance retained by a frequentist fit.
+
+    The concrete validated record lives in :mod:`behavio.inference.optimize`.  This small
+    structural view keeps :mod:`behavio.contracts` a runtime leaf while letting the common
+    :class:`~behavio.contracts.estimator.FitResult` say that a solver did not discard failed
+    restarts, backend settings, or the selected-attempt rule.
+    """
+
+    @property
+    def backend(self) -> str: ...
+
+    @property
+    def selected_index(self) -> int | None: ...
+
+    def to_dict(self) -> Mapping[str, Any]: ...

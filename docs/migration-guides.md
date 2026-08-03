@@ -135,22 +135,24 @@ different resets, trial ordering, or outcome coding.
 The [Linderman lab `ssm` repository](https://github.com/lindermanlab/ssm) is a general state-
 space toolkit supporting HMMs, input-output HMMs, and several observation families.
 Behavio's `BernoulliGLMHMM` is narrower: it is a behavioural binary-choice model with
-explicit session resets, state-specific input-driven emissions, stationary transitions,
-filtered prospective scoring, and Behavio recovery evidence.
+explicit session resets, state-specific input-driven emissions, stationary or exogenous
+covariate-dependent transitions, filtered prospective scoring, transition partial pooling,
+and Behavio recovery evidence.
 
 | `ssm` concept | Behavio concept | Migration check |
 | --- | --- | --- |
 | One observation/input array per sequence | one `Study` with subject/session boundaries | sequence starts equal session resets |
 | `K` hidden states | `n_states` | state count selected only in training data |
 | Bernoulli/input-driven observations | state-specific Bernoulli GLM emissions | covariate coding and intercept convention |
-| transition parameters | stationary transition matrix and optional sticky prior | row orientation and self-transition meaning |
+| transition parameters | stationary matrix/optional sticky prior, or no-intercept transition design with centred effects | row orientation, incoming-trial covariate convention, and self-transition meaning |
 | `most_likely_states` | filtered or smoothed state evidence | smoothed descriptions not used as forecasts |
 | raw EM traces or chosen restart | retained deterministic restarts and fit audit | every attempted optimum remains visible |
 
 Do not compare raw state labels. Align states by their emissions or a declared assignment
 rule, and rerun label-aware recovery. Behavio does not currently cover the full `ssm`
-catalogue—ARHMM, HSMM, LDS, SLDS, recurrent transitions, or general observation families
-should remain in `ssm` or enter through an external estimator adapter.
+catalogue—ARHMM, HSMM, LDS, SLDS, recurrent/neural transition families beyond the declared
+multinomial-logit design, or general observation families—should remain in `ssm` or enter
+through an external estimator adapter.
 
 ## hBayesDM workflows
 

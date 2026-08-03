@@ -24,6 +24,22 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** add a fixed-transition Bernoulli GLM-HMM and a compact session-reset
   binary Q-learning agent, both with restart, recovery, and prospective competing-
   explanation diagnostics.
+- **Implemented:** extend the GLM-HMM with exogenous multinomial-logit transition designs,
+  exact time-varying forward-backward gradients, natural-scale transition reports, and
+  chart-free Gaussian transition effects by group.
+- **Implemented:** add a separate single-subject session-dynamic GLM-HMM with Gaussian-
+  random-walk emission weights, Dirichlet-shrunken session transition matrices, the
+  literature-standard stationary/partial/full MAP-EM sequence, whole-path label/crossing
+  diagnostics, state-and-trajectory recovery, and a declared future-session centre forecast.
+  Nested forward-session selection now covers state count and both dynamic hyperparameters.
+  Its first matched benchmark recovers dynamic paths but does not beat the stationary
+  GLM-HMM on mean future-session log loss; stronger prospective discrimination and local
+  uncertainty remain later work.
+- **Implemented:** add a dedicated cross-subject session-dynamic GLM-HMM with a Gaussian
+  population emission path, evolving Gaussian subject deviations, population-shrunken
+  session transition matrices, one global label coordinate, and explicit seen-future and
+  unseen-subject plug-in forecasts. Population/subject path uncertainty and estimated
+  hierarchy scales remain later work.
 - **Implemented:** add parameter- and model-recovery grids with design-specific engines,
   a static-versus-smooth example, named-design and scenario-level matrices, fit-audit
   propagation, a matched four-family benchmark, and repeated boundary-near regimes with
@@ -386,7 +402,9 @@ The roadmap is organized by scientific contracts rather than by model count.
 - **Implemented:** expose the standard input-driven GLM-HMM convention through
   state-specific task-input emissions and add an explicit sticky Dirichlet self-transition
   prior, retaining state-count, occupancy, alignment, and prospective-selection
-  diagnostics. Covariate-dependent transitions remain a distinct later extension.
+  diagnostics. Add a distinct non-homogeneous variant through declared transition
+  covariates, multinomial-logit matrices, ILR transition coordinates, and complete-block
+  transition hierarchy.
 - **Implemented:** retain stationary, contaminant-aware, smooth session-varying, and
   partially pooled Wiener DDMs under the same joint choice/response-time scoring,
   diagnostics, prospective validation, and recovery requirements.
@@ -472,10 +490,9 @@ The roadmap is organized by scientific contracts rather than by model count.
 ## Known gaps in the scoring layer
 
 Two shared-layer gaps were found independently by three model waves and are recorded, with
-their shapes and revisit triggers, in
+their shapes and resolution criteria, in
 [SDR-0063](decisions/0063-defer-the-log-score-only-comparison-and-the-survival-carrying-prediction.md).
-The first is now closed; the second is deferred rather than an open question, and should not
-be patched under a wave whose subject is one model family.
+Both are now closed at the shared contract rather than patched inside one family.
 
 - **Implemented:** a declared metric set on the prospective comparison. `compare_models` and
   `ComparisonSpec` name which scoring rules the table carries; the first of them ranks, and a
@@ -484,18 +501,19 @@ be patched under a wave whose subject is one model family.
   `DurationReproduction`, `PatchLeaving` and `DynamaxSwitchingAutoregression` rankable
   against candidates of their own kind. The default table is unchanged, Brier column and
   refusal included.
-- **Deferred:** a `ModelPrediction` member that can carry a censored observation. A censored
-  row's score is \(\log S(c)\) and none of the three current members can express it, so a
-  censored family's `predict()` and `pointwise_log_prob` deliberately disagree on exactly
-  those rows. Deciding between a fourth member and an observation-limit channel on
-  `DensityPrediction` wants a second censored family to look at.
+- **Implemented:** `CensoredDensityPrediction`, an explicit widening of
+  `DensityPrediction` that carries one observation limit and exact survival probability per
+  row. Its replay method requires the observed censoring indicator and selects \(\log f(t)\)
+  or \(\log S(c)\) accordingly. `PatchLeaving` is the first integrated family; a second
+  censored family remains desirable before generalising beyond right censoring.
 
 ## Deferred research extensions
 
-Session-varying GLM-HMM research, population-of-laboratories inference, inverse RL,
-agent-discovery models, novel trajectory-shape claims, and further Cell-paper analyses are
-outside the 0.21–0.24 critical path. They may later demonstrate the package, but they will
-not determine its basic architecture.
+Prospective discrimination of session-dynamic versus stationary GLM-HMMs,
+population-of-laboratories inference, inverse RL, agent-discovery models, novel
+trajectory-shape claims, and further Cell-paper analyses are outside the 0.21–0.24 critical
+path. They may later demonstrate the package, but they will not determine its basic
+architecture.
 
 ## 0.21–0.24 completion audit
 

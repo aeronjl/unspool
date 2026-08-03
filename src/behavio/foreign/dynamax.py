@@ -1,10 +1,12 @@
 """A Behavio estimator backed by dynamax's switching linear autoregression.
 
-Behavio's only latent-state model is :class:`~behavio.models.glm_hmm.BernoulliGLMHMM`: one
-state count, Bernoulli emissions, stationary transitions, a *discrete* observation. Nothing
-in the package describes a continuous behavioural time series -- running speed, pupil
-diameter, licking rate, a kinematic component of a pose -- as a switch between regimes, and
-nothing describes a regime that has its own *dynamics* rather than its own mean. dynamax
+Behavio's reference latent-state choice family is
+:class:`~behavio.models.glm_hmm.BernoulliGLMHMM`, including stationary,
+covariate-transition, and session-parameter variants: Bernoulli emissions and a *discrete*
+observation. Nothing in the package describes a continuous behavioural time series --
+running speed, pupil diameter, licking rate, a kinematic component of a pose -- as a switch
+between regimes, and nothing describes a regime that has its own *dynamics* rather than its
+own mean. dynamax
 does, it is MIT, it is maintained, and its inference is exact. This module is the wrapper
 that lets a Behavio user fit it through the whole falsification stack.
 

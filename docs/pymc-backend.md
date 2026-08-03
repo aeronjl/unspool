@@ -1,4 +1,4 @@
-# PyMC hierarchical GLM backend
+# PyMC posterior backends
 
 Behavio's full-posterior adapter samples a `hierarchical(...)` composition over a
 penalised linear Bernoulli model with PyMC's established NUTS implementation. It is a
@@ -132,6 +132,24 @@ backend-neutral convergence policy is described in
 predictive-fit calculation in [PSIS-LOO predictive evaluation](psis-loo.md).
 Behavioural discrepancy checks are described in
 [posterior-predictive checks](posterior-predictive-checks.md).
+
+## Proper-prior sequential Q-learning
+
+`PyMCBinaryQLearning` is a first-party sampled estimator rather than an inference-only
+adapter. Its four normalized priors are declared on the shared natural parameter space, its
+PyTensor scan is the same session-reset Q-learning recursion as `BinaryQLearning`, and its
+public `predict`/`pointwise_log_prob` methods satisfy the posterior estimator contract for
+prospective folds.
+
+Unlike the hierarchical GLM adapter's flat intercept, the Q-learning model has a proper
+prior on every free parameter. `prior_predictive_simulation(design, seed)` and
+`sample_with_seed(study, seed)` consequently form a complete prior-simulation/inference pair
+for `run_simulation_based_calibration`. Posterior result provenance includes the parameter
+space and fingerprint, conditional predictive semantics, all NUTS diagnostics, pointwise
+log likelihood, and source-row trial identity.
+
+See [reinforcement-learning agents](q-learning.md#proper-prior-posterior-q-learning) for the
+priors, prediction semantics, and SBC example.
 
 ## Interpretation boundary
 

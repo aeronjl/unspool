@@ -12,6 +12,7 @@ from behavio.models.base import (
     BehaviourModel,
     CategoricalBehaviourEstimator,
     CategoricalPrediction,
+    CensoredDensityPrediction,
     DensityBehaviourEstimator,
     DensityPrediction,
     FitDiagnostics,
@@ -71,6 +72,12 @@ from behavio.models.glm_hmm import (
     GLMHMMParameters,
     GLMHMMSimulation,
     GroupLabelAgreement,
+)
+from behavio.models.hierarchical_session_dynamic_glm_hmm import (
+    HierarchicalSessionDynamicBernoulliGLMHMM,
+    HierarchicalSessionDynamicGLMHMMFitResult,
+    HierarchicalSessionDynamicGLMHMMSimulation,
+    HierarchicalSessionDynamicTrajectoryRecovery,
 )
 from behavio.models.multinomial import MultinomialLogit
 from behavio.models.patch_leaving import (
@@ -135,6 +142,12 @@ from behavio.models.sdt import (
     roc_points,
     z_roc_summary,
 )
+from behavio.models.session_dynamic_glm_hmm import (
+    SessionDynamicBernoulliGLMHMM,
+    SessionDynamicGLMHMMFitResult,
+    SessionDynamicGLMHMMSimulation,
+    SessionDynamicTrajectoryRecovery,
+)
 from behavio.models.state_alignment import LatentStateAlignment, align_latent_states
 
 __all__ = [
@@ -156,6 +169,7 @@ __all__ = [
     "BisectionRule",
     "CategoricalBehaviourEstimator",
     "CategoricalPrediction",
+    "CensoredDensityPrediction",
     "ChoiceKernel",
     "CorrectedRates",
     "DensityBehaviourEstimator",
@@ -179,6 +193,10 @@ __all__ = [
     "GroupLabelAgreement",
     "HierarchicalGaussianFilter",
     "HierarchicalGaussianFilterParameters",
+    "HierarchicalSessionDynamicBernoulliGLMHMM",
+    "HierarchicalSessionDynamicGLMHMMFitResult",
+    "HierarchicalSessionDynamicGLMHMMSimulation",
+    "HierarchicalSessionDynamicTrajectoryRecovery",
     "LatentStateAlignment",
     "LearningRule",
     "LogCoordinateFitResult",
@@ -211,6 +229,10 @@ __all__ = [
     "RatingCounts",
     "ReproductionParameters",
     "ResetRule",
+    "SessionDynamicBernoulliGLMHMM",
+    "SessionDynamicGLMHMMFitResult",
+    "SessionDynamicGLMHMMSimulation",
+    "SessionDynamicTrajectoryRecovery",
     "SignalDetectionSummary",
     "SoftmaxPolicy",
     "SymmetricLearning",

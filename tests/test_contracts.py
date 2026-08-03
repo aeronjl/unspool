@@ -45,6 +45,7 @@ CONTRACT_RE_EXPORT_HOMES = {
         "BehaviourModel",
         "CategoricalBehaviourEstimator",
         "CategoricalPrediction",
+        "CensoredDensityPrediction",
         "DensityBehaviourEstimator",
         "DensityPrediction",
         "FitDiagnostics",
@@ -81,6 +82,7 @@ CONTRACT_RE_EXPORT_HOMES = {
     "behavio.evaluate.splits": ("EvaluationFold",),
     "behavio.models": (
         "BehaviourEstimator",
+        "CensoredDensityPrediction",
         "DensityBehaviourEstimator",
         "DensityPrediction",
         "FitDiagnostics",

@@ -1,9 +1,9 @@
-"""Fixed-transition Bernoulli GLM-HMM with explicit label diagnostics."""
+"""Stationary and covariate-dependent Bernoulli GLM-HMMs with label diagnostics."""
 
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from itertools import combinations
 from types import MappingProxyType
 from typing import Any
@@ -20,8 +20,10 @@ from behavio.contracts.bounded import (
     validated_row_coefficients,
 )
 from behavio.contracts.compose import ridge_group_draw, ridge_group_penalty
+from behavio.design.matrix import DesignSpec
 from behavio.models._kernels.bernoulli import ordered_session_indices
 from behavio.models._kernels.curvature import finite_difference_hessian, offset_steps
+from behavio.models._kernels.design import build_matrix, resolve_design, validate_design_choice
 from behavio.models._kernels.rowfit import solve_row_coefficients
 from behavio.models.base import (
     FitDiagnostics,
@@ -32,7 +34,7 @@ from behavio.models.base import (
 )
 from behavio.models.glm import BernoulliHistoryGLM
 from behavio.models.state_alignment import LatentStateAlignment, align_latent_states
-from behavio.trials import Study
+from behavio.trials import REQUIRED_COLUMNS, Study
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,12 +45,15 @@ class GLMHMMParameters:
     transition_matrix: NDArray[np.float64]
     emission_coefficients: NDArray[np.float64]
     coefficient_names: tuple[str, ...]
+    transition_effects: NDArray[np.float64] | None = None
+    transition_predictor_names: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         initial = protected_array(self.initial_probabilities, dtype=np.float64)
         transition = protected_array(self.transition_matrix, dtype=np.float64)
         emissions = protected_array(self.emission_coefficients, dtype=np.float64)
         names = tuple(self.coefficient_names)
+        transition_names = tuple(self.transition_predictor_names)
         if initial.ndim != 1 or len(initial) < 2:
             raise ValueError("initial_probabilities must contain at least two states")
         n_states = len(initial)
@@ -68,14 +73,56 @@ class GLMHMMParameters:
             raise ValueError("every transition row must sum to one")
         if not np.all(np.isfinite(emissions)):
             raise ValueError("emission coefficients must be finite")
+        if len(set(transition_names)) != len(transition_names) or any(
+            not isinstance(name, str) or not name for name in transition_names
+        ):
+            raise ValueError("transition predictor names must be unique non-empty strings")
+        if self.transition_effects is None:
+            effects = np.zeros((n_states, n_states, len(transition_names)), dtype=np.float64)
+        else:
+            effects = protected_array(self.transition_effects, dtype=np.float64)
+        expected_effects = (n_states, n_states, len(transition_names))
+        if effects.shape != expected_effects or not np.all(np.isfinite(effects)):
+            raise ValueError(
+                "transition_effects must contain one finite destination-logit effect per "
+                "source state and transition predictor"
+            )
+        if not np.allclose(effects.sum(axis=1), 0.0, atol=1e-8):
+            raise ValueError(
+                "transition effects must sum to zero over destination states; this is the "
+                "identified centred-logit representation"
+            )
         object.__setattr__(self, "initial_probabilities", initial)
         object.__setattr__(self, "transition_matrix", transition)
         object.__setattr__(self, "emission_coefficients", emissions)
         object.__setattr__(self, "coefficient_names", names)
+        object.__setattr__(self, "transition_effects", protected_array(effects, dtype=np.float64))
+        object.__setattr__(self, "transition_predictor_names", transition_names)
 
     @property
     def n_states(self) -> int:
         return len(self.initial_probabilities)
+
+    def transition_probabilities(self, covariates: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Return one transition matrix per row of a transition-covariate design.
+
+        Row ``t`` describes the transition *into* trial ``t``. Session-opening rows have a
+        matrix too for a rectangular return value, but filtering correctly ignores it and
+        resets to :attr:`initial_probabilities`.
+        """
+
+        values = np.asarray(covariates, dtype=np.float64)
+        expected = len(self.transition_predictor_names)
+        if values.ndim != 2 or values.shape[1] != expected or not np.all(np.isfinite(values)):
+            raise ValueError(
+                "transition covariates must be a finite matrix with one column per predictor"
+            )
+        baseline = np.log(np.asarray(self.transition_matrix, dtype=np.float64))
+        logits = baseline[None, :, :] + np.einsum(
+            "tp,ijp->tij", values, np.asarray(self.transition_effects), optimize=True
+        )
+        logits -= logsumexp(logits, axis=2, keepdims=True)
+        return protected_array(np.exp(logits), dtype=np.float64)
 
 
 @dataclass(frozen=True, slots=True)
@@ -197,6 +244,7 @@ class _PosteriorStatistics:
     state_probabilities: NDArray[np.float64]
     initial_counts: NDArray[np.float64]
     transition_counts: NDArray[np.float64]
+    transition_expectations: NDArray[np.float64]
 
 
 @dataclass(frozen=True, slots=True)
@@ -246,12 +294,21 @@ class GLMHMMFitResult(FitResult):
 
 @dataclass(frozen=True, slots=True)
 class BernoulliGLMHMM(BernoulliHistoryGLM):
-    """A stationary-transition HMM with state-specific Bernoulli GLM emissions.
+    """A stationary or covariate-dependent HMM with Bernoulli GLM emissions.
 
     The initial distribution resets at each subject/session boundary. Transition
-    probabilities remain constant across observed trials and sessions. Latent labels are
-    canonicalized by increasing values of ``label_by``, with the complete emission vector
-    used only as a deterministic tie-breaker.
+    probabilities are stationary when ``transition_predictors`` and ``transition_design``
+    are absent. Otherwise each row of the transition matrix is a multinomial logistic
+    regression on the declared exogenous design, evaluated with trial ``t``'s covariates for
+    the transition from ``t - 1`` into ``t``. Latent labels are canonicalized by increasing
+    values of ``label_by``, with the complete emission vector used only as a deterministic
+    tie-breaker.
+
+    Dynamic transitions use an orthonormal isometric-log-ratio (ILR) coordinate. Unlike a
+    reference-category logit, an isotropic Gaussian penalty in this coordinate is invariant
+    to relabelling the destination states. That is what makes ``hierarchical(...,
+    parameters=("transition",))`` a well-defined random-effects model rather than a prior
+    on an arbitrary chart.
     """
 
     n_states: int = 2
@@ -262,9 +319,27 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
     state_occupancy_warning: float = 0.01
     probability_warning_threshold: float = 1e-4
     stickiness: float = 0.0
+    transition_predictors: tuple[str, ...] = ()
+    transition_l2: float = 1.0
+    transition_design: DesignSpec | None = field(default=None, kw_only=True)
 
     def __post_init__(self) -> None:
         BernoulliHistoryGLM.__post_init__(self)
+        transition_predictors = tuple(self.transition_predictors)
+        validate_design_choice(self.transition_design, transition_predictors)
+        if len(set(transition_predictors)) != len(transition_predictors) or any(
+            not isinstance(name, str) or not name for name in transition_predictors
+        ):
+            raise ValueError("transition predictors must be unique non-empty strings")
+        if self.outcome in transition_predictors:
+            raise ValueError("the outcome cannot also be a transition predictor")
+        if self.transition_design is not None and self.transition_design.intercept:
+            raise ValueError(
+                "transition_design must use intercept=False: the baseline transition matrix "
+                "is already the transition intercept"
+            )
+        if not np.isfinite(self.transition_l2) or self.transition_l2 < 0:
+            raise ValueError("transition_l2 must be finite and non-negative")
         if (
             isinstance(self.n_states, bool)
             or not isinstance(self.n_states, int)
@@ -295,20 +370,92 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
             raise ValueError("probability_warning_threshold must lie strictly between zero and 0.5")
         if not np.isfinite(self.stickiness) or self.stickiness < 0:
             raise ValueError("stickiness must be finite and non-negative")
+        if self.is_dynamic and self.stickiness:
+            raise ValueError(
+                "stickiness is a Dirichlet pseudo-count on one stationary transition matrix; "
+                "it is not a prior on covariate-dependent transition probabilities"
+            )
+        object.__setattr__(self, "transition_predictors", transition_predictors)
+
+    @property
+    def is_dynamic(self) -> bool:
+        """Whether transitions depend on a declared exogenous design."""
+
+        return bool(self.transition_predictors or self.transition_design is not None)
+
+    @property
+    def transition_covariate_design(self) -> DesignSpec | None:
+        """The no-intercept design whose rows alter transition logits."""
+
+        if not self.is_dynamic:
+            return None
+        return resolve_design(
+            self.transition_design,
+            self.transition_predictors,
+            intercept=False,
+        )
+
+    @property
+    def transition_coefficient_names(self) -> tuple[str, ...]:
+        """Names of the columns that enter the transition multinomial logits."""
+
+        design = self.transition_covariate_design
+        return () if design is None else design.feature_names
 
     @property
     def model_name(self) -> str:
-        return "bernoulli-glm-hmm"
+        return "dynamic-bernoulli-glm-hmm" if self.is_dynamic else "bernoulli-glm-hmm"
 
     @property
     def signature(self) -> str:
         predictors = ",".join(self.predictors)
+        transition = ""
+        if self.is_dynamic:
+            design = self.transition_covariate_design
+            assert design is not None
+            shorthand = (
+                f"predictors={','.join(self.transition_predictors)}"
+                if self.transition_design is None
+                else f"design={design.signature}"
+            )
+            transition = f";transition_{shorthand};transition_l2={self.transition_l2}"
         return (
             f"{self.model_name}[states={self.n_states};outcome={self.outcome};"
             f"predictors={predictors};choice_lags={self.choice_lags};"
             f"label_by={self.label_by};l2={self.l2};"
-            f"stickiness={self.stickiness}{self._design_signature}]"
+            f"stickiness={self.stickiness}{transition}{self._design_signature}]"
         )
+
+    @property
+    def required_task_columns(self) -> tuple[str, ...]:
+        """Columns used by either the emission or transition design."""
+
+        columns = list(BernoulliHistoryGLM.required_task_columns.fget(self))
+        design = self.transition_covariate_design
+        if design is not None:
+            columns.extend(
+                name
+                for name in design.required_columns
+                if name != self.outcome and name not in REQUIRED_COLUMNS and name not in columns
+            )
+        return tuple(columns)
+
+    @property
+    def declared_priors(self) -> tuple[str, ...]:
+        """Human-readable penalties and chart-free transition declarations."""
+
+        declared = list(BernoulliHistoryGLM.declared_priors.fget(self))
+        if self.is_dynamic and self.transition_l2:
+            declared.append(
+                "ridge on every transition-covariate ILR coefficient: "
+                f"Normal(0, {1.0 / self.transition_l2**0.5:.4g}) "
+                f"(transition_l2={self.transition_l2})"
+            )
+        if self.stickiness:
+            declared.append(
+                f"sticky Dirichlet self-transition pseudo-count (stickiness={self.stickiness})"
+            )
+        return tuple(declared)
 
     @property
     def likelihood(self) -> Any:
@@ -402,21 +549,13 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         Two of the three answers are refusals, and both are about the difference between a
         coordinate and the thing it is a chart for.
 
-        **Transitions and the initial distribution are refused, at any number of states.**
-        A row of the transition matrix lives on a simplex, and this model's coordinate for
-        it is a reference-category multinomial logit,
-        ``t[r,j] = log A[r,j] - log A[r,K-1]``. An isotropic Gaussian on those coordinates is
-        not a prior on the transition matrix: it is a prior on a *chart*, and the chart
-        depends on which state was made the reference. For ``K = 2`` the two possible charts
-        differ by a sign and the ridge survives it; for ``K >= 3`` they do not, so two users
-        who ordered their states differently would be fitting different models while reading
-        the same declaration. Worse, this model's reference state is not fixed by the user
-        at all -- it is whichever state ``label_by`` canonicalisation puts last, which is a
-        function of the data. A symmetric parameterisation (a centred or isometric log-ratio
-        coordinate, with a penalty invariant to relabelling) is what a per-animal transition
-        model needs, and it is a different model rather than a wider declaration. Until then
-        the population transition matrix is pooled, and ``stickiness`` is the declared,
-        chart-free way to say that states persist.
+        **Stationary transitions and the initial distribution are refused.** The legacy
+        stationary transition matrix and the initial simplex use reference-category logits.
+        An isotropic Gaussian there is a prior on an arbitrary chart. A dynamic model instead
+        stores both transition intercepts and slopes in an orthonormal ILR coordinate. Naming
+        ``"transition"`` then varies the complete transition regression under one isotropic,
+        relabelling-invariant scale. Individual source, destination, or contrast coordinates
+        remain inseparable because selecting one would break that invariance.
 
         **A path is refused outright.** ``smooth()`` would make a state's emissions a
         function of clock time, and this model's states are labelled by *ordering* one
@@ -448,16 +587,27 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
                 "smooth GLM, until a labelling rule defined on paths exists"
             )
         if parameters is None:
+            transition_note = (
+                "Its dynamic transition regression is eligible under the alias 'transition', "
+                "but its initial distribution remains a reference-category logit. "
+                if self.is_dynamic
+                else (
+                    "Its transition and initial coordinates are reference-category logits, "
+                    "and an isotropic Gaussian is a prior on that chart rather than on the "
+                    "simplex it charts. "
+                )
+            )
             return (
-                "a GLM-HMM cannot let every parameter vary by group: its initial and "
-                f"transition coordinates are reference-category logits ({self._reference_note()}), "
-                "and an isotropic Gaussian on them is a prior on that chart rather than on "
-                "the simplex it charts. Name the emission coefficients that vary, for "
+                "a GLM-HMM cannot let every parameter vary by group. "
+                f"{transition_note}Name the complete exchangeable blocks that vary, for "
                 f"example parameters={self.coefficient_names!r}"
             )
         declared = tuple(parameters)
         emissions = set(self.coefficient_names)
-        offenders = [name for name in declared if name not in emissions]
+        transition_aliases = {"transition"} if self.is_dynamic else set()
+        offenders = [
+            name for name in declared if name not in emissions and name not in transition_aliases
+        ]
         if not offenders:
             return ""
         per_state = [name for name in offenders if name.startswith("state[")]
@@ -468,6 +618,15 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
                 "group for every state at once or not at all: name the bare coefficient "
                 f"instead, one of {list(self.coefficient_names)}"
             )
+        if self.is_dynamic:
+            return (
+                f"{sorted(offenders)} is not a complete exchangeable parameter block. Name "
+                f"emission coefficients from {list(self.coefficient_names)}, or name "
+                "'transition' to vary every source-state ILR intercept and covariate effect "
+                "together. One source, destination, or contrast cannot vary alone because "
+                "that selection is not closed under latent-state relabelling; the initial "
+                f"simplex is still reference-coded ({self._reference_note()})"
+            )
         return (
             f"{sorted(offenders)} is not an emission coefficient of this model. Only "
             f"{list(self.coefficient_names)} may carry group deviations: the initial and "
@@ -475,7 +634,8 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
             f"({self._reference_note()}), where an isotropic Gaussian is a prior on the "
             "chart and not on the transition matrix, and the reference state is chosen by "
             "label canonicalisation rather than by you. Use stickiness= for population-level "
-            "persistence, or fit per-subject models if per-subject dynamics are the question"
+            "persistence, or declare transition predictors to fit chart-free transition "
+            "random effects"
         )
 
     def _reference_note(self) -> str:
@@ -492,12 +652,25 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
             f"initial_logit[state={state}|reference={self.n_states - 1}]"
             for state in range(self.n_states - 1)
         )
-        transitions = tuple(
-            f"transition_logit[from={source},to={destination}|reference={self.n_states - 1}]"
+        if not self.is_dynamic:
+            transitions = tuple(
+                f"transition_logit[from={source},to={destination}|reference={self.n_states - 1}]"
+                for source in range(self.n_states)
+                for destination in range(self.n_states - 1)
+            )
+            return (*emissions, *initial, *transitions)
+        transition_intercepts = tuple(
+            f"transition_ilr[from={source},contrast={contrast}]"
             for source in range(self.n_states)
-            for destination in range(self.n_states - 1)
+            for contrast in range(self.n_states - 1)
         )
-        return (*emissions, *initial, *transitions)
+        transition_effects = tuple(
+            f"transition_ilr_coefficient[from={source},contrast={contrast}].{predictor}"
+            for source in range(self.n_states)
+            for contrast in range(self.n_states - 1)
+            for predictor in self.transition_coefficient_names
+        )
+        return (*emissions, *initial, *transition_intercepts, *transition_effects)
 
     @property
     def scored_columns(self) -> tuple[str, ...]:
@@ -513,8 +686,15 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         initial_probabilities: Sequence[float],
         transition_matrix: Sequence[Sequence[float]],
         emissions: Mapping[str, Sequence[float]],
+        transition_coefficients: Mapping[str, Sequence[Sequence[float]]] | None = None,
     ) -> Mapping[str, float]:
-        """Validate, canonicalize, and pack natural-scale model components."""
+        """Validate, canonicalize, and pack natural-scale model components.
+
+        Dynamic transition effects are supplied as one ``(source, destination)`` matrix per
+        transition-design column. Each source row must sum to zero, the identified centred
+        multinomial-logit representation. A positive value makes that destination more
+        likely relative to the geometric mean of all destinations as the predictor grows.
+        """
 
         if set(emissions) != set(self.coefficient_names):
             expected = set(self.coefficient_names)
@@ -526,11 +706,30 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         emission_matrix = np.column_stack(
             [np.asarray(emissions[name], dtype=np.float64) for name in self.coefficient_names]
         )
+        transition_names = self.transition_coefficient_names
+        supplied = {} if transition_coefficients is None else dict(transition_coefficients)
+        if set(supplied) != set(transition_names) and (supplied or transition_names):
+            expected = set(transition_names)
+            observed = set(supplied)
+            raise ValueError(
+                "transition_coefficients must match the transition design exactly; "
+                f"missing={sorted(expected - observed)}, "
+                f"extra={sorted(observed - expected)}"
+            )
+        if transition_names:
+            transition_effects = np.stack(
+                [np.asarray(supplied[name], dtype=np.float64) for name in transition_names],
+                axis=2,
+            )
+        else:
+            transition_effects = np.zeros((self.n_states, self.n_states, 0), dtype=np.float64)
         components = GLMHMMParameters(
             initial_probabilities=np.asarray(initial_probabilities, dtype=np.float64),
             transition_matrix=np.asarray(transition_matrix, dtype=np.float64),
             emission_coefficients=emission_matrix,
             coefficient_names=self.coefficient_names,
+            transition_effects=transition_effects,
+            transition_predictor_names=transition_names,
         )
         if components.n_states != self.n_states:
             raise ValueError(f"components must contain exactly {self.n_states} states")
@@ -565,6 +764,36 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
                 raise ValueError("parameters must contain finite numeric values")
         return self._unpack_components(vector)
 
+    def transition_design_matrix(self, study: Study) -> NDArray[np.float64]:
+        """Return exogenous transition covariates in source row order.
+
+        Trial ``t``'s row governs ``P(z_t | z_{t-1})``. The first row of every session is
+        intentionally retained but unused because the state distribution resets there.
+        Learned scaling, categorical levels, and other fitted landmarks must therefore be
+        declared in a training-fitted :class:`~behavio.design.DesignSpec`, exactly as for an
+        emission design.
+        """
+
+        design = self.transition_covariate_design
+        if design is None:
+            return np.empty((len(study), 0), dtype=np.float64)
+        return np.asarray(build_matrix(design, study).values, dtype=np.float64)
+
+    def transition_probabilities(
+        self,
+        study: Study,
+        parameters: Mapping[str, float] | FitResult,
+    ) -> NDArray[np.float64]:
+        """Return the fitted or declared transition matrix on every source row.
+
+        This is the reportable natural-scale estimand for a non-homogeneous HMM. It includes
+        session-opening rows for alignment with the study, although those rows are reset to
+        the initial distribution and do not contribute a transition to the likelihood.
+        """
+
+        components = self.parameter_components(parameters)
+        return components.transition_probabilities(self.transition_design_matrix(study))
+
     def simulate(
         self,
         design: Study,
@@ -598,10 +827,17 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
 
         outcomes = self.outcomes(study)
         features = self.design_matrix(study)
+        transition_features = self.transition_design_matrix(study)
         sessions = ordered_session_indices(study)
 
         def objective(vector: NDArray[np.float64]) -> tuple[float, NDArray[np.float64]]:
-            return self._objective_gradient(vector, features, outcomes, sessions)
+            return self._objective_gradient(
+                vector,
+                features,
+                outcomes,
+                sessions,
+                transition_features=transition_features,
+            )
 
         starts = self._initial_points(features, outcomes)
         bounds = [(-30.0, 30.0)] * len(self.parameter_names)
@@ -645,6 +881,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         gamma = self._posterior_state_probabilities(
             estimates,
             features,
+            transition_features,
             outcomes,
             sessions,
         )
@@ -654,8 +891,9 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
             :, self.coefficient_names.index(self.label_by)
         ]
         label_gap = float(np.min(np.diff(label_values)))
+        transition_probabilities = canonical.transition_probabilities(transition_features)
         probability_values = np.concatenate(
-            (canonical.initial_probabilities, canonical.transition_matrix.ravel())
+            (canonical.initial_probabilities, transition_probabilities.ravel())
         )
         boundary = bool(
             np.any(np.abs(canonical.emission_coefficients) >= self.coefficient_warning_threshold)
@@ -708,9 +946,11 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         self._validate_fit(fit)
         outcomes = self.outcomes(study)
         features = self.design_matrix(study)
+        transition_features = self.transition_design_matrix(study)
         components = self.parameter_components(fit)
         state_probabilities = self._filtered_state_probabilities(
             features,
+            transition_features,
             outcomes,
             ordered_session_indices(study),
             components,
@@ -749,8 +989,10 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         self._validate_fit(fit)
         outcomes = self.outcomes(study)
         features = self.design_matrix(study)
+        transition_features = self.transition_design_matrix(study)
         return self._filtered_state_probabilities(
             features,
+            transition_features,
             outcomes,
             ordered_session_indices(study),
             self.parameter_components(fit),
@@ -816,13 +1058,14 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
 
         outcomes = self.outcomes(study)
         features = self.design_matrix(study)
+        transition_features = self.transition_design_matrix(study)
         sessions = ordered_session_indices(study)
         row_blocks = np.empty(len(study), dtype=np.intp)
         blocks = []
         for block, indices in enumerate(sessions):
             index = np.asarray(indices, dtype=np.intp)
             row_blocks[index] = block
-            blocks.append((index, features[index], outcomes[index]))
+            blocks.append((index, features[index], transition_features[index], outcomes[index]))
         return _GLMHMMRowObjective(
             model=self,
             blocks=tuple(blocks),
@@ -831,13 +1074,14 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         )
 
     def penalty_matrix(self) -> NDArray[np.float64]:
-        """Return the ridge on every non-intercept emission coefficient, and nothing else.
+        """Return emission ridge plus dynamic-transition slope ridge.
 
         The inherited GLM answers "every coordinate but the first", which is the right
         statement about a coefficient vector and the wrong one about this coordinate: it
         would ridge one state's intercept, every other state's intercept, and both
-        simplexes' logits. A transition logit is not a coefficient and has no business being
-        shrunk towards its reference category.
+        simplexes' logits. Stationary transition logits and dynamic ILR intercepts remain
+        unpenalised. Dynamic covariate effects are genuine regression coefficients, and are
+        ridge-regularised in the orthonormal log-ratio coordinate by ``transition_l2``.
         """
 
         penalty = np.zeros(len(self.parameter_names), dtype=np.float64)
@@ -845,6 +1089,13 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         for state in range(self.n_states):
             start = state * n_coefficients
             penalty[start + 1 : start + n_coefficients] = self.l2
+        if self.is_dynamic:
+            slope_start = (
+                self.n_states * n_coefficients
+                + (self.n_states - 1)
+                + self.n_states * (self.n_states - 1)
+            )
+            penalty[slope_start:] = self.transition_l2
         return np.diag(penalty)
 
     def coordinate_box(self, study: Study) -> NDArray[np.float64]:
@@ -865,7 +1116,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         return self._initial_points(self.design_matrix(study), self.outcomes(study))
 
     def group_parameter_expansion(self, name: str) -> tuple[str, ...]:
-        """Return every state's copy of one emission coefficient.
+        """Expand an emission coefficient or the complete dynamic transition regression.
 
         This is the same statement a smooth model makes about a coefficient path: a group's
         deviation is the same kind of object as the population parameter, and the population
@@ -877,12 +1128,19 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
 
         if name in self.coefficient_names:
             return tuple(f"state[{state}].{name}" for state in range(self.n_states))
+        if name == "transition" and self.is_dynamic:
+            return tuple(
+                parameter
+                for parameter in self.parameter_names
+                if parameter.startswith("transition_ilr[")
+                or parameter.startswith("transition_ilr_coefficient[")
+            )
         return (name,)
 
     def group_penalty(
         self, columns: NDArray[np.intp], scales: NDArray[np.float64]
     ) -> NDArray[np.float64]:
-        """Return the isotropic Gaussian precision on one group's emission deviations."""
+        """Return isotropic Gaussian precision in emission or orthonormal ILR coordinates."""
 
         del columns
         return ridge_group_penalty(scales)
@@ -1065,14 +1323,50 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
                 matrix[row, emission_end + order[state]] += 1.0
             if order[reference] < reference:
                 matrix[row, emission_end + order[reference]] -= 1.0
+        if not self.is_dynamic:
+            for source in range(self.n_states):
+                for destination in range(reference):
+                    row = initial_end + source * reference + destination
+                    base = initial_end + order[source] * reference
+                    if order[destination] < reference:
+                        matrix[row, base + order[destination]] += 1.0
+                    if order[reference] < reference:
+                        matrix[row, base + order[reference]] -= 1.0
+            return matrix
+
+        destination_map = np.zeros((self.n_states, self.n_states), dtype=np.float64)
+        destination_map[np.arange(self.n_states), np.asarray(order, dtype=np.intp)] = 1.0
+        basis = _ilr_basis(self.n_states)
+        rotation = basis.T @ destination_map @ basis
+        transition_start = initial_end
         for source in range(self.n_states):
-            for destination in range(reference):
-                row = initial_end + source * reference + destination
-                base = initial_end + order[source] * reference
-                if order[destination] < reference:
-                    matrix[row, base + order[destination]] += 1.0
-                if order[reference] < reference:
-                    matrix[row, base + order[reference]] -= 1.0
+            old_source = order[source]
+            rows = slice(
+                transition_start + source * reference,
+                transition_start + (source + 1) * reference,
+            )
+            columns = slice(
+                transition_start + old_source * reference,
+                transition_start + (old_source + 1) * reference,
+            )
+            matrix[rows, columns] = rotation
+
+        n_predictors = len(self.transition_coefficient_names)
+        slope_start = transition_start + self.n_states * reference
+        for source in range(self.n_states):
+            old_source = order[source]
+            for predictor in range(n_predictors):
+                for new_contrast in range(reference):
+                    row = (
+                        slope_start + (source * reference + new_contrast) * n_predictors + predictor
+                    )
+                    for old_contrast in range(reference):
+                        column = (
+                            slope_start
+                            + (old_source * reference + old_contrast) * n_predictors
+                            + predictor
+                        )
+                        matrix[row, column] = rotation[new_contrast, old_contrast]
         return matrix
 
     # -- internals of the composition contract --------------------------------------------
@@ -1090,6 +1384,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         )
         outcomes = self.outcomes(study)
         features = self.design_matrix(study)
+        transition_features = self.transition_design_matrix(study)
         probability = np.empty(len(study), dtype=np.float64)
         for session_indices in ordered_session_indices(study):
             index = np.asarray(session_indices, dtype=np.intp)
@@ -1099,11 +1394,14 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
                 1.0 - outcomes[index, None]
             ) * -np.logaddexp(0.0, linear)
             emission_probability = expit(linear)
+            transition = components.transition_probabilities(transition_features[index])
             prior = np.asarray(components.initial_probabilities)
             for position, row in enumerate(index):
                 probability[row] = float(prior @ emission_probability[position])
                 log_weight = np.log(prior) + emission_log[position]
-                prior = np.exp(log_weight - logsumexp(log_weight)) @ components.transition_matrix
+                posterior = np.exp(log_weight - logsumexp(log_weight))
+                if position + 1 < len(index):
+                    prior = posterior @ transition[position + 1]
         return np.clip(probability, np.finfo(float).tiny, 1.0 - np.finfo(float).eps)
 
     def _session_components(
@@ -1133,19 +1431,19 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         """
 
         predictors = self._predictor_matrix(design)
+        transition_features = self.transition_design_matrix(design)
         choices = np.zeros(len(design), dtype=np.int8)
         states = np.zeros(len(design), dtype=np.int64)
         predictor_end = 1 + len(self.predictors)
         for session_indices in ordered_session_indices(design):
             index = np.asarray(session_indices, dtype=np.intp)
             components = components_for(index)
+            transition = components.transition_probabilities(transition_features[index])
             generated_history: list[float] = []
             state = int(generator.choice(self.n_states, p=components.initial_probabilities))
             for position, row in enumerate(session_indices):
                 if position:
-                    state = int(
-                        generator.choice(self.n_states, p=components.transition_matrix[state])
-                    )
+                    state = int(generator.choice(self.n_states, p=transition[position, state]))
                 features = np.empty(len(self.coefficient_names), dtype=np.float64)
                 features[0] = 1.0
                 features[1:predictor_end] = predictors[row]
@@ -1276,7 +1574,15 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         base = np.asarray(base_result.x, dtype=np.float64)
         persistent = np.full((self.n_states, self.n_states), 0.1 / (self.n_states - 1))
         np.fill_diagonal(persistent, 0.9)
-        transition_logits = _encode_probability_rows(persistent).ravel()
+        transition_logits = (
+            _encode_probability_rows(persistent).ravel()
+            if not self.is_dynamic
+            else _encode_ilr_rows(persistent).ravel()
+        )
+        transition_slopes = np.zeros(
+            self.n_states * (self.n_states - 1) * len(self.transition_coefficient_names),
+            dtype=np.float64,
+        )
         generator = np.random.default_rng(self.random_seed)
         label_index = self.coefficient_names.index(self.label_by)
         starts: list[NDArray[np.float64]] = []
@@ -1289,13 +1595,17 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
             transitions = transition_logits + generator.normal(
                 0.0, scale, self.n_states * (self.n_states - 1)
             )
-            starts.append(np.concatenate((emissions.ravel(), initial_logits, transitions)))
+            slopes = transition_slopes + generator.normal(
+                0.0, scale * 0.25, transition_slopes.shape
+            )
+            starts.append(np.concatenate((emissions.ravel(), initial_logits, transitions, slopes)))
         return tuple(starts)
 
     def _likelihood_gradient(
         self,
         vector: NDArray[np.float64],
         features: NDArray[np.float64],
+        transition_features: NDArray[np.float64],
         outcomes: NDArray[np.float64],
         sessions: tuple[tuple[int, ...], ...],
     ) -> tuple[float, NDArray[np.float64]]:
@@ -1311,7 +1621,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         components = self._unpack_components(vector)
         emissions = components.emission_coefficients
         initial = components.initial_probabilities
-        transition = components.transition_matrix
+        transition = components.transition_probabilities(transition_features)
         linear = features @ emissions.T
         emission_log_probability = outcomes[:, None] * -np.logaddexp(0.0, -linear) + (
             1.0 - outcomes[:, None]
@@ -1331,13 +1641,25 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
                 gamma[:, state] * (probabilities[:, state] - outcomes)
             )
         initial_gradient = len(sessions) * initial[:-1] - posterior.initial_counts[:-1]
-        departures = posterior.transition_counts.sum(axis=1)
-        transition_gradient = (
-            departures[:, None] * transition[:, :-1] - posterior.transition_counts[:, :-1]
-        )
-        gradient = np.concatenate(
-            (emission_gradient.ravel(), initial_gradient, transition_gradient.ravel())
-        )
+        if not self.is_dynamic:
+            stationary = components.transition_matrix
+            departures = posterior.transition_counts.sum(axis=1)
+            transition_gradient = (
+                departures[:, None] * stationary[:, :-1] - posterior.transition_counts[:, :-1]
+            )
+            transition_blocks = (transition_gradient.ravel(),)
+        else:
+            basis = _ilr_basis(self.n_states)
+            expected = np.asarray(posterior.transition_expectations)
+            departures = expected.sum(axis=2)
+            residual = departures[:, :, None] * transition - expected
+            contrast_residual = np.einsum("tij,jc->tic", residual, basis, optimize=True)
+            intercept_gradient = contrast_residual.sum(axis=0)
+            slope_gradient = np.einsum(
+                "tic,tp->icp", contrast_residual, transition_features, optimize=True
+            )
+            transition_blocks = (intercept_gradient.ravel(), slope_gradient.ravel())
+        gradient = np.concatenate((emission_gradient.ravel(), initial_gradient, *transition_blocks))
         return -posterior.log_likelihood, gradient
 
     def _objective_gradient(
@@ -1346,8 +1668,13 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         features: NDArray[np.float64],
         outcomes: NDArray[np.float64],
         sessions: tuple[tuple[int, ...], ...],
+        transition_features: NDArray[np.float64] | None = None,
     ) -> tuple[float, NDArray[np.float64]]:
-        loss, gradient = self._likelihood_gradient(vector, features, outcomes, sessions)
+        if transition_features is None:
+            transition_features = np.empty((len(outcomes), 0), dtype=np.float64)
+        loss, gradient = self._likelihood_gradient(
+            vector, features, transition_features, outcomes, sessions
+        )
         components = self._unpack_components(vector)
         emissions = components.emission_coefficients
         transition = components.transition_matrix
@@ -1356,6 +1683,11 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         penalty[:, 1:] = self.l2 * emissions[:, 1:]
         loss = loss + 0.5 * self.l2 * float(np.sum(emissions[:, 1:] ** 2))
         gradient[: self.n_states * n_coefficients] += penalty.ravel()
+        if self.is_dynamic and self.transition_l2:
+            n_slopes = self.n_states * (self.n_states - 1) * len(self.transition_coefficient_names)
+            slopes = np.asarray(vector[-n_slopes:], dtype=np.float64)
+            loss += 0.5 * self.transition_l2 * float(slopes @ slopes)
+            gradient[-n_slopes:] += self.transition_l2 * slopes
         if self.stickiness:
             # A sticky Dirichlet prior adds kappa pseudo-counts to self-transitions.
             # Constants independent of the parameters are omitted from the MAP objective.
@@ -1372,6 +1704,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         self,
         vector: NDArray[np.float64],
         features: NDArray[np.float64],
+        transition_features: NDArray[np.float64],
         outcomes: NDArray[np.float64],
         sessions: tuple[tuple[int, ...], ...],
     ) -> NDArray[np.float64]:
@@ -1381,7 +1714,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
             1.0 - outcomes[:, None]
         ) * -np.logaddexp(0.0, linear)
         log_initial = np.log(components.initial_probabilities)
-        log_transition = np.log(components.transition_matrix)
+        log_transition = np.log(components.transition_probabilities(transition_features))
         return _forward_backward(
             log_initial,
             log_transition,
@@ -1392,6 +1725,7 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
     def _filtered_state_probabilities(
         self,
         features: NDArray[np.float64],
+        transition_features: NDArray[np.float64],
         outcomes: NDArray[np.float64],
         sessions: tuple[tuple[int, ...], ...],
         components: GLMHMMParameters,
@@ -1402,14 +1736,16 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         ) * -np.logaddexp(0.0, linear)
         predictive = np.empty((len(outcomes), self.n_states), dtype=np.float64)
         filtered = np.empty_like(predictive)
+        transition = components.transition_probabilities(transition_features)
         for session_indices in sessions:
             prior = np.asarray(components.initial_probabilities)
-            for index in session_indices:
+            for position, index in enumerate(session_indices):
                 predictive[index] = prior
                 log_weight = np.log(prior) + emission_log[index]
                 posterior = np.exp(log_weight - logsumexp(log_weight))
                 filtered[index] = posterior
-                prior = posterior @ components.transition_matrix
+                if position + 1 < len(session_indices):
+                    prior = posterior @ transition[session_indices[position + 1]]
         return FilteredStateProbabilities(predictive=predictive, filtered=filtered)
 
     def _canonicalize_components(
@@ -1433,17 +1769,28 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
             transition_matrix=components.transition_matrix[np.ix_(indices, indices)],
             emission_coefficients=components.emission_coefficients[indices],
             coefficient_names=self.coefficient_names,
+            transition_effects=np.asarray(components.transition_effects)[indices][:, indices, :],
+            transition_predictor_names=components.transition_predictor_names,
         )
         return canonical, permutation
 
     def _pack_components(self, components: GLMHMMParameters) -> NDArray[np.float64]:
-        return np.concatenate(
-            (
-                components.emission_coefficients.ravel(),
-                _encode_probability_vector(components.initial_probabilities),
-                _encode_probability_rows(components.transition_matrix).ravel(),
-            )
+        transition_intercepts = (
+            _encode_probability_rows(components.transition_matrix)
+            if not self.is_dynamic
+            else _encode_ilr_rows(components.transition_matrix)
         )
+        blocks = [
+            components.emission_coefficients.ravel(),
+            _encode_probability_vector(components.initial_probabilities),
+            transition_intercepts.ravel(),
+        ]
+        if self.is_dynamic:
+            effects = np.asarray(components.transition_effects, dtype=np.float64)
+            blocks.append(
+                np.einsum("jc,ijp->icp", _ilr_basis(self.n_states), effects, optimize=True).ravel()
+            )
+        return np.concatenate(blocks)
 
     def _unpack_components(self, vector: Sequence[float]) -> GLMHMMParameters:
         values = np.asarray(vector, dtype=np.float64)
@@ -1454,13 +1801,30 @@ class BernoulliGLMHMM(BernoulliHistoryGLM):
         initial_end = emission_end + self.n_states - 1
         emissions = values[:emission_end].reshape(self.n_states, n_coefficients)
         initial = _decode_reference_logits(values[emission_end:initial_end])
-        transition_logits = values[initial_end:].reshape(self.n_states, self.n_states - 1)
-        transition = np.vstack([_decode_reference_logits(row) for row in transition_logits])
+        transition_end = initial_end + self.n_states * (self.n_states - 1)
+        transition_logits = values[initial_end:transition_end].reshape(
+            self.n_states, self.n_states - 1
+        )
+        if not self.is_dynamic:
+            transition = np.vstack([_decode_reference_logits(row) for row in transition_logits])
+            effects = np.zeros((self.n_states, self.n_states, 0), dtype=np.float64)
+        else:
+            transition = _decode_ilr_rows(transition_logits)
+            coordinates = values[transition_end:].reshape(
+                self.n_states,
+                self.n_states - 1,
+                len(self.transition_coefficient_names),
+            )
+            effects = np.einsum(
+                "jc,icp->ijp", _ilr_basis(self.n_states), coordinates, optimize=True
+            )
         return GLMHMMParameters(
             initial_probabilities=initial,
             transition_matrix=transition,
             emission_coefficients=emissions,
             coefficient_names=self.coefficient_names,
+            transition_effects=effects,
+            transition_predictor_names=self.transition_coefficient_names,
         )
 
 
@@ -1485,7 +1849,15 @@ class _GLMHMMRowObjective:
     """
 
     model: BernoulliGLMHMM
-    blocks: tuple[tuple[NDArray[np.intp], NDArray[np.float64], NDArray[np.float64]], ...]
+    blocks: tuple[
+        tuple[
+            NDArray[np.intp],
+            NDArray[np.float64],
+            NDArray[np.float64],
+            NDArray[np.float64],
+        ],
+        ...,
+    ]
     row_blocks: NDArray[np.intp]
     n_rows: int
 
@@ -1504,10 +1876,10 @@ class _GLMHMMRowObjective:
         block_constant_coordinates(values, self.row_blocks, what="a GLM-HMM's parameters")
         total = 0.0
         gradient = np.zeros_like(values)
-        for index, features, outcomes in self.blocks:
+        for index, features, transition_features, outcomes in self.blocks:
             whole = (tuple(range(len(index))),)
             value, block_gradient = self.model._likelihood_gradient(
-                values[index[0]], features, outcomes, whole
+                values[index[0]], features, transition_features, outcomes, whole
             )
             total += value
             gradient[index] = block_gradient / len(index)
@@ -1544,6 +1916,33 @@ def _encode_probability_rows(probabilities: NDArray[np.float64]) -> NDArray[np.f
     return np.log(probabilities[:, :-1]) - np.log(probabilities[:, -1:])
 
 
+def _ilr_basis(n_states: int) -> NDArray[np.float64]:
+    """Return a deterministic orthonormal basis of the simplex's log-contrast space.
+
+    This is the Helmert sub-matrix, oriented only to give parameter names a stable order.
+    Its columns are orthonormal and orthogonal to the all-ones vector, so relabelling states
+    rotates coordinates without changing Euclidean lengths or isotropic Gaussian priors.
+    """
+
+    basis = np.zeros((n_states, n_states - 1), dtype=np.float64)
+    for contrast in range(n_states - 1):
+        denominator = np.sqrt((contrast + 1) * (contrast + 2))
+        basis[: contrast + 1, contrast] = 1.0 / denominator
+        basis[contrast + 1, contrast] = -(contrast + 1) / denominator
+    return basis
+
+
+def _encode_ilr_rows(probabilities: NDArray[np.float64]) -> NDArray[np.float64]:
+    values = np.asarray(probabilities, dtype=np.float64)
+    return np.log(values) @ _ilr_basis(values.shape[1])
+
+
+def _decode_ilr_rows(coordinates: NDArray[np.float64]) -> NDArray[np.float64]:
+    values = np.asarray(coordinates, dtype=np.float64)
+    logits = values @ _ilr_basis(values.shape[1] + 1).T
+    return np.exp(logits - logsumexp(logits, axis=1, keepdims=True))
+
+
 def _minimum_pairwise_distance(values: NDArray[np.float64]) -> float:
     return float(
         min(
@@ -1563,6 +1962,20 @@ def _forward_backward(
     gamma = np.empty_like(emission_log_probability)
     initial_counts = np.zeros(n_states, dtype=np.float64)
     transition_counts = np.zeros((n_states, n_states), dtype=np.float64)
+    transition_expectations = np.zeros(
+        (len(emission_log_probability), n_states, n_states), dtype=np.float64
+    )
+    transitions = np.asarray(log_transition, dtype=np.float64)
+    if transitions.ndim not in (2, 3):
+        raise ValueError("log_transition must be one matrix or one matrix per trial")
+    if transitions.ndim == 2 and transitions.shape != (n_states, n_states):
+        raise ValueError("a stationary transition matrix must have one row and column per state")
+    if transitions.ndim == 3 and transitions.shape != (
+        len(emission_log_probability),
+        n_states,
+        n_states,
+    ):
+        raise ValueError("dynamic transitions must contain one square matrix per trial")
     log_likelihood = 0.0
     for session_indices in sessions:
         indices = np.asarray(session_indices, dtype=np.intp)
@@ -1572,31 +1985,37 @@ def _forward_backward(
         beta = np.zeros_like(alpha)
         alpha[0] = log_initial + emission[0]
         for trial in range(1, n_trials):
+            transition = transitions if transitions.ndim == 2 else transitions[indices[trial]]
             alpha[trial] = emission[trial] + logsumexp(
-                alpha[trial - 1, :, None] + log_transition,
+                alpha[trial - 1, :, None] + transition,
                 axis=0,
             )
         session_likelihood = float(logsumexp(alpha[-1]))
         log_likelihood += session_likelihood
         for trial in range(n_trials - 2, -1, -1):
+            transition = transitions if transitions.ndim == 2 else transitions[indices[trial + 1]]
             beta[trial] = logsumexp(
-                log_transition + emission[trial + 1][None, :] + beta[trial + 1][None, :],
+                transition + emission[trial + 1][None, :] + beta[trial + 1][None, :],
                 axis=1,
             )
         session_gamma = np.exp(alpha + beta - session_likelihood)
         gamma[indices] = session_gamma
         initial_counts += session_gamma[0]
         for trial in range(1, n_trials):
-            transition_counts += np.exp(
+            transition = transitions if transitions.ndim == 2 else transitions[indices[trial]]
+            expected = np.exp(
                 alpha[trial - 1, :, None]
-                + log_transition
+                + transition
                 + emission[trial][None, :]
                 + beta[trial][None, :]
                 - session_likelihood
             )
+            transition_counts += expected
+            transition_expectations[indices[trial]] = expected
     return _PosteriorStatistics(
         log_likelihood=log_likelihood,
         state_probabilities=gamma,
         initial_counts=initial_counts,
         transition_counts=transition_counts,
+        transition_expectations=transition_expectations,
     )

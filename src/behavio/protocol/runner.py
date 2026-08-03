@@ -270,9 +270,49 @@ class PointwisePrediction:
         return common
 
 
+class CalibrationEstimand(StrEnum):
+    """Which calibration statement a reliability curve estimates."""
+
+    BINARY = "binary"
+    CONFIDENCE = "confidence"
+    TOP_LABEL = "top-label"
+    CLASSWISE = "classwise"
+
+
+@dataclass(frozen=True, slots=True)
+class CalibrationBin:
+    """One populated equal-width reliability bin retained as evidence."""
+
+    lower: float
+    upper: float
+    n_observations: int
+    mean_probability: float
+    observed_rate: float
+
+    def __post_init__(self) -> None:
+        values = (self.lower, self.upper, self.mean_probability, self.observed_rate)
+        if any(not math.isfinite(value) or not 0 <= value <= 1 for value in values):
+            raise ValueError("calibration bin values must be finite and in [0, 1]")
+        if self.lower >= self.upper:
+            raise ValueError("calibration bin lower must be below upper")
+        if self.n_observations < 1:
+            raise ValueError("a retained calibration bin must contain observations")
+
+
 @dataclass(frozen=True, slots=True)
 class CalibrationSummary:
-    """Aggregate probability calibration retained independently of model ranking."""
+    """One reliability estimand plus categorical decompositions where applicable.
+
+    Binary calibration remains one curve. A categorical prediction instead retains three
+    distinct statements: confidence calibration pooled over predicted labels, top-label
+    calibration conditional on each predicted label, and classwise calibration of each
+    class probability against that class's indicator. They are deliberately not collapsed:
+    none implies either of the others in a multiclass problem.
+
+    Expected calibration error is the familiar descriptive equal-width-bin statistic. The
+    populated bins are retained so its resolution and sample allocation remain auditable;
+    it is not presented as an unbiased population estimate.
+    """
 
     available: bool
     n_observations: int
@@ -281,8 +321,18 @@ class CalibrationSummary:
     brier_score: float | None
     expected_calibration_error: float | None
     reason: str | None = None
+    estimand: CalibrationEstimand = CalibrationEstimand.BINARY
+    category: str | int | float | bool | None = None
+    category_index: int | None = None
+    bins: tuple[CalibrationBin, ...] = ()
+    top_label: tuple[CalibrationSummary, ...] = ()
+    classwise: tuple[CalibrationSummary, ...] = ()
 
     def __post_init__(self) -> None:
+        estimand = CalibrationEstimand(self.estimand)
+        bins = tuple(self.bins)
+        top_label = tuple(self.top_label)
+        classwise = tuple(self.classwise)
         if self.n_observations < 0:
             raise ValueError("calibration observation count must be non-negative")
         numeric = (
@@ -297,11 +347,77 @@ class CalibrationSummary:
             if self.reason is not None:
                 raise ValueError("available calibration cannot declare an unavailability reason")
         else:
-            if any(value is not None for value in numeric) or not self.reason:
+            if (
+                any(value is not None for value in numeric)
+                or not self.reason
+                or bins
+                or top_label
+                or classwise
+            ):
                 raise ValueError("unavailable calibration requires only an explicit reason")
         for value in numeric:
             if value is not None and (not math.isfinite(value) or not 0 <= value <= 1):
                 raise ValueError("calibration summaries must be finite values in [0, 1]")
+        if any(not isinstance(item, CalibrationBin) for item in bins):
+            raise TypeError("bins must contain CalibrationBin values")
+        if bins and sum(item.n_observations for item in bins) != self.n_observations:
+            raise ValueError("calibration bin counts must sum to n_observations")
+        if any(not isinstance(item, CalibrationSummary) for item in (*top_label, *classwise)):
+            raise TypeError("categorical calibration decompositions must contain summaries")
+        if any(item.estimand is not CalibrationEstimand.TOP_LABEL for item in top_label):
+            raise ValueError("top_label entries must declare the top-label estimand")
+        if any(item.estimand is not CalibrationEstimand.CLASSWISE for item in classwise):
+            raise ValueError("classwise entries must declare the classwise estimand")
+        if (top_label or classwise) and estimand is not CalibrationEstimand.CONFIDENCE:
+            raise ValueError("categorical decompositions belong to a confidence summary")
+        needs_category = estimand in {
+            CalibrationEstimand.TOP_LABEL,
+            CalibrationEstimand.CLASSWISE,
+        }
+        if needs_category and (
+            self.category_index is None
+            or isinstance(self.category_index, bool)
+            or self.category_index < 0
+        ):
+            raise ValueError(f"{estimand.value} calibration must identify its category")
+        if not needs_category and (self.category is not None or self.category_index is not None):
+            raise ValueError(f"{estimand.value} calibration cannot name one category")
+        if self.category is not None:
+            _identifier(self.category)
+        object.__setattr__(self, "estimand", estimand)
+        object.__setattr__(self, "bins", bins)
+        object.__setattr__(self, "top_label", top_label)
+        object.__setattr__(self, "classwise", classwise)
+
+
+def _calibration_to_dict(summary: CalibrationSummary) -> dict[str, Any]:
+    """Serialize binary reports compatibly and categorical estimands explicitly."""
+
+    record: dict[str, Any] = {
+        "available": summary.available,
+        "n_observations": summary.n_observations,
+        "mean_probability": summary.mean_probability,
+        "observed_rate": summary.observed_rate,
+        "brier_score": summary.brier_score,
+        "expected_calibration_error": summary.expected_calibration_error,
+        "reason": summary.reason,
+    }
+    if summary.estimand is CalibrationEstimand.BINARY:
+        # This is the pre-categorical artifact shape. Live summaries retain their bins, but
+        # adding default-valued keys to every historical binary report would change stable
+        # fingerprints without changing its estimand.
+        return record
+    record.update(
+        {
+            "estimand": summary.estimand.value,
+            "category": summary.category,
+            "category_index": summary.category_index,
+            "bins": [asdict(item) for item in summary.bins],
+            "top_label": [_calibration_to_dict(item) for item in summary.top_label],
+            "classwise": [_calibration_to_dict(item) for item in summary.classwise],
+        }
+    )
+    return record
 
 
 def fold_to_dict(
@@ -594,7 +710,7 @@ class CandidateRun:
                 if self.unit_balanced_brier_interval
                 else None
             ),
-            "calibration": _json_safe(asdict(self.calibration)),
+            "calibration": _json_safe(_calibration_to_dict(self.calibration)),
         }
 
 
@@ -861,7 +977,7 @@ class NestedEvaluationReport:
                 if self.unit_balanced_brier_interval
                 else None
             ),
-            "calibration": _json_safe(asdict(self.calibration)),
+            "calibration": _json_safe(_calibration_to_dict(self.calibration)),
         }
 
     def canonical_json(self) -> str:
@@ -1764,7 +1880,8 @@ def _calibration(
 ) -> CalibrationSummary:
     if not predictions:
         return CalibrationSummary(False, 0, None, None, None, None, "no successful predictions")
-    if any(point.is_categorical for point in predictions):
+    categorical = tuple(point for point in predictions if point.is_categorical)
+    if categorical and len(categorical) != len(predictions):
         return CalibrationSummary(
             False,
             len(predictions),
@@ -1772,8 +1889,10 @@ def _calibration(
             None,
             None,
             None,
-            "binary reliability calibration is not defined for categorical predictions",
+            "one calibration report cannot mix binary and categorical predictions",
         )
+    if categorical:
+        return _categorical_calibration(categorical)
     outcomes = [_binary_outcome(study[outcome_column][point.row]) for point in predictions]
     if any(outcome is None for outcome in outcomes):
         return CalibrationSummary(
@@ -1786,22 +1905,135 @@ def _calibration(
             "declared calibration outcome is not binary 0/1",
         )
     observed = np.asarray(outcomes, dtype=np.float64)
-    probabilities = np.asarray([point.probability for point in predictions])
-    bins = np.minimum((probabilities * 10).astype(int), 9)
+    probabilities = np.asarray([point.probability for point in predictions], dtype=np.float64)
+    return _reliability_summary(
+        probabilities,
+        observed,
+        brier_score=float(np.mean((probabilities - observed) ** 2)),
+        estimand=CalibrationEstimand.BINARY,
+    )
+
+
+def _categorical_calibration(
+    predictions: Sequence[PointwisePrediction],
+) -> CalibrationSummary:
+    """Retain confidence, conditional top-label, and classwise reliability separately."""
+
+    categories = tuple(predictions[0].categories or ())
+    if any(tuple(point.categories or ()) != categories for point in predictions):
+        return CalibrationSummary(
+            False,
+            len(predictions),
+            None,
+            None,
+            None,
+            None,
+            "categorical predictions do not share one category coordinate",
+        )
+    probabilities = np.asarray(
+        [point.category_probabilities for point in predictions], dtype=np.float64
+    )
+    observed_codes = np.asarray(
+        [point.observed_category_index for point in predictions], dtype=np.intp
+    )
+    rows = np.arange(len(predictions), dtype=np.intp)
+    targets = np.zeros_like(probabilities)
+    targets[rows, observed_codes] = 1.0
+    predicted_codes = np.argmax(probabilities, axis=1)
+    confidence = probabilities[rows, predicted_codes]
+    correct = (predicted_codes == observed_codes).astype(np.float64)
+    multiclass_brier = float(0.5 * np.mean(np.sum((probabilities - targets) ** 2, axis=1)))
+
+    top_label = tuple(
+        _reliability_summary(
+            confidence[selected],
+            correct[selected],
+            brier_score=float(np.mean((confidence[selected] - correct[selected]) ** 2)),
+            estimand=CalibrationEstimand.TOP_LABEL,
+            category=categories[column],
+            category_index=column,
+        )
+        for column in range(len(categories))
+        if np.any(selected := predicted_codes == column)
+    )
+    classwise = tuple(
+        _reliability_summary(
+            probabilities[:, column],
+            targets[:, column],
+            brier_score=float(np.mean((probabilities[:, column] - targets[:, column]) ** 2)),
+            estimand=CalibrationEstimand.CLASSWISE,
+            category=category,
+            category_index=column,
+        )
+        for column, category in enumerate(categories)
+    )
+    primary = _reliability_summary(
+        confidence,
+        correct,
+        brier_score=multiclass_brier,
+        estimand=CalibrationEstimand.CONFIDENCE,
+    )
+    return CalibrationSummary(
+        available=primary.available,
+        n_observations=primary.n_observations,
+        mean_probability=primary.mean_probability,
+        observed_rate=primary.observed_rate,
+        brier_score=primary.brier_score,
+        expected_calibration_error=primary.expected_calibration_error,
+        estimand=primary.estimand,
+        bins=primary.bins,
+        top_label=top_label,
+        classwise=classwise,
+    )
+
+
+def _reliability_summary(
+    probabilities: NDArray[np.float64],
+    observed: NDArray[np.float64],
+    *,
+    brier_score: float,
+    estimand: CalibrationEstimand,
+    category: str | int | float | bool | None = None,
+    category_index: int | None = None,
+    n_bins: int = 10,
+) -> CalibrationSummary:
+    """Compute and retain the populated equal-width bins for one declared estimand."""
+
+    probabilities = np.asarray(probabilities, dtype=np.float64)
+    observed = np.asarray(observed, dtype=np.float64)
+    if probabilities.ndim != 1 or observed.shape != probabilities.shape or not len(probabilities):
+        raise ValueError("reliability inputs must be aligned non-empty vectors")
+    bin_codes = np.minimum((probabilities * n_bins).astype(int), n_bins - 1)
+    bins: list[CalibrationBin] = []
     calibration_error = 0.0
-    for bin_index in range(10):
-        selected = bins == bin_index
-        if np.any(selected):
-            calibration_error += float(np.mean(selected)) * abs(
-                float(np.mean(probabilities[selected]) - np.mean(observed[selected]))
+    for bin_index in range(n_bins):
+        selected = bin_codes == bin_index
+        count = int(np.sum(selected))
+        if not count:
+            continue
+        mean_probability = float(np.mean(probabilities[selected]))
+        observed_rate = float(np.mean(observed[selected]))
+        calibration_error += count / len(probabilities) * abs(mean_probability - observed_rate)
+        bins.append(
+            CalibrationBin(
+                lower=bin_index / n_bins,
+                upper=(bin_index + 1) / n_bins,
+                n_observations=count,
+                mean_probability=mean_probability,
+                observed_rate=observed_rate,
             )
+        )
     return CalibrationSummary(
         available=True,
-        n_observations=len(predictions),
+        n_observations=len(probabilities),
         mean_probability=float(np.mean(probabilities)),
         observed_rate=float(np.mean(observed)),
-        brier_score=float(np.mean((probabilities - observed) ** 2)),
+        brier_score=brier_score,
         expected_calibration_error=calibration_error,
+        estimand=estimand,
+        category=category,
+        category_index=category_index,
+        bins=tuple(bins),
     )
 
 

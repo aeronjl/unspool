@@ -101,16 +101,21 @@ numerical gradient.
 
 ## Current model binding
 
-`BinaryQLearning.fit()` now constructs an `OptimizationProblem` and runs
-`ScipyMultistart`. `QLearningFitResult.optimization_run` retains the complete common result
-while its established restart arrays remain available for backwards compatibility and
-the common fit audit. The two representations are checked against each other when the fit
-result is created.
+`BinaryQLearning.fit()` constructs an `OptimizationProblem` directly. The two shared
+first-party solver kernels do the same: the penalised-linear kernel covers Bernoulli GLMs,
+multinomial logits, and compositions that reuse their solver; the bounded-coordinate kernel
+covers psychometric, composable RL, economic, belief, scalar-timing, patch-leaving, and
+GLM-HMM row-coordinate compositions. Every resulting `FitResult` can retain the selected
+backend's complete `optimization_run` without making the leaf contracts package depend on
+one concrete optimizer implementation.
+
+`QLearningFitResult` keeps its established restart arrays for backwards compatibility and
+checks them against the common run. The shared kernels expose the common run directly.
 
 `export_fit()` includes a shared optimization run when a live result exposes one, so starts
-and failed attempts survive the portable artifact boundary. Migrating the composable RL,
-DDM, mixture, and GLM-HMM implementations to this contract is incremental compatibility
-work, not a second inference design.
+and failed attempts survive the portable artifact boundary. Specialised outer optimizers
+such as variance-component profiling, the Wiener likelihood, and the GLM-HMM EM loop remain
+separate migration targets; their inner bounded-coordinate fits already use the common path.
 
 ## Optional PyBADS backend
 

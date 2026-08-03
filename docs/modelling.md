@@ -81,10 +81,18 @@ evidence are detailed in [Partially pooled trajectories](hierarchical-smooth-glm
 the combinators themselves in [Composing models](composing-models.md).
 
 `BernoulliGLMHMM` supplies the first discrete switching competitor: state-specific
-Bernoulli GLM emissions, a stationary learned transition matrix, session-reset initial
-states, deterministic multi-restart fitting, filtered state probabilities, and explicit
-label/occupancy diagnostics. Its assumptions and non-interpretive label convention are
-detailed in the [fixed-transition GLM-HMM guide](glm-hmm.md).
+Bernoulli GLM emissions, stationary or declared covariate-dependent transition matrices,
+session-reset initial states, deterministic multi-restart fitting, filtered state
+probabilities, chart-free transition partial pooling, and explicit label/occupancy
+diagnostics. Its assumptions and non-interpretive label convention are detailed in the
+[GLM-HMM guide](glm-hmm.md).
+
+The same guide documents two stochastic session-path estimators. The one-subject class
+follows the published dynamic emission/transition model. The population class adds an
+explicit Gaussian population path and evolving subject deviations, with distinct forecasts
+for later sessions of fitted subjects and entirely unseen subjects. This dedicated hierarchy
+cannot be manufactured by wrapping a data-dependent latent path in the generic
+`hierarchical()` combinator.
 
 `BinaryQLearning` supplies the first reward-learning competitor. It uses an explicit
 action-contingent reward environment for simulation, session-reset action values, filtered

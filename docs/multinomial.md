@@ -169,7 +169,12 @@ filtered prediction. Recursive simulation currently rejects terms that use the c
 outcome's own history, because precomputing those features from an observed choice column
 would substitute recorded outcomes for generated ones.
 
-The common protocol artifact currently marks scalar reliability calibration unavailable
-for categorical predictions. Log loss, multicategory Brier score, prospective comparison,
-and recovery are implemented; classwise and top-label calibration summaries remain a
-separate future extension.
+The common protocol artifact retains three categorical calibration estimands separately:
+
+- confidence calibration pools the maximum predicted probability against correctness;
+- top-label calibration conditions that curve on each predicted category; and
+- classwise calibration compares each category's probability with its one-vs-rest outcome.
+
+Every curve retains its populated equal-width reliability bins and descriptive ECE.
+Multicategory Brier score remains the proper probability score. None of these calibration
+notions implies the others, so the artifact does not collapse them into one binary curve.

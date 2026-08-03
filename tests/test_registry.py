@@ -129,6 +129,8 @@ def test_the_builtin_registry_resolves_every_implementation_the_cli_accepts() ->
         "behavio.models.BernoulliGLMHMM",
         "behavio.models.BernoulliHistoryGLM",
         "behavio.models.BinaryQLearning",
+        "behavio.models.HierarchicalSessionDynamicBernoulliGLMHMM",
+        "behavio.models.SessionDynamicBernoulliGLMHMM",
         "behavio.models.WienerDriftDiffusion",
     )
     model = registry.create(

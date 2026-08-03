@@ -25,7 +25,8 @@ restores source row order; it is a fact about a :class:`~behavio.trials.Study`, 
 beside one. :class:`behavio.contracts.DensityPrediction` is the predictive object a
 response-time, confidence, or race model produces; it is a prediction, so it lives beside
 :class:`~behavio.contracts.Prediction` and :class:`~behavio.contracts.CategoricalPrediction`
-in the estimator contract, and ``ModelPrediction`` is the union of all three.
+in the estimator contract. ``CensoredDensityPrediction`` widens the density shape with exact
+right-tail survival at declared observation limits, and ``ModelPrediction`` names all four.
 
 Concrete wrappers around third-party model packages live in :mod:`behavio.foreign`, which
 sits above ``behavio.models`` because a wrapped model is a model.

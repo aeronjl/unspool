@@ -1,0 +1,389 @@
+{
+  "benchmark": "training-only session-dynamic GLM-HMM selection and recovery",
+  "competitors": [
+    "stationary_glm_hmm",
+    "observed_transition_glm_hmm",
+    "smooth_drift",
+    "q_learning"
+  ],
+  "contract_passed": false,
+  "design": {
+    "inner_minimum_training_sessions": 4,
+    "outer_test_sessions": 1,
+    "outer_training_sessions": 6,
+    "sessions": 7,
+    "subjects": 1,
+    "trials_per_session": 75
+  },
+  "provenance": {
+    "git_describe": "dcffb29-dirty",
+    "libraries": {
+      "behavio": "0.1.0",
+      "numpy": "2.3.5",
+      "scipy": "1.18.0"
+    },
+    "python": "3.12.13",
+    "schema_version": 1
+  },
+  "regimes": {
+    "session_dynamic": {
+      "all_selected_full_stages_converged": true,
+      "all_selected_partial_stages_converged": true,
+      "mean_decoded_state_accuracy": 0.9314285714285714,
+      "mean_emission_rmse": 0.7763411285131784,
+      "mean_prospective_log_loss": {
+        "observed_transition_glm_hmm": 0.4895470532358765,
+        "q_learning": 0.4815149881122945,
+        "selected_session_dynamic": 0.4394312379193054,
+        "smooth_drift": 0.5977887133450044,
+        "stationary_glm_hmm": 0.4306940177059916
+      },
+      "mean_score_winner": "stationary_glm_hmm",
+      "mean_transition_rmse": 0.04357707525934734,
+      "n_aligned_path_recoveries": 4,
+      "n_two_state_selections": 4,
+      "prospective_win_counts": {
+        "observed_transition_glm_hmm": 0,
+        "q_learning": 1,
+        "selected_session_dynamic": 1,
+        "smooth_drift": 0,
+        "stationary_glm_hmm": 2
+      },
+      "runs": [
+        {
+          "inner_fold_count": 2,
+          "outer_test_session_orders": [
+            6
+          ],
+          "outer_train_session_orders": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "prospective_log_loss": {
+            "observed_transition_glm_hmm": 0.4713418535399881,
+            "q_learning": 0.4410872089636363,
+            "selected_session_dynamic": 0.41433041887895217,
+            "smooth_drift": 0.5264324419036356,
+            "stationary_glm_hmm": 0.41776500086142854
+          },
+          "prospective_winner": "selected_session_dynamic",
+          "selected_candidate": "K=2;sigma=0.35;alpha=30",
+          "selected_emission_step_scale": 0.35,
+          "selected_fit_audit_status": "warning",
+          "selected_full_stage_converged": true,
+          "selected_n_states": 2,
+          "selected_partial_stage_converged": true,
+          "selected_path_recovery": {
+            "alignment_ambiguous": false,
+            "decoded_state_accuracy": 0.900952380952381,
+            "emission_rmse": 0.8861379718414404,
+            "transition_rmse": 0.04067096808129767
+          },
+          "selected_transition_concentration": 30.0
+        },
+        {
+          "inner_fold_count": 2,
+          "outer_test_session_orders": [
+            6
+          ],
+          "outer_train_session_orders": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "prospective_log_loss": {
+            "observed_transition_glm_hmm": 0.5638934094395405,
+            "q_learning": 0.5362124738851878,
+            "selected_session_dynamic": 0.6047726612670137,
+            "smooth_drift": 0.5731532804282463,
+            "stationary_glm_hmm": 0.5796983281852275
+          },
+          "prospective_winner": "q_learning",
+          "selected_candidate": "K=2;sigma=0.35;alpha=30",
+          "selected_emission_step_scale": 0.35,
+          "selected_fit_audit_status": "warning",
+          "selected_full_stage_converged": true,
+          "selected_n_states": 2,
+          "selected_partial_stage_converged": true,
+          "selected_path_recovery": {
+            "alignment_ambiguous": false,
+            "decoded_state_accuracy": 0.9542857142857143,
+            "emission_rmse": 0.8038167574909771,
+            "transition_rmse": 0.03483747508066632
+          },
+          "selected_transition_concentration": 30.0
+        },
+        {
+          "inner_fold_count": 2,
+          "outer_test_session_orders": [
+            6
+          ],
+          "outer_train_session_orders": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "prospective_log_loss": {
+            "observed_transition_glm_hmm": 0.5166934836450555,
+            "q_learning": 0.5415171030428341,
+            "selected_session_dynamic": 0.4343936499311485,
+            "smooth_drift": 0.7529848597971618,
+            "stationary_glm_hmm": 0.4260089618414517
+          },
+          "prospective_winner": "stationary_glm_hmm",
+          "selected_candidate": "K=2;sigma=0.35;alpha=30",
+          "selected_emission_step_scale": 0.35,
+          "selected_fit_audit_status": "warning",
+          "selected_full_stage_converged": true,
+          "selected_n_states": 2,
+          "selected_partial_stage_converged": true,
+          "selected_path_recovery": {
+            "alignment_ambiguous": false,
+            "decoded_state_accuracy": 0.9352380952380952,
+            "emission_rmse": 0.5979070720024444,
+            "transition_rmse": 0.041242031352358245
+          },
+          "selected_transition_concentration": 30.0
+        },
+        {
+          "inner_fold_count": 2,
+          "outer_test_session_orders": [
+            6
+          ],
+          "outer_train_session_orders": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "prospective_log_loss": {
+            "observed_transition_glm_hmm": 0.4062594663189218,
+            "q_learning": 0.4072431665575198,
+            "selected_session_dynamic": 0.3042282216001074,
+            "smooth_drift": 0.538584271250974,
+            "stationary_glm_hmm": 0.29930377993585866
+          },
+          "prospective_winner": "stationary_glm_hmm",
+          "selected_candidate": "K=2;sigma=0.35;alpha=30",
+          "selected_emission_step_scale": 0.35,
+          "selected_fit_audit_status": "warning",
+          "selected_full_stage_converged": true,
+          "selected_n_states": 2,
+          "selected_partial_stage_converged": true,
+          "selected_path_recovery": {
+            "alignment_ambiguous": false,
+            "decoded_state_accuracy": 0.9352380952380952,
+            "emission_rmse": 0.8175027127178517,
+            "transition_rmse": 0.05755782652306713
+          },
+          "selected_transition_concentration": 30.0
+        }
+      ],
+      "selection_counts": {
+        "K=2;sigma=0.15;alpha=12": 0,
+        "K=2;sigma=0.15;alpha=30": 0,
+        "K=2;sigma=0.35;alpha=12": 0,
+        "K=2;sigma=0.35;alpha=30": 4,
+        "K=3;sigma=0.15;alpha=12": 0,
+        "K=3;sigma=0.15;alpha=30": 0,
+        "K=3;sigma=0.35;alpha=12": 0,
+        "K=3;sigma=0.35;alpha=30": 0
+      }
+    },
+    "stationary": {
+      "all_selected_full_stages_converged": true,
+      "all_selected_partial_stages_converged": false,
+      "mean_prospective_log_loss": {
+        "observed_transition_glm_hmm": 0.4617777680203158,
+        "q_learning": 0.586623421009757,
+        "selected_session_dynamic": 0.43109196787575155,
+        "smooth_drift": 0.5660609281281227,
+        "stationary_glm_hmm": 0.4436440985638527
+      },
+      "mean_score_winner": "selected_session_dynamic",
+      "n_two_state_selections": 3,
+      "prospective_win_counts": {
+        "observed_transition_glm_hmm": 0,
+        "q_learning": 0,
+        "selected_session_dynamic": 1,
+        "smooth_drift": 0,
+        "stationary_glm_hmm": 3
+      },
+      "runs": [
+        {
+          "inner_fold_count": 2,
+          "outer_test_session_orders": [
+            6
+          ],
+          "outer_train_session_orders": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "prospective_log_loss": {
+            "observed_transition_glm_hmm": 0.35886834467508694,
+            "q_learning": 0.5947577352021973,
+            "selected_session_dynamic": 0.35717336710890785,
+            "smooth_drift": 0.6274061000504894,
+            "stationary_glm_hmm": 0.35155969025847394
+          },
+          "prospective_winner": "stationary_glm_hmm",
+          "selected_candidate": "K=2;sigma=0.15;alpha=30",
+          "selected_emission_step_scale": 0.15,
+          "selected_fit_audit_status": "warning",
+          "selected_full_stage_converged": true,
+          "selected_n_states": 2,
+          "selected_partial_stage_converged": true,
+          "selected_path_recovery": null,
+          "selected_transition_concentration": 30.0
+        },
+        {
+          "inner_fold_count": 2,
+          "outer_test_session_orders": [
+            6
+          ],
+          "outer_train_session_orders": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "prospective_log_loss": {
+            "observed_transition_glm_hmm": 0.5710117662834244,
+            "q_learning": 0.6567637548291582,
+            "selected_session_dynamic": 0.5442214639513353,
+            "smooth_drift": 0.6080869268846506,
+            "stationary_glm_hmm": 0.5439275943701526
+          },
+          "prospective_winner": "stationary_glm_hmm",
+          "selected_candidate": "K=2;sigma=0.15;alpha=30",
+          "selected_emission_step_scale": 0.15,
+          "selected_fit_audit_status": "warning",
+          "selected_full_stage_converged": true,
+          "selected_n_states": 2,
+          "selected_partial_stage_converged": true,
+          "selected_path_recovery": null,
+          "selected_transition_concentration": 30.0
+        },
+        {
+          "inner_fold_count": 2,
+          "outer_test_session_orders": [
+            6
+          ],
+          "outer_train_session_orders": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "prospective_log_loss": {
+            "observed_transition_glm_hmm": 0.5133784127829892,
+            "q_learning": 0.587257933866896,
+            "selected_session_dynamic": 0.4302598769032985,
+            "smooth_drift": 0.5291049017223776,
+            "stationary_glm_hmm": 0.49485136254047624
+          },
+          "prospective_winner": "selected_session_dynamic",
+          "selected_candidate": "K=3;sigma=0.35;alpha=30",
+          "selected_emission_step_scale": 0.35,
+          "selected_fit_audit_status": "warning",
+          "selected_full_stage_converged": true,
+          "selected_n_states": 3,
+          "selected_partial_stage_converged": false,
+          "selected_path_recovery": null,
+          "selected_transition_concentration": 30.0
+        },
+        {
+          "inner_fold_count": 2,
+          "outer_test_session_orders": [
+            6
+          ],
+          "outer_train_session_orders": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "prospective_log_loss": {
+            "observed_transition_glm_hmm": 0.4038525483397626,
+            "q_learning": 0.5077142601407763,
+            "selected_session_dynamic": 0.39271316353946467,
+            "smooth_drift": 0.4996457838549736,
+            "stationary_glm_hmm": 0.38423774708630776
+          },
+          "prospective_winner": "stationary_glm_hmm",
+          "selected_candidate": "K=2;sigma=0.35;alpha=12",
+          "selected_emission_step_scale": 0.35,
+          "selected_fit_audit_status": "warning",
+          "selected_full_stage_converged": true,
+          "selected_n_states": 2,
+          "selected_partial_stage_converged": true,
+          "selected_path_recovery": null,
+          "selected_transition_concentration": 12.0
+        }
+      ],
+      "selection_counts": {
+        "K=2;sigma=0.15;alpha=12": 0,
+        "K=2;sigma=0.15;alpha=30": 2,
+        "K=2;sigma=0.35;alpha=12": 1,
+        "K=2;sigma=0.35;alpha=30": 0,
+        "K=3;sigma=0.15;alpha=12": 0,
+        "K=3;sigma=0.15;alpha=30": 0,
+        "K=3;sigma=0.35;alpha=12": 0,
+        "K=3;sigma=0.35;alpha=30": 1
+      }
+    }
+  },
+  "repetitions": 4,
+  "seed": 27041,
+  "selection_contract": {
+    "candidate_dimensions": [
+      "n_states",
+      "emission_step_scale",
+      "transition_concentration"
+    ],
+    "dynamic_em_max_iterations_per_stage": 35,
+    "dynamic_em_tolerance": 1e-05,
+    "emission_step_scales": [
+      0.15,
+      0.35
+    ],
+    "outer_test_outcomes_available_during_selection": false,
+    "primary_metric": "mean subject-level inner-fold log loss",
+    "state_counts": [
+      2,
+      3
+    ],
+    "tie_break": "declared candidate order",
+    "transition_concentrations": [
+      12.0,
+      30.0
+    ]
+  },
+  "truth": {
+    "dynamic_emission_step_scale": 0.35,
+    "dynamic_transition_concentration": 30.0,
+    "states": 2
+  }
+}

@@ -6,6 +6,7 @@ import pytest
 from behavio import (
     BernoulliHistoryGLM,
     ChoiceSpec,
+    PyMCBinaryQLearning,
     PyMCHierarchicalGLMBackend,
     Study,
     TaskSpec,
@@ -13,6 +14,7 @@ from behavio import (
     posterior_predictive_check,
 )
 from behavio.compose import HierarchicalModel, hierarchical
+from behavio.contracts.posterior import GenerativePosteriorBehaviourModel
 from behavio.posterior import CategoryRateDiscrepancy
 from behavio.pymc_backend import PyMCBackendError, PyMCUnavailableError
 
@@ -200,3 +202,75 @@ def test_pymc_remains_an_optional_dependency(monkeypatch) -> None:
 
     with pytest.raises(PyMCUnavailableError, match=r"behavio\[bayesian\]"):
         PyMCHierarchicalGLMBackend(draws=10, tune=10, chains=2).sample(model, study, task=task)
+
+
+def test_bayesian_q_learning_has_proper_joint_prior_and_generative_sbc_route() -> None:
+    model = PyMCBinaryQLearning(draws=10, tune=10, chains=2, cores=1, seed=11)
+    design = Study(
+        {
+            "subject": ["a"] * 12,
+            "session": ["s0"] * 12,
+            "session_order": [0] * 12,
+            "trial": list(range(12)),
+            "reward_probability_0": [0.25] * 12,
+            "reward_probability_1": [0.75] * 12,
+        }
+    )
+
+    assert isinstance(model, GenerativePosteriorBehaviourModel)
+    assert model.parameter_names == (
+        "learning_rate",
+        "inverse_temperature",
+        "choice_bias",
+        "perseveration",
+    )
+    assert all(spec.prior is not None for spec in model.parameter_space.parameters)
+    simulation = model.prior_predictive_simulation(design, seed=12)
+    assert set(simulation.truth) == set(model.parameter_names)
+    assert set(np.unique(simulation.study["choice"])) <= {0, 1}
+    assert set(np.unique(simulation.study["reward"])) <= {0, 1}
+
+
+def test_real_pymc_q_learning_fit_scores_by_integrating_filtered_draws() -> None:
+    pytest.importorskip("pymc")
+    design = Study(
+        {
+            "subject": ["a"] * 10 + ["b"] * 10,
+            "session": ["a0"] * 10 + ["b0"] * 10,
+            "session_order": [0] * 20,
+            "trial": list(range(10)) * 2,
+            "reward_probability_0": [0.3] * 20,
+            "reward_probability_1": [0.7] * 20,
+        }
+    )
+    model = PyMCBinaryQLearning(draws=15, tune=15, chains=2, cores=1, seed=21)
+    study = model.simulate(
+        design,
+        {
+            "learning_rate": 0.3,
+            "inverse_temperature": 2.0,
+            "choice_bias": 0.1,
+            "perseveration": 0.2,
+        },
+        seed=22,
+    )
+
+    result = model.sample(study)
+
+    assert result.parameter_names == model.parameter_names
+    assert result.parameter_space_fingerprint == model.parameter_space.fingerprint
+    assert {
+        "posterior",
+        "sample_stats",
+        "log_likelihood",
+        "posterior_predictive",
+        "observed_data",
+        "constant_data",
+    }.issubset(result.group_names)
+    assert result["log_likelihood"]["choice"].values.shape == (2, 15, len(study))
+    assert result.attrs["prediction_mode"] == "filtered"
+    prediction = model.predict(study, result)
+    score = model.pointwise_log_prob(study, result)
+    assert prediction.probability.shape == (len(study),)
+    assert score.shape == (len(study),)
+    assert np.all(np.isfinite(score))

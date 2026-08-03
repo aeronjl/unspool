@@ -97,14 +97,10 @@ richness and depletion*, and that is invisible in such a design however many vis
 contains. `describe()` reports `unidentified_leaving_rule`, and it is the most important
 finding this family has.
 
-**One thing does not fit the prediction contract, and it is reported rather than worked
-around.** `predict` returns a `DensityPrediction` of the leaving time, which is what the
-model claims about every row. A censored row's *score* is a survival probability, and no
-member of `ModelPrediction` can carry "the probability the event is still to come". So
-`pointwise_log_prob` and `DensityPrediction.observed_log_density` agree on uncensored rows
-and deliberately disagree on censored ones; the first is the likelihood and the second is the
-prediction. A consumer that scores the density directly instead of asking the model will
-misscore exactly the censored rows, and `describe()` says so through `heavy_censoring`.
+**Right censoring is explicit in the prediction contract.** This was originally a recorded
+gap. It is now resolved by `CensoredDensityPrediction`, which retains the leaving-time
+density and exact survival at each observation limit, then requires the observed censoring
+indicator when replaying a score. See [SDR-0063](0063-defer-the-log-score-only-comparison-and-the-survival-carrying-prediction.md#resolution-of-gap-two).
 
 **`compare_models` cannot rank two candidates whose only prediction is an unlabelled
 density.** It reports a Brier score beside the log score, a Brier score needs a discrete

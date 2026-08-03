@@ -32,6 +32,7 @@ STAMPED_BENCHMARKS = (
     "landmark_uncertainty",
     "nested_selection",
     "recovery_grid",
+    "session_dynamic_glm_hmm",
     "smooth_ddm",
     "state_alignment",
     "subject_scale_recovery",

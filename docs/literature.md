@@ -47,6 +47,26 @@ that a latent state or learning rate is mechanistically identified.
 - [Q-learning assumptions](q-learning.md)
 - [Ashwood et al. source article](https://doi.org/10.1038/s41593-021-01007-z)
 
+Covariate-dependent transitions follow the non-homogeneous HMM convention: each source
+state's next-state probabilities are a multinomial-logit function of exogenous covariates.
+Subject heterogeneity in transition dynamics is represented by Gaussian effects on the
+complete transition regression, consistent with mixed/multilevel HMM practice. Behavio uses
+isometric log-ratio coordinates so that an isotropic penalty is unchanged by the arbitrary
+choice and ordering of destination states. This covers observed transition drivers and
+partial pooling. The separate `SessionDynamicBernoulliGLMHMM` follows the recent dynamic
+learning model's Gaussian random walk for emissions and Dirichlet session deviations around
+a global transition matrix. `HierarchicalSessionDynamicBernoulliGLMHMM` is an explicitly new
+mixed-effects extension: a Gaussian population path plus evolving subject deviations, with
+population plug-in prediction for unseen subjects. It is informed by mixed-effects HMM
+practice but is not attributed to the dynamic paper. Neither class claims temporal
+smoothness of transition matrices.
+
+- [Non-homogeneous HMM transition regression](https://doi.org/10.1016/j.csda.2019.106840)
+- [hmmTMB covariate and random-effect HMMs](https://doi.org/10.18637/jss.v114.i05)
+- [Mixed non-homogeneous HMM](https://pubmed.ncbi.nlm.nih.gov/22302505/)
+- [Dynamic GLM-HMM learning study](https://pmc.ncbi.nlm.nih.gov/articles/PMC11623682/)
+- [Isometric log-ratio coordinates](https://doi.org/10.1023/A:1023818214614)
+
 ## Choice and response time
 
 Diffusion models turn accuracy and latency into one joint predictive claim. Behavio's
@@ -69,6 +89,32 @@ declared generative distribution; it is not an empirical model check.
 - [Simulation-based calibration guide](simulation-based-calibration.md)
 - [Talts et al. (2018)](https://arxiv.org/abs/1804.06788)
 - [Modrák et al. (2023)](https://arxiv.org/abs/2211.02383)
+
+`PyMCBinaryQLearning` is the first first-party sampled estimator whose every free parameter
+has a normalized prior and whose simulator draws the complete prior joint. Its filtered
+sequential likelihood follows the standard Q-learning construction used in Bayesian
+behavioural modelling; its SBC route tests the implementation, not the psychological truth
+of Q-learning or the universal suitability of its default priors.
+
+- [hBayesDM](https://doi.org/10.1162/CPSY_a_00002)
+- [PyMC reinforcement-learning example](https://www.pymc.io/projects/examples/en/latest/case_studies/reinforcement_learning.html)
+
+## Censoring and categorical calibration
+
+Right-censored likelihood contributions use the survival/CCDF at the observation limit,
+not the event density there. `CensoredDensityPrediction` retains that quantity explicitly
+and `PatchLeaving` is the first model to emit it.
+
+- [Stan survival-model guide](https://mc-stan.org/docs/stan-users-guide/survival.html)
+
+Multiclass calibration is not one scalar property. Behavio retains pooled confidence
+calibration, top-label calibration conditional on the predicted label, and one-vs-rest
+classwise calibration separately. Fixed-bin ECE is retained as a descriptive summary with
+its populated bins, not treated as a unique or unbiased calibration estimand.
+
+- [Vaicenavicius et al. (2019)](https://proceedings.mlr.press/v89/vaicenavicius19a.html)
+- [Gupta and Ramdas (2021)](https://arxiv.org/abs/2107.08353)
+- [Guo et al. (2017)](https://proceedings.mlr.press/v70/guo17a.html)
 
 Sensitivity to prior, likelihood, preprocessing, and model choices is a distinct workflow
 stage. Behavio's first contract uses explicit exact refits and common scalar summaries; it

@@ -979,14 +979,16 @@ column that cuts a session is refused by the same check. Almost none of this cel
 code; the row objective is the model's own forward-backward gradient, evaluated one session
 at a time.
 
-**The simplex is a real obstacle, and it closes transitions rather than hierarchy.** A
-transition row lives on a simplex and is charted here by reference-category logits. An
-isotropic Gaussian on those is a prior on the *chart*: for \(K \ge 3\) it is not invariant to
-which state was made the reference, and the reference here is chosen by label
-canonicalisation rather than by the user. So `parameters=` on a GLM-HMM admits emission
-coefficients and refuses everything else, `parameters=None` is an error rather than a fit,
-and "this animal is stickier" is left to `stickiness=` at population level or to per-animal
-models. See [the GLM-HMM page](glm-hmm.md#why-transitions-stay-pooled).
+**The simplex is a real obstacle, so the coordinate decides which transitions compose.** A
+stationary transition row is retained in the legacy reference-category logit chart. An
+isotropic Gaussian there is a prior on the *chart*: for \(K \ge 3\) it is not invariant to
+which state was made the reference. Stationary transitions therefore stay pooled. A model
+with a declared transition design instead uses orthonormal isometric-log-ratio coordinates;
+the complete `"transition"` regression may vary by group because relabelling rotates or
+permutes that full block without changing its Gaussian norm. Individual source,
+destination, or contrast coordinates remain refused. `parameters=None` is still an error
+because it would include the reference-coded initial simplex. See
+[the GLM-HMM page](glm-hmm.md#why-stationary-transitions-stay-pooled-and-dynamic-transitions-need-ilr).
 
 **Label switching is what the cell had to earn, and anchoring is what earns it.** Relabelling
 one subject's states leaves a GLM-HMM's likelihood exactly where it was; it does not leave

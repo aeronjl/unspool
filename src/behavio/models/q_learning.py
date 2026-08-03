@@ -17,7 +17,12 @@ from behavio.contracts.bounded import (
 )
 from behavio.contracts.compose import ridge_group_draw, ridge_group_penalty
 from behavio.inference.optimize import OptimizationProblem, OptimizationRun, ScipyMultistart
-from behavio.inference.parameters import ParameterSpace, ParameterSpec, ParameterTransform
+from behavio.inference.parameters import (
+    ParameterSpace,
+    ParameterSpec,
+    ParameterTransform,
+    PriorSpec,
+)
 from behavio.models._kernels.bernoulli import ordered_session_indices
 from behavio.models._kernels.curvature import finite_difference_hessian, offset_steps
 from behavio.models._kernels.rowfit import solve_row_coefficients
@@ -40,6 +45,7 @@ _Q_LEARNING_PARAMETER_SPACE = ParameterSpace(
             bounds=(0.0, 1.0),
             plausible_bounds=(0.05, 0.95),
             optimizer_bounds=(-12.0, 12.0),
+            prior=PriorSpec.beta(1.0, 1.0),
             description="Fraction of the reward prediction error applied per update.",
         ),
         ParameterSpec(
@@ -49,18 +55,21 @@ _Q_LEARNING_PARAMETER_SPACE = ParameterSpace(
             bounds=(0.0, None),
             plausible_bounds=(0.1, 10.0),
             optimizer_bounds=(-5.0, 5.0),
+            prior=PriorSpec.half_normal(5.0),
             description="Choice sensitivity to the learned action-value difference.",
         ),
         ParameterSpec(
             name="choice_bias",
             plausible_bounds=(-5.0, 5.0),
             optimizer_bounds=(-30.0, 30.0),
+            prior=PriorSpec.normal(0.0, 2.0),
             description="Value-independent log-odds bias towards action one.",
         ),
         ParameterSpec(
             name="perseveration",
             plausible_bounds=(-5.0, 5.0),
             optimizer_bounds=(-30.0, 30.0),
+            prior=PriorSpec.normal(0.0, 2.0),
             description="Effect-coded influence of the preceding choice.",
         ),
     )
@@ -97,7 +106,6 @@ class QLearningFitResult(FitResult):
     selected_restart: int
     learning_rate: float
     inverse_temperature: float
-    optimization_run: OptimizationRun
 
     def __post_init__(self) -> None:
         FitResult.__post_init__(self)

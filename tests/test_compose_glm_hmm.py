@@ -246,6 +246,66 @@ def test_a_coefficient_varies_by_group_for_every_state_at_once() -> None:
     )
 
 
+def test_dynamic_transition_regression_varies_as_one_chart_free_group_block() -> None:
+    model = switching_model(
+        transition_predictors=("session_order",),
+        transition_l2=0.2,
+    )
+    transition_parameters = model.group_parameter_expansion("transition")
+    pooled = hierarchical(
+        model,
+        over="subject",
+        parameters=("transition",),
+        scale=0.3,
+    )
+
+    assert transition_parameters == tuple(
+        name for name in model.parameter_names if name.startswith("transition_ilr")
+    )
+    assert pooled.varying_parameters == transition_parameters
+    assert pooled.scale_parameters == ("transition",)
+    assert np.all(np.diag(model.penalty_matrix())[-2:] == model.transition_l2)
+
+    one_coordinate = transition_parameters[0]
+    with pytest.raises(TypeError, match="not closed under latent-state relabelling"):
+        hierarchical(
+            model,
+            over="subject",
+            parameters=(one_coordinate,),
+            scale=0.3,
+        )
+
+
+def test_transition_hierarchy_runs_the_session_blocked_dynamic_likelihood() -> None:
+    model = switching_model(
+        n_restarts=1,
+        transition_predictors=("session_order",),
+        transition_l2=0.5,
+    )
+    parameters = model.parameters_from_components(
+        initial_probabilities=[0.5, 0.5],
+        transition_matrix=[[0.9, 0.1], [0.1, 0.9]],
+        emissions={"intercept": [-1.5, 1.5], "stimulus": [0.5, 2.5]},
+        transition_coefficients={
+            "session_order": [[-0.15, 0.15], [0.15, -0.15]],
+        },
+    )
+    pooled = hierarchical(
+        model,
+        over="subject",
+        parameters=("transition",),
+        scale=0.25,
+    )
+    study = pooled.simulate(cohort(["a", "b"], trials=30), parameters, seed=17)
+    fit = pooled.fit(study)
+    prediction = pooled.predict(study, fit)
+
+    assert fit.varying_parameters == model.group_parameter_expansion("transition")
+    assert fit.group_deviations.shape == (2, len(fit.varying_parameters))
+    assert prediction.probability.shape == (len(study),)
+    assert np.all(np.isfinite(prediction.probability))
+
+
 def test_the_row_objective_blocks_by_session_and_refuses_a_coordinate_that_varies() -> None:
     model = switching_model()
     study = model.simulate(cohort(["a", "b"], trials=15), population_parameters(model), seed=2)

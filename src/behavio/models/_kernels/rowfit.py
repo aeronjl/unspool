@@ -21,11 +21,12 @@ from collections.abc import Callable
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.optimize import minimize
 
 from behavio.contracts.bounded import RowCoefficientDesign
 from behavio.contracts.compose import PenalisedFitResult
 from behavio.contracts.estimator import FitDiagnostics, ModelDataError
+from behavio.inference.optimize import OptimizationProblem, ScipyMultistart
+from behavio.inference.parameters import ParameterSpace, ParameterSpec
 from behavio.models._kernels.curvature import finite_difference_hessian, offset_steps
 
 __all__ = ["solve_row_coefficients"]
@@ -53,33 +54,26 @@ def solve_row_coefficients(
     starts = design.initial_points
     if not starts:
         raise ValueError("a row-coefficient fit needs at least one starting vector")
-    bounds = None if design.box is None else [tuple(row) for row in design.box]
-    results = [
-        minimize(
-            design.value_and_gradient,
-            start,
-            method="L-BFGS-B",
-            jac=True,
-            bounds=bounds,
-            options={"maxiter": max_iterations, "ftol": tolerance, "gtol": tolerance},
-        )
-        for start in starts
-    ]
-    objectives = np.asarray(
-        [float(result.fun) if np.isfinite(result.fun) else np.inf for result in results],
-        dtype=np.float64,
+    parameter_space = _coordinate_parameter_space(design.parameter_names, design.box)
+    problem = OptimizationProblem(
+        parameter_space=parameter_space,
+        objective=design.value_and_gradient,
+        starts=starts,
+        has_gradient=True,
+        objective_name=f"{model_name}_row_coefficient_negative_log_likelihood",
     )
-    finite = np.flatnonzero(np.isfinite(objectives)).tolist()
-    if not finite:
-        messages = "; ".join(str(result.message) for result in results)
+    run = ScipyMultistart(
+        max_iterations=max_iterations,
+        function_tolerance=tolerance,
+        gradient_tolerance=tolerance,
+    ).run(problem)
+    chosen = run.selected
+    if chosen is None:
+        messages = "; ".join(attempt.message for attempt in run.attempts)
         raise ModelDataError(
             f"all {model_name} restarts produced non-finite objectives: {messages}"
         )
-    converged = [index for index in finite if results[index].success]
-    eligible = converged if converged else finite
-    selected = min(eligible, key=lambda index: float(objectives[index]))
-    chosen = results[selected]
-    estimates = np.asarray(chosen.x, dtype=np.float64)
+    estimates = np.asarray(chosen.estimate, dtype=np.float64)
     value, gradient = design.value_and_gradient(estimates)
     hessian = finite_difference_hessian(
         lambda vector: design.value_and_gradient(vector)[1],
@@ -90,11 +84,11 @@ def solve_row_coefficients(
     standard_errors = np.sqrt(np.maximum(np.diag(covariance), 0.0))
     derived = None if design.derived_estimates is None else design.derived_estimates(estimates)
     diagnostics = FitDiagnostics(
-        converged=bool(chosen.success),
+        converged=chosen.converged,
         optimizer=f"{optimizer} ({len(starts)} deterministic restarts)",
-        status=int(chosen.status),
-        message=str(chosen.message),
-        n_iterations=int(chosen.nit),
+        status=chosen.status,
+        message=chosen.message,
+        n_iterations=chosen.n_iterations,
         objective=float(value),
         gradient_norm=float(np.linalg.norm(gradient)),
         hessian_condition=float(np.linalg.cond(hessian)),
@@ -110,6 +104,30 @@ def solve_row_coefficients(
         n_observations=design.n_observations,
         diagnostics=diagnostics,
         conditional_group_covariances=_conditional_group_covariances(design, hessian),
+        optimization_run=run,
+    )
+
+
+def _coordinate_parameter_space(
+    parameter_names: tuple[str, ...], box: NDArray[np.float64] | None
+) -> ParameterSpace:
+    """Describe an already-transformed row coordinate to a common backend."""
+
+    bounds = [None] * len(parameter_names) if box is None else list(np.asarray(box))
+    return ParameterSpace(
+        tuple(
+            ParameterSpec(
+                name=name,
+                bounds=(None, None)
+                if interval is None
+                else (float(interval[0]), float(interval[1])),
+                optimizer_bounds=None
+                if interval is None
+                else (float(interval[0]), float(interval[1])),
+                description="Model or composed-model row solver coordinate.",
+            )
+            for name, interval in zip(parameter_names, bounds, strict=True)
+        )
     )
 
 

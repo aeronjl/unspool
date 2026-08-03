@@ -33,8 +33,11 @@ stages, and inferred learning landmarks.
 > Behavio is pre-alpha. Its longitudinal data, clock, fold-fitted transform, validation,
 > first modelling, and parameter- and model-recovery contracts are executable, but the API
 > is not yet stable. The model catalogue currently contains static and smoothly time-
-> varying Bernoulli GLMs, static and smooth hierarchical Bernoulli GLMs, a fixed-transition
-> GLM-HMM, compact and composable binary reinforcement-learning agents, and a joint
+> varying Bernoulli GLMs, static and smooth hierarchical Bernoulli GLMs, stationary,
+> covariate-dependent, single-subject session-dynamic, and population/subject
+> session-dynamic GLM-HMMs, with emission/transition
+> partial pooling on the covariate-dependent family, compact and
+> composable binary reinforcement-learning agents, and a joint
 > choice/response-time Wiener
 > drift-diffusion family with stationary, smooth session-varying, or partially pooled
 > animal-specific trajectories and an optional explicit contaminant mixture for the
@@ -185,7 +188,9 @@ and two combinators over it -- `smooth(model, over=...)` for coefficients on fix
 knots and `hierarchical(model, over="subject", parameters=...)` for parameters that vary by
 group -- which compose, so the smooth, partially pooled, and partially pooled smooth
 trajectory models are expressions rather than four more classes. It also includes
-a fixed-transition Bernoulli GLM-HMM, and a compact
+a stationary or covariate-dependent-transition Bernoulli GLM-HMM, dedicated single-subject
+and population/subject session-dynamic GLM-HMMs with path diagnostics, trajectory recovery,
+and explicit unseen-subject prediction, and a compact
 session-reset binary Q-learning agent plus a composable successor with asymmetric
 learning, forgetting, choice kernels, lapse-softmax policies, and explicit reset columns,
 plus a fixed-parameter Wiener drift-diffusion model

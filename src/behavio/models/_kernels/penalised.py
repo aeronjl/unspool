@@ -20,7 +20,6 @@ from collections.abc import Callable
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.optimize import minimize
 
 from behavio.contracts.audit import FitDiagnostics
 from behavio.contracts.compose import (
@@ -30,6 +29,8 @@ from behavio.contracts.compose import (
     parameter_gradient,
 )
 from behavio.contracts.estimator import FitResult
+from behavio.inference.optimize import OptimizationProblem, ScipyMultistart
+from behavio.inference.parameters import ParameterSpace, ParameterSpec
 
 
 def fit_penalised_linear(
@@ -74,28 +75,29 @@ def fit_penalised_linear(
         gradient += penalty_matrix @ coefficients
         return float(loss), np.asarray(gradient, dtype=np.float64)
 
-    bounds = None if box is None else [(float(low), float(high)) for low, high in box]
     starts = (
         (np.zeros(len(parameter_names), dtype=np.float64),)
         if initial_points is None
         else tuple(initial_points)
     )
-    results = [
-        minimize(
-            objective,
-            start,
-            method="L-BFGS-B",
-            jac=True,
-            bounds=bounds,
-            options={"maxiter": max_iterations, "ftol": tolerance, "gtol": tolerance},
-        )
-        for start in starts
-    ]
-    objectives = [float(item.fun) if np.isfinite(item.fun) else np.inf for item in results]
-    successful = [index for index, item in enumerate(results) if item.success]
-    eligible = successful if successful else list(range(len(results)))
-    result = results[min(eligible, key=lambda index: objectives[index])]
-    estimates = np.asarray(result.x, dtype=np.float64)
+    parameter_space = _coordinate_parameter_space(parameter_names, box)
+    problem = OptimizationProblem(
+        parameter_space=parameter_space,
+        objective=objective,
+        starts=starts,
+        has_gradient=True,
+        objective_name=f"{model_name}_penalised_linear_negative_log_likelihood",
+    )
+    run = ScipyMultistart(
+        max_iterations=max_iterations,
+        function_tolerance=tolerance,
+        gradient_tolerance=tolerance,
+    ).run(problem)
+    selected = run.selected
+    if selected is None:
+        messages = "; ".join(attempt.message for attempt in run.attempts)
+        raise ValueError(f"all {model_name} restarts produced non-finite objectives: {messages}")
+    estimates = np.asarray(selected.estimate, dtype=np.float64)
     curvature = likelihood.curvature(linear_predictor(design_matrix, estimates, offsets), outcomes)
     hessian = information_matrix(design_matrix, curvature) + penalty_matrix
     condition = float(np.linalg.cond(hessian))
@@ -110,12 +112,12 @@ def fit_penalised_linear(
         )
     )
     diagnostics = FitDiagnostics(
-        converged=bool(result.success),
+        converged=selected.converged,
         optimizer=optimizer,
-        status=int(result.status),
-        message=str(result.message),
-        n_iterations=int(result.nit),
-        objective=float(result.fun),
+        status=selected.status,
+        message=selected.message,
+        n_iterations=selected.n_iterations,
+        objective=selected.objective,
         gradient_norm=float(np.linalg.norm(gradient)),
         hessian_condition=condition,
         boundary_estimate=bool(np.any(np.abs(reported) >= coefficient_warning_threshold)),
@@ -129,4 +131,28 @@ def fit_penalised_linear(
         covariance=covariance,
         n_observations=len(outcomes),
         diagnostics=diagnostics,
+        optimization_run=run,
+    )
+
+
+def _coordinate_parameter_space(
+    parameter_names: tuple[str, ...], box: NDArray[np.float64] | None
+) -> ParameterSpace:
+    """Describe an already-transformed solver coordinate to a common backend."""
+
+    bounds = [None] * len(parameter_names) if box is None else list(np.asarray(box))
+    return ParameterSpace(
+        tuple(
+            ParameterSpec(
+                name=name,
+                bounds=(None, None)
+                if interval is None
+                else (float(interval[0]), float(interval[1])),
+                optimizer_bounds=None
+                if interval is None
+                else (float(interval[0]), float(interval[1])),
+                description="Model or composed-model solver coordinate.",
+            )
+            for name, interval in zip(parameter_names, bounds, strict=True)
+        )
     )

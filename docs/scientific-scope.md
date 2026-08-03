@@ -19,7 +19,8 @@ The first useful release should contain:
 3. A small model protocol covering simulation, fitting, pointwise log probability,
    prediction, and diagnostics.
 4. Four reference families: a static psychometric/history GLM, a smooth dynamic GLM,
-   a fixed-transition GLM-HMM, and a compact reinforcement-learning model.
+   a stationary, covariate-dependent-transition, or session-dynamic GLM-HMM, and a compact
+   reinforcement-learning model.
 5. Whole-session, rolling-origin, leave-subject-out, and leave-lab-out splitters.
 6. Parameter-recovery and model-recovery reports tied to an experimental design.
 7. Optional adapters for tabular data, IBL ONE, and NWB; the core representation should
@@ -32,7 +33,10 @@ complete-session and within-session rolling-origin validation; complete-subject 
 complete-lab holdout;
 common model outputs; static and smoothly
 time-varying Bernoulli history GLMs; fixed- or estimated-scale static partial pooling;
-fixed-knot partially pooled subject trajectories; a fixed-transition Bernoulli GLM-HMM;
+fixed-knot partially pooled subject trajectories; a stationary or covariate-dependent
+Bernoulli GLM-HMM with transition partial pooling, plus single-subject and population
+session-dynamic GLM-HMMs with path recovery, explicit unseen-subject plug-in prediction,
+and explicit uncertainty limitations;
 a session-reset binary Q-learning agent; an explicit response-time schema and fixed-
 parameter Wiener drift-diffusion model with an optional explicit contaminant mixture;
 smooth session-varying Wiener drift, boundary, and starting-bias paths;

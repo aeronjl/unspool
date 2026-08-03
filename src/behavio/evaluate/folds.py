@@ -537,7 +537,7 @@ def _fold_prediction(
 ) -> tuple[Study, ModelPrediction, NDArray[np.int64] | None]:
     """Predict over context and test rows together and check shape and coordinates.
 
-    All three prediction shapes are admitted, and a
+    All prediction shapes are admitted (the censored density is a density subtype), and a
     :class:`~behavio.contracts.DensityPrediction` is checked on exactly the terms a
     :class:`~behavio.contracts.CategoricalPrediction` is: if it names categories, the model
     must name the same ones and must be able to code each row's observed category. A

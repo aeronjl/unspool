@@ -47,7 +47,7 @@ from behavio.contracts.bounded import (
     BoundedCoordinateEstimator,
     require_composable,
 )
-from behavio.contracts.estimator import DensityPrediction
+from behavio.contracts.estimator import CensoredDensityPrediction
 from behavio.evaluate import cohort_forward_session_splits
 from behavio.models import ModelDataError
 from behavio.models.patch_leaving import (
@@ -489,15 +489,7 @@ def test_a_residence_time_longer_than_its_declared_limit_is_refused() -> None:
         model.read_problem(Study(columns))
 
 
-def test_the_predicted_density_and_the_pointwise_score_disagree_on_a_censored_row() -> None:
-    """The one place the prediction contract cannot follow the likelihood, asserted.
-
-    ``predict`` returns a density of the *leaving time*, which is what the model claims about
-    every row. A censored row's likelihood is a survival probability, and no member of
-    ``ModelPrediction`` can carry one. So the two agree exactly where the observation is an
-    event and deliberately differ where it is not -- and a consumer that scores the density
-    instead of asking the model would misscore exactly the censored rows.
-    """
+def test_the_censored_prediction_replays_the_event_or_survival_score_per_row() -> None:
 
     model = PatchLeaving(
         gain=GainFunction.HYPERBOLIC,
@@ -512,12 +504,12 @@ def test_the_predicted_density_and_the_pointwise_score_disagree_on_a_censored_ro
 
     scores = model.pointwise_log_prob(study, fit)
     density = model.predict(study, fit)
-    tabulated = density.observed_log_density(np.asarray(study["residence_time"], dtype=np.float64))
-    censored = np.asarray(study["residence_time"], dtype=np.float64) >= 5.0 - 1e-9
+    observed = np.asarray(study["residence_time"], dtype=np.float64)
+    censored = observed >= 5.0 - 1e-9
+    tabulated = density.observed_log_density(observed, censored=censored)
 
-    assert isinstance(density, DensityPrediction)
-    assert scores[~censored] == pytest.approx(tabulated[~censored], abs=5e-3)
-    assert np.all(scores[censored] > tabulated[censored])
+    assert isinstance(density, CensoredDensityPrediction)
+    assert scores == pytest.approx(tabulated, abs=5e-3)
 
 
 def test_an_undeclared_censoring_pile_up_is_reported_before_the_fit() -> None:

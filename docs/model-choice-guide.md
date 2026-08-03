@@ -63,6 +63,13 @@ the claim. Always include observable-history and smooth-change competitors. Sele
 count inside training data, align labels for recovery, inspect occupancy, and use filtered
 state probabilities for prospective claims.
 
+Use `SessionDynamicBernoulliGLMHMM` only when the stronger claim is that those recurrent
+states persist while their emission weights evolve stochastically between sessions. Its
+transition matrices vary by session around a global centre but are not temporally smoothed.
+Select both temporal hyperparameters inside training data, inspect whole-path crossings, and
+require trajectory as well as state recovery. It is a one-subject model; do not treat
+separate animal fits as a population hierarchy.
+
 ### Reward-driven updating
 
 Use `BinaryQLearning` for the compact reference agent or `BinaryRLAgent` for explicit
@@ -184,11 +191,12 @@ can still be an inadequate model of the data.
 ## Unsupported combinations
 
 The current package does not yet provide a first-party multinomial RL agent, collapsing-
-bound or race/LBA likelihood, hierarchical GLM-HMM, session-varying GLM-HMM transitions,
-or joint trial-level Bayesian reliability model. Use a conforming external estimator when
-one exists, and preserve these same task, scoring, prediction, recovery, and provenance
-contracts. The [capability matrix](methods/capability-matrix.md) is the authoritative
-support boundary.
+bound or race/LBA likelihood, or joint trial-level Bayesian reliability model.
+Covariate-dependent and subject-hierarchical transition regressions, a one-subject stochastic
+session model, and a dedicated population/subject dynamic path model are implemented; none
+is a substitute for the others. Use a conforming external estimator when one exists, and
+preserve these same task, scoring, prediction, recovery, and provenance contracts. The
+[capability matrix](methods/capability-matrix.md) is the authoritative support boundary.
 
 Next: inspect the common-format [model cards](model-cards.md), then choose a
 [worked study](tutorials/index.md) with the closest observed event and deployment geometry.

@@ -218,6 +218,180 @@ def test_analytic_likelihood_gradient_matches_finite_differences() -> None:
     np.testing.assert_allclose(analytic, numeric, atol=2e-6, rtol=2e-6)
 
 
+def test_covariate_dependent_transitions_are_multinomial_logit_regressions() -> None:
+    study = Study(
+        {
+            "subject": ["a"] * 4,
+            "session": ["s1"] * 4,
+            "trial": [0, 1, 2, 3],
+            "session_order": [0] * 4,
+            "arousal": [0.0, -1.0, 0.0, 1.0],
+        }
+    )
+    model = BernoulliGLMHMM(
+        choice_lags=0,
+        transition_predictors=("arousal",),
+        n_restarts=1,
+    )
+    effects = np.asarray(
+        [
+            [[-0.8], [0.8]],
+            [[0.5], [-0.5]],
+        ]
+    )
+    parameters = model.parameters_from_components(
+        initial_probabilities=[0.5, 0.5],
+        transition_matrix=[[0.8, 0.2], [0.3, 0.7]],
+        emissions={"intercept": [-1.0, 1.0]},
+        transition_coefficients={"arousal": effects[:, :, 0]},
+    )
+    components = model.parameter_components(parameters)
+    transition = model.transition_probabilities(study, parameters)
+
+    assert model.model_name == "dynamic-bernoulli-glm-hmm"
+    np.testing.assert_allclose(components.transition_effects, effects)
+    np.testing.assert_allclose(transition[0], components.transition_matrix)
+    assert transition[3, 0, 1] > transition[0, 0, 1] > transition[1, 0, 1]
+    assert transition[3, 1, 0] > transition[0, 1, 0] > transition[1, 1, 0]
+    np.testing.assert_allclose(transition.sum(axis=2), 1.0)
+
+
+def test_dynamic_transition_gradient_and_filtered_score_match_the_likelihood() -> None:
+    study = Study(
+        {
+            "subject": ["a"] * 8,
+            "session": ["s1"] * 4 + ["s2"] * 4,
+            "trial": [0, 1, 2, 3] * 2,
+            "session_order": [0] * 4 + [1] * 4,
+            "stimulus": [-1.0, 0.2, 1.1, -0.3, 0.5, -0.7, 1.4, 0.1],
+            "arousal": [-0.5, 0.2, 1.0, -0.8, 0.4, 0.9, -0.2, 0.6],
+            "choice": [0, 1, 1, 0, 1, 0, 1, 1],
+        }
+    )
+    model = BernoulliGLMHMM(
+        predictors=("stimulus",),
+        transition_predictors=("arousal",),
+        choice_lags=0,
+        l2=0.2,
+        transition_l2=0.3,
+        n_restarts=1,
+    )
+    parameters = model.parameters_from_components(
+        initial_probabilities=[0.6, 0.4],
+        transition_matrix=[[0.8, 0.2], [0.3, 0.7]],
+        emissions={"intercept": [-0.8, 0.9], "stimulus": [0.4, 1.2]},
+        transition_coefficients={
+            "arousal": [[-0.35, 0.35], [0.2, -0.2]],
+        },
+    )
+    vector = np.asarray([parameters[name] for name in model.parameter_names])
+    outcomes = model.outcomes(study)
+    features = model.design_matrix(study)
+    transition_features = model.transition_design_matrix(study)
+    sessions = ordered_session_indices(study)
+
+    objective, analytic = model._objective_gradient(
+        vector,
+        features,
+        outcomes,
+        sessions,
+        transition_features=transition_features,
+    )
+    numeric = np.empty_like(analytic)
+    for index in range(len(vector)):
+        step = 1e-6 * (1.0 + abs(vector[index]))
+        positive = vector.copy()
+        negative = vector.copy()
+        positive[index] += step
+        negative[index] -= step
+        positive_value, _ = model._objective_gradient(
+            positive,
+            features,
+            outcomes,
+            sessions,
+            transition_features=transition_features,
+        )
+        negative_value, _ = model._objective_gradient(
+            negative,
+            features,
+            outcomes,
+            sessions,
+            transition_features=transition_features,
+        )
+        numeric[index] = (positive_value - negative_value) / (2.0 * step)
+
+    fit = fixed_fit(model, parameters, len(study))
+    likelihood_without_penalties, _ = model._likelihood_gradient(
+        vector,
+        features,
+        transition_features,
+        outcomes,
+        sessions,
+    )
+    scores = model.pointwise_log_prob(study, fit)
+
+    assert np.isfinite(objective)
+    np.testing.assert_allclose(analytic, numeric, atol=3e-6, rtol=3e-6)
+    assert -float(np.sum(scores)) == pytest.approx(likelihood_without_penalties, abs=1e-9)
+
+
+def test_dynamic_transitions_refuse_a_stationary_sticky_pseudocount() -> None:
+    with pytest.raises(ValueError, match="not a prior on covariate-dependent"):
+        BernoulliGLMHMM(
+            choice_lags=0,
+            transition_predictors=("arousal",),
+            stickiness=1.0,
+        )
+
+
+def test_dynamic_transition_coordinate_relabels_isometrically_with_three_states() -> None:
+    model = BernoulliGLMHMM(
+        choice_lags=0,
+        n_states=3,
+        transition_predictors=("arousal",),
+        n_restarts=1,
+    )
+    parameters = model.parameters_from_components(
+        initial_probabilities=[0.2, 0.3, 0.5],
+        transition_matrix=[
+            [0.8, 0.1, 0.1],
+            [0.2, 0.7, 0.1],
+            [0.1, 0.2, 0.7],
+        ],
+        emissions={"intercept": [-2.0, 0.0, 2.0]},
+        transition_coefficients={
+            "arousal": [
+                [0.2, -0.1, -0.1],
+                [-0.15, 0.25, -0.1],
+                [0.1, 0.05, -0.15],
+            ]
+        },
+    )
+    vector = np.asarray([parameters[name] for name in model.parameter_names])
+    components = model.parameter_components(parameters)
+    permutation = (2, 0, 1)
+    mapped = model.relabelling_map(permutation) @ vector
+    relabelled = model._unpack_components(mapped)
+    indices = np.asarray(permutation, dtype=np.intp)
+
+    np.testing.assert_allclose(
+        relabelled.initial_probabilities,
+        components.initial_probabilities[indices],
+    )
+    np.testing.assert_allclose(
+        relabelled.transition_matrix,
+        components.transition_matrix[np.ix_(indices, indices)],
+    )
+    np.testing.assert_allclose(
+        relabelled.transition_effects,
+        np.asarray(components.transition_effects)[indices][:, indices, :],
+    )
+    transition_start = model.n_states * len(model.coefficient_names) + model.n_states - 1
+    assert np.linalg.norm(mapped[transition_start:]) == pytest.approx(
+        np.linalg.norm(vector[transition_start:])
+    )
+
+
 def test_sticky_prior_adds_declared_self_transition_pseudocounts() -> None:
     study = design(n_sessions=2, trials_per_session=10)
     study = Study(

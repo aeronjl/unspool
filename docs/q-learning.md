@@ -172,7 +172,7 @@ same status, issue-code, and `RestartAudit` contract used by the other reference
 Raw objectives, convergence flags, and optimizer messages remain on `QLearningFitResult`.
 
 `BinaryQLearning.parameter_space` now makes its natural and optimizer coordinates, bounds,
-and transforms machine-readable through the shared
+transforms, and normalized proper priors machine-readable through the shared
 [parameter-space contract](parameter-spaces.md). Existing encoded names remain valid.
 Portable fit artifacts record both coordinate identities and estimates, while covariance
 and standard errors remain explicitly on the optimizer scale.
@@ -181,6 +181,51 @@ Fitting now runs through the common [deterministic inference backend](inference-
 `QLearningFitResult.optimization_run` retains every start, attempted estimate, objective,
 status, message, iteration/evaluation count, and gradient norm. The established restart
 arrays remain as checked compatibility views for diagnostics and existing analyses.
+
+## Proper-prior posterior Q-learning
+
+`PyMCBinaryQLearning` is the sampler-backed counterpart. It uses the same model recursion
+and parameter space, with `Beta(1, 1)` on learning rate, `HalfNormal(5)` on inverse
+temperature, and `Normal(0, 2)` on bias and perseveration. These are transparent weak
+defaults, not universal psychological population distributions; sensitivity analysis is
+required when posterior conclusions depend on their tails.
+
+```python
+from behavio import PyMCBinaryQLearning
+
+model = PyMCBinaryQLearning(draws=1_000, tune=1_000, chains=4, seed=17)
+posterior = model.sample(study)
+prediction = model.predict(future_study, posterior)
+scores = model.pointwise_log_prob(future_study, posterior)
+```
+
+Prediction replays the observed choice/reward history separately for every retained draw,
+then averages probabilities. Held-out log scoring uses the log of the draw-averaged density,
+not the likelihood evaluated at posterior mean parameters. The retained posterior predictive
+group is explicitly one-step-ahead and conditional on observed earlier histories; full joint
+choice/reward simulation uses the declared action-contingent environment through `simulate`.
+
+The model is directly usable in the prior-joint SBC loop:
+
+```python
+from functools import partial
+from behavio.posterior import PosteriorParameterQuantity, run_simulation_based_calibration
+
+report = run_simulation_based_calibration(
+    partial(model.prior_predictive_simulation, design),
+    model.sample_with_seed,
+    tuple(PosteriorParameterQuantity(name) for name in model.parameter_names),
+    repeats=100,
+    seed=91,
+    simulation_signature=model.signature,
+    inference_signature=f"{model.signature};backend={model.backend_name}",
+    backend="thread",
+)
+```
+
+This is simulation-based calibration in the sense of Talts et al.: every parameter is drawn
+from the declared prior before the study is simulated. It is not parameter recovery at a
+hand-picked truth and it does not establish empirical adequacy.
 
 `BinaryRLAgent` uses the same deterministic multistart and fit-audit requirements, with a
 numerical gradient because the recursion varies by component assembly. `RLFitResult`

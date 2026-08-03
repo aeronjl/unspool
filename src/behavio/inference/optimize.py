@@ -293,6 +293,20 @@ class OptimizationRun:
             "attempts": [item.to_dict() for item in self.attempts],
         }
 
+    def __reduce__(self) -> tuple[Any, tuple[Any, ...]]:
+        """Reconstruct from mutable records because ``mappingproxy`` is not picklable."""
+
+        return (
+            type(self),
+            (
+                self.backend,
+                _thaw_record(self.backend_config),
+                _thaw_record(self.problem),
+                self.attempts,
+                self.selected_index,
+            ),
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class ScipyMultistart:

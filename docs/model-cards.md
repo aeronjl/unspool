@@ -12,6 +12,8 @@ performance rankings. “Supported” refers to the evidence boundary in the
 | History GLM | Binary choice | Static coefficients | Complete or partial pooling | RL, latent state, omitted covariates |
 | Smooth history GLM | Binary choice | Smooth coefficient paths | Complete or partial pooling | GLM-HMM, RL, clock choice |
 | GLM-HMM | Binary choice | Discrete recurrent states | Complete pooling | smooth drift, history, state count |
+| Session-dynamic GLM-HMM | Binary choice | Recurrent states with session-varying parameters | One subject | stationary/covariate-transition GLM-HMM, smooth drift, history, learning |
+| Hierarchical session-dynamic GLM-HMM | Binary choice | Population latent-policy path plus evolving subject deviations | Gaussian subject-path pooling | one-subject dynamics, smooth population drift, subject heterogeneity, label ambiguity |
 | Binary RL | Binary choice | Recursive values and policy traces | Complete pooling | history, bias, lapse, reward schedule |
 | Normative belief updating | Binary response to an exogenous observation | Recursive belief written by the task, not by the response | Complete or partial pooling | volatility versus coupling, response rule, observation versus response column |
 | Scalar timing | A reproduced duration, or a binary long/short report | None by default; a drifting or per-subject clock is a combinator away | Complete or partial pooling | decision rule, target range, clock rate versus response bias |
@@ -126,21 +128,94 @@ every backend, or reliable person-level measurement.
 **Use when:** binary choice may switch among a small number of recurrent policies with
 state-specific input-driven Bernoulli emissions.
 
-**Requires:** binary choice, declared inputs and lags, state count, stationary transition
-semantics, and enough trials to support occupancy.
+**Requires:** binary choice, declared emission inputs and lags, state count, stationary or
+explicit exogenous transition semantics, and enough trials/state changes to support
+occupancy and transition effects.
 
 **Predicts:** one-step choice from filtered state probabilities. Smoothed state
 probabilities are descriptive and cannot support a future prediction claim.
 
-**Parameters:** state-specific GLM coefficients, initial-state probabilities, transition
-matrix, and optional sticky Dirichlet self-transition prior.
+**Parameters:** state-specific GLM coefficients, initial-state probabilities, baseline
+transition matrix, optional centred multinomial-logit transition effects, and—only for the
+stationary model—an optional sticky Dirichlet self-transition prior. Complete dynamic
+transition regressions may carry Gaussian group deviations in an ILR coordinate.
 
 **Evidence:** state-label alignment, occupancy and restart diagnostics, state-count nested
 selection, prospective IBL example, and model recovery.
 
-**Does not establish:** psychologically discrete states, stable label meaning, or
-session-varying transitions. State count is a selected specification, not a discovered
-natural kind.
+**Does not establish:** psychologically discrete states, stable label meaning, or latent
+session-random-walk dynamics. A covariate effect is conditional non-homogeneity, not a
+stochastic learning path. State count is a selected specification, not a discovered natural
+kind.
+
+[Detailed assumptions](glm-hmm.md)
+
+## Session-dynamic Bernoulli GLM-HMM
+
+**Class:** `SessionDynamicBernoulliGLMHMM`
+
+**Use when:** the claim is that recurrent latent policies retain their identity while their
+emission weights evolve stochastically between ordered sessions and session transition
+matrices vary around a shared centre.
+
+**Requires:** one subject, at least two ordered sessions for a path claim, fixed state count,
+training-only choices of emission step scale and transition concentration, and enough
+within-session trials and state changes for design-specific recovery.
+
+**Predicts:** fitted sessions with their fitted parameters. A strictly later unseen session
+uses the carried-forward final emission weights and the global transition prior mode,
+resetting to the pooled initial distribution. Earlier unseen sessions and unseen subjects
+are refused.
+
+**Parameters:** one state-specific emission vector and transition matrix per session, a
+pooled initial distribution, and the stationary initializer's fixed global transition
+matrix. Emissions have a Gaussian random-walk prior. Session transition rows have independent
+Dirichlet priors around the global rows; they are not a smooth transition path.
+
+**Evidence:** stationary, partial, and full MAP-EM diagnostics; training-only nested
+selection over state count and both dynamic hyperparameters; occupancy and boundary
+diagnostics; whole-path canonicalization; adjacent-session pairwise crossing flags;
+truth-aware state alignment; and truth-aware emission/transition trajectory RMSE. The first
+matched benchmark recovers the path but does not establish a prospective advantage over the
+stationary GLM-HMM.
+
+**Does not establish:** a psychological meaning for a state, transition continuity,
+cross-subject population effects, or calibrated parameter uncertainty. Local covariance is
+not estimated. The unseen-session forecast is an explicit conditional-centre policy, not a
+published validation result.
+
+[Detailed assumptions](glm-hmm.md)
+
+## Hierarchical session-dynamic Bernoulli GLM-HMM
+
+**Class:** `HierarchicalSessionDynamicBernoulliGLMHMM`
+
+**Use when:** several subjects share an ordered learning coordinate, the claim concerns a
+population latent-policy trajectory, and individual subjects may deviate smoothly from that
+population path.
+
+**Requires:** at least two subjects; fixed state count and population, initial-subject, and
+subject-increment scales; increasing session order within subject; enough state changes to
+distinguish population structure from subject paths.
+
+**Predicts:** fitted subject-sessions with their fitted paths. A later session for a fitted
+subject uses the population path plus that subject's carried final deviation. An unseen
+subject uses the zero-deviation population plug-in. Both use the global transition prior
+mode and the pooled session-opening state distribution.
+
+**Parameters:** a Gaussian-random-walk population emission path, a zero-centred first
+deviation and Gaussian-random-walk deviation path per subject, one transition matrix per
+subject-session drawn around a global population matrix, and one pooled initial state
+distribution.
+
+**Evidence:** analytic-gradient checks; stationary, partial, and full MAP-EM diagnostics;
+population and subject crossing evidence; immutable simulation truth; filtered-score
+identity; global state alignment; population/subject/transition trajectory RMSE; and exact
+seen-future and unseen-subject forecast tests.
+
+**Does not establish:** psychological state meaning, calibrated path uncertainty, estimated
+hierarchy scales, stable subject-specific transition styles, population-of-labs inference,
+or integrated rather than plug-in unseen-subject prediction.
 
 [Detailed assumptions](glm-hmm.md)
 

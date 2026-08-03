@@ -211,9 +211,9 @@ scores = external_model.pointwise_log_prob(test_study, fit)
 ```
 
 `fit()` must return an Behavio `FitResult` whose model name, signature, and training-row
-count match the estimator. `predict()` returns `Prediction`, `CategoricalPrediction` or
-`DensityPrediction` — the three members of `ModelPrediction` — in the requested study's
-source row order. `pointwise_log_prob()` returns one finite value per row for exactly
+count match the estimator. `predict()` returns `Prediction`, `CategoricalPrediction`,
+`DensityPrediction`, or its explicit `CensoredDensityPrediction` widening in the requested
+study's source row order. `pointwise_log_prob()` returns one finite value per row for exactly
 `scored_columns`.
 
 If an upstream package uses sequence arrays, xarray objects, or its own sample class, keep

@@ -1,8 +1,7 @@
 # SDR-0063: Record two continuous-outcome scoring gaps rather than patching them under a model wave
 
-- **Status:** Accepted. **Gap one is resolved**; see [Resolution of gap one](#resolution-of-gap-one).
-  Gap two remains deferred on its original reasoning.
-- **Date:** 2026-07-30 (gap one resolved 2026-07-30)
+- **Status:** Accepted. **Both gaps are resolved**; see the two resolution sections below.
+- **Date:** 2026-07-30 (gap one resolved 2026-07-30; gap two resolved 2026-08-03)
 - **Related decisions:** [SDR-0061](0061-fit-patch-leaving-as-a-hazard-not-as-the-marginal-value-theorem.md),
   [SDR-0062](0062-implement-normative-belief-updating-clean-room.md)
 
@@ -98,6 +97,7 @@ ordered, duplicate-free declaration of the rules the table carries, defaulting t
 `DEFAULT_COMPARISON_METRICS = (ScoreMetric.LOG_LOSS, ScoreMetric.BRIER)`. **The first rule
 ranks**: it is what `ProspectiveComparisonReport.winner`, every `PairedComparison` and the
 bootstrap interval are read on, and `ProspectiveComparisonReport.ranked_by` names it.
+
 `metrics=(ScoreMetric.LOG_LOSS,)` is the log-score-only table this record was written about.
 `ScoreMetric.JOINT_LOG_LOSS` is refused there rather than accepted as a synonym: this
 comparison's log column *is* the joint log density of every scored column, and carrying both
@@ -136,9 +136,20 @@ now rankable: `tests/test_scalar_timing.py`, `tests/test_patch_leaving.py` and
 `tests/test_dynamax_model.py` each rank two candidates of their own kind under a declared log
 score, in place of the tests that previously asserted the refusal and nothing else.
 
-Gap two is untouched. `PatchLeaving` still scores a censored row through
-`pointwise_log_prob` and still disagrees with `DensityPrediction.observed_log_density` there,
-for the reasons below, and deciding its shape still wants a second censored family.
+## Resolution of gap two
+
+`CensoredDensityPrediction` is an explicit subtype and contract widening of
+`DensityPrediction`. It retains the ordinary event-time density while adding one declared
+observation limit and the model's exact survival probability at that limit per row. Its
+`observed_log_density(..., censored=...)` method requires the observed event/censoring
+indicator and selects `log f(t)` or `log S(c)`; omitting the indicator raises, so a caller
+cannot silently rescore censoring as a completed event.
+
+This chooses the more explicit of the two shapes considered above without duplicating the
+density API: existing density consumers accept the subtype, while `take()` preserves the
+censoring channels through prospective folds. `PatchLeaving` is the first integrated family.
+The resolution covers right censoring only; interval censoring and left truncation still need
+their own observation contracts.
 
 ## Consequences
 
@@ -148,9 +159,9 @@ other contract — simulation, fitting, prediction, pointwise scoring, diagnosti
 modification. Comparison does not, and it is the one a falsification-first package can least
 afford to have missing.
 
-**A censored row is scored correctly today and read incorrectly by an unwary consumer.** The
-package cannot make the second impossible without gap two closed; it can and does make it
-loud.
+**A right-censored row is carried and replayed explicitly.** The prediction requires an
+observed censoring indicator before it will score a row, so the former silent event-density
+interpretation is no longer available on a censoring-aware prediction.
 
 **Nothing is silently approximated.** No Brier score is invented for a density, no censored
 row is scored by its density, and no number is reported for a quantity the layer cannot

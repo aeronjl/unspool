@@ -10,6 +10,7 @@ from behavio.compare.models import UnscoreableByBrier
 from behavio.contracts import (
     LOG_DENSITY_FLOOR,
     CategoricalPrediction,
+    CensoredDensityPrediction,
     DensityBehaviourEstimator,
     DensityPrediction,
     FitDiagnostics,
@@ -215,7 +216,38 @@ def test_a_density_is_one_of_the_three_shapes_a_consumer_reads_back() -> None:
     """The widening is the point: the union names it, so every consumer must handle it."""
 
     assert DensityPrediction in ModelPrediction.__args__
-    assert set(ModelPrediction.__args__) == {Prediction, CategoricalPrediction, DensityPrediction}
+    assert CensoredDensityPrediction in ModelPrediction.__args__
+    assert set(ModelPrediction.__args__) == {
+        Prediction,
+        CategoricalPrediction,
+        DensityPrediction,
+        CensoredDensityPrediction,
+    }
+
+
+def test_a_censored_density_uses_survival_only_for_censored_rows() -> None:
+    base = unlabelled(n_trials=2)
+    prediction = CensoredDensityPrediction(
+        grid=base.grid,
+        density=base.density,
+        outcome=base.outcome,
+        mode=base.mode,
+        censoring_time=np.asarray([2.0, 3.0]),
+        survival_probability=np.asarray([0.4, 0.2]),
+        censoring_column="observation_limit",
+    )
+    observed = np.asarray([1.0, 3.0])
+    censored = np.asarray([False, True])
+
+    scores = prediction.observed_log_density(observed, censored=censored)
+
+    assert scores[0] == pytest.approx(base.observed_log_density(observed)[0])
+    assert scores[1] == pytest.approx(np.log(0.2))
+    with pytest.raises(ValueError, match="requires the observed censored indicator"):
+        prediction.observed_log_density(observed)
+    subset = prediction.take([1])
+    assert isinstance(subset, CensoredDensityPrediction)
+    assert subset.survival_probability == pytest.approx([0.2])
 
 
 # ---------------------------------------------------------------------------------------

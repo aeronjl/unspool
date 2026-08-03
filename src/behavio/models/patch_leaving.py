@@ -70,17 +70,11 @@ model asserts every duration ran to its event; ``describe()`` reports
 ``undeclared_censoring`` when the residence times pile up on a common maximum, which is what
 that assertion looks like when it is false.
 
-**One thing does not fit the prediction contract, and it is worth reporting rather than
-working around.** ``predict`` returns a
-:class:`~behavio.contracts.DensityPrediction` of the *leaving time*, which is the right
-prediction for every row and is what the model actually claims. A censored row's *score* is a
-survival probability, and no member of
-:data:`~behavio.contracts.estimator.ModelPrediction` can carry "the probability the event is
-still to come". So ``pointwise_log_prob`` and ``DensityPrediction.observed_log_density`` agree
-on uncensored rows and deliberately disagree on censored ones. ``pointwise_log_prob`` is the
-likelihood; the density is the prediction; a consumer that scores the density directly instead
-of asking the model will misscore exactly the censored rows. ``describe()`` says so through
-``heavy_censoring``.
+When censoring is declared, ``predict`` returns a
+:class:`~behavio.contracts.CensoredDensityPrediction`: the event-time density plus the exact
+survival probability at each row's observation limit. Its ``observed_log_density`` therefore
+matches ``pointwise_log_prob`` on completed and censored rows. Without censoring, ``predict``
+returns the ordinary :class:`~behavio.contracts.DensityPrediction`.
 
 ``docs/decisions/0061-fit-patch-leaving-as-a-hazard-not-as-the-marginal-value-theorem.md``
 records why the theorem is a benchmark rather than the likelihood, what a per-moment decision
@@ -109,6 +103,7 @@ from scipy.special import expit, log_expit
 
 from behavio._internal.arrays import protected_array
 from behavio.contracts.estimator import (
+    CensoredDensityPrediction,
     DensityPrediction,
     DerivedQuantity,
     FitResult,
@@ -689,8 +684,22 @@ class PatchLeaving(LogCoordinateModel):
             * (1.0 - expit(deviate))
             * np.exp(log_expit(deviate) - log_expit(entry)[:, None])
         )
-        return DensityPrediction(
-            grid=grid, density=density, outcome=self.outcome, mode=prediction_mode
+        if self.censoring_time_column is None:
+            return DensityPrediction(
+                grid=grid, density=density, outcome=self.outcome, mode=prediction_mode
+            )
+        limits = numeric_column(study, self.censoring_time_column, role="task")
+        limit_rate = self._log_intake(limits, amounts, decays)
+        limit_deviate = (limit_rate - rows[:, 0]) / noise
+        survival = np.exp(log_expit(limit_deviate) - log_expit(entry))
+        return CensoredDensityPrediction(
+            grid=grid,
+            density=density,
+            outcome=self.outcome,
+            mode=prediction_mode,
+            censoring_time=limits,
+            survival_probability=survival,
+            censoring_column=self.censoring_time_column,
         )
 
     def predict_density(
@@ -934,10 +943,9 @@ class PatchLeaving(LogCoordinateModel):
                     severity=WARNING,
                     message=(
                         f"{share:.0%} of visits were still in progress when observation "
-                        "stopped. Those rows are scored by their survival function, which "
-                        "the predicted density cannot express, so scoring "
-                        "predict().observed_log_density() instead of pointwise_log_prob() "
-                        "would misscore exactly this share of the study"
+                        "stopped. Those rows are scored by their survival function, retained "
+                        "beside the event-time density in predict(); event and censoring "
+                        "contributions should still be inspected separately"
                     ),
                 )
             ]

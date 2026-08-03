@@ -684,7 +684,8 @@ have to re-derive what every wrapper needs.
   defective densities on an explicit grid, reports the mass a truncated grid lost rather
   than normalising it away, and interpolates at an observed value so a per-trial likelihood
   is not a function of the solver's step size. Return it from `predict()`; it is one of the
-  three shapes `ModelPrediction` names, and everything downstream reads it.
+  shapes `ModelPrediction` names, and everything downstream reads it. A right-censored
+  wrapper returns the `CensoredDensityPrediction` widening with exact survival at its limits.
 - `behavio.adapters.check_behaviour_estimator` executes the estimator half of the
   [compatibility list](extensions.md#compatibility-tests), including the filtered/smoothed
   check above and a cross-check that an integrated `DensityPrediction` reproduces the

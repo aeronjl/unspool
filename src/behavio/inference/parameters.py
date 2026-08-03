@@ -182,6 +182,20 @@ class PriorSpec:
 
         return {"family": self.family.value, "arguments": dict(self.arguments)}
 
+    def sample(self, generator: np.random.Generator) -> float:
+        """Draw once from this normalized prior on its declared natural scale."""
+
+        if not isinstance(generator, np.random.Generator):
+            raise TypeError("generator must be a numpy.random.Generator")
+        arguments = self.arguments
+        if self.family == PriorFamily.NORMAL:
+            return float(generator.normal(arguments["location"], arguments["scale"]))
+        if self.family == PriorFamily.HALF_NORMAL:
+            return float(abs(generator.normal(0.0, arguments["scale"])))
+        if self.family == PriorFamily.BETA:
+            return float(generator.beta(arguments["alpha"], arguments["beta"]))
+        return float(generator.uniform(arguments["lower"], arguments["upper"]))
+
 
 @dataclass(frozen=True, slots=True)
 class ParameterSpec:
@@ -545,6 +559,35 @@ class ParameterSpace:
                 continue
             total += item.prior.log_prob(values[item.name])
         return float(total)
+
+    def sample_prior(self, *, seed: int | np.random.Generator) -> Mapping[str, float]:
+        """Draw the complete natural parameter vector from declared proper priors.
+
+        This is the prior half of simulation-based calibration: every free parameter must
+        carry a normalized :class:`PriorSpec`, and fixed parameters are restored exactly.
+        The returned mapping is accepted directly by :meth:`encode` and by a generative
+        model whose simulator declares these natural names.
+        """
+
+        if isinstance(seed, np.random.Generator):
+            generator = seed
+        else:
+            if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
+                raise ParameterSpaceError("seed must be a non-negative integer or Generator")
+            generator = np.random.default_rng(seed)
+        values: dict[str, float] = {}
+        for item in self.parameters:
+            if item.role == ParameterRole.FIXED:
+                values[item.name] = float(item.fixed_value)
+                continue
+            if item.prior is None:
+                raise ParameterSpaceError(
+                    f"free parameter {item.name!r} has no prior and cannot be prior-sampled"
+                )
+            value = item.prior.sample(generator)
+            item.to_optimizer(value)
+            values[item.name] = value
+        return MappingProxyType(values)
 
     def log_abs_det_inverse_jacobian(
         self, optimizer: Sequence[float] | NDArray[np.floating[Any]]

@@ -800,7 +800,7 @@ def test_available_calibration_places_its_aggregate_point_against_the_diagonal()
     text = figure_text(figure)
     assert "Brier score 0.2100" in text
     assert "expected calibration error 0.0700" in text
-    assert "per-bin reliability" in text
+    assert "binary estimand" in text
 
 
 def test_unavailable_calibration_states_the_declared_reason() -> None:

@@ -445,15 +445,8 @@ def test_the_mixed_density_is_the_two_component_average_at_every_grid_point() ->
     )
 
 
-def test_a_censored_row_still_predicts_a_density_of_the_leaving_time() -> None:
-    """The prediction and the score deliberately disagree on a censored row, as they did.
-
-    ``PatchLeaving`` already documents that ``pointwise_log_prob`` and the tabulated density
-    disagree on censored rows, because a density cannot express "the event is still to come".
-    Mixing does not change that, and the component is asked the same way: at a grid point that
-    is not the row's limit it answers with its density, so the mixed *prediction* is a density
-    on every row while the mixed *score* is a survival probability where the model's was.
-    """
+def test_a_censored_duration_mixture_retains_the_survival_score() -> None:
+    """Mixing carries both event density and survival probability through one prediction."""
 
     model = patch_mixture()
     design = patch_design(n_rows=60, n_subjects=1, n_sessions=1)
@@ -470,9 +463,8 @@ def test_a_censored_row_still_predicts_a_density_of_the_leaving_time() -> None:
     assert np.all(np.asarray(prediction.density) >= 0.0)
     assert np.any(censored)
     scored = model.pointwise_log_prob(study, fit)
-    tabulated = prediction.observed_log_density(times)
-    assert np.allclose(scored[~censored], tabulated[~censored], atol=1e-3)
-    assert not np.allclose(scored[censored], tabulated[censored], atol=1e-3)
+    tabulated = prediction.observed_log_density(times, censored=censored)
+    assert np.allclose(scored, tabulated, atol=1e-3)
 
 
 def test_a_tabulated_density_is_refused_by_the_probability_average_that_cannot_take_it() -> None:

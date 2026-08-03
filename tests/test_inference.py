@@ -10,6 +10,7 @@ from behavio.inference import (
     ObjectiveTarget,
     OptimizationBackend,
     OptimizationProblem,
+    ParameterSpaceError,
     ParameterSpec,
     ParameterTransform,
     PriorMeasure,
@@ -76,6 +77,24 @@ def test_scipy_multistart_retains_every_attempt_and_selects_deterministically() 
     with pytest.raises(TypeError):
         run.problem["target"] = "changed"
     json.dumps(run.to_dict(), allow_nan=False)
+
+
+def test_parameter_space_draws_complete_reproducible_natural_prior_joint() -> None:
+    space = quadratic_space()
+
+    first = space.sample_prior(seed=18)
+    second = space.sample_prior(seed=18)
+
+    assert first == second
+    assert set(first) == set(space.natural_names)
+    assert -10.0 <= first["x"] <= 10.0
+    assert first["scale"] > 0.0
+    space.encode(first)
+    assert np.isfinite(space.log_prior(first, require_all=True))
+
+    incomplete = ParameterSpace((ParameterSpec("x"),))
+    with pytest.raises(ParameterSpaceError, match="has no prior"):
+        incomplete.sample_prior(seed=0)
 
 
 def test_unsuccessful_nonfinite_attempts_remain_visible_and_are_not_selected() -> None:

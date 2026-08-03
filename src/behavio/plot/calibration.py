@@ -1,18 +1,8 @@
-"""Probability-calibration display for the runner's retained calibration summary.
+"""Reliability display for the runner's retained calibration estimand and bins.
 
-.. warning::
-
-   :class:`~behavio.protocol.runner.CalibrationSummary` retains *aggregate* calibration only. The
-   ten-bin reliability decomposition behind
-   :attr:`~behavio.protocol.runner.CalibrationSummary.expected_calibration_error` is computed inside
-   :mod:`behavio.protocol.runner` and then discarded, so a full reliability curve cannot be drawn
-   without recomputing it. This module presents the aggregate point rather than
-   re-deriving the bins, because the plotting layer presents; it does not compute. Retaining
-   per-bin counts and rates on ``CalibrationSummary`` is the change that would upgrade this
-   display to a reliability curve.
-
-Unavailability is a result, not an absence: when the runner declares calibration
-unavailable, the figure states the declared reason instead of drawing an empty axes.
+For categorical predictions the primary curve is confidence calibration. Conditional
+top-label and classwise curves remain available on the summary rather than being pooled into
+that display. Unavailability is a result, not an absence: the declared reason is shown.
 """
 
 from __future__ import annotations
@@ -37,11 +27,10 @@ def plot_calibration(
     ax: Axes | None = None,
     figsize: tuple[float, float] = (4.4, 4.2),
 ) -> Figure:
-    """Draw the retained aggregate calibration against perfect calibration.
+    """Draw retained populated reliability bins and the aggregate calibration point.
 
-    The single marker is the summary's mean predicted probability against its observed
-    outcome rate; the diagonal is perfect calibration. Brier score, expected calibration
-    error, and the observation count are written under the axes.
+    The aggregate marker is the mean predicted probability against its observed rate; the
+    smaller markers are the populated equal-width bins used by the reported ECE.
     """
 
     if not isinstance(summary, CalibrationSummary):
@@ -59,8 +48,8 @@ def plot_calibration(
         )
         axes.set_xlim(0.0, 1.0)
         axes.set_ylim(0.0, 1.0)
-        axes.set_xlabel("mean predicted probability")
-        axes.set_ylabel("observed outcome rate")
+        axes.set_xlabel("mean predicted probability or confidence")
+        axes.set_ylabel("observed outcome rate or correctness")
         axes.set_title(title)
         if not summary.available:
             axes.text(
@@ -82,6 +71,16 @@ def plot_calibration(
             axes.legend(loc="lower right", fontsize=7.5, frameon=False)
             return figure
         assert summary.mean_probability is not None and summary.observed_rate is not None
+        if summary.bins:
+            axes.plot(
+                [item.mean_probability for item in summary.bins],
+                [item.observed_rate for item in summary.bins],
+                color=MUTED,
+                linewidth=1.0,
+                marker="s",
+                markersize=4,
+                label=f"populated reliability bins ({len(summary.bins)})",
+            )
         axes.plot(
             [summary.mean_probability, summary.mean_probability],
             [summary.mean_probability, summary.observed_rate],
@@ -104,6 +103,7 @@ def plot_calibration(
             axes,
             f"Brier score {summary.brier_score:.4f}, expected calibration error "
             f"{summary.expected_calibration_error:.4f}\n"
-            "aggregate only: CalibrationSummary does not retain its per-bin reliability",
+            f"{summary.estimand.value} estimand; {len(summary.bins)} populated bins; "
+            f"{len(summary.top_label)} top-label and {len(summary.classwise)} classwise curves",
         )
     return figure

@@ -28,6 +28,7 @@ from behavio.contracts.compose import (
 )
 from behavio.contracts.estimator import (
     LOG_DENSITY_FLOOR,
+    CensoredDensityPrediction,
     DensityPrediction,
     FitResult,
     ModelDataError,
@@ -457,6 +458,8 @@ def blended_density(
     model_prediction: DensityPrediction,
     weight: NDArray[np.float64],
     component: NDArray[np.float64],
+    *,
+    component_survival: NDArray[np.float64] | None = None,
 ) -> DensityPrediction:
     """Return the weighted average of two densities tabulated on one shared grid.
 
@@ -487,6 +490,26 @@ def blended_density(
     if not np.all(np.isfinite(values)) or np.any(values < 0.0):
         raise ValueError("a component's density must be finite and non-negative")
     mixed = (1.0 - weight)[:, None] * density + weight[:, None] * values
+    if isinstance(model_prediction, CensoredDensityPrediction):
+        if component_survival is None:
+            raise ValueError(
+                "a censored density mixture also needs the component's survival probability"
+            )
+        survival = np.asarray(component_survival, dtype=np.float64)
+        if survival.shape != weight.shape:
+            raise ValueError("component survival must contain one probability per study row")
+        if not np.all(np.isfinite(survival)) or np.any((survival < 0.0) | (survival > 1.0)):
+            raise ValueError("component survival probabilities must be finite and lie in [0, 1]")
+        mixed_survival = (1.0 - weight) * np.asarray(
+            model_prediction.survival_probability
+        ) + weight * survival
+        return replace(
+            model_prediction,
+            density=mixed,
+            survival_probability=mixed_survival,
+        )
+    if component_survival is not None:
+        raise ValueError("component survival was supplied for a density with no censoring channel")
     return replace(model_prediction, density=mixed)
 
 
@@ -1411,10 +1434,22 @@ class MixtureRowModel(_MixedModel):
         model_prediction = self.model.predict_rows(study, values[:, :width], mode=mode)
         weight = mixture_weight(values[:, width], self.weight_bounds)
         if isinstance(model_prediction, DensityPrediction):
+            component_survival = None
+            if isinstance(model_prediction, CensoredDensityPrediction):
+                log_survival = np.asarray(
+                    self.component.pointwise_log_density(study, model_prediction.censoring_time),
+                    dtype=np.float64,
+                )
+                if log_survival.shape != (len(study),):
+                    raise ValueError("a component must return one log survival per study row")
+                if np.any(np.isnan(log_survival)) or np.any(np.isposinf(log_survival)):
+                    raise ValueError("component log survivals must be finite or -inf")
+                component_survival = np.exp(log_survival)
             return blended_density(
                 model_prediction,
                 weight,
                 self.component_density_on_grid(study, model_prediction.grid),
+                component_survival=component_survival,
             )
         probability = np.asarray(
             self.component.prediction_probability(study), dtype=np.float64

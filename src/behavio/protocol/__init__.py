@@ -42,6 +42,8 @@ from behavio.protocol.exact_recovery import (
     run_exact_recovery,
 )
 from behavio.protocol.runner import (
+    CalibrationBin,
+    CalibrationEstimand,
     CalibrationSummary,
     CandidateRun,
     CandidateVerification,
@@ -108,6 +110,8 @@ __all__ = [
     "PROTOCOL_SCHEMA_VERSION",
     "AggregationWeighting",
     "AuditLevel",
+    "CalibrationBin",
+    "CalibrationEstimand",
     "CalibrationSummary",
     "CandidateInference",
     "CandidateRun",

@@ -89,11 +89,13 @@ from behavio.models import (
     BinaryQLearning,
     BinaryRLAgent,
     EqualVarianceSDT,
+    HierarchicalSessionDynamicBernoulliGLMHMM,
     MetaSDT,
     MultinomialLogit,
     Perseveration,
     Psychometric,
     PsychometricFunction,
+    SessionDynamicBernoulliGLMHMM,
     UnequalVarianceSDT,
     WienerDriftDiffusion,
     WinStayLoseShift,
@@ -136,7 +138,7 @@ from behavio.protocol.schema import (
     ObservationDataType,
     StudyProtocol,
 )
-from behavio.pymc_backend import PyMCHierarchicalGLMBackend
+from behavio.pymc_backend import PyMCBinaryQLearning, PyMCHierarchicalGLMBackend
 from behavio.recovery.models import run_model_recovery
 from behavio.recovery.parameters import run_parameter_recovery
 from behavio.registry import (
@@ -183,6 +185,7 @@ __all__ = [
     "FoldStage",
     "HierarchicalFitResult",
     "HierarchicalModel",
+    "HierarchicalSessionDynamicBernoulliGLMHMM",
     "MetaSDT",
     "MixtureModel",
     "MixtureRowModel",
@@ -201,12 +204,14 @@ __all__ = [
     "Psychometric",
     "PsychometricFunction",
     "PyBADSMultistart",
+    "PyMCBinaryQLearning",
     "PyMCHierarchicalGLMBackend",
     "ResponseTimeSpec",
     "RewardSpec",
     "SBCUniformity",
     "ScipyMultistart",
     "ScoreMetric",
+    "SessionDynamicBernoulliGLMHMM",
     "SessionOrderPolicy",
     "SmoothModel",
     "SourceType",

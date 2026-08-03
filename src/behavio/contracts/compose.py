@@ -678,13 +678,13 @@ def require_varying_parameters(
     deviation and no Gaussian random walk can be placed on.
 
     The case that forced it is a coordinate that is a **chart** rather than a quantity. A
-    GLM-HMM's transition row is a point on a simplex and its coordinate is a
-    reference-category logit; an isotropic ridge there is a prior on which state was made
-    the reference, not on the transition matrix, so the same declaration means different
-    models to two users who ordered their states differently. Nothing in either estimator
-    contract can express that, because it is not a fact about a member -- ``penalty_matrix``
-    and ``group_penalty`` are the same shape whether or not the coordinate they act on is
-    exchangeable.
+    stationary GLM-HMM transition row is a point on a simplex and its legacy coordinate is
+    a reference-category logit; an isotropic ridge there is a prior on which state was made
+    the reference, not on the transition matrix. The covariate-dependent GLM-HMM shows the
+    alternative: a complete orthonormal log-ratio block is exchangeable and may vary, while
+    selecting one of its contrasts may not. Nothing in either estimator contract can infer
+    that distinction from shape alone -- ``penalty_matrix`` and ``group_penalty`` are the
+    same shape whether or not the selected coordinate is closed under relabelling.
 
     ``combinator`` is passed through because the answer may differ by axis: the same model
     can admit a group deviation on a parameter and refuse a path in clock time on it, which

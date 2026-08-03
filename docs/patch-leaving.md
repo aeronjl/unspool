@@ -128,19 +128,18 @@ that entered a patch before recording began has a conditional likelihood, not a 
 and scoring it as if it did not would be the exact failure the censoring machinery exists to
 prevent.
 
-### One thing does not fit the prediction contract, and it is reported
+### Censoring is retained in the prediction contract
 
-`predict()` returns a `DensityPrediction` of the **leaving time**, on every row, censored or
-not: that is what the model claims about the row. A censored row's *score* is a survival
-probability, and no member of `ModelPrediction` can carry "the probability the event is still
-to come".
+With `censoring_time_column`, `predict()` returns a `CensoredDensityPrediction`: the
+**leaving-time density** on every row plus the exact survival probability at that row's
+observation limit. `observed_log_density(values, censored=...)` requires the event indicator
+and selects `log f(t)` for departures or `log S(c)` for right-censored visits. Omitting the
+indicator raises instead of silently treating censoring as a completed event.
 
-So `pointwise_log_prob` and `DensityPrediction.observed_log_density` **agree on uncensored
-rows and deliberately disagree on censored ones**. The first is the likelihood; the second is
-the prediction. A consumer that scores the density directly instead of asking the model will
-misscore exactly the censored rows, and `describe()` says so through `heavy_censoring` with
-the share of the study affected. The gap in the contract is recorded in
-[SDR-0063](decisions/0063-defer-the-log-score-only-comparison-and-the-survival-carrying-prediction.md).
+The censoring time is predictive task context; whether a visit ended is observed data. This
+is why the prediction carries limits and survival probabilities but still receives the
+indicator only when a score is replayed. Its scores now agree with `pointwise_log_prob` on
+both kinds of row.
 
 The censoring *arithmetic* — which rows are scored by a density and which by a survival, how
 the gradient follows the same selection, and whether a duration equal to its limit is an
@@ -172,7 +171,7 @@ design is a residence time wearing a rate's units.
 | `unidentified_leaving_rule` | one patch type: a rate threshold and a time threshold are the same model |
 | `heterogeneous_environment` | more than one type, so `optimal_residence_time` should be read per type |
 | `undeclared_censoring` | residence times piled up on a common maximum with no censoring column |
-| `heavy_censoring` | a quarter or more of visits still in progress, so the density and the score diverge on that share |
+| `heavy_censoring` | a quarter or more of visits still in progress, so event and survival contributions should be inspected separately |
 | `all_rows_censored` | nothing ever departed, so the giving-up rate is bounded rather than located |
 
 ## Every coordinate is a logarithm

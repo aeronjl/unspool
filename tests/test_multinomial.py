@@ -20,12 +20,14 @@ from behavio import (
 from behavio.design import DesignSpec, NumericTerm
 from behavio.models import CategoricalPrediction, ModelDataError
 from behavio.protocol import (
+    CalibrationEstimand,
     CandidateSpec,
     ProtocolState,
     ScoreMetric,
     Setting,
     materialize_protocol,
 )
+from behavio.protocol.runner import PointwisePrediction, _calibration
 
 
 def categorical_design(*, omissions: bool = False) -> Study:
@@ -182,8 +184,14 @@ def test_protocol_runner_serializes_categorical_rows_and_scores_brier() -> None:
     assert point.categories == (0, 1)
     assert point.observed_category_index in (0, 1)
     assert point.probability is None
-    assert run.report.candidates[0].calibration.reason is not None
-    assert "categorical" in run.report.candidates[0].calibration.reason
+    calibration = run.report.candidates[0].calibration
+    assert calibration.available
+    assert calibration.estimand is CalibrationEstimand.CONFIDENCE
+    assert len(calibration.classwise) == 2
+    assert all(item.estimand is CalibrationEstimand.CLASSWISE for item in calibration.classwise)
+    assert sum(item.n_observations for item in calibration.bins) == len(
+        run.report.candidates[0].predictions
+    )
     assert "category_probabilities" in run.report.canonical_json()
 
     protocol = frozen_small_protocol(multinomial_candidates())
@@ -209,4 +217,46 @@ def test_protocol_runner_serializes_categorical_rows_and_scores_brier() -> None:
     assert all(
         candidate.score is not None and candidate.score.metric == ScoreMetric.BRIER
         for candidate in brier_run.report.candidates
+    )
+
+
+def test_multiclass_calibration_keeps_confidence_top_label_and_classwise_estimands() -> None:
+    probabilities = (
+        (0.7, 0.2, 0.1),
+        (0.2, 0.6, 0.2),
+        (0.1, 0.2, 0.7),
+        (0.4, 0.35, 0.25),
+    )
+    observed = (0, 2, 2, 1)
+    points = tuple(
+        PointwisePrediction(
+            row=index,
+            probability=None,
+            linear_predictor=None,
+            log_probability=-1.0,
+            aggregation_unit="a",
+            category_probabilities=values,
+            categories=("left", "right", "up"),
+            observed_category_index=code,
+        )
+        for index, (values, code) in enumerate(zip(probabilities, observed, strict=True))
+    )
+
+    summary = _calibration(points, None, "choice")
+
+    assert summary.estimand is CalibrationEstimand.CONFIDENCE
+    assert tuple(item.category for item in summary.top_label) == ("left", "right", "up")
+    assert tuple(item.category for item in summary.classwise) == ("left", "right", "up")
+    assert all(item.n_observations == 4 for item in summary.classwise)
+    assert summary.brier_score == pytest.approx(
+        0.5
+        * np.mean(
+            [
+                sum(
+                    (probability - float(column == truth)) ** 2
+                    for column, probability in enumerate(row)
+                )
+                for row, truth in zip(probabilities, observed, strict=True)
+            ]
+        )
     )

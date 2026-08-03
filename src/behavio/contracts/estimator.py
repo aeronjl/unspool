@@ -30,6 +30,7 @@ from behavio._internal.scoring import (
     validated_score_metrics,
 )
 from behavio.contracts.audit import FitAudit, FitAuditPolicy, FitDiagnostics
+from behavio.contracts.backend import OptimizationRunRecord
 from behavio.trials import Study
 
 
@@ -260,10 +261,17 @@ class FitResult:
     n_observations: int
     diagnostics: FitDiagnostics
     derived: tuple[DerivedQuantity, ...] = field(default=(), kw_only=True)
+    optimization_run: OptimizationRunRecord | None = field(
+        default=None, kw_only=True, compare=False
+    )
 
     def __post_init__(self) -> None:
         names = tuple(self.parameter_names)
         derived = tuple(self.derived)
+        if self.optimization_run is not None and not isinstance(
+            self.optimization_run, OptimizationRunRecord
+        ):
+            raise ValueError("optimization_run must satisfy OptimizationRunRecord or be null")
         if any(not isinstance(quantity, DerivedQuantity) for quantity in derived):
             raise ValueError("derived must contain DerivedQuantity values")
         derived_names = [quantity.name for quantity in derived]
@@ -829,15 +837,99 @@ class DensityPrediction:
         )
 
 
-ModelPrediction = Prediction | CategoricalPrediction | DensityPrediction
+@dataclass(frozen=True, slots=True)
+class CensoredDensityPrediction(DensityPrediction):
+    """An event-time density plus exact survival at each observation limit.
+
+    A right-censored observation contributes ``log S(c)`` rather than ``log f(c)``. A
+    finite density grid cannot generally reconstruct ``S(c)`` because missing mass may be
+    tail mass, left-support mass, or genuine defective mass. This widening therefore
+    carries the model's own survival probability at the declared censoring time.
+
+    The observed ``censored`` indicator remains an argument to
+    :meth:`observed_log_density`: the observation limit is predictive context, whereas
+    whether the event occurred is observed data.
+    """
+
+    censoring_time: NDArray[np.float64] = field(kw_only=True)
+    survival_probability: NDArray[np.float64] = field(kw_only=True)
+    censoring_column: str = field(kw_only=True)
+
+    def __post_init__(self) -> None:
+        DensityPrediction.__post_init__(self)
+        censoring_time = protected_array(self.censoring_time, dtype=np.float64)
+        survival = protected_array(self.survival_probability, dtype=np.float64)
+        expected = (self.n_observations,)
+        if censoring_time.shape != expected or not np.all(np.isfinite(censoring_time)):
+            raise ValueError("censoring_time must contain one finite limit per trial")
+        if survival.shape != expected or not np.all(np.isfinite(survival)):
+            raise ValueError("survival_probability must contain one finite value per trial")
+        if np.any((survival < 0.0) | (survival > 1.0)):
+            raise ValueError("survival probabilities must lie in [0, 1]")
+        if not isinstance(self.censoring_column, str) or not self.censoring_column:
+            raise ValueError("a censored density must name its censoring column")
+        object.__setattr__(self, "censoring_time", censoring_time)
+        object.__setattr__(self, "survival_probability", survival)
+
+    def observed_log_density(
+        self,
+        values: Sequence[float] | NDArray[np.floating[Any]],
+        categories: Sequence[Any] | NDArray[Any] | None = None,
+        *,
+        censored: Sequence[bool] | NDArray[np.bool_] | None = None,
+        floor: float = LOG_DENSITY_FLOOR,
+    ) -> NDArray[np.float64]:
+        """Score events by density and right-censored rows by survival at their limit."""
+
+        if censored is None:
+            raise ValueError(
+                "a censored density requires the observed censored indicator; omitting it "
+                "would score censored rows as completed events"
+            )
+        observed = np.asarray(values, dtype=np.float64)
+        indicator = np.asarray(censored)
+        if indicator.shape != (self.n_observations,) or indicator.dtype.kind != "b":
+            raise ValueError("censored must contain one boolean indicator per trial")
+        if observed.shape != (self.n_observations,) or not np.all(np.isfinite(observed)):
+            raise ValueError("values must contain one finite outcome per predicted trial")
+        if np.any(observed > self.censoring_time + 1e-12):
+            raise ValueError("an observed duration may not exceed its censoring time")
+        if np.any(indicator & ~np.isclose(observed, self.censoring_time, rtol=1e-9, atol=1e-12)):
+            raise ValueError("a right-censored duration must equal its censoring time")
+        event_scores = DensityPrediction.observed_log_density(
+            self, observed, categories, floor=floor
+        )
+        with np.errstate(divide="ignore"):
+            survival_scores = np.log(self.survival_probability)
+        survival_scores = np.maximum(survival_scores, float(floor))
+        return protected_array(np.where(indicator, survival_scores, event_scores), dtype=np.float64)
+
+    def take(self, indices: Sequence[int] | NDArray[np.integer[Any]]) -> CensoredDensityPrediction:
+        """Return a row subset retaining censoring limits and survival probabilities."""
+
+        return CensoredDensityPrediction(
+            grid=self.grid,
+            density=self.density[indices],
+            outcome=self.outcome,
+            mode=self.mode,
+            categories=self.categories,
+            censoring_time=self.censoring_time[indices],
+            survival_probability=self.survival_probability[indices],
+            censoring_column=self.censoring_column,
+        )
+
+
+ModelPrediction = Prediction | CategoricalPrediction | DensityPrediction | CensoredDensityPrediction
 """Every prediction shape a Behavio consumer reads back off ``predict()``.
 
-The three are not a hierarchy. :class:`Prediction` is one probability per row,
+The shapes are not a hierarchy except for the explicit censored-density widening.
+:class:`Prediction` is one probability per row,
 :class:`CategoricalPrediction` is a simplex over named categories, and
 :class:`DensityPrediction` is a density over a continuous outcome that may additionally be
-defective across categories. Every consumer that slices a prediction -- most of all
+defective across categories. :class:`CensoredDensityPrediction` additionally carries exact
+survival at the design's observation limits. Every consumer that slices a prediction -- most of all
 :func:`behavio.evaluate.evaluate_splits`, which keeps only a fold's scored rows -- goes
-through ``take``, which all three implement with the same meaning.
+through ``take``, which all implement with the same meaning.
 """
 
 
