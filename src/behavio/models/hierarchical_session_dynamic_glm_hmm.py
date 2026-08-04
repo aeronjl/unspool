@@ -15,17 +15,27 @@ fitted, and used for unseen-subject prediction rather than being implied by pool
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from itertools import pairwise
 from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import minimize
-from scipy.special import expit
+from scipy.special import expit, logsumexp, ndtri
 
 from behavio._internal.arrays import protected_array
 from behavio.models._kernels.bernoulli import ordered_session_indices
+from behavio.models._kernels.dynamic_uncertainty import (
+    at_log_bound,
+    estimate_transition_concentration,
+    gaussian_scale_observed_covariance,
+    observed_path_covariance,
+    session_transition_counts,
+    supplemented_scale_covariance,
+    transition_standard_errors,
+    update_gaussian_scales,
+)
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -108,6 +118,93 @@ class HierarchicalSessionDynamicTrajectoryRecovery:
 
 
 @dataclass(frozen=True, slots=True)
+class UnseenSubjectDynamicPrediction:
+    """Monte Carlo integration over coherent unseen-subject paths and transitions."""
+
+    subjects: tuple[Any, ...]
+    row_subject_indices: NDArray[np.intp]
+    probability: NDArray[np.float64]
+    draw_probabilities: NDArray[np.float64]
+    draw_pointwise_log_probability: NDArray[np.float64]
+    pointwise_marginal_log_probability: NDArray[np.float64]
+    subject_joint_log_probability: NDArray[np.float64]
+    subject_effective_draws: NDArray[np.float64]
+    subject_log_probability_mcse: NDArray[np.float64]
+    draw_session_emission_coefficients: NDArray[np.float64]
+    draw_session_transition_matrices: NDArray[np.float64]
+    n_draws: int
+    seed: int
+    includes_population_path_uncertainty: bool
+    label_path_ambiguous: bool
+    label_policy: str = "conditional-on-one-whole-path-canonical-mode"
+
+    def __post_init__(self) -> None:
+        subjects = tuple(_scalar(value) for value in self.subjects)
+        row_subjects = protected_array(self.row_subject_indices, dtype=np.intp)
+        probability = protected_array(self.probability, dtype=np.float64)
+        draws = protected_array(self.draw_probabilities, dtype=np.float64)
+        draw_log = protected_array(self.draw_pointwise_log_probability, dtype=np.float64)
+        marginal = protected_array(self.pointwise_marginal_log_probability, dtype=np.float64)
+        joint = protected_array(self.subject_joint_log_probability, dtype=np.float64)
+        effective = protected_array(self.subject_effective_draws, dtype=np.float64)
+        mcse = protected_array(self.subject_log_probability_mcse, dtype=np.float64)
+        emission_draws = protected_array(self.draw_session_emission_coefficients, dtype=np.float64)
+        transition_draws = protected_array(self.draw_session_transition_matrices, dtype=np.float64)
+        if not subjects or len(set(subjects)) != len(subjects):
+            raise ValueError("prediction subjects must be unique and non-empty")
+        if probability.ndim != 1 or row_subjects.shape != probability.shape:
+            raise ValueError("prediction rows and subject indices must align")
+        if draws.shape != (self.n_draws, len(probability)) or draw_log.shape != draws.shape:
+            raise ValueError("predictive draws must contain one value per draw and row")
+        if marginal.shape != probability.shape:
+            raise ValueError("pointwise marginal scores must align with prediction rows")
+        if (
+            joint.shape != (len(subjects),)
+            or effective.shape != joint.shape
+            or mcse.shape != joint.shape
+        ):
+            raise ValueError("subject-joint Monte Carlo diagnostics must align")
+        if emission_draws.ndim != 4 or emission_draws.shape[0] != self.n_draws:
+            raise ValueError("emission draws must cover draw, session, state, and coefficient")
+        if transition_draws.shape[:2] != emission_draws.shape[:2] or transition_draws.ndim != 4:
+            raise ValueError("transition draws must align with draw and session")
+        if np.any((row_subjects < 0) | (row_subjects >= len(subjects))):
+            raise ValueError("row subject indices must identify prediction subjects")
+        for name, values in (
+            ("probability", probability),
+            ("draw probabilities", draws),
+            ("draw log probability", draw_log),
+            ("pointwise marginal log probability", marginal),
+            ("subject joint log probability", joint),
+            ("subject effective draws", effective),
+            ("subject log probability MCSE", mcse),
+            ("emission draws", emission_draws),
+            ("transition draws", transition_draws),
+        ):
+            if not np.all(np.isfinite(values)):
+                raise ValueError(f"{name} must be finite")
+        if not np.all((probability > 0) & (probability < 1)):
+            raise ValueError("marginal probabilities must lie strictly inside zero and one")
+        if not np.all((effective >= 1.0) & (effective <= self.n_draws + 1e-8)):
+            raise ValueError("effective draws must lie between one and n_draws")
+        if np.any(mcse < 0):
+            raise ValueError("Monte Carlo errors must be non-negative")
+        if self.label_policy != "conditional-on-one-whole-path-canonical-mode":
+            raise ValueError("label_policy must retain the fitted canonical path mode")
+        object.__setattr__(self, "subjects", subjects)
+        object.__setattr__(self, "row_subject_indices", row_subjects)
+        object.__setattr__(self, "probability", probability)
+        object.__setattr__(self, "draw_probabilities", draws)
+        object.__setattr__(self, "draw_pointwise_log_probability", draw_log)
+        object.__setattr__(self, "pointwise_marginal_log_probability", marginal)
+        object.__setattr__(self, "subject_joint_log_probability", joint)
+        object.__setattr__(self, "subject_effective_draws", effective)
+        object.__setattr__(self, "subject_log_probability_mcse", mcse)
+        object.__setattr__(self, "draw_session_emission_coefficients", emission_draws)
+        object.__setattr__(self, "draw_session_transition_matrices", transition_draws)
+
+
+@dataclass(frozen=True, slots=True)
 class HierarchicalSessionDynamicGLMHMMFitResult(FitResult):
     """Population and subject paths with retained three-stage fitting evidence."""
 
@@ -146,7 +243,28 @@ class HierarchicalSessionDynamicGLMHMMFitResult(FitResult):
     subject_emission_scale: float
     emission_step_scale: float
     transition_concentration: float
-    uncertainty_policy: str = "not-estimated"
+    population_emission_standard_errors: NDArray[np.float64]
+    population_emission_covariance: NDArray[np.float64]
+    session_emission_standard_errors: NDArray[np.float64]
+    session_emission_covariance: NDArray[np.float64]
+    subject_deviation_standard_errors: NDArray[np.float64]
+    joint_emission_covariance: NDArray[np.float64]
+    session_transition_standard_errors: NDArray[np.float64]
+    path_hessian_condition: float
+    path_covariance_positive_definite: bool
+    hyperparameter_names: tuple[str, ...]
+    hyperparameter_estimates: NDArray[np.float64]
+    hyperparameter_standard_errors: NDArray[np.float64]
+    hyperparameter_covariance: NDArray[np.float64]
+    hyperparameters_estimated: bool
+    hyperparameter_estimation_converged: bool
+    hyperparameter_estimation_iterations: int
+    hyperparameters_at_boundary: NDArray[np.bool_]
+    gaussian_scale_em_rate_matrix: NDArray[np.float64]
+    gaussian_scale_em_spectral_radius: float
+    hyperparameter_uncertainty_policy: str
+    uncertainty_policy: str = "observed-laplace-conditional-on-canonical-path"
+    uncertainty_label_policy: str = "conditional-on-one-whole-path-canonical-mode"
     seen_future_session_policy: str = (
         "population-path-plus-carried-subject-deviation/use-global-transitions"
     )
@@ -182,6 +300,31 @@ class HierarchicalSessionDynamicGLMHMMFitResult(FitResult):
         restart_converged = protected_array(self.initialization_restart_converged, dtype=np.bool_)
         permutation = tuple(self.canonical_permutation)
         crossing_subjects = tuple(_scalar(value) for value in self.subject_label_crossing_subjects)
+        population_errors = protected_array(
+            self.population_emission_standard_errors, dtype=np.float64
+        )
+        population_covariance = protected_array(
+            self.population_emission_covariance, dtype=np.float64
+        )
+        session_errors = protected_array(self.session_emission_standard_errors, dtype=np.float64)
+        session_covariance = protected_array(self.session_emission_covariance, dtype=np.float64)
+        deviation_errors = protected_array(self.subject_deviation_standard_errors, dtype=np.float64)
+        joint_covariance = protected_array(self.joint_emission_covariance, dtype=np.float64)
+        transition_errors = protected_array(
+            self.session_transition_standard_errors, dtype=np.float64
+        )
+        hyperparameter_names = tuple(self.hyperparameter_names)
+        hyperparameter_estimates = protected_array(self.hyperparameter_estimates, dtype=np.float64)
+        hyperparameter_errors = protected_array(
+            self.hyperparameter_standard_errors, dtype=np.float64
+        )
+        hyperparameter_covariance = protected_array(
+            self.hyperparameter_covariance, dtype=np.float64
+        )
+        hyperparameters_at_boundary = protected_array(
+            self.hyperparameters_at_boundary, dtype=np.bool_
+        )
+        rate_matrix = protected_array(self.gaussian_scale_em_rate_matrix, dtype=np.float64)
         if sorted(permutation) != list(range(n_states)) or n_states < 2:
             raise ValueError("canonical_permutation must permute every latent state")
         for name, values in (
@@ -239,6 +382,82 @@ class HierarchicalSessionDynamicGLMHMMFitResult(FitResult):
                 raise ValueError(f"{name} must be finite and positive")
         if not self.uncertainty_policy:
             raise ValueError("uncertainty_policy must be non-empty")
+        if self.uncertainty_label_policy != "conditional-on-one-whole-path-canonical-mode":
+            raise ValueError("uncertainty_label_policy must retain the canonical label mode")
+        population_width = validated.population_emissions.size
+        session_width = validated.emissions.size
+        joint_width = population_width + session_width
+        if population_errors.shape != validated.population_emissions.shape:
+            raise ValueError("population path standard errors must align")
+        if session_errors.shape != validated.emissions.shape:
+            raise ValueError("subject-session path standard errors must align")
+        if deviation_errors.shape != validated.emissions.shape:
+            raise ValueError("subject-deviation standard errors must align")
+        if population_covariance.shape != (population_width, population_width):
+            raise ValueError("population covariance must cover the complete population path")
+        if session_covariance.shape != (session_width, session_width):
+            raise ValueError("session covariance must cover every realized subject path")
+        if joint_covariance.shape != (joint_width, joint_width):
+            raise ValueError("joint covariance must cover population and subject paths")
+        if transition_errors.shape != validated.transitions.shape or not np.all(
+            np.isfinite(transition_errors)
+        ):
+            raise ValueError("session transition standard errors must align and be finite")
+        path_arrays = (
+            population_errors,
+            session_errors,
+            deviation_errors,
+            population_covariance,
+            session_covariance,
+            joint_covariance,
+        )
+        if self.path_covariance_positive_definite:
+            if not all(np.all(np.isfinite(values)) for values in path_arrays):
+                raise ValueError("a valid hierarchical path covariance must be finite")
+        elif not all(np.all(np.isnan(values)) for values in path_arrays):
+            raise ValueError("an invalid hierarchical path covariance must remain unavailable")
+        if np.isnan(self.path_hessian_condition) or self.path_hessian_condition <= 0:
+            raise ValueError("path_hessian_condition must be positive and not NaN")
+        expected_hyperparameters = (
+            "population_emission_step_scale",
+            "subject_emission_scale",
+            "emission_step_scale",
+            "transition_concentration",
+        )
+        if hyperparameter_names != expected_hyperparameters:
+            raise ValueError("hyperparameter_names must identify the complete hierarchy")
+        n_hyperparameters = len(hyperparameter_names)
+        if (
+            hyperparameter_estimates.shape != (n_hyperparameters,)
+            or hyperparameter_errors.shape != (n_hyperparameters,)
+            or hyperparameter_covariance.shape != (n_hyperparameters, n_hyperparameters)
+            or hyperparameters_at_boundary.shape != (n_hyperparameters,)
+        ):
+            raise ValueError("hierarchy hyperparameter uncertainty arrays must align")
+        if not np.all(np.isfinite(hyperparameter_estimates)) or np.any(
+            hyperparameter_estimates <= 0
+        ):
+            raise ValueError("hierarchy hyperparameter estimates must be finite and positive")
+        if self.hyperparameters_estimated:
+            finite_errors = np.isfinite(hyperparameter_errors)
+            if np.any(hyperparameter_errors[finite_errors] < 0):
+                raise ValueError("available hierarchy hyperparameter errors must be non-negative")
+            if not np.array_equal(np.isfinite(np.diag(hyperparameter_covariance)), finite_errors):
+                raise ValueError("hierarchy covariance diagonals must match reported errors")
+        elif not np.all(np.isnan(hyperparameter_errors)) or not np.all(
+            np.isnan(hyperparameter_covariance)
+        ):
+            raise ValueError("fixed hierarchy hyperparameters must not acquire uncertainty")
+        if (
+            isinstance(self.hyperparameter_estimation_iterations, bool)
+            or not isinstance(self.hyperparameter_estimation_iterations, int)
+            or self.hyperparameter_estimation_iterations < 0
+        ):
+            raise ValueError("hyperparameter_estimation_iterations must be non-negative")
+        if rate_matrix.shape != (3, 3):
+            raise ValueError("the hierarchy scale EM rate matrix must be three by three")
+        if not self.hyperparameter_uncertainty_policy:
+            raise ValueError("hyperparameter_uncertainty_policy must be non-empty")
         if self.seen_future_session_policy != (
             "population-path-plus-carried-subject-deviation/use-global-transitions"
         ):
@@ -256,6 +475,19 @@ class HierarchicalSessionDynamicGLMHMMFitResult(FitResult):
         object.__setattr__(self, "initialization_restart_objectives", restart_objectives)
         object.__setattr__(self, "initialization_restart_converged", restart_converged)
         object.__setattr__(self, "initialization_restart_messages", restart_messages)
+        object.__setattr__(self, "population_emission_standard_errors", population_errors)
+        object.__setattr__(self, "population_emission_covariance", population_covariance)
+        object.__setattr__(self, "session_emission_standard_errors", session_errors)
+        object.__setattr__(self, "session_emission_covariance", session_covariance)
+        object.__setattr__(self, "subject_deviation_standard_errors", deviation_errors)
+        object.__setattr__(self, "joint_emission_covariance", joint_covariance)
+        object.__setattr__(self, "session_transition_standard_errors", transition_errors)
+        object.__setattr__(self, "hyperparameter_names", hyperparameter_names)
+        object.__setattr__(self, "hyperparameter_estimates", hyperparameter_estimates)
+        object.__setattr__(self, "hyperparameter_standard_errors", hyperparameter_errors)
+        object.__setattr__(self, "hyperparameter_covariance", hyperparameter_covariance)
+        object.__setattr__(self, "hyperparameters_at_boundary", hyperparameters_at_boundary)
+        object.__setattr__(self, "gaussian_scale_em_rate_matrix", rate_matrix)
 
     @property
     def grouping(self) -> str:
@@ -314,6 +546,26 @@ class HierarchicalSessionDynamicGLMHMMFitResult(FitResult):
     def subject_was_fitted(self, subject: Any) -> bool:
         return _scalar(subject) in self.subjects
 
+    def population_emission_intervals(self, *, level: float = 0.95) -> NDArray[np.float64]:
+        """Return canonical-mode Gaussian intervals for the population path."""
+
+        return _normal_path_intervals(
+            self.population_emission_coefficients,
+            self.population_emission_standard_errors,
+            level=level,
+            available=self.path_covariance_positive_definite,
+        )
+
+    def subject_deviation_intervals(self, *, level: float = 0.95) -> NDArray[np.float64]:
+        """Return canonical-mode Gaussian intervals for subject deviations."""
+
+        return _normal_path_intervals(
+            self.subject_deviations,
+            self.subject_deviation_standard_errors,
+            level=level,
+            available=self.path_covariance_positive_definite,
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class HierarchicalSessionDynamicBernoulliGLMHMM(SessionDynamicBernoulliGLMHMM):
@@ -361,7 +613,11 @@ class HierarchicalSessionDynamicBernoulliGLMHMM(SessionDynamicBernoulliGLMHMM):
             f"l2={self.l2};population_emission_step_scale="
             f"{self.population_emission_step_scale};subject_emission_scale="
             f"{self.subject_emission_scale};emission_step_scale={self.emission_step_scale};"
-            f"transition_concentration={self.transition_concentration}{self._design_signature}]"
+            f"transition_concentration={self.transition_concentration};"
+            f"estimate_hyperparameters={self.estimate_hyperparameters};"
+            f"gaussian_scale_bounds={self.gaussian_scale_bounds};"
+            f"transition_concentration_bounds={self.transition_concentration_bounds}"
+            f"{self._design_signature}]"
         )
 
     @property
@@ -381,6 +637,15 @@ class HierarchicalSessionDynamicBernoulliGLMHMM(SessionDynamicBernoulliGLMHMM):
             declared.append(
                 "ridge on every non-intercept population-path coefficient: "
                 f"Normal(0, {1.0 / self.l2**0.5:.4g}) (l2={self.l2})"
+            )
+        if self.estimate_hyperparameters:
+            declared.extend(
+                (
+                    "training-only bounded Laplace-EM estimation of all three Gaussian "
+                    "hierarchy scales",
+                    "training-only conditional Dirichlet-multinomial estimation of "
+                    "transition concentration",
+                )
             )
         return tuple(declared)
 
@@ -492,6 +757,13 @@ class HierarchicalSessionDynamicBernoulliGLMHMM(SessionDynamicBernoulliGLMHMM):
         )
 
     def fit(self, study: Study) -> HierarchicalSessionDynamicGLMHMMFitResult:
+        """Fit fixed hierarchy scales or estimate them from the training study."""
+
+        if self.estimate_hyperparameters:
+            return self._fit_estimated_hyperparameters(study)
+        return self._fit_fixed_hyperparameters(study)
+
+    def _fit_fixed_hyperparameters(self, study: Study) -> HierarchicalSessionDynamicGLMHMMFitResult:
         """Fit population and subject paths with stationary, partial, and full MAP EM."""
 
         structure = _population_structure(study, require_multiple_subjects=True)
@@ -629,6 +901,47 @@ class HierarchicalSessionDynamicBernoulliGLMHMM(SessionDynamicBernoulliGLMHMM):
             emissions,
             transitions,
         )
+        path_uncertainty = self._observed_population_path_covariance(
+            features,
+            outcomes,
+            initial,
+            population,
+            emissions,
+            transitions,
+            structure,
+        )
+        population_width = population.size
+        if path_uncertainty.positive_definite:
+            population_covariance = path_uncertainty.covariance[
+                :population_width, :population_width
+            ]
+            session_covariance = path_uncertainty.covariance[population_width:, population_width:]
+            deviation_map = _subject_deviation_contrast(
+                structure,
+                population.shape,
+                emissions.shape,
+            )
+            deviation_variance = np.einsum(
+                "ij,jk,ik->i",
+                deviation_map,
+                path_uncertainty.covariance,
+                deviation_map,
+                optimize=True,
+            )
+            deviation_errors = np.sqrt(np.maximum(deviation_variance, 0.0)).reshape(emissions.shape)
+        else:
+            population_covariance = np.full((population_width, population_width), np.nan)
+            session_covariance = np.full((emissions.size, emissions.size), np.nan)
+            deviation_errors = np.full(emissions.shape, np.nan)
+        transition_counts = session_transition_counts(
+            posterior.transition_expectations,
+            structure.sessions,
+        )
+        transition_errors = transition_standard_errors(
+            transition_counts,
+            self.transition_concentration,
+            global_transition,
+        )
         occupancy = np.mean(posterior.state_probabilities, axis=0)
         population_crossings, population_gap = self._label_path_diagnostics(population)
         subject_crossings, crossing_subjects, subject_gap = self._subject_label_diagnostics(
@@ -684,7 +997,7 @@ class HierarchicalSessionDynamicBernoulliGLMHMM(SessionDynamicBernoulliGLMHMM):
             n_iterations=len(partial_history) + len(objective_history),
             objective=float(objective_history[-1]),
             gradient_norm=float(np.linalg.norm(final_gradient)),
-            hessian_condition=None,
+            hessian_condition=path_uncertainty.hessian_condition,
             boundary_estimate=boundary,
         )
         n_parameters = len(estimates)
@@ -732,7 +1045,336 @@ class HierarchicalSessionDynamicBernoulliGLMHMM(SessionDynamicBernoulliGLMHMM):
             subject_emission_scale=self.subject_emission_scale,
             emission_step_scale=self.emission_step_scale,
             transition_concentration=self.transition_concentration,
+            population_emission_standard_errors=path_uncertainty.standard_errors[
+                :population_width
+            ].reshape(population.shape),
+            population_emission_covariance=population_covariance,
+            session_emission_standard_errors=path_uncertainty.standard_errors[
+                population_width:
+            ].reshape(emissions.shape),
+            session_emission_covariance=session_covariance,
+            subject_deviation_standard_errors=deviation_errors,
+            joint_emission_covariance=path_uncertainty.covariance,
+            session_transition_standard_errors=transition_errors,
+            path_hessian_condition=path_uncertainty.hessian_condition,
+            path_covariance_positive_definite=path_uncertainty.positive_definite,
+            hyperparameter_names=(
+                "population_emission_step_scale",
+                "subject_emission_scale",
+                "emission_step_scale",
+                "transition_concentration",
+            ),
+            hyperparameter_estimates=np.asarray(
+                [
+                    self.population_emission_step_scale,
+                    self.subject_emission_scale,
+                    self.emission_step_scale,
+                    self.transition_concentration,
+                ]
+            ),
+            hyperparameter_standard_errors=np.full(4, np.nan),
+            hyperparameter_covariance=np.full((4, 4), np.nan),
+            hyperparameters_estimated=False,
+            hyperparameter_estimation_converged=False,
+            hyperparameter_estimation_iterations=0,
+            hyperparameters_at_boundary=np.zeros(4, dtype=np.bool_),
+            gaussian_scale_em_rate_matrix=np.full((3, 3), np.nan),
+            gaussian_scale_em_spectral_radius=float("nan"),
+            hyperparameter_uncertainty_policy="fixed-hyperparameters",
+            uncertainty_policy=(
+                "observed-laplace-conditional-on-canonical-path"
+                if path_uncertainty.positive_definite
+                else "unavailable-nonpositive-observed-path-information"
+            ),
         )
+
+    def _fit_estimated_hyperparameters(
+        self, study: Study
+    ) -> HierarchicalSessionDynamicGLMHMMFitResult:
+        """Estimate all Gaussian hierarchy scales and the transition concentration."""
+
+        structure = _population_structure(study, require_multiple_subjects=True)
+        if len(structure.population_orders) < 2:
+            raise ModelDataError(
+                "estimating the population random-walk scale requires two population orders"
+            )
+        if not any(len(blocks) > 1 for blocks in structure.subject_blocks):
+            raise ModelDataError(
+                "estimating the subject random-walk scale requires a repeated-session subject"
+            )
+        scales = np.clip(
+            np.asarray(
+                [
+                    self.population_emission_step_scale,
+                    self.subject_emission_scale,
+                    self.emission_step_scale,
+                ],
+                dtype=np.float64,
+            ),
+            *self.gaussian_scale_bounds,
+        )
+        concentration = float(
+            np.clip(self.transition_concentration, *self.transition_concentration_bounds)
+        )
+        converged = False
+        iterations = 0
+        for iteration in range(1, self.hyperparameter_max_iterations + 1):
+            iterations = iteration
+            fixed = replace(
+                self,
+                estimate_hyperparameters=False,
+                population_emission_step_scale=float(scales[0]),
+                subject_emission_scale=float(scales[1]),
+                emission_step_scale=float(scales[2]),
+                transition_concentration=concentration,
+            )
+            fitted = fixed._fit_fixed_hyperparameters(study)
+            if not fitted.path_covariance_positive_definite:
+                raise ModelDataError(
+                    "hierarchy hyperparameter estimation requires a positive-definite "
+                    "observed path covariance"
+                )
+            coordinate = fixed._pack_emission_coordinate(
+                fitted.population_emission_coefficients,
+                fitted.session_emission_coefficients,
+            )
+            contrasts = _hierarchy_scale_contrasts(
+                structure,
+                fitted.population_emission_coefficients.shape,
+                fitted.session_emission_coefficients.shape,
+            )
+            updated_scales = update_gaussian_scales(
+                coordinate,
+                fitted.joint_emission_covariance,
+                contrasts,
+                self.gaussian_scale_bounds,
+            )
+            posterior = fixed._dynamic_posterior(
+                fixed.design_matrix(study),
+                fixed.outcomes(study),
+                structure.sessions,
+                fixed.parameter_components(fitted).initial_probabilities,
+                fitted.session_emission_coefficients,
+                fitted.session_transition_matrices,
+            )
+            counts = session_transition_counts(
+                posterior.transition_expectations,
+                structure.sessions,
+            )
+            updated_concentration, _, concentration_converged = estimate_transition_concentration(
+                counts,
+                fitted.global_transition_matrix,
+                self.transition_concentration_bounds,
+            )
+            change = max(
+                float(np.max(np.abs(np.log(updated_scales / scales)))),
+                abs(float(np.log(updated_concentration / concentration))),
+            )
+            scales = updated_scales
+            concentration = updated_concentration
+            if change <= self.hyperparameter_tolerance and concentration_converged:
+                converged = True
+                break
+
+        final_model = replace(
+            self,
+            estimate_hyperparameters=False,
+            population_emission_step_scale=float(scales[0]),
+            subject_emission_scale=float(scales[1]),
+            emission_step_scale=float(scales[2]),
+            transition_concentration=concentration,
+        )
+        fitted = final_model._fit_fixed_hyperparameters(study)
+        if not fitted.path_covariance_positive_definite:
+            raise ModelDataError(
+                "estimated hierarchy requires a positive-definite final path covariance"
+            )
+        coordinate = final_model._pack_emission_coordinate(
+            fitted.population_emission_coefficients,
+            fitted.session_emission_coefficients,
+        )
+        contrasts = _hierarchy_scale_contrasts(
+            structure,
+            fitted.population_emission_coefficients.shape,
+            fitted.session_emission_coefficients.shape,
+        )
+        scale_covariance, scale_errors, scale_uncertainty_valid = (
+            gaussian_scale_observed_covariance(
+                scales,
+                coordinate,
+                fitted.joint_emission_covariance,
+                contrasts,
+            )
+        )
+        rate_matrix = np.full((3, 3), np.nan, dtype=np.float64)
+        spectral_radius = float("nan")
+        scale_policy = "louis-observed-information"
+        if not scale_uncertainty_valid:
+
+            def scale_update(candidate: NDArray[np.float64]) -> NDArray[np.float64]:
+                probe = replace(
+                    self,
+                    estimate_hyperparameters=False,
+                    population_emission_step_scale=float(candidate[0]),
+                    subject_emission_scale=float(candidate[1]),
+                    emission_step_scale=float(candidate[2]),
+                    transition_concentration=concentration,
+                )
+                probe_fit = probe._fit_fixed_hyperparameters(study)
+                if not probe_fit.path_covariance_positive_definite:
+                    return np.full(3, np.nan)
+                probe_coordinate = probe._pack_emission_coordinate(
+                    probe_fit.population_emission_coefficients,
+                    probe_fit.session_emission_coefficients,
+                )
+                probe_contrasts = _hierarchy_scale_contrasts(
+                    structure,
+                    probe_fit.population_emission_coefficients.shape,
+                    probe_fit.session_emission_coefficients.shape,
+                )
+                return update_gaussian_scales(
+                    probe_coordinate,
+                    probe_fit.joint_emission_covariance,
+                    probe_contrasts,
+                    self.gaussian_scale_bounds,
+                )
+
+            (
+                scale_covariance,
+                scale_errors,
+                rate_matrix,
+                spectral_radius,
+                scale_uncertainty_valid,
+            ) = supplemented_scale_covariance(
+                scales,
+                scale_update,
+                self.gaussian_scale_bounds,
+                tuple(len(contrast) for contrast in contrasts),
+                self.hyperparameter_tolerance,
+            )
+            scale_policy = "supplemented-em"
+        posterior = final_model._dynamic_posterior(
+            final_model.design_matrix(study),
+            final_model.outcomes(study),
+            structure.sessions,
+            final_model.parameter_components(fitted).initial_probabilities,
+            fitted.session_emission_coefficients,
+            fitted.session_transition_matrices,
+        )
+        counts = session_transition_counts(
+            posterior.transition_expectations,
+            structure.sessions,
+        )
+        _, concentration_error, concentration_uncertainty_valid = estimate_transition_concentration(
+            counts,
+            fitted.global_transition_matrix,
+            self.transition_concentration_bounds,
+        )
+        hyper_covariance = np.full((4, 4), np.nan, dtype=np.float64)
+        hyper_errors = np.full(4, np.nan, dtype=np.float64)
+        if scale_uncertainty_valid:
+            hyper_covariance[:3, :3] = scale_covariance
+            hyper_errors[:3] = scale_errors
+        if concentration_uncertainty_valid and np.isfinite(concentration_error):
+            hyper_covariance[3, 3] = concentration_error**2
+            hyper_errors[3] = concentration_error
+        if np.all(np.isfinite(hyper_errors)):
+            hyper_covariance[:3, 3] = hyper_covariance[3, :3] = 0.0
+        estimates = np.concatenate((scales, [concentration]))
+        boundary_tolerance = max(self.hyperparameter_tolerance, 1e-4)
+        reported_scale_policy = (
+            scale_policy if scale_uncertainty_valid else "scale-unavailable-unstable-information"
+        )
+        at_boundary = np.asarray(
+            [
+                *(
+                    at_log_bound(
+                        float(scale),
+                        self.gaussian_scale_bounds,
+                        boundary_tolerance,
+                    )
+                    for scale in scales
+                ),
+                at_log_bound(
+                    concentration,
+                    self.transition_concentration_bounds,
+                    boundary_tolerance,
+                ),
+            ],
+            dtype=np.bool_,
+        )
+        fixed_converged = bool(fitted.diagnostics.converged)
+        hyper_optimizer = f"{fitted.diagnostics.optimizer}; outer hierarchy "
+        hyper_optimizer += "Laplace-EM/Dirichlet evidence"
+        diagnostics = replace(
+            fitted.diagnostics,
+            converged=fixed_converged and converged,
+            optimizer=hyper_optimizer,
+            status=0 if fixed_converged and converged else 1,
+            message=(
+                f"{fitted.diagnostics.message}; hierarchy hyperparameter estimation "
+                f"{'converged' if converged else 'did not converge'} after {iterations} iterations"
+            ),
+            n_iterations=(fitted.diagnostics.n_iterations or 0) + iterations,
+            boundary_estimate=bool(fitted.diagnostics.boundary_estimate or np.any(at_boundary)),
+        )
+        return replace(
+            fitted,
+            model_signature=self.signature,
+            diagnostics=diagnostics,
+            population_emission_step_scale=float(scales[0]),
+            subject_emission_scale=float(scales[1]),
+            emission_step_scale=float(scales[2]),
+            transition_concentration=concentration,
+            hyperparameter_estimates=estimates,
+            hyperparameter_standard_errors=hyper_errors,
+            hyperparameter_covariance=hyper_covariance,
+            hyperparameters_estimated=True,
+            hyperparameter_estimation_converged=converged,
+            hyperparameter_estimation_iterations=iterations,
+            hyperparameters_at_boundary=at_boundary,
+            gaussian_scale_em_rate_matrix=rate_matrix,
+            gaussian_scale_em_spectral_radius=spectral_radius,
+            hyperparameter_uncertainty_policy=(
+                f"{reported_scale_policy};"
+                "conditional-dirichlet-multinomial;block-diagonal-cross-family-covariance"
+            ),
+        )
+
+    def _observed_population_path_covariance(
+        self,
+        features: NDArray[np.float64],
+        outcomes: NDArray[np.float64],
+        initial: NDArray[np.float64],
+        population: NDArray[np.float64],
+        emissions: NDArray[np.float64],
+        transitions: NDArray[np.float64],
+        structure: _PopulationStructure,
+    ) -> Any:
+        """Differentiate the state-marginalized population/subject path objective."""
+
+        mode = self._pack_emission_coordinate(population, emissions)
+
+        def gradient(vector: NDArray[np.float64]) -> NDArray[np.float64]:
+            _, candidate_emissions = self._unpack_emission_coordinate(vector, structure)
+            posterior = self._dynamic_posterior(
+                features,
+                outcomes,
+                structure.sessions,
+                initial,
+                candidate_emissions,
+                transitions,
+            )
+            _, values = self._population_emission_m_step_objective(
+                vector,
+                features,
+                outcomes,
+                posterior.state_probabilities,
+                structure,
+            )
+            return values
+
+        return observed_path_covariance(gradient, mode)
 
     def transition_probabilities(
         self,
@@ -786,6 +1428,182 @@ class HierarchicalSessionDynamicBernoulliGLMHMM(SessionDynamicBernoulliGLMHMM):
         probability = self.predict(study, fit, mode=mode).probability
         scores = outcomes * np.log(probability) + (1.0 - outcomes) * np.log1p(-probability)
         return protected_array(scores, dtype=np.float64)
+
+    def predict_new_subjects(
+        self,
+        study: Study,
+        fit: FitResult,
+        *,
+        n_draws: int,
+        seed: int,
+        include_population_path_uncertainty: bool = True,
+    ) -> UnseenSubjectDynamicPrediction:
+        """Integrate coherent random paths for subjects absent from the training fit.
+
+        One Monte Carlo draw contains one population path shared by all prediction subjects,
+        one evolving deviation path per subject, and one Dirichlet session-transition matrix
+        per subject-session block.  Pointwise marginal scores are retained for diagnostics,
+        but the coherent predictive likelihood is the subject-joint score.
+        """
+
+        population_fit = self._validate_population_fit(fit)
+        if isinstance(n_draws, bool) or not isinstance(n_draws, int) or n_draws < 2:
+            raise ValueError("n_draws must be an integer of at least two")
+        if isinstance(seed, bool) or not isinstance(seed, int) or seed < 0:
+            raise ValueError("seed must be a non-negative integer")
+        if not isinstance(include_population_path_uncertainty, bool):
+            raise ValueError("include_population_path_uncertainty must be boolean")
+        if (
+            include_population_path_uncertainty
+            and not population_fit.path_covariance_positive_definite
+        ):
+            raise ModelDataError(
+                "population path integration requires a positive-definite fitted covariance"
+            )
+        structure = _population_structure(study, require_multiple_subjects=False)
+        overlap = set(structure.subjects) & set(population_fit.subjects)
+        if overlap:
+            raise ValueError(
+                "predict_new_subjects requires entirely unseen subjects; fitted labels include "
+                f"{sorted(overlap, key=repr)!r}"
+            )
+        fitted_positions = {
+            int(order): position
+            for position, order in enumerate(population_fit.population_session_orders)
+        }
+        last_fitted_order = int(population_fit.population_session_orders[-1])
+        requested_orders = tuple(sorted(set(int(value) for value in structure.orders)))
+        invalid = [
+            order
+            for order in requested_orders
+            if order not in fitted_positions and order <= last_fitted_order
+        ]
+        if invalid:
+            raise ModelDataError(
+                "unseen-subject integration cannot invent an earlier or interleaved population "
+                f"path; missing fitted orders are {invalid!r}"
+            )
+
+        generator = np.random.default_rng(seed)
+        features = self.design_matrix(study)
+        outcomes = self.outcomes(study)
+        base = self.parameter_components(population_fit)
+        n_blocks = len(structure.sessions)
+        shape = (self.n_states, len(self.coefficient_names))
+        probabilities = np.empty((n_draws, len(study)), dtype=np.float64)
+        log_probabilities = np.empty_like(probabilities)
+        emission_draws = np.empty((n_draws, n_blocks, *shape), dtype=np.float64)
+        transition_draws = np.empty(
+            (n_draws, n_blocks, self.n_states, self.n_states), dtype=np.float64
+        )
+        population_mean = population_fit.population_emission_coefficients.ravel()
+        population_covariance = population_fit.population_emission_covariance
+
+        for draw in range(n_draws):
+            if include_population_path_uncertainty:
+                fitted_population = generator.multivariate_normal(
+                    population_mean,
+                    population_covariance,
+                    check_valid="raise",
+                ).reshape(population_fit.population_emission_coefficients.shape)
+            else:
+                fitted_population = np.asarray(
+                    population_fit.population_emission_coefficients,
+                    dtype=np.float64,
+                )
+            by_order = {
+                order: fitted_population[position] for order, position in fitted_positions.items()
+            }
+            previous = fitted_population[-1]
+            for order in requested_orders:
+                if order > last_fitted_order:
+                    previous = previous + generator.normal(
+                        0.0,
+                        population_fit.population_emission_step_scale,
+                        shape,
+                    )
+                    by_order[order] = previous
+
+            for blocks in structure.subject_blocks:
+                deviation = generator.normal(
+                    0.0,
+                    population_fit.subject_emission_scale,
+                    shape,
+                )
+                for within_subject, block in enumerate(blocks):
+                    if within_subject:
+                        deviation = deviation + generator.normal(
+                            0.0,
+                            population_fit.emission_step_scale,
+                            shape,
+                        )
+                    emission_draws[draw, block] = by_order[int(structure.orders[block])] + deviation
+            for block in range(n_blocks):
+                for state in range(self.n_states):
+                    transition_draws[draw, block, state] = generator.dirichlet(
+                        population_fit.transition_concentration
+                        * population_fit.global_transition_matrix[state]
+                        + 1.0
+                    )
+            components = tuple(
+                GLMHMMParameters(
+                    initial_probabilities=base.initial_probabilities,
+                    transition_matrix=transition_draws[draw, block],
+                    emission_coefficients=emission_draws[draw, block],
+                    coefficient_names=self.coefficient_names,
+                )
+                for block in range(n_blocks)
+            )
+            filtered = self._dynamic_filtered(features, outcomes, study, components)
+            emission_probability = np.empty((len(study), self.n_states), dtype=np.float64)
+            for block, indices in enumerate(structure.sessions):
+                index = np.asarray(indices, dtype=np.intp)
+                emission_probability[index] = expit(features[index] @ emission_draws[draw, block].T)
+            probability = np.sum(filtered.predictive * emission_probability, axis=1)
+            probability = np.clip(
+                probability,
+                np.finfo(float).tiny,
+                1.0 - np.finfo(float).eps,
+            )
+            probabilities[draw] = probability
+            log_probabilities[draw] = outcomes * np.log(probability) + (1.0 - outcomes) * np.log1p(
+                -probability
+            )
+
+        subject_position = {subject: index for index, subject in enumerate(structure.subjects)}
+        row_subjects = np.asarray(
+            [subject_position[_scalar(value)] for value in study["subject"]],
+            dtype=np.intp,
+        )
+        log_draws = np.log(float(n_draws))
+        joint = np.empty(len(structure.subjects), dtype=np.float64)
+        effective = np.empty_like(joint)
+        mcse = np.empty_like(joint)
+        for subject in range(len(structure.subjects)):
+            weights = np.sum(log_probabilities[:, row_subjects == subject], axis=1)
+            log_weight_sum = float(logsumexp(weights))
+            joint[subject] = log_weight_sum - log_draws
+            normalized = np.exp(weights - log_weight_sum)
+            effective[subject] = 1.0 / float(np.sum(normalized**2))
+            shifted = np.exp(weights - float(np.max(weights)))
+            mcse[subject] = float(np.std(shifted, ddof=1) / np.sqrt(n_draws) / np.mean(shifted))
+        return UnseenSubjectDynamicPrediction(
+            subjects=structure.subjects,
+            row_subject_indices=row_subjects,
+            probability=np.mean(probabilities, axis=0),
+            draw_probabilities=probabilities,
+            draw_pointwise_log_probability=log_probabilities,
+            pointwise_marginal_log_probability=(logsumexp(log_probabilities, axis=0) - log_draws),
+            subject_joint_log_probability=joint,
+            subject_effective_draws=effective,
+            subject_log_probability_mcse=mcse,
+            draw_session_emission_coefficients=emission_draws,
+            draw_session_transition_matrices=transition_draws,
+            n_draws=n_draws,
+            seed=seed,
+            includes_population_path_uncertainty=include_population_path_uncertainty,
+            label_path_ambiguous=population_fit.label_path_ambiguous,
+        )
 
     def state_probabilities(
         self,
@@ -1377,6 +2195,88 @@ def _set_validated_trajectory(
     object.__setattr__(target, "session_emission_coefficients", values.emissions)
     object.__setattr__(target, "session_transition_matrices", values.transitions)
     object.__setattr__(target, "global_transition_matrix", values.global_transition)
+
+
+def _subject_deviation_contrast(
+    structure: _PopulationStructure,
+    population_shape: tuple[int, ...],
+    emission_shape: tuple[int, ...],
+) -> NDArray[np.float64]:
+    """Map the joint ``(population, realized path)`` coordinate onto deviations."""
+
+    trailing = int(np.prod(population_shape[1:], dtype=np.int64))
+    if emission_shape[1:] != population_shape[1:]:
+        raise ValueError("population and session path coordinates must share trailing axes")
+    population_width = int(np.prod(population_shape, dtype=np.int64))
+    session_width = int(np.prod(emission_shape, dtype=np.int64))
+    matrix = np.zeros((session_width, population_width + session_width), dtype=np.float64)
+    for block, population_index in enumerate(structure.population_index):
+        for offset in range(trailing):
+            row = block * trailing + offset
+            matrix[row, int(population_index) * trailing + offset] = -1.0
+            matrix[row, population_width + row] = 1.0
+    return matrix
+
+
+def _hierarchy_scale_contrasts(
+    structure: _PopulationStructure,
+    population_shape: tuple[int, ...],
+    emission_shape: tuple[int, ...],
+) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+    """Return contrasts for population steps, initial deviations, and subject steps."""
+
+    trailing = int(np.prod(population_shape[1:], dtype=np.int64))
+    population_width = int(np.prod(population_shape, dtype=np.int64))
+    joint_width = population_width + int(np.prod(emission_shape, dtype=np.int64))
+    population = np.zeros(((population_shape[0] - 1) * trailing, joint_width))
+    row = 0
+    for position in range(1, population_shape[0]):
+        for offset in range(trailing):
+            population[row, (position - 1) * trailing + offset] = -1.0
+            population[row, position * trailing + offset] = 1.0
+            row += 1
+
+    deviations = _subject_deviation_contrast(structure, population_shape, emission_shape)
+    initial_rows = np.asarray(
+        [
+            block * trailing + offset
+            for blocks in structure.subject_blocks
+            for block in blocks[:1]
+            for offset in range(trailing)
+        ],
+        dtype=np.intp,
+    )
+    initial = deviations[initial_rows]
+    step_rows: list[NDArray[np.float64]] = []
+    for blocks in structure.subject_blocks:
+        for previous, current in pairwise(blocks):
+            for offset in range(trailing):
+                step_rows.append(
+                    deviations[current * trailing + offset]
+                    - deviations[previous * trailing + offset]
+                )
+    if not step_rows:
+        raise ValueError("subject-step contrasts require a repeated-session subject")
+    return population, initial, np.stack(step_rows)
+
+
+def _normal_path_intervals(
+    estimates: NDArray[np.float64],
+    standard_errors: NDArray[np.float64],
+    *,
+    level: float,
+    available: bool,
+) -> NDArray[np.float64]:
+    if not 0.0 < level < 1.0:
+        raise ValueError("level must lie strictly between zero and one")
+    if not available:
+        raise ValueError("the local path covariance is unavailable")
+    critical = float(ndtri(0.5 + level / 2.0))
+    radius = critical * np.asarray(standard_errors, dtype=np.float64)
+    return protected_array(
+        np.stack((np.asarray(estimates) - radius, np.asarray(estimates) + radius), axis=-1),
+        dtype=np.float64,
+    )
 
 
 def _normalized_positive(values: NDArray[np.float64]) -> NDArray[np.float64]:

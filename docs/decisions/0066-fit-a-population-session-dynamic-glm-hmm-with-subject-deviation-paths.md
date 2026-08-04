@@ -4,6 +4,12 @@
 - **Date:** 2026-08-03
 - **Related guide:** [Bernoulli GLM-HMM](../glm-hmm.md)
 
+> **Subsequent decision:** [SDR-0067](0067-keep-dynamic-glm-hmm-uncertainty-conditional-on-one-label-mode.md)
+> adds canonical-mode path covariance, opt-in hierarchy
+> hyperparameter estimation, and coherent unseen-subject Monte Carlo integration. The
+> population/subject hierarchy and deterministic plug-in policies specified below remain
+> unchanged.
+
 ## Context
 
 SDR-0065 deliberately limited the published session-dynamic GLM-HMM to one subject. Fitting

@@ -10,16 +10,27 @@ temporally continuous prior.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 from scipy.optimize import minimize
-from scipy.special import expit, logsumexp
+from scipy.special import expit, logsumexp, ndtri
 
 from behavio._internal.arrays import protected_array
 from behavio.models._kernels.bernoulli import ordered_session_indices
+from behavio.models._kernels.dynamic_uncertainty import (
+    at_log_bound,
+    estimate_transition_concentration,
+    first_axis_difference_contrast,
+    gaussian_scale_observed_covariance,
+    observed_path_covariance,
+    session_transition_counts,
+    supplemented_scale_covariance,
+    transition_standard_errors,
+    update_gaussian_scales,
+)
 from behavio.models.base import (
     FitDiagnostics,
     FitResult,
@@ -143,7 +154,24 @@ class SessionDynamicGLMHMMFitResult(FitResult):
     initialization_selected_restart: int
     emission_step_scale: float
     transition_concentration: float
-    uncertainty_policy: str = "not-estimated"
+    session_emission_standard_errors: NDArray[np.float64]
+    session_emission_covariance: NDArray[np.float64]
+    session_transition_standard_errors: NDArray[np.float64]
+    path_hessian_condition: float
+    path_covariance_positive_definite: bool
+    hyperparameter_names: tuple[str, ...]
+    hyperparameter_estimates: NDArray[np.float64]
+    hyperparameter_standard_errors: NDArray[np.float64]
+    hyperparameter_covariance: NDArray[np.float64]
+    hyperparameters_estimated: bool
+    hyperparameter_estimation_converged: bool
+    hyperparameter_estimation_iterations: int
+    hyperparameters_at_boundary: NDArray[np.bool_]
+    gaussian_scale_em_rate_matrix: NDArray[np.float64]
+    gaussian_scale_em_spectral_radius: float
+    hyperparameter_uncertainty_policy: str
+    uncertainty_policy: str = "observed-laplace-conditional-on-canonical-path"
+    uncertainty_label_policy: str = "conditional-on-one-whole-path-canonical-mode"
     future_session_policy: str = "carry-last-emissions/use-global-transitions"
 
     def __post_init__(self) -> None:
@@ -161,6 +189,23 @@ class SessionDynamicGLMHMMFitResult(FitResult):
         )
         restart_converged = protected_array(self.initialization_restart_converged, dtype=np.bool_)
         restart_messages = tuple(self.initialization_restart_messages)
+        emission_errors = protected_array(self.session_emission_standard_errors, dtype=np.float64)
+        emission_covariance = protected_array(self.session_emission_covariance, dtype=np.float64)
+        transition_errors = protected_array(
+            self.session_transition_standard_errors, dtype=np.float64
+        )
+        hyperparameter_names = tuple(self.hyperparameter_names)
+        hyperparameter_estimates = protected_array(self.hyperparameter_estimates, dtype=np.float64)
+        hyperparameter_errors = protected_array(
+            self.hyperparameter_standard_errors, dtype=np.float64
+        )
+        hyperparameter_covariance = protected_array(
+            self.hyperparameter_covariance, dtype=np.float64
+        )
+        hyperparameters_at_boundary = protected_array(
+            self.hyperparameters_at_boundary, dtype=np.bool_
+        )
+        rate_matrix = protected_array(self.gaussian_scale_em_rate_matrix, dtype=np.float64)
         keys = tuple(self.session_keys)
         permutation = tuple(self.canonical_permutation)
         n_states = emissions.shape[1] if emissions.ndim == 3 else 0
@@ -206,6 +251,64 @@ class SessionDynamicGLMHMMFitResult(FitResult):
             raise ValueError("initialization_selected_restart must identify one restart")
         if not self.uncertainty_policy:
             raise ValueError("uncertainty_policy must be non-empty")
+        if self.uncertainty_label_policy != "conditional-on-one-whole-path-canonical-mode":
+            raise ValueError("uncertainty_label_policy must retain the canonical label mode")
+        path_width = emissions.size
+        if emission_errors.shape != emissions.shape:
+            raise ValueError("session emission standard errors must align with the path")
+        if emission_covariance.shape != (path_width, path_width):
+            raise ValueError("session emission covariance must cover the complete path")
+        if transition_errors.shape != transitions.shape or not np.all(
+            np.isfinite(transition_errors)
+        ):
+            raise ValueError("session transition standard errors must align and be finite")
+        if np.any(transition_errors < 0):
+            raise ValueError("session transition standard errors must be non-negative")
+        if self.path_covariance_positive_definite:
+            if not np.all(np.isfinite(emission_errors)) or not np.all(
+                np.isfinite(emission_covariance)
+            ):
+                raise ValueError("a valid path covariance must be finite")
+        elif not np.all(np.isnan(emission_errors)) or not np.all(np.isnan(emission_covariance)):
+            raise ValueError("an invalid path covariance must remain visibly unavailable")
+        if np.isnan(self.path_hessian_condition) or self.path_hessian_condition <= 0:
+            raise ValueError("path_hessian_condition must be positive and not NaN")
+        expected_hyperparameters = ("emission_step_scale", "transition_concentration")
+        if hyperparameter_names != expected_hyperparameters:
+            raise ValueError("hyperparameter_names must identify both dynamic hyperparameters")
+        hyper_shape = (len(hyperparameter_names),)
+        if (
+            hyperparameter_estimates.shape != hyper_shape
+            or hyperparameter_errors.shape != hyper_shape
+            or hyperparameter_covariance.shape
+            != (len(hyperparameter_names), len(hyperparameter_names))
+            or hyperparameters_at_boundary.shape != hyper_shape
+        ):
+            raise ValueError("hyperparameter uncertainty arrays must align")
+        if not np.all(np.isfinite(hyperparameter_estimates)) or np.any(
+            hyperparameter_estimates <= 0
+        ):
+            raise ValueError("hyperparameter estimates must be finite and positive")
+        if self.hyperparameters_estimated:
+            finite_errors = np.isfinite(hyperparameter_errors)
+            if np.any(hyperparameter_errors[finite_errors] < 0):
+                raise ValueError("available hyperparameter errors must be non-negative")
+            if not np.array_equal(np.isfinite(np.diag(hyperparameter_covariance)), finite_errors):
+                raise ValueError("hyperparameter covariance diagonals must match reported errors")
+        elif not np.all(np.isnan(hyperparameter_errors)) or not np.all(
+            np.isnan(hyperparameter_covariance)
+        ):
+            raise ValueError("fixed hyperparameters must not acquire estimated uncertainty")
+        if (
+            isinstance(self.hyperparameter_estimation_iterations, bool)
+            or not isinstance(self.hyperparameter_estimation_iterations, int)
+            or self.hyperparameter_estimation_iterations < 0
+        ):
+            raise ValueError("hyperparameter_estimation_iterations must be non-negative")
+        if rate_matrix.shape != (1, 1):
+            raise ValueError("the Gaussian-scale EM rate matrix must be one by one")
+        if not self.hyperparameter_uncertainty_policy:
+            raise ValueError("hyperparameter_uncertainty_policy must be non-empty")
         if self.future_session_policy != "carry-last-emissions/use-global-transitions":
             raise ValueError("future_session_policy must name the model's declared forecast rule")
         object.__setattr__(self, "session_keys", keys)
@@ -221,6 +324,35 @@ class SessionDynamicGLMHMMFitResult(FitResult):
         object.__setattr__(self, "initialization_restart_objectives", restart_objectives)
         object.__setattr__(self, "initialization_restart_converged", restart_converged)
         object.__setattr__(self, "initialization_restart_messages", restart_messages)
+        object.__setattr__(self, "session_emission_standard_errors", emission_errors)
+        object.__setattr__(self, "session_emission_covariance", emission_covariance)
+        object.__setattr__(self, "session_transition_standard_errors", transition_errors)
+        object.__setattr__(self, "hyperparameter_names", hyperparameter_names)
+        object.__setattr__(self, "hyperparameter_estimates", hyperparameter_estimates)
+        object.__setattr__(self, "hyperparameter_standard_errors", hyperparameter_errors)
+        object.__setattr__(self, "hyperparameter_covariance", hyperparameter_covariance)
+        object.__setattr__(self, "hyperparameters_at_boundary", hyperparameters_at_boundary)
+        object.__setattr__(self, "gaussian_scale_em_rate_matrix", rate_matrix)
+
+    def emission_intervals(self, *, level: float = 0.95) -> NDArray[np.float64]:
+        """Return canonical-mode Gaussian path intervals as ``(..., lower/upper)``."""
+
+        if not 0.0 < level < 1.0:
+            raise ValueError("level must lie strictly between zero and one")
+        if not self.path_covariance_positive_definite:
+            raise ValueError("the local path covariance is unavailable")
+        critical = float(ndtri(0.5 + level / 2.0))
+        radius = critical * self.session_emission_standard_errors
+        return protected_array(
+            np.stack(
+                (
+                    self.session_emission_coefficients - radius,
+                    self.session_emission_coefficients + radius,
+                ),
+                axis=-1,
+            ),
+            dtype=np.float64,
+        )
 
     @property
     def state_separation(self) -> float:
@@ -283,6 +415,11 @@ class SessionDynamicBernoulliGLMHMM(BernoulliGLMHMM):
     transition_concentration: float = 10.0
     dynamic_max_iterations: int = 100
     dynamic_tolerance: float = 1e-6
+    estimate_hyperparameters: bool = False
+    gaussian_scale_bounds: tuple[float, float] = (0.01, 5.0)
+    transition_concentration_bounds: tuple[float, float] = (0.05, 2000.0)
+    hyperparameter_max_iterations: int = 8
+    hyperparameter_tolerance: float = 1e-2
 
     def __post_init__(self) -> None:
         BernoulliGLMHMM.__post_init__(self)
@@ -308,6 +445,27 @@ class SessionDynamicBernoulliGLMHMM(BernoulliGLMHMM):
             raise ValueError("dynamic_max_iterations must be a positive integer")
         if not np.isfinite(self.dynamic_tolerance) or self.dynamic_tolerance <= 0:
             raise ValueError("dynamic_tolerance must be finite and positive")
+        if not isinstance(self.estimate_hyperparameters, bool):
+            raise ValueError("estimate_hyperparameters must be boolean")
+        for name, bounds in (
+            ("gaussian_scale_bounds", self.gaussian_scale_bounds),
+            ("transition_concentration_bounds", self.transition_concentration_bounds),
+        ):
+            if (
+                len(bounds) != 2
+                or not np.all(np.isfinite(bounds))
+                or bounds[0] <= 0
+                or bounds[0] >= bounds[1]
+            ):
+                raise ValueError(f"{name} must contain increasing positive finite bounds")
+        if (
+            isinstance(self.hyperparameter_max_iterations, bool)
+            or not isinstance(self.hyperparameter_max_iterations, int)
+            or self.hyperparameter_max_iterations < 1
+        ):
+            raise ValueError("hyperparameter_max_iterations must be a positive integer")
+        if not np.isfinite(self.hyperparameter_tolerance) or self.hyperparameter_tolerance <= 0:
+            raise ValueError("hyperparameter_tolerance must be finite and positive")
 
     @property
     def model_name(self) -> str:
@@ -331,7 +489,11 @@ class SessionDynamicBernoulliGLMHMM(BernoulliGLMHMM):
             f"{self.model_name}[states={self.n_states};outcome={self.outcome};"
             f"predictors={predictors};choice_lags={self.choice_lags};label_by={self.label_by};"
             f"l2={self.l2};emission_step_scale={self.emission_step_scale};"
-            f"transition_concentration={self.transition_concentration}{self._design_signature}]"
+            f"transition_concentration={self.transition_concentration};"
+            f"estimate_hyperparameters={self.estimate_hyperparameters};"
+            f"gaussian_scale_bounds={self.gaussian_scale_bounds};"
+            f"transition_concentration_bounds={self.transition_concentration_bounds}"
+            f"{self._design_signature}]"
         )
 
     @property
@@ -346,6 +508,12 @@ class SessionDynamicBernoulliGLMHMM(BernoulliGLMHMM):
                 f"transition_concentration={self.transition_concentration:.4g}",
             )
         )
+        if self.estimate_hyperparameters:
+            declared += (
+                "training-only bounded Laplace-EM estimation of the emission step scale",
+                "training-only conditional Dirichlet-multinomial estimation of transition "
+                "concentration",
+            )
         return tuple(declared)
 
     @property
@@ -441,6 +609,13 @@ class SessionDynamicBernoulliGLMHMM(BernoulliGLMHMM):
         )
 
     def fit(self, study: Study) -> SessionDynamicGLMHMMFitResult:
+        """Fit fixed hyperparameters or estimate them strictly from this training study."""
+
+        if self.estimate_hyperparameters:
+            return self._fit_estimated_hyperparameters(study)
+        return self._fit_fixed_hyperparameters(study)
+
+    def _fit_fixed_hyperparameters(self, study: Study) -> SessionDynamicGLMHMMFitResult:
         """Fit the session path with the reference stationary, partial, and full stages."""
 
         subject, keys, orders, sessions = _session_structure(study)
@@ -545,6 +720,23 @@ class SessionDynamicBernoulliGLMHMM(BernoulliGLMHMM):
         posterior = self._dynamic_posterior(
             features, outcomes, sessions, initial, emissions, transitions
         )
+        path_uncertainty = self._observed_emission_path_covariance(
+            features,
+            outcomes,
+            sessions,
+            initial,
+            emissions,
+            transitions,
+        )
+        transition_counts = session_transition_counts(
+            posterior.transition_expectations,
+            sessions,
+        )
+        transition_errors = transition_standard_errors(
+            transition_counts,
+            self.transition_concentration,
+            global_transition,
+        )
         occupancy = np.mean(posterior.state_probabilities, axis=0)
         crossings, minimum_label_gap = self._label_path_diagnostics(emissions)
         minimum_separation = min(
@@ -591,7 +783,7 @@ class SessionDynamicBernoulliGLMHMM(BernoulliGLMHMM):
             n_iterations=len(partial_history) + len(objective_history),
             objective=float(objective_history[-1]),
             gradient_norm=float(np.linalg.norm(final_gradient)),
-            hessian_condition=None,
+            hessian_condition=path_uncertainty.hessian_condition,
             boundary_estimate=boundary,
         )
         n_parameters = len(estimates)
@@ -631,7 +823,259 @@ class SessionDynamicBernoulliGLMHMM(BernoulliGLMHMM):
             initialization_selected_restart=initialization.selected_restart,
             emission_step_scale=self.emission_step_scale,
             transition_concentration=self.transition_concentration,
+            session_emission_standard_errors=path_uncertainty.standard_errors.reshape(
+                emissions.shape
+            ),
+            session_emission_covariance=path_uncertainty.covariance,
+            session_transition_standard_errors=transition_errors,
+            path_hessian_condition=path_uncertainty.hessian_condition,
+            path_covariance_positive_definite=path_uncertainty.positive_definite,
+            hyperparameter_names=("emission_step_scale", "transition_concentration"),
+            hyperparameter_estimates=np.asarray(
+                [self.emission_step_scale, self.transition_concentration]
+            ),
+            hyperparameter_standard_errors=np.full(2, np.nan),
+            hyperparameter_covariance=np.full((2, 2), np.nan),
+            hyperparameters_estimated=False,
+            hyperparameter_estimation_converged=False,
+            hyperparameter_estimation_iterations=0,
+            hyperparameters_at_boundary=np.zeros(2, dtype=np.bool_),
+            gaussian_scale_em_rate_matrix=np.full((1, 1), np.nan),
+            gaussian_scale_em_spectral_radius=float("nan"),
+            hyperparameter_uncertainty_policy="fixed-hyperparameters",
+            uncertainty_policy=(
+                "observed-laplace-conditional-on-canonical-path"
+                if path_uncertainty.positive_definite
+                else "unavailable-nonpositive-observed-path-information"
+            ),
         )
+
+    def _fit_estimated_hyperparameters(self, study: Study) -> SessionDynamicGLMHMMFitResult:
+        """Estimate Gaussian and Dirichlet hyperparameters by training-only Laplace EM."""
+
+        _, _, _, sessions = _session_structure(study)
+        if len(sessions) < 2:
+            raise ModelDataError(
+                "estimating the emission random-walk scale requires at least two sessions"
+            )
+        scale = float(np.clip(self.emission_step_scale, *self.gaussian_scale_bounds))
+        concentration = float(
+            np.clip(self.transition_concentration, *self.transition_concentration_bounds)
+        )
+        converged = False
+        iterations = 0
+        fitted: SessionDynamicGLMHMMFitResult | None = None
+        for iteration in range(1, self.hyperparameter_max_iterations + 1):
+            iterations = iteration
+            fixed = replace(
+                self,
+                estimate_hyperparameters=False,
+                emission_step_scale=scale,
+                transition_concentration=concentration,
+            )
+            fitted = fixed._fit_fixed_hyperparameters(study)
+            if not fitted.path_covariance_positive_definite:
+                raise ModelDataError(
+                    "hyperparameter estimation requires a positive-definite observed path "
+                    "covariance"
+                )
+            contrast = first_axis_difference_contrast(fitted.session_emission_coefficients.shape)
+            updated_scale = float(
+                update_gaussian_scales(
+                    fitted.session_emission_coefficients.ravel(),
+                    fitted.session_emission_covariance,
+                    (contrast,),
+                    self.gaussian_scale_bounds,
+                )[0]
+            )
+            posterior = fixed._dynamic_posterior(
+                fixed.design_matrix(study),
+                fixed.outcomes(study),
+                sessions,
+                fixed.parameter_components(fitted).initial_probabilities,
+                fitted.session_emission_coefficients,
+                fitted.session_transition_matrices,
+            )
+            counts = session_transition_counts(posterior.transition_expectations, sessions)
+            updated_concentration, _, concentration_converged = estimate_transition_concentration(
+                counts,
+                fitted.global_transition_matrix,
+                self.transition_concentration_bounds,
+            )
+            change = max(
+                abs(float(np.log(updated_scale / scale))),
+                abs(float(np.log(updated_concentration / concentration))),
+            )
+            scale = updated_scale
+            concentration = updated_concentration
+            if change <= self.hyperparameter_tolerance and concentration_converged:
+                converged = True
+                break
+
+        final_model = replace(
+            self,
+            estimate_hyperparameters=False,
+            emission_step_scale=scale,
+            transition_concentration=concentration,
+        )
+        fitted = final_model._fit_fixed_hyperparameters(study)
+        if not fitted.path_covariance_positive_definite:
+            raise ModelDataError(
+                "estimated hyperparameters require a positive-definite final path covariance"
+            )
+        contrast = first_axis_difference_contrast(fitted.session_emission_coefficients.shape)
+        scale_covariance, scale_errors, scale_uncertainty_valid = (
+            gaussian_scale_observed_covariance(
+                np.asarray([scale]),
+                fitted.session_emission_coefficients.ravel(),
+                fitted.session_emission_covariance,
+                (contrast,),
+            )
+        )
+        rate_matrix = np.full((1, 1), np.nan, dtype=np.float64)
+        spectral_radius = float("nan")
+        scale_policy = "louis-observed-information"
+        if not scale_uncertainty_valid:
+
+            def scale_update(candidate: NDArray[np.float64]) -> NDArray[np.float64]:
+                probe = replace(
+                    self,
+                    estimate_hyperparameters=False,
+                    emission_step_scale=float(candidate[0]),
+                    transition_concentration=concentration,
+                )
+                probe_fit = probe._fit_fixed_hyperparameters(study)
+                if not probe_fit.path_covariance_positive_definite:
+                    return np.full(1, np.nan)
+                return update_gaussian_scales(
+                    probe_fit.session_emission_coefficients.ravel(),
+                    probe_fit.session_emission_covariance,
+                    (
+                        first_axis_difference_contrast(
+                            probe_fit.session_emission_coefficients.shape
+                        ),
+                    ),
+                    self.gaussian_scale_bounds,
+                )
+
+            (
+                scale_covariance,
+                scale_errors,
+                rate_matrix,
+                spectral_radius,
+                scale_uncertainty_valid,
+            ) = supplemented_scale_covariance(
+                np.asarray([scale]),
+                scale_update,
+                self.gaussian_scale_bounds,
+                (len(contrast),),
+                self.hyperparameter_tolerance,
+            )
+            scale_policy = "supplemented-em"
+        posterior = final_model._dynamic_posterior(
+            final_model.design_matrix(study),
+            final_model.outcomes(study),
+            sessions,
+            final_model.parameter_components(fitted).initial_probabilities,
+            fitted.session_emission_coefficients,
+            fitted.session_transition_matrices,
+        )
+        counts = session_transition_counts(posterior.transition_expectations, sessions)
+        _, concentration_error, concentration_uncertainty_valid = estimate_transition_concentration(
+            counts,
+            fitted.global_transition_matrix,
+            self.transition_concentration_bounds,
+        )
+        hyper_covariance = np.full((2, 2), np.nan, dtype=np.float64)
+        hyper_errors = np.full(2, np.nan, dtype=np.float64)
+        if scale_uncertainty_valid:
+            hyper_covariance[0, 0] = scale_covariance[0, 0]
+            hyper_errors[0] = scale_errors[0]
+        if concentration_uncertainty_valid and np.isfinite(concentration_error):
+            hyper_covariance[1, 1] = concentration_error**2
+            hyper_errors[1] = concentration_error
+        if np.all(np.isfinite(hyper_errors)):
+            hyper_covariance[0, 1] = hyper_covariance[1, 0] = 0.0
+        boundary_tolerance = max(self.hyperparameter_tolerance, 1e-4)
+        reported_scale_policy = (
+            scale_policy if scale_uncertainty_valid else "scale-unavailable-unstable-information"
+        )
+        at_boundary = np.asarray(
+            [
+                at_log_bound(scale, self.gaussian_scale_bounds, boundary_tolerance),
+                at_log_bound(
+                    concentration,
+                    self.transition_concentration_bounds,
+                    boundary_tolerance,
+                ),
+            ],
+            dtype=np.bool_,
+        )
+        fixed_converged = bool(fitted.diagnostics.converged)
+        diagnostics = replace(
+            fitted.diagnostics,
+            converged=fixed_converged and converged,
+            optimizer=f"{fitted.diagnostics.optimizer}; outer Laplace-EM/Dirichlet evidence",
+            status=0 if fixed_converged and converged else 1,
+            message=(
+                f"{fitted.diagnostics.message}; hyperparameter estimation "
+                f"{'converged' if converged else 'did not converge'} after {iterations} iterations"
+            ),
+            n_iterations=(fitted.diagnostics.n_iterations or 0) + iterations,
+            boundary_estimate=bool(fitted.diagnostics.boundary_estimate or np.any(at_boundary)),
+        )
+        return replace(
+            fitted,
+            model_signature=self.signature,
+            diagnostics=diagnostics,
+            emission_step_scale=scale,
+            transition_concentration=concentration,
+            hyperparameter_estimates=np.asarray([scale, concentration]),
+            hyperparameter_standard_errors=hyper_errors,
+            hyperparameter_covariance=hyper_covariance,
+            hyperparameters_estimated=True,
+            hyperparameter_estimation_converged=converged,
+            hyperparameter_estimation_iterations=iterations,
+            hyperparameters_at_boundary=at_boundary,
+            gaussian_scale_em_rate_matrix=rate_matrix,
+            gaussian_scale_em_spectral_radius=spectral_radius,
+            hyperparameter_uncertainty_policy=(
+                f"{reported_scale_policy};"
+                "conditional-dirichlet-multinomial;block-diagonal-cross-family-covariance"
+            ),
+        )
+
+    def _observed_emission_path_covariance(
+        self,
+        features: NDArray[np.float64],
+        outcomes: NDArray[np.float64],
+        sessions: tuple[tuple[int, ...], ...],
+        initial: NDArray[np.float64],
+        emissions: NDArray[np.float64],
+        transitions: NDArray[np.float64],
+    ) -> Any:
+        """Use observed marginal curvature while holding transitions/hyperparameters fixed."""
+
+        def gradient(vector: NDArray[np.float64]) -> NDArray[np.float64]:
+            candidate = np.asarray(vector, dtype=np.float64).reshape(emissions.shape)
+            posterior = self._dynamic_posterior(
+                features,
+                outcomes,
+                sessions,
+                initial,
+                candidate,
+                transitions,
+            )
+            _, values = self._emission_m_step_objective(
+                vector,
+                features,
+                outcomes,
+                sessions,
+                posterior.state_probabilities,
+            )
+            return values
+
+        return observed_path_covariance(gradient, emissions.ravel())
 
     def transition_probabilities(
         self,

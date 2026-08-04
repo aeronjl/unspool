@@ -49,6 +49,7 @@ from behavio.models import (
     BernoulliHistoryGLM,
     BinaryQLearning,
     HierarchicalSessionDynamicBernoulliGLMHMM,
+    LabHierarchicalSessionDynamicBernoulliGLMHMM,
     SessionDynamicBernoulliGLMHMM,
     WienerDriftDiffusion,
 )
@@ -307,6 +308,7 @@ def builtin_estimator_registry() -> EstimatorRegistry:
         BernoulliHistoryGLM,
         BernoulliGLMHMM,
         HierarchicalSessionDynamicBernoulliGLMHMM,
+        LabHierarchicalSessionDynamicBernoulliGLMHMM,
         SessionDynamicBernoulliGLMHMM,
         BinaryQLearning,
         WienerDriftDiffusion,

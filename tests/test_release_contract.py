@@ -55,6 +55,7 @@ MODEL_CATALOGUE = {
     "BernoulliGLMHMM",
     "SessionDynamicBernoulliGLMHMM",
     "HierarchicalSessionDynamicBernoulliGLMHMM",
+    "LabHierarchicalSessionDynamicBernoulliGLMHMM",
     "BinaryQLearning",
     "BinaryRLAgent",
     "MultinomialLogit",

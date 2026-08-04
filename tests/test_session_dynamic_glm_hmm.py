@@ -43,6 +43,12 @@ def parameters(estimator: SessionDynamicBernoulliGLMHMM) -> dict[str, float]:
         ("transition_concentration", 0.0, "transition_concentration"),
         ("dynamic_max_iterations", 0, "dynamic_max_iterations"),
         ("dynamic_tolerance", 0.0, "dynamic_tolerance"),
+        ("gaussian_scale_bounds", (1.0, 1.0), "gaussian_scale_bounds"),
+        (
+            "transition_concentration_bounds",
+            (0.0, 1.0),
+            "transition_concentration_bounds",
+        ),
         ("stickiness", 1.0, "Dirichlet prior"),
         ("transition_predictors", ("arousal",), "different mechanisms"),
     ],
@@ -208,7 +214,19 @@ def test_fit_retains_paths_and_scores_the_same_filtered_likelihood() -> None:
     assert np.all(np.isfinite(fit.partial_objective_history))
     assert "partial stage converged; full stage converged" in fit.diagnostics.message
     assert fit.state_occupancy.sum() == pytest.approx(1.0)
-    assert fit.uncertainty_policy == "not-estimated"
+    assert fit.uncertainty_policy == "observed-laplace-conditional-on-canonical-path"
+    assert fit.uncertainty_label_policy == "conditional-on-one-whole-path-canonical-mode"
+    assert fit.path_covariance_positive_definite
+    assert fit.session_emission_standard_errors.shape == (5, 2, 1)
+    assert fit.session_emission_covariance.shape == (10, 10)
+    assert np.all(np.isfinite(fit.session_emission_standard_errors))
+    assert np.all(np.isfinite(fit.session_transition_standard_errors))
+    intervals = fit.emission_intervals()
+    assert intervals.shape == (5, 2, 1, 2)
+    assert np.all(intervals[..., 0] <= fit.session_emission_coefficients)
+    assert np.all(intervals[..., 1] >= fit.session_emission_coefficients)
+    assert not fit.hyperparameters_estimated
+    assert np.all(np.isnan(fit.hyperparameter_standard_errors))
     assert np.all(np.isnan(fit.standard_errors))
     assert fit.audit().latent_states is not None
     assert fit.audit().restarts is not None
@@ -216,6 +234,44 @@ def test_fit_retains_paths_and_scores_the_same_filtered_likelihood() -> None:
     assert recovery.alignment.decoded_accuracy > 0.75
     assert np.isfinite(recovery.emission_rmse)
     assert np.isfinite(recovery.transition_rmse)
+
+
+def test_training_only_hyperparameter_estimation_retains_uncertainty_and_boundaries() -> None:
+    truth = model(
+        max_iterations=120,
+        dynamic_max_iterations=20,
+        emission_step_scale=0.25,
+        transition_concentration=15.0,
+    )
+    truth_parameters = dict(
+        truth.parameters_from_components(
+            initial_probabilities=(0.5, 0.5),
+            transition_matrix=((0.75, 0.25), (0.2, 0.8)),
+            emissions={"intercept": (-2.5, 2.5)},
+        )
+    )
+    simulation = truth.simulate(design(sessions=5, trials=60), truth_parameters, seed=44)
+    estimator = model(
+        max_iterations=120,
+        dynamic_max_iterations=20,
+        emission_step_scale=0.5,
+        transition_concentration=30.0,
+        estimate_hyperparameters=True,
+        hyperparameter_max_iterations=4,
+        hyperparameter_tolerance=0.15,
+    )
+
+    fit = estimator.fit(simulation)
+
+    assert fit.hyperparameters_estimated
+    assert fit.hyperparameter_estimation_converged
+    assert fit.hyperparameter_estimation_iterations <= 4
+    assert fit.hyperparameter_estimates.shape == (2,)
+    assert np.all(np.isfinite(fit.hyperparameter_standard_errors))
+    assert np.all(fit.hyperparameter_standard_errors > 0)
+    assert fit.hyperparameter_covariance.shape == (2, 2)
+    assert fit.hyperparameters_at_boundary.shape == (2,)
+    assert "dirichlet-multinomial" in fit.hyperparameter_uncertainty_policy
 
 
 def test_future_sessions_use_last_emissions_and_the_global_transition_center() -> None:

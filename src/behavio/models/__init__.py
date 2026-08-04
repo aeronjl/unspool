@@ -78,6 +78,15 @@ from behavio.models.hierarchical_session_dynamic_glm_hmm import (
     HierarchicalSessionDynamicGLMHMMFitResult,
     HierarchicalSessionDynamicGLMHMMSimulation,
     HierarchicalSessionDynamicTrajectoryRecovery,
+    UnseenSubjectDynamicPrediction,
+)
+from behavio.models.lab_hierarchical_session_dynamic_glm_hmm import (
+    LabHierarchicalSessionDynamicBernoulliGLMHMM,
+    LabHierarchicalSessionDynamicGLMHMMFitResult,
+    LabHierarchicalSessionDynamicGLMHMMSimulation,
+    LabHierarchicalSessionDynamicTrajectoryRecovery,
+    UnseenLabDynamicPrediction,
+    UnseenSubjectInLabDynamicPrediction,
 )
 from behavio.models.multinomial import MultinomialLogit
 from behavio.models.patch_leaving import (
@@ -197,6 +206,10 @@ __all__ = [
     "HierarchicalSessionDynamicGLMHMMFitResult",
     "HierarchicalSessionDynamicGLMHMMSimulation",
     "HierarchicalSessionDynamicTrajectoryRecovery",
+    "LabHierarchicalSessionDynamicBernoulliGLMHMM",
+    "LabHierarchicalSessionDynamicGLMHMMFitResult",
+    "LabHierarchicalSessionDynamicGLMHMMSimulation",
+    "LabHierarchicalSessionDynamicTrajectoryRecovery",
     "LatentStateAlignment",
     "LearningRule",
     "LogCoordinateFitResult",
@@ -241,6 +254,9 @@ __all__ = [
     "UnchosenForgetting",
     "UnequalVarianceSDT",
     "UnitSquareSigmoid",
+    "UnseenLabDynamicPrediction",
+    "UnseenSubjectDynamicPrediction",
+    "UnseenSubjectInLabDynamicPrediction",
     "UnsupportedPredictionMode",
     "ValueBasedFitResult",
     "ValueTrajectory",

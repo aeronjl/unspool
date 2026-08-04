@@ -130,6 +130,7 @@ def test_the_builtin_registry_resolves_every_implementation_the_cli_accepts() ->
         "behavio.models.BernoulliHistoryGLM",
         "behavio.models.BinaryQLearning",
         "behavio.models.HierarchicalSessionDynamicBernoulliGLMHMM",
+        "behavio.models.LabHierarchicalSessionDynamicBernoulliGLMHMM",
         "behavio.models.SessionDynamicBernoulliGLMHMM",
         "behavio.models.WienerDriftDiffusion",
     )

@@ -7,6 +7,7 @@ from behavio.models import (
     HierarchicalSessionDynamicGLMHMMFitResult,
     HierarchicalSessionDynamicGLMHMMSimulation,
     ModelDataError,
+    UnseenSubjectDynamicPrediction,
 )
 from behavio.models.hierarchical_session_dynamic_glm_hmm import _population_structure
 
@@ -187,7 +188,22 @@ def test_fit_retains_population_paths_scores_and_recovery() -> None:
     assert fit.subject_label_crossings.shape == (9, 1)
     assert fit.grouping == "subject"
     assert fit.groups == fit.subjects
-    assert fit.uncertainty_policy == "not-estimated"
+    assert fit.uncertainty_policy == "observed-laplace-conditional-on-canonical-path"
+    assert fit.uncertainty_label_policy == "conditional-on-one-whole-path-canonical-mode"
+    assert fit.path_covariance_positive_definite
+    assert fit.population_emission_standard_errors.shape == (4, 2, 1)
+    assert fit.session_emission_standard_errors.shape == (12, 2, 1)
+    assert fit.subject_deviation_standard_errors.shape == (12, 2, 1)
+    assert fit.population_emission_covariance.shape == (8, 8)
+    assert fit.session_emission_covariance.shape == (24, 24)
+    assert fit.joint_emission_covariance.shape == (32, 32)
+    assert np.all(np.isfinite(fit.population_emission_standard_errors))
+    assert np.all(np.isfinite(fit.subject_deviation_standard_errors))
+    assert np.all(np.isfinite(fit.session_transition_standard_errors))
+    assert fit.population_emission_intervals().shape == (4, 2, 1, 2)
+    assert fit.subject_deviation_intervals().shape == (12, 2, 1, 2)
+    assert not fit.hyperparameters_estimated
+    assert np.all(np.isnan(fit.hyperparameter_standard_errors))
     assert np.all(np.isnan(fit.standard_errors))
     assert fit.audit().latent_states is not None
     assert fit.audit().restarts is not None
@@ -242,6 +258,94 @@ def test_seen_future_and_unseen_subject_predictions_use_declared_population_plug
         estimator.transition_probabilities(seen, fit)[0],
         fit.global_transition_matrix,
     )
+
+
+def test_unseen_subject_prediction_integrates_coherent_paths_and_joint_scores() -> None:
+    estimator = model(dynamic_max_iterations=25, dynamic_tolerance=1e-5)
+    simulation = estimator.simulate(
+        design(subjects=("animal-a", "animal-b", "animal-c"), sessions=3, trials=35),
+        parameters(estimator),
+        seed=17,
+    )
+    fit = estimator.fit(simulation)
+    unseen = Study.factorial(
+        trials=8,
+        subjects=("animal-new-a", "animal-new-b"),
+        sessions=("future-a", "future-b"),
+        columns={"choice": [0, 1] * 16},
+    )
+    columns = {name: unseen[name] for name in unseen.columns}
+    columns["session_order"] = np.tile(np.repeat([3, 4], 8), 2)
+    unseen = Study(columns)
+
+    first = estimator.predict_new_subjects(unseen, fit, n_draws=32, seed=29)
+    second = estimator.predict_new_subjects(unseen, fit, n_draws=32, seed=29)
+
+    assert isinstance(first, UnseenSubjectDynamicPrediction)
+    assert first.includes_population_path_uncertainty
+    assert first.label_path_ambiguous == fit.label_path_ambiguous
+    assert first.draw_probabilities.shape == (32, len(unseen))
+    assert first.draw_session_emission_coefficients.shape == (32, 4, 2, 1)
+    assert first.draw_session_transition_matrices.shape == (32, 4, 2, 2)
+    np.testing.assert_allclose(first.probability, np.mean(first.draw_probabilities, axis=0))
+    np.testing.assert_allclose(
+        first.draw_session_transition_matrices.sum(axis=-1),
+        1.0,
+    )
+    np.testing.assert_allclose(first.draw_probabilities, second.draw_probabilities)
+    assert np.all(first.subject_effective_draws >= 1.0)
+    assert np.all(first.subject_log_probability_mcse >= 0.0)
+
+    with pytest.raises(ValueError, match="entirely unseen"):
+        estimator.predict_new_subjects(
+            _prediction_study(subject="animal-a", session="future", order=3),
+            fit,
+            n_draws=8,
+            seed=3,
+        )
+
+
+def test_hierarchy_hyperparameter_estimation_keeps_unstable_scale_information_visible() -> None:
+    truth = model(
+        dynamic_max_iterations=15,
+        population_emission_step_scale=0.2,
+        subject_emission_scale=0.3,
+        emission_step_scale=0.15,
+        transition_concentration=20.0,
+    )
+    simulation = truth.simulate(
+        design(subjects=("a", "b", "c"), sessions=3, trials=25),
+        parameters(truth),
+        seed=8,
+    )
+    estimator = model(
+        max_iterations=100,
+        dynamic_max_iterations=12,
+        estimate_hyperparameters=True,
+        hyperparameter_max_iterations=1,
+        hyperparameter_tolerance=10.0,
+        population_emission_step_scale=0.2,
+        subject_emission_scale=0.3,
+        emission_step_scale=0.15,
+        transition_concentration=20.0,
+    )
+
+    fit = estimator.fit(simulation)
+
+    assert fit.hyperparameters_estimated
+    assert fit.hyperparameter_estimation_converged
+    assert fit.hyperparameter_estimates.shape == (4,)
+    assert np.all(np.isfinite(fit.hyperparameter_estimates))
+    assert fit.hyperparameter_covariance.shape == (4, 4)
+    assert fit.gaussian_scale_em_rate_matrix.shape == (3, 3)
+    assert np.isfinite(fit.hyperparameter_standard_errors[-1])
+    scale_errors = fit.hyperparameter_standard_errors[:3]
+    if np.all(np.isfinite(scale_errors)):
+        assert np.all(scale_errors > 0)
+    else:
+        assert np.all(np.isnan(scale_errors))
+        assert fit.gaussian_scale_em_spectral_radius >= 1.0
+        assert "scale-unavailable" in fit.hyperparameter_uncertainty_policy
 
 
 def test_seen_subject_unfitted_past_session_is_refused() -> None:

@@ -4,6 +4,12 @@
 - **Date:** 2026-08-03
 - **Related guide:** [Bernoulli GLM-HMM](../glm-hmm.md)
 
+> **Subsequent decision:** [SDR-0067](0067-keep-dynamic-glm-hmm-uncertainty-conditional-on-one-label-mode.md)
+> supersedes this record's initial decision to omit local
+> covariance and keep both dynamic hyperparameters outside every fit. The path model,
+> three-stage initialization, transition prior, label rule, and forecast policy below remain
+> unchanged.
+
 ## Context
 
 SDR-0064 separated observed covariate-dependent transition regression from latent
