@@ -87,12 +87,26 @@ probabilities, chart-free transition partial pooling, and explicit label/occupan
 diagnostics. Its assumptions and non-interpretive label convention are detailed in the
 [GLM-HMM guide](glm-hmm.md).
 
-The same guide documents two stochastic session-path estimators. The one-subject class
+The same guide documents three stochastic session-path estimators. The one-subject class
 follows the published dynamic emission/transition model. The population class adds an
 explicit Gaussian population path and evolving subject deviations, with distinct forecasts
-for later sessions of fitted subjects and entirely unseen subjects. This dedicated hierarchy
-cannot be manufactured by wrapping a data-dependent latent path in the generic
+for later sessions of fitted subjects and entirely unseen subjects. Both report local path
+uncertainty conditional on one whole-path label mode and can estimate their supported
+Gaussian and Dirichlet hyperparameters inside training data. The population class also
+integrates coherent random paths for entirely unseen subjects with subject-joint Monte Carlo
+diagnostics. The laboratory class adds exchangeable evolving lab paths above strictly nested
+subject paths, refuses labs without independent animal replication, and separates new
+subjects in seen labs from lab-joint prediction in entirely unseen labs. These dedicated
+hierarchies cannot be manufactured by wrapping a data-dependent latent path in the generic
 `hierarchical()` combinator.
+
+`PyMCBernoulliGLMHMM` is the separate proper-prior posterior route across the stationary and
+all three session-dynamic depths. It marginalizes the discrete state sequence, samples
+non-centred population/lab/subject/session paths and their variance components jointly, and
+returns filtered likelihood, predictive draws, whole-draw label permutations, and path-
+crossing ambiguity in the common `PosteriorResult`. This is not the local MAP covariance
+under another name. Its dynamic prediction currently covers fitted subject-session blocks;
+posterior propagation to a new session, subject, or lab remains open.
 
 `BinaryQLearning` supplies the first reward-learning competitor. It uses an explicit
 action-contingent reward environment for simulation, session-reset action values, filtered

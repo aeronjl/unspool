@@ -58,14 +58,50 @@ learning model's Gaussian random walk for emissions and Dirichlet session deviat
 a global transition matrix. `HierarchicalSessionDynamicBernoulliGLMHMM` is an explicitly new
 mixed-effects extension: a Gaussian population path plus evolving subject deviations, with
 population plug-in prediction for unseen subjects. It is informed by mixed-effects HMM
-practice but is not attributed to the dynamic paper. Neither class claims temporal
-smoothness of transition matrices.
+practice but is not attributed to the dynamic paper.
+`LabHierarchicalSessionDynamicBernoulliGLMHMM` extends that construction again with one
+exchangeable evolving lab deviation shared by subjects nested in the same laboratory. Its
+Gaussian random effects and higher cluster level follow mixed and multilevel HMM practice;
+the exact population/lab/subject dynamic path is a Behavio specification. It requires
+within-lab subject replication and uses laboratory-joint prediction for a wholly unseen lab.
+This is distinct from treating observed labs as fixed contrasts. None of the dynamic classes
+claims temporal smoothness of transition matrices or a causal source for lab differences.
+
+Dynamic-path uncertainty follows incomplete-data rather than fixed-responsibility
+curvature. Behavio differentiates the observed state-marginalized path objective, uses
+Louis' identity and, when necessary, supplemented EM for Gaussian scale information, and
+estimates transition concentration through conditional Dirichlet-multinomial evidence.
+Because HMM posteriors are invariant to state permutations, the optimized models' labelled
+intervals are explicitly conditional on one whole-path modal labelling rather than averaged
+across labels. Those intervals are local empirical-Bayes approximations.
+
+`PyMCBernoulliGLMHMM` is the distinct full-posterior route. It follows the standard HMM
+strategy of exactly marginalizing the finite discrete path before NUTS, uses proper priors
+and non-centred Gaussian innovations, and samples the population, laboratory, subject,
+session, transition, and variance-component layers supported by the wrapped model. Complete
+posterior draws are relabelled together after sampling; minimum gaps and path crossings stay
+in the posterior as ambiguity evidence. This implements posterior propagation on fitted
+paths. It does not yet propagate new dynamic paths into unseen sessions, subjects, or labs,
+and a few tiny contract tests are not a calibration claim: repeated design-specific SBC is
+still required.
 
 - [Non-homogeneous HMM transition regression](https://doi.org/10.1016/j.csda.2019.106840)
 - [hmmTMB covariate and random-effect HMMs](https://doi.org/10.18637/jss.v114.i05)
+- [Mixed HMMs for longitudinal processes](https://doi.org/10.1198/016214506000001086)
+- [Bayesian multilevel mixed HMM](https://doi.org/10.1002/sim.6039)
 - [Mixed non-homogeneous HMM](https://pubmed.ncbi.nlm.nih.gov/22302505/)
 - [Dynamic GLM-HMM learning study](https://pmc.ncbi.nlm.nih.gov/articles/PMC11623682/)
+- [IBL standardized multi-lab behaviour](https://doi.org/10.7554/eLife.63711)
+- [Random-lab replicability assessment](https://doi.org/10.1371/journal.pbio.3002082)
 - [Isometric log-ratio coordinates](https://doi.org/10.1023/A:1023818214614)
+- [Observed information for EM](https://doi.org/10.1111/j.2517-6161.1982.tb01203.x)
+- [Supplemented EM](https://doi.org/10.1080/01621459.1991.10475130)
+- [Dirichlet concentration estimation](https://tminka.github.io/papers/dirichlet/)
+- [Label switching in mixture and HMM posteriors](https://doi.org/10.18637/jss.v069.c01)
+- [Forward marginalization for finite HMMs](https://mc-stan.org/docs/functions-reference/hidden_markov_models.html)
+- [Post-sampling relabeling rather than naive posterior means](https://doi.org/10.1111/1467-9868.00265)
+- [Non-centred hierarchical parameterizations](https://doi.org/10.1214/088342307000000014)
+- [The No-U-Turn Sampler](https://www.jmlr.org/papers/v15/hoffman14a.html)
 
 ## Choice and response time
 

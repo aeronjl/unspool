@@ -1,5 +1,61 @@
 # PyMC posterior backends
 
+## Proper-prior GLM-HMM posteriors
+
+`PyMCBernoulliGLMHMM` wraps any first-party `BernoulliGLMHMM` depth: stationary,
+trial-covariate transitions, one-subject session dynamics, population/subject dynamics, or
+population/lab/subject dynamics. This is a new Bayesian specification with normalized
+priors, not an uncertainty adapter around the optimized result.
+
+```python
+from behavio import (
+    LabHierarchicalSessionDynamicBernoulliGLMHMM,
+    PyMCBernoulliGLMHMM,
+)
+
+model = PyMCBernoulliGLMHMM(
+    LabHierarchicalSessionDynamicBernoulliGLMHMM(
+        predictors=("signed_contrast",),
+        choice_lags=1,
+        lab_column="lab",
+    ),
+    draws=1_000,
+    tune=1_000,
+    chains=4,
+)
+posterior = model.sample(training_study)
+filtered = model.predict(training_study, posterior)
+```
+
+The sampler marginalizes the discrete state sequence by a session-blocked forward
+recursion. NUTS samples only continuous parameters: emissions, initial and transition
+simplexes, Gaussian innovations, all hierarchy scales, and transition concentration.
+Population, lab, subject, and session paths use non-centred innovations. The posterior
+contains the incremental forward normalizers as pointwise filtered log likelihood and
+one-step posterior predictive choices conditional on observed earlier choices.
+
+State labels are not made identifiable by assertion. Priors remain symmetric, then every
+retained draw is post-processed with one complete state permutation ordered by the wrapped
+model's `label_by` coefficient. Transition rows and columns and every state-indexed path
+move together. Dynamic draws use one order over the whole fitted path; a path crossing or a
+small average gap sets `label_path_crossing` or `label_ambiguous` rather than reordering
+individual sessions.
+
+`prior_predictive_simulation(design, seed)` draws the complete normalized prior joint and
+retains array-valued truth for explicit SBC quantities. Repeated SBC over a scientifically
+matched design remains necessary before claiming calibrated intervals.
+
+Current dynamic prediction is deliberately training-path scoped. The same fitted
+subject-session blocks can be filtered and scored with posterior integration. A new session,
+subject, or laboratory is refused because correct prediction must propagate a new path from
+every posterior draw; substituting the optimized model's plug-in path would no longer be
+full Bayesian uncertainty.
+
+See [SDR-0069](decisions/0069-sample-glm-hmm-states-by-marginalizing-the-discrete-path.md)
+for the prior, label, and scope decision.
+
+## Fixed-scale hierarchical GLM adapter
+
 Behavio's full-posterior adapter samples a `hierarchical(...)` composition over a
 penalised linear Bernoulli model with PyMC's established NUTS implementation. It is a
 narrow interoperability reference, not a new sampler or a second behavioural model.

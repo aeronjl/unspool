@@ -14,6 +14,7 @@ performance rankings. “Supported” refers to the evidence boundary in the
 | GLM-HMM | Binary choice | Discrete recurrent states | Complete pooling | smooth drift, history, state count |
 | Session-dynamic GLM-HMM | Binary choice | Recurrent states with session-varying parameters | One subject | stationary/covariate-transition GLM-HMM, smooth drift, history, learning |
 | Hierarchical session-dynamic GLM-HMM | Binary choice | Population latent-policy path plus evolving subject deviations | Gaussian subject-path pooling | one-subject dynamics, smooth population drift, subject heterogeneity, label ambiguity |
+| Lab-hierarchical session-dynamic GLM-HMM | Binary choice | Population path plus evolving lab and nested subject deviations | Gaussian lab- and subject-path pooling | fixed lab contrasts, subject heterogeneity, lab exchangeability, label ambiguity |
 | Binary RL | Binary choice | Recursive values and policy traces | Complete pooling | history, bias, lapse, reward schedule |
 | Normative belief updating | Binary response to an exogenous observation | Recursive belief written by the task, not by the response | Complete or partial pooling | volatility versus coupling, response rule, observation versus response column |
 | Scalar timing | A reproduced duration, or a binary long/short report | None by default; a drifting or per-subject clock is a combinator away | Complete or partial pooling | decision rule, target range, clock rate versus response bias |
@@ -150,6 +151,11 @@ kind.
 
 [Detailed assumptions](glm-hmm.md)
 
+**Full-posterior option:** `PyMCBernoulliGLMHMM` assigns proper priors to emissions and
+simplexes, marginalizes the discrete path, and integrates filtered predictions over NUTS
+draws. Complete-draw relabelling retains per-draw gaps and ambiguity. This is distinct from
+the optimized model's local covariance.
+
 ## Session-dynamic Bernoulli GLM-HMM
 
 **Class:** `SessionDynamicBernoulliGLMHMM`
@@ -158,9 +164,10 @@ kind.
 emission weights evolve stochastically between ordered sessions and session transition
 matrices vary around a shared centre.
 
-**Requires:** one subject, at least two ordered sessions for a path claim, fixed state count,
-training-only choices of emission step scale and transition concentration, and enough
-within-session trials and state changes for design-specific recovery.
+**Requires:** one subject, at least two ordered sessions for a path or scale claim, fixed
+state count, training-only selection or estimation of emission step scale and transition
+concentration, and enough within-session trials and state changes for design-specific
+recovery.
 
 **Predicts:** fitted sessions with their fitted parameters. A strictly later unseen session
 uses the carried-forward final emission weights and the global transition prior mode,
@@ -173,18 +180,27 @@ matrix. Emissions have a Gaussian random-walk prior. Session transition rows hav
 Dirichlet priors around the global rows; they are not a smooth transition path.
 
 **Evidence:** stationary, partial, and full MAP-EM diagnostics; training-only nested
-selection over state count and both dynamic hyperparameters; occupancy and boundary
-diagnostics; whole-path canonicalization; adjacent-session pairwise crossing flags;
-truth-aware state alignment; and truth-aware emission/transition trajectory RMSE. The first
-matched benchmark recovers the path but does not establish a prospective advantage over the
-stationary GLM-HMM.
+selection or bounded Laplace-EM/Dirichlet-multinomial estimation of the dynamic
+hyperparameters; observed state-marginalized path covariance; conditional transition-row
+errors; occupancy and boundary diagnostics; whole-path canonicalization; adjacent-session
+pairwise crossing flags; truth-aware state alignment; and truth-aware emission/transition
+trajectory RMSE. The first matched benchmark recovers the path but does not establish a
+prospective advantage over the stationary GLM-HMM.
 
-**Does not establish:** a psychological meaning for a state, transition continuity,
-cross-subject population effects, or calibrated parameter uncertainty. Local covariance is
-not estimated. The unseen-session forecast is an explicit conditional-centre policy, not a
-published validation result.
+**The optimized estimator does not establish:** a psychological meaning for a state,
+transition continuity, cross-subject population effects, or full-posterior calibrated
+uncertainty. Its local intervals condition on one canonical label mode and fixed fitted
+transition/hyperparameter layers. The
+unseen-session forecast is an explicit conditional-centre policy, not a published validation
+result.
 
 [Detailed assumptions](glm-hmm.md)
+
+**Full-posterior option:** wrapping this model in `PyMCBernoulliGLMHMM` jointly samples its
+emission path, session transition matrices, emission step scale, transition concentration,
+and shared initial/global transition distributions. The discrete path is marginalized and
+whole-path crossing ambiguity is retained. Posterior propagation to a new session is not yet
+implemented.
 
 ## Hierarchical session-dynamic Bernoulli GLM-HMM
 
@@ -194,14 +210,17 @@ published validation result.
 population latent-policy trajectory, and individual subjects may deviate smoothly from that
 population path.
 
-**Requires:** at least two subjects; fixed state count and population, initial-subject, and
-subject-increment scales; increasing session order within subject; enough state changes to
-distinguish population structure from subject paths.
+**Requires:** at least two subjects; fixed state count; fixed or bounded-estimated
+population, initial-subject, and subject-increment scales; increasing session order within
+subject; enough replicated paths and state changes to distinguish population structure from
+subject paths.
 
 **Predicts:** fitted subject-sessions with their fitted paths. A later session for a fitted
 subject uses the population path plus that subject's carried final deviation. An unseen
 subject uses the zero-deviation population plug-in. Both use the global transition prior
-mode and the pooled session-opening state distribution.
+mode and the pooled session-opening state distribution. `predict_new_subjects()` instead
+integrates a coherent random path and session transitions for each entirely unseen subject,
+with subject-joint scores and Monte Carlo diagnostics.
 
 **Parameters:** a Gaussian-random-walk population emission path, a zero-centred first
 deviation and Gaussian-random-walk deviation path per subject, one transition matrix per
@@ -209,15 +228,74 @@ subject-session drawn around a global population matrix, and one pooled initial 
 distribution.
 
 **Evidence:** analytic-gradient checks; stationary, partial, and full MAP-EM diagnostics;
-population and subject crossing evidence; immutable simulation truth; filtered-score
-identity; global state alignment; population/subject/transition trajectory RMSE; and exact
-seen-future and unseen-subject forecast tests.
+observed population/subject/deviation path covariance; Louis and supplemented-EM scale
+diagnostics; conditional Dirichlet concentration and transition errors; population and
+subject crossing evidence; immutable simulation truth; filtered-score identity; global state
+alignment; population/subject/transition trajectory RMSE; and deterministic plug-in plus
+integrated unseen-subject forecast tests.
 
-**Does not establish:** psychological state meaning, calibrated path uncertainty, estimated
-hierarchy scales, stable subject-specific transition styles, population-of-labs inference,
-or integrated rather than plug-in unseen-subject prediction.
+**The optimized estimator does not establish:** psychological state meaning,
+full-posterior calibrated uncertainty, stable subject-specific transition styles, or
+population-of-labs inference. Its labelled path intervals condition on one canonical modal
+region; unstable variance components remain
+unavailable, and integrated prediction holds global transition, pooled initial, and fitted
+hyperparameters fixed.
 
 [Detailed assumptions](glm-hmm.md)
+
+**Full-posterior option:** `PyMCBernoulliGLMHMM` samples non-centred population and subject
+paths, all three Gaussian scales, the global and session transition matrices, and transition
+concentration jointly. It supports posterior filtering on fitted subject-session blocks;
+unseen-subject posterior path propagation remains open even though the optimized model has a
+separate coherent Monte Carlo predictor.
+
+## Lab-hierarchical session-dynamic Bernoulli GLM-HMM
+
+**Class:** `LabHierarchicalSessionDynamicBernoulliGLMHMM`
+
+**Use when:** subjects are nested in laboratories, laboratories are treated as exchangeable
+sampling units, and the target includes population trajectories or prediction in a wholly
+new laboratory rather than only contrasts among the observed labs.
+
+**Requires:** a non-missing declared lab column; every subject assigned to exactly one lab;
+at least two labs and two independent subjects per lab; fixed state count; fixed or
+bounded-estimated population, lab-initial, lab-increment, subject-initial, and
+subject-increment scales; enough orders, paths, trials, and state changes for design-specific
+recovery. Meaningful population-of-labs inference usually requires materially more than the
+mechanical two-lab minimum.
+
+**Predicts:** fitted sessions, later sessions of fitted subjects, new subjects in fitted
+labs, and entirely unseen labs under separate declared plug-in rules.
+`predict_new_subjects()` integrates new subject paths conditional on represented labs and
+reports subject-joint scores. `predict_new_labs()` integrates one shared lab path, nested
+subject paths, and session transitions and reports lab-joint scores with Monte Carlo
+diagnostics.
+
+**Parameters:** a population emission random walk; a zero-centred initial deviation and
+random-walk deviation for every lab; a zero-centred initial deviation and random-walk
+deviation for every nested subject; one direct population-shrunk transition matrix per
+subject-session; and one pooled initial distribution.
+
+**Evidence:** analytic joint-gradient checks; nested simulation truth and truth-aligned
+population/lab/subject recovery; the stationary/partial/full MAP-EM sequence; observed
+state-marginalized path covariance at every hierarchy level; five-scale Louis and
+supplemented-EM diagnostics; transition-concentration and conditional-row errors; separate
+population/lab/subject crossing evidence; seen-lab, unseen-subject, and unseen-lab contract
+tests; and a complete leave-one-lab-out no-leakage test.
+
+**The optimized estimator does not establish:** that the observed labs are representative,
+a causal explanation for lab differences, stable lab-specific transition styles, crossed
+lab/subject effects, full-posterior calibrated uncertainty, or psychological state meaning.
+Its labelled intervals remain conditional on one canonical modal region, and unseen-lab
+prediction is only as defensible as the declared lab exchangeability assumption.
+
+[Detailed assumptions](glm-hmm.md)
+
+**Full-posterior option:** `PyMCBernoulliGLMHMM` extends the same joint posterior through
+non-centred laboratory paths and both lab scales, so population, lab, subject, session,
+transition, and hyperparameter uncertainty are sampled together. It does not yet turn those
+draws into unseen-lab posterior prediction or establish calibration across weakly replicated
+lab designs.
 
 ## Binary reinforcement learning
 

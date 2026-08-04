@@ -15,6 +15,34 @@ to assign cognitive meanings to latent labels.
 emission coefficients a stochastic session path and gives each session its own transition
 matrix. That model is described below; it is not what `transition_predictors=` constructs.
 
+## Full-posterior inference
+
+The optimized GLM-HMM classes and `PyMCBernoulliGLMHMM` share task, design, boundary,
+filtering, and label semantics but define different inferential models. The optimized path
+uses MAP/EM and local observed-likelihood uncertainty. The PyMC path declares proper
+Dirichlet, Normal, half-Normal, and exponential priors and samples the joint posterior after
+exactly marginalizing the discrete state sequence.
+
+For session-dynamic models this posterior includes the realized session emissions and
+transitions, population path, laboratory and subject deviations where present, every
+supported Gaussian scale, and transition concentration. Gaussian paths use non-centred
+innovations. Nothing is conditioned on the MAP fit.
+
+Symmetric priors preserve label permutation as a property of the posterior. Complete draws
+are relabelled together using one increasing `label_by` order; dynamic paths use their mean
+whole-path order. `label_permutation`, `label_minimum_gap`, `label_path_crossing`, and
+`label_ambiguous` remain available per draw. This makes state-specific summaries readable
+without pretending the labels are intrinsically identified.
+
+Filtered prediction and pointwise log probability integrate over posterior draws and never
+use future choices within a session. Dynamic posterior prediction currently requires the
+same fitted subject-session blocks. Prospective propagation to a new session, subject, or
+lab remains a separate open capability; the sampler refuses those requests rather than
+using a posterior-mean or MAP plug-in trajectory.
+
+See the [PyMC backend guide](pymc-backend.md#proper-prior-glm-hmm-posteriors) and
+[SDR-0069](decisions/0069-sample-glm-hmm-states-by-marginalizing-the-discrete-path.md).
+
 ## Generative model
 
 For state $z_t \in \{1, \ldots, K\}$ and binary choice $y_t$:
@@ -164,9 +192,9 @@ This is the distinction in the published model: emission weights have a Gaussian
 walk, but transition matrices are conditionally independent across sessions around the
 global matrix $\bar A$. Because of the added-one parameterization, $\bar A$ is the prior
 mode rather than its arithmetic mean. `transition_concentration` therefore controls
-shrinkage toward that global transition mode; it is not a transition-path smoothness parameter. Both
-hyperparameters are part of the model signature and must be selected only within training
-data.
+shrinkage toward that global transition mode; it is not a transition-path smoothness
+parameter. Both hyperparameters are part of the model signature and must be selected or
+estimated only within training data.
 
 Fitting is the reference three-stage MAP-EM sequence: a stationary multistart GLM-HMM; an
 emission-dynamic intermediate model with one re-estimated shared transition matrix; then the
@@ -178,18 +206,26 @@ Both objective histories and both convergence decisions are retained on the fit.
 distribution is estimated across session openings rather than fixed uniform. That is an
 intentional Behavio convention and a difference from the cited implementation.
 
-`n_states`, `emission_step_scale`, and `transition_concentration` remain candidate
-specifications rather than parameters estimated by the EM loop. Supply their Cartesian grid
-to `nested_select_model()` with forward-session outer and inner splits: the generic selector
-fits every candidate using only the outer training study, and the untouched outer session is
-used only after a specification has been chosen. The
-[session-dynamic benchmark](../benchmarks/session_dynamic_glm_hmm/README.md) pins this
+`n_states` remains a candidate specification. Fixed `emission_step_scale` and
+`transition_concentration` values may likewise be supplied to `nested_select_model()` with
+forward-session outer and inner splits. Alternatively, `estimate_hyperparameters=True`
+estimates both strictly inside each fit: Laplace EM updates the Gaussian scale from the path
+mode and covariance, while conditional Dirichlet-multinomial evidence estimates the
+transition concentration. Bounds, convergence, local errors, and boundary flags remain on
+the fit. The
+[session-dynamic benchmark](https://github.com/aeronjl/behavio/tree/main/benchmarks/session_dynamic_glm_hmm)
+pins this
 procedure against stationary, observed-transition, smooth-drift, and Q-learning competitors.
 Its compact dynamic regime recovers the latent path but does **not** establish superior
 future-session prediction over the stationary GLM-HMM, so retrospective path quality must
-not be promoted into a deployment claim. The fit also reports no local covariance: standard
-errors and covariance are `NaN`, `uncertainty_policy` is
-`"not-estimated"`, and the fit audit keeps that limitation visible.
+not be promoted into a deployment claim.
+
+Every fit reports `session_emission_covariance` from observed, state-marginalized path
+curvature and conditional Dirichlet errors for its session transition rows. These are local
+approximations with transitions and hyperparameters held fixed. `emission_intervals()` stays
+conditional on one whole-path canonical label mode. It does not average over label
+permutations, and `label_path_ambiguous` remains visible beside it. If observed curvature is
+not positive definite, the arrays remain `NaN` rather than being clipped.
 
 Labels are canonicalized once for the complete path, using the mean `label_by` coefficient.
 They are never independently reordered by session. `label_crossings` reports sign changes
@@ -207,6 +243,10 @@ carrying the final emission weights forward and uses $\bar A$, the Dirichlet pri
 the unseen transition matrix. Unseen earlier/interleaved sessions and unseen subjects are refused. This forecast
 rule makes prospective scoring executable; it is not a claim that the original paper
 validated unseen-session forecasting.
+
+Hyperparameter estimation and local path covariance are empirical-Bayes/Laplace
+approximations, not full Bayesian uncertainty. The policy and derivation are recorded in
+[SDR-0067](decisions/0067-keep-dynamic-glm-hmm-uncertainty-conditional-on-one-label-mode.md).
 
 ## Cross-subject dynamic hierarchy
 
@@ -269,7 +309,7 @@ The joint emission M-step optimizes $M$ and every $W_m$ together. The pooled sta
 initializes one shared state coordinate; the mean population path canonicalizes it once; and
 population and within-subject crossing evidence remains separate on the fit.
 
-Prediction distinguishes two deployment cases. For a strictly later session of a fitted
+Deterministic prediction distinguishes two deployment cases. For a strictly later session of a fitted
 subject, the model evaluates the population path at that order and carries the subject's
 last deviation forward. For an unseen subject, it uses the zero-deviation population
 plug-in. Past or interleaved missing sessions of fitted subjects are refused. Beyond the last
@@ -277,13 +317,115 @@ population order, the random walk's conditional mean carries the population path
 Every forecast uses $\bar A$, resets to the pooled initial distribution, and remains
 filtered.
 
+`predict_new_subjects()` is the explicit integrated alternative for an entirely unseen
+population. One Monte Carlo draw shares one fitted population-path draw across subjects,
+extends future population orders through the fitted random walk, evolves one deviation path
+per subject, and draws every future session transition row from its Dirichlet distribution.
+It retains pointwise marginal scores, coherent subject-joint log probabilities, effective
+draws, and Monte Carlo errors. The subject-joint score is the predictive estimand; summing
+the pointwise marginal scores would combine different random-effect draws and is not the
+same calculation.
+
 The Gaussian hierarchy follows the standard random-effects principle used in mixed HMMs,
 including [hmmTMB](https://doi.org/10.18637/jss.v114.i05), but this exact population path was
 not fitted by the [dynamic GLM-HMM study](https://pmc.ncbi.nlm.nih.gov/articles/PMC11623682/).
 It is a Behavio model specified in
 [SDR-0066](decisions/0066-fit-a-population-session-dynamic-glm-hmm-with-subject-deviation-paths.md).
-The three scales are fixed model specifications. Standard errors and covariance are `NaN`;
-label-aware path and hyperparameter uncertainty remains the next capability.
+Fixed scales remain supported. With `estimate_hyperparameters=True`, all three Gaussian
+scales and the transition concentration are estimated inside the training fit. Population,
+realized subject, and subject-deviation path errors are separate arrays. Gaussian scale
+uncertainty uses Louis observed information and, when needed, a supplemented-EM rate
+correction; a non-positive information matrix or spectral radius at or above one leaves the
+affected errors unavailable. Intervals remain conditional on one canonical label mode under
+[SDR-0067](decisions/0067-keep-dynamic-glm-hmm-uncertainty-conditional-on-one-label-mode.md).
+
+## Population-to-laboratory-to-subject dynamic hierarchy
+
+`LabHierarchicalSessionDynamicBernoulliGLMHMM` adds an explicit exchangeable laboratory
+level. It is a separate class because merely finding a `lab` column must not change the
+estimand of an existing cross-subject fit.
+
+```python
+from behavio import LabHierarchicalSessionDynamicBernoulliGLMHMM
+
+lab_dynamic = LabHierarchicalSessionDynamicBernoulliGLMHMM(
+    predictors=("stimulus",),
+    choice_lags=1,
+    n_states=2,
+    lab_column="lab",
+    population_emission_step_scale=0.2,
+    lab_emission_scale=0.3,
+    lab_emission_step_scale=0.15,
+    subject_emission_scale=0.4,
+    emission_step_scale=0.15,
+    transition_concentration=20.0,
+)
+
+simulation = lab_dynamic.simulate_with_trajectories(design, parameters, seed=11)
+fit = lab_dynamic.fit(simulation.study)
+
+fit.population_emission_coefficients
+fit.lab_deviation_coefficients
+fit.lab_emission_coefficients
+fit.subject_deviations
+```
+
+For laboratory (l), subject (m) nested in it, and observed order (r), the hierarchy is
+
+\[
+M_r\sim\mathcal N(M_{r-1},\sigma_{\mathrm{pop}}^2I),\quad
+L_{l,0}\sim\mathcal N(0,\tau_{\mathrm{lab}}^2I),\quad
+L_{l,s}\sim\mathcal N(L_{l,s-1},\sigma_{\mathrm{lab}}^2I),
+\]
+
+\[
+D_{m,0}\sim\mathcal N(0,\tau_{\mathrm{subj}}^2I),\quad
+D_{m,s}\sim\mathcal N(D_{m,s-1},\sigma_{\mathrm{subj}}^2I),\quad
+W_{m,s}=M_{r(m,s)}+L_{l(m),s}+D_{m,s}.
+\]
+
+One lab/order path point is shared by all subjects observed in that laboratory at that
+order. Subjects must belong to exactly one lab. A fit requires at least two labs and two
+independent subjects per lab; one-subject labs are refused because lab and subject
+deviations cannot be separated. Those minima make the model estimable, not precise:
+population-of-laboratories claims still need a scientifically defined exchangeable lab
+population, substantially more independent labs, recovery under the actual design, and
+complete-lab holdout.
+
+The fit uses the same stationary, emission-dynamic/static-transition, and fully dynamic
+MAP-EM sequence as the two-level model. Its joint M-step and observed curvature cover
+population, laboratory-deviation, and realized subject paths together. It exposes errors
+for population, laboratory deviations, realized laboratory paths, realized subject paths,
+and subject deviations. With `estimate_hyperparameters=True`, all five Gaussian scales and
+the transition concentration are training-only estimates with boundary, Louis, and
+supplemented-EM stability evidence. Population, lab, and subject paths share one global
+label permutation; crossings are reported separately at all three levels and intervals
+condition on that one canonical mode.
+
+Deterministic filtered prediction has distinct policies:
+
+- a fitted session reuses its fitted path;
+- a future session of a fitted subject carries the final subject deviation around the
+  population-plus-lab path;
+- a new subject in a fitted lab uses that lab path with zero subject deviation; and
+- a wholly unseen lab uses the population path with zero lab and subject deviations.
+
+`predict_new_subjects()` integrates subject paths only after requiring every requested lab
+to have been fitted; its coherent score is subject-joint. `predict_new_labs()` instead draws
+one laboratory path shared by every subject in that lab, draws nested subject paths and
+session transitions, and reports lab-joint log probability, effective draws, and Monte
+Carlo error. This lab-joint quantity—not a sum of separately marginalized trial or subject
+scores—is the unseen-lab predictive estimand. Both methods refuse earlier or interleaved
+population/lab orders and retain label ambiguity.
+
+The Gaussian levels follow mixed and multilevel HMM practice
+([Altman 2007](https://doi.org/10.1198/016214506000001086),
+[Zhang and Berhane 2014](https://doi.org/10.1002/sim.6039),
+[hmmTMB](https://doi.org/10.18637/jss.v114.i05)); the exact dynamic hierarchy is Behavio's,
+specified in
+[SDR-0068](decisions/0068-model-laboratories-as-an-exchangeable-level-above-subjects.md).
+It does not identify a causal laboratory mechanism or infer persistent lab-specific
+transition styles. Session transition rows remain direct draws around one global matrix.
 
 ## Optional sticky transition prior
 
@@ -596,7 +738,10 @@ complete dynamic transition regressions over grouping columns that respect sessi
 boundaries. The one-subject session-dynamic class supports Gaussian-random-walk emissions
 and independently Dirichlet-shrunken session transition matrices. The dedicated population
 class adds a Gaussian population path, evolving subject deviations, and unseen-subject
-plug-in prediction. Neither dynamic class estimates local covariance or its path scales.
+plug-in and explicit Monte Carlo integrated prediction. Both dynamic classes report local
+canonical-mode path covariance and can estimate their supported Gaussian and Dirichlet
+hyperparameters inside training data, retaining unstable variance-component information as
+unavailable rather than regularizing it into an interval.
 
 The family still does not provide arbitrary smooth path-valued emissions, temporally smooth
 transition paths, state carry-over across sessions, missing-outcome inference, semi-Markov

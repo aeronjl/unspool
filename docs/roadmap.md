@@ -34,12 +34,33 @@ The roadmap is organized by scientific contracts rather than by model count.
   Nested forward-session selection now covers state count and both dynamic hyperparameters.
   Its first matched benchmark recovers dynamic paths but does not beat the stationary
   GLM-HMM on mean future-session log loss; stronger prospective discrimination and local
-  uncertainty remain later work.
+  uncertainty calibration remain later work.
 - **Implemented:** add a dedicated cross-subject session-dynamic GLM-HMM with a Gaussian
   population emission path, evolving Gaussian subject deviations, population-shrunken
   session transition matrices, one global label coordinate, and explicit seen-future and
-  unseen-subject plug-in forecasts. Population/subject path uncertainty and estimated
-  hierarchy scales remain later work.
+  unseen-subject plug-in forecasts.
+- **Implemented:** add observed state-marginalized covariance for single-subject,
+  population, realized-subject, and subject-deviation emission paths, explicitly conditional
+  on one whole-path canonical label mode while retaining crossing and ambiguity evidence.
+  Add bounded training-only Laplace-EM estimates of Gaussian scales, conditional
+  Dirichlet-multinomial transition-concentration estimates, Louis and supplemented-EM scale
+  uncertainty with visible stability failures, conditional transition-row errors, and
+  coherent Monte Carlo integration for entirely unseen subjects with subject-joint scores.
+- **Implemented:** add a separate population-to-laboratory-to-subject session-dynamic
+  GLM-HMM with exchangeable Gaussian laboratory paths, nested evolving subject deviations,
+  joint population/lab/subject uncertainty, five bounded variance-component estimates,
+  strict nesting and within-lab replication checks, distinct seen-lab/new-subject and
+  unseen-lab prediction, and coherent lab-joint Monte Carlo scores under one global label
+  coordinate.
+- **Implemented:** add proper-prior PyMC/NUTS inference for stationary, transition-
+  covariate, single-subject session-dynamic, population/subject, and
+  population/lab/subject GLM-HMMs. The discrete path is exactly marginalized; Gaussian
+  paths use non-centred innovations; transition matrices, population/lab/subject/session
+  scales, and transition concentration are jointly sampled; full-draw relabelling retains
+  gaps and whole-path crossings; and filtered likelihood, posterior predictive, prior-joint
+  simulation, and point-summary contracts share the labelled `PosteriorResult` surface.
+  Dynamic prediction is presently limited to fitted subject-session blocks: posterior-draw
+  propagation to unseen sessions, subjects, and labs remains open.
 - **Implemented:** add parameter- and model-recovery grids with design-specific engines,
   a static-versus-smooth example, named-design and scenario-level matrices, fit-audit
   propagation, a matched four-family benchmark, and repeated boundary-near regimes with
@@ -509,11 +530,16 @@ Both are now closed at the shared contract rather than patched inside one family
 
 ## Deferred research extensions
 
-Prospective discrimination of session-dynamic versus stationary GLM-HMMs,
-population-of-laboratories inference, inverse RL, agent-discovery models, novel
-trajectory-shape claims, and further Cell-paper analyses are outside the 0.21–0.24 critical
-path. They may later demonstrate the package, but they will not determine its basic
-architecture.
+Prospective discrimination of session-dynamic versus stationary GLM-HMMs, broader Bayesian
+coverage beyond Q-learning, hierarchical GLMs, and the GLM-HMM family, a second
+censored-duration family,
+inverse RL, agent-discovery models, novel trajectory-shape claims, and further Cell-paper
+analyses are outside the 0.21–0.24 critical path. The population-of-laboratories model is
+now implemented and its fitted paths have a joint posterior; broad claims still require
+more independent labs, design-specific posterior calibration and recovery, complete-lab
+prospective evidence, and posterior propagation to genuinely unseen hierarchy units. The
+remaining extensions may later demonstrate the package, but they will not determine its
+basic architecture.
 
 ## 0.21–0.24 completion audit
 

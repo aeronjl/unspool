@@ -140,6 +140,7 @@ from behavio.protocol.schema import (
     StudyProtocol,
 )
 from behavio.pymc_backend import PyMCBinaryQLearning, PyMCHierarchicalGLMBackend
+from behavio.pymc_glm_hmm import PyMCBernoulliGLMHMM
 from behavio.recovery.models import run_model_recovery
 from behavio.recovery.parameters import run_parameter_recovery
 from behavio.registry import (
@@ -206,6 +207,7 @@ __all__ = [
     "Psychometric",
     "PsychometricFunction",
     "PyBADSMultistart",
+    "PyMCBernoulliGLMHMM",
     "PyMCBinaryQLearning",
     "PyMCHierarchicalGLMBackend",
     "ResponseTimeSpec",

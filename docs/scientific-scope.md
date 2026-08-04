@@ -35,8 +35,11 @@ common model outputs; static and smoothly
 time-varying Bernoulli history GLMs; fixed- or estimated-scale static partial pooling;
 fixed-knot partially pooled subject trajectories; a stationary or covariate-dependent
 Bernoulli GLM-HMM with transition partial pooling, plus single-subject and population
-session-dynamic GLM-HMMs with path recovery, explicit unseen-subject plug-in prediction,
-and explicit uncertainty limitations;
+session-dynamic GLM-HMMs with path recovery, label-conditional observed path covariance,
+bounded variance-component estimation, explicit unseen-subject plug-in and integrated
+prediction, plus an exchangeable population-to-lab-to-subject dynamic hierarchy with
+within-lab replication safeguards and lab-joint unseen-lab prediction, all with retained
+uncertainty limitations;
 a session-reset binary Q-learning agent; an explicit response-time schema and fixed-
 parameter Wiener drift-diffusion model with an optional explicit contaminant mixture;
 smooth session-varying Wiener drift, boundary, and starting-bias paths;

@@ -25,6 +25,20 @@ state or parameter recovery, and explicit reset semantics.
       show_root_heading: false
       show_source: false
 
+::: behavio.models.lab_hierarchical_session_dynamic_glm_hmm
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
+## Proper-prior Bayesian GLM-HMMs
+
+::: behavio.pymc_glm_hmm
+    options:
+      members_order: source
+      show_root_heading: false
+      show_source: false
+
 ## Q-learning
 
 ::: behavio.models.q_learning

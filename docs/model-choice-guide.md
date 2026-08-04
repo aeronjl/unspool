@@ -70,6 +70,14 @@ Select both temporal hyperparameters inside training data, inspect whole-path cr
 require trajectory as well as state recovery. It is a one-subject model; do not treat
 separate animal fits as a population hierarchy.
 
+Use `HierarchicalSessionDynamicBernoulliGLMHMM` when several animals share a population
+latent-policy path and have evolving deviations. Use
+`LabHierarchicalSessionDynamicBernoulliGLMHMM` only when animals are nested in exchangeable
+laboratories and the deployment target genuinely includes a new lab. The latter requires
+independent animal replication within every lab and scores integrated unseen-lab prediction
+jointly by lab. A lab column or leave-lab-out split alone does not justify that sampling
+model; retain fixed-lab trajectory geometry when the claim concerns only the observed labs.
+
 ### Reward-driven updating
 
 Use `BinaryQLearning` for the compact reference agent or `BinaryRLAgent` for explicit

@@ -48,6 +48,9 @@ reserving a number ahead of writing the record is not a way to avoid a collision
 | [SDR-0064](0064-model-dynamic-transitions-with-multinomial-logits-and-ilr-group-effects.md) | Accepted | Model observed transition non-homogeneity with multinomial logits and complete group effects in an isometric log-ratio coordinate; keep latent session drift separate |
 | [SDR-0065](0065-fit-session-dynamic-glm-hmm-paths-by-map-em.md) | Accepted | Fit one-subject session-dynamic GLM-HMM paths by MAP EM with published emission and transition priors, whole-path labels, and an explicit future-session prior-mode forecast |
 | [SDR-0066](0066-fit-a-population-session-dynamic-glm-hmm-with-subject-deviation-paths.md) | Accepted | Fit a population emission path and evolving subject deviations for a cross-subject session-dynamic GLM-HMM with explicit unseen-subject prediction |
+| [SDR-0067](0067-keep-dynamic-glm-hmm-uncertainty-conditional-on-one-label-mode.md) | Accepted | Estimate dynamic hierarchy hyperparameters and report path uncertainty conditional on one whole-path label mode, with unstable missing-information corrections left visible |
+| [SDR-0068](0068-model-laboratories-as-an-exchangeable-level-above-subjects.md) | Accepted | Model laboratories as exchangeable dynamic paths above nested subject paths, with complete-lab prediction and lab-joint scoring |
+| [SDR-0069](0069-sample-glm-hmm-states-by-marginalizing-the-discrete-path.md) | Accepted | Sample proper-prior stationary and nested session-dynamic GLM-HMMs by marginalizing discrete paths, jointly propagating hierarchy uncertainty, and retaining draw-wise label ambiguity |
 
 ## Record structure
 

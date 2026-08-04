@@ -127,7 +127,7 @@ nav:
           - Analysis sensitivity: sensitivity-analysis.md
           - Test-retest reliability: test-retest-reliability.md
           - PSIS-LOO and posterior model comparison: psis-loo.md
-          - PyMC hierarchical GLM backend: pymc-backend.md
+          - PyMC posterior backends: pymc-backend.md
           - Estimator contract: estimator-contract.md
           - Trajectory shapes: trajectory-shapes.md
   - Worked studies:

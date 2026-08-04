@@ -172,6 +172,7 @@ INTEROPERABILITY_AND_EVIDENCE = {
     "PyBADSMultistart",
     "PosteriorResult",
     "PyMCBinaryQLearning",
+    "PyMCBernoulliGLMHMM",
     "PyMCHierarchicalGLMBackend",
     "audit_posterior",
     "posterior_predictive_check",

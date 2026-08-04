@@ -35,7 +35,12 @@ stages, and inferred learning landmarks.
 > is not yet stable. The model catalogue currently contains static and smoothly time-
 > varying Bernoulli GLMs, static and smooth hierarchical Bernoulli GLMs, stationary,
 > covariate-dependent, single-subject session-dynamic, and population/subject
-> session-dynamic GLM-HMMs, with emission/transition
+> session-dynamic GLM-HMMs with label-conditional path uncertainty and integrated
+> unseen-subject prediction, plus a population/lab/subject dynamic hierarchy with
+> lab-joint unseen-lab prediction. A separate proper-prior PyMC route marginalizes the
+> discrete state path and jointly samples fitted population/lab/subject/session paths,
+> transition matrices, and variance components while retaining draw-wise label ambiguity.
+> The catalogue also includes emission/transition
 > partial pooling on the covariate-dependent family, compact and
 > composable binary reinforcement-learning agents, and a joint
 > choice/response-time Wiener
@@ -188,9 +193,13 @@ and two combinators over it -- `smooth(model, over=...)` for coefficients on fix
 knots and `hierarchical(model, over="subject", parameters=...)` for parameters that vary by
 group -- which compose, so the smooth, partially pooled, and partially pooled smooth
 trajectory models are expressions rather than four more classes. It also includes
-a stationary or covariate-dependent-transition Bernoulli GLM-HMM, dedicated single-subject
-and population/subject session-dynamic GLM-HMMs with path diagnostics, trajectory recovery,
-and explicit unseen-subject prediction, and a compact
+a stationary or covariate-dependent-transition Bernoulli GLM-HMM, dedicated single-subject,
+population/subject, and population/lab/subject session-dynamic GLM-HMMs with path
+diagnostics, trajectory recovery, training-only hyperparameter estimation, and plug-in or
+integrated unseen-subject or unseen-lab prediction. `PyMCBernoulliGLMHMM` supplies
+proper-prior joint posterior inference across that line by marginalizing discrete states;
+its dynamic prediction is presently limited to fitted subject-session blocks,
+and a compact
 session-reset binary Q-learning agent plus a composable successor with asymmetric
 learning, forgetting, choice kernels, lapse-softmax policies, and explicit reset columns,
 plus a fixed-parameter Wiener drift-diffusion model
